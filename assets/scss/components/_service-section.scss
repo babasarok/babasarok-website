@@ -52,6 +52,8 @@
 
         &_item-wrapper {
             box-sizing: border-box;
+            // IF YOU CHANGE THIS, YOU MUST ALSO CHANGE indexSpan IN scrollSnapper.ts to be the same value of (100 / X)
+            // where X is the number of items you want to show at once
             width: 33%;
             @include mobile {
                 width: 100%;
@@ -59,7 +61,7 @@
             flex-shrink: 0;
             scroll-snap-align: center;
             scroll-snap-stop: always;
-            padding: 0 15px;
+            padding: 15px;
         }
 
         &_item {

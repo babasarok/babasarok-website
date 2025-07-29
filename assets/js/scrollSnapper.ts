@@ -36,10 +36,15 @@
  */
 
 export class ScrollSnapper {
-    index: number = 0;
+    private index: number = 0;
+    private indexSpan: number = 3;
     private element: HTMLElement;
     private indicator: HTMLElement;
     private scrollTimeout: number | null = null;
+
+    private clicked: boolean = false;
+
+    private readonly INDEX_SPAN_BREAKPOINT = 575; // breakpoint for index span change
 
     /**
      *
@@ -50,10 +55,66 @@ export class ScrollSnapper {
         this.element = element;
         this.indicator = indicator;
         this.initIndicator();
+        this.updateIndexSpan();
         this.updateInertStatus(0);
         this.updateIndicator(0);
+        this.element.style.pointerEvents = "auto";
+        window.addEventListener("resize", () => this.updateIndexSpan());
+
 
         this.element.addEventListener("scroll", (e) => this.onScroll(e));
+        this.element.addEventListener("pointerdown", (e) => {
+            if (e.pointerType !== "mouse" && e.pointerType !== "pen") {
+                // only handle mouse and pen pointer types
+                return;
+            }
+
+            this.clicked = true;
+            this.element.style.scrollSnapType = "none";
+        })
+
+        this.element.addEventListener("pointerup", (e) => {
+            this.clicked = false;
+
+            this.onScroll(e);
+            this.element.style.scrollSnapType = "x mandatory";
+        })
+
+        this.element.addEventListener("pointercancel", (e) => {
+            this.clicked = false;
+            this.onScroll(e);
+            this.element.style.scrollSnapType = "x mandatory";
+        })
+
+        this.element.addEventListener("pointermove", (e) => {
+            if (!this.clicked) {
+                // if the user is dragging, we don't want to update the index
+                return;
+            }
+
+            this.element.scrollTo({
+                left: this.element.scrollLeft - e.movementX,
+                behavior: "instant"
+            });
+        });
+    }
+
+    private updateIndexSpan() {
+        const width = window.innerWidth;
+        const prev = this.indexSpan;
+        if (width < this.INDEX_SPAN_BREAKPOINT) {
+            this.indexSpan = 1; // mobile
+        }
+        else {
+            this.indexSpan = 3; // desktop
+        }
+
+        if (prev === this.indexSpan) {
+            return;
+        }
+
+        this.updateIndicator(this.index);
+        this.updateInertStatus(this.index);
     }
 
     private onScroll = (e: Event) => {
@@ -81,13 +142,12 @@ export class ScrollSnapper {
     }
 
     private updateInertStatus(index: number) {
-        const currentChild = this.element.children[index];
         for (let i = 0; i < this.element.children.length; i++) {
             const child = this.element.children[i];
             if (!(child instanceof HTMLElement))
                 return;
 
-            const isCurrent = child === currentChild
+            const isCurrent = i >= index && i < (index + this.indexSpan);
             child.ariaHidden = !isCurrent ? "true" : null
             child.inert = !isCurrent
         }
@@ -99,7 +159,7 @@ export class ScrollSnapper {
             if (!(child instanceof HTMLElement))
                 return;
 
-            const isCurrent = i === index;
+            const isCurrent = i >= index && i < (index + this.indexSpan);
             child.classList.toggle("slick-active", isCurrent);
         };
     }

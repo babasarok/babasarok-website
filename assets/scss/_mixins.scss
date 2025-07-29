@@ -8,6 +8,7 @@
     @content;
   }
 }
+// IF YOU CHANGE THIS, YOU MUST ALSO CHANGE THE IN scrollSnapper.ts
 @mixin mobile {
   @media (max-width: 575px) {
     @content;
