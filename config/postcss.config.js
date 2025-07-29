@@ -21,7 +21,6 @@ module.exports = {
     //     ...whitelister([
     //       "./assets/scss/components/_alerts.scss",
     //       // './assets/scss/components/_buttons.scss',
-    //       "/assets/scss/_slick.scss",
     //       "/assets/scss/_magnific_popup.scss",
     //     ]),
     //   ],

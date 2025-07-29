@@ -4,13 +4,13 @@
  * - remove them from package.json
  * - remove their styles from libraries.scss
  */
-import "./vendor/slick-animation";
 import "waypoints/lib/jquery.waypoints";
 // TODO: this module is deprecated, use newer alternatives
 import { TweenMax, Power3 } from "gsap/TweenMax";
 // TODO: remove this module and use lazysizes instead
 import "imagesloaded";
 import "./form-handler";
+import { ScrollSnapper } from "./scrollSnapper";
 
 // Preloader
 
@@ -106,32 +106,7 @@ $(document).ready(function () {
     $(".navbar-collapse").collapse("hide");
   });
 
-  // service slider
-  $(".service__slider").slick({
-    infinite: false,
-    slidesToShow: 3,
-    slidesToScroll: 1,
-    dots: false,
-    arrows: false,
-    responsive: [
-      {
-        breakpoint: 992,
-        settings: {
-          slidesToShow: 2,
-          slidesToScroll: 1,
-          dots: true,
-        },
-      },
-      {
-        breakpoint: 768,
-        settings: {
-          slidesToShow: 1,
-          slidesToScroll: 1,
-          dots: true,
-        },
-      },
-    ],
-  });
+  new ScrollSnapper(document.getElementsByClassName("service__slider")[0], document.getElementsByClassName("service__indicator")[0])
 
   // skill count
   $(".skill__progress").waypoint(
@@ -157,28 +132,6 @@ $(document).ready(function () {
     },
     { offset: "80%" }
   );
-
-  // Testimonial slider
-  $(".testimonial__slider").slick({
-    infinite: true,
-    slidesToShow: 2,
-    slidesToScroll: 1,
-    dots: true,
-    arrows: false,
-    autoplay: true,
-    autoplaySpeed: 2000,
-    responsive: [
-      {
-        breakpoint: 992,
-        settings: {
-          slidesToShow: 1,
-          slidesToScroll: 1,
-          infinite: true,
-          dots: true,
-        },
-      },
-    ],
-  });
 
   // Modal Popup
   $(".popup-button").magnificPopup({

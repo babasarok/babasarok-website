@@ -40,10 +40,11 @@
           </div>
         </div>
         <div class="row">
-          <div class="col-12">
+          <div style="width: 100%">
             <div class="service__slider">
               {{ $Section := .service }}
               {{ range $Section }}
+              <div class="service__slider_item-wrapper">
                 <div class="service__slider_item">
                   <div class="service__slider_item-icon">
                     <div class="icon-background">
@@ -69,9 +70,21 @@
                   </div>
                   <div class="service-item-content mt-5">{{ .content | markdownify }}</div>
                 </div>
+              </div>
               {{ end }}
             </div>
           </div>
+        </div>
+        <div
+            class="service__indicator slick-dots mt-5"
+            data-scroll-snapper="service__slider"
+            data-scroll-snapper-indicator="service__indicator">
+            {{ range .service }}
+                <li>
+                    <button>
+                    </button>
+                </li>
+            {{ end }}
         </div>
       </div>
     </section>
