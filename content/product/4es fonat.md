@@ -13,7 +13,8 @@ table:
     description: 18.700Ft
   - title: 260cm
     description: 20.300Ft
-  - {}
+  - title: 280cm
+    description: 21.800Ft
   - {}
   - {}
   - {}
