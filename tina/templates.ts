@@ -119,6 +119,12 @@ export function blog_templateFields(): TinaField<false>[] {
       name: "categories",
       label: "Kategóriák",
     },
+    {
+      type: "rich-text",
+      name: "content",
+      label: "Tartalom",
+      isBody: true,
+    }
   ];
 }
 export function config_templateFields(): TinaField<false>[] {
