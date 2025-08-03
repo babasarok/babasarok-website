@@ -19,7 +19,8 @@ table:
     description: 23.400Ft
   - title: 320cm
     description: 25.000Ft
-  - {}
+  - title: 340cm
+    description: 26.500Ft
   - {}
   - {}
   - {}
