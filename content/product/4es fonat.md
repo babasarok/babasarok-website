@@ -25,7 +25,8 @@ table:
     description: 28.000Ft
   - title: 380cm
     description: 29.600Ft
-  - {}
+  - title: 400cm
+    description: 31.200Ft
 shortDescription: |-
   A hármas fonathoz hasonlóan védi a baba fejét a rácsokhoz való ütközéstől.
   magassága nagyobb, mint a hármas fonat, mivel 4szálból készül, kb. 20 cm.
