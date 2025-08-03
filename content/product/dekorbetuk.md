@@ -4,7 +4,8 @@ categories: Tedd még különlegesebbé a babaszobát!
 date: 2025-04-28T06:49:27.000Z
 thumbnail: /images/product/dekorbetuk.jpg
 table:
-  - {}
+  - title: Kiegészítő figurák (díszítve)
+    description: 600Ft
   - title: Betűk díszítve
     description: 1.200Ft
   - title: null
