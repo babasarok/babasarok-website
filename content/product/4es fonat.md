@@ -23,7 +23,8 @@ table:
     description: 26.500Ft
   - title: 360cm
     description: 28.000Ft
-  - {}
+  - title: 380cm
+    description: 29.600Ft
   - {}
 shortDescription: |-
   A hármas fonathoz hasonlóan védi a baba fejét a rácsokhoz való ütközéstől.
