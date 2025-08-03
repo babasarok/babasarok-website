@@ -1,7 +1,7 @@
 ---
 title: Fonott rácsvédő
 categories: 4-es fonat
-thumbnail: /IMG_7927.JPG
+thumbnail: /IMG_7422 (1).jpg
 table:
   - title: 180cm
     description: 14.400Ft
