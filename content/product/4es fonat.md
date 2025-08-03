@@ -11,7 +11,8 @@ table:
     description: '17.000'
   - title: 240cm
     description: 18.700Ft
-  - {}
+  - title: 260cm
+    description: 20.300Ft
   - {}
   - {}
   - {}
