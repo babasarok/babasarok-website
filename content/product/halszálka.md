@@ -25,7 +25,8 @@ table:
     description: 36.000Ft
   - title: 380cm
     description: 36.000Ft
-  - {}
+  - title: 400cm
+    description: 38.000Ft
 shortDescription: >-
   Ez a különleges rácsvédő 5 szálból készül. Halszálka fonás, magassága kb.
   20-21cm. Funkciója a többi rácsvédőhöz hasonlóan, hogy védje a babát vagy a
