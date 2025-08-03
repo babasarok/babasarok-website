@@ -5,7 +5,8 @@ thumbnail: /IMG_8006.jpg
 table:
   - title: 180cm
     description: 18.000Ft
-  - {}
+  - title: 200cm
+    description: 20.000Ft
   - {}
   - {}
   - {}
