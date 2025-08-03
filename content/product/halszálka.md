@@ -9,7 +9,8 @@ table:
     description: 20.000Ft
   - title: 220cm
     description: 21.000Ft
-  - {}
+  - title: 240cm
+    description: 22.800Ft
   - {}
   - {}
   - {}
