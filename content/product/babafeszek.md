@@ -6,8 +6,8 @@ thumbnail: /IMG_6058.jpg
 table:
   - title: Normál méret 35x65cm
     description: 15.000Ft
-  - title: Közepes méret 40x70cm
-    description: 15000Ft
+  - title: Közepes méret 40x75cm
+    description: 16.500Ft
   - title: XXL méret 50x80cm
     description: 17000Ft
 shortDescription: >-
