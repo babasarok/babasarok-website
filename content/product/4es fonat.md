@@ -5,9 +5,8 @@ thumbnail: /IMG_7422 (1).jpg
 table:
   - title: 200cm
     description: 16.000Ft
-  - {}
   - title: 220cm
-    description: '17.000'
+    description: 17.600Ft
   - title: 240cm
     description: 18.700Ft
   - title: 260cm
