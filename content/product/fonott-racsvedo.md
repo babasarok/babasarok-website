@@ -4,10 +4,8 @@ categories: A baba biztonsága és stílusa egyben
 date: 2025-05-20T12:07:16.000Z
 thumbnail: /IMG_6139.jpg
 table:
-  - title: 180cm
-    description: 10500Ft
   - title: 200cm
-    description: 11600Ft
+    description: 12.800Ft
   - title: 220cm
     description: 12760Ft
   - title: 240cm
