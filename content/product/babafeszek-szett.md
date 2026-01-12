@@ -8,8 +8,8 @@ table:
     description: 21.500Ft
   - title: Közepes méret 40x70cm
     description: 23.000Ft
-  - title: XXL méret 50x80cm
-    description: 23800Ft
+  - title: XXL méret 50x90cm
+    description: 26.500Ft
 shortDescription: >-
   A babafészek szűk, ölelő formája anyaméhhez hasonló környezetet teremt, ami
   megnyugtatja a babát és segíti a pihentető alvást. A szett tartalmazza a
