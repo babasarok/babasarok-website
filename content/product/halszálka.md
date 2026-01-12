@@ -20,7 +20,7 @@ table:
   - title: 360cm
     description: 34.200Ft
   - title: 380cm
-    description: 36.000Ft
+    description: 36.100Ft
   - title: 400cm
     description: 38.000Ft
 shortDescription: >-
