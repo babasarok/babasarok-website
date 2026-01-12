@@ -7,7 +7,7 @@ table:
   - title: 200cm
     description: 12.800Ft
   - title: 220cm
-    description: 12760Ft
+    description: 14.000Ft
   - title: 240cm
     description: 13680Ft
   - title: 260cm
