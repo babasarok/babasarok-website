@@ -6,7 +6,7 @@ thumbnail: /images/product/babafeszek-szett.jpeg
 table:
   - title: Normál méret 35x65cm
     description: 21.500Ft
-  - title: Közepes méret 40x70cm
+  - title: Közepes méret 40x75cm
     description: 23.000Ft
   - title: XXL méret 50x90cm
     description: 26.500Ft
