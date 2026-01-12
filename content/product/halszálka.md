@@ -3,10 +3,8 @@ title: Fonott rácsvédő-halszálka
 categories: 5-ös fonat
 thumbnail: /IMG_8006.jpg
 table:
-  - title: 180cm
-    description: 18.000Ft
   - title: 200cm
-    description: 20.000Ft
+    description: 19.000Ft
   - title: 220cm
     description: 21.000Ft
   - title: 240cm
@@ -17,8 +15,6 @@ table:
     description: 26.600Ft
   - title: 300cm
     description: 28.500Ft
-  - title: 320cm
-    description: 30.500Ft
   - title: 340cm
     description: 32.300Ft
   - title: 360cm
