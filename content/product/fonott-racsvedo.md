@@ -15,7 +15,7 @@ table:
   - title: 280cm
     description: 17.900Ft
   - title: 300cm
-    description: 17100Ft
+    description: 19.200Ft
   - title: 320cm
     description: 18240Ft
   - title: 340cm
