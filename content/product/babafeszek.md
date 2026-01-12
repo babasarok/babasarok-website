@@ -8,8 +8,8 @@ table:
     description: 15.000Ft
   - title: Közepes méret 40x75cm
     description: 16.500Ft
-  - title: XXL méret 50x80cm
-    description: 17000Ft
+  - title: XXL méret 50x90cm
+    description: 20.000Ft
 shortDescription: >-
   A babafészek biztonságos, kényelmes pihenést biztosít a legkisebbeknek. A
   szűk, anyaméhhez hasonló környezet elősegíti a békés alvást, miközben a fészek
