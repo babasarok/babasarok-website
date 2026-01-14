@@ -5,7 +5,7 @@ date: 2025-04-28T06:49:27.000Z
 thumbnail: /IMG_7073.jpg
 table:
   - title: Kiegészítő figurák (díszítve)
-    description: 600Ft
+    description: 700Ft
   - title: Betűk díszítve
     description: 1.200Ft
   - title: null
