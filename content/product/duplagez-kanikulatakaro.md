@@ -9,7 +9,7 @@ table:
   - title: 2 rétegű
     description: 5.800Ft
   - title: Duplagéz+Pamutvászon
-    description: 4500Ft
+    description: 4.900Ft
 shortDescription: >-
   A duplagéz kánikulatakaró ideális választás a nyári hőségben, amikor még a
   legkisebbek is kényelmetlenül érzik magukat a melegben. Két rétegben
