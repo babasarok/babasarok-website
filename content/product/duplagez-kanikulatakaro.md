@@ -4,8 +4,8 @@ categories: A tökéletes megoldás a forró napokra
 date: 2025-05-01T12:07:16.000Z
 thumbnail: /IMG_6152.jpg
 table:
-  - title: 1 oldalas
-    description: 3900Ft
+  - title: 'Extra vékony, egyrétegű, akár textilpelusnak is'
+    description: 1.900Ft
   - title: 2 oldalas
     description: 5300Ft
   - title: Duplagéz+Pamutvászon
