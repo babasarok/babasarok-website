@@ -8,8 +8,6 @@ table:
     description: 700Ft
   - title: Betűk díszítve
     description: 1.200Ft
-  - title: null
-    description: Natúr betűk-1.000Ft/db
 shortDescription: >-
   Fedezd fel a babaszoba legújabb trendjét: a falra ragasztható dekorbetűket!
   Egyedivé varázsolhatod vele a szobát, legyen szó a baba nevéről vagy egy
@@ -19,3 +17,4 @@ shortDescription: >-
   Minden betű kb. 15 cm magas, a szélessége igazodik az adott betűhöz.
 ---
 
+![](/sophie.jpg)
