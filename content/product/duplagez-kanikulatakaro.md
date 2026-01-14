@@ -6,8 +6,8 @@ thumbnail: /IMG_6152.jpg
 table:
   - title: 'Extra vékony, egyrétegű, akár textilpelusnak is'
     description: 1.900Ft
-  - title: 2 oldalas
-    description: 5300Ft
+  - title: 2 rétegű
+    description: 5.800Ft
   - title: Duplagéz+Pamutvászon
     description: 4500Ft
 shortDescription: >-
