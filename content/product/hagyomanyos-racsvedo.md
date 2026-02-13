@@ -4,6 +4,8 @@ categories: A biztonságos pihenésért
 date: 2020-08-12T12:07:16.000Z
 thumbnail: /IMG_9614.jpg
 table:
+  - title: 70cm
+    description: 4.100Ft
   - title: 60cm
     description: 3.900Ft
   - title: Teljesen körbeérő rácsvédők
