@@ -4,6 +4,8 @@ categories: A biztonságos pihenésért
 date: 2020-08-12T12:07:16.000Z
 thumbnail: /IMG_9614.jpg
 table:
+  - title: 140cm
+    description: 8.200Ft
   - title: 120cm
     description: 7.800Ft
   - title: 70cm
