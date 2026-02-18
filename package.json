@@ -78,7 +78,7 @@
         "shx": "^0.3.4"
     },
     "otherDependencies": {
-        "hugo": "0.115.0"
+        "hugo": "0.122.0"
     },
     "husky": {
         "hooks": {
