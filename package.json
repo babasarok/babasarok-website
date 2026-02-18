@@ -2,6 +2,7 @@
     "name": "babasarok-website",
     "description": "Babasarok weboldal",
     "version": "1.5.8",
+    "type": "module",
     "browserslist": [
         "defaults"
     ],
