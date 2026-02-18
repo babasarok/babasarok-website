@@ -30,4 +30,6 @@ shortDescription: >-
   igazán feldobja a kiságyat és a babaszobát.
 ---
 
-![](/IMG_8891.JPG)![](</IMG_9137 (1).jpg>)
+![](/IMG_8891.JPG)
+
+![](</IMG_9137 (1).jpg>)

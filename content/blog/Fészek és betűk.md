@@ -6,4 +6,10 @@ postImage: /IMG_7073.jpeg
 categories: Referenciamunka
 ---
 
-![](/IMG_7064.jpeg)![](/IMG_7072.jpg)![](/IMG_7066.jpg)![](/IMG_7069.JPG)
+![](/IMG_7064.jpeg)
+
+![](/IMG_7072.jpg)
+
+![](/IMG_7066.jpg)
+
+![](/IMG_7069.JPG)

@@ -12,9 +12,17 @@ shortDescription: >-
   Fedezd fel a babaszoba legújabb trendjét: a falra ragasztható dekorbetűket!
   Egyedivé varázsolhatod vele a szobát, legyen szó a baba nevéről vagy egy
   kedves üzenetről. Kiegészítő elemekkel, mint virágok, pillangók, állatok, még
-  kedvesebbé teheted a dekorációt – csak a képzelet szab határt! 
+  kedvesebbé teheted a dekorációt – csak a képzelet szab határt!
 
   Minden betű kb. 15 cm magas, a szélessége igazodik az adott betűhöz.
 ---
 
-![](/sophie.jpg)![](/IMG_0435.jpg)![](/E871C000-8C7F-4662-8288-874788CBA080.PNG)![](/IMG_8683.jpg)![](/IMG_8684.jpg)
+![](/sophie.jpg)
+
+![](/IMG_0435.jpg)
+
+![](/E871C000-8C7F-4662-8288-874788CBA080.PNG)
+
+![](/IMG_8683.jpg)
+
+![](/IMG_8684.jpg)
