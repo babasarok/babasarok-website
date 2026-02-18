@@ -41,7 +41,7 @@
       <div class="col-lg-4">
         <div class="footer__widget_logo mb-5">
           {{ $asset := resources.Get .Site.Params.footerLogo }}
-          {{ $img := $asset.Fit "900x300 webp" }}
+          {{ $img := $asset.Fit "900x300" }}
           <img
             style="width: 255px; height: 170px; object-fit: contain"
             src="{{ $img.RelPermalink }}"

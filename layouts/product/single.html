@@ -30,7 +30,7 @@
           <div class="case-details-thumb mb-5">
             {{ if (isset .Params "thumbnail") }}
             {{ $asset := resources.Get .Params.thumbnail }}
-            {{ $img := $asset.Resize "1000x webp" }}
+            {{ $img := $asset.Resize "1000x" }}
             <img src="{{ $img.RelPermalink }}" alt="case-details" />
             {{ end }}
           </div>

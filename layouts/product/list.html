@@ -44,7 +44,7 @@
               <div class="product-item">
               {{ if (isset .Params "thumbnail") }}
                 {{ $asset := resources.Get .Params.thumbnail }}
-                {{ $img := $asset.Resize "700x webp" }}
+                {{ $img := $asset.Resize "700x" }}
                 <img src="{{ $img.RelPermalink }}" class="product-item-thumb" alt="product-thumb" />
               {{ end }}
                 <div class="product-item-content">

@@ -61,7 +61,7 @@
                     </div>
                     <div class="icon">
                       {{ $asset := resources.Get .image }}
-                      {{ $img := $asset.Fit "256x256 webp" }}
+                      {{ $img := $asset.Fit "256x256" }}
                       <img
                         style="width: 84px; height: 84px; object-fit: contain; clip-path: circle()"
                         src=" {{ $img.RelPermalink }}"

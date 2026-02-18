@@ -7,7 +7,7 @@
   <div class="container">
     <a href="{{ .Site.BaseURL }}" class="navbar-brand">
       {{ $asset := resources.Get .Site.Params.logo }}
-      {{ $img := $asset.Fit "600x200 webp" }}
+      {{ $img := $asset.Fit "600x200" }}
       <img style="width: 100px; height: 70px; object-fit: contain" src="{{ $img.RelPermalink }}" alt="site-logo" />
     </a>
     <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#navbarCollapse">

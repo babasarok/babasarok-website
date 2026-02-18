@@ -43,7 +43,7 @@
             <div class="blog-page__item">
               <div class="blog-page__item-thumb">
                 {{ $asset := resources.Get .Params.featureImage }}
-                {{ $img := $asset.Fill "320x370 webp" }}
+                {{ $img := $asset.Fill "320x370" }}
                 <img src="{{ $img.RelPermalink }}" alt="post-image" />
               </div>
               <div class="blog-page__item-content bg-white">

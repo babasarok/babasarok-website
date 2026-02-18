@@ -44,7 +44,7 @@
                 <img src="images/hero/figure-svg.svg" alt="figure-svg" />
               </div>
               {{ $asset := resources.Get .image }}
-              {{ $img := $asset.Fit "1500x1000 webp" }}
+              {{ $img := $asset.Fit "1500x1000" }}
               <img
                 src="{{ $img.RelPermalink }}"
                 alt="hero-image"
@@ -59,7 +59,7 @@
                 <div class="hero_figure-popup">
                   <div class="thumb">
                     {{ $asset := resources.Get .videoThumb }}
-                    {{ $img := $asset.Fit "320x180 webp" }}
+                    {{ $img := $asset.Fit "320x180" }}
                     <img src="{{ $img.RelPermalink }}" alt="popup" />
                   </div>
 

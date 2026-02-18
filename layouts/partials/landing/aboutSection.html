@@ -19,7 +19,7 @@
                 </div>
                 <div class="about_content-thumb-image">
                   {{ $asset := resources.Get .image }}
-                  {{ $img := $asset.Fit "1500x1000 webp" }}
+                  {{ $img := $asset.Fit "1500x1000" }}
                   <img
                     src="{{ $img.RelPermalink }}"
                     alt="about-img"

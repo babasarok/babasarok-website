@@ -15,31 +15,30 @@
     },
     "scripts": {
         "init": "shx rm -rf .git && git init -b main",
-        "create": "exec-bin node_modules/.bin/hugo/hugo new",
+        "create": "hugo new",
         "prepare": "husky install",
         "prestart": "npm run clean",
-        "start": "exec-bin node_modules/.bin/hugo/hugo server --debug --logLevel debug --bind=0.0.0.0 --disableFastRender --renderToDisk --baseURL=http://localhost --templateMetrics --templateMetricsHints",
-        "start:lan": "exec-bin node_modules/.bin/hugo/hugo server --bind=0.0.0.0 --baseURL=http://192.168.1.10 --port=1313",
-        "forestry": "exec-bin node_modules/.bin/hugo/hugo server -D -E -F --renderToDisk -d public",
+        "start": "hugo server --logLevel debug --bind=0.0.0.0 --disableFastRender --baseURL=http://localhost --templateMetrics --templateMetricsHints",
+        "start:lan": "hugo server --bind=0.0.0.0 --baseURL=http://192.168.1.10 --port=1313",
+        "forestry": "hugo server -D -E -F -d public",
         "tina:dev": "tinacms dev -c \"npm start\"",
-        "tina:build": "tinacms build && exec-bin node_modules/.bin/hugo/hugo --gc --minify",
+        "tina:build": "tinacms build && hugo --gc --minify",
         "prebuild": "npm run clean",
-        "build": "exec-bin node_modules/.bin/hugo/hugo --gc --minify",
-        "build:lan": "exec-bin node_modules/.bin/hugo/hugo --gc --minify --baseURL=http://192.168.1.10:8080",
+        "build": "hugo --gc --minify",
+        "build:lan": "hugo --gc --minify --baseURL=http://192.168.1.10:8080",
         "build:preview": "npm run build -D -F",
         "clean": "shx rm -rf public resources",
         "clean:git": "git branch --merged master | grep -v '^[ *]*master$' | xargs git branch -d",
         "lint": "npm run -s lint:markdown",
         "lint:markdown": "markdownlint-cli2 \"*.md\" \"content/**/*.md\"",
         "lint:markdown-fix": "markdownlint-cli2-fix \"*.md\" \"content/**/*.md\"",
-        "server": "exec-bin node_modules/.bin/hugo/hugo server",
+        "server": "hugo server",
         "test": "npm run -s lint",
         "env": "env",
         "precheck": "npm version",
-        "check": "exec-bin node_modules/.bin/hugo/hugo version",
+        "check": "hugo version",
         "latest:hugo": "gh release view --repo gohugoio/hugo",
         "latest:hyas": "gh release view --repo h-enk/hyas",
-        "postinstall": "hugo-installer --version otherDependencies.hugo --extended --destination node_modules/.bin/hugo",
         "version": "auto-changelog -p && git add CHANGELOG.md"
     },
     "dependencies": {
@@ -66,8 +65,9 @@
         "@tinacms/cli": "^1.9.8",
         "auto-changelog": "^2.4.0",
         "autoprefixer": "^10.4.11",
+        "dart-sass": "^1.25.0",
         "exec-bin": "^1.0.0",
-        "hugo-installer": "^4.0.1",
+        "hugo-extended": "^0.155.3",
         "husky": "^8.0.1",
         "markdownlint-cli2": "^0.5.1",
         "netlify-plugin-submit-sitemap": "^0.4.0",
@@ -76,14 +76,5 @@
         "pretty-quick": "^3.1.3",
         "purgecss-whitelister": "^2.4.0",
         "shx": "^0.3.4"
-    },
-    "otherDependencies": {
-        "hugo": "0.122.0"
-    },
-    "husky": {
-        "hooks": {
-            "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
-            "pre-commit": "pretty-quick --staged"
-        }
     }
 }
