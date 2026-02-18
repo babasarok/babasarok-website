@@ -28,3 +28,4 @@ shortDescription: |-
   magassága nagyobb, mint a hármas fonat, mivel 4szálból készül, kb. 21 cm.
 ---
 
+![](/IMG_8843.JPG)![](/IMG_8842.JPG)![](/IMG_8058.JPG)![](/IMG_8382.JPG)![](/IMG_9101.JPG)
