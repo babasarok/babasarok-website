@@ -15,11 +15,10 @@ table:
 shortDescription: 'Ezek a termékek vagy szettek raktáron vannak, nincs elkészítési idejük, azonnal tudom küldeni. Nem sérültek, nincs hibájuk, általában visszamondás vagy félrenézett rendelés miatt vannak készleten. '
 ---
 
-![](/IMG_1514.JPG)
+| ![](/IMG_1514.JPG) | ![](/IMG_1515.JPG) |
+| - | - |
 
-![](/IMG_1515.JPG)
-
-![](/IMG_1513.JPG)
+<img src="/IMG_1513.JPG" width="200" />
 
 ![](/IMG_1361.JPG)
 

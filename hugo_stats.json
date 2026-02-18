@@ -41,8 +41,13 @@
       "strong",
       "style",
       "svg",
+      "table",
+      "tbody",
       "textarea",
+      "th",
+      "thead",
       "title",
+      "tr",
       "ul"
     ],
     "classes": [
