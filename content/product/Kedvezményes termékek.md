@@ -18,7 +18,7 @@ shortDescription: 'Ezek a termékek vagy szettek raktáron vannak, nincs elkész
 | ![](/IMG_1514.JPG) | ![](/IMG_1515.JPG) |
 | - | - |
 
-![](/IMG_1513.JPG)
+{{< img src="/IMG_1513.JPG" alt="" width="200x" >}}
 
 ![](/IMG_1361.JPG)
 
