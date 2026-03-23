@@ -1,6 +1,6 @@
 ---
 title: Kedvezményes termékek
-thumbnail: /IMG_1361.JPG
+thumbnail: /IMG_1361 (1).jpg
 table:
   - title: 'Szoptatóspárna, pihepuha huzattal'
     description: 'Régi ár: 9.500Ft  Új ár: 7.500Ft'
@@ -16,9 +16,9 @@ shortDescription: 'Ezek a termékek vagy szettek raktáron vannak, nincs elkész
 ---
 
 | ![](/IMG_1514.JPG) | ![](/IMG_1515.JPG) |
-| - | - |
+| ------------------ | ------------------ |
 
-{{< img src="/IMG_1513.JPG" alt="" width="200x" >}}
+{{\< img src="/IMG\_1513.JPG" alt="" width="200x" >}}
 
 ![](/IMG_1361.JPG)
 
