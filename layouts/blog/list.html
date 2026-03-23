@@ -42,9 +42,11 @@
           <div class="col-lg-4">
             <div class="blog-page__item">
               <div class="blog-page__item-thumb">
-                {{ $asset := resources.Get .Params.featureImage }}
-                {{ $img := $asset.Fill "320x370" }}
-                <img src="{{ $img.RelPermalink }}" alt="post-image" />
+                {{ with $asset := resources.Get .Params.featureImage }}
+                  {{ with $img := $asset.Fill "320x370" }}
+                    <img src="{{ $img.RelPermalink }}" width="{{ $img.Width }}" height="{{ $img.Height }}" alt="post-image" />
+                  {{ end }}
+                {{ end }}
               </div>
               <div class="blog-page__item-content bg-white">
                 <span class="small">{{ .PublishDate.Format "January 2, 2006" }}</span>
