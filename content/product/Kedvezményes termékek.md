@@ -2,8 +2,6 @@
 title: Kedvezményes termékek
 thumbnail: /IMG_1361 (1).jpg
 table:
-  - title: 'Szoptatóspárna, pihepuha huzattal'
-    description: 'Régi ár: 9.500Ft  Új ár: 7.500Ft'
   - title: 'Csajos, virágos babafészek szettben (közepes)'
     description: 'Régi ár: 23.000Ft Új ár: 18.000Ft'
   - title: Kék babafészek (normál)
