@@ -3,18 +3,21 @@
 <script module lang="ts">
     import Icon from "@iconify/svelte";
     import OrderItem from "./OrderItem.svelte";
-    import type { Product } from "../products";
+    import type { Product } from "../../tina/products";
+
+    import IconButton from "./IconButton.svelte";
+
+    let productInfo: Record<string, Product> | null = $state(null);
+
+    async function main() {
+        const response = await fetch("/json/product-data.json");
+        productInfo = await response.json();
+    }
 
     let productSelectValue: string = $state("");
-    let products: Product[] = $state([
-        {
-            id: "racsvedo",
-            colors: [],
-            size: undefined,
-            material: undefined,
-            fonas: undefined,
-        },
-    ]);
+    let products: Product[] = $state([]);
+
+    main();
 </script>
 
 <form class="flex flex-col">
@@ -22,7 +25,7 @@
     <div class="flex flex-col gap-6">
         <div class="flex flex-col gap-1">
             <div class="flex items-center gap-2">
-                <Icon icon="mdi:account" class="shrink-0 text-4xl rounded-full p-2 text-primary bg-bg-primary" />
+                <Icon icon="mdi:account" class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary" />
                 <div class="flex flex-col gap-2 text-nowrap">
                     <h4>Vasarloi adatok</h4>
                 </div>
@@ -35,7 +38,7 @@
         </div>
         <div class="flex flex-col gap-4">
             <div class="flex items-center gap-2">
-                <Icon icon="mdi:cart" class="shrink-0 text-4xl rounded-full p-2 text-primary bg-bg-primary" />
+                <Icon icon="mdi:cart" class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary" />
                 <div class="flex flex-col gap">
                     <h4>Termék kiválasztása</h4>
                     <p class="text-sm">Válassz egy vagy több terméket, amire árajánlatot szeretnél kapni.</p>
@@ -53,44 +56,41 @@
                         productSelectValue = e.target.value;
                     }}>
                     <option value="" disabled selected>Válassz egy terméket</option>
-                    <option value="racsvedo">Fonott Racsvedo</option>
-                    <option value="babafeszek">Babafeszek</option>
-                    <option value="baldachin">Baldachin</option>
-                    <option value="polya">Polya</option>
-                    <option value="babatakaro_szett">Babatakaro Szett</option>
-                    <option value="feher_gumis_lepedo">Feher gumis lepedo</option>
-                    <option value="kanikulatakaro">Kanikulatakaro</option>
-                    <option value="gezpelenka_szett">Gezpelenka szett</option>
-                    <option value="meleg_wellsoft_takaro">Meleg wellsoft takaro</option>
-                    <option value="kismamaparna">Kismamaparna, pamutvaszon huzattal</option>
-                    <option value="diszparna">Diszparna</option>
-                    <option value="meleg_wellsoft_takaro">Zsebes tarolo</option>
+                    {#each Object.values(productInfo || {}) as product}
+                        <option value={product.id}>{product.name}</option>
+                    {/each}
                 </select>
-                <button
+                <IconButton
+                    type="button"
                     disabled={!productSelectValue}
                     onclick={() => {
-                        switch (productSelectValue) {
-                            case "racsvedo": {
-                                products.push({
-                                    colors: [],
-                                    fonas: undefined,
-                                    material: undefined,
-                                    size: undefined,
-                                    id: "racsvedo",
-                                });
-                                break;
-                            }
+                        const currentProduct = productInfo?.[productSelectValue];
+                        if (!currentProduct) {
+                            return;
                         }
+
+                        products.push($state.snapshot(currentProduct));
                         productSelectValue = "";
                     }}>
-                    <Icon icon="mdi:plus" class="text-2xl text-primary hover:text-primary-light" />
-                </button>
+                    <Icon icon="mdi:plus" />
+                </IconButton>
             </div>
-            <div class="flex gap-2">
+            <div class="grid gap-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {#each products as product}
-                    <OrderItem {product} onClose={() => {}} />
+                    {@const info = productInfo?.[product.id]}
+                    {#if info}
+                        <OrderItem
+                            {product}
+                            onClose={() => {
+                                const index = products.findIndex((p) => p.id === product.id);
+                                if (index !== -1) {
+                                    products.splice(index, 1);
+                                }
+                            }} />
+                    {/if}
                 {/each}
             </div>
         </div>
     </div>
+    <button type="submit">Árajánlat kérése</button>
 </form>

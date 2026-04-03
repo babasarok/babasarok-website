@@ -6,9 +6,9 @@
     --color-bg-secondary: #EDE6DF;
     --color-surface: #FFFFFF;
     --color-surface-soft: #FAF8F6;
-    --color-primary: #8C6B5A;
-    --color-primary-light: #A18472;
-    --color-primary-dark: #6F5447;
+    --color-primary-500: #8C6B5A;
+    --color-primary-400: #A18472;
+    --color-primary-600: #6F5447;
 
     --color-text-primary: #5F5147;
     --color-text-secondary: #8A7A6E;
@@ -23,6 +23,12 @@
 
 .tailwind {
     @import 'tailwindcss/utilities' prefix("tw-");
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
     h1,
     h2,

@@ -2,3 +2,6 @@
   {{ $alertInit := resources.Get "js/alert-init.js" | js.Build | minify -}}
   <script>{{ $alertInit.Content | safeJS }}</script>
 {{- end -}}
+
+{{- $productData := resources.Get "json/product-data.json" | resources.ExecuteAsTemplate "json/product-data.json" . -}}
+<link rel="alternate" type="application/json" href="{{ $productData.RelPermalink }}" />

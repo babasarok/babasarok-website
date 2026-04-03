@@ -1,0 +1,11 @@
+
+{{- $products := dict -}}
+{{- range $file := readDir "data/products" -}}
+    {{- if strings.HasSuffix $file.Name ".json" -}}
+        {{- $raw := readFile (printf "data/products/%s" $file.Name) -}}
+        {{- $jsonData := transform.Unmarshal $raw -}}
+        {{- $products = merge $products (dict $jsonData.id $jsonData) -}}
+    {{- end -}}
+{{- end -}}
+
+{{- jsonify (dict "indent" "  ") $products -}}
