@@ -57,7 +57,7 @@
                     }}>
                     <option value="" disabled selected>Válassz egy terméket</option>
                     {#each Object.values(productInfo || {}) as product}
-                        <option value={product.id}>{product.name}</option>
+                        <option value={product.product_id}>{product.name}</option>
                     {/each}
                 </select>
                 <IconButton
@@ -77,12 +77,12 @@
             </div>
             <div class="grid gap-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {#each products as product}
-                    {@const info = productInfo?.[product.id]}
+                    {@const info = productInfo?.[product.product_id]}
                     {#if info}
                         <OrderItem
                             {product}
                             onClose={() => {
-                                const index = products.findIndex((p) => p.id === product.id);
+                                const index = products.findIndex((p) => p.product_id === product.product_id);
                                 if (index !== -1) {
                                     products.splice(index, 1);
                                 }

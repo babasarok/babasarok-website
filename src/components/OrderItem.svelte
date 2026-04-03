@@ -23,7 +23,7 @@
         </IconButton>
     </div>
     <div class="w-full h-0.5 bg-border"></div>
-    {#each Object.values(product.fields).sort((a, b) => (a.order ?? -1) - (b.order ?? -1)) as field}
+    {#each product.fields as field}
         <div class="flex flex-col gap-1">
             <p class="text-sm text-primary-500">{field.name}</p>
             <div class="flex gap-1 max-w-80 flex-wrap">

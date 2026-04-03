@@ -1,4 +1,4 @@
-import { ToggleField, type InputFieldType, type TinaField, type ReferenceField, type ToggleProps, } from "tinacms";
+import { ToggleField, type InputFieldType, type TinaField, type ReferenceField, type ToggleProps, GroupListField, type GroupFieldProps, type GroupProps, } from "tinacms";
 
 export interface Option {
     value: string;
@@ -19,6 +19,7 @@ export interface InputField extends BaseField {
 export interface SelectField extends BaseField {
     type: "select";
     items: Option[];
+    multiple?: boolean;
 }
 
 export interface RadioField extends BaseField {
@@ -88,11 +89,10 @@ export const PRODUCT: TinaField<false>[] = [
                 label: "Mező típus",
             },
             {
-                type: "reference",
+                type: "boolean",
                 name: "multiple",
                 label: "Több érték engedélyezése",
                 description: "Jelzi, hogy a mező több értéket is engedélyez-e.",
-                collections: ["product_data"],
                 ui: {
                     component(props) {
                         const castedProps = props as unknown as InputFieldType<ToggleProps, Parameters<typeof ReferenceField>[0]>;
@@ -104,7 +104,50 @@ export const PRODUCT: TinaField<false>[] = [
                         return ToggleField(castedProps);
                     },
                 }
+            },
+            {
+                type: "object",
+                list: true,
+                name: "items",
+                label: "Választási lehetőségek",
+                description: "A mezőhöz tartozó választható lehetőségek.",
+                ui: {
+                    itemProps: (item) => {
+                        return { label: item?.name || item?.value || "Új mező" };
+                    },
+                    component(props) {
+                        const castedProps = props as unknown as InputFieldType<GroupProps, Parameters<typeof ReferenceField>[0]>;
+                        const typeValue = props.field.name.split(".").slice(0, -1).reduce((obj, key) => obj && obj[key], castedProps.form.getState().values).type;
+                        if (typeValue != "select" && typeValue != "radio") {
+                            return null;
+                        }
+
+                        return GroupListField(castedProps);
+                    },
+                },
+                fields: [
+                    {
+                        type: "string",
+                        name: "value",
+                        label: "Érték",
+                        required: true,
+                        description: "A lehetőség értéke, amit a rendszer használ.",
+                    },
+                    {
+                        type: "string",
+                        name: "name",
+                        label: "Címke",
+                        description: "A lehetőség megjelenítendő neve, ami a felhasználó számára látható. Ha nincs megadva, akkor a value értékét használja.",
+                    },
+                    {
+                        type: "string",
+                        name: "tooltip",
+                        label: "Tooltip",
+                        description: "Opcionális leírás, ami megjelenik, amikor a felhasználó a lehetőség fölé viszi az egeret.",
+                    }
+                ],
             }
+
         ],
     },
 ];
