@@ -19,6 +19,9 @@ import { PRODUCT } from "./products";
 const branch = process.env.HEAD || process.env.VERCEL_GIT_COMMIT_REF || "main";
 
 export default defineConfig({
+    cmsCallback: (cms) => {
+        return cms;
+    },
     branch,
     clientId: process.env.TINA_CMS_CLIENT_ID, // Get this from tina.io
     token: process.env.TINA_CMS_CLIENT_TOKEN, // Get this from tina.io
@@ -247,20 +250,17 @@ export default defineConfig({
                 },
                 fields: parameters_templateFields(),
             },
-            // {
-            //     format: "json",
-            //     label: "Rendelés/Termék fájlok",
-            //     name: "products_order_file",
-            //     path: "data/products",
-            //     frontmatterFormat: "json",
-            //     match: {
-            //         include: "*",
-            //     },
-            //     ui: {
-
-            //     },
-            //     fields: PRODUCT
-            // },
+            {
+                format: "json",
+                label: "Rendelés/Termék fájlok",
+                name: "product_data",
+                path: "data/products",
+                frontmatterFormat: "json",
+                match: {
+                    include: "*",
+                },
+                fields: PRODUCT
+            },
         ],
     },
 });

@@ -1,9 +1,10 @@
 {
-    "name": "Fonott racsvedo",
-    "id": "racsvedo",
-    "fields": {
-        "sizes": {
-            "name": "Méret",
+    "name": "Fonott rácsvédő",
+    "product_id": "racsvedo",
+    "fields": [
+        {
+            "name": "sizes",
+            "label": "Méret",
             "order": 1,
             "type": "select",
             "multiple": false,
@@ -46,8 +47,9 @@
                 }
             ]
         },
-        "fonas": {
-            "name": "Fonás",
+        {
+            "name": "fonas",
+            "label": "Fonás",
             "type": "radio",
             "order": 2,
             "items": [
@@ -70,8 +72,9 @@
                 }
             ]
         },
-        "material": {
-            "name": "Anyag",
+        {
+            "name": "material",
+            "label": "Anyag",
             "type": "radio",
             "order": 3,
             "items": [
@@ -89,10 +92,11 @@
                 }
             ]
         },
-        "color": {
+        {
+            "name": "color",
+            "label": "Szín",
             "order": 4,
-            "name": "Szín",
             "type": "input"
         }
-    }
+    ]
 }

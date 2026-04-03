@@ -8,6 +8,7 @@
         "strict": true,
         "moduleResolution": "bundler",
         "module": "ESNext",
+        "jsx": "react",
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
