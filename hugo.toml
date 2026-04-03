@@ -1,1 +1,5 @@
-timeout = 600000
+timeout = "60s"
+
+[goldmark]
+[goldmark.renderer]
+unsafe = true

@@ -1,0 +1,42 @@
+{
+    "name": "Fonott racsvedo",
+    "id": "racsvedo",
+    "sizes": [
+        {
+            "size": "200cm"
+        },
+        {
+            "size": "220cm"
+        },
+        {
+            "size": "240cm"
+        },
+        {
+            "size": "240cm"
+        },
+        {
+            "size": "260cm"
+        },
+        {
+            "size": "280cm"
+        },
+        {
+            "size": "300cm"
+        },
+        {
+            "size": "320cm"
+        },
+        {
+            "size": "340cm"
+        },
+        {
+            "size": "360cm"
+        },
+        {
+            "size": "380cm"
+        },
+        {
+            "size": "400cm"
+        }
+    ]
+}

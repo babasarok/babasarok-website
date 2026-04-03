@@ -1,8 +1,19 @@
 {
-  "compilerOptions": {
-    "lib": ["ES6", "DOM"],
-    "target": "es6",
-    "strict": true,
-    "moduleResolution": "bundler"
-  }
+    "compilerOptions": {
+        "lib": [
+            "ESNext",
+            "DOM"
+        ],
+        "target": "ESNext",
+        "strict": true,
+        "moduleResolution": "bundler",
+        "module": "ESNext",
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": true,
+        "verbatimModuleSyntax": true,
+    },
 }
