@@ -6,6 +6,7 @@
     import type { Product } from "../../tina/products";
 
     import IconButton from "./IconButton.svelte";
+    import Button from "./Button.svelte";
 
     let productInfo: Record<string, Product> | null = $state(null);
 
@@ -17,6 +18,22 @@
     let productSelectValue: string = $state("");
     let products: Product[] = $state([]);
 
+    const valid = $derived.by(() => {
+        if (!products.length) {
+            return false;
+        }
+
+        for (const product of products) {
+            for (const field of product.fields) {
+                if (!field.value) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    });
+
     main();
 </script>
 
@@ -27,7 +44,7 @@
             <div class="flex items-center gap-2">
                 <Icon icon="mdi:account" class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary" />
                 <div class="flex flex-col gap-2 text-nowrap">
-                    <h4>Vasarloi adatok</h4>
+                    <h4>Vásárlói adatok</h4>
                 </div>
             </div>
             <div class="flex gap-2">
@@ -86,11 +103,17 @@
                                 if (index !== -1) {
                                     products.splice(index, 1);
                                 }
+                            }}
+                            onChange={(updatedProduct) => {
+                                const index = products.findIndex((p) => p.product_id === updatedProduct.product_id);
+                                if (index !== -1) {
+                                    products[index] = updatedProduct;
+                                }
                             }} />
                     {/if}
                 {/each}
             </div>
         </div>
+        <Button disabled={!valid} variant="contained" type="submit">Árajánlat kérése</Button>
     </div>
-    <button type="submit">Árajánlat kérése</button>
 </form>

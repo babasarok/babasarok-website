@@ -1,98 +1,99 @@
 {
-  "product_id": "racsvedo",
-  "name": "Fonott rácsvédő",
-  "fields": [
-    {
-      "name": "sizes",
-      "label": "Méret",
-      "type": "select",
-      "multiple": false,
-      "items": [
+    "product_id": "racsvedo",
+    "name": "Fonott rácsvédő",
+    "icon": "/product/braids.svg",
+    "fields": [
         {
-          "value": "200cm"
+            "name": "sizes",
+            "label": "Méret",
+            "type": "select",
+            "multiple": false,
+            "items": [
+                {
+                    "value": "200cm"
+                },
+                {
+                    "value": "220cm"
+                },
+                {
+                    "value": "240cm"
+                },
+                {
+                    "value": "240cm"
+                },
+                {
+                    "value": "260cm"
+                },
+                {
+                    "value": "280cm"
+                },
+                {
+                    "value": "300cm"
+                },
+                {
+                    "value": "320cm"
+                },
+                {
+                    "value": "340cm"
+                },
+                {
+                    "value": "360cm"
+                },
+                {
+                    "value": "380cm"
+                },
+                {
+                    "value": "400cm"
+                }
+            ]
         },
         {
-          "value": "220cm"
+            "name": "fonas",
+            "label": "Fonás",
+            "type": "radio",
+            "items": [
+                {
+                    "value": "harmas",
+                    "name": "Hármas"
+                },
+                {
+                    "value": "negyes",
+                    "name": "Négyes"
+                },
+                {
+                    "value": "otos",
+                    "name": "Ötös",
+                    "tooltip": "Avagy halszálka fonás, melynek jellegzetessége, hogy a szálak egymásba fonódnak, így egy erős és tartós szerkezetet alkotnak. Ez a fonásminta különösen népszerű a kültéri használatra szánt termékek esetében, mivel kiválóan ellenáll az időjárási viszontagságoknak és a mechanikai igénybevételnek."
+                },
+                {
+                    "value": "hatos",
+                    "name": "Hatos"
+                }
+            ]
         },
         {
-          "value": "240cm"
+            "name": "material",
+            "label": "Anyag",
+            "type": "radio",
+            "items": [
+                {
+                    "value": "pamutjersey",
+                    "name": "Pamutjersey"
+                },
+                {
+                    "value": "velur",
+                    "name": "Velúr"
+                },
+                {
+                    "value": "teddy",
+                    "name": "Teddy"
+                }
+            ]
         },
         {
-          "value": "240cm"
-        },
-        {
-          "value": "260cm"
-        },
-        {
-          "value": "280cm"
-        },
-        {
-          "value": "300cm"
-        },
-        {
-          "value": "320cm"
-        },
-        {
-          "value": "340cm"
-        },
-        {
-          "value": "360cm"
-        },
-        {
-          "value": "380cm"
-        },
-        {
-          "value": "400cm"
+            "name": "color",
+            "label": "Szín",
+            "type": "input"
         }
-      ]
-    },
-    {
-      "name": "fonas",
-      "label": "Fonás",
-      "type": "radio",
-      "items": [
-        {
-          "value": "harmas",
-          "name": "Hármas"
-        },
-        {
-          "value": "negyes",
-          "name": "Négyes"
-        },
-        {
-          "value": "otos",
-          "name": "Ötös",
-          "tooltip": "Avagy halszálka fonás, melynek jellegzetessége, hogy a szálak egymásba fonódnak, így egy erős és tartós szerkezetet alkotnak. Ez a fonásminta különösen népszerű a kültéri használatra szánt termékek esetében, mivel kiválóan ellenáll az időjárási viszontagságoknak és a mechanikai igénybevételnek."
-        },
-        {
-          "value": "hatos",
-          "name": "Hatos"
-        }
-      ]
-    },
-    {
-      "name": "material",
-      "label": "Anyag",
-      "type": "radio",
-      "items": [
-        {
-          "value": "pamutjersey",
-          "name": "Pamutjersey"
-        },
-        {
-          "value": "velur",
-          "name": "Velúr"
-        },
-        {
-          "value": "teddy",
-          "name": "Teddy"
-        }
-      ]
-    },
-    {
-      "name": "color",
-      "label": "Szín",
-      "type": "input"
-    }
-  ]
+    ]
 }

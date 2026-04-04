@@ -1,4 +1,4 @@
-import { ToggleField, type InputFieldType, type TinaField, type ReferenceField, type ToggleProps, GroupListField, type GroupFieldProps, type GroupProps, } from "tinacms";
+import { ToggleField, type InputFieldType, type TinaField, type ReferenceField, type ToggleProps, GroupListField, type GroupFieldProps, type GroupProps, TextField, type TextFieldProps, type InputProps, } from "tinacms";
 
 export interface Option {
     value: string;
@@ -8,18 +8,21 @@ export interface Option {
 
 export interface BaseField {
     name: string;
+    label?: string;
     value?: string;
 }
 
 export interface InputField extends BaseField {
     type: "input";
     regex?: string;
+    placeholder?: string;
 }
 
 export interface SelectField extends BaseField {
     type: "select";
     items: Option[];
     multiple?: boolean;
+    placeholder?: string;
 }
 
 export interface RadioField extends BaseField {
@@ -33,6 +36,7 @@ export type Field = InputField | SelectField | RadioField;
 export interface Product {
     product_id: string;
     name: string;
+    icon?: string;
     fields: Field[];
 }
 
@@ -48,6 +52,12 @@ export const PRODUCT: TinaField<false>[] = [
         name: "name",
         description: "A termék megjelenítendő neve, ami a felhasználó számára látható.",
         label: "Termék név",
+    },
+    {
+        type: "image",
+        name: "icon",
+        description: "NE VÁLTOZTASD MEG, még nem tudtam megoldani hogy ezt lehessen átállítani.Opcionális ikon a termékhez, ami megjelenik a rendelési felületen.",
+        label: "Termék ikon",
     },
     {
         type: "object",
@@ -87,23 +97,6 @@ export const PRODUCT: TinaField<false>[] = [
                     { value: "radio", label: "Gombos - egyválasztós" },
                 ],
                 label: "Mező típus",
-            },
-            {
-                type: "boolean",
-                name: "multiple",
-                label: "Több érték engedélyezése",
-                description: "Jelzi, hogy a mező több értéket is engedélyez-e.",
-                ui: {
-                    component(props) {
-                        const castedProps = props as unknown as InputFieldType<ToggleProps, Parameters<typeof ReferenceField>[0]>;
-                        const typeValue = props.field.name.split(".").slice(0, -1).reduce((obj, key) => obj && obj[key], castedProps.form.getState().values).type;
-                        if (typeValue != "select") {
-                            return null;
-                        }
-
-                        return ToggleField(castedProps);
-                    },
-                }
             },
             {
                 type: "object",
@@ -146,7 +139,41 @@ export const PRODUCT: TinaField<false>[] = [
                         description: "Opcionális leírás, ami megjelenik, amikor a felhasználó a lehetőség fölé viszi az egeret.",
                     }
                 ],
-            }
+            },
+            {
+                type: "boolean",
+                name: "multiple",
+                label: "Több érték engedélyezése",
+                description: "Jelzi, hogy a mező több értéket is engedélyez-e.",
+                ui: {
+                    component(props) {
+                        const castedProps = props as unknown as InputFieldType<ToggleProps, Parameters<typeof ReferenceField>[0]>;
+                        const typeValue = props.field.name.split(".").slice(0, -1).reduce((obj, key) => obj && obj[key], castedProps.form.getState().values).type;
+                        if (typeValue != "select") {
+                            return null;
+                        }
+
+                        return ToggleField(castedProps);
+                    },
+                }
+            },
+            {
+                type: "string",
+                name: "placeholder",
+                label: "Placeholder",
+                description: "A mező helykitöltő szövege, ami megjelenik, amikor nincs kiválasztott érték.",
+                ui: {
+                    component(props) {
+                        const castedProps = props as unknown as InputFieldType<InputProps, Parameters<typeof ReferenceField>[0]>;
+                        const typeValue = props.field.name.split(".").slice(0, -1).reduce((obj, key) => obj && obj[key], castedProps.form.getState().values).type;
+                        if (typeValue != "select" && typeValue != "input") {
+                            return null;
+                        }
+
+                        return TextField(castedProps as any);
+                    },
+                }
+            },
 
         ],
     },
