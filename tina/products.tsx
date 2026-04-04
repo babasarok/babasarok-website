@@ -40,6 +40,10 @@ export interface Product {
     fields: Field[];
 }
 
+export interface ProductItem extends Product {
+    uuid: string;
+}
+
 export const PRODUCT: TinaField<false>[] = [
     {
         type: "string",

@@ -1,19 +1,20 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import IconButton from "./IconButton.svelte";
-    import type { Product } from "../../tina/products";
+    import type { Product, ProductItem } from "../../tina/products";
     import Button from "./Button.svelte";
+    import type { HTMLAttributes } from "svelte/elements";
 
-    interface Props {
+    interface Props extends HTMLAttributes<HTMLDivElement> {
         onClose: () => void;
-        product: Product;
-        onChange?: (product: Product) => void;
+        product: ProductItem;
+        onChange?: (product: ProductItem) => void;
     }
 
-    let { onClose, product, onChange }: Props = $props();
+    let { onClose, product, onChange, class: className, ...rest }: Props = $props();
 </script>
 
-<div class="flex flex-col gap-2 rounded-xl border shadow-md border-primary-light p-2 w-full">
+<div {...rest} class={["flex flex-col gap-2 rounded-xl border shadow-md border-primary-light p-2 w-full", className]}>
     <div class="flex justify-between items-center">
         <div class="flex items-center gap-2 justify-center">
             {#if product.icon}
@@ -28,7 +29,7 @@
             {/if}
             <p>{product.name}</p>
         </div>
-        <IconButton onclick={onClose}>
+        <IconButton type="button" onclick={onClose}>
             <Icon icon="mdi:close" />
         </IconButton>
     </div>

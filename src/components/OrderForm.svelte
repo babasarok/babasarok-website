@@ -3,8 +3,10 @@
 <script module lang="ts">
     import Icon from "@iconify/svelte";
     import OrderItem from "./OrderItem.svelte";
-    import type { Product } from "../../tina/products";
-
+    import type { Product, ProductItem } from "../../tina/products";
+    import { v4 as uuidv4 } from "uuid";
+    import { flip } from "svelte/animate";
+    import { fade } from "svelte/transition";
     import IconButton from "./IconButton.svelte";
     import Button from "./Button.svelte";
 
@@ -16,7 +18,7 @@
     }
 
     let productSelectValue: string = $state("");
-    let products: Product[] = $state([]);
+    let products: ProductItem[] = $state([]);
 
     const valid = $derived.by(() => {
         if (!products.length) {
@@ -86,31 +88,33 @@
                             return;
                         }
 
-                        products.push($state.snapshot(currentProduct));
+                        products.push({ ...$state.snapshot(currentProduct), uuid: uuidv4() });
                         productSelectValue = "";
                     }}>
                     <Icon icon="mdi:plus" />
                 </IconButton>
             </div>
             <div class="grid gap-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                {#each products as product}
+                {#each products as product (`${product.uuid}`)}
                     {@const info = productInfo?.[product.product_id]}
-                    {#if info}
-                        <OrderItem
-                            {product}
-                            onClose={() => {
-                                const index = products.findIndex((p) => p.product_id === product.product_id);
-                                if (index !== -1) {
-                                    products.splice(index, 1);
-                                }
-                            }}
-                            onChange={(updatedProduct) => {
-                                const index = products.findIndex((p) => p.product_id === updatedProduct.product_id);
-                                if (index !== -1) {
-                                    products[index] = updatedProduct;
-                                }
-                            }} />
-                    {/if}
+                    <div transition:fade={{ duration: 250 }} animate:flip={{ duration: 250 }}>
+                        {#if info}
+                            <OrderItem
+                                {product}
+                                onClose={() => {
+                                    const index = products.findIndex((p) => p.uuid === product.uuid);
+                                    if (index !== -1) {
+                                        products.splice(index, 1);
+                                    }
+                                }}
+                                onChange={(updatedProduct) => {
+                                    const index = products.findIndex((p) => p.uuid === updatedProduct.uuid);
+                                    if (index !== -1) {
+                                        products[index] = updatedProduct;
+                                    }
+                                }} />
+                        {/if}
+                    </div>
                 {/each}
             </div>
         </div>
