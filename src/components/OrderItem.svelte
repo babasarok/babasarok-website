@@ -13,7 +13,7 @@
     let { onClose, product, onChange }: Props = $props();
 </script>
 
-<div class="flex flex-col gap-2 rounded-lg border shadow-md border-primary-light p-2 w-full">
+<div class="flex flex-col gap-2 rounded-xl border shadow-md border-primary-light p-2 w-full">
     <div class="flex justify-between items-center">
         <div class="flex items-center gap-2 justify-center">
             {#if product.icon}
