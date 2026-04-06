@@ -44,25 +44,26 @@
             "name": "fonas",
             "label": "Fonás",
             "type": "radio",
+            "regex": "^(\\d+)$",
             "items": [
                 {
-                    "value": "harmas",
+                    "value": "3",
                     "name": "Hármas",
                     "price": 6400
                 },
                 {
-                    "value": "negyes",
+                    "value": "4",
                     "name": "Négyes",
                     "price": 8000
                 },
                 {
-                    "value": "otos",
+                    "value": "5",
                     "name": "Ötös",
                     "tooltip": "Más néven halszálka.",
                     "price": 9500
                 },
                 {
-                    "value": "hatos",
+                    "value": "6",
                     "name": "Hatos",
                     "price": 12500
                 }

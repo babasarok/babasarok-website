@@ -101,7 +101,7 @@
     {#each product.fields as field}
         <div class="flex flex-col gap-1">
             <p class="text-sm text-primary-500">{field.label || field.name}</p>
-            <div class="flex gap-1 max-w-80 flex-wrap">
+            <div class="flex gap-1 flex-wrap">
                 {#if field.type === "radio" && "items" in field}
                     {#each field.items as item}
                         {@const selected = field.value?.value === item.value}
