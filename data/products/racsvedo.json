@@ -3,6 +3,7 @@
     "name": "Fonott rácsvédő",
     "icon": "/product/braids.svg",
     "priced_by_length": true,
+    "price": 0,
     "fields": [
         {
             "name": "sizes",
@@ -42,20 +43,24 @@
             "items": [
                 {
                     "value": "harmas",
-                    "name": "Hármas"
+                    "name": "Hármas",
+                    "price": 6400
                 },
                 {
                     "value": "negyes",
-                    "name": "Négyes"
+                    "name": "Négyes",
+                    "price": 8000
                 },
                 {
                     "value": "otos",
                     "name": "Ötös",
-                    "tooltip": "Avagy halszálka fonás, melynek jellegzetessége, hogy a szálak egymásba fonódnak, így egy erős és tartós szerkezetet alkotnak. Ez a fonásminta különösen népszerű a kültéri használatra szánt termékek esetében, mivel kiválóan ellenáll az időjárási viszontagságoknak és a mechanikai igénybevételnek."
+                    "tooltip": "Avagy halszálka fonás, melynek jellegzetessége, hogy a szálak egymásba fonódnak, így egy erős és tartós szerkezetet alkotnak. Ez a fonásminta különösen népszerű a kültéri használatra szánt termékek esetében, mivel kiválóan ellenáll az időjárási viszontagságoknak és a mechanikai igénybevételnek.",
+                    "price": 9500
                 },
                 {
                     "value": "hatos",
-                    "name": "Hatos"
+                    "name": "Hatos",
+                    "price": 12500
                 }
             ]
         },
@@ -66,15 +71,18 @@
             "items": [
                 {
                     "value": "pamutjersey",
-                    "name": "Pamutjersey"
+                    "name": "Pamutjersey",
+                    "price": 0
                 },
                 {
                     "value": "velur",
-                    "name": "Velúr"
+                    "name": "Velúr",
+                    "price": 1500
                 },
                 {
                     "value": "teddy",
-                    "name": "Teddy"
+                    "name": "Teddy",
+                    "price": 1500
                 }
             ]
         },

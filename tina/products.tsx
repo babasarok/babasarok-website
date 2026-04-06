@@ -49,6 +49,7 @@ export interface Product {
     name: string;
     icon?: string;
     priced_by_length?: boolean;
+    price?: number;
     fields: Field[];
 }
 
