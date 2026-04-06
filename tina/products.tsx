@@ -1,20 +1,30 @@
-import { ToggleField, type InputFieldType, type TinaField, type ReferenceField, type ToggleProps, GroupListField, type GroupFieldProps, type GroupProps, TextField, type TextFieldProps, type InputProps, } from "tinacms";
+import { ToggleField, type InputFieldType, type TinaField, type ReferenceField, type ToggleProps, GroupListField, type GroupFieldProps, type GroupProps, TextField, type TextFieldProps, type InputProps, NumberField, type NumberProps, } from "tinacms";
 
 export interface Option {
     value: string;
     label?: string;
     tooltip?: string;
+    price?: number;
 }
 
 export interface BaseField {
     name: string;
     label?: string;
-    value?: string;
+    /**
+     * Csak belső használatra, nem jelenik meg a felhasználó számára.
+     */
+    value?: {
+        value: string;
+        is_custom?: boolean;
+        error?: string | undefined;
+    };
+    length_based_pricing_source?: boolean;
+    regex?: string;
+    price?: number;
 }
 
 export interface InputField extends BaseField {
     type: "input";
-    regex?: string;
     placeholder?: string;
 }
 
@@ -23,13 +33,14 @@ export interface SelectField extends BaseField {
     items: Option[];
     multiple?: boolean;
     placeholder?: string;
+    allow_custom_value?: boolean;
 }
 
 export interface RadioField extends BaseField {
     type: "radio";
     items: Option[];
+    allow_custom_value?: boolean;
 }
-
 
 export type Field = InputField | SelectField | RadioField;
 
@@ -37,6 +48,7 @@ export interface Product {
     product_id: string;
     name: string;
     icon?: string;
+    priced_by_length?: boolean;
     fields: Field[];
 }
 
@@ -64,6 +76,17 @@ export const PRODUCT: TinaField<false>[] = [
         label: "Termék ikon",
     },
     {
+        type: "boolean",
+        name: "priced_by_length",
+        label: "Méteráru",
+        description: "Jelzi, hogy a termék ára a hossz alapján kerül meghatározásra, nem pedig fix ár alapján. Egy mezőnek méretnek kell lennie",
+    },
+    {
+        type: "number",
+        name: "price",
+        label: "Alap Ár - Forintban",
+    },
+    {
         type: "object",
         name: "fields",
         list: true,
@@ -81,6 +104,29 @@ export const PRODUCT: TinaField<false>[] = [
                 description: "Egyedi! azonosító a mezőhöz, csak angol karaktereket és számokat tartalmazhat, szóköz nélkül. Pl: meret",
                 label: "Mező ID",
                 required: true,
+            },
+            {
+                type: "boolean",
+                name: "length_based_pricing_source",
+                description: "Jelzi, hogy ez a mező szolgáltatja-e a méterárú számolás alapját. CM-ben kötelező megadni az értékeket! Csak egy mező jelölhető meg méterárú árforrásként.",
+                label: "Méteráru árforrás",
+            },
+            {
+                type: "number",
+                name: "price",
+                description: "Ár, ami hozzáadódik a termék alapárához, ha ez a mező ki van töltve.",
+                label: "Ár - Forintban",
+                ui: {
+                    component(props) {
+                        const castedProps = props as unknown as InputFieldType<ToggleProps, Parameters<typeof ReferenceField>[0]>;
+                        const value = props.field.name.split(".").slice(0, -1).reduce((obj, key) => obj && obj[key], castedProps.form.getState().values).length_based_pricing_source;
+                        if (value) {
+                            return null;
+                        }
+
+                        return ToggleField(castedProps);
+                    },
+                }
             },
             {
                 type: "string",
@@ -128,13 +174,30 @@ export const PRODUCT: TinaField<false>[] = [
                         name: "value",
                         label: "Érték",
                         required: true,
-                        description: "A lehetőség értéke, amit a rendszer használ.",
+                        description: "Az opció értéke, amit a rendszer használ.",
                     },
                     {
                         type: "string",
                         name: "name",
                         label: "Címke",
-                        description: "A lehetőség megjelenítendő neve, ami a felhasználó számára látható. Ha nincs megadva, akkor a value értékét használja.",
+                        description: "Az opció megjelenítendő neve, ami a felhasználó számára látható. Ha nincs megadva, akkor a value értékét használja.",
+                    },
+                    {
+                        type: "number",
+                        name: "price",
+                        label: "Ár",
+                        description: "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni.",
+                        ui: {
+                            component(props) {
+                                const castedProps = props as unknown as InputFieldType<NumberProps, Parameters<typeof ReferenceField>[0]>;
+                                const value = props.field.name.split(".").slice(0, -3).reduce((obj, key) => obj && obj[key], castedProps.form.getState().values).length_based_pricing_source;
+                                if (value) {
+                                    return null;
+                                }
+
+                                return NumberField(castedProps as any);
+                            },
+                        }
                     },
                     {
                         type: "string",
@@ -143,6 +206,29 @@ export const PRODUCT: TinaField<false>[] = [
                         description: "Opcionális leírás, ami megjelenik, amikor a felhasználó a lehetőség fölé viszi az egeret.",
                     }
                 ],
+            },
+            {
+                type: "boolean",
+                name: "allow_custom_value",
+                description: "Ha engedélyezve van, a felhasználó egyedi értéket is megadhat a mezőhöz.",
+                label: "Egyedi érték engedélyezése",
+                ui: {
+                    component(props) {
+                        const castedProps = props as unknown as InputFieldType<ToggleProps, Parameters<typeof ReferenceField>[0]>;
+                        const typeValue = props.field.name.split(".").slice(0, -1).reduce((obj, key) => obj && obj[key], castedProps.form.getState().values).type;
+                        if (typeValue != "select" && typeValue != "radio") {
+                            return null;
+                        }
+
+                        return ToggleField(castedProps);
+                    },
+                }
+            },
+            {
+                type: "string",
+                name: "regex",
+                description: "Opcionális reguláris kifejezés, aminek a mező értékének meg kell felelnie.",
+                label: "Érvényességi minta (regex)",
             },
             {
                 type: "boolean",
@@ -170,7 +256,7 @@ export const PRODUCT: TinaField<false>[] = [
                     component(props) {
                         const castedProps = props as unknown as InputFieldType<InputProps, Parameters<typeof ReferenceField>[0]>;
                         const typeValue = props.field.name.split(".").slice(0, -1).reduce((obj, key) => obj && obj[key], castedProps.form.getState().values).type;
-                        if (typeValue != "select" && typeValue != "input") {
+                        if (typeValue === "select" || typeValue === "radio") {
                             return null;
                         }
 

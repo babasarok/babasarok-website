@@ -2,50 +2,38 @@
     "product_id": "racsvedo",
     "name": "Fonott rácsvédő",
     "icon": "/product/braids.svg",
+    "priced_by_length": true,
     "fields": [
         {
             "name": "sizes",
+            "length_based_pricing_source": true,
             "label": "Méret",
-            "type": "select",
-            "multiple": false,
+            "type": "radio",
+            "regex": "^(\\d+)$",
             "items": [
                 {
-                    "value": "200cm"
+                    "value": "200",
+                    "name": "200cm"
                 },
                 {
-                    "value": "220cm"
+                    "value": "260",
+                    "name": "260cm"
                 },
                 {
-                    "value": "240cm"
+                    "value": "300",
+                    "name": "300cm"
                 },
                 {
-                    "value": "240cm"
+                    "value": "380",
+                    "name": "380cm"
                 },
                 {
-                    "value": "260cm"
-                },
-                {
-                    "value": "280cm"
-                },
-                {
-                    "value": "300cm"
-                },
-                {
-                    "value": "320cm"
-                },
-                {
-                    "value": "340cm"
-                },
-                {
-                    "value": "360cm"
-                },
-                {
-                    "value": "380cm"
-                },
-                {
-                    "value": "400cm"
+                    "value": "400",
+                    "name": "400cm"
                 }
-            ]
+            ],
+            "allow_custom_value": true,
+            "multiple": false
         },
         {
             "name": "fonas",

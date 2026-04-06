@@ -1,7 +1,7 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import IconButton from "./IconButton.svelte";
-    import type { Product, ProductItem } from "../../tina/products";
+    import type { Field, Product, ProductItem, RadioField, SelectField } from "../../tina/products";
     import Button from "./Button.svelte";
     import type { HTMLAttributes } from "svelte/elements";
 
@@ -13,6 +13,40 @@
 
     let { onClose, product, onChange, class: className, ...rest }: Props = $props();
 </script>
+
+{#snippet Input(field: Field)}
+    {#if field.type === "input" || field.value?.is_custom}
+        <input
+            type="text"
+            value={field.value?.value ?? ""}
+            oninput={(e) => {
+                if (!(e.target instanceof HTMLInputElement)) {
+                    return;
+                }
+
+                const result = $state.snapshot(product);
+                const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                if (fieldToUpdate) {
+                    fieldToUpdate.value = {
+                        value: e.target.value,
+                        is_custom: field.value?.is_custom || false,
+                    };
+                    if (field.regex) {
+                        const regex = new RegExp(field.regex);
+                        if (!regex.test(e.target.value)) {
+                            fieldToUpdate.value.error = "Érvénytelen érték";
+                        } else {
+                            delete fieldToUpdate.value.error;
+                        }
+                    }
+                    onChange?.(result);
+                }
+            }} />
+    {/if}
+    {#if field.value?.error}
+        <p class="text-sm text-red-500">{field.value.error}</p>
+    {/if}
+{/snippet}
 
 <div {...rest} class={["flex flex-col gap-2 rounded-xl border shadow-md border-primary-light p-2 w-full", className]}>
     <div class="flex justify-between items-center">
@@ -40,7 +74,7 @@
             <div class="flex gap-1 max-w-80 flex-wrap">
                 {#if field.type === "radio" && "items" in field}
                     {#each field.items as item}
-                        {@const selected = field.value === item.value}
+                        {@const selected = field.value?.value === item.value}
                         <Button
                             type="button"
                             {selected}
@@ -48,16 +82,38 @@
                                 const result = $state.snapshot(product);
                                 const fieldToUpdate = result.fields.find((f) => f.name === field.name);
                                 if (fieldToUpdate) {
-                                    fieldToUpdate.value = item.value;
+                                    fieldToUpdate.value = {
+                                        value: item.value,
+                                        is_custom: false,
+                                    };
                                     onChange?.(result);
                                 }
                             }}>
                             {"name" in item ? item.name : item.value}
                         </Button>
                     {/each}
+                    {#if field.allow_custom_value}
+                        <Button
+                            type="button"
+                            selected={field.value?.is_custom}
+                            onclick={() => {
+                                const result = $state.snapshot(product);
+                                const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                                if (fieldToUpdate) {
+                                    fieldToUpdate.value = {
+                                        value: "",
+                                        is_custom: true,
+                                    };
+                                    onChange?.(result);
+                                }
+                            }}>
+                            Egyéb
+                        </Button>
+                    {/if}
+                    {@render Input(field)}
                 {:else if field.type === "select" && "items" in field}
                     <select
-                        value={field.value}
+                        value={field.value?.value}
                         onchange={(e) => {
                             if (!(e.target instanceof HTMLSelectElement)) {
                                 return;
@@ -66,7 +122,10 @@
                             const result = $state.snapshot(product);
                             const fieldToUpdate = result.fields.find((f) => f.name === field.name);
                             if (fieldToUpdate) {
-                                fieldToUpdate.value = e.target.value;
+                                fieldToUpdate.value = {
+                                    value: e.target.value,
+                                    is_custom: false,
+                                };
                                 onChange?.(result);
                             }
                         }}>
@@ -78,21 +137,7 @@
                         {/each}
                     </select>
                 {:else if field.type === "input"}
-                    <input
-                        type="text"
-                        value={field.value}
-                        oninput={(e) => {
-                            if (!(e.target instanceof HTMLInputElement)) {
-                                return;
-                            }
-
-                            const result = $state.snapshot(product);
-                            const fieldToUpdate = result.fields.find((f) => f.name === field.name);
-                            if (fieldToUpdate) {
-                                fieldToUpdate.value = e.target.value;
-                                onChange?.(result);
-                            }
-                        }} />
+                    {@render Input(field)}
                 {:else}
                     <p>--</p>
                 {/if}
