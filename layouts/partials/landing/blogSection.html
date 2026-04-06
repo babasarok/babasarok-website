@@ -14,7 +14,7 @@
           </div>
           <div class="col-lg-6">
             <div class="blog-preview__header_button desktop">
-              <a class="btn btn-outline-secondary btn-zoom m-3" href="{{ .buttonTarget | absURL }}"
+              <a class="btn btn-outline-secondary btn-zoom m-3" href="{{ .buttonTarget | relURL }}"
                 >{{ .buttonName }}</a
               >
             </div>
@@ -43,7 +43,7 @@
         <div class="row">
           <div class="col-lg-12">
             <div class="blog-preview__header_button mobile">
-              <a class="btn btn-outline-secondary btn-zoom" href="{{ .buttonTarget | absURL }}">{{ .buttonName }}</a>
+              <a class="btn btn-outline-secondary btn-zoom" href="{{ .buttonTarget | relURL }}">{{ .buttonName }}</a>
             </div>
           </div>
         </div>

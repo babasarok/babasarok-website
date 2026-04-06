@@ -33,7 +33,7 @@
                 <span class="top-title pre-line">{{ .topTitle }}</span>
                 {{ .content | markdownify }}
               </div>
-              <a type="button" class="btn btn-lg btn-primary btn-zoom" href="{{ .buttonURL | absURL }}"
+              <a type="button" class="btn btn-lg btn-primary btn-zoom" href="{{ .buttonURL | relURL }}"
                 >{{ .buttonName }}</a
               >
             </div>
@@ -49,7 +49,7 @@
                 src="{{ $img.RelPermalink }}"
                 alt="hero-image"
                 style="
-                  -webkit-mask: url({{ "images/hero/hero-mask-svg.png" | absURL }});
+                  -webkit-mask: url({{ "images/hero/hero-mask-svg.png" | relURL }});
                   -webkit-mask-repeat: no-repeat;
                   -webkit-mask-size: contain;
                   -webkit-mask-position: center center;

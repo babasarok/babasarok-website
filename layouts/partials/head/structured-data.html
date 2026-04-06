@@ -1,6 +1,6 @@
 {{/* TODO: Add e-commerce structured data */}}
 
-{{ $baseURL := "/" | absURL -}}
+{{ $baseURL := "/" | relURL -}}
 
 {{ $dot := . -}}
 {{ $dot.Scratch.Set "path" "" -}}

@@ -1,7 +1,7 @@
 {{ define "main" }}
 	<header class="breadCrumb">
 		<div class="svg-img">
-			<img src="{{ "images/hero/figure-svg.svg" | absURL }}" alt="bg"/>
+			<img src="{{ "images/hero/figure-svg.svg" | relURL }}" alt="bg"/>
 		</div>
 		<div class="animate-shape">
 			<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewbox="0 0 600 600">
@@ -17,7 +17,7 @@
 			</svg>
 		</div>
 		<div class="animate-pattern">
-			<img src="{{ "images/service/background-pattern.svg" | absURL }}" alt="background-shape"/>
+			<img src="{{ "images/service/background-pattern.svg" | relURL }}" alt="background-shape"/>
 		</div>
 		<div class="container">
 			<div class="row">
@@ -26,7 +26,7 @@
 					<nav aria-label="breadcrumb" class="d-flex justify-content-center">
 						<ol class="breadcrumb align-items-center">
 							<li class="breadcrumb-item">
-								<a href="{{ .Site.BaseURL }}">Főoldal</a>
+								<a href="{{ relURL "" }}">Főoldal</a>
 							</li>
 							<li class="breadcrumb-item active" aria-current="page">{{ .Params.breadcrumb }}</li>
 						</ol>
@@ -55,7 +55,7 @@
 								</svg>
 							</div>
 							<div class="icon">
-								<img src="{{ "images/contact/location.svg" | absURL }}" style="width:100%;height:100%" alt="location"/>
+								<img src="{{ "images/contact/location.svg" | relURL }}" style="width:100%;height:100%" alt="location"/>
 							</div>
 						</div>
 						<h4>Cím</h4>
@@ -73,7 +73,7 @@
 								</svg>
 							</div>
 							<div class="icon">
-								<img src="{{ "images/contact/phone.svg" | absURL }}" style="width:100%;height:100%" alt="phone"/>
+								<img src="{{ "images/contact/phone.svg" | relURL }}" style="width:100%;height:100%" alt="phone"/>
 							</div>
 						</div>
 						<h4>Telefon & Email</h4>
@@ -92,7 +92,7 @@
 								</svg>
 							</div>
 							<div class="icon">
-								<img src="{{ "images/contact/social-media.svg" | absURL }}" style="width:100%;height:100%" alt="time"/>
+								<img src="{{ "images/contact/social-media.svg" | relURL }}" style="width:100%;height:100%" alt="time"/>
 							</div>
 						</div>
 						<h4>Közösségi Média</h4>

@@ -6,6 +6,7 @@
     import type { HTMLAttributes } from "svelte/elements";
     import { derived } from "svelte/store";
     import Tooltip from "./Tooltip.svelte";
+    import { v4 } from "uuid";
 
     interface Props extends HTMLAttributes<HTMLDivElement> {
         onClose: () => void;
@@ -46,9 +47,11 @@
 
 {#snippet Input(field: Field)}
     {#if field.type === "input" || field.value?.is_custom}
+        {@const id = v4()}
         <input
             type="text"
             value={field.value?.value ?? ""}
+            list={field.type === "input" && field.items ? id : undefined}
             oninput={(e) => {
                 if (!(e.target instanceof HTMLInputElement)) {
                     return;
@@ -72,6 +75,13 @@
                     onChange?.(result);
                 }
             }} />
+        {#if field.type === "input" && field.items}
+            <datalist {id}>
+                {#each field.items as item}
+                    <option value={item.value}>{item.label}</option>
+                {/each}
+            </datalist>
+        {/if}
     {/if}
     {#if field.value?.error}
         <p class="text-sm text-red-500">{field.value.error}</p>
@@ -121,7 +131,7 @@
                                         onChange?.(result);
                                     }
                                 }}>
-                                {"name" in item ? item.name : item.value}
+                                {item.label || item.value}
                                 {#if hasTooltip}
                                     <Icon icon="material-symbols:question-mark-rounded" class="text-xs" />
                                 {/if}
@@ -178,7 +188,7 @@
                         <option value="" disabled selected>{field.placeholder || "Válassz egy opciót"}</option>
                         {#each field.items as item}
                             <option value={item.value}>
-                                {"name" in item ? item.name : item.value}
+                                {item.label || item.value}
                             </option>
                         {/each}
                     </select>

@@ -26,6 +26,7 @@ export interface BaseField {
 export interface InputField extends BaseField {
     type: "input";
     placeholder?: string;
+    items?: Option[];
 }
 
 export interface SelectField extends BaseField {

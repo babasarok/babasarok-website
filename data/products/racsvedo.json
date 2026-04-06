@@ -14,27 +14,27 @@
             "items": [
                 {
                     "value": "200",
-                    "name": "200cm"
+                    "label": "200cm"
                 },
                 {
                     "value": "260",
-                    "name": "260cm"
+                    "label": "260cm"
                 },
                 {
                     "value": "300",
-                    "name": "300cm"
+                    "label": "300cm"
                 },
                 {
                     "value": "340",
-                    "name": "340cm"
+                    "label": "340cm"
                 },
                 {
                     "value": "380",
-                    "name": "380cm"
+                    "label": "380cm"
                 },
                 {
                     "value": "400",
-                    "name": "400cm"
+                    "label": "400cm"
                 }
             ],
             "allow_custom_value": true,
@@ -48,23 +48,23 @@
             "items": [
                 {
                     "value": "3",
-                    "name": "Hármas",
+                    "label": "Hármas",
                     "price": 6400
                 },
                 {
                     "value": "4",
-                    "name": "Négyes",
+                    "label": "Négyes",
                     "price": 8000
                 },
                 {
                     "value": "5",
-                    "name": "Ötös",
+                    "label": "Ötös",
                     "tooltip": "Más néven halszálka.",
                     "price": 9500
                 },
                 {
                     "value": "6",
-                    "name": "Hatos",
+                    "label": "Hatos",
                     "price": 12500
                 }
             ]
@@ -76,17 +76,17 @@
             "items": [
                 {
                     "value": "pamutjersey",
-                    "name": "Pamutjersey",
+                    "label": "Pamutjersey",
                     "price": 0
                 },
                 {
                     "value": "velur",
-                    "name": "Velúr",
+                    "label": "Velúr",
                     "price": 1100
                 },
                 {
                     "value": "teddy",
-                    "name": "Teddy",
+                    "label": "Teddy",
                     "price": 1100
                 }
             ]
@@ -94,7 +94,25 @@
         {
             "name": "color",
             "label": "Szín",
-            "type": "input"
+            "type": "input",
+            "items": [
+                {
+                    "value": "vilagosbarna",
+                    "label": "Világosbarna"
+                },
+                {
+                    "value": "sotetbarna",
+                    "label": "Sötétbarna"
+                },
+                {
+                    "value": "szurke",
+                    "label": "Szürke"
+                },
+                {
+                    "value": "fekete",
+                    "label": "Fekete"
+                }
+            ]
         }
     ]
 }
