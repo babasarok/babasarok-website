@@ -25,6 +25,10 @@
                     "name": "300cm"
                 },
                 {
+                    "value": "340",
+                    "name": "340cm"
+                },
+                {
                     "value": "380",
                     "name": "380cm"
                 },
@@ -54,7 +58,7 @@
                 {
                     "value": "otos",
                     "name": "Ötös",
-                    "tooltip": "Avagy halszálka fonás, melynek jellegzetessége, hogy a szálak egymásba fonódnak, így egy erős és tartós szerkezetet alkotnak. Ez a fonásminta különösen népszerű a kültéri használatra szánt termékek esetében, mivel kiválóan ellenáll az időjárási viszontagságoknak és a mechanikai igénybevételnek.",
+                    "tooltip": "Más néven halszálka.",
                     "price": 9500
                 },
                 {
@@ -77,12 +81,12 @@
                 {
                     "value": "velur",
                     "name": "Velúr",
-                    "price": 1500
+                    "price": 1100
                 },
                 {
                     "value": "teddy",
                     "name": "Teddy",
-                    "price": 1500
+                    "price": 1100
                 }
             ]
         },

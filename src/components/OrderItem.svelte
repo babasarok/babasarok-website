@@ -105,22 +105,38 @@
                 {#if field.type === "radio" && "items" in field}
                     {#each field.items as item}
                         {@const selected = field.value?.value === item.value}
-                        <Button
-                            type="button"
-                            {selected}
-                            onclick={() => {
-                                const result = $state.snapshot(product);
-                                const fieldToUpdate = result.fields.find((f) => f.name === field.name);
-                                if (fieldToUpdate) {
-                                    fieldToUpdate.value = {
-                                        value: item.value,
-                                        is_custom: false,
-                                    };
-                                    onChange?.(result);
-                                }
-                            }}>
-                            {"name" in item ? item.name : item.value}
-                        </Button>
+                        {#snippet button(hasTooltip: boolean)}
+                            <Button
+                                type="button"
+                                class="flex items-center gap-0.5"
+                                {selected}
+                                onclick={() => {
+                                    const result = $state.snapshot(product);
+                                    const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                                    if (fieldToUpdate) {
+                                        fieldToUpdate.value = {
+                                            value: item.value,
+                                            is_custom: false,
+                                        };
+                                        onChange?.(result);
+                                    }
+                                }}>
+                                {"name" in item ? item.name : item.value}
+                                {#if hasTooltip}
+                                    <Icon icon="material-symbols:question-mark-rounded" class="text-xs" />
+                                {/if}
+                            </Button>
+                        {/snippet}
+                        {#if item.tooltip}
+                            <Tooltip contentProps={{ class: "inline-block" }}>
+                                {#snippet content()}
+                                    {item.tooltip}
+                                {/snippet}
+                                {@render button(true)}
+                            </Tooltip>
+                        {:else}
+                            {@render button(false)}
+                        {/if}
                     {/each}
                     {#if field.allow_custom_value}
                         <Button
@@ -176,13 +192,15 @@
     {/each}
     <div class="w-full h-0.5 bg-border"></div>
     <div class="flex flex-col gap-1">
-        <p class="text-sm text-primary-500">
-            Ár
-            <Tooltip contentProps={{ class: "inline-block" }}>
+        <p class="text-sm text-primary-500 flex items-center gap-1 justify-between">
+            <span>
+                Ár <span class="text-xs">(tájékoztató)</span>
+            </span>
+            <Tooltip>
                 {#snippet content()}
-                    Az ár a kiválasztott opcióktól függően változhat.
+                    Az ár tájékoztató jellegű, a végleges árajánlatot a visszajelzéskor kapod meg.
                 {/snippet}
-                <Icon icon="mdi:alert-circle" class="inline-block text-sm" />
+                <Icon icon="mdi:alert-circle" class="inline-block text-sm text-orange-500" />
             </Tooltip>
         </p>
         <div class="flex flex-col gap-1 text-xs">
