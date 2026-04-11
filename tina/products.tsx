@@ -45,6 +45,11 @@ export interface RadioField extends BaseField {
 
 export type Field = InputField | SelectField | RadioField;
 
+export interface ProductMaterial {
+    material: string;
+    price?: number;
+}
+
 export interface Product {
     product_id: string;
     name: string;
@@ -52,11 +57,43 @@ export interface Product {
     priced_by_length?: boolean;
     price?: number;
     fields: Field[];
+    materials?: ProductMaterial[];
+    material_value?: {
+        material_id: string;
+        colors: string[]
+    }
 }
 
 export interface ProductItem extends Product {
     uuid: string;
 }
+
+const priceField: TinaField = {
+    type: "number",
+    name: "price",
+    label: "Ár",
+    description: "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni.",
+    ui: {
+        component(props) {
+            const castedProps = props as unknown as InputFieldType<NumberProps, Parameters<typeof ReferenceField>[0]>;
+            const value = props.field.name.split(".").slice(0, -3).reduce((obj, key) => obj && obj[key], castedProps.form.getState().values).length_based_pricing_source;
+            if (value) {
+                return null;
+            }
+
+            return NumberField(castedProps as any);
+        },
+        parse(value) {
+            if (typeof value === "string") {
+                const parsed = Number.parseFloat(value);
+                return Number.isNaN(parsed) ? 0 : parsed;
+            }
+
+            return value;
+        }
+
+    }
+};
 
 export const PRODUCT: TinaField<false>[] = [
     {
@@ -90,6 +127,28 @@ export const PRODUCT: TinaField<false>[] = [
     },
     {
         type: "object",
+        name: "materials",
+        list: true,
+        label: "Anyagok",
+        description: "A termékhez tartozó anyagok. Ha nincs egy se hozzáadva, akkor a termékhez nem lesz anyag kiválasztási lehetőség a rendelési felületen.",
+        ui: {
+            itemProps: (item) => {
+                return { label: item?.material || "Új anyag" };
+            },
+        },
+        fields: [
+            {
+                type: "reference",
+                name: "material",
+                label: "Anyag",
+                description: "Válassz egy anyagot a listából.",
+                collections: ["product_materials"],
+            },
+            priceField
+        ],
+    },
+    {
+        type: "object",
         name: "fields",
         list: true,
         label: "Választandó mezők",
@@ -113,23 +172,7 @@ export const PRODUCT: TinaField<false>[] = [
                 description: "Jelzi, hogy ez a mező szolgáltatja-e a méterárú számolás alapját. CM-ben kötelező megadni az értékeket! Csak egy mező jelölhető meg méterárú árforrásként.",
                 label: "Méteráru árforrás",
             },
-            {
-                type: "number",
-                name: "price",
-                description: "Ár, ami hozzáadódik a termék alapárához, ha ez a mező ki van töltve.",
-                label: "Ár - Forintban",
-                ui: {
-                    component(props) {
-                        const castedProps = props as unknown as InputFieldType<ToggleProps, Parameters<typeof ReferenceField>[0]>;
-                        const value = props.field.name.split(".").slice(0, -1).reduce((obj, key) => obj && obj[key], castedProps.form.getState().values).length_based_pricing_source;
-                        if (value) {
-                            return null;
-                        }
-
-                        return ToggleField(castedProps);
-                    },
-                }
-            },
+            priceField,
             {
                 type: "string",
                 name: "label",
@@ -158,7 +201,7 @@ export const PRODUCT: TinaField<false>[] = [
                 description: "A mezőhöz tartozó választható lehetőségek.",
                 ui: {
                     itemProps: (item) => {
-                        return { label: item?.name || item?.value || "Új mező" };
+                        return { label: item?.label || item?.value || "Új mező" };
                     }
                 },
                 fields: [
@@ -171,7 +214,7 @@ export const PRODUCT: TinaField<false>[] = [
                     },
                     {
                         type: "string",
-                        name: "name",
+                        name: "label",
                         label: "Címke",
                         description: "Az opció megjelenítendő neve, ami a felhasználó számára látható. Ha nincs megadva, akkor a value értékét használja.",
                     },

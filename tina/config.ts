@@ -14,6 +14,7 @@ import {
     testimonial_templateFields,
 } from "./templates";
 import { PRODUCT } from "./products";
+import { MATERIALS } from "./materials";
 
 // Your hosting provider likely exposes this as an environment variable
 const branch = process.env.HEAD || process.env.VERCEL_GIT_COMMIT_REF || "main";
@@ -252,7 +253,7 @@ export default defineConfig({
             },
             {
                 format: "json",
-                label: "Rendelés/Termék fájlok",
+                label: "Rendelés/Termékek",
                 name: "product_data",
                 path: "data/products",
                 frontmatterFormat: "json",
@@ -260,6 +261,17 @@ export default defineConfig({
                     include: "*",
                 },
                 fields: PRODUCT
+            },
+            {
+                format: "json",
+                label: "Rendelés/Anyagok",
+                name: "product_materials",
+                path: "data/materials",
+                frontmatterFormat: "json",
+                match: {
+                    include: "*",
+                },
+                fields: MATERIALS
             },
         ],
     },

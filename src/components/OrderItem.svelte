@@ -2,6 +2,7 @@
     import Icon from "@iconify/svelte";
     import IconButton from "./IconButton.svelte";
     import type { Field, Product, ProductItem, RadioField, SelectField } from "../../tina/products";
+    import type { Material } from "../../tina/materials";
     import Button from "./Button.svelte";
     import type { HTMLAttributes } from "svelte/elements";
     import { derived } from "svelte/store";
@@ -12,9 +13,10 @@
         onClose: () => void;
         product: ProductItem;
         onChange?: (product: ProductItem) => void;
+        materials: Record<string, Material> | null;
     }
 
-    let { onClose, product, onChange, class: className, ...rest }: Props = $props();
+    let { onClose, product, onChange, class: className, materials, ...rest }: Props = $props();
 
     interface PricePart {
         label: string;
@@ -200,6 +202,48 @@
             </div>
         </div>
     {/each}
+    {#if product.materials && product.materials.length > 0}
+        <div class="flex flex-col gap-1">
+            <p class="text-sm text-primary-500">Anyag</p>
+            <div class="flex gap-1 flex-wrap">
+                {#each product.materials as material}
+                    {@const materialInfo = materials ? materials[material.material] : null}
+                    {#if materialInfo}
+                        {@const selected = product.material_value?.material_id === material.material}
+                        <Button
+                            type="button"
+                            class="flex items-center gap-0.5"
+                            {selected}
+                            onclick={() => {
+                                const result = $state.snapshot(product);
+                                result.material_value = {
+                                    material_id: material.material,
+                                    colors: [],
+                                };
+                                onChange?.(result);
+                            }}>
+                            {materialInfo.label || materialInfo.material_id}
+                        </Button>
+                    {/if}
+                {/each}
+            </div>
+        </div>
+        {#if product.material_value}
+            {@const materialInfo = materials
+                ? Object.values(materials).find((m) => m.material_id === product.material_value?.material_id)
+                : null}
+            {#if materialInfo?.colors && materialInfo.colors.length > 0}
+                <div class="flex flex-col gap-1">
+                    <p class="text-sm text-primary-500">Szín</p>
+                    <div class="flex gap-1 flex-wrap">
+                        {#each materialInfo?.colors || [] as color}
+                            <div>{color.label}</div>
+                        {/each}
+                    </div>
+                </div>
+            {/if}
+        {/if}
+    {/if}
     <div class="w-full h-0.5 bg-border"></div>
     <div class="flex flex-col gap-1">
         <p class="text-sm text-primary-500 flex items-center gap-1 justify-between">

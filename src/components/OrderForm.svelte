@@ -4,6 +4,7 @@
     import Icon from "@iconify/svelte";
     import OrderItem from "./OrderItem.svelte";
     import type { Product, ProductItem } from "../../tina/products";
+    import type { Material } from "../../tina/materials";
     import { v4 as uuidv4 } from "uuid";
     import { flip } from "svelte/animate";
     import { fade } from "svelte/transition";
@@ -11,10 +12,13 @@
     import Button from "./Button.svelte";
 
     let productInfo: Record<string, Product> | null = $state(null);
+    let materialInfo: Record<string, Material> | null = $state(null);
 
     async function main() {
-        const response = await fetch("/json/product-data.json");
-        productInfo = await response.json();
+        const productResponse = await fetch("/json/product-data.json");
+        const materialsResponse = await fetch("/json/material-data.json");
+        productInfo = await productResponse.json();
+        materialInfo = await materialsResponse.json();
     }
 
     let productSelectValue: string = $state("");
@@ -26,6 +30,21 @@
         }
 
         for (const product of products) {
+            if (product.materials && product.materials.length > 0) {
+                if (!product.material_value || !product.material_value.material_id) {
+                    return false;
+                }
+
+                const material = materialInfo
+                    ? Object.values(materialInfo).find((m) => m.material_id === product.material_value?.material_id)
+                    : null;
+                if (!material) {
+                    return false;
+                }
+
+                // TODO: validate color count
+            }
+
             for (const field of product.fields) {
                 if (!field.value) {
                     return false;
@@ -101,6 +120,7 @@
                         {#if info}
                             <OrderItem
                                 {product}
+                                materials={materialInfo}
                                 onClose={() => {
                                     const index = products.findIndex((p) => p.uuid === product.uuid);
                                     if (index !== -1) {
