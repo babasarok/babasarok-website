@@ -1,4 +1,16 @@
 {
   "material_id": "pamutjersey",
-  "label": "PamutJersey"
+  "label": "PamutJersey",
+  "colors": [
+    {
+      "color_id": "feher",
+      "label": "Fehér",
+      "hex": "#FFFFFF"
+    },
+    {
+      "color_id": "sotetzold",
+      "label": "Sötétzöld",
+      "hex": "#186A13"
+    }
+  ]
 }

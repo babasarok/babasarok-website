@@ -3,7 +3,7 @@ import type { TinaField } from "tinacms";
 export interface MaterialColor {
     color_id: string;
     label: string;
-    color_name?: string;
+    hex?: string;
 }
 
 export interface Material {
@@ -54,7 +54,7 @@ export const MATERIALS: TinaField[] = [
             },
             {
                 type: "string",
-                name: "color_name",
+                name: "hex",
                 label: "Színkód",
                 description: "Megközelítőleges színe az anyagnak.",
                 ui: {

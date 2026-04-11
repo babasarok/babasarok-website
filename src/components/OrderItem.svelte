@@ -110,6 +110,7 @@
         </IconButton>
     </div>
     <div class="w-full h-0.5 bg-border"></div>
+    <!-- Generic fields -->
     {#each product.fields as field}
         <div class="flex flex-col gap-1">
             <p class="text-sm text-primary-500">{field.label || field.name}</p>
@@ -202,6 +203,7 @@
             </div>
         </div>
     {/each}
+    <!-- Materials section -->
     {#if product.materials && product.materials.length > 0}
         <div class="flex flex-col gap-1">
             <p class="text-sm text-primary-500">Anyag</p>
@@ -209,7 +211,7 @@
                 {#each product.materials as material}
                     {@const materialInfo = materials ? materials[material.material] : null}
                     {#if materialInfo}
-                        {@const selected = product.material_value?.material_id === material.material}
+                        {@const selected = product.material_value?.material_id === materialInfo.material_id}
                         <Button
                             type="button"
                             class="flex items-center gap-0.5"
@@ -217,7 +219,7 @@
                             onclick={() => {
                                 const result = $state.snapshot(product);
                                 result.material_value = {
-                                    material_id: material.material,
+                                    material_id: materialInfo.material_id,
                                     colors: [],
                                 };
                                 onChange?.(result);
@@ -237,7 +239,17 @@
                     <p class="text-sm text-primary-500">Szín</p>
                     <div class="flex gap-1 flex-wrap">
                         {#each materialInfo?.colors || [] as color}
-                            <div>{color.label}</div>
+                            <Tooltip>
+                                {#snippet content()}
+                                    {color.label || color.color_id}
+                                {/snippet}
+                                <IconButton>
+                                    <div
+                                        class="size-4 border rounded-full hover:scale-115 transition-all"
+                                        style={`background-color: ${color.hex}`}>
+                                    </div>
+                                </IconButton>
+                            </Tooltip>
                         {/each}
                     </div>
                 </div>
