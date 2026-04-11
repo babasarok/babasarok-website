@@ -159,16 +159,7 @@ export const PRODUCT: TinaField<false>[] = [
                 ui: {
                     itemProps: (item) => {
                         return { label: item?.name || item?.value || "Új mező" };
-                    },
-                    component(props) {
-                        const castedProps = props as unknown as InputFieldType<GroupProps, Parameters<typeof ReferenceField>[0]>;
-                        const typeValue = props.field.name.split(".").slice(0, -1).reduce((obj, key) => obj && obj[key], castedProps.form.getState().values).type;
-                        if (typeValue != "select" && typeValue != "radio") {
-                            return null;
-                        }
-
-                        return GroupListField(castedProps);
-                    },
+                    }
                 },
                 fields: [
                     {
