@@ -48,6 +48,7 @@ export type Field = InputField | SelectField | RadioField;
 export interface ProductMaterial {
     material: string;
     price?: number;
+    color_count?: number | string;
 }
 
 export interface Product {

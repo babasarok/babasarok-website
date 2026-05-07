@@ -1,13 +1,14 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import IconButton from "./IconButton.svelte";
-    import type { Field, Product, ProductItem, RadioField, SelectField } from "../../tina/products";
+    import type { Field, Product, ProductItem, ProductMaterial, RadioField, SelectField } from "../../tina/products";
     import type { Material } from "../../tina/materials";
     import Button from "./Button.svelte";
     import type { HTMLAttributes } from "svelte/elements";
-    import { derived } from "svelte/store";
     import Tooltip from "./Tooltip.svelte";
     import { v4 } from "uuid";
+    import { slide } from "svelte/transition";
+    import Chip from "./Chip.svelte";
 
     interface Props extends HTMLAttributes<HTMLDivElement> {
         onClose: () => void;
@@ -45,6 +46,30 @@
         }
         return priceParts;
     });
+
+    function resolveValue(accessor: string, product: ProductItem): number | undefined {
+        const parts = accessor.split(".");
+        let current: any = product;
+
+        for (const part of parts) {
+            if (current && part in current) {
+                current = current[part];
+            } else if (Array.isArray(current)) {
+                current = current.find((item) => item.name === part);
+            }
+        }
+        return typeof current?.value?.value === "string" ? Number.parseFloat(current.value.value) : undefined;
+    }
+
+    function generateColorCount(material: ProductMaterial, product: ProductItem): number | undefined {
+        if (material.color_count === undefined) {
+            return 0;
+        }
+        if (typeof material.color_count === "number") {
+            return material.color_count;
+        }
+        return resolveValue(material.color_count, product);
+    }
 </script>
 
 {#snippet Input(field: Field)}
@@ -152,22 +177,24 @@
                         {/if}
                     {/each}
                     {#if field.allow_custom_value}
-                        <Button
-                            type="button"
-                            selected={field.value?.is_custom}
-                            onclick={() => {
-                                const result = $state.snapshot(product);
-                                const fieldToUpdate = result.fields.find((f) => f.name === field.name);
-                                if (fieldToUpdate) {
-                                    fieldToUpdate.value = {
-                                        value: "",
-                                        is_custom: true,
-                                    };
-                                    onChange?.(result);
-                                }
-                            }}>
-                            Egyéb
-                        </Button>
+                        <div transition:slide>
+                            <Button
+                                type="button"
+                                selected={field.value?.is_custom}
+                                onclick={() => {
+                                    const result = $state.snapshot(product);
+                                    const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                                    if (fieldToUpdate) {
+                                        fieldToUpdate.value = {
+                                            value: "",
+                                            is_custom: true,
+                                        };
+                                        onChange?.(result);
+                                    }
+                                }}>
+                                Egyéb
+                            </Button>
+                        </div>
                     {/if}
                     {@render Input(field)}
                 {:else if field.type === "select" && "items" in field}
@@ -234,18 +261,76 @@
             {@const materialInfo = materials
                 ? Object.values(materials).find((m) => m.material_id === product.material_value?.material_id)
                 : null}
+            {@const productMaterial = product.materials
+                ? product.materials.find(
+                      (m) => m.material === `data/materials/${product.material_value?.material_id}.json`
+                  )
+                : null}
+            {@debug productMaterial}
             {#if materialInfo?.colors && materialInfo.colors.length > 0}
+                {@const colorCount = generateColorCount(productMaterial!, product)}
+                {@const multiColor = (colorCount ?? 0) > 1}
                 <div class="flex flex-col gap-1">
-                    <p class="text-sm text-primary-500">Szín</p>
+                    <p class="text-sm text-primary-500 flex items-center gap-1 justify-between">
+                        <span> Szín </span>
+                        {#if multiColor}
+                            <span class="text-xs">
+                                ({product.material_value.colors.length ?? 0} / {colorCount})
+                            </span>
+                        {/if}
+                    </p>
+                    {#if multiColor}
+                        <div class="flex gap-1 flex-wrap">
+                            {#each product.material_value?.colors as colorId, index}
+                                {@const colorInfo = materialInfo.colors.find((c) => c.color_id === colorId)}
+                                {#if colorInfo}
+                                    <Chip
+                                        color={colorInfo.hex}
+                                        onClose={() => {
+                                            const result = $state.snapshot(product);
+                                            if (result.material_value) {
+                                                result.material_value.colors = [
+                                                    ...result.material_value.colors.slice(0, index),
+                                                    ...result.material_value.colors.slice(index + 1),
+                                                ];
+                                            }
+                                            onChange?.(result);
+                                        }}>
+                                        {colorInfo.label || colorInfo.color_id}
+                                    </Chip>
+                                {/if}
+                            {/each}
+                        </div>
+                    {/if}
                     <div class="flex gap-1 flex-wrap">
                         {#each materialInfo?.colors || [] as color}
-                            <Tooltip>
+                            <Tooltip
+                                disabled={colorCount === undefined ||
+                                    (multiColor ? (product.material_value?.colors.length ?? 0) >= colorCount : false)}>
                                 {#snippet content()}
                                     {color.label || color.color_id}
                                 {/snippet}
-                                <IconButton>
+                                <IconButton
+                                    type="button"
+                                    disabled={colorCount === undefined ||
+                                        (multiColor
+                                            ? (product.material_value?.colors.length ?? 0) >= colorCount
+                                            : false)}
+                                    onclick={() => {
+                                        const result = $state.snapshot(product);
+                                        if (!result.material_value) {
+                                            return;
+                                        }
+
+                                        if (multiColor) {
+                                            result.material_value.colors.push(color.color_id);
+                                        } else {
+                                            result.material_value.colors = [color.color_id];
+                                        }
+                                        onChange?.(result);
+                                    }}>
                                     <div
-                                        class="size-4 border rounded-full hover:scale-115 transition-all"
+                                        class={["size-4 border rounded-full hover:scale-115 transition-all"]}
                                         style={`background-color: ${color.hex}`}>
                                     </div>
                                 </IconButton>
@@ -294,7 +379,7 @@
                 </div>
             {/if}
             {#if product.priced_by_length}
-                {@const totalPrice = priceParts.reduce((sum, part) => sum + (part.price ?? 0), 0)}
+                {@const totalPrice = Math.round(priceParts.reduce((sum, part) => sum + (part.price ?? 0), 0))}
                 {@const length = product.fields.find((f) => f.length_based_pricing_source)?.value?.value
                     ? Number.parseFloat(product.fields.find((f) => f.length_based_pricing_source)!.value!.value) / 100
                     : 0}

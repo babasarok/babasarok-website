@@ -1,81 +1,84 @@
 {
-  "product_id": "racsvedo",
-  "name": "Fonott rácsvédő",
-  "icon": "/product/braids.svg",
-  "priced_by_length": true,
-  "price": 0,
-  "materials": [
-    {
-      "material": "data/materials/velur.json",
-      "price": 1100
-    },
-    {
-      "material": "data/materials/pamutjersey.json",
-      "price": 0
-    },
-    {
-      "material": "data/materials/teddy.json",
-      "price": 1100
-    }
-  ],
-  "fields": [
-    {
-      "name": "sizes",
-      "length_based_pricing_source": true,
-      "label": "Méret",
-      "type": "radio",
-      "items": [
+    "product_id": "racsvedo",
+    "name": "Fonott rácsvédő",
+    "icon": "/product/braids.svg",
+    "priced_by_length": true,
+    "price": 0,
+    "materials": [
         {
-          "value": "200"
+            "material": "data/materials/velur.json",
+            "price": 1100,
+            "color_count": "fields.fonas"
         },
         {
-          "value": "260"
+            "material": "data/materials/pamutjersey.json",
+            "price": 0,
+            "color_count": "fields.fonas"
         },
         {
-          "value": "300"
-        },
-        {
-          "value": "340"
-        },
-        {
-          "value": "380"
-        },
-        {
-          "value": "400"
+            "material": "data/materials/teddy.json",
+            "price": 1100,
+            "color_count": "fields.fonas"
         }
-      ],
-      "allow_custom_value": true,
-      "regex": "^(\\d+)$",
-      "multiple": false
-    },
-    {
-      "name": "fonas",
-      "label": "Fonás",
-      "type": "radio",
-      "items": [
+    ],
+    "fields": [
         {
-          "value": "3",
-          "label": "Hármas",
-          "price": 6400
+            "name": "sizes",
+            "length_based_pricing_source": true,
+            "label": "Méret",
+            "type": "radio",
+            "items": [
+                {
+                    "value": "200"
+                },
+                {
+                    "value": "260"
+                },
+                {
+                    "value": "300"
+                },
+                {
+                    "value": "340"
+                },
+                {
+                    "value": "380"
+                },
+                {
+                    "value": "400"
+                }
+            ],
+            "allow_custom_value": true,
+            "regex": "^(\\d+)$",
+            "multiple": false
         },
         {
-          "value": "4",
-          "label": "Négyes",
-          "price": 8000
-        },
-        {
-          "value": "5",
-          "label": "Ötös",
-          "price": 9500,
-          "tooltip": "Más néven halszálka."
-        },
-        {
-          "value": "6",
-          "label": "Hatos",
-          "price": 12500
+            "name": "fonas",
+            "label": "Fonás",
+            "type": "radio",
+            "items": [
+                {
+                    "value": "3",
+                    "label": "Hármas",
+                    "price": 6400
+                },
+                {
+                    "value": "4",
+                    "label": "Négyes",
+                    "price": 8000
+                },
+                {
+                    "value": "5",
+                    "label": "Ötös",
+                    "price": 9500,
+                    "tooltip": "Más néven halszálka."
+                },
+                {
+                    "value": "6",
+                    "label": "Hatos",
+                    "price": 12500
+                }
+            ],
+            "regex": "^(\\d+)$"
         }
-      ],
-      "regex": "^(\\d+)$"
-    }
-  ]
+    ]
 }

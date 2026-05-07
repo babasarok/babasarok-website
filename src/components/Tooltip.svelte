@@ -22,9 +22,10 @@
         children: import("svelte").Snippet;
         content: import("svelte").Snippet;
         contentProps?: HTMLAttributes<HTMLDivElement>;
+        disabled?: boolean;
     }
 
-    let { children, content, contentProps, ...rest }: Props = $props();
+    let { children, content, contentProps, disabled }: Props = $props();
 
     // State
     let open = $state(false);
@@ -62,7 +63,7 @@
     {@render children?.()}
 </div>
 <!-- Floating Element -->
-{#if open}
+{#if open && !disabled}
     <div
         bind:this={floating.elements.floating}
         style={floating.floatingStyles}
