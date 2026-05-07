@@ -48,7 +48,7 @@ export type Field = InputField | SelectField | RadioField;
 export interface ProductMaterial {
     material: string;
     price?: number;
-    color_count?: number | string;
+    color_count?: string;
 }
 
 export interface Product {
@@ -145,7 +145,13 @@ export const PRODUCT: TinaField<false>[] = [
                 description: "Válassz egy anyagot a listából.",
                 collections: ["product_materials"],
             },
-            priceField
+            priceField,
+            {
+                type: "string",
+                name: "color_count",
+                label: "Választható színek/minták száma",
+                description: "Az alap 1. Ha egy másik mező az alapja, írd be a Mező ID-jét. A Mezó szám alapú legyen.",
+            }
         ],
     },
     {

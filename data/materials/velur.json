@@ -1,4 +1,16 @@
 {
-  "material_id": "velur",
-  "label": "Velúr"
+    "material_id": "velur",
+    "label": "Velúr",
+    "colors": [
+        {
+            "color_id": "feher",
+            "label": "Fehér",
+            "hex": "#FFFFFF"
+        },
+        {
+            "color_id": "sotetzold",
+            "label": "Sötétzöld",
+            "hex": "#186A13"
+        }
+    ]
 }

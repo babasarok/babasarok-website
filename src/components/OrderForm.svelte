@@ -116,7 +116,7 @@
             <div class="grid gap-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {#each products as product (`${product.uuid}`)}
                     {@const info = productInfo?.[product.product_id]}
-                    <div transition:fade={{ duration: 250 }} animate:flip={{ duration: 250 }}>
+                    <div transition:fade={{ duration: 250 }}>
                         {#if info}
                             <OrderItem
                                 {product}
