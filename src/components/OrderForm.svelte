@@ -107,7 +107,7 @@
                             return;
                         }
 
-                        products.push({ ...$state.snapshot(currentProduct), uuid: uuidv4() });
+                        products.push({ ...$state.snapshot(currentProduct), uuid: uuidv4(), count: 1 });
                         productSelectValue = "";
                     }}>
                     <Icon icon="mdi:plus" />

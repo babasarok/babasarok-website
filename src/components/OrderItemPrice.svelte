@@ -34,6 +34,11 @@
                     break;
             }
         }
+
+        priceParts.push({
+            label: "Anyag",
+            price: product.materials?.find((m) => m.material === product.material_value?.material_id)?.price ?? 0,
+        });
         return priceParts;
     });
 </script>
@@ -74,25 +79,36 @@
                 </p>
             </div>
         {/if}
-        {#if product.priced_by_length}
+        <svelte:boundary>
             {@const totalPrice = Math.round(priceParts.reduce((sum, part) => sum + (part.price ?? 0), 0))}
             {@const length = product.fields.find((f) => f.length_based_pricing_source)?.value?.value
                 ? Number.parseFloat(product.fields.find((f) => f.length_based_pricing_source)!.value!.value) / 100
                 : 0}
-            <div class="flex justify-between font-medium">
-                <p>Összesen</p>
+            {@const finalPrice = product.priced_by_length
+                ? Number.isNaN(length) || length <= 0
+                    ? undefined
+                    : totalPrice * length
+                : totalPrice}
+            <div class={["flex justify-between", { "font-medium": product.count === 1 }]}>
                 <p>
-                    {#if product.priced_by_length}
-                        {#if Number.isNaN(length) || length <= 0}
-                            --
-                        {:else}
-                            {totalPrice * length} Ft
-                        {/if}
+                    {#if product.count === 1}
+                        Összesen
                     {:else}
-                        {totalPrice} Ft
+                        Darabár
                     {/if}
                 </p>
+                <p>
+                    {finalPrice !== undefined ? `${finalPrice * product.count} Ft` : "--"}
+                </p>
             </div>
-        {/if}
+            {#if product.count > 1}
+                <div class="flex justify-between font-medium">
+                    <p>Összesen</p>
+                    <p>
+                        {finalPrice !== undefined ? `${finalPrice * product.count} Ft` : "--"}
+                    </p>
+                </div>
+            {/if}
+        </svelte:boundary>
     </div>
 </div>

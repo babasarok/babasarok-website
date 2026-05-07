@@ -1,10 +1,27 @@
-import { ToggleField, type InputFieldType, type TinaField, type ReferenceField, type ToggleProps, GroupListField, type GroupFieldProps, type GroupProps, TextField, type TextFieldProps, type InputProps, NumberField, type NumberProps, } from "tinacms";
+import {
+    ToggleField,
+    type InputFieldType,
+    type TinaField,
+    type ReferenceField,
+    type ToggleProps,
+    GroupListField,
+    type GroupFieldProps,
+    type GroupProps,
+    TextField,
+    type TextFieldProps,
+    type InputProps,
+    NumberField,
+    type NumberProps,
+    ButtonToggleField,
+    type ButtonToggleProps
+} from "tinacms";
 
 export interface Option {
     value: string;
     label?: string;
     tooltip?: string;
     price?: number;
+    fixed_price?: boolean;
 }
 
 export interface BaseField {
@@ -67,6 +84,7 @@ export interface Product {
 
 export interface ProductItem extends Product {
     uuid: string;
+    count: number;
 }
 
 const priceField: TinaField = {
@@ -226,6 +244,23 @@ export const PRODUCT: TinaField<false>[] = [
                         description: "Az opció megjelenítendő neve, ami a felhasználó számára látható. Ha nincs megadva, akkor a value értékét használja.",
                     },
                     {
+                        type: "boolean",
+                        name: "fixed_price",
+                        label: "Fix ár",
+                        description: "Méterárunál ez az opció fix árnak lesz tekintve.",
+                        ui: {
+                            component(props) {
+                                const castedProps = props as unknown as InputFieldType<ToggleProps, Parameters<typeof ReferenceField>[0]>;
+                                const value = props.field.name.split(".").slice(0, -3).reduce((obj, key) => obj && obj[key], castedProps.form.getState().values).length_based_pricing_source;
+                                if (!value) {
+                                    return null;
+                                }
+
+                                return ToggleField(castedProps as any);
+                            },
+                        }
+                    },
+                    {
                         type: "number",
                         name: "price",
                         label: "Ár",
@@ -233,8 +268,10 @@ export const PRODUCT: TinaField<false>[] = [
                         ui: {
                             component(props) {
                                 const castedProps = props as unknown as InputFieldType<NumberProps, Parameters<typeof ReferenceField>[0]>;
-                                const value = props.field.name.split(".").slice(0, -3).reduce((obj, key) => obj && obj[key], castedProps.form.getState().values).length_based_pricing_source;
-                                if (value) {
+                                const values = castedProps.form.getState().values;
+                                const length_based_pricing_source = props.field.name.split(".").slice(0, -3).reduce((obj, key) => obj && obj[key], values).length_based_pricing_source;
+                                const fixed_price = props.field.name.split(".").slice(0, -1).reduce((obj, key) => obj && obj[key], values).fixed_price;
+                                if (length_based_pricing_source && !fixed_price) {
                                     return null;
                                 }
 
