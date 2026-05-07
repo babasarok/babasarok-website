@@ -5,6 +5,7 @@
     import Button from "./Button.svelte";
     import Tooltip from "./Tooltip.svelte";
     import Chip from "./Chip.svelte";
+    import Icon from "@iconify/svelte";
 
     interface Props {
         product: ProductItem;
@@ -14,19 +15,20 @@
 
     const { product, materials, onChange }: Props = $props();
 
-    function resolveValue(accessor: string, product: ProductItem): number | undefined {
-        const parts = accessor.split(".");
-        let current: any = product;
+    function resolveValue(name: string, product: ProductItem): number | undefined {
+        const current = product.fields.find((f) => f.name === name)?.value?.value;
 
-        for (const part of parts) {
-            if (current && part in current) {
-                current = current[part];
-            } else if (Array.isArray(current)) {
-                current = current.find((item) => item.name === part);
-            }
+        if (!current) {
+            return undefined;
         }
 
-        return typeof current?.value?.value === "string" ? Number.parseFloat(current.value.value) : undefined;
+        const val = Number.parseFloat(current);
+
+        if (Number.isNaN(val)) {
+            return undefined;
+        }
+
+        return val;
     }
 
     function generateColorCount(material: ProductMaterial, product: ProductItem): number | undefined {
@@ -88,6 +90,10 @@
                             ({product.material_value.colors.length ?? 0} / {colorCount})
                         </span>
                     {/if}
+                </p>
+                <p class="text-xs text-primary-500 flex items-center gap-1 border-1 border-primary-light rounded p-1">
+                    <Icon icon="mdi:alert-circle" class="inline-block size-6 text-orange-500" />
+                    <span> A színek tájékoztató jellegűek, a pontos árnyalatok eltérhetnek. </span>
                 </p>
                 {#if multiColor}
                     <div class="flex gap-1 flex-wrap">
