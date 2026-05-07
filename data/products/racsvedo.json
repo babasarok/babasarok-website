@@ -29,22 +29,28 @@
             "type": "radio",
             "items": [
                 {
-                    "value": "200"
+                    "value": "200",
+                    "label": "200cm"
                 },
                 {
-                    "value": "260"
+                    "value": "260",
+                    "label": "260cm"
                 },
                 {
-                    "value": "300"
+                    "value": "300",
+                    "label": "300cm"
                 },
                 {
-                    "value": "340"
+                    "value": "340",
+                    "label": "340cm"
                 },
                 {
-                    "value": "380"
+                    "value": "380",
+                    "label": "380cm"
                 },
                 {
-                    "value": "400"
+                    "value": "400",
+                    "label": "400cm"
                 }
             ],
             "allow_custom_value": true,
