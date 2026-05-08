@@ -79,6 +79,10 @@ export interface ProductMaterial {
     color_count?: string;
 }
 
+export interface ProductTieIn {
+    product_id: string;
+}
+
 export interface Product {
     product_id: string;
     name: string;
@@ -87,6 +91,7 @@ export interface Product {
     price?: number;
     fields?: Field[];
     materials?: ProductMaterial[];
+    tie_ins?: ProductTieIn[];
     material_required_count?: number;
     material_values?: {
         material_id: string;
@@ -129,6 +134,26 @@ export const PRODUCT: TinaField<false>[] = [
         type: "number",
         name: "price",
         label: "Alap Ár - Forintban",
+    },
+    {
+        type: "object",
+        name: "tie_ins",
+        label: "Kapcsolódó termékek",
+        description: "Opcionális, a termékhez kapcsolódó egyéb termékek. Ezek a termékek megjelennek gyorsgombnak. Az szett árszámlálás nem itt történik.",
+        list: true,
+        ui: {
+            itemProps: (item) => {
+                return { label: item?.product_id || "Új kapcsolódó termék" };
+            },
+        },
+        fields: [
+            {
+                type: "reference",
+                name: "product_id",
+                label: "Termék",
+                collections: ["product_data"],
+            },
+        ]
     },
     {
         type: "object",
