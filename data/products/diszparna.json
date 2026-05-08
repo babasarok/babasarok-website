@@ -1,0 +1,44 @@
+{
+  "product_id": "diszparna",
+  "name": "Díszpárna",
+  "price": 3500,
+  "materials": [
+    {
+      "material": "data/materials/teddy.json"
+    },
+    {
+      "material": "data/materials/minky.json"
+    },
+    {
+      "material": "data/materials/potty-nelkuli-minky.json"
+    },
+    {
+      "material": "data/materials/wellsoft.json"
+    }
+  ],
+  "fields": [
+    {
+      "name": "fajta",
+      "price": 0,
+      "label": "Fajta",
+      "type": "radio",
+      "items": [
+        {
+          "value": "csillag",
+          "label": "Csillag",
+          "price": 0
+        },
+        {
+          "value": "felho",
+          "label": "Felhő",
+          "price": 0
+        },
+        {
+          "value": "korona",
+          "label": "Korona",
+          "price": 0
+        }
+      ]
+    }
+  ]
+}
