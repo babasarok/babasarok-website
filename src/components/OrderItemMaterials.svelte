@@ -6,6 +6,7 @@
     import Tooltip from "./Tooltip.svelte";
     import Chip from "./Chip.svelte";
     import Icon from "@iconify/svelte";
+    import Color from "./Color.svelte";
 
     interface Props {
         product: ProductItem;
@@ -121,40 +122,24 @@
                 <div class="flex gap-1 flex-wrap">
                     {#each materialInfo?.colors || [] as color}
                         {@const selected = product.material_value?.colors.includes(color.color_id)}
-                        <Tooltip
+                        <Color
+                            {color}
                             disabled={colorCount === undefined ||
-                                (multiColor ? (product.material_value?.colors.length ?? 0) >= colorCount : false)}>
-                            {#snippet content()}
-                                {color.label || color.color_id}
-                            {/snippet}
-                            <IconButton
-                                type="button"
-                                disabled={colorCount === undefined ||
-                                    (multiColor ? (product.material_value?.colors.length ?? 0) >= colorCount : false)}
-                                aria-selected={!multiColor && selected}
-                                onclick={() => {
-                                    const result = $state.snapshot(product);
-                                    if (!result.material_value) {
-                                        return;
-                                    }
+                                (multiColor ? (product.material_value?.colors.length ?? 0) >= colorCount : false)}
+                            selected={!multiColor && selected}
+                            onclick={() => {
+                                const result = $state.snapshot(product);
+                                if (!result.material_value) {
+                                    return;
+                                }
 
-                                    if (multiColor) {
-                                        result.material_value.colors.push(color.color_id);
-                                    } else {
-                                        result.material_value.colors = [color.color_id];
-                                    }
-                                    onChange?.(result);
-                                }}>
-                                <div
-                                    class={[
-                                        "size-5 border-2 rounded-full hover:border-primary-400 transition-all p-px",
-                                        !multiColor && selected ? "border-primary-500" : "border-transparent",
-                                    ]}>
-                                    <div class="rounded-full h-full w-full" style={`background-color: ${color.hex}`}>
-                                    </div>
-                                </div>
-                            </IconButton>
-                        </Tooltip>
+                                if (multiColor) {
+                                    result.material_value.colors.push(color.color_id);
+                                } else {
+                                    result.material_value.colors = [color.color_id];
+                                }
+                                onChange?.(result);
+                            }} />
                     {/each}
                 </div>
             </div>

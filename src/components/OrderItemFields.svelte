@@ -5,6 +5,8 @@
     import Tooltip from "./Tooltip.svelte";
     import { v4 } from "uuid";
     import { slide } from "svelte/transition";
+    import Color from "./Color.svelte";
+    import Switch from "./Switch.svelte";
 
     interface Props {
         product: ProductItem;
@@ -146,6 +148,67 @@
                 </select>
             {:else if field.type === "input"}
                 {@render Input(field)}
+            {:else if field.type === "color"}
+                <div class="flex gap-1 flex-wrap">
+                    {#each field.items as item}
+                        {@const selected = field.value?.value === item.value}
+                        <Color
+                            color={{ color_id: item.value, hex: item.value, label: item.label }}
+                            {selected}
+                            onclick={(color_id) => {
+                                const result = $state.snapshot(product);
+                                const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                                if (fieldToUpdate) {
+                                    fieldToUpdate.value = {
+                                        value: color_id,
+                                        is_custom: false,
+                                    };
+                                    onChange?.(result);
+                                }
+                            }} />
+                    {/each}
+                    {#if field.allow_custom_value}
+                        <div transition:slide>
+                            <Button
+                                type="button"
+                                selected={field.value?.is_custom}
+                                onclick={() => {
+                                    const result = $state.snapshot(product);
+                                    const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                                    if (fieldToUpdate) {
+                                        fieldToUpdate.value = {
+                                            value: "",
+                                            is_custom: true,
+                                        };
+                                        onChange?.(result);
+                                    }
+                                }}>
+                                Egyéb
+                            </Button>
+                        </div>
+                    {/if}
+                </div>
+                {@render Input(field)}
+            {:else if field.type === "toggle"}
+                <div class="flex">
+                    <Switch
+                        checked={field.value?.value === "true"}
+                        onchange={(e) => {
+                            if (!(e.target instanceof HTMLInputElement)) {
+                                return;
+                            }
+
+                            const result = $state.snapshot(product);
+                            const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                            if (fieldToUpdate) {
+                                fieldToUpdate.value = {
+                                    value: e.target.checked ? "true" : "false",
+                                    is_custom: false,
+                                };
+                                onChange?.(result);
+                            }
+                        }} />
+                </div>
             {:else}
                 <p>--</p>
             {/if}

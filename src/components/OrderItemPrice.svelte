@@ -24,10 +24,18 @@
 
             switch (field.type) {
                 case "radio":
+                case "color":
                 case "select": {
                     const items = (field as RadioField | SelectField).items;
-                    const selectedItem = items.find((item) => item.value === field.value?.value);
+                    const selectedItem = items?.find((item) => item.value === field.value?.value);
                     priceParts.push({ label: field.label || field.name, price: selectedItem?.price ?? 0 });
+                    break;
+                }
+                case "toggle": {
+                    priceParts.push({
+                        label: field.label || field.name,
+                        price: field.value?.value === "true" ? (field.price ?? 0) : 0,
+                    });
                     break;
                 }
                 default:
@@ -35,10 +43,12 @@
             }
         }
 
-        priceParts.push({
-            label: "Anyag",
-            price: product.materials?.find((m) => m.material === product.material_value?.material_id)?.price ?? 0,
-        });
+        if (product.materials && product.materials.length > 0) {
+            priceParts.push({
+                label: "Anyag",
+                price: product.materials?.find((m) => m.material === product.material_value?.material_id)?.price ?? 0,
+            });
+        }
         return priceParts;
     });
 </script>

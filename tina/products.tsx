@@ -60,7 +60,17 @@ export interface RadioField extends BaseField {
     allow_custom_value?: boolean;
 }
 
-export type Field = InputField | SelectField | RadioField;
+export interface ColorField extends BaseField {
+    type: "color";
+    items: Option[];
+    allow_custom_value?: boolean;
+}
+
+export interface BooleanField extends BaseField {
+    type: "toggle";
+}
+
+export type Field = InputField | SelectField | RadioField | ColorField | BooleanField;
 
 export interface ProductMaterial {
     material: string;
@@ -215,6 +225,8 @@ export const PRODUCT: TinaField<false>[] = [
                     { value: "input", label: "Szöveg" },
                     { value: "select", label: "Legördülő" },
                     { value: "radio", label: "Gombos - egyválasztós" },
+                    { value: "color", label: "Szín" },
+                    { value: "toggle", label: "Igen/Nem" },
                 ],
                 label: "Mező típus",
             },
@@ -227,7 +239,16 @@ export const PRODUCT: TinaField<false>[] = [
                 ui: {
                     itemProps: (item) => {
                         return { label: item?.label || item?.value || "Új mező" };
-                    }
+                    },
+                    component(props) {
+                        const castedProps = props as unknown as InputFieldType<GroupFieldProps, Parameters<typeof ReferenceField>[0]>;
+                        const value = props.field.name.split(".").slice(0, -1).reduce((obj, key) => obj && obj[key], castedProps.form.getState().values).type;
+                        if (value === "toggle") {
+                            return null;
+                        }
+
+                        return GroupListField(castedProps as any);
+                    },
                 },
                 fields: [
                     {
@@ -296,7 +317,7 @@ export const PRODUCT: TinaField<false>[] = [
                     component(props) {
                         const castedProps = props as unknown as InputFieldType<ToggleProps, Parameters<typeof ReferenceField>[0]>;
                         const typeValue = props.field.name.split(".").slice(0, -1).reduce((obj, key) => obj && obj[key], castedProps.form.getState().values).type;
-                        if (typeValue != "select" && typeValue != "radio") {
+                        if (typeValue != "select" && typeValue != "radio" && typeValue != "color") {
                             return null;
                         }
 

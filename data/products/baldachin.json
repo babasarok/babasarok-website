@@ -1,0 +1,37 @@
+{
+  "product_id": "baldachin",
+  "name": "Baldachin",
+  "fields": [
+    {
+      "name": "szin",
+      "label": "Szín",
+      "type": "color",
+      "allow_custom_value": true
+    },
+    {
+      "name": "suruseg",
+      "label": "Sűrűség",
+      "type": "radio",
+      "items": [
+        {
+          "value": "6",
+          "label": "6m"
+        },
+        {
+          "value": "9",
+          "label": "9m"
+        },
+        {
+          "value": "12",
+          "label": "12m"
+        }
+      ]
+    },
+    {
+      "name": "pompom",
+      "price": 500,
+      "label": "Pompom",
+      "type": "toggle"
+    }
+  ]
+}
