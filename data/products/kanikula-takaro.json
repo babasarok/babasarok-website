@@ -10,11 +10,6 @@
       "type": "radio",
       "items": [
         {
-          "value": "egyretegu",
-          "label": "Egyrétegű",
-          "price": 1900
-        },
-        {
           "value": "ketretegu",
           "label": "Kétrétegű",
           "price": 5800
