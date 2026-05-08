@@ -7,7 +7,8 @@
       "name": "szin",
       "price": 0,
       "label": "Szín",
-      "type": "color"
+      "type": "color",
+      "allow_custom_value": true
     }
   ]
 }
