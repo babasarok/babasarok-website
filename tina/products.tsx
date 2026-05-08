@@ -97,6 +97,7 @@ export interface Product {
         material_id: string;
         colors: string[];
         custom_color?: string | undefined;
+        error?: string | undefined;
     }[]
 }
 
@@ -305,14 +306,15 @@ export const PRODUCT: TinaField<false>[] = [
                         label: "Fix ár",
                         description: "Méterárunál ez az opció fix árnak lesz tekintve.",
                         ui: {
-                            component(props) {
-                                const length_based_pricing_source = getValue(props, "../../length_based_pricing_source");
-                                if (!length_based_pricing_source) {
-                                    return null;
-                                }
+                            // component(props) {
+                            //     const length_based_pricing_source = getValue(props, "../../length_based_pricing_source");
+                            //     if (!length_based_pricing_source) {
+                            //         return null;
+                            //     }
 
-                                return ToggleField(props as any);
-                            }
+                            //     return ToggleField(props as any);
+                            // }
+                            component: "hidden"
                         }
                     },
                     {
