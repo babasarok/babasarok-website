@@ -1,0 +1,28 @@
+{
+  "product_id": "babatakaro-szett",
+  "name": "Babatakaró szett",
+  "materials": [
+    {
+      "material": "data/materials/teddy.json"
+    },
+    {
+      "material": "data/materials/pamutvaszon.json"
+    },
+    {
+      "material": "data/materials/minky.json"
+    },
+    {
+      "material": "data/materials/potty-nelkuli-minky.json"
+    },
+    {
+      "material": "data/materials/wellsoft.json"
+    },
+    {
+      "material": "data/materials/duplagez.json"
+    },
+    {
+      "material": "data/materials/waffle.json"
+    }
+  ],
+  "material_required_count": 2
+}

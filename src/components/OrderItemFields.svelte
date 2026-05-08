@@ -29,7 +29,7 @@
                 }
 
                 const result = $state.snapshot(product);
-                const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
                 if (fieldToUpdate) {
                     fieldToUpdate.value = {
                         value: e.target.value,
@@ -60,7 +60,7 @@
 {/snippet}
 
 <!-- Generic fields -->
-{#each product.fields as field}
+{#each product.fields ?? [] as field}
     <div class="flex flex-col gap-1">
         <p class="text-sm text-primary-500">{field.label || field.name}</p>
         <div class="flex gap-1 flex-wrap">
@@ -74,7 +74,7 @@
                             {selected}
                             onclick={() => {
                                 const result = $state.snapshot(product);
-                                const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                                const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
                                 if (fieldToUpdate) {
                                     fieldToUpdate.value = {
                                         value: item.value,
@@ -107,7 +107,7 @@
                             selected={field.value?.is_custom}
                             onclick={() => {
                                 const result = $state.snapshot(product);
-                                const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                                const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
                                 if (fieldToUpdate) {
                                     fieldToUpdate.value = {
                                         value: "",
@@ -130,7 +130,7 @@
                         }
 
                         const result = $state.snapshot(product);
-                        const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                        const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
                         if (fieldToUpdate) {
                             fieldToUpdate.value = {
                                 value: e.target.value,
@@ -157,7 +157,7 @@
                             {selected}
                             onclick={(color_id) => {
                                 const result = $state.snapshot(product);
-                                const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                                const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
                                 if (fieldToUpdate) {
                                     fieldToUpdate.value = {
                                         value: color_id,
@@ -174,7 +174,7 @@
                                 selected={field.value?.is_custom}
                                 onclick={() => {
                                     const result = $state.snapshot(product);
-                                    const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                                    const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
                                     if (fieldToUpdate) {
                                         fieldToUpdate.value = {
                                             value: "",
@@ -199,7 +199,7 @@
                             }
 
                             const result = $state.snapshot(product);
-                            const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                            const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
                             if (fieldToUpdate) {
                                 fieldToUpdate.value = {
                                     value: e.target.checked ? "true" : "false",

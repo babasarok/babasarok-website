@@ -84,7 +84,7 @@ export interface Product {
     icon?: string;
     priced_by_length?: boolean;
     price?: number;
-    fields: Field[];
+    fields?: Field[];
     materials?: ProductMaterial[];
     material_required_count?: number;
     material_values?: {

@@ -17,7 +17,7 @@
     const priceParts = $derived.by(() => {
         let priceParts: PricePart[] = [];
         priceParts.push({ label: "Alapár", price: product.price });
-        for (const field of product.fields) {
+        for (const field of product.fields ?? []) {
             if (field.length_based_pricing_source) {
                 continue;
             }
@@ -99,8 +99,9 @@
         {/if}
         <svelte:boundary>
             {@const totalPrice = Math.round(priceParts.reduce((sum, part) => sum + (part.price ?? 0), 0))}
-            {@const length = product.fields.find((f) => f.length_based_pricing_source)?.value?.value
-                ? Number.parseFloat(product.fields.find((f) => f.length_based_pricing_source)!.value!.value) / 100
+            {@const indeterminatePrice = priceParts.some((part) => part.price === undefined)}
+            {@const length = product.fields?.find((f) => f.length_based_pricing_source)?.value?.value
+                ? Number.parseFloat(product.fields?.find((f) => f.length_based_pricing_source)!.value!.value) / 100
                 : 0}
             {@const finalPrice = product.priced_by_length
                 ? Number.isNaN(length) || length <= 0
@@ -116,7 +117,8 @@
                     {/if}
                 </p>
                 <p>
-                    {finalPrice !== undefined ? `${finalPrice * product.count} Ft` : "--"}
+                    {finalPrice !== undefined ? `${finalPrice} Ft` : "--"}
+                    {indeterminatePrice ? " + ??" : ""}
                 </p>
             </div>
             {#if product.count > 1}
@@ -124,6 +126,7 @@
                     <p>Összesen</p>
                     <p>
                         {finalPrice !== undefined ? `${finalPrice * product.count} Ft` : "--"}
+                        {indeterminatePrice ? " + ??" : ""}
                     </p>
                 </div>
             {/if}

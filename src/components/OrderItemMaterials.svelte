@@ -18,7 +18,7 @@
     const { product, materials, onChange, material_index = 0 }: Props = $props();
 
     function resolveValue(name: string, product: ProductItem): number | undefined {
-        const current = product.fields.find((f) => f.name === name)?.value?.value;
+        const current = product.fields?.find((f) => f.name === name)?.value?.value;
 
         if (!current) {
             return undefined;
