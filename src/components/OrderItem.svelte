@@ -41,7 +41,9 @@
     </div>
     <div class="w-full h-0.5 bg-border"></div>
     <OrderItemFields {product} {onChange} />
-    <OrderItemMaterials {product} {materials} {onChange} />
+    {#each Array(product.material_required_count ?? 0) as _, i}
+        <OrderItemMaterials {product} {materials} {onChange} material_index={i} />
+    {/each}
     <div class="w-full h-0.5 bg-border"></div>
     <div class="flex justify-between items-center">
         <IconButton

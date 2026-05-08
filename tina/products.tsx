@@ -86,10 +86,11 @@ export interface Product {
     price?: number;
     fields: Field[];
     materials?: ProductMaterial[];
-    material_value?: {
+    material_required_count?: number;
+    material_values?: {
         material_id: string;
         colors: string[]
-    }
+    }[]
 }
 
 export interface ProductItem extends Product {
@@ -181,6 +182,12 @@ export const PRODUCT: TinaField<false>[] = [
                 description: "Az alap 1. Ha egy másik mező az alapja, írd be a Mező ID-jét. A Mezó szám alapú legyen.",
             }
         ],
+    },
+    {
+        type: "number",
+        name: "material_required_count",
+        label: "Szükséges anyagok száma",
+        description: "Ennek a terméknek a rendeléséhez hány anyagra van szükség. Ez csak akkor lesz releváns, ha anyagokat adtál hozzá a termékhez.",
     },
     {
         type: "object",

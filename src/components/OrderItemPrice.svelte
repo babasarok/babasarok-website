@@ -28,13 +28,18 @@
                 case "select": {
                     const items = (field as RadioField | SelectField).items;
                     const selectedItem = items?.find((item) => item.value === field.value?.value);
-                    priceParts.push({ label: field.label || field.name, price: selectedItem?.price ?? 0 });
+                    priceParts.push({ label: field.label || field.name, price: selectedItem?.price });
                     break;
                 }
                 case "toggle": {
                     priceParts.push({
                         label: field.label || field.name,
-                        price: field.value?.value === "true" ? (field.price ?? 0) : 0,
+                        price:
+                            field.value?.value === undefined
+                                ? undefined
+                                : field.value?.value === "true"
+                                  ? field.price
+                                  : 0,
                     });
                     break;
                 }
@@ -44,10 +49,13 @@
         }
 
         if (product.materials && product.materials.length > 0) {
-            priceParts.push({
-                label: "Anyag",
-                price: product.materials?.find((m) => m.material === product.material_value?.material_id)?.price ?? 0,
-            });
+            for (let i = 0; i < (product.material_required_count ?? 0); i++) {
+                const material = product.materials?.[i];
+                priceParts.push({
+                    label: (product.material_required_count ?? 0) == 1 ? "Anyag" : `Anyag ${i + 1}`,
+                    price: material.price,
+                });
+            }
         }
         return priceParts;
     });

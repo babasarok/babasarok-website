@@ -10,11 +10,12 @@
 
     interface Props {
         product: ProductItem;
+        material_index?: number;
         materials: Record<string, Material> | null;
         onChange?: (product: ProductItem) => void;
     }
 
-    const { product, materials, onChange }: Props = $props();
+    const { product, materials, onChange, material_index = 0 }: Props = $props();
 
     function resolveValue(name: string, product: ProductItem): number | undefined {
         const current = product.fields.find((f) => f.name === name)?.value?.value;
@@ -49,19 +50,23 @@
 
 {#if product.materials && product.materials.length > 0}
     <div class="flex flex-col gap-1">
-        <p class="text-sm text-primary-500">Anyag</p>
+        <p class="text-sm text-primary-500">
+            {(product.material_required_count ?? 0) == 1 ? "Anyag" : `Anyag ${material_index + 1}`}
+        </p>
         <div class="flex gap-1 flex-wrap">
             {#each product.materials as material}
                 {@const materialInfo = materials ? materials[material.material] : null}
                 {#if materialInfo}
-                    {@const selected = product.material_value?.material_id === materialInfo.material_id}
+                    {@const selected =
+                        product.material_values?.[material_index]?.material_id === materialInfo.material_id}
                     <Button
                         type="button"
                         class="flex items-center gap-0.5"
                         {selected}
                         onclick={() => {
                             const result = $state.snapshot(product);
-                            result.material_value = {
+                            result.material_values = result.material_values || [];
+                            result.material_values[material_index] = {
                                 material_id: materialInfo.material_id,
                                 colors: [],
                             };
@@ -73,12 +78,16 @@
             {/each}
         </div>
     </div>
-    {#if product.material_value}
+    {#if product.material_values?.[material_index]}
         {@const materialInfo = materials
-            ? Object.values(materials).find((m) => m.material_id === product.material_value?.material_id)
+            ? Object.values(materials).find(
+                  (m) => m.material_id === product.material_values?.[material_index]?.material_id
+              )
             : null}
         {@const productMaterial = product.materials
-            ? product.materials.find((m) => m.material === `data/materials/${product.material_value?.material_id}.json`)
+            ? product.materials.find(
+                  (m) => m.material === `data/materials/${product.material_values?.[material_index]?.material_id}.json`
+              )
             : null}
         {#if materialInfo?.colors && materialInfo.colors.length > 0}
             {@const colorCount = generateColorCount(productMaterial!, product)}
@@ -88,7 +97,7 @@
                     <span> Szín </span>
                     {#if multiColor}
                         <span class="text-xs">
-                            ({product.material_value.colors.length ?? 0} / {colorCount})
+                            ({product.material_values?.[material_index]?.colors.length ?? 0} / {colorCount})
                         </span>
                     {/if}
                 </p>
@@ -98,17 +107,17 @@
                 </p>
                 {#if multiColor}
                     <div class="flex gap-1 flex-wrap">
-                        {#each product.material_value?.colors as colorId, index}
+                        {#each product.material_values?.[material_index]?.colors as colorId, index}
                             {@const colorInfo = materialInfo.colors.find((c) => c.color_id === colorId)}
                             {#if colorInfo}
                                 <Chip
                                     color={colorInfo.hex}
                                     onClose={() => {
                                         const result = $state.snapshot(product);
-                                        if (result.material_value) {
-                                            result.material_value.colors = [
-                                                ...result.material_value.colors.slice(0, index),
-                                                ...result.material_value.colors.slice(index + 1),
+                                        if (result.material_values?.[material_index]) {
+                                            result.material_values[material_index].colors = [
+                                                ...result.material_values[material_index].colors.slice(0, index),
+                                                ...result.material_values[material_index].colors.slice(index + 1),
                                             ];
                                         }
                                         onChange?.(result);
@@ -121,22 +130,24 @@
                 {/if}
                 <div class="flex gap-1 flex-wrap">
                     {#each materialInfo?.colors || [] as color}
-                        {@const selected = product.material_value?.colors.includes(color.color_id)}
+                        {@const selected = product.material_values?.[material_index]?.colors.includes(color.color_id)}
                         <Color
                             {color}
                             disabled={colorCount === undefined ||
-                                (multiColor ? (product.material_value?.colors.length ?? 0) >= colorCount : false)}
+                                (multiColor
+                                    ? (product.material_values?.[material_index]?.colors.length ?? 0) >= colorCount
+                                    : false)}
                             selected={!multiColor && selected}
                             onclick={() => {
                                 const result = $state.snapshot(product);
-                                if (!result.material_value) {
+                                if (!result.material_values?.[material_index]) {
                                     return;
                                 }
 
                                 if (multiColor) {
-                                    result.material_value.colors.push(color.color_id);
+                                    result.material_values[material_index].colors.push(color.color_id);
                                 } else {
-                                    result.material_value.colors = [color.color_id];
+                                    result.material_values[material_index].colors = [color.color_id];
                                 }
                                 onChange?.(result);
                             }} />
