@@ -6,17 +6,17 @@
     "price": 0,
     "materials": [
         {
-            "material": "data/materials/velur.json",
+            "material_path": "data/materials/velur.json",
             "price": 1100,
             "color_count": "fonas"
         },
         {
-            "material": "data/materials/pamutjersey.json",
+            "material_path": "data/materials/pamutjersey.json",
             "price": 0,
             "color_count": "fonas"
         },
         {
-            "material": "data/materials/teddy.json",
+            "material_path": "data/materials/teddy.json",
             "price": 1100,
             "color_count": "fonas"
         }

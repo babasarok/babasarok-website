@@ -1,62 +1,62 @@
 {
-  "product_id": "hagyomanyos-racsvedo",
-  "name": "Hagyományos Rácsvédő",
-  "priced_by_length": true,
-  "price": 6500,
-  "materials": [
-    {
-      "material": "data/materials/minky.json"
-    },
-    {
-      "material": "data/materials/teddy.json"
-    },
-    {
-      "material": "data/materials/potty-nelkuli-minky.json"
-    },
-    {
-      "material": "data/materials/pamutvaszon.json"
-    },
-    {
-      "material": "data/materials/wellsoft.json"
-    }
-  ],
-  "fields": [
-    {
-      "name": "meret",
-      "length_based_pricing_source": true,
-      "label": "Méret",
-      "type": "radio",
-      "items": [
+    "product_id": "hagyomanyos-racsvedo",
+    "name": "Hagyományos Rácsvédő",
+    "priced_by_length": true,
+    "price": 6500,
+    "materials": [
         {
-          "value": "330",
-          "label": "60x120cm"
+            "material_path": "data/materials/minky.json"
         },
         {
-          "value": "340",
-          "label": "70x120cm"
+            "material_path": "data/materials/teddy.json"
         },
         {
-          "value": "350",
-          "label": "70x140cm"
+            "material_path": "data/materials/potty-nelkuli-minky.json"
         },
         {
-          "value": "60",
-          "label": "60cm"
+            "material_path": "data/materials/pamutvaszon.json"
         },
         {
-          "value": "70",
-          "label": "70cm"
-        },
-        {
-          "value": "120",
-          "label": "120cm"
-        },
-        {
-          "value": "140",
-          "label": "140cm"
+            "material_path": "data/materials/wellsoft.json"
         }
-      ],
-      "regex": "^(\\d+)$"
-    }
-  ]
+    ],
+    "fields": [
+        {
+            "name": "meret",
+            "length_based_pricing_source": true,
+            "label": "Méret",
+            "type": "radio",
+            "items": [
+                {
+                    "value": "330",
+                    "label": "60x120cm"
+                },
+                {
+                    "value": "340",
+                    "label": "70x120cm"
+                },
+                {
+                    "value": "350",
+                    "label": "70x140cm"
+                },
+                {
+                    "value": "60",
+                    "label": "60cm"
+                },
+                {
+                    "value": "70",
+                    "label": "70cm"
+                },
+                {
+                    "value": "120",
+                    "label": "120cm"
+                },
+                {
+                    "value": "140",
+                    "label": "140cm"
+                }
+            ],
+            "regex": "^(\\d+)$"
+        }
+    ]
 }

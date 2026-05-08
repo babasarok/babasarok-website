@@ -74,7 +74,7 @@ export interface BooleanField extends BaseField {
 export type Field = InputField | SelectField | RadioField | ColorField | BooleanField;
 
 export interface ProductMaterial {
-    material: string;
+    material_path: string;
     price?: number;
     color_count?: string;
 }
@@ -163,13 +163,13 @@ export const PRODUCT: TinaField<false>[] = [
         description: "A termékhez tartozó anyagok. Ha nincs egy se hozzáadva, akkor a termékhez nem lesz anyag kiválasztási lehetőség a rendelési felületen.",
         ui: {
             itemProps: (item) => {
-                return { label: item?.material || "Új anyag" };
+                return { label: item?.material_path || "Új anyag" };
             },
         },
         fields: [
             {
                 type: "reference",
-                name: "material",
+                name: "material_path",
                 label: "Anyag",
                 description: "Válassz egy anyagot a listából.",
                 collections: ["product_materials"],
@@ -312,7 +312,7 @@ export const PRODUCT: TinaField<false>[] = [
                                 }
 
                                 return ToggleField(props as any);
-                            },
+                            }
                         }
                     },
                     {

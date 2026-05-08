@@ -52,11 +52,11 @@
 {#if product.materials && product.materials.length > 0}
     <div class="flex flex-col gap-1">
         <p class="text-sm text-primary-500">
-            {(product.material_required_count ?? 0) == 1 ? "Anyag" : `Anyag ${material_index + 1}`}
+            {(product.material_required_count ?? 1) == 1 ? "Anyag" : `Anyag ${material_index + 1}`}
         </p>
         <div class="flex gap-1 flex-wrap">
             {#each product.materials as material}
-                {@const materialInfo = materials ? materials[material.material] : null}
+                {@const materialInfo = materials ? materials[material.material_path] : null}
                 {#if materialInfo}
                     {@const selected =
                         product.material_values?.[material_index]?.material_id === materialInfo.material_id}
@@ -87,7 +87,9 @@
             : null}
         {@const productMaterial = product.materials
             ? product.materials.find(
-                  (m) => m.material === `data/materials/${product.material_values?.[material_index]?.material_id}.json`
+                  (m) =>
+                      m.material_path ===
+                      `data/materials/${product.material_values?.[material_index]?.material_id}.json`
               )
             : null}
         {@const colorCount = generateColorCount(productMaterial!, product)}
@@ -137,7 +139,7 @@
             {/if}
             {#if (materialInfo?.colors.length ?? 0) > 0}
                 <div transition:slide class="flex gap-1 flex-wrap">
-                    {#each materialInfo?.colors || [] as color}
+                    {#each materialInfo?.colors || [] as color (color.color_id)}
                         {@const selected = product.material_values?.[material_index]?.colors.includes(color.color_id)}
                         <Color
                             {color}

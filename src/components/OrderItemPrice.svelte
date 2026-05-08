@@ -49,11 +49,14 @@
         }
 
         if (product.materials && product.materials.length > 0) {
-            for (let i = 0; i < (product.material_required_count ?? 0); i++) {
-                const material = product.materials?.[i];
+            for (let i = 0; i < (product.material_required_count ?? 1); i++) {
+                const material = product.material_values?.[i];
+                const price = product.materials.find(
+                    (m) => m.material_path === `data/materials/${material?.material_id}.json`
+                )?.price;
                 priceParts.push({
-                    label: (product.material_required_count ?? 0) == 1 ? "Anyag" : `Anyag ${i + 1}`,
-                    price: material.price,
+                    label: (product.material_required_count ?? 1) == 1 ? "Anyag" : `Anyag ${i + 1}`,
+                    price: price,
                 });
             }
         }
