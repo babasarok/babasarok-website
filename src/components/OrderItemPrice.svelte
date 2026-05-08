@@ -78,7 +78,7 @@
             <div class="flex justify-between">
                 <p>{part.label}</p>
                 <p>
-                    {part.price !== undefined ? `${index != 0 ? "+" : ""}${part.price} Ft` : "--"}
+                    {part.price !== undefined ? `${index != 0 ? "+" : ""}${part.price} Ft` : "??"}
                     {#if product.priced_by_length}
                         /m
                     {/if}
@@ -117,7 +117,7 @@
                     {/if}
                 </p>
                 <p>
-                    {finalPrice !== undefined ? `${finalPrice} Ft` : "--"}
+                    {finalPrice !== undefined ? `${finalPrice} Ft` : "??"}
                     {indeterminatePrice ? " + ??" : ""}
                 </p>
             </div>
@@ -125,7 +125,7 @@
                 <div class="flex justify-between font-medium">
                     <p>Összesen</p>
                     <p>
-                        {finalPrice !== undefined ? `${finalPrice * product.count} Ft` : "--"}
+                        {finalPrice !== undefined ? `${finalPrice * product.count} Ft` : "??"}
                         {indeterminatePrice ? " + ??" : ""}
                     </p>
                 </div>

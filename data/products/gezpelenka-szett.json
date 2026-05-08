@@ -1,0 +1,13 @@
+{
+  "product_id": "gezpelenka-szett",
+  "name": "Gézpelenka szett",
+  "price": 2800,
+  "fields": [
+    {
+      "name": "szin",
+      "label": "Szín",
+      "type": "color",
+      "allow_custom_value": true
+    }
+  ]
+}

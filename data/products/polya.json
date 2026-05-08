@@ -1,6 +1,7 @@
 {
   "product_id": "polya",
   "name": "Pólya",
+  "price": 6500,
   "materials": [
     {
       "material": "data/materials/teddy.json"
@@ -28,6 +29,7 @@
   "fields": [
     {
       "name": "kokuszbetet",
+      "price": 1200,
       "label": "Kókuszbetéttel",
       "type": "toggle"
     }
