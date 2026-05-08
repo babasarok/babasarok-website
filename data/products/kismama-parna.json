@@ -1,0 +1,11 @@
+{
+  "product_id": "kismama-parna",
+  "name": "Kismamapárna",
+  "price": 9500,
+  "materials": [
+    {
+      "material": "data/materials/pamutvaszon.json",
+      "price": 0
+    }
+  ]
+}

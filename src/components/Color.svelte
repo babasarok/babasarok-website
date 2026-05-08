@@ -19,8 +19,9 @@
     <IconButton type="button" {disabled} aria-selected={selected} onclick={() => onclick?.(color.color_id)}>
         <div
             class={[
-                "size-5 border-2 rounded-full hover:border-primary-400 transition-all p-px",
+                "size-5 border-2 rounded-full transition-all p-px",
                 selected ? "border-primary-500" : "border-transparent",
+                disabled ? "" : "hover:border-primary-400",
             ]}>
             <div class="rounded-full h-full w-full" style={`background-color: ${color.hex}`}></div>
         </div>

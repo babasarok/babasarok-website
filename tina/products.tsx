@@ -89,7 +89,8 @@ export interface Product {
     material_required_count?: number;
     material_values?: {
         material_id: string;
-        colors: string[]
+        colors: string[];
+        custom_color?: string | undefined;
     }[]
 }
 

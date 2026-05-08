@@ -12,7 +12,7 @@
     class={[
         "text-sm font-medium transition-all rounded-md",
         {
-            "border text-foreground border-border  px-3 py-1 hover:bg-primary-500 hover:text-surface":
+            "border text-foreground border-border  px-3 py-1 hover:bg-primary-500 disabled:bg-transparent disabled:text-foreground hover:text-surface":
                 variant === "outlined",
             "bg-primary-500 text-surface": selected && variant === "outlined",
             "text-primary-500 hover:text-primary-700": variant === "text",
