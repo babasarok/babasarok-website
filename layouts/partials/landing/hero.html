@@ -48,11 +48,16 @@
               <img
                 src="{{ $img.RelPermalink }}"
                 alt="hero-image"
-                style="
-                  -webkit-mask: url({{ "images/hero/hero-mask-svg.png" | absURL }});
-                  -webkit-mask-repeat: no-repeat;
-                  -webkit-mask-size: contain;
-                  -webkit-mask-position: center center;
+                style="clip-path: shape(from 30px 0%,
+  hline to calc(100% - 30px),
+  arc to 100% 30px of 30px 30px cw small,
+  vline to calc(100% - 30px),
+  arc to calc(100% - 30px) 100% of 30px 30px cw small,
+  line to 30px calc(100% - 30px),
+  arc to 0% calc(100% - 60px) of 30px 30px cw small,
+  vline to 30px,
+  arc to 30px 0% of 30px 30px cw small,
+  close);
                 " />
 
               {{ if .videoURL }}
