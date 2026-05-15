@@ -24,6 +24,18 @@ table:
     description: 24.300Ft
   - title: 400cm
     description: 25.600Ft
-shortDescription: 'A fonott rácsvédő nemcsak dizájnos kiegészítője a kiságyának, hanem praktikus védelmet is nyújt. Puha, pufi anyaga megóvja a baba fejét a rácsokkal való ütközéstől, különösen, amikor a pici már forogni kezd. Magas pamut tartalma, antiallergén töltete és mosóbarát jellege garantálja a bababarát környezetet, míg strapabíró kialakítása hosszú távú használatot biztosít.'
+shortDescription: 'A fonott rácsvédő nemcsak dizájnos kiegészítője a kiságyának, hanem praktikus védelmet is nyújt. Puha, pufi anyaga megóvja a baba fejét a rácsokkal való ütközéstől, különösen, amikor a pici már forogni kezd. '
 ---
 
+Fonataink háromféle anyagtípussal is kérhetők. 
+
+1, hagyományos pamutjersey -sokféle színválaszték, magas pamuttartalom
+
+2, Előkelő plüssvelúr-bársonyos jelleg, selymes tapintás
+
+3, Pihe-puha teddy (buklé) -dizájnos megjelenés, puha tapintás.
+
+Antiallergén töltete és mosóbarát jellege minden fonatnak garantálja a bababarát környezetet, míg strapabíró kialakítása hosszú távú használatot biztosít.
+
+| ![](/No%C3%A9mi-25.jpg) | ![](/No%C3%A9mi-18.jpg) | ![](/Noémi-39.jpg) |
+| ----------------------- | ----------------------- | ------------------ |
