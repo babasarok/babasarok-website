@@ -1,23 +1,12 @@
 import type { TinaField } from "tinacms";
 
-export interface MaterialColor {
-    color_id: string;
-    label: string;
-    hex?: string;
-}
-
-export interface Material {
-    material_id: string;
-    label: string;
-    colors: MaterialColor[];
-}
-
 export const MATERIALS: TinaField[] = [
     {
         type: "string",
         name: "material_id",
         description: "Egyedi! azonosító az anyaghoz, csak angol karaktereket és számokat tartalmazhat, szóköz nélkül. Pl: anyag-1",
         label: "Anyag ID",
+        required: true,
     },
     {
         type: "string",

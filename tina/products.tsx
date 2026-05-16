@@ -17,107 +17,20 @@ import {
 } from "tinacms";
 import { getValue } from "./utils";
 
-export interface Option {
-    value: string;
-    label?: string;
-    tooltip?: string;
-    price?: number;
-    fixed_price?: boolean;
-}
-
-export interface BaseField {
-    name: string;
-    label?: string;
-    /**
-     * Csak belső használatra, nem jelenik meg a felhasználó számára.
-     */
-    value?: {
-        value: string;
-        is_custom?: boolean;
-        error?: string | undefined;
-    };
-    length_based_pricing_source?: boolean;
-    regex?: string;
-    price?: number;
-}
-
-export interface InputField extends BaseField {
-    type: "input";
-    placeholder?: string;
-    items?: Option[];
-}
-
-export interface SelectField extends BaseField {
-    type: "select";
-    items: Option[];
-    multiple?: boolean;
-    placeholder?: string;
-    allow_custom_value?: boolean;
-}
-
-export interface RadioField extends BaseField {
-    type: "radio";
-    items: Option[];
-    allow_custom_value?: boolean;
-}
-
-export interface ColorField extends BaseField {
-    type: "color";
-    items: Option[];
-    allow_custom_value?: boolean;
-}
-
-export interface BooleanField extends BaseField {
-    type: "toggle";
-}
-
-export type Field = InputField | SelectField | RadioField | ColorField | BooleanField;
-
-export interface ProductMaterial {
-    material_path: string;
-    price?: number;
-    color_count?: string;
-}
-
-export interface ProductTieIn {
-    product_id: string;
-}
-
-export interface Product {
-    product_id: string;
-    name: string;
-    icon?: string;
-    priced_by_length?: boolean;
-    price?: number;
-    fields?: Field[];
-    materials?: ProductMaterial[];
-    tie_ins?: ProductTieIn[];
-    material_required_count?: number;
-    material_values?: {
-        material_id: string;
-        colors: string[];
-        custom_color?: string | undefined;
-        error?: string | undefined;
-    }[]
-}
-
-export interface ProductItem extends Product {
-    uuid: string;
-    count: number;
-}
-
 export const PRODUCT: TinaField<false>[] = [
     {
         type: "string",
         name: "product_id",
         description: "Egyedi! azonosító a termékhez, csak angol karaktereket és számokat tartalmazhat, szóköz nélkül. Pl: termek-1",
         label: "Termék ID",
+        required: true,
     },
     {
         type: "string",
         name: "name",
         description: "A termék megjelenítendő neve, ami a felhasználó számára látható.",
         label: "Termék név",
+        required: true,
     },
     {
         type: "image",
@@ -153,6 +66,7 @@ export const PRODUCT: TinaField<false>[] = [
                 name: "product_id",
                 label: "Termék",
                 collections: ["product_data"],
+                required: true,
             },
         ]
     },
@@ -174,6 +88,7 @@ export const PRODUCT: TinaField<false>[] = [
                 label: "Anyag",
                 description: "Válassz egy anyagot a listából.",
                 collections: ["product_materials"],
+                required: true,
             },
             {
                 type: "number",
@@ -193,7 +108,7 @@ export const PRODUCT: TinaField<false>[] = [
         type: "number",
         name: "material_required_count",
         label: "Szükséges anyagok száma",
-        description: "Ennek a terméknek a rendeléséhez hány anyagra van szükség. Ez csak akkor lesz releváns, ha anyagokat adtál hozzá a termékhez.",
+        description: "Ennek a terméknek a rendeléséhez hány anyagra van szükség. Ez csak akkor lesz releváns, ha anyagokat adtál hozzá a termékhez. Az alap 1.",
     },
     {
         type: "object",

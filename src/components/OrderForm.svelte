@@ -3,58 +3,104 @@
 <script module lang="ts">
     import Icon from "@iconify/svelte";
     import OrderItem from "./OrderItem.svelte";
-    import type { Product, ProductItem } from "../../tina/products";
-    import type { Material } from "../../tina/materials";
+    import { productValidator } from "../../tina/productTypes";
+    import { materialValidator } from "../../tina/materialTypes";
     import { v4 as uuidv4 } from "uuid";
-    import { flip } from "svelte/animate";
     import { fade } from "svelte/transition";
     import IconButton from "./IconButton.svelte";
     import Button from "./Button.svelte";
+    import { nonEmptyObject, type ProductItem, type ProductResolved, type ResolvedMaterial } from "../lib/types";
+    import z from "zod";
 
-    let productInfo: Record<string, Product> | null = $state(null);
-    let materialInfo: Record<string, Material> | null = $state(null);
+    export const materialsResponseValidator = z.record(z.string(), materialValidator).transform((record) => {
+        const result: Record<string, ResolvedMaterial> = {};
+        for (const key in record) {
+            const material = record[key];
+
+            result[key] = {
+                ...material,
+                colors: material.colors?.filter((x) => nonEmptyObject(x)),
+            };
+        }
+        return result;
+    });
+
+    export const productsResponseValidator = (materials: Record<string, ResolvedMaterial>) =>
+        z.record(z.string(), productValidator).transform((record) => {
+            const result: Record<string, ProductResolved> = {};
+            for (const key in record) {
+                const product = record[key];
+
+                result[key] = {
+                    ...product,
+                    materials: product.materials
+                        ?.filter((x) => nonEmptyObject(x))
+                        .map((material) => ({
+                            ...material,
+                            material: materials[material.material_path],
+                        })),
+                    fields: product.fields
+                        ?.filter((x) => nonEmptyObject(x))
+                        .map((field) => {
+                            switch (field.type) {
+                                case "input":
+                                    return {
+                                        ...field,
+                                        type: "input",
+                                        items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
+                                    };
+                                case "select":
+                                    return {
+                                        ...field,
+                                        type: "select",
+                                        items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
+                                    };
+                                case "radio":
+                                    return {
+                                        ...field,
+                                        type: "radio",
+                                        items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
+                                    };
+                                case "color":
+                                    return {
+                                        ...field,
+                                        type: "color",
+                                        items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
+                                    };
+                                case "toggle":
+                                    return { ...field, type: "toggle" };
+                            }
+                        }),
+                };
+            }
+            return result;
+        });
+
+    let productInfo: Record<string, ProductResolved> | null = $state(null);
+    let materialInfo: Record<string, ResolvedMaterial> | null = $state(null);
 
     async function main() {
         const productResponse = await fetch("/json/product-data.json");
         const materialsResponse = await fetch("/json/material-data.json");
-        productInfo = await productResponse.json();
-        materialInfo = await materialsResponse.json();
+        const materialsResult = await materialsResponseValidator.safeParseAsync(await materialsResponse.json());
+        if (!materialsResult.success) {
+            console.error("Failed to parse materials data", materialsResult.error);
+            return;
+        }
+        const productsResult = await productsResponseValidator(materialsResult.data).safeParseAsync(
+            await productResponse.json()
+        );
+        if (!productsResult.success) {
+            console.error("Failed to parse products data", productsResult.error);
+            return;
+        }
+
+        materialInfo = materialsResult.data;
+        productInfo = productsResult.data;
     }
 
     let productSelectValue: string = $state("");
     let products: ProductItem[] = $state([]);
-
-    const valid = $derived.by(() => {
-        if (!products.length) {
-            return false;
-        }
-
-        for (const product of products) {
-            if (product.materials && product.materials.length > 0) {
-                if (!product.material_value || !product.material_value.material_id) {
-                    return false;
-                }
-
-                const material = materialInfo
-                    ? Object.values(materialInfo).find((m) => m.material_id === product.material_value?.material_id)
-                    : null;
-                if (!material) {
-                    return false;
-                }
-
-                // TODO: validate color count
-            }
-
-            for (const field of product.fields) {
-                if (!field.value) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    });
-
     main();
 </script>
 
@@ -138,6 +184,6 @@
                 {/each}
             </div>
         </div>
-        <Button disabled={!valid} variant="contained" type="submit">Árajánlat kérése</Button>
+        <Button variant="contained" type="submit">Árajánlat kérése</Button>
     </div>
 </form>

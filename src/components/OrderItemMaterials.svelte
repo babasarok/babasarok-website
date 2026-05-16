@@ -1,6 +1,6 @@
 <script lang="ts">
     import IconButton from "./IconButton.svelte";
-    import type { ProductItem, ProductMaterial } from "../../tina/products";
+    import type { ProductMaterial } from "../../tina/products";
     import type { Material } from "../../tina/materials";
     import Button from "./Button.svelte";
     import Tooltip from "./Tooltip.svelte";
@@ -8,15 +8,15 @@
     import Icon from "@iconify/svelte";
     import Color from "./Color.svelte";
     import { slide } from "svelte/transition";
+    import type { ProductItem } from "../lib/types";
 
     interface Props {
         product: ProductItem;
         material_index?: number;
-        materials: Record<string, Material> | null;
         onChange?: (product: ProductItem) => void;
     }
 
-    const { product, materials, onChange, material_index = 0 }: Props = $props();
+    const { product, onChange, material_index = 0 }: Props = $props();
 
     function resolveValue(name: string, product: ProductItem): number | undefined {
         const current = product.fields?.find((f) => f.name === name)?.value?.value;
@@ -56,7 +56,7 @@
         </p>
         <div class="flex gap-1 flex-wrap">
             {#each product.materials as material}
-                {@const materialInfo = materials ? materials[material.material_path] : null}
+                {@const materialInfo = material.material}
                 {#if materialInfo}
                     {@const selected =
                         product.material_values?.[material_index]?.material_id === materialInfo.material_id}
@@ -80,18 +80,10 @@
         </div>
     </div>
     {#if product.material_values?.[material_index]}
-        {@const materialInfo = materials
-            ? Object.values(materials).find(
-                  (m) => m.material_id === product.material_values?.[material_index]?.material_id
-              )
-            : null}
-        {@const productMaterial = product.materials
-            ? product.materials.find(
-                  (m) =>
-                      m.material_path ===
-                      `data/materials/${product.material_values?.[material_index]?.material_id}.json`
-              )
-            : null}
+        {@const productMaterial = product.materials?.find(
+            (m) => m.material.material_id === product.material_values?.[material_index]?.material_id
+        )}
+        {@const materialInfo = productMaterial?.material}
         {@const colorCount = generateColorCount(productMaterial!, product)}
         {@const multiColor = (colorCount ?? 0) > 1}
         {@const disabled =
@@ -106,7 +98,7 @@
                     </span>
                 {/if}
             </p>
-            {#if (materialInfo?.colors.length ?? 0) > 0}
+            {#if (materialInfo?.colors?.length ?? 0) > 0}
                 <p
                     transition:slide
                     class="text-xs text-primary-500 flex items-center gap-1 border-1 border-primary-light rounded p-1">
@@ -117,7 +109,7 @@
             {#if multiColor}
                 <div class="flex gap-1 flex-wrap">
                     {#each product.material_values?.[material_index]?.colors as colorId, index}
-                        {@const colorInfo = materialInfo?.colors.find((c) => c.color_id === colorId)}
+                        {@const colorInfo = materialInfo?.colors?.find((c) => c.color_id === colorId)}
                         {#if colorInfo}
                             <Chip
                                 color={colorInfo.hex}
@@ -137,7 +129,7 @@
                     {/each}
                 </div>
             {/if}
-            {#if (materialInfo?.colors.length ?? 0) > 0}
+            {#if (materialInfo?.colors?.length ?? 0) > 0}
                 <div transition:slide class="flex gap-1 flex-wrap">
                     {#each materialInfo?.colors || [] as color (color.color_id)}
                         {@const selected = product.material_values?.[material_index]?.colors.includes(color.color_id)}
@@ -163,7 +155,7 @@
                 </div>
             {/if}
         </div>
-        {#if (materialInfo?.colors.length ?? 0) > 0}
+        {#if (materialInfo?.colors?.length ?? 0) > 0}
             <Button
                 {disabled}
                 type="button"
@@ -179,7 +171,7 @@
                 Egyéb
             </Button>
         {/if}
-        {#if product.material_values?.[material_index]?.custom_color != undefined || (materialInfo?.colors.length ?? 0) === 0}
+        {#if product.material_values?.[material_index]?.custom_color != undefined || (materialInfo?.colors?.length ?? 0) === 0}
             <input
                 value={product.material_values?.[material_index]?.custom_color}
                 oninput={(e) => {

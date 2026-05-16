@@ -55,7 +55,8 @@
         "react-tinacms-editor": "^0.53.26",
         "tailwindcss": "^4.2.2",
         "tinacms": "^3.6.3",
-        "waypoints": "^4.0.1"
+        "waypoints": "^4.0.1",
+        "zod": "^4.4.3"
     },
     "devDependencies": {
         "@babel/cli": "^7.18.10",

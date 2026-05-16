@@ -1,7 +1,8 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import type { ProductItem, RadioField, SelectField } from "../../tina/products";
+    import type { RadioField, SelectField } from "../../tina/products";
     import Tooltip from "./Tooltip.svelte";
+    import type { ProductItem } from "../lib/types";
 
     interface Props {
         product: ProductItem;
