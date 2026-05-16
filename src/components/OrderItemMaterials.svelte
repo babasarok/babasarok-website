@@ -1,14 +1,12 @@
 <script lang="ts">
     import IconButton from "./IconButton.svelte";
-    import type { ProductMaterial } from "../../tina/products";
-    import type { Material } from "../../tina/materials";
     import Button from "./Button.svelte";
     import Tooltip from "./Tooltip.svelte";
     import Chip from "./Chip.svelte";
     import Icon from "@iconify/svelte";
     import Color from "./Color.svelte";
     import { slide } from "svelte/transition";
-    import type { ProductItem } from "../lib/types";
+    import type { ProductItem, ProductMaterialResolved } from "../lib/types";
 
     interface Props {
         product: ProductItem;
@@ -34,7 +32,7 @@
         return val;
     }
 
-    function generateColorCount(material: ProductMaterial, product: ProductItem): number | undefined {
+    function generateColorCount(material: ProductMaterialResolved, product: ProductItem): number | undefined {
         if (material.color_count === undefined) {
             return 1;
         }

@@ -1,16 +1,35 @@
-import type { Material } from "../../tina/materials";
-import type { Field, Product, ProductItem, ProductMaterial, ProductMaterialValue, RadioField, SelectField } from "../../tina/products";
+import type {
+    FieldInternal,
+    ProductItem,
+    ProductMaterialResolved,
+    ProductMaterialValue,
+    RadioFieldInternal,
+    SelectFieldInternal,
+} from "../lib/types";
 
 interface PricePart {
     label: string;
     price: number | undefined;
 }
 
-interface Price {
-    parts: PricePart[];
+interface BasePrice {
+    basePrice: PricePart;
+    options: PricePart[];
+    unitPrice: number;
+    totalPrice: number;
+    indeterminate: boolean;
 }
 
-function getFieldPrice(field: Field): PricePart | null {
+export interface Price extends BasePrice {
+    priced_by_length: false;
+}
+
+export interface LengthBasedPrice extends BasePrice {
+    priced_by_length: true;
+    length: number | undefined;
+}
+
+function getFieldPrice(field: FieldInternal): PricePart | null {
     if (field.length_based_pricing_source) {
         return null;
     }
@@ -19,19 +38,14 @@ function getFieldPrice(field: Field): PricePart | null {
         case "radio":
         case "color":
         case "select": {
-            const items = (field as RadioField | SelectField).items;
+            const items = (field as RadioFieldInternal | SelectFieldInternal).items;
             const selectedItem = items?.find((item) => item.value === field.value?.value);
             return { label: field.label || field.name, price: selectedItem?.price };
         }
         case "toggle": {
             return {
                 label: field.label || field.name,
-                price:
-                    field.value?.value === undefined
-                        ? undefined
-                        : field.value?.value === "true"
-                            ? field.price
-                            : 0,
+                price: field.value?.value === undefined ? undefined : field.value?.value === "true" ? field.price : 0,
             };
         }
         case "input": {
@@ -43,42 +57,70 @@ function getFieldPrice(field: Field): PricePart | null {
     }
 }
 
-function getMaterialPrice(value: ProductMaterialValue, productMaterials: ProductMaterial[], materialInfo: Material[]): PricePart | null {
-    const material = productMaterials.find(
-        (m) => m. === value.material_id
-    );
+function getMaterialPrice(
+    value: Pick<ProductMaterialValue, "material_id">,
+    productMaterials: ProductMaterialResolved[],
+    material_count: number,
+    material_index: number
+): PricePart | null {
+    const material = productMaterials.find((m) => m.material.material_id === value.material_id);
+
+    const materialPrice = material?.price;
+    return { label: material_count > 1 ? `Anyag ${material_index + 1}` : "Anyag", price: materialPrice };
 }
 
-
-function calculatePriceForItem(
-    product: ProductItem,
-    materials: Material[]
-) {
-    let priceParts: PricePart[] = [];
-    priceParts.push({ label: "Alapár", price: product.price });
+export function calculatePriceForItem(product: ProductItem): Price | LengthBasedPrice {
+    let parts: PricePart[] = [];
     for (const field of product.fields ?? []) {
         const fieldPrice = getFieldPrice(field);
         if (!fieldPrice) {
             continue;
         }
-        priceParts.push(fieldPrice);
+        parts.push(fieldPrice);
     }
 
     if (product.materials && product.materials.length > 0) {
         for (let i = 0; i < (product.material_required_count ?? 1); i++) {
-            const material = product.material_values?.[i];
-            const price = product.materials.find(
-                (m) => m.material_path === `data/materials/${material?.material_id}.json`
-            )?.price;
-            priceParts.push({
-                label: (product.material_required_count ?? 1) == 1 ? "Anyag" : `Anyag ${i + 1}`,
-                price: price,
-            });
+            const value = product.material_values?.[i];
+            const price = getMaterialPrice(
+                value ?? { material_id: "" },
+                product.materials,
+                product.material_required_count ?? 1,
+                i
+            );
+            if (!price) {
+                continue;
+            }
+            parts.push(price);
         }
     }
 
-    const unitPrice = priceParts.reduce((sum, part) => sum + (part.price ?? 0), 0);
+    const basePrice: PricePart = { label: "Alapár", price: product.price };
+    const unitPrice = Math.round([basePrice, ...parts].reduce((sum, part) => sum + Math.round(part.price ?? 0), 0));
+    const indeterminate = parts.some((part) => part.price === undefined) || product.price === undefined;
+    const totalPrice = unitPrice * product.count;
 
+    if (product.priced_by_length) {
+        const length = Number.parseFloat(
+            product.fields?.find((x) => x.length_based_pricing_source)?.value?.value ?? ""
+        );
+        return {
+            priced_by_length: true,
+            length: Number.isNaN(length) ? undefined : length,
+            options: parts,
+            unitPrice,
+            totalPrice,
+            basePrice,
+            indeterminate,
+        };
+    }
 
-
+    return {
+        options: parts,
+        unitPrice,
+        totalPrice,
+        priced_by_length: false,
+        basePrice,
+        indeterminate,
+    };
 }

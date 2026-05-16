@@ -35,9 +35,32 @@ export type BooleanFieldResolved = BaseField & {
 
 export type FieldResolved = InputFieldResolved | SelectFieldResolved | RadioFieldResolved | ColorFieldResolved | BooleanFieldResolved;
 
-export type FieldInternal = FieldResolved & {
+export type InputFieldInternal = FieldResolved & {
+    type: "input";
     value?: ValueWithError;
 };
+
+export type SelectFieldInternal = FieldResolved & {
+    type: "select";
+    value?: ValueWithError;
+};
+
+export type RadioFieldInternal = FieldResolved & {
+    type: "radio";
+    value?: ValueWithError;
+};
+
+export type ColorFieldInternal = FieldResolved & {
+    type: "color";
+    value?: ValueWithError;
+};
+
+export type BooleanFieldInternal = FieldResolved & {
+    type: "toggle";
+    value?: ValueWithError;
+};
+
+export type FieldInternal = InputFieldInternal | SelectFieldInternal | RadioFieldInternal | ColorFieldInternal | BooleanFieldInternal;
 
 export interface ValueWithError {
     value: string;
