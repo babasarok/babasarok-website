@@ -5,16 +5,16 @@
     import OrderItem from "./OrderItem.svelte";
     import { productValidator } from "../../tina/productTypes";
     import { materialValidator } from "../../tina/materialTypes";
-    import { v4 as uuidv4 } from "uuid";
     import { fade } from "svelte/transition";
-    import IconButton from "./IconButton.svelte";
-    import Button from "./Button.svelte";
-    import { nonEmptyObject, ProductItem, type ProductResolved, type ResolvedMaterial } from "../lib/types.svelte";
+    import IconButton from "./common/IconButton.svelte";
+    import Button from "./common/Button.svelte";
+    import type { TinaProductResolved, TinaResolvedMaterial } from "../lib/types.svelte";
     import z from "zod";
-    import { generateColorCount } from "../lib/materialUtils";
+    import { nonEmptyObject } from "../lib/validation";
+    import { Product } from "../lib/Product.svelte";
 
     export const materialsResponseValidator = z.record(z.string(), materialValidator).transform((record) => {
-        const result: Record<string, ResolvedMaterial> = {};
+        const result: Record<string, TinaResolvedMaterial> = {};
         for (const key in record) {
             const material = record[key];
 
@@ -26,9 +26,9 @@
         return result;
     });
 
-    export const productsResponseValidator = (materials: Record<string, ResolvedMaterial>) =>
+    export const productsResponseValidator = (materials: Record<string, TinaResolvedMaterial>) =>
         z.record(z.string(), productValidator).transform((record) => {
-            const result: Record<string, ProductResolved> = {};
+            const result: Record<string, TinaProductResolved> = {};
             for (const key in record) {
                 const product = record[key];
 
@@ -77,8 +77,8 @@
             return result;
         });
 
-    let productInfo: Record<string, ProductResolved> | null = $state(null);
-    let materialInfo: Record<string, ResolvedMaterial> | null = $state(null);
+    let productInfo: Record<string, TinaProductResolved> | null = $state(null);
+    let materialInfo: Record<string, TinaResolvedMaterial> | null = $state(null);
 
     async function main() {
         const productResponse = await fetch("/json/product-data.json");
@@ -101,7 +101,7 @@
     }
 
     let productSelectValue: string = $state("");
-    let products: ProductItem[] = $state([]);
+    let products: Product[] = $state([]);
     main();
 </script>
 
@@ -155,7 +155,7 @@
                         }
 
                         const snapshot = $state.snapshot(currentProduct);
-                        products.push(new ProductItem(snapshot));
+                        products.push(new Product(snapshot));
                         productSelectValue = "";
                     }}>
                     <Icon icon="mdi:plus" />

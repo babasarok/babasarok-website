@@ -6,8 +6,7 @@ const materialColorValidator = z.object({
     hex: z.string().optional(),
 });
 
-export type MaterialColor = z.infer<typeof materialColorValidator>;
-
+export type TinaMaterialColor = z.infer<typeof materialColorValidator>;
 
 export const materialValidator = z.object({
     material_id: z.string(),
@@ -15,4 +14,4 @@ export const materialValidator = z.object({
     colors: z.array(materialColorValidator.or(z.object({}))).optional(),
 });
 
-export type Material = z.infer<typeof materialValidator>;
+export type TinaMaterial = z.infer<typeof materialValidator>;

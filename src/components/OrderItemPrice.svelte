@@ -1,11 +1,11 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import Tooltip from "./Tooltip.svelte";
-    import type { ProductItem, RadioFieldResolved, SelectFieldResolved } from "../lib/types.svelte";
+    import Tooltip from "./common/Tooltip.svelte";
     import { calculatePriceForItem } from "../lib/priceUtils";
+    import type { Product } from "../lib/Product.svelte";
 
     interface Props {
-        product: ProductItem;
+        product: Product;
     }
 
     const { product }: Props = $props();

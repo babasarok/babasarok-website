@@ -1,6 +1,11 @@
-import type { FieldInternal, ProductItem } from "./types";
+import type { Product } from "./Product.svelte";
+import type { Field } from "./types.svelte";
 
-function prefillField(field: FieldInternal): void {
+export function nonEmptyObject<T extends Record<string, any>>(obj: T): obj is Exclude<T, Record<string, never>> {
+    return Object.keys(obj).length > 0;
+}
+
+function prefillField(field: Field): void {
     switch (field.type) {
         case "toggle": {
             if (field.value?.value === undefined) {
@@ -10,7 +15,7 @@ function prefillField(field: FieldInternal): void {
     }
 }
 
-function updateFieldWithErrors(item: FieldInternal): void {
+function updateFieldWithErrors(item: Field): void {
     // Was not edited by user, can be ignored for displaying errors
     if (!item.value) {
         return;
@@ -49,4 +54,11 @@ function updateFieldWithErrors(item: FieldInternal): void {
     }
 }
 
-function updateWithErrors(item: ProductItem): void {}
+export function prefillItem(item: Product): void {}
+
+export function validateItem(item: Product): void {
+    item.fields?.forEach((field) => {
+        prefillField(field);
+        updateFieldWithErrors(field);
+    });
+}

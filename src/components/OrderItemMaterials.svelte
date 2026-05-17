@@ -1,17 +1,17 @@
 <script lang="ts">
-    import IconButton from "./IconButton.svelte";
-    import Button from "./Button.svelte";
-    import Tooltip from "./Tooltip.svelte";
-    import Chip from "./Chip.svelte";
+    import IconButton from "./common/IconButton.svelte";
+    import Button from "./common/Button.svelte";
+    import Tooltip from "./common/Tooltip.svelte";
+    import Chip from "./common/Chip.svelte";
     import Icon from "@iconify/svelte";
-    import Color from "./Color.svelte";
+    import Color from "./common/Color.svelte";
     import { slide } from "svelte/transition";
-    import type { ProductItem, ProductMaterialResolved } from "../lib/types.svelte";
+    import type { Product } from "../lib/Product.svelte";
 
     interface Props {
-        product: ProductItem;
+        product: Product;
         material_index?: number;
-        onChange?: (product: ProductItem) => void;
+        onChange?: (product: Product) => void;
     }
 
     const { product, onChange, material_index = 0 }: Props = $props();

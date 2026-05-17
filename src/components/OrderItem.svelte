@@ -1,17 +1,17 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import IconButton from "./IconButton.svelte";
+    import IconButton from "./common/IconButton.svelte";
     import type { HTMLAttributes } from "svelte/elements";
-    import Tooltip from "./Tooltip.svelte";
+    import Tooltip from "./common/Tooltip.svelte";
     import OrderItemMaterials from "./OrderItemMaterials.svelte";
     import OrderItemFields from "./OrderItemFields.svelte";
     import OrderItemPrice from "./OrderItemPrice.svelte";
-    import type { ProductItem } from "../lib/types.svelte";
+    import type { Product } from "../lib/Product.svelte";
 
     interface Props extends HTMLAttributes<HTMLDivElement> {
         onClose: () => void;
-        product: ProductItem;
-        onChange?: (product: ProductItem) => void;
+        product: Product;
+        onChange?: (product: Product) => void;
     }
 
     let { onClose, product, onChange, class: className, ...rest }: Props = $props();

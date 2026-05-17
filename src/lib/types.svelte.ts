@@ -1,83 +1,78 @@
 import type {
-    BaseField,
-    BooleanField,
-    ColorField,
-    Field,
-    InputField,
-    Option,
-    Product,
-    ProductMaterial,
-    RadioField,
-    SelectField,
+    TinaBaseField,
+    TinaBooleanField,
+    TinaColorField,
+    TinaProductField,
+    TinaInputField,
+    TinaOption,
+    TinaProduct,
+    TinaProductMaterial,
+    TinaRadioField,
+    TinaSelectField,
 } from "../../tina/productTypes";
-import type { Material, MaterialColor } from "../../tina/materialTypes";
+import type { TinaMaterial, TinaMaterialColor } from "../../tina/materialTypes";
 import { v4 } from "uuid";
 
-export interface ResolvedMaterial extends Material {
-    colors?: MaterialColor[];
+export interface TinaResolvedMaterial extends TinaMaterial {
+    colors?: TinaMaterialColor[];
 }
 
-export interface ProductMaterialResolved extends ProductMaterial {
-    material: ResolvedMaterial;
+export interface TinaResolvedProductMaterial extends TinaProductMaterial {
+    material: TinaResolvedMaterial;
 }
 
-export type InputFieldResolved = InputField & {
+export type TinaResolvedInputField = TinaInputField & {
     type: "input";
-    items: Option[];
+    items: TinaOption[];
 };
 
-export type SelectFieldResolved = SelectField & {
+export type TinaResolvedSelectField = TinaSelectField & {
     type: "select";
-    items: Option[];
+    items: TinaOption[];
 };
 
-export type RadioFieldResolved = RadioField & {
+export type TinaResolvedRadioField = TinaRadioField & {
     type: "radio";
-    items: Option[];
+    items: TinaOption[];
 };
 
-export type ColorFieldResolved = ColorField & {
+export type TinaResolvedColorField = TinaColorField & {
     type: "color";
-    items: Option[];
+    items: TinaOption[];
 };
 
-export type BooleanFieldResolved = BooleanField & {
+export type TinaResolvedBooleanField = TinaBooleanField & {
     type: "toggle";
 };
 
-export type FieldResolved =
-    | InputFieldResolved
-    | SelectFieldResolved
-    | RadioFieldResolved
-    | ColorFieldResolved
-    | BooleanFieldResolved;
+export type TinaResolvedProductField =
+    | TinaResolvedInputField
+    | TinaResolvedSelectField
+    | TinaResolvedRadioField
+    | TinaResolvedColorField
+    | TinaResolvedBooleanField;
 
-export type InputFieldInternal = InputFieldResolved & {
+export type InputField = TinaResolvedInputField & {
     value?: ValueWithError;
 };
 
-export type SelectFieldInternal = SelectFieldResolved & {
+export type SelectField = TinaResolvedSelectField & {
     value?: ValueWithError;
 };
 
-export type RadioFieldInternal = RadioFieldResolved & {
+export type RadioField = TinaResolvedRadioField & {
     value?: ValueWithError;
 };
 
-export type ColorFieldInternal = ColorFieldResolved & {
+export type ColorField = TinaResolvedColorField & {
     value?: ValueWithError;
 };
 
-export type BooleanFieldInternal = BooleanFieldResolved & {
+export type BooleanField = TinaResolvedBooleanField & {
     value?: ValueWithError;
 };
 
-export type FieldInternal =
-    | InputFieldInternal
-    | SelectFieldInternal
-    | RadioFieldInternal
-    | ColorFieldInternal
-    | BooleanFieldInternal;
+export type Field = InputField | SelectField | RadioField | ColorField | BooleanField;
 
 export interface ValueWithError {
     value: string;
@@ -92,129 +87,7 @@ export interface ProductMaterialValue {
     error?: string | undefined;
 }
 
-export interface IProductMaterialInternal extends Omit<ProductMaterialResolved, "color_count"> {
-    color_count: number | undefined;
-}
-
-export interface ProductResolved extends Product {
-    materials?: ProductMaterialResolved[];
-    fields?: FieldResolved[];
-}
-
-export interface IProductItem extends Omit<ProductResolved, "materials"> {
-    uuid: string;
-    count: number;
-    material_values?: ProductMaterialValue[];
-    materials: ProductMaterialInternal[];
-    fields?: FieldInternal[];
-}
-
-export class ProductMaterialInternal implements IProductMaterialInternal {
-    material: ResolvedMaterial;
-    price?: number | undefined;
-    color_count: number | undefined;
-    private original_color_count: string;
-    material_path: string;
-
-    private resolveColorCount(name: string, product: Pick<IProductItem, "fields">): number | undefined {
-        const current = product.fields?.find((f) => f.name === name)?.value?.value;
-
-        if (!current) {
-            return undefined;
-        }
-
-        const val = Number.parseFloat(current);
-
-        if (Number.isNaN(val)) {
-            return undefined;
-        }
-
-        return val;
-    }
-
-    constructor(material: ProductMaterialResolved, product: Pick<IProductItem, "fields">) {
-        this.material_path = $state($state.snapshot(material.material_path));
-        this.material = $state($state.snapshot(material.material));
-        this.price = $state($state.snapshot(material.price));
-        this.original_color_count = $state($state.snapshot(material.color_count ?? "1"));
-        this.color_count = $derived.by(() => {
-            const val = Number.parseFloat(this.original_color_count);
-
-            if (!Number.isNaN(val)) {
-                return val;
-            }
-
-            // value might be a reference to a field, try to resolve it
-            const current = product.fields?.find((f) => f.name === this.original_color_count)?.value?.value;
-            if (!current) {
-                return undefined;
-            }
-
-            const res = Number.parseFloat(current);
-
-            if (Number.isNaN(res)) {
-                return undefined;
-            }
-
-            return res;
-        });
-    }
-
-    public clone(product: Pick<IProductItem, "fields">): ProductMaterialInternal {
-        return new ProductMaterialInternal(
-            {
-                material_path: this.material_path,
-                material: this.material,
-                price: this.price,
-                color_count: this.original_color_count,
-            },
-            product
-        );
-    }
-}
-
-export class ProductItem implements IProductItem {
-    uuid: string = v4();
-    count: number = $state(1);
-    product_id: string;
-    name: string;
-
-    material_values?: ProductMaterialValue[];
-    materials: ProductMaterialInternal[];
-    material_required_count?: number | undefined;
-    private original_materials?: ProductMaterialResolved[];
-    fields?: FieldInternal[];
-    icon?: string | undefined;
-    priced_by_length?: boolean | undefined;
-    price?: number | undefined;
-
-    constructor(item: ProductResolved) {
-        this.product_id = $state(item.product_id);
-        this.name = $state(item.name);
-        this.icon = $state(item.icon);
-        this.priced_by_length = $state(item.priced_by_length);
-        this.price = $state(item.price);
-        this.original_materials = item.materials;
-        this.material_required_count = $state(item.material_required_count);
-        this.fields = $state(item.fields);
-        this.materials = item.materials?.map((m) => new ProductMaterialInternal(m, { fields: this.fields })) ?? [];
-        this.material_values = $state();
-    }
-
-    clone(): ProductItem {
-        return new ProductItem({
-            product_id: $state.snapshot(this.product_id),
-            name: $state.snapshot(this.name),
-            icon: $state.snapshot(this.icon),
-            priced_by_length: $state.snapshot(this.priced_by_length),
-            price: $state.snapshot(this.price),
-            materials: this.original_materials,
-            material_required_count: $state.snapshot(this.material_required_count),
-            fields: $state.snapshot(this.fields),
-        });
-    }
-}
-
-export function nonEmptyObject<T extends Record<string, any>>(obj: T): obj is Exclude<T, Record<string, never>> {
-    return Object.keys(obj).length > 0;
+export interface TinaProductResolved extends TinaProduct {
+    materials?: TinaResolvedProductMaterial[];
+    fields?: TinaResolvedProductField[];
 }

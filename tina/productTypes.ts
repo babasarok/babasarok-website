@@ -10,7 +10,7 @@ const optionValidator = z.object({
     fixed_price: z.boolean().optional(),
 });
 
-export type Option = z.infer<typeof optionValidator>;
+export type TinaOption = z.infer<typeof optionValidator>;
 
 const baseFieldValidator = z.object({
     name: z.string(),
@@ -20,7 +20,7 @@ const baseFieldValidator = z.object({
     price: z.number().optional(),
 });
 
-export type BaseField = z.infer<typeof baseFieldValidator>;
+export type TinaBaseField = z.infer<typeof baseFieldValidator>;
 
 const inputFieldValidator = baseFieldValidator.extend({
     type: z.literal("input"),
@@ -28,7 +28,7 @@ const inputFieldValidator = baseFieldValidator.extend({
     items: z.array(optionValidator.or(emptyObject)).optional(),
 });
 
-export type InputField = z.infer<typeof inputFieldValidator>;
+export type TinaInputField = z.infer<typeof inputFieldValidator>;
 
 const selectFieldValidator = baseFieldValidator.extend({
     type: z.literal("select"),
@@ -38,7 +38,7 @@ const selectFieldValidator = baseFieldValidator.extend({
     items: z.array(optionValidator.or(emptyObject)).optional(),
 });
 
-export type SelectField = z.infer<typeof selectFieldValidator>;
+export type TinaSelectField = z.infer<typeof selectFieldValidator>;
 
 const radioFieldValidator = baseFieldValidator.extend({
     type: z.literal("radio"),
@@ -46,7 +46,7 @@ const radioFieldValidator = baseFieldValidator.extend({
     items: z.array(optionValidator.or(emptyObject)).optional(),
 });
 
-export type RadioField = z.infer<typeof radioFieldValidator>;
+export type TinaRadioField = z.infer<typeof radioFieldValidator>;
 
 const colorFieldValidator = baseFieldValidator.extend({
     type: z.literal("color"),
@@ -54,13 +54,13 @@ const colorFieldValidator = baseFieldValidator.extend({
     items: z.array(optionValidator.or(emptyObject)).optional(),
 });
 
-export type ColorField = z.infer<typeof colorFieldValidator>;
+export type TinaColorField = z.infer<typeof colorFieldValidator>;
 
 const booleanFieldValidator = baseFieldValidator.extend({
     type: z.literal("toggle"),
 });
 
-export type BooleanField = z.infer<typeof booleanFieldValidator>;
+export type TinaBooleanField = z.infer<typeof booleanFieldValidator>;
 
 const fieldValidator = z.discriminatedUnion("type", [
     inputFieldValidator,
@@ -70,8 +70,7 @@ const fieldValidator = z.discriminatedUnion("type", [
     booleanFieldValidator,
 ]);
 
-export type Field = z.infer<typeof fieldValidator>;
-
+export type TinaProductField = z.infer<typeof fieldValidator>;
 
 const productMaterialValidator = z.object({
     material_path: z.string(),
@@ -79,12 +78,11 @@ const productMaterialValidator = z.object({
     color_count: z.string().optional(),
 });
 
-export type ProductMaterial = z.infer<typeof productMaterialValidator>;
+export type TinaProductMaterial = z.infer<typeof productMaterialValidator>;
 
 // export interface ProductTieIn {
 //     product_id: string;
 // }
-
 
 export const productValidator = z.object({
     product_id: z.string(),
@@ -100,4 +98,4 @@ export const productValidator = z.object({
     material_required_count: z.number().optional(),
 });
 
-export type Product = z.infer<typeof productValidator>;
+export type TinaProduct = z.infer<typeof productValidator>;

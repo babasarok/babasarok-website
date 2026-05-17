@@ -1,22 +1,23 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import Button from "./Button.svelte";
-    import Tooltip from "./Tooltip.svelte";
+    import Button from "./common/Button.svelte";
+    import Tooltip from "./common/Tooltip.svelte";
     import { v4 } from "uuid";
     import { slide } from "svelte/transition";
-    import Color from "./Color.svelte";
-    import Switch from "./Switch.svelte";
-    import type { FieldInternal, ProductItem } from "../lib/types.svelte";
+    import Color from "./common/Color.svelte";
+    import Switch from "./common/Switch.svelte";
+    import type { Field } from "../lib/types.svelte";
+    import type { Product } from "../lib/Product.svelte";
 
     interface Props {
-        product: ProductItem;
-        onChange?: (product: ProductItem) => void;
+        product: Product;
+        onChange?: (product: Product) => void;
     }
 
     const { product, onChange }: Props = $props();
 </script>
 
-{#snippet Input(field: FieldInternal)}
+{#snippet Input(field: Field)}
     {#if field.type === "input" || field.value?.is_custom}
         {@const id = v4()}
         <input

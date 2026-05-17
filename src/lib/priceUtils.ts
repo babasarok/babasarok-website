@@ -1,12 +1,6 @@
-import type {
-    FieldInternal,
-    ProductItem,
-    ProductMaterialInternal,
-    ProductMaterialResolved,
-    ProductMaterialValue,
-    RadioFieldInternal,
-    SelectFieldInternal,
-} from "./types.svelte";
+import type { Product } from "./Product.svelte";
+import type { ProductMaterial } from "./ProductMaterial.svelte";
+import type { Field, ProductMaterialValue, RadioField, SelectField } from "./types.svelte";
 
 interface PricePart {
     label: string;
@@ -30,7 +24,7 @@ export interface LengthBasedPrice extends BasePrice {
     length: number | undefined;
 }
 
-function getFieldPrice(field: FieldInternal): PricePart | null {
+function getFieldPrice(field: Field): PricePart | null {
     if (field.length_based_pricing_source) {
         return null;
     }
@@ -39,7 +33,7 @@ function getFieldPrice(field: FieldInternal): PricePart | null {
         case "radio":
         case "color":
         case "select": {
-            const items = (field as RadioFieldInternal | SelectFieldInternal).items;
+            const items = (field as RadioField | SelectField).items;
             const selectedItem = items?.find((item) => item.value === field.value?.value);
             return { label: field.label || field.name, price: selectedItem?.price };
         }
@@ -60,7 +54,7 @@ function getFieldPrice(field: FieldInternal): PricePart | null {
 
 function getMaterialPrice(
     value: Pick<ProductMaterialValue, "material_id">,
-    productMaterials: ProductMaterialInternal[],
+    productMaterials: ProductMaterial[],
     material_count: number,
     material_index: number
 ): PricePart | null {
@@ -70,7 +64,7 @@ function getMaterialPrice(
     return { label: material_count > 1 ? `Anyag ${material_index + 1}` : "Anyag", price: materialPrice };
 }
 
-export function calculatePriceForItem(product: ProductItem): Price | LengthBasedPrice {
+export function calculatePriceForItem(product: Product): Price | LengthBasedPrice {
     let parts: PricePart[] = [];
     for (const field of product.fields ?? []) {
         const fieldPrice = getFieldPrice(field);
