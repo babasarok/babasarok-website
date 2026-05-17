@@ -10,8 +10,8 @@ interface PricePart {
 interface BasePrice {
     basePrice: PricePart;
     options: PricePart[];
-    unitPrice: number;
-    totalPrice: number;
+    unitPrice: number | undefined;
+    totalPrice: number | undefined;
     indeterminate: boolean;
 }
 
@@ -22,6 +22,7 @@ export interface Price extends BasePrice {
 export interface LengthBasedPrice extends BasePrice {
     priced_by_length: true;
     length: number | undefined;
+    per_meter_price: number | undefined;
 }
 
 function getFieldPrice(field: Field): PricePart | null {
@@ -96,15 +97,19 @@ export function calculatePriceForItem(product: Product): Price | LengthBasedPric
     const totalPrice = unitPrice * product.count;
 
     if (product.priced_by_length) {
-        const length = Number.parseFloat(
+        let length: number | undefined = Number.parseFloat(
             product.fields?.find((x) => x.length_based_pricing_source)?.value?.value ?? ""
         );
+
+        length = Number.isNaN(length) ? undefined : length / 100;
+
         return {
             priced_by_length: true,
-            length: Number.isNaN(length) ? undefined : length,
+            length,
             options: parts,
-            unitPrice,
-            totalPrice,
+            unitPrice: length === undefined ? undefined : unitPrice * length,
+            per_meter_price: unitPrice,
+            totalPrice: length === undefined ? undefined : totalPrice * length,
             basePrice,
             indeterminate,
         };

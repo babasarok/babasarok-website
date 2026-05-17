@@ -10,8 +10,9 @@
     import Button from "./common/Button.svelte";
     import type { TinaProductResolved, TinaResolvedMaterial } from "../lib/types.svelte";
     import z from "zod";
-    import { nonEmptyObject } from "../lib/validation";
+    import { nonEmptyObject, validateItem } from "../lib/validation";
     import { Product } from "../lib/Product.svelte";
+    import { sanitizeItem } from "../lib/validation";
 
     export const materialsResponseValidator = z.record(z.string(), materialValidator).transform((record) => {
         const result: Record<string, TinaResolvedMaterial> = {};
@@ -105,7 +106,14 @@
     main();
 </script>
 
-<form class="flex flex-col">
+<form
+    class="flex flex-col"
+    onsubmit={(e) => {
+        e.preventDefault();
+        for (const product of products) {
+            validateItem(product);
+        }
+    }}>
     <h3 class="mb-4">Árajánlatkérés</h3>
     <div class="flex flex-col gap-6">
         <div class="flex flex-col gap-4">
@@ -131,7 +139,6 @@
             </div>
             <div class="flex gap-2">
                 <select
-                    required
                     value={productSelectValue}
                     onchange={(e) => {
                         if (!(e.target instanceof HTMLSelectElement)) {
@@ -177,7 +184,7 @@
                                 onChange={(updatedProduct) => {
                                     const index = products.findIndex((p) => p.uuid === updatedProduct.uuid);
                                     if (index !== -1) {
-                                        products[index] = updatedProduct;
+                                        ((products[index] = sanitizeItem(updatedProduct)), false);
                                     }
                                 }} />
                         {/if}

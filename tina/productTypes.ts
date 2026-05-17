@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { optional } from "zod";
 
 const emptyObject = z.object({});
 
@@ -25,6 +25,7 @@ export type TinaBaseField = z.infer<typeof baseFieldValidator>;
 const inputFieldValidator = baseFieldValidator.extend({
     type: z.literal("input"),
     placeholder: z.string().optional(),
+    optional: z.boolean().optional(),
     items: z.array(optionValidator.or(emptyObject)).optional(),
 });
 

@@ -5,9 +5,10 @@ import { ProductMaterial } from "./ProductMaterial.svelte";
 export interface IProduct extends Omit<TinaProductResolved, "materials"> {
     uuid: string;
     count: number;
-    material_values?: ProductMaterialValue[];
+    material_values: ProductMaterialValue[];
     materials: ProductMaterial[];
     fields?: Field[];
+    material_required_count: number;
 }
 
 export class Product implements IProduct {
@@ -16,9 +17,9 @@ export class Product implements IProduct {
     product_id: string;
     name: string;
 
-    material_values?: ProductMaterialValue[];
+    material_values: ProductMaterialValue[];
     materials: ProductMaterial[];
-    material_required_count?: number | undefined;
+    material_required_count: number;
     private original_materials?: TinaResolvedProductMaterial[];
     fields?: Field[];
     icon?: string | undefined;
@@ -32,10 +33,10 @@ export class Product implements IProduct {
         this.priced_by_length = $state(item.priced_by_length);
         this.price = $state(item.price);
         this.original_materials = item.materials;
-        this.material_required_count = $state(item.material_required_count);
+        this.material_required_count = $state(item.material_required_count ?? 1);
         this.fields = $state(item.fields);
         this.materials = item.materials?.map((m) => new ProductMaterial(m, { fields: this.fields })) ?? [];
-        this.material_values = $state();
+        this.material_values = $state([]);
     }
 
     clone(): Product {

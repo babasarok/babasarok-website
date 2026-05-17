@@ -47,22 +47,19 @@
             {/each}
         </div>
     </div>
-    {#if product.material_values?.[material_index]}
-        {@const productMaterial = product.materials?.find(
-            (m) => m.material.material_id === product.material_values?.[material_index]?.material_id
-        )}
+    {#if product.material_values?.[material_index] && !!product.material_values[material_index].material_id}
+        {@const value = product.material_values[material_index]}
+        {@const productMaterial = product.materials?.find((m) => m.material.material_id === value?.material_id)}
         {@const materialInfo = productMaterial?.material}
         {@const colorCount = productMaterial?.color_count}
         {@const multiColor = (colorCount ?? 0) > 1}
-        {@const disabled =
-            colorCount === undefined ||
-            (multiColor ? (product.material_values?.[material_index]?.colors.length ?? 0) >= colorCount : false)}
+        {@const disabled = colorCount === undefined || (multiColor ? (value?.colors.length ?? 0) >= colorCount : false)}
         <div class="flex flex-col gap-1">
             <p class="text-sm text-primary-500 flex items-center gap-1 justify-between">
                 <span> Szín </span>
                 {#if multiColor}
                     <span class="text-xs">
-                        ({product.material_values?.[material_index]?.colors.length ?? 0} / {colorCount})
+                        ({value?.colors.length ?? 0} / {colorCount})
                     </span>
                 {/if}
             </p>
@@ -76,7 +73,7 @@
             {/if}
             {#if multiColor}
                 <div class="flex gap-1 flex-wrap">
-                    {#each product.material_values?.[material_index]?.colors as colorId, index}
+                    {#each value?.colors as colorId, index}
                         {@const colorInfo = materialInfo?.colors?.find((c) => c.color_id === colorId)}
                         {#if colorInfo}
                             <Chip
@@ -100,7 +97,7 @@
             {#if (materialInfo?.colors?.length ?? 0) > 0}
                 <div transition:slide class="flex gap-1 flex-wrap">
                     {#each materialInfo?.colors || [] as color (color.color_id)}
-                        {@const selected = product.material_values?.[material_index]?.colors.includes(color.color_id)}
+                        {@const selected = value?.colors.includes(color.color_id)}
                         <Color
                             {color}
                             {disabled}
@@ -139,9 +136,9 @@
                 Egyéb
             </Button>
         {/if}
-        {#if product.material_values?.[material_index]?.custom_color != undefined || (materialInfo?.colors?.length ?? 0) === 0}
+        {#if value.custom_color != undefined || (materialInfo?.colors?.length ?? 0) === 0}
             <input
-                value={product.material_values?.[material_index]?.custom_color}
+                value={value.custom_color}
                 oninput={(e) => {
                     const result = product;
                     if (!result.material_values?.[material_index]) {
@@ -151,5 +148,10 @@
                     onChange?.(result);
                 }} />
         {/if}
+    {/if}
+    {#if product.material_values?.[material_index]?.error}
+        <p class="text-sm text-red-500">
+            {product.material_values[material_index].error}
+        </p>
     {/if}
 {/if}

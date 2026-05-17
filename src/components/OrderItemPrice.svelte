@@ -44,7 +44,7 @@
             <div class="flex justify-between">
                 <p>Méterár</p>
                 <p>
-                    {price.unitPrice} Ft/m
+                    {price.per_meter_price !== undefined ? `${price.per_meter_price} Ft/m` : "??"}
                 </p>
             </div>
         {/if}
