@@ -1,11 +1,12 @@
 import type {
     FieldInternal,
     ProductItem,
+    ProductMaterialInternal,
     ProductMaterialResolved,
     ProductMaterialValue,
     RadioFieldInternal,
     SelectFieldInternal,
-} from "../lib/types";
+} from "./types.svelte";
 
 interface PricePart {
     label: string;
@@ -59,7 +60,7 @@ function getFieldPrice(field: FieldInternal): PricePart | null {
 
 function getMaterialPrice(
     value: Pick<ProductMaterialValue, "material_id">,
-    productMaterials: ProductMaterialResolved[],
+    productMaterials: ProductMaterialInternal[],
     material_count: number,
     material_index: number
 ): PricePart | null {

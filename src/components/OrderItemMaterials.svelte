@@ -6,7 +6,7 @@
     import Icon from "@iconify/svelte";
     import Color from "./Color.svelte";
     import { slide } from "svelte/transition";
-    import type { ProductItem, ProductMaterialResolved } from "../lib/types";
+    import type { ProductItem, ProductMaterialResolved } from "../lib/types.svelte";
 
     interface Props {
         product: ProductItem;
@@ -15,36 +15,6 @@
     }
 
     const { product, onChange, material_index = 0 }: Props = $props();
-
-    function resolveValue(name: string, product: ProductItem): number | undefined {
-        const current = product.fields?.find((f) => f.name === name)?.value?.value;
-
-        if (!current) {
-            return undefined;
-        }
-
-        const val = Number.parseFloat(current);
-
-        if (Number.isNaN(val)) {
-            return undefined;
-        }
-
-        return val;
-    }
-
-    function generateColorCount(material: ProductMaterialResolved, product: ProductItem): number | undefined {
-        if (material.color_count === undefined) {
-            return 1;
-        }
-
-        const val = Number.parseFloat(material.color_count);
-
-        if (Number.isNaN(val)) {
-            return resolveValue(material.color_count, product);
-        }
-
-        return val;
-    }
 </script>
 
 {#if product.materials && product.materials.length > 0}
@@ -63,7 +33,7 @@
                         class="flex items-center gap-0.5"
                         {selected}
                         onclick={() => {
-                            const result = $state.snapshot(product);
+                            const result = product;
                             result.material_values = result.material_values || [];
                             result.material_values[material_index] = {
                                 material_id: materialInfo.material_id,
@@ -82,7 +52,7 @@
             (m) => m.material.material_id === product.material_values?.[material_index]?.material_id
         )}
         {@const materialInfo = productMaterial?.material}
-        {@const colorCount = generateColorCount(productMaterial!, product)}
+        {@const colorCount = productMaterial?.color_count}
         {@const multiColor = (colorCount ?? 0) > 1}
         {@const disabled =
             colorCount === undefined ||
@@ -112,7 +82,7 @@
                             <Chip
                                 color={colorInfo.hex}
                                 onClose={() => {
-                                    const result = $state.snapshot(product);
+                                    const result = product;
                                     if (result.material_values?.[material_index]) {
                                         result.material_values[material_index].colors = [
                                             ...result.material_values[material_index].colors.slice(0, index),
@@ -136,7 +106,7 @@
                             {disabled}
                             selected={!multiColor && selected}
                             onclick={() => {
-                                const result = $state.snapshot(product);
+                                const result = product;
                                 if (!result.material_values?.[material_index]) {
                                     return;
                                 }
@@ -158,7 +128,7 @@
                 {disabled}
                 type="button"
                 onclick={() => {
-                    const result = $state.snapshot(product);
+                    const result = product;
                     if (!result.material_values?.[material_index]) {
                         return;
                     }
@@ -173,7 +143,7 @@
             <input
                 value={product.material_values?.[material_index]?.custom_color}
                 oninput={(e) => {
-                    const result = $state.snapshot(product);
+                    const result = product;
                     if (!result.material_values?.[material_index]) {
                         return;
                     }

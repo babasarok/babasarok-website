@@ -9,8 +9,9 @@
     import { fade } from "svelte/transition";
     import IconButton from "./IconButton.svelte";
     import Button from "./Button.svelte";
-    import { nonEmptyObject, type ProductItem, type ProductResolved, type ResolvedMaterial } from "../lib/types";
+    import { nonEmptyObject, ProductItem, type ProductResolved, type ResolvedMaterial } from "../lib/types.svelte";
     import z from "zod";
+    import { generateColorCount } from "../lib/materialUtils";
 
     export const materialsResponseValidator = z.record(z.string(), materialValidator).transform((record) => {
         const result: Record<string, ResolvedMaterial> = {};
@@ -153,7 +154,8 @@
                             return;
                         }
 
-                        products.push({ ...$state.snapshot(currentProduct), uuid: uuidv4(), count: 1 });
+                        const snapshot = $state.snapshot(currentProduct);
+                        products.push(new ProductItem(snapshot));
                         productSelectValue = "";
                     }}>
                     <Icon icon="mdi:plus" />
@@ -166,7 +168,6 @@
                         {#if info}
                             <OrderItem
                                 {product}
-                                materials={materialInfo}
                                 onClose={() => {
                                     const index = products.findIndex((p) => p.uuid === product.uuid);
                                     if (index !== -1) {

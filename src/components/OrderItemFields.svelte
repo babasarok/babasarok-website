@@ -1,12 +1,12 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import type { Field, ProductItem } from "../../tina/products";
     import Button from "./Button.svelte";
     import Tooltip from "./Tooltip.svelte";
     import { v4 } from "uuid";
     import { slide } from "svelte/transition";
     import Color from "./Color.svelte";
     import Switch from "./Switch.svelte";
+    import type { FieldInternal, ProductItem } from "../lib/types.svelte";
 
     interface Props {
         product: ProductItem;
@@ -16,7 +16,7 @@
     const { product, onChange }: Props = $props();
 </script>
 
-{#snippet Input(field: Field)}
+{#snippet Input(field: FieldInternal)}
     {#if field.type === "input" || field.value?.is_custom}
         {@const id = v4()}
         <input
@@ -28,21 +28,13 @@
                     return;
                 }
 
-                const result = $state.snapshot(product);
+                const result = product;
                 const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
                 if (fieldToUpdate) {
                     fieldToUpdate.value = {
                         value: e.target.value,
                         is_custom: field.value?.is_custom || false,
                     };
-                    if (field.regex) {
-                        const regex = new RegExp(field.regex);
-                        if (!regex.test(e.target.value)) {
-                            fieldToUpdate.value.error = "Érvénytelen érték";
-                        } else {
-                            delete fieldToUpdate.value.error;
-                        }
-                    }
                     onChange?.(result);
                 }
             }} />
@@ -73,7 +65,7 @@
                             class="flex items-center gap-0.5"
                             {selected}
                             onclick={() => {
-                                const result = $state.snapshot(product);
+                                const result = product;
                                 const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
                                 if (fieldToUpdate) {
                                     fieldToUpdate.value = {
@@ -106,7 +98,7 @@
                             type="button"
                             selected={field.value?.is_custom}
                             onclick={() => {
-                                const result = $state.snapshot(product);
+                                const result = product;
                                 const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
                                 if (fieldToUpdate) {
                                     fieldToUpdate.value = {
@@ -129,7 +121,7 @@
                             return;
                         }
 
-                        const result = $state.snapshot(product);
+                        const result = product;
                         const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
                         if (fieldToUpdate) {
                             fieldToUpdate.value = {
@@ -156,7 +148,7 @@
                             color={{ color_id: item.value, hex: item.value, label: item.label }}
                             {selected}
                             onclick={(color_id) => {
-                                const result = $state.snapshot(product);
+                                const result = product;
                                 const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
                                 if (fieldToUpdate) {
                                     fieldToUpdate.value = {
@@ -173,7 +165,7 @@
                                 type="button"
                                 selected={field.value?.is_custom}
                                 onclick={() => {
-                                    const result = $state.snapshot(product);
+                                    const result = product;
                                     const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
                                     if (fieldToUpdate) {
                                         fieldToUpdate.value = {
@@ -198,7 +190,7 @@
                                 return;
                             }
 
-                            const result = $state.snapshot(product);
+                            const result = product;
                             const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
                             if (fieldToUpdate) {
                                 fieldToUpdate.value = {

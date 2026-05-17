@@ -1,22 +1,20 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import IconButton from "./IconButton.svelte";
-    import type { Field, ProductItem } from "../../tina/products";
-    import type { Material } from "../../tina/materials";
     import type { HTMLAttributes } from "svelte/elements";
     import Tooltip from "./Tooltip.svelte";
     import OrderItemMaterials from "./OrderItemMaterials.svelte";
     import OrderItemFields from "./OrderItemFields.svelte";
     import OrderItemPrice from "./OrderItemPrice.svelte";
+    import type { ProductItem } from "../lib/types.svelte";
 
     interface Props extends HTMLAttributes<HTMLDivElement> {
         onClose: () => void;
         product: ProductItem;
         onChange?: (product: ProductItem) => void;
-        materials: Record<string, Material> | null;
     }
 
-    let { onClose, product, onChange, class: className, materials, ...rest }: Props = $props();
+    let { onClose, product, onChange, class: className, ...rest }: Props = $props();
 </script>
 
 <div {...rest} class={["flex flex-col gap-2 rounded-xl border shadow-md border-primary-light p-2 w-full", className]}>
@@ -42,7 +40,7 @@
     <div class="w-full h-0.5 bg-border"></div>
     <OrderItemFields {product} {onChange} />
     {#each Array(product.material_required_count ?? 1) as _, i}
-        <OrderItemMaterials {product} {materials} {onChange} material_index={i} />
+        <OrderItemMaterials {product} {onChange} material_index={i} />
     {/each}
     <div class="w-full h-0.5 bg-border"></div>
     <div class="flex justify-between items-center">
@@ -50,7 +48,8 @@
             type="button"
             disabled={product.count <= 1}
             onclick={() => {
-                onChange?.({ ...$state.snapshot(product), count: product.count - 1 });
+                product.count--;
+                onChange?.(product);
             }}>
             <Icon icon="mdi:minus" />
         </IconButton>
@@ -58,7 +57,8 @@
         <IconButton
             type="button"
             onclick={() => {
-                onChange?.({ ...$state.snapshot(product), count: product.count + 1 });
+                product.count++;
+                onChange?.(product);
             }}>
             <Icon icon="mdi:add" />
         </IconButton>
