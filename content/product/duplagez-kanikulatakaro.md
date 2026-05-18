@@ -2,7 +2,7 @@
 title: Duplagéz Kánikulatakaró
 categories: A tökéletes megoldás a forró napokra
 date: 2025-05-01T12:07:16.000Z
-thumbnail: /IMG_6152.jpg
+thumbnail: /Photo Collage Facebook Post.PNG
 table:
   - title: 'Extra vékony, egyrétegű, akár textilpelusnak is'
     description: 1.900Ft
@@ -10,13 +10,15 @@ table:
     description: 5.800Ft
   - title: Duplagéz+Pamutvászon
     description: 4.900Ft
-shortDescription: >-
-  A duplagéz kánikulatakaró ideális választás a nyári hőségben, amikor még a
-  legkisebbek is kényelmetlenül érzik magukat a melegben. Két rétegben
-  takaróként, egy rétegben pedig textilpelusként használható, sőt, sok baba
-  imádja "nyunyókaként" is. 100% pamut anyaga rendkívül légáteresztő, vékony és
-  könnyed, így ideális választás a forró napokra, amikor fontos a baba
-  komfortja, ugyanakkor nem szeretnénk túlfűteni. Kényelmes, praktikus és
-  sokoldalú!
+shortDescription: |-
+  Duplagéz kánikulatakaró, a nyár slágere!
+  - Két rétegben takaróként, egy rétegben pedig textilpelusként használható, sőt, sok baba imádja "nyunyókaként" is.
+   -100% pamut anyaga rendkívül légáteresztő, vékony és könnyed, így ideális választás a forró napokra, amikor fontos a baba komfortja, ugyanakkor nem szeretnénk túlfűteni. 
+  Kényelmes, praktikus és sokoldalú!
 ---
 
+Kánikulatakaróinkat akár waffle anyag kombinációjával is kérheted, sőt felnőtt méretben is elérhető, 150x200cm-es méretben
+
+| ![](/IMG_8082.jpg) | ![](/IMG_8076.jpg)   |
+| ------------------ | -------------------- |
+| waffle+pamutvászon | duplagéz+pamutvászon |
