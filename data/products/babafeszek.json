@@ -1,57 +1,62 @@
 {
-    "product_id": "babafeszek",
-    "name": "Babafészek",
-    "price": 15000,
-    "materials": [
+  "product_id": "babafeszek",
+  "name": "Babafészek",
+  "price": 15000,
+  "tie_ins": [
+    {
+      "product_id": "data/products/babatakaro-szett.json"
+    }
+  ],
+  "materials": [
+    {
+      "material_path": "data/materials/teddy.json"
+    },
+    {
+      "material_path": "data/materials/pamutvaszon.json"
+    },
+    {
+      "material_path": "data/materials/minky.json"
+    },
+    {
+      "material_path": "data/materials/potty-nelkuli-minky.json"
+    },
+    {
+      "material_path": "data/materials/wellsoft.json"
+    },
+    {
+      "material_path": "data/materials/duplagez.json"
+    },
+    {
+      "material_path": "data/materials/waffle.json"
+    }
+  ],
+  "material_required_count": 2,
+  "fields": [
+    {
+      "name": "meret",
+      "price": 0,
+      "label": "Méret",
+      "type": "radio",
+      "items": [
         {
-            "material_path": "data/materials/teddy.json"
+          "value": "35x65",
+          "label": "Normál",
+          "price": 0,
+          "tooltip": "35x65cm"
         },
         {
-            "material_path": "data/materials/pamutvaszon.json"
+          "value": "40x75",
+          "label": "Közepes",
+          "price": 1500,
+          "tooltip": "40x75cm"
         },
         {
-            "material_path": "data/materials/minky.json"
-        },
-        {
-            "material_path": "data/materials/potty-nelkuli-minky.json"
-        },
-        {
-            "material_path": "data/materials/wellsoft.json"
-        },
-        {
-            "material_path": "data/materials/duplagez.json"
-        },
-        {
-            "material_path": "data/materials/waffle.json"
+          "value": "50x90",
+          "label": "XXL",
+          "price": 5000,
+          "tooltip": "50x90cm"
         }
-    ],
-    "material_required_count": 2,
-    "fields": [
-        {
-            "name": "meret",
-            "price": 0,
-            "label": "Méret",
-            "type": "radio",
-            "items": [
-                {
-                    "value": "35x65",
-                    "label": "Normál",
-                    "price": 0,
-                    "tooltip": "35x65cm"
-                },
-                {
-                    "value": "40x75",
-                    "label": "Közepes",
-                    "price": 1500,
-                    "tooltip": "40x75cm"
-                },
-                {
-                    "value": "50x90",
-                    "label": "XXL",
-                    "price": 5000,
-                    "tooltip": "50x90cm"
-                }
-            ]
-        }
-    ]
+      ]
+    }
+  ]
 }
