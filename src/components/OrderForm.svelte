@@ -33,8 +33,9 @@
             for (const key in record) {
                 const product = record[key];
 
-                result[key] = {
+                result[product.product_id] = {
                     ...product,
+                    product_path: key,
                     materials: product.materials
                         ?.filter((x) => nonEmptyObject(x))
                         .map((material) => ({

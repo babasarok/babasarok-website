@@ -4,7 +4,7 @@
     {{- if strings.HasSuffix $file.Name ".json" -}}
         {{- $raw := readFile (printf "data/products/%s" $file.Name) -}}
         {{- $jsonData := transform.Unmarshal $raw -}}
-        {{- $products = merge $products (dict $jsonData.product_id $jsonData) -}}
+        {{- $products = merge $products (dict (printf "data/products/%s" $file.Name) $jsonData) -}}
     {{- end -}}
 {{- end -}}
 

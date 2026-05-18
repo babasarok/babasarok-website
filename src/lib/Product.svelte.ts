@@ -25,6 +25,7 @@ export class Product implements IProduct {
     icon?: string | undefined;
     priced_by_length?: boolean | undefined;
     price?: number | undefined;
+    product_path: string;
 
     constructor(item: TinaProductResolved) {
         this.product_id = $state(item.product_id);
@@ -37,6 +38,7 @@ export class Product implements IProduct {
         this.fields = $state(item.fields);
         this.materials = item.materials?.map((m) => new ProductMaterial(m, { fields: this.fields })) ?? [];
         this.material_values = $state([]);
+        this.product_path = item.product_path;
     }
 
     clone(): Product {
@@ -49,6 +51,7 @@ export class Product implements IProduct {
             materials: this.original_materials,
             material_required_count: $state.snapshot(this.material_required_count),
             fields: $state.snapshot(this.fields),
+            product_path: $state.snapshot(this.product_path),
         });
     }
 }
