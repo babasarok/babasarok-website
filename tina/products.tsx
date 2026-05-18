@@ -13,7 +13,7 @@ import {
     NumberField,
     type NumberProps,
     ButtonToggleField,
-    type ButtonToggleProps
+    type ButtonToggleProps,
 } from "tinacms";
 import { getValue } from "./utils";
 
@@ -21,7 +21,8 @@ export const PRODUCT: TinaField<false>[] = [
     {
         type: "string",
         name: "product_id",
-        description: "Egyedi! azonosító a termékhez, csak angol karaktereket és számokat tartalmazhat, szóköz nélkül. Pl: termek-1",
+        description:
+            "Egyedi! azonosító a termékhez, csak angol karaktereket és számokat tartalmazhat, szóköz nélkül. Pl: termek-1",
         label: "Termék ID",
         required: true,
     },
@@ -35,14 +36,16 @@ export const PRODUCT: TinaField<false>[] = [
     {
         type: "image",
         name: "icon",
-        description: "NE VÁLTOZTASD MEG, még nem tudtam megoldani hogy ezt lehessen átállítani.Opcionális ikon a termékhez, ami megjelenik a rendelési felületen.",
+        description:
+            "NE VÁLTOZTASD MEG, még nem tudtam megoldani hogy ezt lehessen átállítani.Opcionális ikon a termékhez, ami megjelenik a rendelési felületen.",
         label: "Termék ikon",
     },
     {
         type: "boolean",
         name: "priced_by_length",
         label: "Méteráru",
-        description: "Jelzi, hogy a termék ára a hossz alapján kerül meghatározásra, nem pedig fix ár alapján. Egy mezőnek méretnek kell lennie",
+        description:
+            "Jelzi, hogy a termék ára a hossz alapján kerül meghatározásra, nem pedig fix ár alapján. Egy mezőnek méretnek kell lennie",
     },
     {
         type: "number",
@@ -53,7 +56,8 @@ export const PRODUCT: TinaField<false>[] = [
         type: "object",
         name: "tie_ins",
         label: "Kapcsolódó termékek",
-        description: "Opcionális, a termékhez kapcsolódó egyéb termékek. Ezek a termékek megjelennek gyorsgombnak. Az szett árszámlálás nem itt történik.",
+        description:
+            "Opcionális, a termékhez kapcsolódó egyéb termékek. Ezek a termékek megjelennek gyorsgombnak. Az szett árszámlálás nem itt történik.",
         list: true,
         ui: {
             itemProps: (item) => {
@@ -68,14 +72,15 @@ export const PRODUCT: TinaField<false>[] = [
                 collections: ["product_data"],
                 required: true,
             },
-        ]
+        ],
     },
     {
         type: "object",
         name: "materials",
         list: true,
         label: "Anyagok",
-        description: "A termékhez tartozó anyagok. Ha nincs egy se hozzáadva, akkor a termékhez nem lesz anyag kiválasztási lehetőség a rendelési felületen.",
+        description:
+            "A termékhez tartozó anyagok. Ha nincs egy se hozzáadva, akkor a termékhez nem lesz anyag kiválasztási lehetőség a rendelési felületen.",
         ui: {
             itemProps: (item) => {
                 return { label: item?.material_path || "Új anyag" };
@@ -101,14 +106,15 @@ export const PRODUCT: TinaField<false>[] = [
                 name: "color_count",
                 label: "Választható színek/minták száma",
                 description: "Az alap 1. Ha egy másik mező az alapja, írd be a Mező ID-jét. A Mezó szám alapú legyen.",
-            }
+            },
         ],
     },
     {
         type: "number",
         name: "material_required_count",
         label: "Szükséges anyagok száma",
-        description: "Ennek a terméknek a rendeléséhez hány anyagra van szükség. Ez csak akkor lesz releváns, ha anyagokat adtál hozzá a termékhez. Az alap 1.",
+        description:
+            "Ennek a terméknek a rendeléséhez hány anyagra van szükség. Ez csak akkor lesz releváns, ha anyagokat adtál hozzá a termékhez. Az alap 1.",
     },
     {
         type: "object",
@@ -125,14 +131,16 @@ export const PRODUCT: TinaField<false>[] = [
             {
                 type: "string",
                 name: "name",
-                description: "Egyedi! azonosító a mezőhöz, csak angol karaktereket és számokat tartalmazhat, szóköz nélkül. Pl: meret",
+                description:
+                    "Egyedi! azonosító a mezőhöz, csak angol karaktereket és számokat tartalmazhat, szóköz nélkül. Pl: meret",
                 label: "Mező ID",
                 required: true,
             },
             {
                 type: "boolean",
                 name: "length_based_pricing_source",
-                description: "Jelzi, hogy ez a mező szolgáltatja-e a méterárú számolás alapját. CM-ben kötelező megadni az értékeket! Csak egy mező jelölhető meg méterárú árforrásként.",
+                description:
+                    "Jelzi, hogy ez a mező szolgáltatja-e a méterárú számolás alapját. CM-ben kötelező megadni az értékeket! Csak egy mező jelölhető meg méterárú árforrásként.",
                 label: "Méteráru árforrás",
             },
             {
@@ -142,7 +150,10 @@ export const PRODUCT: TinaField<false>[] = [
                 description: "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni.",
                 ui: {
                     component(props) {
-                        const castedProps = props as unknown as InputFieldType<NumberProps, Parameters<typeof ReferenceField>[0]>;
+                        const castedProps = props as unknown as InputFieldType<
+                            NumberProps,
+                            Parameters<typeof ReferenceField>[0]
+                        >;
                         const length_based_pricing_source = getValue(props, "length_based_pricing_source");
                         if (length_based_pricing_source) {
                             return null;
@@ -157,8 +168,8 @@ export const PRODUCT: TinaField<false>[] = [
                         }
 
                         return value;
-                    }
-                }
+                    },
+                },
             },
             {
                 type: "string",
@@ -181,6 +192,22 @@ export const PRODUCT: TinaField<false>[] = [
                     { value: "toggle", label: "Igen/Nem" },
                 ],
                 label: "Mező típus",
+            },
+            {
+                type: "boolean",
+                name: "optional",
+                description: "Jelzi, hogy a mező opcionális-e.",
+                label: "Opcionális mező",
+                ui: {
+                    component(props) {
+                        const typeValue = getValue(props, "type");
+                        if (typeValue !== "input") {
+                            return null;
+                        }
+
+                        return ToggleField(props as any);
+                    },
+                },
             },
             {
                 type: "object",
@@ -213,7 +240,8 @@ export const PRODUCT: TinaField<false>[] = [
                         type: "string",
                         name: "label",
                         label: "Címke",
-                        description: "Az opció megjelenítendő neve, ami a felhasználó számára látható. Ha nincs megadva, akkor a value értékét használja.",
+                        description:
+                            "Az opció megjelenítendő neve, ami a felhasználó számára látható. Ha nincs megadva, akkor a value értékét használja.",
                     },
                     {
                         type: "boolean",
@@ -229,17 +257,21 @@ export const PRODUCT: TinaField<false>[] = [
 
                             //     return ToggleField(props as any);
                             // }
-                            component: "hidden"
-                        }
+                            component: "hidden",
+                        },
                     },
                     {
                         type: "number",
                         name: "price",
                         label: "Ár",
-                        description: "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni.",
+                        description:
+                            "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni.",
                         ui: {
                             component(props) {
-                                const length_based_pricing_source = getValue(props, "../../length_based_pricing_source");
+                                const length_based_pricing_source = getValue(
+                                    props,
+                                    "../../length_based_pricing_source"
+                                );
                                 const fixed_price = getValue(props, "fixed_price");
                                 if (length_based_pricing_source && !fixed_price) {
                                     return null;
@@ -254,15 +286,16 @@ export const PRODUCT: TinaField<false>[] = [
                                 }
 
                                 return value;
-                            }
-                        }
+                            },
+                        },
                     },
                     {
                         type: "string",
                         name: "tooltip",
                         label: "Tooltip",
-                        description: "Opcionális leírás, ami megjelenik, amikor a felhasználó a lehetőség fölé viszi az egeret.",
-                    }
+                        description:
+                            "Opcionális leírás, ami megjelenik, amikor a felhasználó a lehetőség fölé viszi az egeret.",
+                    },
                 ],
             },
             {
@@ -279,7 +312,7 @@ export const PRODUCT: TinaField<false>[] = [
 
                         return ToggleField(props as any);
                     },
-                }
+                },
             },
             {
                 type: "string",
@@ -301,7 +334,7 @@ export const PRODUCT: TinaField<false>[] = [
 
                         return ToggleField(props as any);
                     },
-                }
+                },
             },
             {
                 type: "string",
@@ -317,9 +350,8 @@ export const PRODUCT: TinaField<false>[] = [
 
                         return TextField(props as any);
                     },
-                }
+                },
             },
-
         ],
     },
 ];

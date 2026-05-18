@@ -41,6 +41,7 @@
                             ...material,
                             material: materials[material.material_path],
                         })),
+                    tie_ins: product.tie_ins?.filter((x) => nonEmptyObject(x)),
                     fields: product.fields
                         ?.filter((x) => nonEmptyObject(x))
                         .map((field) => {
@@ -79,7 +80,6 @@
         });
 
     let productInfo: Record<string, TinaProductResolved> | null = $state(null);
-    let materialInfo: Record<string, TinaResolvedMaterial> | null = $state(null);
 
     async function main() {
         const productResponse = await fetch("/json/product-data.json");
@@ -97,7 +97,6 @@
             return;
         }
 
-        materialInfo = materialsResult.data;
         productInfo = productsResult.data;
     }
 
