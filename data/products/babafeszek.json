@@ -1,12 +1,12 @@
 {
-  "product_id": "babafeszek",
-  "name": "Babafészek",
-  "price": 15000,
   "tie_ins": [
     {
       "product_id": "data/products/babatakaro-szett.json"
     }
   ],
+  "product_id": "babafeszek",
+  "name": "Babafészek",
+  "price": 15000,
   "materials": [
     {
       "material_path": "data/materials/teddy.json"
@@ -57,6 +57,18 @@
           "tooltip": "50x90cm"
         }
       ]
+    },
+    {
+      "name": "takaro_szett",
+      "price": 6500,
+      "label": "Babatakaró és párna",
+      "type": "toggle"
+    },
+    {
+      "name": "betet",
+      "price": 3700,
+      "label": "Betét",
+      "type": "toggle"
     }
   ]
 }

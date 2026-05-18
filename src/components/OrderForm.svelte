@@ -42,7 +42,6 @@
                             ...material,
                             material: materials[material.material_path],
                         })),
-                    tie_ins: product.tie_ins?.filter((x) => nonEmptyObject(x)),
                     fields: product.fields
                         ?.filter((x) => nonEmptyObject(x))
                         .map((field) => {

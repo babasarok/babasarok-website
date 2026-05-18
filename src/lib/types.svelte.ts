@@ -9,7 +9,6 @@ import type {
     TinaProductMaterial,
     TinaRadioField,
     TinaSelectField,
-    TinaProductTieIn,
 } from "../../tina/productTypes";
 import type { TinaMaterial, TinaMaterialColor } from "../../tina/materialTypes";
 
@@ -90,6 +89,5 @@ export interface ProductMaterialValue {
 export interface TinaProductResolved extends TinaProduct {
     materials?: TinaResolvedProductMaterial[];
     fields?: TinaResolvedProductField[];
-    tie_ins?: TinaProductTieIn[];
     product_path: string;
 }

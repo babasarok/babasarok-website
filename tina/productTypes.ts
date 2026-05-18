@@ -81,12 +81,6 @@ const productMaterialValidator = z.object({
 
 export type TinaProductMaterial = z.infer<typeof productMaterialValidator>;
 
-const productTieInValidator = z.object({
-    product_id: z.string(),
-});
-
-export type TinaProductTieIn = z.infer<typeof productTieInValidator>;
-
 export const productValidator = z.object({
     product_id: z.string(),
     name: z.string(),
@@ -95,7 +89,6 @@ export const productValidator = z.object({
     price: z.number().optional(),
     fields: z.array(fieldValidator.or(emptyObject)).optional(),
     materials: z.array(productMaterialValidator.or(emptyObject)).optional(),
-    tie_ins: z.array(productTieInValidator.or(emptyObject)).optional(),
     material_required_count: z.number().optional(),
 });
 

@@ -54,28 +54,6 @@ export const PRODUCT: TinaField<false>[] = [
     },
     {
         type: "object",
-        name: "tie_ins",
-        label: "Kapcsolódó termékek",
-        description:
-            "Opcionális, a termékhez kapcsolódó egyéb termékek. Ezek a termékek megjelennek gyorsgombnak. Az szett árszámlálás nem itt történik.",
-        list: true,
-        ui: {
-            itemProps: (item) => {
-                return { label: item?.product_id || "Új kapcsolódó termék" };
-            },
-        },
-        fields: [
-            {
-                type: "reference",
-                name: "product_id",
-                label: "Termék",
-                collections: ["product_data"],
-                required: true,
-            },
-        ],
-    },
-    {
-        type: "object",
         name: "materials",
         list: true,
         label: "Anyagok",
