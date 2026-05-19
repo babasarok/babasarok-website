@@ -14,6 +14,7 @@ import {
     type NumberProps,
     ButtonToggleField,
     type ButtonToggleProps,
+    DateField,
 } from "tinacms";
 import { getValue } from "./utils";
 
@@ -51,6 +52,29 @@ export const PRODUCT: TinaField<false>[] = [
         type: "number",
         name: "price",
         label: "Alap Ár - Forintban",
+    },
+    {
+        type: "number",
+        name: "discount",
+        label: "Kedvezmény %",
+        description: "Opcionális kedvezmény százalékban. A teljes árra lesz alkalmazva.",
+    },
+    {
+        type: "datetime",
+        name: "discount_valid_until",
+        label: "Kedvezmény érvényességének vége",
+        description:
+            "Opcionális dátum, ami megadja, hogy a kedvezménynekm mikor legyen vége. Ha nincs megadva, akkor a kedvezmény mindig érvényes lesz.",
+        ui: {
+            component(props) {
+                const discount = getValue(props, "discount");
+                if (!discount) {
+                    return null;
+                }
+
+                return DateField(props as any);
+            },
+        },
     },
     {
         type: "object",
