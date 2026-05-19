@@ -169,24 +169,21 @@
             </div>
             <div class="grid gap-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {#each products as product (`${product.uuid}`)}
-                    {@const info = productInfo?.[product.product_id]}
                     <div transition:fade={{ duration: 250 }}>
-                        {#if info}
-                            <OrderItem
-                                {product}
-                                onClose={() => {
-                                    const index = products.findIndex((p) => p.uuid === product.uuid);
-                                    if (index !== -1) {
-                                        products.splice(index, 1);
-                                    }
-                                }}
-                                onChange={(updatedProduct) => {
-                                    const index = products.findIndex((p) => p.uuid === updatedProduct.uuid);
-                                    if (index !== -1) {
-                                        ((products[index] = sanitizeItem(updatedProduct)), false);
-                                    }
-                                }} />
-                        {/if}
+                        <OrderItem
+                            {product}
+                            onClose={() => {
+                                const index = products.findIndex((p) => p.uuid === product.uuid);
+                                if (index !== -1) {
+                                    products.splice(index, 1);
+                                }
+                            }}
+                            onChange={(updatedProduct) => {
+                                const index = products.findIndex((p) => p.uuid === updatedProduct.uuid);
+                                if (index !== -1) {
+                                    ((products[index] = sanitizeItem(updatedProduct)), false);
+                                }
+                            }} />
                     </div>
                 {/each}
             </div>
