@@ -32,7 +32,7 @@
             <div class="flex justify-between">
                 <p>{part.label}</p>
                 <p>
-                    {part.price !== undefined ? `${index != 0 ? "+" : ""}${part.price} Ft` : "??"}
+                    {part.price !== undefined ? `${part.price} Ft` : "??"}
                     {#if price.priced_by_length}
                         /m
                     {/if}

@@ -10,7 +10,7 @@
     import Button from "./common/Button.svelte";
     import type { TinaProductResolved, TinaResolvedMaterial } from "../lib/types.svelte";
     import z from "zod";
-    import { nonEmptyObject, validateItem } from "../lib/validation";
+    import { isItemValid, nonEmptyObject, validateItem } from "../lib/validation";
     import { Product } from "../lib/Product.svelte";
     import { sanitizeItem } from "../lib/validation";
 
@@ -102,6 +102,7 @@
 
     let productSelectValue: string = $state("");
     let products: Product[] = $state([]);
+    let error = $state<string | null>(null);
     main();
 </script>
 
@@ -109,8 +110,16 @@
     class="flex flex-col"
     onsubmit={(e) => {
         e.preventDefault();
+        error = null;
         for (const product of products) {
             validateItem(product);
+        }
+
+        for (const product of products) {
+            if (!isItemValid(product)) {
+                error = "Kérem, ellenőrizd a termékek adatait, és töltsd ki a hiányzó mezőket.";
+                return;
+            }
         }
     }}>
     <h3 class="mb-4">Árajánlatkérés</h3>
@@ -161,7 +170,7 @@
                         }
 
                         const snapshot = $state.snapshot(currentProduct);
-                        products.push(new Product(snapshot));
+                        products.push(sanitizeItem(new Product(snapshot)));
                         productSelectValue = "";
                     }}>
                     <Icon icon="mdi:plus" />

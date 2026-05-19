@@ -23,6 +23,10 @@ export function sanitizeItem(item: Product): Product {
     }
 
     for (const material of item.material_values ?? []) {
+        if (!material) {
+            continue;
+        }
+
         const materialInfo = item.materials.find((m) => m.material.material_id === material.material_id);
         // Resolving failed, bail, or we are using custom color, in which case we don't know if we need a limit.
         if (materialInfo?.color_count == null || material.custom_color) {
@@ -124,6 +128,9 @@ function updateMaterialsWithErrors(item: Product): void {
     }
 
     item.material_values?.forEach((materialValue) => {
+        if (!materialValue) {
+            return;
+        }
         const materialInfo = item.materials.find((m) => m.material.material_id === materialValue.material_id);
         if (materialInfo) {
             updateMaterialWithErrors(materialValue, materialInfo);
@@ -140,4 +147,28 @@ export function validateItem(item: Product): Product {
 
     updateMaterialsWithErrors(item);
     return item;
+}
+
+export function isItemValid(item: Product): boolean {
+    for (const field of item.fields ?? []) {
+        if (field.value?.error) {
+            return false;
+        }
+    }
+
+    if (item.materials.length === 0) {
+        return true;
+    }
+
+    if (item.material_values.length < item.material_required_count) {
+        return false;
+    }
+
+    for (const materialValue of item.material_values ?? []) {
+        if (materialValue?.error) {
+            return false;
+        }
+    }
+
+    return true;
 }

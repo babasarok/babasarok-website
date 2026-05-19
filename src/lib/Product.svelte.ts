@@ -5,7 +5,7 @@ import { ProductMaterial } from "./ProductMaterial.svelte";
 export interface IProduct extends Omit<TinaProductResolved, "materials"> {
     uuid: string;
     count: number;
-    material_values: ProductMaterialValue[];
+    material_values: Array<ProductMaterialValue | undefined>;
     materials: ProductMaterial[];
     fields?: Field[];
     material_required_count: number;
@@ -17,7 +17,7 @@ export class Product implements IProduct {
     product_id: string;
     name: string;
 
-    material_values: ProductMaterialValue[];
+    material_values: Array<ProductMaterialValue | undefined>;
     materials: ProductMaterial[];
     material_required_count: number;
     private original_materials?: TinaResolvedProductMaterial[];
