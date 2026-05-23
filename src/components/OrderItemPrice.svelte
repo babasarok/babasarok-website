@@ -39,6 +39,14 @@
                 </p>
             </div>
         {/if}
+        {#if price.discount !== undefined}
+            <div class="flex justify-between">
+                <p class="text-xs">Kedvezmény</p>
+                <p class="text-xs">
+                    {(1 - price.discount).toLocaleString(undefined, { style: "percent" })}
+                </p>
+            </div>
+        {/if}
         <svelte:boundary>
             <div class="flex justify-between font-medium">
                 <div class="flex items-center gap-1">

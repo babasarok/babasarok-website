@@ -13,6 +13,7 @@ interface BasePrice {
     unitPrice: number | undefined;
     totalPrice: number | undefined;
     indeterminate: boolean;
+    discount: number | undefined;
 }
 
 export interface Price extends BasePrice {
@@ -94,7 +95,8 @@ export function calculatePriceForItem(product: Product): Price | LengthBasedPric
     const basePrice: PricePart = { label: "Alapár", price: product.price };
     const unitPrice = Math.round([basePrice, ...parts].reduce((sum, part) => sum + Math.round(part.price ?? 0), 0));
     const indeterminate = parts.some((part) => part.price === undefined) || product.price === undefined;
-    const totalPrice = unitPrice * product.count;
+    const discountMultiplier = (product.discount && product.discount_valid_until && new Date() <= product.discount_valid_until) ? 1 - product.discount / 100 : undefined;
+    const totalPrice = unitPrice * product.count * (discountMultiplier !== undefined ? discountMultiplier : 1);
 
     if (product.priced_by_length) {
         let length: number | undefined = Number.parseFloat(
@@ -112,6 +114,7 @@ export function calculatePriceForItem(product: Product): Price | LengthBasedPric
             totalPrice: length === undefined ? undefined : totalPrice * length,
             basePrice,
             indeterminate,
+            discount: discountMultiplier
         };
     }
 
@@ -122,5 +125,6 @@ export function calculatePriceForItem(product: Product): Price | LengthBasedPric
         priced_by_length: false,
         basePrice,
         indeterminate,
+        discount: discountMultiplier
     };
 }

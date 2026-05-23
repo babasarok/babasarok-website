@@ -26,6 +26,8 @@ export class Product implements IProduct {
     priced_by_length?: boolean | undefined;
     price?: number | undefined;
     product_path: string;
+    discount?: number | undefined;
+    discount_valid_until?: Date | undefined;
 
     constructor(item: TinaProductResolved) {
         this.product_id = $state(item.product_id);
@@ -39,6 +41,8 @@ export class Product implements IProduct {
         this.materials = item.materials?.map((m) => new ProductMaterial(m, { fields: this.fields })) ?? [];
         this.material_values = $state([]);
         this.product_path = item.product_path;
+        this.discount = $state(item.discount);
+        this.discount_valid_until = $state(item.discount_valid_until);
     }
 
     clone(): Product {
@@ -52,6 +56,8 @@ export class Product implements IProduct {
             material_required_count: $state.snapshot(this.material_required_count),
             fields: $state.snapshot(this.fields),
             product_path: $state.snapshot(this.product_path),
+            discount: $state.snapshot(this.discount),
+            discount_valid_until: $state.snapshot(this.discount_valid_until),
         });
     }
 }

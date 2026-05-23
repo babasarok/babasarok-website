@@ -87,6 +87,8 @@ export const productValidator = z.object({
     icon: z.string().optional(),
     priced_by_length: z.boolean().optional(),
     price: z.number().optional(),
+    discount: z.number().optional(),
+    discount_valid_until: z.coerce.date().optional(),
     fields: z.array(fieldValidator.or(emptyObject)).optional(),
     materials: z.array(productMaterialValidator.or(emptyObject)).optional(),
     material_required_count: z.number().optional(),
