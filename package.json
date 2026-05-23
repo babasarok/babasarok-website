@@ -22,7 +22,7 @@
         "start": "concurrently \"hugo server --logLevel debug --bind=0.0.0.0 --disableFastRender --baseURL=http://localhost --templateMetrics --templateMetricsHints\" \"vite build --watch\"",
         "start:lan": "hugo server --bind=0.0.0.0 --baseURL=http://192.168.1.10 --port=1313",
         "tina:dev": "tinacms dev -c \"npm start\"",
-        "tina:build": "tinacms build && hugo --gc --minify && vite build",
+        "tina:build": "tinacms build && vite build && hugo --gc --minify",
         "prebuild": "npm run clean",
         "build": "hugo --gc --minify",
         "build:lan": "hugo --gc --minify --baseURL=http://192.168.1.10:8080",
