@@ -43,5 +43,5 @@
         <OrderItemMaterials {product} {onChange} material_index={i} />
     {/each}
     <div class="w-full h-0.5 bg-border"></div>
-    <OrderItemPrice {product} />
+    <OrderItemPrice {product} {onChange} />
 </div>

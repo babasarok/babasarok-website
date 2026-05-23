@@ -184,7 +184,7 @@
                                 <div class="flex flex-col text-start">
                                     {product.name}{addedCount > 0 ? ` (${addedCount})` : ""}
                                 </div>
-                                <Icon icon="mdi:add" />
+                                <Icon icon="mdi:add" class="shrink-0" />
                             </button>
                         {/each}
                     </div>

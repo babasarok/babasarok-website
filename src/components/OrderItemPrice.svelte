@@ -7,7 +7,7 @@
 
     interface Props {
         product: Product;
-        onChange: (product: Product) => void;
+        onChange?: (product: Product) => void;
     }
 
     const { product, onChange }: Props = $props();
@@ -21,8 +21,8 @@
     <div class="flex flex-col gap-1 text-xs">
         {#each [price.basePrice, ...price.options] as part, index}
             <div class="flex justify-between">
-                <p>{part.label}</p>
-                <p>
+                <p class="text-xs">{part.label}</p>
+                <p class="text-xs">
                     {part.price !== undefined ? `${part.price} Ft` : "??"}
                     {#if price.priced_by_length}
                         /m
@@ -31,69 +31,49 @@
             </div>
         {/each}
         <div class="w-full h-0.5 bg-border"></div>
-        <div class="flex justify-end items-center gap-1">
-            <IconButton
-                type="button"
-                disabled={product.count <= 1}
-                onclick={() => {
-                    product.count--;
-                    onChange?.(product);
-                }}>
-                <Icon icon="mdi:minus" />
-            </IconButton>
-            <p>{product.count}db</p>
-            <IconButton
-                type="button"
-                onclick={() => {
-                    product.count++;
-                    onChange?.(product);
-                }}>
-                <Icon icon="mdi:add" />
-            </IconButton>
-        </div>
         {#if price.priced_by_length}
             <div class="flex justify-between">
-                <p>Méterár</p>
-                <p>
+                <p class="text-xs">Méterár</p>
+                <p class="text-xs">
                     {price.per_meter_price !== undefined ? `${price.per_meter_price} Ft/m` : "??"}
                 </p>
             </div>
         {/if}
         <svelte:boundary>
-            <div class={["flex justify-between", { "font-medium": product.count === 1 }]}>
-                <p class="flex items-center gap-1">
-                    {#if product.count === 1}
-                        Összesen <Tooltip>
-                            {#snippet content()}
-                                Az ár tájékoztató jellegű, a végleges árajánlatot a visszajelzéskor kapod meg.
-                            {/snippet}
-                            <Icon icon="mdi:alert-circle" class="inline-block text-sm text-orange-500" />
-                        </Tooltip>
-                    {:else}
-                        Darabár
-                    {/if}
-                </p>
-                <p>
-                    {price.unitPrice !== undefined ? `${price.unitPrice} Ft` : "??"}
+            <div class="flex justify-between font-medium">
+                <div class="flex items-center gap-1">
+                    <IconButton
+                        class="text-xs"
+                        type="button"
+                        disabled={product.count <= 1}
+                        onclick={() => {
+                            product.count--;
+                            onChange?.(product);
+                        }}>
+                        <Icon icon="mdi:minus" class="h-[1em]" />
+                    </IconButton>
+                    <p class="text-xs">{product.count}db</p>
+                    <IconButton
+                        class="text-xs"
+                        type="button"
+                        onclick={() => {
+                            product.count++;
+                            onChange?.(product);
+                        }}>
+                        <Icon icon="mdi:add" class="h-[1em]" />
+                    </IconButton>
+                </div>
+                <p class="flex gap-0.5 text-xs">
+                    {price.totalPrice !== undefined ? `${price.totalPrice} Ft` : "??"}
                     {price.indeterminate ? " + ??" : ""}
+                    <Tooltip>
+                        {#snippet content()}
+                            Az ár tájékoztató jellegű, a végleges árajánlatot a visszajelzéskor kapod meg.
+                        {/snippet}
+                        <Icon icon="mdi:alert-circle" class="inline-block text-sm text-orange-500" />
+                    </Tooltip>
                 </p>
             </div>
-            {#if product.count > 1}
-                <div class="flex justify-between font-medium">
-                    <p class="flex items-center gap-1">
-                        Összesen <Tooltip>
-                            {#snippet content()}
-                                Az ár tájékoztató jellegű, a végleges árajánlatot a visszajelzéskor kapod meg.
-                            {/snippet}
-                            <Icon icon="mdi:alert-circle" class="inline-block text-sm text-orange-500" />
-                        </Tooltip>
-                    </p>
-                    <p>
-                        {price.totalPrice !== undefined ? `${price.totalPrice} Ft` : "??"}
-                        {price.indeterminate ? " + ??" : ""}
-                    </p>
-                </div>
-            {/if}
         </svelte:boundary>
     </div>
 </div>
