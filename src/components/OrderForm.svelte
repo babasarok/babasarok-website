@@ -221,6 +221,9 @@
                 {/snippet}
             </Masonry>
         </div>
+        {#if error}
+            <p class="text-sm text-red-500">{error}</p>
+        {/if}
         <Button variant="contained" type="submit" disabled={!valid}>Árajánlat kérése</Button>
     </div>
 </form>
