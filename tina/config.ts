@@ -17,7 +17,7 @@ import { PRODUCT } from "./products";
 import { MATERIALS } from "./materials";
 
 // Your hosting provider likely exposes this as an environment variable
-const branch = process.env.HEAD || process.env.VERCEL_GIT_COMMIT_REF || "main";
+const branch = process.env.HEAD || process.env.CF_PAGES_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || "main";
 
 export default defineConfig({
     cmsCallback: (cms) => {
@@ -260,7 +260,7 @@ export default defineConfig({
                 match: {
                     include: "*",
                 },
-                fields: PRODUCT
+                fields: PRODUCT,
             },
             {
                 format: "json",
@@ -271,7 +271,7 @@ export default defineConfig({
                 match: {
                     include: "*",
                 },
-                fields: MATERIALS
+                fields: MATERIALS,
             },
         ],
     },
