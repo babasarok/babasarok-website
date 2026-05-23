@@ -102,7 +102,17 @@
     }
 
     let products: Product[] = $state([]);
-    let error = $state<string | null>(null);
+    let error: string | null = $state(null);
+    let name = $state("");
+    let email = $state("");
+    let phone = $state("");
+
+    let valid = $derived.by(() => {
+        if (products.length === 0) return false;
+        if (name.trim() === "" || email.trim() === "") return false;
+
+        return true;
+    });
     main();
 </script>
 
@@ -132,9 +142,9 @@
                 </div>
             </div>
             <div class="flex gap-2 flex-col sm:flex-row">
-                <input type="text" placeholder="Név *" required />
-                <input type="email" placeholder="Email cím *" required />
-                <input type="tel" placeholder="Telefonszám" />
+                <input type="text" placeholder="Név *" required bind:value={name} />
+                <input type="email" placeholder="Email cím *" required bind:value={email} />
+                <input type="tel" placeholder="Telefonszám" bind:value={phone} />
             </div>
         </div>
         <div class="flex flex-col gap-4">
@@ -211,7 +221,7 @@
                 {/snippet}
             </Masonry>
         </div>
-        <Button variant="contained" type="submit">Árajánlat kérése</Button>
+        <Button variant="contained" type="submit" disabled={!valid}>Árajánlat kérése</Button>
     </div>
 </form>
 

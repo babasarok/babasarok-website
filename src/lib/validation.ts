@@ -112,7 +112,7 @@ function updateMaterialWithErrors(value: ProductMaterialValue, material: Product
     }
 
     if (value.colors.length < colorCount) {
-        value.error = `${colorCount} színt kell választani`;
+        value.error = `${colorCount == 1 ? "" : colorCount} színt kell választani`;
     }
 }
 
@@ -166,6 +166,12 @@ export function isItemValid(item: Product): boolean {
 
     for (const materialValue of item.material_values ?? []) {
         if (materialValue?.error) {
+            return false;
+        }
+    }
+
+    for (const field of item.fields ?? []) {
+        if (field.value?.error) {
             return false;
         }
     }

@@ -47,9 +47,6 @@
             </datalist>
         {/if}
     {/if}
-    {#if field.value?.error}
-        <p class="text-sm text-red-500">{field.value.error}</p>
-    {/if}
 {/snippet}
 
 <!-- Generic fields -->
@@ -206,5 +203,8 @@
                 <p>--</p>
             {/if}
         </div>
+        {#if field.value?.error}
+            <p class="text-sm text-red-500">{field.value.error}</p>
+        {/if}
     </div>
 {/each}
