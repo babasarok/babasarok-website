@@ -100,7 +100,6 @@
         productInfo = productsResult.data;
     }
 
-    let productSelectValue: string = $state("");
     let products: Product[] = $state([]);
     let error = $state<string | null>(null);
     main();
@@ -138,44 +137,58 @@
             </div>
         </div>
         <div class="flex flex-col gap-4">
-            <div class="flex items-center gap-2">
-                <Icon icon="mdi:cart" class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary" />
-                <div class="flex flex-col gap">
-                    <h4>Termék kiválasztása</h4>
-                    <p class="text-sm">Válassz egy vagy több terméket, amire árajánlatot szeretnél kapni.</p>
+            <div class="flex items-center gap-2 justify-between">
+                <div class="flex items-center gap-2">
+                    <Icon icon="mdi:cart" class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary" />
+                    <div class="flex flex-col gap">
+                        <h4>Termék kiválasztása</h4>
+                        <p class="text-sm">Válassz egy vagy több terméket, amire árajánlatot szeretnél kapni.</p>
+                    </div>
                 </div>
-            </div>
-            <div class="flex gap-2">
-                <select
-                    value={productSelectValue}
-                    onchange={(e) => {
-                        if (!(e.target instanceof HTMLSelectElement)) {
-                            return;
-                        }
-
-                        productSelectValue = e.target.value;
-                    }}>
-                    <option value="" disabled selected>Válassz egy terméket</option>
-                    {#each Object.values(productInfo || {}) as product}
-                        <option value={product.product_id}>{product.name}</option>
-                    {/each}
-                </select>
-                <IconButton
-                    type="button"
-                    disabled={!productSelectValue}
-                    onclick={() => {
-                        const currentProduct = productInfo?.[productSelectValue];
-                        if (!currentProduct) {
-                            return;
-                        }
-
-                        const snapshot = $state.snapshot(currentProduct);
-                        products.push(sanitizeItem(new Product(snapshot)));
-                        productSelectValue = "";
-                    }}>
-                    <Icon icon="mdi:plus" />
+                <IconButton type="button" popovertarget="product-dialog">
+                    <Icon icon="mdi:add" class="size-8" />
                 </IconButton>
             </div>
+            <dialog
+                class="h-[80%] w-[80%] md:w-fit md:h-[min(80%, fit-content)] m-auto border-0 rounded-2xl shadow-lg p-4"
+                id="product-dialog"
+                popover>
+                <div class="flex flex-col gap-4 h-full">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <Icon
+                                icon="mdi:cart"
+                                class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary" />
+                            <div class="flex flex-col gap">
+                                <h4>Termékek</h4>
+                            </div>
+                        </div>
+                        <IconButton type="button" popovertarget="product-dialog" popovertargetaction="hide">
+                            <Icon icon="mdi:close" />
+                        </IconButton>
+                    </div>
+                    <div class="flex-1 overflow-auto flex flex-col gap-2">
+                        {#each Object.values(productInfo || {}) as product}
+                            {@const addedCount = products.reduce(
+                                (count, p) => (p.name === product.name ? count + 1 : count),
+                                0
+                            )}
+                            <button
+                                type="button"
+                                class="flex font-normal w-full justify-between items-center gap-4 p-1 rounded hover:bg-border transition-all"
+                                onclick={() => {
+                                    const snapshot = $state.snapshot(product);
+                                    products.splice(0, 0, sanitizeItem(new Product(snapshot)));
+                                }}>
+                                <div class="flex flex-col text-start">
+                                    {product.name}{addedCount > 0 ? ` (${addedCount})` : ""}
+                                </div>
+                                <Icon icon="mdi:add" />
+                            </button>
+                        {/each}
+                    </div>
+                </div>
+            </dialog>
             <div class="grid gap-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {#each products as product (`${product.uuid}`)}
                     <div transition:fade={{ duration: 250 }}>
@@ -197,6 +210,7 @@
                 {/each}
             </div>
         </div>
+        <!-- <div class="w-full h-0.5 bg-border"></div> -->
         <Button variant="contained" type="submit">Árajánlat kérése</Button>
     </div>
 </form>

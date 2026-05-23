@@ -6,7 +6,10 @@
 </script>
 
 <button
-    class={["text-2xl text-primary-500 hover:text-primary-600 transition-all disabled:text-gray-500", className]}
+    class={[
+        "text-2xl text-primary-500 rounded-full hover:bg-border transition-all leading-none disabled:text-gray-500",
+        className,
+    ]}
     {...rest}>
     {@render children?.()}
 </button>
