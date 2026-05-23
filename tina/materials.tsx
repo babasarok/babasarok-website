@@ -19,8 +19,8 @@ export const MATERIALS: TinaField[] = [
         type: "object",
         name: "colors",
         list: true,
-        label: "Színek",
-        description: "A termékhez tartozó egyedi mezők. A sorrendjük meghatározza a megjelenítésük sorrendjét.",
+        label: "Színek/minták",
+        description: "A termékhez tartozó színek vagy minták.",
         ui: {
             itemProps: (item) => {
                 return { label: item?.label || "Új mező" };
@@ -31,7 +31,7 @@ export const MATERIALS: TinaField[] = [
                 type: "string",
                 name: "color_id",
                 description: "Egyedi! azonosító a színhez, csak angol karaktereket és számokat tartalmazhat, szóköz nélkül. Pl: szin-1",
-                label: "Szín ID",
+                label: "Színkód",
                 required: true,
             },
             {

@@ -43,26 +43,5 @@
         <OrderItemMaterials {product} {onChange} material_index={i} />
     {/each}
     <div class="w-full h-0.5 bg-border"></div>
-    <div class="flex justify-between items-center">
-        <IconButton
-            type="button"
-            disabled={product.count <= 1}
-            onclick={() => {
-                product.count--;
-                onChange?.(product);
-            }}>
-            <Icon icon="mdi:minus" />
-        </IconButton>
-        <p class="text-sm text-primary-500">Mennyiség: {product.count}</p>
-        <IconButton
-            type="button"
-            onclick={() => {
-                product.count++;
-                onChange?.(product);
-            }}>
-            <Icon icon="mdi:add" />
-        </IconButton>
-    </div>
-    <div class="w-full h-0.5 bg-border"></div>
     <OrderItemPrice {product} />
 </div>

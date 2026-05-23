@@ -13,6 +13,7 @@
     import { isItemValid, nonEmptyObject, validateItem } from "../lib/validation";
     import { Product } from "../lib/Product.svelte";
     import { sanitizeItem } from "../lib/validation";
+    import Masonry from "svelte-bricks";
 
     export const materialsResponseValidator = z.record(z.string(), materialValidator).transform((record) => {
         const result: Record<string, TinaResolvedMaterial> = {};
@@ -130,7 +131,7 @@
                     <h4>Vásárlói adatok</h4>
                 </div>
             </div>
-            <div class="flex gap-2">
+            <div class="flex gap-2 flex-col sm:flex-row">
                 <input type="text" placeholder="Név *" required />
                 <input type="email" placeholder="Email cím *" required />
                 <input type="tel" placeholder="Telefonszám" />
@@ -150,11 +151,11 @@
                 </IconButton>
             </div>
             <dialog
-                class="h-[80%] w-[80%] md:w-fit md:h-[min(80%, fit-content)] m-auto border-0 rounded-2xl shadow-lg p-4"
+                class="h-[80%] w-[80%] md:w-fit md:h-fit md:max-h-[80%] m-auto border-0 rounded-2xl shadow-lg"
                 id="product-dialog"
                 popover>
-                <div class="flex flex-col gap-4 h-full">
-                    <div class="flex items-center justify-between gap-2">
+                <div class="flex flex-col gap-4 h-full py-4">
+                    <div class="flex items-center justify-between gap-2 px-4">
                         <div class="flex items-center gap-2">
                             <Icon
                                 icon="mdi:cart"
@@ -175,7 +176,7 @@
                             )}
                             <button
                                 type="button"
-                                class="flex font-normal w-full justify-between items-center gap-4 p-1 rounded hover:bg-border transition-all"
+                                class="flex font-normal w-full justify-between items-center gap-4 p-1 px-4 rounded hover:bg-border transition-all"
                                 onclick={() => {
                                     const snapshot = $state.snapshot(product);
                                     products.splice(0, 0, sanitizeItem(new Product(snapshot)));
@@ -189,13 +190,13 @@
                     </div>
                 </div>
             </dialog>
-            <div class="grid gap-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                {#each products as product (`${product.uuid}`)}
+            <Masonry items={products} getId={(item) => item.uuid} gap={16} order="column-sequential" animate={false}>
+                {#snippet children({ item })}
                     <div transition:fade={{ duration: 250 }}>
                         <OrderItem
-                            {product}
+                            product={item}
                             onClose={() => {
-                                const index = products.findIndex((p) => p.uuid === product.uuid);
+                                const index = products.findIndex((p) => p.uuid === item.uuid);
                                 if (index !== -1) {
                                     products.splice(index, 1);
                                 }
@@ -207,10 +208,15 @@
                                 }
                             }} />
                     </div>
-                {/each}
-            </div>
+                {/snippet}
+            </Masonry>
         </div>
-        <!-- <div class="w-full h-0.5 bg-border"></div> -->
         <Button variant="contained" type="submit">Árajánlat kérése</Button>
     </div>
 </form>
+
+<style>
+    dialog::backdrop {
+        background: rgba(0, 0, 0, 0.5);
+    }
+</style>
