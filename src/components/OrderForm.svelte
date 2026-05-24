@@ -14,6 +14,7 @@
     import { Product } from "../lib/Product.svelte";
     import { sanitizeItem } from "../lib/validation";
     import Masonry from "svelte-bricks";
+    import { generateFormData } from "../lib/emailConverter";
 
     export const materialsResponseValidator = z.record(z.string(), materialValidator).transform((record) => {
         const result: Record<string, TinaResolvedMaterial> = {};
@@ -22,7 +23,7 @@
 
             result[key] = {
                 ...material,
-                colors: material.colors?.filter((x) => nonEmptyObject(x)),
+                colors: material.colors?.filter((x) => nonEmptyObject(x)) ?? [],
             };
         }
         return result;
@@ -37,44 +38,46 @@
                 result[product.product_id] = {
                     ...product,
                     product_path: key,
-                    materials: product.materials
-                        ?.filter((x) => nonEmptyObject(x))
-                        .map((material) => ({
-                            ...material,
-                            material: materials[material.material_path],
-                        })),
-                    fields: product.fields
-                        ?.filter((x) => nonEmptyObject(x))
-                        .map((field) => {
-                            switch (field.type) {
-                                case "input":
-                                    return {
-                                        ...field,
-                                        type: "input",
-                                        items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
-                                    };
-                                case "select":
-                                    return {
-                                        ...field,
-                                        type: "select",
-                                        items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
-                                    };
-                                case "radio":
-                                    return {
-                                        ...field,
-                                        type: "radio",
-                                        items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
-                                    };
-                                case "color":
-                                    return {
-                                        ...field,
-                                        type: "color",
-                                        items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
-                                    };
-                                case "toggle":
-                                    return { ...field, type: "toggle" };
-                            }
-                        }),
+                    materials:
+                        product.materials
+                            ?.filter((x) => nonEmptyObject(x))
+                            .map((material) => ({
+                                ...material,
+                                material: materials[material.material_path],
+                            })) ?? [],
+                    fields:
+                        product.fields
+                            ?.filter((x) => nonEmptyObject(x))
+                            .map((field) => {
+                                switch (field.type) {
+                                    case "input":
+                                        return {
+                                            ...field,
+                                            type: "input",
+                                            items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
+                                        };
+                                    case "select":
+                                        return {
+                                            ...field,
+                                            type: "select",
+                                            items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
+                                        };
+                                    case "radio":
+                                        return {
+                                            ...field,
+                                            type: "radio",
+                                            items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
+                                        };
+                                    case "color":
+                                        return {
+                                            ...field,
+                                            type: "color",
+                                            items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
+                                        };
+                                    case "toggle":
+                                        return { ...field, type: "toggle" };
+                                }
+                            }) ?? [],
                 };
             }
             return result;
@@ -103,8 +106,8 @@
 
     let products: Product[] = $state([]);
     let error: string | null = $state(null);
-    let name = $state("");
-    let email = $state("");
+    let name = $state("Attila");
+    let email = $state("floyd0122@gmail.com");
     let phone = $state("");
 
     let valid = $derived.by(() => {
@@ -131,6 +134,14 @@
                 return;
             }
         }
+
+        console.log("Submitting order with data:", {
+            name,
+            email,
+            phone,
+            products: products.map((p) => p.serialise()),
+            readable: generateFormData(name, email, phone, products),
+        });
     }}>
     <h3 class="mb-4">Árajánlatkérés</h3>
     <div class="flex flex-col gap-6">

@@ -40,7 +40,8 @@
     {
       "name": "egyeb",
       "label": "Egyéb megjegyzés",
-      "type": "input"
+      "type": "input",
+      "optional": true
     }
   ]
 }

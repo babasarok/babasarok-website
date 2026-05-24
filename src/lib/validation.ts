@@ -2,7 +2,9 @@ import type { Product } from "./Product.svelte";
 import type { ProductMaterial } from "./ProductMaterial.svelte";
 import type { Field, ProductMaterialValue } from "./types.svelte";
 
-export function nonEmptyObject<T extends Record<string, any>>(obj: T): obj is Exclude<T, Record<string, never>> {
+export function nonEmptyObject<T extends Record<string, any>>(
+    obj: T
+): obj is Exclude<T, Record<string, never> | undefined> {
     return Object.keys(obj).length > 0;
 }
 
@@ -63,7 +65,6 @@ function updateFieldWithErrors(item: Field): void {
                 break;
             }
         }
-        return;
     }
 
     if (item.regex) {

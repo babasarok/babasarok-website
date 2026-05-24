@@ -1,13 +1,13 @@
 import type { IProduct } from "./Product.svelte";
 import type { TinaResolvedMaterial, TinaResolvedProductMaterial } from "./types.svelte";
 
-export interface IProductMaterial extends Omit<TinaResolvedProductMaterial, "color_count"> {
+export interface IProductMaterial extends Required<Omit<TinaResolvedProductMaterial, "color_count">> {
     color_count: number | undefined;
 }
 
 export class ProductMaterial implements IProductMaterial {
     material: TinaResolvedMaterial;
-    price?: number | undefined;
+    price: number | undefined;
     color_count: number | undefined;
     private original_color_count: string;
     material_path: string;
@@ -15,7 +15,7 @@ export class ProductMaterial implements IProductMaterial {
     constructor(material: TinaResolvedProductMaterial, product: Pick<IProduct, "fields">) {
         this.material_path = $state($state.snapshot(material.material_path));
         this.material = $state($state.snapshot(material.material));
-        this.price = $state($state.snapshot(material.price));
+        this.price = $state($state.snapshot(material.price ?? undefined));
         this.original_color_count = $state($state.snapshot(material.color_count ?? "1"));
         this.color_count = $derived.by(() => {
             const val = Number.parseFloat(this.original_color_count);
@@ -50,5 +50,14 @@ export class ProductMaterial implements IProductMaterial {
             },
             product
         );
+    }
+
+    public serialise(): IProductMaterial {
+        return {
+            color_count: $state.snapshot(this.color_count),
+            material: $state.snapshot(this.material),
+            price: $state.snapshot(this.price),
+            material_path: $state.snapshot(this.material_path),
+        };
     }
 }
