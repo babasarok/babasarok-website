@@ -136,10 +136,11 @@
     let products: Product[] = $state([]);
     let error: string | null = $state(null);
     let success: string | null = $state(null);
-    let name = $state("Attila");
-    let email = $state("floyd0122@gmail.com");
+    let name = $state("");
+    let email = $state("");
     let phone = $state("");
     let deliveryMethod = $state<string>("");
+    let message = $state("");
 
     let valid = $derived.by(() => {
         if (products.length === 0) return false;
@@ -168,7 +169,6 @@
             }
         }
 
-        console.log(deliveryMethods, deliveryMethod);
         const deliveryMethodData = deliveryMethods?.[deliveryMethod];
         if (!deliveryMethodData) {
             error = "Kérem, válassz egy szállítási módot.";
@@ -188,15 +188,58 @@
 
         const serializedData = generateFormData(name, email, phone, deliveryMethodData, products);
         const formData = new FormData();
+        const productStrings = serializedData.termékek.map((p) => {
+            let result = p.név;
+            result += ` (${p.darabszám}db)`;
+            result += `\n`;
+            if (p.opciók && p.opciók.length > 0) {
+                for (const option of p.opciók ?? []) {
+                    result += `  ${option.név}: ${option.érték}\n`;
+                }
+            }
+            if (p.anyagok && p.anyagok.length > 0) {
+                result += `  Anyagok:\n`;
+
+                for (const material of p.anyagok ?? []) {
+                    result += `    - ${material.név} (${material.egyedi_szín ?? material.színek?.join(", ")})\n`;
+                }
+            }
+
+            result += "\n";
+            result += `Alapár: ${p.ár.alapár} Ft\n`;
+            if (p.ár.tételek && p.ár.tételek.length > 0) {
+                for (const tétel of p.ár.tételek) {
+                    result += `${tétel.tétel}: ${tétel.ár ?? "??"}Ft \n`;
+                }
+            }
+            result += "\n";
+            result += `${p.ár.egységár ? `  Egységár: ${p.ár.egységár}Ft` : ""}\n`;
+            if (p.ár.hossz_alapú) {
+                result += `  Méterár: ${p.ár.méterár}Ft/m\n`;
+            }
+            result += `Összár: ${p.ár.összár}Ft ${p.ár.nem_teljes_ár ? "(nem teljes ár)" : ""}`;
+
+            return result;
+        });
         // formData.append("h-captcha-response", captcha.value);
         formData.append("access_key", "1ffa9477-1db3-47f2-bc9e-1226e3a3b858");
         formData.append("subject", `Új árajánlatkérés - ${serializedData.név}`);
         formData.append("nev", serializedData.név);
         formData.append("email", serializedData.email);
         formData.append("telefonszam", serializedData.telefonszám);
-        formData.append("szallitasimod", JSON.stringify(serializedData.szállítási_mód, null, 2));
-        formData.append("ar", JSON.stringify(serializedData.ár, null, 2));
-        formData.append("termekek", JSON.stringify(serializedData.termékek, null, 2));
+        for (const [index, productString] of productStrings.entries()) {
+            formData.append(`termek ${index + 1}`, productString);
+        }
+
+        formData.append(
+            "szallitasimod",
+            `${serializedData.szállítási_mód.név} (${serializedData.szállítási_mód.ár} Ft)`
+        );
+        formData.append("uzenet", message);
+        formData.append(
+            "ar",
+            `${serializedData.ár.összár} Ft ${serializedData.ár.nem_teljes_ár ? "(nem teljes ár)" : ""}`
+        );
         sending = true;
         try {
             const res = await fetch("https://api.web3forms.com/submit", {
@@ -315,7 +358,16 @@
         <div class="w-full h-0.5 bg-border mt-4"></div>
         <div class="flex gap-4 flex-wrap mt-6 relative">
             <OrderDelivery {deliveryMethods} bind:deliveryMethod />
+            <div class="flex flex-col rounded-xl bg-border p-4 flex-1">
+                <div class="flex items-center gap-2">
+                    <Icon icon="mdi:message-text" class="shrink-0 text-2xl  text-primary-500" />
+                    <h4 class="text-xl text-uppercase">Egyéb információ</h4>
+                </div>
+                <textarea bind:value={message} placeholder="Megjegyzés a rendeléshez" class="mt-4 flex-1 text-sm"
+                ></textarea>
+            </div>
         </div>
+        <div class="flex flex-col gap-2 mt-4"></div>
         <!-- <div class="h-captcha mt-4" data-captcha="true"></div> -->
         {#if success}
             <p class="pt-4 text-sm text-green-500">{success}</p>

@@ -162,12 +162,6 @@
                     <div class="contact-form-input">
                         <form id="contact-form" action="https://api.web3forms.com/submit" method="POST">
                             <input type="hidden" name="access_key" value="{{ .Site.Params.fabformURL }}" />
-                            {{ if .Site.Params.autoreply_message }}
-                                <input
-                                    type="hidden"
-                                    name="_autoresponse"
-                                    value="{{ .Site.Params.autoreply_message }}" />
-                            {{ end }}
                             <div class="form-row">
                                 <div class="form-group col-md-6 pr-3">
                                     <input type="text" class="form-control" name="name" placeholder="Név" required />
@@ -219,7 +213,6 @@
                                     {{ .Site.Params.contact_error_message }}
                                 </span>
                             </p>
-                            <input type="text" name="_honey" style="display:none" />
                         </form>
                         <p class="contact-form-generator">
                             <strong>** </strong>

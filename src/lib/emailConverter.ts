@@ -13,6 +13,7 @@ export interface ReadableOptionData {
     név: string;
     érték: string;
     egyedi: boolean;
+    ár: number | undefined;
 }
 
 export interface ReadablePricePart {
@@ -108,14 +109,17 @@ export function generateProductData(product: Product) {
         });
     }
 
-    result.opciók = serialised.fields.map((f) => {
-        const label = "items" in f ? f.items.find((option) => option.value === f.value?.value)?.label : "";
-        return {
-            név: f.label ?? f.name,
-            érték: `${f.value?.value} ${label ? `(${label})` : ""}`,
-            egyedi: f.value?.is_custom ?? false,
-        };
-    });
+    result.opciók = serialised.fields
+        .filter((f) => !("optional" in f) || !f.optional)
+        .map((f) => {
+            const label = "items" in f ? f.items.find((option) => option.value === f.value?.value)?.label : "";
+            return {
+                név: f.label ?? f.name,
+                érték: `${label ?? f.value?.value}`,
+                egyedi: f.value?.is_custom ?? false,
+                ár: f.length_based_pricing_source ? 0 : f.price, // length based pricing options don't have a price here, as the price is calculated in the price data
+            };
+        });
 
     return result;
 }
