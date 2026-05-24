@@ -1,5 +1,6 @@
 import { calculatePriceForItem } from "./priceUtils";
 import type { Product } from "./Product.svelte";
+import type { TinaDeliveryMethodResolved } from "./types.svelte";
 
 export interface ReadableMaterialData {
     név: string;
@@ -119,11 +120,26 @@ export function generateProductData(product: Product) {
     return result;
 }
 
-export function generateFormData(name: string, email: string, phone: string, products: Product[]) {
+export function generateFormData(
+    name: string,
+    email: string,
+    phone: string,
+    deliveryMethod: TinaDeliveryMethodResolved,
+    products: Product[]
+) {
+    const productData = products.map((p) => generateProductData(p));
     return {
         név: name,
         email: email,
         telefonszám: phone,
-        termékek: products.map((p) => generateProductData(p)),
+        szállítási_mód: {
+            név: deliveryMethod.name,
+            ár: deliveryMethod.price,
+        },
+        termékek: productData,
+        ár: {
+            összár: productData.reduce((sum, p) => sum + (p.ár.összár ?? 0), 0) + deliveryMethod.price,
+            nem_teljes_ár: productData.some((p) => p.ár.nem_teljes_ár),
+        },
     };
 }

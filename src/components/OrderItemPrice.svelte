@@ -7,7 +7,7 @@
 
     interface Props {
         product: Product;
-        onChange?: (product: Product) => void;
+        onChange?: ((product: Product) => void) | undefined;
     }
 
     const { product, onChange }: Props = $props();

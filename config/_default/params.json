@@ -1,0 +1,56 @@
+{
+    "images": ["favicon.ico"],
+    "ogLocale": "hu_HU",
+    "titleHome": "Babasarok",
+    "schemaType": "Organization",
+    "schemaName": "Babasarok",
+    "schemaAuthor": "Attila Greguss",
+    "schemaLocale": "en-US",
+    "themeColor": "#F1D3B2",
+    "landscapePhotoWidths": [900, 800, 700, 600, 500],
+    "portraitPhotoWidths": [800, 700, 600, 500],
+    "lqipWidth": "20x",
+    "smallLimit": "320",
+    "imageResponsive": true,
+    "imageImageSizes": ["480", "720", "1080", "1280", "1600", "2048"],
+    "singleSize": false,
+    "imageAddClass": "img-fluid lazyload blur-up",
+    "defaultImage": "default-image.png",
+    "fillImage": "1280x720 Center",
+    "footerContact": {
+        "topTitle": "Kapcsolat",
+        "title": "Rendelj most!",
+        "button": "Érdeklődj itt"
+    },
+    "titleSeparator": "-",
+    "titleAddition": "Egyedi, kézzel készített babakelengye",
+    "blogPageURL": "blog",
+    "logo": "images/site-navigation/logo.png",
+    "footerLogo": "images/site-navigation/logo-dark.png",
+    "contactLink": "contact",
+    "copyright": "All right reserved copyright © Babasarok 2025",
+    "fabformURL": "12b302cf-cea0-44d5-808a-814661c5bfe1",
+    "autoreply_message": "Köszönjük, hogy felkerested a Babasarok weboldalát! Hamarosan felvesszük veled a kapcsolatot.",
+    "contact_success_message": "Köszönjük az érdeklődést! Sikeresen megkaptuk az üzenetet.",
+    "contact_error_message": "Hiba történt az üzenet elküldése során. Kérjük, próbálja újra később. Ha a probléma továbbra is fennáll, kérjük, lépjen kapcsolatba velünk e-mailben, telefonon, Instagramon vagy Facebookon.",
+    "address": {
+        "phone": "+36 30 2121 709",
+        "email": "halminoemi99@gmail.com",
+        "address": "3896, Telkibánya Petőfi út 87."
+    },
+    "social": [
+        {
+            "icon": "streamline-logos:facebook-logo-2",
+            "url": "https://www.facebook.com/share/1AsACc4DuU/?mibextid=wwXIfr"
+        },
+        {
+            "icon": "fa:instagram",
+            "url": "https://www.instagram.com/babasarokk/"
+        },
+        {
+            "icon": "fa-brands:tiktok",
+            "url": "https://www.tiktok.com/@halminoemi99?_t=ZG-8wgf8AuszwG&_r=1",
+            "weight": 1
+        }
+    ]
+}

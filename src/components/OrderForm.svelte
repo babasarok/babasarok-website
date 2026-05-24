@@ -8,13 +8,30 @@
     import { fade } from "svelte/transition";
     import IconButton from "./common/IconButton.svelte";
     import Button from "./common/Button.svelte";
-    import type { TinaProductResolved, TinaResolvedMaterial } from "../lib/types.svelte";
+    import type { TinaDeliveryMethodResolved, TinaProductResolved, TinaResolvedMaterial } from "../lib/types.svelte";
     import z from "zod";
     import { isItemValid, nonEmptyObject, validateItem } from "../lib/validation";
     import { Product } from "../lib/Product.svelte";
     import { sanitizeItem } from "../lib/validation";
     import Masonry from "svelte-bricks";
     import { generateFormData } from "../lib/emailConverter";
+    import { deliveryMethodValidator } from "../../tina/deliveryMethodTypes";
+    import OrderDelivery from "./OrderDelivery.svelte";
+
+    export const deliveryMethodsResponseValidator = z
+        .record(z.string(), deliveryMethodValidator)
+        .transform((record) => {
+            const result: Record<string, TinaDeliveryMethodResolved> = {};
+            for (const key in record) {
+                const method = record[key];
+
+                result[method.delivery_name] = {
+                    ...method,
+                    delivery_path: key,
+                };
+            }
+            return result;
+        });
 
     export const materialsResponseValidator = z.record(z.string(), materialValidator).transform((record) => {
         const result: Record<string, TinaResolvedMaterial> = {};
@@ -84,10 +101,12 @@
         });
 
     let productInfo: Record<string, TinaProductResolved> | null = $state(null);
+    let deliveryMethods: Record<string, TinaDeliveryMethodResolved> | null = $state(null);
 
     async function main() {
         const productResponse = await fetch("/json/product-data.json");
         const materialsResponse = await fetch("/json/material-data.json");
+        const deliveryMethodsResponse = await fetch("/json/delivery-data.json");
         const materialsResult = await materialsResponseValidator.safeParseAsync(await materialsResponse.json());
         if (!materialsResult.success) {
             console.error("Failed to parse materials data", materialsResult.error);
@@ -101,14 +120,26 @@
             return;
         }
 
+        const deliveryMethodsResult = await deliveryMethodsResponseValidator.safeParseAsync(
+            await deliveryMethodsResponse.json()
+        );
+        if (!deliveryMethodsResult.success) {
+            console.error("Failed to parse delivery methods data", deliveryMethodsResult.error);
+            return;
+        }
+
         productInfo = productsResult.data;
+        deliveryMethods = deliveryMethodsResult.data;
+        deliveryMethod = Object.values(deliveryMethods)[0]?.delivery_name ?? "";
     }
 
     let products: Product[] = $state([]);
     let error: string | null = $state(null);
+    let success: string | null = $state(null);
     let name = $state("Attila");
     let email = $state("floyd0122@gmail.com");
     let phone = $state("");
+    let deliveryMethod = $state<string>("");
 
     let valid = $derived.by(() => {
         if (products.length === 0) return false;
@@ -117,13 +148,15 @@
         return true;
     });
     main();
+    let sending = $state(false);
 </script>
 
 <form
     class="flex flex-col"
-    onsubmit={(e) => {
+    onsubmit={async (e) => {
         e.preventDefault();
         error = null;
+        success = null;
         for (const product of products) {
             validateItem(product);
         }
@@ -135,21 +168,68 @@
             }
         }
 
-        console.log("Submitting order with data:", {
-            name,
-            email,
-            phone,
-            products: products.map((p) => p.serialise()),
-            readable: generateFormData(name, email, phone, products),
-        });
+        console.log(deliveryMethods, deliveryMethod);
+        const deliveryMethodData = deliveryMethods?.[deliveryMethod];
+        if (!deliveryMethodData) {
+            error = "Kérem, válassz egy szállítási módot.";
+            return;
+        }
+
+        // const captcha = e.currentTarget.querySelector("textarea[name=h-captcha-response]");
+        // if (
+        //     !captcha ||
+        //     "value" in captcha === false ||
+        //     typeof captcha.value !== "string" ||
+        //     captcha.value.trim() === ""
+        // ) {
+        //     error = "Kérem, erősítsd meg, hogy nem vagy robot.";
+        //     return;
+        // }
+
+        const serializedData = generateFormData(name, email, phone, deliveryMethodData, products);
+        const formData = new FormData();
+        // formData.append("h-captcha-response", captcha.value);
+        formData.append("access_key", "1ffa9477-1db3-47f2-bc9e-1226e3a3b858");
+        formData.append("subject", `Új árajánlatkérés - ${serializedData.név}`);
+        formData.append("nev", serializedData.név);
+        formData.append("email", serializedData.email);
+        formData.append("telefonszam", serializedData.telefonszám);
+        formData.append("szallitasimod", JSON.stringify(serializedData.szállítási_mód, null, 2));
+        formData.append("ar", JSON.stringify(serializedData.ár, null, 2));
+        formData.append("termekek", JSON.stringify(serializedData.termékek, null, 2));
+        sending = true;
+        try {
+            const res = await fetch("https://api.web3forms.com/submit", {
+                method: "POST",
+                body: formData,
+            });
+
+            const result = await res.json();
+
+            if (!res.ok) {
+                error = `Hiba történt az árajánlatkérés elküldése közben. Kérlek, próbáld meg újra később. (${result.message})`;
+                console.log("Failed to submit order", result);
+                sending = false;
+                return;
+            }
+        } catch (e) {
+            error = `Hiba történt az árajánlatkérés elküldése közben. Kérlek, próbáld meg újra később.`;
+            console.log("Failed to submit order", e);
+            sending = false;
+            return;
+        }
+
+        sending = false;
+        success = "Árajánlatkérésed sikeresen elküldve! Hamarosan felvesszük veled a kapcsolatot.";
+        products = [];
     }}>
     <h3 class="mb-4">Árajánlatkérés</h3>
-    <div class="flex flex-col gap-6">
-        <div class="flex flex-col gap-4">
+    <div class="flex flex-col">
+        <div class="flex flex-col gap-4 pb-6">
             <div class="flex items-center gap-2">
                 <Icon icon="mdi:account" class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary" />
                 <div class="flex flex-col gap-2 text-nowrap">
-                    <h4>Vásárlói adatok</h4>
+                    <h4 class="text-xl text-uppercase">Vásárlói adatok</h4>
                 </div>
             </div>
             <div class="flex gap-2 flex-col sm:flex-row">
@@ -163,7 +243,7 @@
                 <div class="flex items-center gap-2">
                     <Icon icon="mdi:cart" class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary" />
                     <div class="flex flex-col gap">
-                        <h4>Termék kiválasztása</h4>
+                        <h4 class="text-xl text-uppercase">Termék kiválasztása</h4>
                         <p class="text-sm">Válassz egy vagy több terméket, amire árajánlatot szeretnél kapni.</p>
                     </div>
                 </div>
@@ -182,7 +262,7 @@
                                 icon="mdi:cart"
                                 class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary" />
                             <div class="flex flex-col gap">
-                                <h4>Termékek</h4>
+                                <h4 class="text-xl text-uppercase">Termékek</h4>
                             </div>
                         </div>
                         <IconButton type="button" popovertarget="product-dialog" popovertargetaction="hide">
@@ -232,10 +312,18 @@
                 {/snippet}
             </Masonry>
         </div>
-        {#if error}
-            <p class="text-sm text-red-500">{error}</p>
+        <div class="w-full h-0.5 bg-border mt-4"></div>
+        <div class="flex gap-4 flex-wrap mt-6 relative">
+            <OrderDelivery {deliveryMethods} bind:deliveryMethod />
+        </div>
+        <!-- <div class="h-captcha mt-4" data-captcha="true"></div> -->
+        {#if success}
+            <p class="pt-4 text-sm text-green-500">{success}</p>
         {/if}
-        <Button variant="contained" type="submit" disabled={!valid}>Árajánlat kérése</Button>
+        {#if error}
+            <p class="pt-4 text-sm text-red-500">{error}</p>
+        {/if}
+        <Button class="mt-4" variant="contained" type="submit" disabled={!valid || sending}>Árajánlat kérése</Button>
     </div>
 </form>
 

@@ -1,0 +1,11 @@
+
+{{- $delivery_methods := dict -}}
+{{- range $file := readDir "data/delivery_methods" -}}
+    {{- if strings.HasSuffix $file.Name ".json" -}}
+        {{- $raw := readFile (printf "data/delivery_methods/%s" $file.Name) -}}
+        {{- $jsonData := transform.Unmarshal $raw -}}
+        {{- $delivery_methods = merge $delivery_methods (dict (printf "data/delivery_methods/%s" $file.Name) $jsonData) -}}
+    {{- end -}}
+{{- end -}}
+
+{{- jsonify (dict "indent" "  ") $delivery_methods -}}

@@ -1,5 +1,5 @@
 {{- if and (.Site.Params.alert) (.Site.Params.alertDismissable) -}}
-  {{ $alertInit := resources.Get "js/alert-init.js" | js.Build | minify -}}
+    {{ $alertInit := resources.Get "js/alert-init.js" | js.Build | minify -}}
   <script>{{ $alertInit.Content | safeJS }}</script>
 {{- end -}}
 
@@ -8,3 +8,6 @@
 
 {{- $materialData := resources.Get "json/material-data.json" | resources.ExecuteAsTemplate "json/material-data.json" . -}}
 <link rel="alternate" type="application/json" href="{{ $materialData.RelPermalink }}" />
+
+{{- $deliveryData := resources.Get "json/delivery-data.json" | resources.ExecuteAsTemplate "json/delivery-data.json" . -}}
+<link rel="alternate" type="application/json" href="{{ $deliveryData.RelPermalink }}" />

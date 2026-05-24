@@ -11,7 +11,7 @@
 
     interface Props {
         product: Product;
-        onChange?: (product: Product) => void;
+        onChange?: ((product: Product) => void) | undefined;
     }
 
     const { product, onChange }: Props = $props();
@@ -94,7 +94,7 @@
                     <div transition:slide>
                         <Button
                             type="button"
-                            selected={field.value?.is_custom}
+                            selected={field.value?.is_custom ?? false}
                             onclick={() => {
                                 const result = product;
                                 const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
@@ -161,7 +161,7 @@
                         <div transition:slide>
                             <Button
                                 type="button"
-                                selected={field.value?.is_custom}
+                                selected={field.value?.is_custom ?? false}
                                 onclick={() => {
                                     const result = product;
                                     const fieldToUpdate = result.fields?.find((f) => f.name === field.name);

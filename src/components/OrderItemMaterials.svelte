@@ -11,7 +11,7 @@
     interface Props {
         product: Product;
         material_index?: number;
-        onChange?: (product: Product) => void;
+        onChange?: ((product: Product) => void) | undefined;
     }
 
     const { product, onChange, material_index = 0 }: Props = $props();

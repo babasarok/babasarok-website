@@ -3,13 +3,13 @@
     import Tooltip from "./Tooltip.svelte";
 
     interface Props {
-        color: { color_id: string; hex?: string; label?: string };
+        color: { color_id: string; hex?: string | undefined; label?: string | undefined };
         selected?: boolean;
         onclick?: (color_id: string) => void;
         disabled?: boolean;
     }
 
-    const { color, selected = false, onclick, disabled }: Props = $props();
+    const { color, selected = false, onclick, disabled = false }: Props = $props();
 </script>
 
 <Tooltip {disabled}>

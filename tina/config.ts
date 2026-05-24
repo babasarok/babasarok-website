@@ -15,6 +15,7 @@ import {
 } from "./templates";
 import { PRODUCT } from "./products";
 import { MATERIALS } from "./materials";
+import { DELIVER_METHODS } from "./deliveryMethods";
 
 // Your hosting provider likely exposes this as an environment variable
 const branch = process.env.HEAD || process.env.CF_PAGES_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || "main";
@@ -24,8 +25,8 @@ export default defineConfig({
         return cms;
     },
     branch,
-    clientId: process.env.TINA_CMS_CLIENT_ID, // Get this from tina.io
-    token: process.env.TINA_CMS_CLIENT_TOKEN, // Get this from tina.io
+    clientId: process.env.TINA_CMS_CLIENT_ID!, // Get this from tina.io
+    token: process.env.TINA_CMS_CLIENT_TOKEN!, // Get this from tina.io
     client: { skip: true },
     build: {
         outputFolder: "admin",
@@ -235,11 +236,11 @@ export default defineConfig({
                 fields: menus_templateFields(),
             },
             {
-                format: "yaml",
+                format: "json",
                 label: "Paraméter Fájl",
                 name: "parameters_file",
                 path: "config/_default",
-                frontmatterFormat: "yaml",
+                frontmatterFormat: "json",
                 ui: {
                     allowedActions: {
                         create: false,
@@ -272,6 +273,17 @@ export default defineConfig({
                     include: "*",
                 },
                 fields: MATERIALS,
+            },
+            {
+                format: "json",
+                label: "Rendelés/Szállítási módok",
+                name: "delivery_methods",
+                path: "data/delivery_methods",
+                frontmatterFormat: "json",
+                match: {
+                    include: "*",
+                },
+                fields: DELIVER_METHODS,
             },
         ],
     },
