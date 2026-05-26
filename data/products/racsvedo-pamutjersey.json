@@ -1,17 +1,12 @@
 {
-  "product_id": "racsvedo",
-  "name": "Fonott rácsvédő",
+  "product_id": "racsvedo-pamutjersey",
+  "name": "Fonott rácsvédő (Pamutjersey)",
   "icon": "/product/braids.svg",
   "priced_by_length": true,
   "price": 0,
   "materials": [
     {
-      "material_path": "data/materials/velur.json",
-      "price": 0,
-      "color_count": "fonas"
-    },
-    {
-      "material_path": "data/materials/teddy.json",
+      "material_path": "data/materials/pamutjersey.json",
       "price": 0,
       "color_count": "fonas"
     }
@@ -60,23 +55,23 @@
         {
           "value": "3",
           "label": "Hármas",
-          "price": 7500
+          "price": 6400
         },
         {
           "value": "4",
           "label": "Négyes",
-          "price": 9500
+          "price": 8000
         },
         {
           "value": "5",
           "label": "Ötös",
-          "price": 11500,
+          "price": 9500,
           "tooltip": "Más néven halszálka."
         },
         {
           "value": "6",
           "label": "Hatos",
-          "price": 13500
+          "price": 12500
         }
       ],
       "regex": "^(\\d+)$"
