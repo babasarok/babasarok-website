@@ -1,6 +1,7 @@
 {
   "product_id": "baldachin",
   "name": "Baldachin",
+  "price": 12000,
   "fields": [
     {
       "name": "szin",
@@ -19,17 +20,19 @@
         },
         {
           "value": "9",
-          "label": "9m"
+          "label": "9m",
+          "price": 2000
         },
         {
           "value": "12",
-          "label": "12m"
+          "label": "12m",
+          "price": 6000
         }
       ]
     },
     {
       "name": "pompom",
-      "price": 500,
+      "price": 3000,
       "label": "Pompom",
       "type": "toggle"
     }

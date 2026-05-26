@@ -58,11 +58,9 @@
         <div class="flex flex-col gap-1">
             <p class="text-sm text-primary-500 flex items-center gap-1 justify-between">
                 <span> Szín </span>
-                {#if multiColor}
-                    <span class="text-xs">
-                        {custom ? "Egyedi szín" : `${value?.colors.length ?? 0} / ${colorCount}`}
-                    </span>
-                {/if}
+                <span class="text-xs">
+                    {custom ? "Egyedi szín" : `${value?.colors.length ?? 0} / ${colorCount}`}
+                </span>
             </p>
             {#if (materialInfo?.colors?.length ?? 0) > 0}
                 <p

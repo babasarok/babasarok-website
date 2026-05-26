@@ -25,7 +25,7 @@ export class Product implements IProduct {
     fields: Field[];
     icon: string | undefined;
     priced_by_length: boolean | undefined;
-    price: number | undefined;
+    price: number;
     product_path: string;
     discount: number | undefined;
     discount_valid_until: Date | undefined;

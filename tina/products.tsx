@@ -52,6 +52,7 @@ export const PRODUCT: TinaField<false>[] = [
         type: "number",
         name: "price",
         label: "Alap Ár - Forintban",
+        required: true,
     },
     {
         type: "number",
@@ -100,6 +101,7 @@ export const PRODUCT: TinaField<false>[] = [
             {
                 type: "number",
                 name: "price",
+                required: true,
                 label: "Ár",
                 description: "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni.",
             },
@@ -246,23 +248,6 @@ export const PRODUCT: TinaField<false>[] = [
                             "Az opció megjelenítendő neve, ami a felhasználó számára látható. Ha nincs megadva, akkor a value értékét használja.",
                     },
                     {
-                        type: "boolean",
-                        name: "fixed_price",
-                        label: "Fix ár",
-                        description: "Méterárunál ez az opció fix árnak lesz tekintve.",
-                        ui: {
-                            // component(props) {
-                            //     const length_based_pricing_source = getValue(props, "../../length_based_pricing_source");
-                            //     if (!length_based_pricing_source) {
-                            //         return null;
-                            //     }
-
-                            //     return ToggleField(props as any);
-                            // }
-                            component: "hidden",
-                        },
-                    },
-                    {
                         type: "number",
                         name: "price",
                         label: "Ár",
@@ -274,8 +259,7 @@ export const PRODUCT: TinaField<false>[] = [
                                     props,
                                     "../../length_based_pricing_source"
                                 );
-                                const fixed_price = getValue(props, "fixed_price");
-                                if (length_based_pricing_source && !fixed_price) {
+                                if (length_based_pricing_source) {
                                     return null;
                                 }
 

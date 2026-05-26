@@ -6,8 +6,7 @@ const optionValidator = z.object({
     value: z.string(),
     label: z.string().optional(),
     tooltip: z.string().optional(),
-    price: z.number().optional(),
-    fixed_price: z.boolean().optional(),
+    price: z.number().default(0),
 });
 
 export type TinaOption = z.infer<typeof optionValidator>;
@@ -17,7 +16,7 @@ const baseFieldValidator = z.object({
     label: z.string().optional(),
     length_based_pricing_source: z.boolean().optional(),
     regex: z.string().optional(),
-    price: z.number().optional(),
+    price: z.number().default(0),
 });
 
 export type TinaBaseField = z.infer<typeof baseFieldValidator>;
@@ -75,7 +74,7 @@ export type TinaProductField = z.infer<typeof fieldValidator>;
 
 const productMaterialValidator = z.object({
     material_path: z.string(),
-    price: z.number().optional(),
+    price: z.number().default(0),
     color_count: z.string().optional(),
 });
 
@@ -86,7 +85,7 @@ export const productValidator = z.object({
     name: z.string(),
     icon: z.string().optional(),
     priced_by_length: z.boolean().optional(),
-    price: z.number().optional(),
+    price: z.number().default(0),
     discount: z.number().optional(),
     discount_valid_until: z.coerce.date().optional(),
     fields: z.array(fieldValidator.or(emptyObject)).optional(),
