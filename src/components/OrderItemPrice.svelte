@@ -15,11 +15,15 @@
     const price = $derived.by(() => {
         return calculatePriceForItem(product);
     });
+
+    const priceParts = $derived.by(() => {
+        return [price.basePrice, ...price.options].filter((part) => part.price !== undefined && part.price > 0);
+    });
 </script>
 
 <div class="flex flex-col gap-1">
     <div class="flex flex-col gap-1 text-xs">
-        {#each [price.basePrice, ...price.options] as part, index}
+        {#each priceParts as part, index}
             <div class="flex justify-between">
                 <p class="text-xs">{part.label}</p>
                 <p class="text-xs">
