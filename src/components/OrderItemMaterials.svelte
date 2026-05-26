@@ -51,6 +51,7 @@
         {@const value = product.material_values[material_index]}
         {@const productMaterial = product.materials?.find((m) => m.material.material_id === value?.material_id)}
         {@const materialInfo = productMaterial?.material}
+        {@const custom = value.custom_color != undefined || (materialInfo?.colors?.length ?? 0) === 0}
         {@const colorCount = productMaterial?.color_count}
         {@const multiColor = (colorCount ?? 0) > 1}
         {@const disabled = colorCount === undefined || (multiColor ? (value?.colors.length ?? 0) >= colorCount : false)}
@@ -59,7 +60,7 @@
                 <span> Szín </span>
                 {#if multiColor}
                     <span class="text-xs">
-                        ({value?.colors.length ?? 0} / {colorCount})
+                        {custom ? "Egyedi szín" : `${value?.colors.length ?? 0} / ${colorCount}`}
                     </span>
                 {/if}
             </p>
@@ -136,7 +137,7 @@
                 Egyéb
             </Button>
         {/if}
-        {#if value.custom_color != undefined || (materialInfo?.colors?.length ?? 0) === 0}
+        {#if custom}
             <input
                 value={value.custom_color}
                 oninput={(e) => {
