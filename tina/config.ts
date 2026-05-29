@@ -264,13 +264,13 @@ export default defineConfig({
                 fields: PRODUCT,
             },
             {
-                format: "json",
+                format: "md",
                 label: "Rendelés/Anyagok",
                 name: "product_materials",
-                path: "data/materials",
-                frontmatterFormat: "json",
+                path: "content/material",
+                frontmatterFormat: "yaml",
                 match: {
-                    include: "*",
+                    include: "**/*",
                 },
                 fields: MATERIALS,
             },

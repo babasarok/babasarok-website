@@ -18,9 +18,9 @@ disableKinds:
     - "rss"
 
 outputs:
-    home: ["HTML", "RSS", "json"]
-    section: ["HTML", "RSS", "json"]
-    page: ["HTML", "RSS", "json"]
+    home: ["HTML", "RSS", "JSON"]
+    section: ["HTML", "RSS", "JSON"]
+    page: ["HTML", "RSS", "JSON"]
 
 pagination:
     pagerSize: 6

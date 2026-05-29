@@ -1,0 +1,8 @@
+{{- dict
+  "kind" .Kind
+  "title" .Site.Title
+  "description" .Site.Params.description
+  "permalink" .Permalink
+  "path" (printf "content/%s" .File.Path)
+  "language" .Site.LanguageCode
+| jsonify -}}

@@ -1,6 +1,6 @@
 ---
-material_id: "duplagez"
+title: "Duplagéz"
 label: "Duplagéz"
+material_id: "duplagez"
+colors: []
 ---
-
-Hello
