@@ -6,12 +6,12 @@
   "price": 0,
   "materials": [
     {
-      "material_path": "data/materials/velur.json",
+      "material_path": "content/material/velur.md",
       "price": 0,
       "color_count": "fonas"
     },
     {
-      "material_path": "data/materials/teddy.json",
+      "material_path": "content/material/teddy.md",
       "price": 0,
       "color_count": "fonas"
     }

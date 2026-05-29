@@ -4,7 +4,7 @@
     "price": 9500,
     "materials": [
         {
-            "material_path": "data/materials/pamutvaszon.json",
+            "material_path": "content/material/pamutvaszon.md",
             "price": 0
         }
     ]
