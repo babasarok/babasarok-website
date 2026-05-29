@@ -214,7 +214,7 @@ export default defineConfig({
                     },
                 },
                 match: {
-                    include: "config",
+                    include: "hugo",
                 },
                 fields: config_templateFields(),
             },

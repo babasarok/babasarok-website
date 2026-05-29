@@ -124,7 +124,7 @@ export function blog_templateFields(): TinaField<false>[] {
             name: "content",
             label: "Tartalom",
             isBody: true,
-        }
+        },
     ];
 }
 export function config_templateFields(): TinaField<false>[] {
@@ -145,14 +145,16 @@ export function config_templateFields(): TinaField<false>[] {
             label: "Cím",
         },
         {
-            type: "string",
-            name: "theme",
-            label: "Vizuális Téma",
-        },
-        {
-            type: "number",
-            name: "paginate",
+            type: "object",
+            name: "pagination",
             label: "Oldalankénti bejegyzések száma",
+            fields: [
+                {
+                    type: "number",
+                    name: "pagerSize",
+                    label: "Egy oldalankénti bejegyzések száma",
+                },
+            ],
         },
     ];
 }
@@ -324,25 +326,29 @@ export function parameters_templateFields(): TinaField<false>[] {
             type: "string",
             label: "Kapcsolat kérdőiv email cím/kód",
             name: "fabformURL",
-            description: "A https://formsubmit.co elfogad email címet először, majd küld kódot az első alkalommal amit ide be lehet írni hogy a botok ne találják meg a beírt email címet a neten."
+            description:
+                "A https://formsubmit.co elfogad email címet először, majd küld kódot az első alkalommal amit ide be lehet írni hogy a botok ne találják meg a beírt email címet a neten.",
         },
         {
             type: "string",
             label: "Automatikus email válasz tartalma (Nem Működik!)",
             name: "autoreply_message",
-            description: "Ez az üzenet kerül elküldésre a felhasználónak (azzal együtt amit ő kitöltött), ha sikeresen elküldi a kapcsolat kérdőívet.",
+            description:
+                "Ez az üzenet kerül elküldésre a felhasználónak (azzal együtt amit ő kitöltött), ha sikeresen elküldi a kapcsolat kérdőívet.",
         },
         {
             type: "string",
             label: "Sikeres kapcsolat kérdőív üzenet",
             name: "contact_success_message",
-            description: "Ez az üzenetet mutatja az oldal a felhasználónak, ha sikeresen elküldi a kapcsolat kérdőívet.",
+            description:
+                "Ez az üzenetet mutatja az oldal a felhasználónak, ha sikeresen elküldi a kapcsolat kérdőívet.",
         },
         {
             type: "string",
             label: "Sikertelen kapcsolat kérdőív üzenet",
             name: "contact_error_message",
-            description: "Ez az üzenetet mutatja az oldal a felhasználónak, ha sikertelenül küldi el a kapcsolat kérdőívet.",
+            description:
+                "Ez az üzenetet mutatja az oldal a felhasználónak, ha sikertelenül küldi el a kapcsolat kérdőívet.",
         },
         {
             type: "object",
@@ -486,7 +492,7 @@ export function product_templateFields(): TinaField<false>[] {
             name: "content",
             label: "Tartalom",
             isBody: true,
-        }
+        },
     ];
 }
 export function resume_templateFields(): TinaField<false>[] {

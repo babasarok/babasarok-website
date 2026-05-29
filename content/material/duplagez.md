@@ -1,0 +1,6 @@
+---
+material_id: "duplagez"
+label: "Duplagéz"
+---
+
+Hello
