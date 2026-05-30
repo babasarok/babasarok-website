@@ -19,14 +19,12 @@
     import OrderDelivery from "./OrderDelivery.svelte";
 
     export const deliveryMethodsResponseValidator = z
-        .object({ pages: z.array(z.object({ path: z.string(), frontmatter: deliveryMethodValidator })) })
+        .object({ pages: z.array(deliveryMethodValidator.extend({ path: z.string() })) })
         .transform((obj) => {
             const result: Record<string, TinaDeliveryMethodResolved> = {};
             for (const page of obj.pages) {
-                const method = page.frontmatter;
-
-                result[method.delivery_name] = {
-                    ...method,
+                result[page.delivery_name] = {
+                    ...page,
                     delivery_path: page.path,
                 };
             }
@@ -34,15 +32,13 @@
         });
 
     export const materialsResponseValidator = z
-        .object({ pages: z.array(z.object({ path: z.string(), frontmatter: materialValidator })) })
+        .object({ pages: z.array(materialValidator.extend({ path: z.string() })) })
         .transform((obj) => {
             const result: Record<string, TinaResolvedMaterial> = {};
             for (const page of obj.pages) {
-                const material = page.frontmatter;
-
                 result[page.path] = {
-                    ...material,
-                    colors: material.colors?.filter((x) => nonEmptyObject(x)) ?? [],
+                    ...page,
+                    colors: page.colors?.filter((x) => nonEmptyObject(x)) ?? [],
                 };
             }
             return result;

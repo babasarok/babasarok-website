@@ -3,7 +3,15 @@
   {{- $thumbnail := "" -}}
   {{- with .Params.thumbnail -}}
     {{- with resources.Get . -}}
-      {{- $thumbnail = .RelPermalink -}}
+      {{ $thumbnail_full := .Resize "700x" }}
+      {{- $thumbnail = $thumbnail_full.RelPermalink -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $icon := "" -}}
+  {{- with .Params.icon -}}
+    {{- with resources.Get . -}}
+      {{ $icon_full := .Resize "700x" }}
+      {{- $icon = $icon_full.RelPermalink -}}
     {{- end -}}
   {{- end -}}
   {{- $featureImage := "" -}}
@@ -12,19 +20,17 @@
       {{- $featureImage = .RelPermalink -}}
     {{- end -}}
   {{- end -}}
-  {{- $items = $items | append (dict
+  {{- $items = $items | append (merge .Params (dict
     "title" .Title
-    "label" (.Params.label | default .Title)
     "permalink" .Permalink
     "path" (printf "content/%s" .File.Path)
     "summary" (.Summary | plainify)
-    "categories" .Params.categories
-    "tags" .Params.tags
     "thumbnail" $thumbnail
     "featureImage" $featureImage
     "date" (.Date.Format "2006-01-02")
     "publishDate" (.PublishDate.Format "2006-01-02")
-    "frontmatter" .Params
+    "icon" $icon
+    )
   ) -}}
 {{- end -}}
 {{- dict
