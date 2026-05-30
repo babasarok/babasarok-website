@@ -275,13 +275,13 @@ export default defineConfig({
                 fields: MATERIALS,
             },
             {
-                format: "json",
+                format: "md",
                 label: "Rendelés/Szállítási módok",
                 name: "delivery_methods",
-                path: "data/delivery_methods",
-                frontmatterFormat: "json",
+                path: "content/delivery_method",
+                frontmatterFormat: "yaml",
                 match: {
-                    include: "*",
+                    include: "**/*",
                 },
                 fields: DELIVER_METHODS,
             },

@@ -19,15 +19,15 @@
     import OrderDelivery from "./OrderDelivery.svelte";
 
     export const deliveryMethodsResponseValidator = z
-        .record(z.string(), deliveryMethodValidator)
-        .transform((record) => {
+        .object({ pages: z.array(z.object({ path: z.string(), frontmatter: deliveryMethodValidator })) })
+        .transform((obj) => {
             const result: Record<string, TinaDeliveryMethodResolved> = {};
-            for (const key in record) {
-                const method = record[key];
+            for (const page of obj.pages) {
+                const method = page.frontmatter;
 
                 result[method.delivery_name] = {
                     ...method,
-                    delivery_path: key,
+                    delivery_path: page.path,
                 };
             }
             return result;
@@ -108,20 +108,20 @@
     async function main() {
         const productResponse = await fetch("/json/product-data.json");
         const materialsResponse = await fetch("/material/index.json");
-        const deliveryMethodsResponse = await fetch("/json/delivery-data.json");
+        const deliveryMethodsResponse = await fetch("/delivery_method/index.json");
         const materialsResult = await materialsResponseValidator.safeParseAsync(await materialsResponse.json());
         if (!materialsResult.success) {
             console.error("Failed to parse materials data", materialsResult.error);
             return;
         }
         console.log("Parsed materials data", materialsResult.data);
-        const productsResult = await productsResponseValidator(materialsResult.data).safeParseAsync(
-            await productResponse.json()
-        );
-        if (!productsResult.success) {
-            console.error("Failed to parse products data", productsResult.error);
-            return;
-        }
+        // const productsResult = await productsResponseValidator(materialsResult.data).safeParseAsync(
+        //     await productResponse.json()
+        // );
+        // if (!productsResult.success) {
+        //     console.error("Failed to parse products data", productsResult.error);
+        //     return;
+        // }
 
         const deliveryMethodsResult = await deliveryMethodsResponseValidator.safeParseAsync(
             await deliveryMethodsResponse.json()
@@ -131,7 +131,7 @@
             return;
         }
 
-        productInfo = productsResult.data;
+        // productInfo = productsResult.data;
         deliveryMethods = deliveryMethodsResult.data;
         deliveryMethod = Object.values(deliveryMethods)[0]?.delivery_name ?? "";
     }
