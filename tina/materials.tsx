@@ -4,7 +4,8 @@ export const MATERIALS: TinaField[] = [
     {
         type: "string",
         name: "material_id",
-        description: "Egyedi! azonosító az anyaghoz, csak angol karaktereket és számokat tartalmazhat, szóköz nélkül. Pl: anyag-1",
+        description:
+            "Egyedi! azonosító az anyaghoz, csak angol karaktereket és számokat tartalmazhat, szóköz nélkül. Pl: anyag-1",
         label: "Anyag ID",
         required: true,
     },
@@ -30,7 +31,8 @@ export const MATERIALS: TinaField[] = [
             {
                 type: "string",
                 name: "color_id",
-                description: "Egyedi! azonosító a színhez, csak angol karaktereket és számokat tartalmazhat, szóköz nélkül. Pl: szin-1",
+                description:
+                    "Egyedi! azonosító a színhez, csak angol karaktereket és számokat tartalmazhat, szóköz nélkül. Pl: szin-1",
                 label: "Színkód",
                 required: true,
             },
@@ -47,9 +49,28 @@ export const MATERIALS: TinaField[] = [
                 label: "Színkód",
                 description: "Megközelítőleges színe az anyagnak.",
                 ui: {
-                    component: "color"
-                }
-            }
-        ]
-    }
-]
+                    component: "color",
+                },
+            },
+        ],
+    },
+    {
+        type: "string",
+        name: "categories",
+        label: "Alcím",
+    },
+    {
+        type: "string",
+        name: "shortDescription",
+        label: "Leírás",
+        ui: {
+            component: "textarea",
+        },
+    },
+    {
+        type: "rich-text",
+        name: "content",
+        label: "Tartalom",
+        isBody: true,
+    },
+];
