@@ -46,26 +46,22 @@
             <div class="row">
                 <div class="col-12">
                     <div class="product-item-grid">
-                        {{ range .Paginator.Pages }}
-                            {{ if (not .Params.hidden_in_product_list) }}
-                                <div class="product-item">
-                                    {{ if (isset .Params "thumbnail") }}
-                                        {{ $asset := resources.Get .Params.thumbnail }}
-                                        {{ $img := $asset.Resize "700x" }}
-                                        <img
-                                            src="{{ $img.RelPermalink }}"
-                                            class="product-item-thumb"
-                                            alt="product-thumb" />
-                                    {{ end }}
-                                    <div class="product-item-content">
-                                        <span>{{ .Params.categories }}</span>
-                                        <h3 class="mb-0">
-                                            <a class="text-dark" href="{{ .Permalink }}">{{ .Title }}</a>
-                                        </h3>
-                                        <a class="see-more-btn" href="{{ .Permalink }}">Részletek</a>
-                                    </div>
+                        {{ $pages := where .Pages "Params.hidden_in_product_list" "ne" true }}
+                        {{ range (.Paginate $pages).Pages }}
+                            <div class="product-item">
+                                {{ if (isset .Params "thumbnail") }}
+                                    {{ $asset := resources.Get .Params.thumbnail }}
+                                    {{ $img := $asset.Resize "700x" }}
+                                    <img src="{{ $img.RelPermalink }}" class="product-item-thumb" alt="product-thumb" />
+                                {{ end }}
+                                <div class="product-item-content">
+                                    <span>{{ .Params.categories }}</span>
+                                    <h3 class="mb-0">
+                                        <a class="text-dark" href="{{ .Permalink }}">{{ .Title }}</a>
+                                    </h3>
+                                    <a class="see-more-btn" href="{{ .Permalink }}">Részletek</a>
                                 </div>
-                            {{ end }}
+                            </div>
                         {{ end }}
                     </div>
                 </div>
