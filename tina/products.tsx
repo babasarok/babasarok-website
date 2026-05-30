@@ -3,17 +3,10 @@ import {
     type InputFieldType,
     type TinaField,
     type ReferenceField,
-    type ToggleProps,
     GroupListField,
-    type GroupFieldProps,
-    type GroupProps,
     TextField,
-    type TextFieldProps,
-    type InputProps,
     NumberField,
     type NumberProps,
-    ButtonToggleField,
-    type ButtonToggleProps,
     DateField,
 } from "tinacms";
 import { getValue } from "./utils";
@@ -64,7 +57,13 @@ export const PRODUCT: TinaField<false>[] = [
         type: "object",
         name: "table",
         label: "Ár táblázat",
+        description: "Ártáblázat, ami megjelenik a termék saját oldalán.",
         list: true,
+        ui: {
+            itemProps: (item) => {
+                return { label: `${item.title} - ${item.description}` };
+            },
+        },
         fields: [
             {
                 type: "string",
