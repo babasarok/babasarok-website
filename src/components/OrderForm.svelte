@@ -33,18 +33,20 @@
             return result;
         });
 
-    export const materialsResponseValidator = z.record(z.string(), materialValidator).transform((record) => {
-        const result: Record<string, TinaResolvedMaterial> = {};
-        for (const key in record) {
-            const material = record[key];
+    export const materialsResponseValidator = z
+        .object({ pages: z.array(z.object({ path: z.string(), frontmatter: materialValidator })) })
+        .transform((obj) => {
+            const result: Record<string, TinaResolvedMaterial> = {};
+            for (const page of obj.pages) {
+                const material = page.frontmatter;
 
-            result[key] = {
-                ...material,
-                colors: material.colors?.filter((x) => nonEmptyObject(x)) ?? [],
-            };
-        }
-        return result;
-    });
+                result[page.path] = {
+                    ...material,
+                    colors: material.colors?.filter((x) => nonEmptyObject(x)) ?? [],
+                };
+            }
+            return result;
+        });
 
     export const productsResponseValidator = (materials: Record<string, TinaResolvedMaterial>) =>
         z.record(z.string(), productValidator).transform((record) => {
@@ -105,13 +107,14 @@
 
     async function main() {
         const productResponse = await fetch("/json/product-data.json");
-        const materialsResponse = await fetch("/json/material-data.json");
+        const materialsResponse = await fetch("/material/index.json");
         const deliveryMethodsResponse = await fetch("/json/delivery-data.json");
         const materialsResult = await materialsResponseValidator.safeParseAsync(await materialsResponse.json());
         if (!materialsResult.success) {
             console.error("Failed to parse materials data", materialsResult.error);
             return;
         }
+        console.log("Parsed materials data", materialsResult.data);
         const productsResult = await productsResponseValidator(materialsResult.data).safeParseAsync(
             await productResponse.json()
         );

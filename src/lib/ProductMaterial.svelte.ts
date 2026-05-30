@@ -7,7 +7,7 @@ export interface IProductMaterial extends Required<Omit<TinaResolvedProductMater
 
 export class ProductMaterial implements IProductMaterial {
     material: TinaResolvedMaterial;
-    price: number | undefined;
+    price: number;
     color_count: number | undefined;
     private original_color_count: string;
     material_path: string;
