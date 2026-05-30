@@ -439,62 +439,7 @@ export function product_section_templateFields(): TinaField<false>[] {
         },
     ];
 }
-export function product_templateFields(): TinaField<false>[] {
-    return [
-        {
-            type: "string",
-            name: "title",
-            label: "Név",
-        },
-        {
-            type: "string",
-            name: "categories",
-            label: "Alcím",
-        },
-        {
-            type: "datetime",
-            name: "date",
-            label: "Dátum",
-        },
-        {
-            type: "image",
-            name: "thumbnail",
-            label: "Kép",
-        },
-        {
-            type: "object",
-            name: "table",
-            label: "Ár",
-            list: true,
-            fields: [
-                {
-                    type: "string",
-                    name: "title",
-                    label: "Ár címe",
-                },
-                {
-                    type: "string",
-                    name: "description",
-                    label: "Ár",
-                },
-            ],
-        },
-        {
-            type: "string",
-            name: "shortDescription",
-            label: "Leírás",
-            ui: {
-                component: "textarea",
-            },
-        },
-        {
-            type: "rich-text",
-            name: "content",
-            label: "Tartalom",
-            isBody: true,
-        },
-    ];
-}
+
 export function resume_templateFields(): TinaField<false>[] {
     return [
         {

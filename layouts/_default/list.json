@@ -10,8 +10,7 @@
   {{- $icon := "" -}}
   {{- with .Params.icon -}}
     {{- with resources.Get . -}}
-      {{ $icon_full := .Resize "700x" }}
-      {{- $icon = $icon_full.RelPermalink -}}
+      {{- $icon = .RelPermalink -}}
     {{- end -}}
   {{- end -}}
   {{- $featureImage := "" -}}

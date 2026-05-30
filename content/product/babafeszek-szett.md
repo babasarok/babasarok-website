@@ -1,5 +1,6 @@
 ---
 title: Babafészek szett
+product_id: babafeszek-szett
 categories: Kuckós biztonság az első pillanattól
 date: 2025-05-02T06:49:27.000Z
 thumbnail: /IMG_3617.JPG

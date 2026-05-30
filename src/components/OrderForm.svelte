@@ -45,64 +45,69 @@
         });
 
     export const productsResponseValidator = (materials: Record<string, TinaResolvedMaterial>) =>
-        z.record(z.string(), productValidator).transform((record) => {
-            const result: Record<string, TinaProductResolved> = {};
-            for (const key in record) {
-                const product = record[key];
-
-                result[product.product_id] = {
-                    ...product,
-                    product_path: key,
-                    materials:
-                        product.materials
-                            ?.filter((x) => nonEmptyObject(x))
-                            .map((material) => ({
-                                ...material,
-                                material: materials[material.material_path],
-                            })) ?? [],
-                    fields:
-                        product.fields
-                            ?.filter((x) => nonEmptyObject(x))
-                            .map((field) => {
-                                switch (field.type) {
-                                    case "input":
-                                        return {
-                                            ...field,
-                                            type: "input",
-                                            items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
-                                        };
-                                    case "select":
-                                        return {
-                                            ...field,
-                                            type: "select",
-                                            items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
-                                        };
-                                    case "radio":
-                                        return {
-                                            ...field,
-                                            type: "radio",
-                                            items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
-                                        };
-                                    case "color":
-                                        return {
-                                            ...field,
-                                            type: "color",
-                                            items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
-                                        };
-                                    case "toggle":
-                                        return { ...field, type: "toggle" };
-                                }
-                            }) ?? [],
-                };
-            }
-            return result;
-        });
+        z
+            .object({
+                pages: z.array(productValidator.extend({ path: z.string(), can_be_ordered: z.boolean().optional() })),
+            })
+            .transform((obj) => {
+                const result: Record<string, TinaProductResolved> = {};
+                for (const page of obj.pages) {
+                    if (!page.can_be_ordered) {
+                        continue;
+                    }
+                    result[page.product_id] = {
+                        ...page,
+                        product_path: page.path,
+                        materials:
+                            page.materials
+                                ?.filter((x) => nonEmptyObject(x))
+                                .map((material) => ({
+                                    ...material,
+                                    material: materials[material.material_path],
+                                })) ?? [],
+                        fields:
+                            page.fields
+                                ?.filter((x) => nonEmptyObject(x))
+                                .map((field) => {
+                                    switch (field.type) {
+                                        case "input":
+                                            return {
+                                                ...field,
+                                                type: "input",
+                                                items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
+                                            };
+                                        case "select":
+                                            return {
+                                                ...field,
+                                                type: "select",
+                                                items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
+                                            };
+                                        case "radio":
+                                            return {
+                                                ...field,
+                                                type: "radio",
+                                                items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
+                                            };
+                                        case "color":
+                                            return {
+                                                ...field,
+                                                type: "color",
+                                                items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
+                                            };
+                                        case "toggle":
+                                            return { ...field, type: "toggle" };
+                                    }
+                                }) ?? [],
+                    };
+                }
+                return result;
+            });
 
     let productInfo: Record<string, TinaProductResolved> | null = $state(null);
     let deliveryMethods: Record<string, TinaDeliveryMethodResolved> | null = $state(null);
 
     async function main() {
-        const productResponse = await fetch("/json/product-data.json");
+        const productResponse = await fetch("/product/index.json");
         const materialsResponse = await fetch("/material/index.json");
         const deliveryMethodsResponse = await fetch("/delivery_method/index.json");
         const materialsResult = await materialsResponseValidator.safeParseAsync(await materialsResponse.json());
@@ -110,14 +115,14 @@
             console.error("Failed to parse materials data", materialsResult.error);
             return;
         }
-        console.log("Parsed materials data", materialsResult.data);
-        // const productsResult = await productsResponseValidator(materialsResult.data).safeParseAsync(
-        //     await productResponse.json()
-        // );
-        // if (!productsResult.success) {
-        //     console.error("Failed to parse products data", productsResult.error);
-        //     return;
-        // }
+
+        const productsResult = await productsResponseValidator(materialsResult.data).safeParseAsync(
+            await productResponse.json()
+        );
+        if (!productsResult.success) {
+            console.error("Failed to parse products data", productsResult.error);
+            return;
+        }
 
         const deliveryMethodsResult = await deliveryMethodsResponseValidator.safeParseAsync(
             await deliveryMethodsResponse.json()
@@ -127,7 +132,7 @@
             return;
         }
 
-        // productInfo = productsResult.data;
+        productInfo = productsResult.data;
         deliveryMethods = deliveryMethodsResult.data;
         deliveryMethod = Object.values(deliveryMethods)[0]?.delivery_name ?? "";
     }
@@ -312,9 +317,9 @@
                         </IconButton>
                     </div>
                     <div class="flex-1 overflow-auto flex flex-col gap-2">
-                        {#each Object.values(productInfo || {}) as product}
+                        {#each Object.values(productInfo || {}).sort( (a, b) => a.title.localeCompare(b.title) ) as product}
                             {@const addedCount = products.reduce(
-                                (count, p) => (p.name === product.name ? count + 1 : count),
+                                (count, p) => (p.title === product.title ? count + 1 : count),
                                 0
                             )}
                             <button
@@ -325,7 +330,7 @@
                                     products.splice(0, 0, sanitizeItem(new Product(snapshot)));
                                 }}>
                                 <div class="flex flex-col text-start">
-                                    {product.name}{addedCount > 0 ? ` (${addedCount})` : ""}
+                                    {product.title}{addedCount > 0 ? ` (${addedCount})` : ""}
                                 </div>
                                 <Icon icon="mdi:add" class="shrink-0" />
                             </button>

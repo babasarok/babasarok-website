@@ -31,7 +31,7 @@
             {:else}
                 <Icon icon="mdi:circle" class="text-primary-400 text-4xl shrink-0" />
             {/if}
-            <p class="whitespace-nowrap overflow-hidden text-ellipsis">{product.name}</p>
+            <p class="whitespace-nowrap overflow-hidden text-ellipsis">{product.title}</p>
         </div>
         <IconButton class="shrink-0" type="button" onclick={onClose}>
             <Icon icon="mdi:close" />

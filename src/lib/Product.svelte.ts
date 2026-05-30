@@ -16,7 +16,7 @@ export class Product implements IProduct {
     uuid: string = v4();
     count: number = $state(1);
     product_id: string;
-    name: string;
+    title: string;
 
     material_values: Array<ProductMaterialValue | undefined>;
     materials: ProductMaterial[];
@@ -32,7 +32,7 @@ export class Product implements IProduct {
 
     constructor(item: TinaProductResolved) {
         this.product_id = $state(item.product_id);
-        this.name = $state(item.name);
+        this.title = $state(item.title);
         this.icon = $state(item.icon);
         this.priced_by_length = $state(item.priced_by_length);
         this.price = $state(item.price);
@@ -49,7 +49,7 @@ export class Product implements IProduct {
     clone(): Product {
         return new Product({
             product_id: $state.snapshot(this.product_id),
-            name: $state.snapshot(this.name),
+            title: $state.snapshot(this.title),
             icon: $state.snapshot(this.icon),
             priced_by_length: $state.snapshot(this.priced_by_length),
             price: $state.snapshot(this.price),
@@ -65,7 +65,7 @@ export class Product implements IProduct {
     serialise(): Serialised<IProduct> {
         return {
             product_id: $state.snapshot(this.product_id),
-            name: $state.snapshot(this.name),
+            title: $state.snapshot(this.title),
             icon: $state.snapshot(this.icon),
             priced_by_length: $state.snapshot(this.priced_by_length),
             price: $state.snapshot(this.price),

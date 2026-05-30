@@ -82,7 +82,7 @@ export type TinaProductMaterial = z.infer<typeof productMaterialValidator>;
 
 export const productValidator = z.object({
     product_id: z.string(),
-    name: z.string(),
+    title: z.string(),
     icon: z.string().optional(),
     priced_by_length: z.boolean().optional(),
     price: z.number().default(0),

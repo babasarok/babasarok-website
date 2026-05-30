@@ -1,5 +1,6 @@
 ---
 title: Kedvezményes termékek
+product_id: kedvezmenyes-termekek
 thumbnail: /IMG_3353.jpg
 table:
   - title: 'Csajos, virágos babafészek szettben (közepes)'

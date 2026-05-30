@@ -1,5 +1,36 @@
 ---
 title: Hagyományos Rácsvédő
+product_id: hagyomanyos-racsvedo
+priced_by_length: true
+price: 6500
+materials:
+  - material_path: content/material/minky.md
+  - material_path: content/material/teddy.md
+  - material_path: content/material/potty-nelkuli-minky.md
+  - material_path: content/material/pamutvaszon.md
+  - material_path: content/material/wellsoft.md
+material_required_count: 2
+fields:
+  - name: meret
+    length_based_pricing_source: true
+    label: Méret
+    type: radio
+    items:
+      - value: "330"
+        label: 60x120cm
+      - value: "335"
+        label: 70x120cm
+      - value: "340"
+        label: 70x140cm
+      - value: "60"
+        label: 60cm
+      - value: "70"
+        label: 70cm
+      - value: "120"
+        label: 120cm
+      - value: "140"
+        label: 140cm
+    regex: '^(\\d+)$'
 categories: A biztonságos pihenésért
 date: 2020-08-12T12:07:16.000Z
 thumbnail: /IMG_9614.jpg
@@ -15,6 +46,8 @@ table:
   - title: Teljesen körbeérő rácsvédők
     description: 21.500Ft
 shortDescription: 'A hagyományos rácsvédő 2 cm vastag habszivacsból készült, így hatékony védelmet nyújt a baba fejének a kiságy rácsai ellen. Tökéletes választás azoknak, akik kényelmesen szeretnék elhelyezni a babafészket is a kiságyban, miközben megőrzik a baba biztonságát és komfortját. A praktikus kialakítás mellett a rácsvédő könnyen kezelhető, cipzárral ellátott, így a szivacsbetét kivételével könnyedén tisztítható és garantáltan megóvja a kicsit az esetleges ütközésektől. '
+can_be_ordered: true
+
 ---
 
 ![](/IMG_7914.JPG)

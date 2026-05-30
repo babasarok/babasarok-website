@@ -1,5 +1,55 @@
 ---
 title: Fonott Rácsvédő
+product_id: racsvedo
+icon: /product/braids.svg
+priced_by_length: true
+price: 0
+materials:
+  - material_path: content/material/velur.md
+    price: 0
+    color_count: fonas
+  - material_path: content/material/teddy.md
+    price: 0
+    color_count: fonas
+fields:
+  - name: sizes
+    length_based_pricing_source: true
+    label: Méret
+    type: radio
+    items:
+      - value: "200"
+        label: 200cm
+      - value: "260"
+        label: 260cm
+      - value: "300"
+        label: 300cm
+      - value: "340"
+        label: 340cm
+      - value: "380"
+        label: 380cm
+      - value: "400"
+        label: 400cm
+    allow_custom_value: true
+    regex: '^(\\d+)$'
+    multiple: false
+  - name: fonas
+    label: Fonás
+    type: radio
+    items:
+      - value: "3"
+        label: Hármas
+        price: 7500
+      - value: "4"
+        label: Négyes
+        price: 9500
+      - value: "5"
+        label: Ötös
+        price: 11500
+        tooltip: Más néven halszálka.
+      - value: "6"
+        label: Hatos
+        price: 13500
+    regex: '^(\\d+)$'
 categories: A baba biztonsága és stílusa egyben
 date: 2025-05-20T12:07:16.000Z
 thumbnail: /Noémi-35.jpg
@@ -25,9 +75,11 @@ table:
   - title: 400cm
     description: 25.600Ft
 shortDescription: 'A fonott rácsvédő nemcsak dizájnos kiegészítője a kiságyának, hanem praktikus védelmet is nyújt. Puha, pufi anyaga megóvja a baba fejét a rácsokkal való ütközéstől, különösen, amikor a pici már forogni kezd. '
+can_be_ordered: true
+
 ---
 
-Fonataink háromféle anyagtípussal is kérhetők. 
+Fonataink háromféle anyagtípussal is kérhetők.
 
 1, hagyományos pamutjersey -sokféle színválaszték, magas pamuttartalom
 

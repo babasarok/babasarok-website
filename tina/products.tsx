@@ -29,10 +29,68 @@ export const PRODUCT: TinaField<false>[] = [
     },
     {
         type: "string",
-        name: "name",
-        description: "A termék megjelenítendő neve, ami a felhasználó számára látható.",
-        label: "Termék név",
+        name: "title",
+        label: "Név",
         required: true,
+    },
+    {
+        type: "boolean",
+        name: "hidden_in_product_list",
+        label: "Elrejtés",
+        description: "Ha be van kapcsolva, ez a termék nem fog megjelenni a termékek listájában a 'Termékek' között.",
+    },
+    {
+        type: "boolean",
+        name: "can_be_ordered",
+        label: "Rendelhető",
+        description: "Ha be van kapcsolva, ez a termék megjelenik a rendelési listában.",
+    },
+    {
+        type: "string",
+        name: "categories",
+        label: "Alcím",
+    },
+    {
+        type: "datetime",
+        name: "date",
+        label: "Dátum",
+    },
+    {
+        type: "image",
+        name: "thumbnail",
+        label: "Kép",
+    },
+    {
+        type: "object",
+        name: "table",
+        label: "Ár táblázat",
+        list: true,
+        fields: [
+            {
+                type: "string",
+                name: "title",
+                label: "Ár címe",
+            },
+            {
+                type: "string",
+                name: "description",
+                label: "Ár",
+            },
+        ],
+    },
+    {
+        type: "string",
+        name: "shortDescription",
+        label: "Leírás",
+        ui: {
+            component: "textarea",
+        },
+    },
+    {
+        type: "rich-text",
+        name: "content",
+        label: "Tartalom",
+        isBody: true,
     },
     {
         type: "image",

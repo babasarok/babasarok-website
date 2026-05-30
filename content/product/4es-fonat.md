@@ -1,5 +1,6 @@
 ---
 title: Fonott rácsvédő
+product_id: negyes-fonat
 categories: 4-es fonat
 thumbnail: /IMG_7422 (1).jpg
 table:
