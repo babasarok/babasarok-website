@@ -55,7 +55,7 @@
             <div class="flex justify-between font-medium">
                 <div class="flex items-center gap-1">
                     <IconButton
-                        class="text-xs"
+                        class="text-sm leading-none"
                         type="button"
                         disabled={product.count <= 1}
                         onclick={() => {
@@ -66,7 +66,7 @@
                     </IconButton>
                     <p class="text-xs">{product.count}db</p>
                     <IconButton
-                        class="text-xs"
+                        class="text-sm leading-none"
                         type="button"
                         onclick={() => {
                             product.count++;

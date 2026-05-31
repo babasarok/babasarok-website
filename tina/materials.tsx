@@ -61,6 +61,11 @@ export const MATERIALS: TinaField[] = [
         ],
     },
     {
+        type: "image",
+        name: "thumbnail",
+        label: "Kép",
+    },
+    {
         type: "string",
         name: "categories",
         label: "Alcím",
