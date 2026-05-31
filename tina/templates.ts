@@ -280,24 +280,6 @@ export function parameters_templateFields(): TinaField<false>[] {
             label: "Oldal leírása",
         },
         {
-            type: "boolean",
-            name: "alert",
-            label: "Alert Enabled",
-        },
-        {
-            type: "boolean",
-            name: "alertDismissable",
-            label: "Alert dismissable",
-        },
-        {
-            type: "string",
-            name: "alertText",
-            label: "Alert text",
-            ui: {
-                component: "textarea",
-            },
-        },
-        {
             type: "string",
             name: "blogPageURL",
             label: "Referenciamunkák URL",

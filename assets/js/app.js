@@ -9,8 +9,5 @@ listen();
 // TODO: use lazysizes in all pages
 import "lazysizes";
 
-// global alert
-import "./assets/js/alert";
-
 import "./script";
 import "iconify-icon";
