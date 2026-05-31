@@ -7,5 +7,5 @@
     "prettier.configPath": ".prettierrc",
     "[svelte]": {
         "editor.defaultFormatter": "svelte.svelte-vscode"
-    },
+    }
 }

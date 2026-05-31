@@ -39,7 +39,8 @@
         "check": "hugo version",
         "latest:hugo": "gh release view --repo gohugoio/hugo",
         "latest:hyas": "gh release view --repo h-enk/hyas",
-        "version": "auto-changelog -p && git add CHANGELOG.md"
+        "version": "auto-changelog -p && git add CHANGELOG.md",
+        "format:hbs": "hbs-neat \"layouts/**/*\""
     },
     "dependencies": {
         "@hyas/images": "^0.2.3",

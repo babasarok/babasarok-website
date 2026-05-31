@@ -3,7 +3,14 @@ import z from "zod";
 const materialColorValidator = z.object({
     color_id: z.string(),
     label: z.string(),
-    hex: z.string().optional(),
+    hex: z
+        .string()
+        .optional()
+        .transform((val) => (val === "" ? undefined : val)),
+    image: z
+        .string()
+        .optional()
+        .transform((val) => (val === "" ? undefined : val)),
 });
 
 export type TinaMaterialColor = z.infer<typeof materialColorValidator>;

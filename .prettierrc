@@ -1,8 +1,5 @@
 {
-    "plugins": [
-        "prettier-plugin-go-template",
-        "prettier-plugin-svelte"
-    ],
+    "plugins": ["prettier-plugin-go-template", "prettier-plugin-svelte"],
     "bracketSameLine": true,
     "trailingComma": "es5",
     "jsxSingleQuote": true,
@@ -10,9 +7,13 @@
     "semi": true,
     "overrides": [
         {
-            "files": [
-                "*.html"
-            ],
+            "files": ["*.html"],
+            "options": {
+                "parser": "go-template"
+            }
+        },
+        {
+            "files": ["layouts/**/*"],
             "options": {
                 "parser": "go-template"
             }
