@@ -1,5 +1,5 @@
 ---
-title: Feher gumis Lepedő
+title: Fehér gumis Lepedő
 product_id: feher-gumis-lepedo
 name: Fehér gumis lepedő
 price: 3000
