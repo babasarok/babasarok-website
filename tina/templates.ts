@@ -193,16 +193,6 @@ export function hero_templateFields(): TinaField<false>[] {
             name: "image",
             label: "Kép",
         },
-        {
-            type: "image",
-            name: "videoThumb",
-            label: "Videó előnézet",
-        },
-        {
-            type: "string",
-            name: "videoURL",
-            label: "Videó URL",
-        },
     ];
 }
 export function menus_templateFields(): TinaField<false>[] {
