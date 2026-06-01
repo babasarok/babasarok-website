@@ -8,9 +8,11 @@
 
 a.text-light,
 a.text-dark {
-  // transition: all 0.3s ease;
-  &:hover {
+  /* transition: all 0.3s ease;*/
+  @at-root {
+  a.text-light:hover, a.text-dark:hover {
     color: $primary !important;
+  }
   }
 }
 
@@ -26,7 +28,8 @@ a.text-dark {
 .pre-line {
   margin-left: 20px;
   position: relative;
-  &::before {
+  @at-root {
+  .pre-line::before {
     position: absolute;
     content: "";
     height: 2px;
@@ -36,14 +39,15 @@ a.text-dark {
     transform: translateX(-50%);
     background: $secondary;
   }
+  }
 
   @include mobile {
     margin-left: 30px;
   }
 }
 
-// This fixes the fact that with `markdownify` we can't add `text-light`
-// directly onto the generated `h1`, `h2` etc.
+/* This fixes the fact that with `markdownify` we can't add `text-light`*/
+/* directly onto the generated `h1`, `h2` etc.*/
 .text-white {
   h1,
   h2,
@@ -71,7 +75,7 @@ a.text-dark {
 
 @include mobile {
   p {
-    font-size:  1rem; // 18px
+    font-size:  1rem; /* 18px*/
   }
 
   h1 {

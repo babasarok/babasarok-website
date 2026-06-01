@@ -41,12 +41,14 @@
   @include desktop {
     padding: 120px 0 0;
   }
-  &__title {
+  @at-root {
+  .breadCrumb__title {
     @include desktop-gt {
       font-size: 48px;
     }
     line-height: 1;
     margin: 0 0 30px;
+  }
   }
   .breadcrumb {
     background: none;
@@ -56,14 +58,18 @@
     flex-wrap: nowrap;
     white-space: nowrap;
     overflow: hidden;
-    &-item {
+    @at-root {
+    .breadCrumb .breadcrumb-item {
       a {
         color: $secondary;
         text-decoration: none;
       }
-      &.active {
+      @at-root {
+      .breadCrumb .breadcrumb-item.active {
         color: $secondary;
       }
+        }
+    }
     }
   }
   .breadcrumb-item {

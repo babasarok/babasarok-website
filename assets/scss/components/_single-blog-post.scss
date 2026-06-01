@@ -41,7 +41,8 @@
     }
   }
   .singleBlog {
-    &__feature {
+    @at-root {
+    .section .singleBlog__feature {
       margin: 0 100px;
       @include desktop {
         margin: 0;
@@ -52,7 +53,9 @@
         border-radius: 20px;
       }
     }
-    &__content {
+    }
+    @at-root {
+    .section .singleBlog__content {
       margin: 0 200px;
       @include desktop {
         margin: 0;
@@ -73,6 +76,7 @@
         }
       }
     }
+    }
   }
 }
 .post-meta {
@@ -89,8 +93,10 @@
     }
     a {
       color: #7e7e8a;
-      &:hover {
+      @at-root {
+      .post-meta li a:hover {
         color: $primary;
+      }
       }
     }
   }

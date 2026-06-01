@@ -3,7 +3,9 @@
     overflow: visible;
     padding-bottom: 275px;
 
-    &__background {
+    @at-root {
+
+    .service__background {
         position: absolute;
         top: 0;
         right: 0;
@@ -15,8 +17,11 @@
             height: 100%;
         }
     }
+    }
 
-    &__background_shape {
+    @at-root {
+
+    .service__background_shape {
         position: absolute;
         bottom: -10%;
         left: -7%;
@@ -31,8 +36,11 @@
             display: none;
         }
     }
+    }
 
-    &__background_pattern {
+    @at-root {
+
+    .service__background_pattern {
         position: absolute;
         bottom: 4%;
         left: 6%;
@@ -42,18 +50,23 @@
             display: none;
         }
     }
+    }
 
-    &__slider {
+    @at-root {
+
+    .service__slider {
         display: flex;
         scroll-snap-type: x mandatory;
         scroll-behavior: smooth;
         overflow-x: scroll;
         scrollbar-width: none;
 
-        &_item-wrapper {
+        @at-root {
+
+        .service__slider_item-wrapper {
             box-sizing: border-box;
-            // IF YOU CHANGE THIS, YOU MUST ALSO CHANGE indexSpan IN scrollSnapper.ts to be the same value of (100 / X)
-            // where X is the number of items you want to show at once
+            /* IF YOU CHANGE THIS, YOU MUST ALSO CHANGE indexSpan IN scrollSnapper.ts to be the same value of (100 / X)*/
+            /* where X is the number of items you want to show at once*/
             width: 33%;
             @include mobile {
                 width: 100%;
@@ -63,14 +76,19 @@
             scroll-snap-stop: always;
             padding: 15px;
         }
+            }
 
-        &_item {
+        @at-root {
+
+        .service__slider_item {
             padding: 30px;
             box-shadow: 0 5 10px 0 rgba(50, 65, 141, 0.12);
             border-radius: 20px;
             background: $white;
 
-            &-icon {
+            @at-root {
+
+            .service__slider_item-icon {
                 height: 110px;
                 width: 125px;
                 position: relative;
@@ -88,9 +106,12 @@
                     z-index: 1;
                 }
             }
+                    }
         }
+            }
 
 
+    }
     }
 
     .service-item-content p {
@@ -116,8 +137,11 @@
         height: 8px;
         width: 8px;
 
-        &:not(:last-child) {
+        @at-root {
+
+        .slick-dots li:not(:last-child) {
             margin-right: 15px;
+        }
         }
 
         button {
@@ -132,16 +156,24 @@
             padding: 0;
             text-indent: -9999px;
 
-            &:focus {
+            @at-root {
+
+            .slick-dots li button:focus {
                 outline: 0;
             }
+            }
 
-            &:hover {
+            @at-root {
+
+            .slick-dots li button:hover {
                 background: $primary;
+            }
             }
         }
 
-        &.slick-active {
+        @at-root {
+
+        .slick-dots li.slick-active {
             height: 10px;
             width: 10px;
             border-radius: 50%;
@@ -150,11 +182,14 @@
                 background-color: $primary;
             }
         }
+        }
     }
 }
 
 .slick-slide {
-    &:focus {
+    @at-root {
+    .slick-slide:focus {
         outline: 0;
+    }
     }
 }

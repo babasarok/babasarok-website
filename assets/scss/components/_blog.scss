@@ -1,8 +1,10 @@
 .blog-page {
-  &__item {
+  @at-root {
+  .blog-page__item {
     position: relative;
     margin-bottom: 180px;
-    &-thumb {
+    @at-root {
+    .blog-page__item-thumb {
       width: 90%;
       height: 100%;
       overflow: hidden;
@@ -17,7 +19,9 @@
         transition: all 0.3s ease;
       }
     }
-    &-content {
+      }
+    @at-root {
+    .blog-page__item-content {
       position: absolute;
       bottom: -100px;
       left: 40px;
@@ -33,7 +37,8 @@
         position: relative;
         display: block;
         line-height: 1;
-        &::before {
+        @at-root {
+        .blog-page__item-content span::before {
           position: absolute;
           content: "";
           top: 50%;
@@ -43,12 +48,17 @@
           background: $secondary;
           transform: translateY(-50%);
         }
+            }
       }
     }
-    &:hover {
+      }
+    @at-root {
+    .blog-page__item:hover {
       .blog-page__item-thumb img {
         transform: scale(1.1);
       }
     }
+      }
+  }
   }
 }

@@ -1,12 +1,14 @@
 .contact__info {
-  &_item {
+  @at-root {
+  .contact__info_item {
     box-shadow: 0 20px 40px 0 rgba(50, 65, 141, 0.12);
     padding: 50px 40px;
     @include mobile {
       padding: 25px 25px;
     }
     border-radius: 20px;
-    &-icon {
+    @at-root {
+    .contact__info_item-icon {
       height: 110px;
       width: 125px;
       @include mobile {
@@ -31,21 +33,27 @@
         height: 60%;
       }
     }
+      }
     a {
       color: $body-color;
       text-decoration: underline;
-      &:hover {
+      @at-root {
+      .contact__info_item a:hover {
         color: $primary;
       }
+        }
     }
+  }
   }
 }
 .contact-form {
   padding: 50px 0 100px;
-  &-input {
+  @at-root {
+  .contact-form-input {
     .form-group {
       margin-bottom: 30px;
     }
+  }
   }
   #map {
     border-radius: 30px;
@@ -55,11 +63,13 @@
       margin-top: 60px;
     }
   }
-  &-generator {
+  @at-root {
+  .contact-form-generator {
     p,
     a,
     strong {
       font-size: 13px;
     }
+  }
   }
 }

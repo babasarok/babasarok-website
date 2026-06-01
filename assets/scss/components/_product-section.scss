@@ -1,11 +1,12 @@
-// In the Name of Allah, the Merciful the Compassionate
+/* In the Name of Allah, the Merciful the Compassionate*/
 
 .product {
   padding: 100px 0 135px;
   @include desktop {
     padding: 100px 0;
   }
-  &-item {
+  @at-root {
+  .product-item {
     width: 50%;
     padding: 30px;
     max-width: 250px;
@@ -20,10 +21,11 @@
       flex-direction: column;
     }
 
-    // &:not(:last-child) {
-    //   margin-bottom: 40px;
-    // }
-    &-grid {
+    /* &:not(:last-child) {*/
+    /*   margin-bottom: 40px;*/
+    /* }*/
+    @at-root {
+    .product-item-grid {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
@@ -32,7 +34,9 @@
         row-gap: 3rem;
       }
     }
-    &-thumb {
+      }
+    @at-root {
+    .product-item-thumb {
       transition: 0.3s ease;
       border-radius: 20px;
       width: 100%;
@@ -42,7 +46,9 @@
         margin: auto;
       }
     }
-    &-content {
+      }
+    @at-root {
+    .product-item-content {
       @include mobile {
         display: flex;
         flex-direction: column;
@@ -68,7 +74,8 @@
         transform: scaleY(0);
         transform-origin: bottom center;
         transition: all 0.3s ease;
-        &::before {
+        @at-root {
+        .product-item-content .see-more-btn::before {
           position: absolute;
           content: "";
           height: 2px;
@@ -78,12 +85,15 @@
           left: -30px;
           transform: translateY(-50%);
         }
+            }
         @include tablet {
           transform: scaleY(1);
         }
       }
     }
-    &:hover {
+      }
+    @at-root {
+    .product-item:hover {
       .product-item-thumb {
         box-shadow: 0 20px 40px 0 rgba(0, 0, 0, 0.12);
       }
@@ -93,5 +103,7 @@
         }
       }
     }
+      }
+  }
   }
 }

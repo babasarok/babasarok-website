@@ -6,7 +6,8 @@
     margin-bottom: 40px;
     padding: 100px 0;
   }
-  &__background {
+  @at-root {
+  .resume__background {
     background: $dark-background;
     height: 100%;
     width: 100%;
@@ -15,7 +16,9 @@
     left: 0;
     transform: skewY(-2deg);
   }
-  &__heading {
+  }
+  @at-root {
+  .resume__heading {
     margin-right: 100px;
     position: sticky;
     position: sticky;
@@ -25,13 +28,18 @@
       margin-bottom: 30px;
     }
     span {
-      &::before {
+      @at-root {
+      .resume__heading span::before {
         background: $light;
       }
+        }
     }
   }
-  &__education {
-    &_item {
+  }
+  @at-root {
+  .resume__education {
+    @at-root {
+    .resume__education_item {
       background: $white;
       padding: 30px;
       border-radius: 20px;
@@ -42,7 +50,8 @@
         flex-direction: column;
         align-items: center;
       }
-      &_image {
+      @at-root {
+      .resume__education_item_image {
         margin-right: 30px;
         width: 150px;
         height: 100%;
@@ -52,6 +61,9 @@
           width: 100%;
         }
       }
+          }
     }
+      }
+  }
   }
 }
