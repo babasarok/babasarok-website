@@ -1,35 +1,40 @@
 .base-font {
-  font-family: $font-family-base;
+    font-family: $font-family-base;
 }
 
 * {
-  transition: all 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 a.text-light,
 a.text-dark {
-  /* transition: all 0.3s ease;*/
-  @at-root {
-  a.text-light:hover, a.text-dark:hover {
+    /* transition: all 0.3s ease;*/
+}
+
+a.text-light:hover,
+a.text-dark:hover {
     color: $primary !important;
-  }
-  }
 }
 
 .top-title {
-  @include mobile-gt {
-    font-size: 20px;
-  }
-  display: block;
-  color: $dark;
-  @extend .mb-3;
+    @include mobile-gt {
+        font-size: 20px;
+    }
+    display: block;
+    color: $dark;
+    @extend .mb-3;
 }
 
 .pre-line {
-  margin-left: 20px;
-  position: relative;
-  @at-root {
-  .pre-line::before {
+    margin-left: 20px;
+    position: relative;
+
+    @include mobile {
+        margin-left: 30px;
+    }
+}
+
+.pre-line::before {
     position: absolute;
     content: "";
     height: 2px;
@@ -38,59 +43,53 @@ a.text-dark {
     left: -20px;
     transform: translateX(-50%);
     background: $secondary;
-  }
-  }
-
-  @include mobile {
-    margin-left: 30px;
-  }
 }
 
 /* This fixes the fact that with `markdownify` we can't add `text-light`*/
 /* directly onto the generated `h1`, `h2` etc.*/
 .text-white {
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    color: $white;
-  }
-}
-@each $color, $value in $theme-colors {
-  .text-#{$color} {
     h1,
     h2,
     h3,
     h4,
     h5,
-    h6,
-    p,
-    span {
-      color: $value;
+    h6 {
+        color: $white;
     }
-  }
+}
+@each $color, $value in $theme-colors {
+    .text-#{$color} {
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p,
+        span {
+            color: $value;
+        }
+    }
 }
 
 @include mobile {
-  p {
-    font-size:  1rem; /* 18px*/
-  }
+    p {
+        font-size: 1rem; /* 18px*/
+    }
 
-  h1 {
-    font-size: 2.25rem;
-  }
+    h1 {
+        font-size: 2.25rem;
+    }
 
-  h2 {
-    font-size: 1.9rem;
-  }
+    h2 {
+        font-size: 1.9rem;
+    }
 
-  h3 {
-    font-size: 1.75rem;
-  }
+    h3 {
+        font-size: 1.75rem;
+    }
 
-  h4 {
-    font-size: 1.5rem;
-  }
+    h4 {
+        font-size: 1.5rem;
+    }
 }

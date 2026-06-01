@@ -1,25 +1,25 @@
 .section {
-  padding: 100px 0;
+    padding: 100px 0;
 }
 
 .unstyle-list {
-  list-style-type: none;
-  padding-left: 0;
-  margin-right: 0;
+    list-style-type: none;
+    padding-left: 0;
+    margin-right: 0;
 }
 
 img {
-  max-width: 100%;
-  height: auto;
+    max-width: 100%;
+    height: auto;
 }
 
 body {
-  background-color: var(--background);
-  overflow-x: hidden;
+    background-color: var(--background);
+    overflow-x: hidden;
 }
 
 iconify-icon {
-  display: inline-block;
-  width: 1em;
-  height: 1em;
+    display: inline-block;
+    width: 1em;
+    height: 1em;
 }

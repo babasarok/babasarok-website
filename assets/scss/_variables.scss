@@ -3,16 +3,14 @@
 //
 
 // General
-$primary: hsl(28.52, 49.59%, 75.88%) ;
+$primary: hsl(28.52, 49.59%, 75.88%);
 $secondary: #806548;
 
-
-
 body {
-  --background: hsl(28.52, 49.59%, 97%);
-  --light-background: hsl(28.52, 49.59%, 90.88%);
-  --dark-background: hsl(28.52, 49.59%, 42%);
-  --primary: hsl(28.52, 49.59%, 75.88%) ;
+    --background: hsl(28.52, 49.59%, 97%);
+    --light-background: hsl(28.52, 49.59%, 90.88%);
+    --dark-background: hsl(28.52, 49.59%, 42%);
+    --primary: hsl(28.52, 49.59%, 75.88%);
 }
 
 $background: var(--background);
