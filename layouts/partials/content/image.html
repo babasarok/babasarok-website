@@ -22,9 +22,9 @@
 {{ $imgSrcSet = (delimit $imgSrcSet ",") -}}
 
 {{ if gt $image.Width site.Params.smallLimit -}}
-  <figure class="figure">
+  <figure >
     <img
-      class="figure-img img-fluid lazyload blur-up"
+      class="img-fluid"
       data-sizes="auto"
       src="{{ $lqip.Permalink }}"
       data-srcset="{{ $imgSrcSet }}"
@@ -33,7 +33,7 @@
       alt="{{ .Title }}" />
     <noscript
       ><img
-        class="figure-img img-fluid"
+        class="img-fluid"
         sizes="100vw"
         srcset="{{ $imgSrcSet }}"
         src="{{ $image.Permalink }}"
@@ -41,11 +41,11 @@
         height="{{ $image.Height }}"
         alt="{{ .Title }}"
     /></noscript>
-    <!-- {{ with .Title }}<figcaption class="figure-caption">{{ . | safeHTML }}</figcaption>{{ end -}} -->
+    <!-- {{ with .Title }}<figcaption >{{ . | safeHTML }}</figcaption>{{ end -}} -->
   </figure>
 {{ else -}}
   <img
-    class="img-fluid lazyload blur-up"
+    class="img-fluid"
     src="{{ $lqip.Permalink }}"
     data-src="{{ $image.Permalink }}"
     width="{{ $image.Width }}"

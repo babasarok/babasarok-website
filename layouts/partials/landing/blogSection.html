@@ -7,7 +7,7 @@
       <div class="container">
         <div class="row mb-5">
           <div class="col-lg-6">
-            <div class="blog-preview__header">
+            <div >
               <span class="top-title pre-line">{{ .topTitle }}</span>
               {{ .title | markdownify }}
             </div>
@@ -31,7 +31,7 @@
                   <img src="{{ $img.RelPermalink }}" alt="post-image" />
                 </div>
                 <div class="blog-preview__item-content bg-white">
-                  <span class="small">{{ .PublishDate.Format "January 2, 2006" }}</span>
+                  <span >{{ .PublishDate.Format "January 2, 2006" }}</span>
                   <h5 class="mb-0">
                     <a class="text-dark" href="{{ .Permalink }}">{{ .Title }}</a>
                   </h5>

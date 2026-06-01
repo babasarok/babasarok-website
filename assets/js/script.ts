@@ -18,28 +18,16 @@ document.addEventListener("DOMContentLoaded", function () {
     reactToScroll();
 
     // Smooth scrolling
-    const scrollLink = document.querySelector(".scroll");
-    scrollLink.addEventListener("click", function (e) {
-        let elem = document.querySelector(this.hash);
-        if (elem) {
-            e.preventDefault();
-            window.scrollTo({
-                top: elem.offsetTop,
-                behavior: "smooth",
-            });
-        }
-    });
-
-    const navbarCollapse = document.querySelector(".navbar-collapse");
-    if (navbarCollapse) {
-        navbarCollapse.classList.add("show");
-    }
-
-    const navbarLinks = document.querySelectorAll(".navbar-nav>li>a");
-    navbarLinks.forEach((link) => {
-        link.addEventListener("click", () => {
-            if (navbarCollapse) {
-                navbarCollapse.classList.remove("show");
+    const scrollLinks = document.querySelectorAll(".scroll");
+    scrollLinks.forEach((scrollLink) => {
+        scrollLink.addEventListener("click", function (e) {
+            let elem = document.querySelector(this.hash);
+            if (elem) {
+                e.preventDefault();
+                window.scrollTo({
+                    top: elem.offsetTop,
+                    behavior: "smooth",
+                });
             }
         });
     });

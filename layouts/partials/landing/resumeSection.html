@@ -11,18 +11,18 @@
                 {{ .title | markdownify }}
               </div>
 
-              <div class="btn-group nav mt-5">
+              <div class="mt-5">
                 <a href="#{{ .tab1Target }}" class="btn btn-primary active" data-toggle="tab">{{ .tab1Name }}</a>
                 <a href="#{{ .tab2Target }}" class="btn btn-primary" data-toggle="tab">{{ .tab2Name }}</a>
               </div>
             </div>
           </div>
           <div class="col-lg-6">
-            <div class="tab-content">
-              <div class="resume__education tab-pane active" id="{{ .tab1Target }}">
+            <div >
+              <div class="active" id="{{ .tab1Target }}">
                 {{ $Section := .education }}
                 {{ range $Section }}
-                  <div class="resume__education_item d-flex flex-nowrap">
+                  <div class="resume__education_item d-flex">
                     <a href="{{ .url }}">
                       {{ $asset := resources.Get .image }}
                       {{ $img := $asset.Resize "300x" }}
@@ -33,10 +33,10 @@
                 {{ end }}
               </div>
 
-              <div class="resume__education tab-pane" id="{{ .tab2Target }}">
+              <div  id="{{ .tab2Target }}">
                 {{ $Section := .experience }}
                 {{ range $Section }}
-                  <div class="resume__education_item d-flex flex-nowrap">
+                  <div class="resume__education_item d-flex">
                     <a href="{{ .url }}">
                       {{ $asset := resources.Get .image }}
                       {{ $img := $asset.Resize "300x" }}
