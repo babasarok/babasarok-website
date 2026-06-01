@@ -3,16 +3,6 @@
     position: relative;
     margin-top: 150px;
 }
-.footer__cta_content span::before {
-    position: absolute;
-    content: "";
-    height: 2px;
-    width: 20px;
-    left: -40px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: #fff;
-}
 .footer__cta_content {
     width: 60%;
     @include desktop {
@@ -26,6 +16,16 @@
         line-height: 1;
         margin: 0 0 20px 40px;
         position: relative;
+        &::before {
+            position: absolute;
+            content: "";
+            height: 2px;
+            width: 20px;
+            left: -40px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #fff;
+        }
         @include desktop {
             display: inline-block;
         }
@@ -139,11 +139,9 @@
     0%,
     100% {
         transform: translateX(0) rotate(-20deg);
-        transform: translateX(0) rotate(-20deg);
     }
 
     50% {
-        transform: translateX(15px) rotate(-20deg);
         transform: translateX(15px) rotate(-20deg);
     }
 }
