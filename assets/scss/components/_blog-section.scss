@@ -1,18 +1,6 @@
 .blog-preview {
     position: relative;
     margin-bottom: 30px;
-    .mobile {
-        display: none;
-    }
-    @include desktop {
-        .desktop {
-            display: none;
-        }
-        .mobile {
-            display: block;
-            text-align: center;
-        }
-    }
 }
 .blog-preview__item-content span::before {
     position: absolute;
