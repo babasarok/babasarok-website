@@ -22,16 +22,16 @@
                             {{ range $section }}
                                 <div class="testimonial__slider_item">
                                     {{ if .star }}
-                                        <ul class="testimonial__slider_item-rating">
+                                        <ul class="testimonial__slider_item-rating list-inline">
                                             {{ $rating := .star | int }}
                                             {{ $rating := sub $rating 1 }}
                                             {{ range $i, $sequence := (seq 5) }}
                                                 {{ if le
                                                     $i $rating
                                                 }}
-                                                    <li><i class="fa fa-star"></i></li>
+                                                    <li class="list-inline-item"><i class="fa fa-star"></i></li>
                                                 {{ else }}
-                                                    <li><i class="fa fa-star inactive"></i></li>
+                                                    <li class="list-inline-item"><i class="fa fa-star inactive"></i></li>
                                                 {{ end }}
                                             {{ end }}
                                         </ul>

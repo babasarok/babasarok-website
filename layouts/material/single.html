@@ -32,7 +32,7 @@
                         <h1>{{ .Title }}</h1>
                     </div>
                     <p>{{ .Params.shortDescription }}</p>
-                    <div class="case-details-thumb mb-5">
+                    <div class="case-details-thumb d-flex flex-column align-items-center mb-5">
                         {{ if (isset .Params "thumbnail") }}
                             {{ $asset := resources.Get .Params.thumbnail }}
                             {{ $img := $asset.Resize "1000x" }}
@@ -40,7 +40,7 @@
                         {{ end }}
                     </div>
                     {{ if (isset .Params "table") }}
-                        <div class="case-details-info">
+                        <div class="case-details-info d-flex flex-wrap justify-content-center">
                             {{ range .Params.table }}
                                 <div class="case-details-info-item">
                                     <h5>{{ .title }}</h5>
@@ -85,18 +85,18 @@
                         {{ end }}
                         <div class="social">
                             {{ $url := printf "%s" .Permalink | absLangURL }}
-                            <ul class="unstyle-list">
-                                <li>
+                            <ul class="unstyle-list list-inline">
+                                <li class="list-inline-item">
                                     <a href=" https://www.facebook.com/sharer/sharer.php?u={{ $url }}"
                                         ><i class="fa fa-facebook-official btn-zoom"></i
                                     ></a>
                                 </li>
-                                <li>
+                                <li class="list-inline-item">
                                     <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ $url }}"
                                         ><i class="fa fa-linkedin-square btn-zoom"></i
                                     ></a>
                                 </li>
-                                <li>
+                                <li class="list-inline-item">
                                     <a href="https://twitter.com/intent/tweet?&url={{ $url }}"
                                         ><i class="fa fa-twitter-square btn-zoom"></i
                                     ></a>
