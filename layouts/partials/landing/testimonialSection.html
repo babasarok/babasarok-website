@@ -31,14 +31,17 @@
                                                 }}
                                                     <li class="list-inline-item"><i class="fa fa-star"></i></li>
                                                 {{ else }}
-                                                    <li class="list-inline-item"><i class="fa fa-star inactive"></i></li>
+                                                    <li class="list-inline-item">
+                                                        <i class="fa fa-star inactive"></i>
+                                                    </li>
                                                 {{ end }}
                                             {{ end }}
                                         </ul>
                                     {{ end }}
                                     <p class="testimonial__slider_item-content">{{ .comment | markdownify }}</p>
                                     <p class="testimonial__slider_item-author">
-                                        <span>{{ .name }}</span> | {{ .time }}
+                                        <span>{{ .name }}</span> |
+                                        {{ .time }}
                                     </p>
                                 </div>
                             {{ end }}
