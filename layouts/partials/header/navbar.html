@@ -1,6 +1,6 @@
 <nav class="navbar navbar-expand-lg fixed-top">
     <div class="container">
-        <a href="{{ .Site.BaseURL }}" class="navbar-brand">
+        <a href="/" class="navbar-brand">
             {{ $asset := resources.Get .Site.Params.logo }}
             {{ $img := $asset.Fit "600x200" }}
             <img
@@ -20,7 +20,7 @@
                 {{ range $index, $element := $menu }}
                     <li>
                         <a
-                            href="{{ $.Site.BaseURL }}{{ .URL }}"
+                            href="{{ .URL | relURL }}"
                             class="nav-link text-dark text-sm-center p-2 {{ if $.IsHome }}scroll{{ end }}"
                             >{{ .Name }}</a
                         >

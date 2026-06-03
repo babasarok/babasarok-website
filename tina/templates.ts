@@ -131,11 +131,6 @@ export function config_templateFields(): TinaField<false>[] {
     return [
         {
             type: "string",
-            name: "baseURL",
-            label: "Oldal URL",
-        },
-        {
-            type: "string",
             name: "languageCode",
             label: "Nyelvi kód",
         },
