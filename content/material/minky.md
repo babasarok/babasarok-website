@@ -30,6 +30,13 @@ colors:
   - color_id: '#9'
     label: Menta
     image: /IMG_6675.jpeg
+  - color_id: '#10'
+    label: 'Királykék '
+    image: /IMG_6673.jpeg
+  - {}
+  - {}
+  - {}
+  - {}
 thumbnail: '/IMG_6615,1.JPG'
 ---
 
