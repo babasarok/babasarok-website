@@ -48,7 +48,9 @@ colors:
   - color_id: '#15'
     label: Lila
     image: /IMG_6655.jpeg
-  - {}
+  - color_id: '#16'
+    label: 'Halvány rózsaszín '
+    image: /IMG_6648.jpeg
 thumbnail: '/IMG_6615,1.JPG'
 ---
 
