@@ -54,7 +54,9 @@ colors:
   - color_id: '#17'
     label: Rosegold
     image: /IMG_6646.jpeg
-  - {}
+  - color_id: '#18'
+    label: Mályva
+    image: /IMG_6644.jpeg
   - {}
 thumbnail: '/IMG_6615,1.JPG'
 ---
