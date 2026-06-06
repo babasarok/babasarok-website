@@ -57,7 +57,9 @@ colors:
   - color_id: '#18'
     label: Mályva
     image: /IMG_6644.jpeg
-  - {}
+  - color_id: '#19'
+    label: Mogyoró
+    image: /IMG_6638.jpeg
 thumbnail: '/IMG_6615,1.JPG'
 ---
 
