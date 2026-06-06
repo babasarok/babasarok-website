@@ -80,7 +80,7 @@ export function generateProductData(product: Product) {
     const serialised = product.serialise();
 
     const result: ReadableProductData = {
-        név: serialised.name,
+        név: serialised.title,
         kedvezmény:
             serialised.discount &&
             (serialised.discount_valid_until ? new Date() < serialised.discount_valid_until : true)
