@@ -21,6 +21,9 @@ colors:
   - color_id: '#6'
     label: Csokibarna
     image: /IMG_3334.JPG
+  - color_id: '#7'
+    label: 'Világos bézs '
+    image: /IMG_3079.JPG
 thumbnail: '/IMG_6615,1.JPG'
 ---
 
