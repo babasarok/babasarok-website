@@ -17,6 +17,7 @@
     import { generateFormData } from "../lib/emailConverter";
     import { deliveryMethodValidator } from "../../tina/deliveryMethodTypes";
     import OrderDelivery from "./OrderDelivery.svelte";
+    import params from "../../config/_default/params.json";
 
     export const deliveryMethodsResponseValidator = z
         .object({ pages: z.array(deliveryMethodValidator.extend({ path: z.string() })) })
@@ -226,7 +227,7 @@
             return result;
         });
         // formData.append("h-captcha-response", captcha.value);
-        formData.append("access_key", "1ffa9477-1db3-47f2-bc9e-1226e3a3b858");
+        formData.append("access_key", params.fabformURL);
         formData.append("subject", `Új árajánlatkérés - ${serializedData.név}`);
         formData.append("nev", serializedData.név);
         formData.append("email", serializedData.email);
