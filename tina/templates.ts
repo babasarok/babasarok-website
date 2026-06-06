@@ -282,7 +282,7 @@ export function parameters_templateFields(): TinaField<false>[] {
         {
             type: "string",
             name: "contactLink",
-            label: "Rendelés URL",
+            label: "Rendelés oldal URL",
         },
         {
             type: "string",
@@ -291,31 +291,9 @@ export function parameters_templateFields(): TinaField<false>[] {
         },
         {
             type: "string",
-            label: "Kapcsolat kérdőiv email cím/kód",
+            label: "Rendelés form kód",
             name: "fabformURL",
-            description:
-                "A https://formsubmit.co elfogad email címet először, majd küld kódot az első alkalommal amit ide be lehet írni hogy a botok ne találják meg a beírt email címet a neten.",
-        },
-        {
-            type: "string",
-            label: "Automatikus email válasz tartalma (Nem Működik!)",
-            name: "autoreply_message",
-            description:
-                "Ez az üzenet kerül elküldésre a felhasználónak (azzal együtt amit ő kitöltött), ha sikeresen elküldi a kapcsolat kérdőívet.",
-        },
-        {
-            type: "string",
-            label: "Sikeres kapcsolat kérdőív üzenet",
-            name: "contact_success_message",
-            description:
-                "Ez az üzenetet mutatja az oldal a felhasználónak, ha sikeresen elküldi a kapcsolat kérdőívet.",
-        },
-        {
-            type: "string",
-            label: "Sikertelen kapcsolat kérdőív üzenet",
-            name: "contact_error_message",
-            description:
-                "Ez az üzenetet mutatja az oldal a felhasználónak, ha sikertelenül küldi el a kapcsolat kérdőívet.",
+            description: "A https://web3forms.com-ról származó form kód.",
         },
         {
             type: "object",
