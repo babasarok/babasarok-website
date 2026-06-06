@@ -45,6 +45,10 @@ colors:
   - color_id: '#14'
     label: Ekrü
     image: /IMG_6657.jpeg
+  - color_id: '#15'
+    label: Lila
+    image: /IMG_6655.jpeg
+  - {}
 thumbnail: '/IMG_6615,1.JPG'
 ---
 
