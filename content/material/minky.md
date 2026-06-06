@@ -27,6 +27,9 @@ colors:
   - color_id: '#8'
     label: Zsálya
     image: /IMG_1454.JPG
+  - color_id: '#9'
+    label: Menta
+    image: /IMG_6675.jpeg
 thumbnail: '/IMG_6615,1.JPG'
 ---
 
