@@ -5,7 +5,7 @@ date: 2025-05-01T12:07:16.000Z
 thumbnail: /Photo Collage Facebook Post.PNG
 table:
   - title: 'Extra vékony, egyrétegű, akár textilpelusnak is'
-    description: 1.900Ft
+    description: 3.000Ft
   - title: 2 rétegű
     description: 5.800Ft
   - title: Duplagéz+Pamutvászon
