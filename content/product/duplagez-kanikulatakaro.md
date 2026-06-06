@@ -17,7 +17,7 @@ shortDescription: |-
   Kényelmes, praktikus és sokoldalú!
 ---
 
-Kánikulatakaróinkat akár waffle anyag kombinációjával is kérheted, sőt felnőtt méretben is elérhető, 150x200cm-es méretben
+Kánikulatakaróinkat akár waffle anyag kombinációval is kérhetitek, már felnőtt (140x200cm) méretben is
 
 | ![](/IMG_8082.jpg) | ![](/IMG_8076.jpg)   |
 | ------------------ | -------------------- |
