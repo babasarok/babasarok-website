@@ -1,5 +1,5 @@
 ---
-title: Extravékony kánikulatakaró
+title: Kánikulatakaró (extravékony)
 product_id: kanikula-takaro-extravekony
 price: 1900
 fields:

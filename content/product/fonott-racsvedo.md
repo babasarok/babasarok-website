@@ -1,5 +1,5 @@
 ---
-title: Fonott Rácsvédő
+title: Fonott Rácsvédő (Teddy/Velúr)
 product_id: racsvedo
 icon: /product/braids.svg
 priced_by_length: true
