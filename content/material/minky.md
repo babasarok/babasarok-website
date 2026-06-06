@@ -33,7 +33,9 @@ colors:
   - color_id: '#10'
     label: 'Királykék '
     image: /IMG_6673.jpeg
-  - {}
+  - color_id: '#11'
+    label: Halványszürke
+    image: /IMG_6668.jpeg
   - {}
   - {}
   - {}
