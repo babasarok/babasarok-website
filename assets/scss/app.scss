@@ -1,5 +1,4 @@
 @import "bootstrap/scss/functions";
-@import "magnific-popup";
 
 // TODO: Use SVG icons instead of web fonts to reduce page size
 $fa-font-path: "font-awesome/fonts";
@@ -12,8 +11,6 @@ $fa-font-path: "font-awesome/fonts";
 @import "buttons";
 @import "common";
 
-@import "components/alerts";
-@import "components/preloder";
 @import "components/navbar";
 @import "components/hero-section";
 @import "components/about-section";

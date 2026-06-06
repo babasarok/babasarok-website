@@ -20,6 +20,9 @@ main:
     - name: Referenciamunkák
       url: "#blog"
       weight: 7
+    - name: Anyagok
+      url: "/material/"
+      weight: 8
 sitemap:
     - name: Főoldal
       url: ""

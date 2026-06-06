@@ -1,6 +1,7 @@
 ---
 title: Fonott rácsvédő-halszálka
 categories: 5-ös fonat
+product_id: halszalka
 thumbnail: /Noémi-25.jpg
 table:
   - title: 200cm

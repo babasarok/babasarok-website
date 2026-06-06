@@ -1,0 +1,57 @@
+baseURL: "https://babasarok.net/"
+languageCode: hu-hu
+title: Babasarok
+publishDir: "public"
+
+disableAliases: true
+disableHugoGeneratorInject: false
+enableEmoji: true
+enableGitInfo: false
+enableRobotsTXT: true
+rssLimit: 10
+timeout: 60s
+
+disableKinds:
+    - "taxonomy"
+    - "sitemap"
+    - "robotstxt"
+    - "rss"
+
+outputs:
+    home: ["HTML", "RSS", "JSON"]
+    section: ["HTML", "RSS", "JSON"]
+    page: ["HTML", "RSS", "JSON"]
+
+pagination:
+    pagerSize: 6
+
+caches:
+    getjson:
+        dir: ":cacheDir/:project"
+        maxAge: 10s
+sitemap:
+    changefreq: weekly
+    filename: sitemap.xml
+    priority: 0.5
+
+permalinks:
+    blog: "blog/:title/"
+
+minify:
+    tdewolff:
+        html:
+            keepWhitespace: false
+
+related:
+    threshold: 80
+    includeNewer: true
+    toLower: false
+    indices:
+        - name: categories
+          weight: 100
+        - name: date
+          weight: 10
+build:
+    writeStats: true
+
+_template: config_template

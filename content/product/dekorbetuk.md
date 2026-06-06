@@ -1,5 +1,6 @@
 ---
 title: Dekorbetűk
+product_id: dekorbetuk
 categories: Tedd még különlegesebbé a babaszobát!
 date: 2025-04-28T06:49:27.000Z
 thumbnail: /IMG_7073.jpg

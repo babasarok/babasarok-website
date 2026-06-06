@@ -1,0 +1,68 @@
+{{- $items := slice -}}
+{{- range .Pages -}}
+    {{- $thumbnail := "" -}}
+    {{- with .Params.thumbnail -}}
+        {{- with resources.Get . -}}
+            {{ $thumbnail_full := .Resize "700x" }}
+            {{- $thumbnail = $thumbnail_full.RelPermalink -}}
+        {{- end -}}
+    {{- end -}}
+
+    {{- $icon := "" -}}
+    {{- with .Params.icon -}}
+        {{- with resources.Get . -}}
+            {{- $icon = .RelPermalink -}}
+        {{- end -}}
+    {{- end -}}
+
+    {{- $featureImage := "" -}}
+    {{- with .Params.featureImage -}}
+        {{- with resources.Get . -}}
+            {{- $featureImage = .RelPermalink -}}
+        {{- end -}}
+    {{- end -}}
+
+    {{- $colors := slice -}}
+    {{- with .Params.colors -}}
+        {{- range . -}}
+            {{- $color := . -}}
+            {{- $colorImage := "" -}}
+            {{- with resources.Get .image -}}
+                {{- $colorImage = .RelPermalink -}}
+                {{- $color = merge $color (dict "image" $colorImage) -}}
+            {{- end -}}
+            {{- $colors = $colors | append $color -}}
+        {{- end -}}
+    {{- end -}}
+
+    {{- $params := .Params -}}
+    {{- $params = merge $params (dict "colors" $colors) -}}
+    {{- $params = merge $params (dict "thumbnail" $thumbnail) -}}
+    {{- $params = merge $params (dict "icon" $icon) -}}
+    {{- $params = merge $params (dict "featureImage" $featureImage) -}}
+    {{- $items = $items | append (merge $params (dict
+        "title" .Title
+        "permalink" .Permalink
+        "path" (printf "content/%s" .File.Path)
+        "summary" (.Summary | plainify)
+        "date" (.Date.Format "2006-01-02")
+        "publishDate" (.PublishDate.Format "2006-01-02")
+        )
+        )
+        -}}
+{{- end -}}
+{{- dict
+    "kind" .Kind
+    "title" .Title
+    "permalink" .Permalink
+    "path" (printf "content/%s" .File.Path)
+    "description" .Description
+    "pages" $items
+    "paginator" (dict
+    "pageNumber" .Paginator.PageNumber
+    "numberOfPages" .Paginator.TotalPages
+    "hasPrev" .Paginator.HasPrev
+    "hasNext" .Paginator.HasNext
+    )
+    | jsonify (dict "indent" "    " "prefix" "")
+-}}

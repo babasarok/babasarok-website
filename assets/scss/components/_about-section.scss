@@ -1,17 +1,33 @@
 .about {
-  overflow: visible;
-  &_content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    &-thumb {
-      width: 45%;
-      position: relative;
-      @include desktop {
+    overflow: visible;
+}
+.about_content-thumb .about_content-thumb-image img.about_mask_svg {
+    mask: url(../images/about/about-mask-svg.svg);
+    mask-repeat: no-repeat;
+    mask-size: contain;
+    mask-position: center center;
+}
+.about_content-inner-blob {
+    position: absolute;
+    top: -55%;
+    right: -22%;
+    z-index: -1;
+    width: 400.369px;
+    height: 362.909px;
+    svg {
+        width: 140%;
+    }
+    @include tablet {
+        display: none;
+    }
+}
+.about_content-thumb {
+    width: 45%;
+    position: relative;
+    @include desktop {
         width: 100%;
-      }
-      .about-svg {
+    }
+    .about-svg {
         position: absolute;
         top: -11%;
         left: -17%;
@@ -19,56 +35,34 @@
         height: 150px;
         animation: move_top 4s infinite;
         @include tablet {
-          top: -7%;
-          left: -16%;
+            top: -7%;
+            left: -16%;
         }
         img {
-          height: 100%;
-          width: 100%;
+            height: 100%;
+            width: 100%;
         }
-      }
-      .about_content-thumb-image {
-        img {
-          height: 100%;
-          width: 100%;
-          &.about_mask_svg {
-            mask: url(../images/about/about-mask-svg.svg);
-            mask-repeat: no-repeat;
-            mask-size: contain;
-            mask-position: center center;
-          }
-        }
-      }
     }
-    &-inner {
-      width: 55%;
-      padding: 60px 50px;
-      background: $dark-background;
-      border-radius: 20px;
-      margin-left: -15px;
-      position: relative;
-      @include desktop {
+    .about_content-thumb-image {
+        img {
+            height: 100%;
+            width: 100%;
+        }
+    }
+}
+.about_content-inner {
+    width: 55%;
+    padding: 60px 50px;
+    background: $dark-background;
+    border-radius: 20px;
+    margin-left: -15px;
+    position: relative;
+    @include desktop {
         padding: 25px;
-      }
-      @include desktop {
+    }
+    @include desktop {
         width: 100%;
         margin-left: 0;
         margin-top: 30px;
-      }
-      &-blob {
-        position: absolute;
-        top: -55%;
-        right: -22%;
-        z-index: -1;
-        width: 400.369px;
-        height: 362.909px;
-        svg {
-          width: 140%;
-        }
-        @include tablet {
-          display: none;
-        }
-      }
     }
-  }
 }

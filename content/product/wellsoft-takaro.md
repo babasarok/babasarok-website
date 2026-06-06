@@ -1,0 +1,21 @@
+---
+title: Meleg Wellsoft Takaró
+product_id: wellsoft-takaro
+fields:
+  - name: meret
+    label: Méret
+    type: radio
+    items:
+      - value: 70x100
+        label: 70x100cm
+      - value: 50x80
+        label: 50x80cm
+  - name: szin
+    label: Szín
+    type: color
+    allow_custom_value: true
+hidden_in_product_list: true
+can_be_ordered: true
+
+
+---

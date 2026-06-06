@@ -1,65 +1,52 @@
-.contact__info {
-  &_item {
-    box-shadow: 0 20px 40px 0 rgba(50, 65, 141, 0.12);
-    padding: 50px 40px;
+.contact__info_item-icon {
+    height: 110px;
+    width: 125px;
     @include mobile {
-      padding: 25px 25px;
-    }
-    border-radius: 20px;
-    &-icon {
-      height: 110px;
-      width: 125px;
-      @include mobile {
         height: 70px;
         width: 75px;
-      }
-      position: relative;
-      margin-bottom: 35px;
-      .icon-background {
+    }
+    position: relative;
+    margin-bottom: 35px;
+    .icon-background {
         position: absolute;
         top: 0;
         right: 0;
         width: 100%;
         height: 100%;
-      }
-      .icon {
+    }
+    .icon {
         position: absolute;
         left: 0;
         bottom: 0;
         z-index: 1;
         width: 60%;
         height: 60%;
-      }
     }
+}
+.contact__info_item {
+    box-shadow: 0 20px 40px 0 rgba(50, 65, 141, 0.12);
+    padding: 50px 40px;
+    @include mobile {
+        padding: 25px 25px;
+    }
+    border-radius: 20px;
     a {
-      color: $body-color;
-      text-decoration: underline;
-      &:hover {
-        color: $primary;
-      }
+        color: $body-color;
+        text-decoration: underline;
+
+        &:hover {
+            color: $primary;
+        }
     }
-  }
 }
 .contact-form {
-  padding: 50px 0 100px;
-  &-input {
-    .form-group {
-      margin-bottom: 30px;
+    padding: 50px 0 100px;
+    #map {
+        border-radius: 30px;
+        height: 100%;
+        @include desktop {
+            height: 400px;
+            margin-top: 60px;
+        }
     }
-  }
-  #map {
-    border-radius: 30px;
-    height: 100%;
-    @include desktop {
-      height: 400px;
-      margin-top: 60px;
-    }
-  }
-  &-generator {
-    p,
-    a,
-    strong {
-      font-size: 13px;
-    }
-  }
 }

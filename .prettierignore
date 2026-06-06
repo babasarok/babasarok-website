@@ -17,6 +17,7 @@ public/
 .hugo_build.lock
 assets/**/vendor
 pnpm-lock.yaml
+static/components/
 
 ############################
 # Misc.
