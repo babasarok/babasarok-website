@@ -24,6 +24,9 @@ colors:
   - color_id: '#7'
     label: 'Világos bézs '
     image: /IMG_3079.JPG
+  - color_id: '#8'
+    label: Zsálya
+    image: /IMG_1454.JPG
 thumbnail: '/IMG_6615,1.JPG'
 ---
 
