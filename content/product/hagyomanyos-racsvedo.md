@@ -30,7 +30,7 @@ fields:
         label: 120cm
       - value: "140"
         label: 140cm
-    regex: '^(\\d+)$'
+    regex: '^(\d+)$'
 categories: A biztonságos pihenésért
 date: 2020-08-12T12:07:16.000Z
 thumbnail: /IMG_9614.jpg

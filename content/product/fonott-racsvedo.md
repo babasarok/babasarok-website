@@ -30,7 +30,7 @@ fields:
       - value: "400"
         label: 400cm
     allow_custom_value: true
-    regex: '^(\\d+)$'
+    regex: '^(\d+)$'
     multiple: false
   - name: fonas
     label: Fonás
@@ -49,7 +49,7 @@ fields:
       - value: "6"
         label: Hatos
         price: 13500
-    regex: '^(\\d+)$'
+    regex: '^(\d+)$'
 categories: A baba biztonsága és stílusa egyben
 date: 2025-05-20T12:07:16.000Z
 thumbnail: /Noémi-35.jpg

@@ -28,7 +28,7 @@ fields:
       - value: "400"
         label: 400cm
     allow_custom_value: true
-    regex: '^(\\d+)$'
+    regex: '^(\d+)$'
     multiple: false
   - name: fonas
     label: Fonás
@@ -47,7 +47,7 @@ fields:
       - value: "6"
         label: Hatos
         price: 12500
-    regex: '^(\\d+)$'
+    regex: '^(\d+)$'
 hidden_in_product_list: true
 can_be_ordered: true
 
