@@ -14,7 +14,7 @@
 <div class="flex flex-1 flex-col rounded-xl bg-border p-4">
     <div class="flex items-center gap-2">
         <Icon icon="mdi:truck-delivery" class="shrink-0 text-2xl  text-primary-500" />
-        <h4 class="text-xl text-uppercase">Szállítási mód</h4>
+        <h4 class="text-lg text-uppercase">Hogyan szeretnéd megkapni a csomagot?</h4>
     </div>
     <div class="flex flex-col gap-2 mt-4">
         {#each Object.values(deliveryMethods || {}) as method}

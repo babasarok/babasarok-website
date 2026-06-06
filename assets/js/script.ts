@@ -1,4 +1,3 @@
-import "./form-handler";
 import { ScrollSnapper } from "./scrollSnapper";
 
 function reactToScroll() {

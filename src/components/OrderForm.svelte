@@ -270,13 +270,13 @@
         success = "Árajánlatkérésed sikeresen elküldve! Hamarosan felvesszük veled a kapcsolatot.";
         products = [];
     }}>
-    <h3 class="mb-4">Árajánlatkérés</h3>
+    <h3 class="mb-4">Tervezzük meg a szettet!</h3>
     <div class="flex flex-col">
         <div class="flex flex-col gap-4 pb-6">
             <div class="flex items-center gap-2">
                 <Icon icon="mdi:account" class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary" />
-                <div class="flex flex-col gap-2 text-nowrap">
-                    <h4 class="text-xl text-uppercase">Vásárlói adatok</h4>
+                <div class="flex flex-col gap-2">
+                    <h4 class="text-lg text-uppercase">Hova küldhetjük a terveket?</h4>
                 </div>
             </div>
             <div class="flex gap-2 flex-col sm:flex-row">
@@ -290,8 +290,10 @@
                 <div class="flex items-center gap-2">
                     <Icon icon="mdi:cart" class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary" />
                     <div class="flex flex-col gap">
-                        <h4 class="text-xl text-uppercase">Termék kiválasztása</h4>
-                        <p class="text-sm">Válassz egy vagy több terméket, amire árajánlatot szeretnél kapni.</p>
+                        <h4 class="text-lg text-uppercase">Miket szeretnél a csomagba?</h4>
+                        <p class="text-sm">
+                            Kattints a gombra, és válaszd ki azokat a darabokat, amikből összeállítjuk a szettet.
+                        </p>
                     </div>
                 </div>
                 <IconButton type="button" popovertarget="product-dialog">
@@ -365,10 +367,13 @@
             <div class="flex flex-col rounded-xl bg-border p-4 flex-1">
                 <div class="flex items-center gap-2">
                     <Icon icon="mdi:message-text" class="shrink-0 text-2xl  text-primary-500" />
-                    <h4 class="text-xl text-uppercase">Egyéb információ</h4>
+                    <h4 class="text-lg text-uppercase">Van valami különleges kérésed?</h4>
                 </div>
-                <textarea bind:value={message} placeholder="Megjegyzés a rendeléshez" class="mt-4 flex-1 text-sm"
-                ></textarea>
+                <textarea
+                    bind:value={message}
+                    placeholder="Írd meg ide, milyen egyedi színekre, mintákra gondoltál, vagy ha van bármilyen egyedi kérésed (pl. név hímzése)!"
+                    class="mt-4 flex-1 text-sm min-h-22">
+                </textarea>
             </div>
         </div>
         <div class="flex flex-col gap-2 mt-4"></div>
@@ -380,7 +385,7 @@
             <p class="pt-4 text-sm text-red-500">{error}</p>
         {/if}
         <Button class="mt-4 h-10 uppercase" variant="contained" type="submit" disabled={!valid || sending}
-            >Árajánlat kérése</Button>
+            >Kérem az ingyenes ajánlatot!</Button>
     </div>
 </form>
 

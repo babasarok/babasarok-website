@@ -1,31 +1,26 @@
 ---
-title: Lépj kapcsolatba
+title: Álmodjuk meg együtt a tökéletes babaszobát!
 breadcrumb: Kapcsolat
 ---
 
-### Rendelés menete
+### Így készül a te egyedi csodád:
 
-1. *Válaszd ki a kívánt terméket*
+1. *Inspirálódj!*
 
-   Böngéssz weboldalunkon, és nézd meg az általad választott termékek leírását. Fontos, hogy mivel minden termék egyedi elképzelés alapján készül, a színek és minták széles választéka nem található az oldalon. Ha konkrét elképzelésed van, ne habozz kapcsolatba lépni velünk!
+   Nézz szét a termékeink között. Mivel minden darabot egyedileg, kézzel varrunk, a színeknek és a mintáknak csak a képzeleted szab határt.
 
-2. *Vedd fel velünk a kapcsolatot*
+2. *Meséld el, mit álmodtál meg!*
 
-   A legjobb módja annak, hogy további információkat kapj a termékek színeiről, mintáiról és egyéb részleteiről, ha kapcsolatba lépsz velünk a lenti módokon vagy még lejjeb üzenetben. Írj nekünk, és mi örömmel küldünk több lehetőséget és példát, hogy megtaláld az elképzeléseidnek leginkább megfelelő választást.
+   Töltsd ki a fenti űrlapot. Írd meg, milyen termékek tetszenek, milyen színvilág illene a babaszobába.
 
-3. *Egyedi rendelés és egyeztetés*
+3. *Közös tervezés.*
 
-   Miután felvetted velünk a kapcsolatot, egyeztetjük az egyedi igényeidet (színek, minták, méretek, stb.), így a termék pontosan úgy készülhet el, ahogy szeretnéd.
+    Felvesszük veled a kapcsolatot, és minden apró részletet (méretek, anyagok, ár) leegyeztetünk, hogy a végeredmény tökéletes legyen.
 
-4. *Fizetés*
+4. *Biztonságos fizetés.*
 
-   A rendelés véglegesítése után választhatsz kétféle fizetési mód közül:
-   - *Előre utalás*: A rendelés véglegesítése után előre utalhatsz, biztosítva ezzel a termék elkészítését.
-   - *Utánvét*: A csomagot átvételkor fizetheted készpénzben.
-   A szállítási díj a választott fizetési mód függvényében változik:
-     - *Előre utalás esetén*: 2500 Ft
-     - *Utánvét esetén*: 3500 Ft
+    Ha mindent lefixáltunk, választhatsz az előre utalás és az utánvétes fizetés között – ahogy neked kényelmesebb.
 
-5. *Szállítás*
+5. *Érkezik a csomag!*
 
-   Miután a rendelésed és a fizetés tisztázása megtörtént, a terméket *GLS házhozszállítással* küldjük el. A szállítási költség a választott fizetési mód alapján alakul. A csomagot a küldés után követheted, és értesítést kapsz a szállítás állapotáról.
+   A gondosan elkészített termékeket GLS futárral küldjük egyenesen az ajtódig, amiről folyamatosan tájékoztatunk.
