@@ -61,6 +61,7 @@ colors:
     label: Mogyoró
     image: /IMG_6638.jpeg
 thumbnail: '/IMG_6615,1.JPG'
+categories: 'puha, pöttyös felületű anyag'
 ---
 
 |   |   |   |   |   |
