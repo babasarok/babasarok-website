@@ -42,7 +42,9 @@ colors:
   - color_id: '#13'
     label: Hamvas olajbarna
     image: /IMG_6663.jpeg
-  - {}
+  - color_id: '#14'
+    label: Ekrü
+    image: /IMG_6657.jpeg
 thumbnail: '/IMG_6615,1.JPG'
 ---
 
