@@ -39,7 +39,9 @@ colors:
   - color_id: '#12'
     label: 'Fehér '
     image: /IMG_6658.jpeg
-  - {}
+  - color_id: '#13'
+    label: Hamvas olajbarna
+    image: /IMG_6663.jpeg
   - {}
 thumbnail: '/IMG_6615,1.JPG'
 ---
