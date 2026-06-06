@@ -272,7 +272,7 @@
         products = [];
     }}>
     <h3 class="mb-4">Tervezzük meg a szettet!</h3>
-    <div class="flex items-start gap-2 mb-6 p-2 rounded bg-bg-secondary border border-yellow-200">
+    <div class="flex items-center gap-2 mb-6 p-2 rounded bg-bg-secondary border border-yellow-200">
         <Icon icon="mdi:info" class="shrink-0 text-2xl text-yellow-500" />
         <p class="text-xs text-yellow-700">
             Jelenleg a rendelési folyamat tesztelés alatt áll. Ha bármilyen problémát tapasztalsz, kérlek, jelezd nekünk

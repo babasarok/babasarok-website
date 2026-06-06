@@ -1,6 +1,6 @@
 ---
 title: Álmodjuk meg együtt a tökéletes babaszobát!
-breadcrumb: Kapcsolat
+breadcrumb: Rendelés
 ---
 
 ### Így készül a te egyedi csodád:
