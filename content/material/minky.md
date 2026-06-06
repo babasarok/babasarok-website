@@ -15,6 +15,9 @@ colors:
   - color_id: '#4'
     label: 'Babarózsaszín '
     image: /IMG_4076.JPG
+  - color_id: '#5'
+    label: Sötézöld
+    image: /IMG_4072.JPG
 thumbnail: '/IMG_6615,1.JPG'
 ---
 
