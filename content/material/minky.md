@@ -18,6 +18,9 @@ colors:
   - color_id: '#5'
     label: Sötézöld
     image: /IMG_4072.JPG
+  - color_id: '#6'
+    label: Csokibarna
+    image: /IMG_3334.JPG
 thumbnail: '/IMG_6615,1.JPG'
 ---
 
