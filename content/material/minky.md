@@ -12,6 +12,9 @@ colors:
   - color_id: '#3'
     label: Világos mályva
     image: /IMG_4077.JPG
+  - color_id: '#4'
+    label: 'Babarózsaszín '
+    image: /IMG_4076.JPG
 thumbnail: '/IMG_6615,1.JPG'
 ---
 
