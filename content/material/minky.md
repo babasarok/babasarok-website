@@ -36,7 +36,9 @@ colors:
   - color_id: '#11'
     label: Halványszürke
     image: /IMG_6668.jpeg
-  - {}
+  - color_id: '#12'
+    label: 'Fehér '
+    image: /IMG_6658.jpeg
   - {}
   - {}
 thumbnail: '/IMG_6615,1.JPG'
