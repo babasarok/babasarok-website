@@ -44,14 +44,14 @@
         </div>
     </header>
 
+    <section class="section container tailwind">
+        <order-form></order-form>
+    </section>
+
     <section>
         <div class="container pt-4">
             {{ .Content }}
         </div>
-    </section>
-
-    <section class="section container tailwind">
-        <order-form></order-form>
     </section>
 
     {{ $address := .Site.Params.address }}

@@ -379,7 +379,8 @@
         {#if error}
             <p class="pt-4 text-sm text-red-500">{error}</p>
         {/if}
-        <Button class="mt-4" variant="contained" type="submit" disabled={!valid || sending}>Árajánlat kérése</Button>
+        <Button class="mt-4 h-10 uppercase" variant="contained" type="submit" disabled={!valid || sending}
+            >Árajánlat kérése</Button>
     </div>
 </form>
 

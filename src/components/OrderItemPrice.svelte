@@ -34,7 +34,9 @@
                 </p>
             </div>
         {/each}
-        <div class="w-full h-0.5 bg-border"></div>
+        {#if priceParts.length > 0}
+            <div class="w-full h-0.5 bg-border"></div>
+        {/if}
         {#if price.priced_by_length}
             <div class="flex justify-between">
                 <p class="text-xs">Méterár</p>

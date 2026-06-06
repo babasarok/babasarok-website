@@ -59,7 +59,13 @@
             <p class="text-sm text-primary-500 flex items-center gap-1 justify-between">
                 <span> Szín </span>
                 <span class="text-xs">
-                    {custom ? "Egyedi szín" : `${value?.colors.length ?? 0} / ${colorCount}`}
+                    {#if custom}
+                        Egyedi szín
+                    {:else if colorCount === undefined}
+                        <span class="text-red-600">Válaszz először opciót</span>
+                    {:else}
+                        {`${value?.colors.length ?? 0} / ${colorCount}`}
+                    {/if}
                 </span>
             </p>
             {#if (materialInfo?.colors?.length ?? 0) > 0}
