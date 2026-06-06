@@ -157,7 +157,7 @@
 </script>
 
 <form
-    class="flex flex-col"
+    class="flex flex-col px-3.75 sm:max-w-135 md:max-w-180 lg:max-w-240 xl:max-w-285 mx-auto"
     onsubmit={async (e) => {
         e.preventDefault();
         error = null;
