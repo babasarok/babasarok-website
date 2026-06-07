@@ -270,6 +270,14 @@
         sending = false;
         success = "Árajánlatkérésed sikeresen elküldve! Hamarosan felvesszük veled a kapcsolatot.";
         products = [];
+
+        if (window.fbq) {
+            try {
+                window.fbq("track", "Purchase", { currency: "HUF", value: serializedData.ár.összár });
+            } catch (e) {
+                console.error("Failed to record purchase", e);
+            }
+        }
     }}>
     <h3 class="mb-4">Tervezzük meg a szettet!</h3>
     <div class="flex flex-col">
