@@ -28,7 +28,8 @@
             {{- $color := . -}}
             {{- $colorImage := "" -}}
             {{- with resources.Get .image -}}
-                {{- $colorImage = .RelPermalink -}}
+                {{- $colorImage_full := .Fill "50x50 Center" -}}
+                {{- $colorImage = $colorImage_full.RelPermalink -}}
                 {{- $color = merge $color (dict "image" $colorImage) -}}
             {{- end -}}
             {{- $colors = $colors | append $color -}}
