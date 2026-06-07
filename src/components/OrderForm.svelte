@@ -273,7 +273,11 @@
 
         if (window.fbq) {
             try {
-                window.fbq("track", "Purchase", { currency: "HUF", value: serializedData.ár.összár });
+                window.fbq("track", "Purchase", {
+                    currency: "HUF",
+                    value: serializedData.ár.összár,
+                    num_items: serializedData.termékek.length,
+                });
             } catch (e) {
                 console.error("Failed to record purchase", e);
             }
