@@ -24,6 +24,9 @@ colors:
   - color_id: '#7'
     label: 'Világos bézs '
     image: /IMG_3079.jpeg
+  - color_id: '#8'
+    label: Zsálya
+    image: /IMG_1454.jpeg
   - color_id: '#9'
     label: Menta
     image: /IMG_6675.jpeg
@@ -57,9 +60,6 @@ colors:
   - color_id: '#19'
     label: Mogyoró
     image: /IMG_6638.jpeg
-  - color_id: '#8'
-    label: Zsálya
-    image: /IMG_1454.jpeg
 thumbnail: '/IMG_6615,1.JPG'
 categories: 'puha, pöttyös felületű anyag'
 ---
