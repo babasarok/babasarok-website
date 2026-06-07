@@ -83,6 +83,7 @@
                         {#if colorInfo}
                             <Chip
                                 color={colorInfo.hex}
+                                bgImage={colorInfo.image}
                                 onClose={() => {
                                     const result = product;
                                     if (result.material_values?.[material_index]) {
@@ -100,7 +101,7 @@
                 </div>
             {/if}
             {#if (materialInfo?.colors?.length ?? 0) > 0}
-                <div transition:slide class="flex gap-1 flex-wrap">
+                <div transition:slide class="flex gap-1 flex-wrap leading-0">
                     {#each materialInfo?.colors || [] as color (color.color_id)}
                         {@const selected = value?.colors.includes(color.color_id)}
                         <Color
