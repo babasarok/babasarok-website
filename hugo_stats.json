@@ -84,6 +84,7 @@
       "btn-primary",
       "btn-zoom",
       "case-details",
+      "case-details-colors",
       "case-details-info",
       "case-details-info-item",
       "case-details-nav",
@@ -99,6 +100,7 @@
       "col-sm-12",
       "collapse",
       "collapsed",
+      "color-item",
       "contact__info_item",
       "contact__info_item-icon",
       "container",
@@ -154,6 +156,7 @@
       "mb-4",
       "mb-5",
       "ml-3",
+      "mr-2",
       "mr-3",
       "mt-4",
       "mt-5",
@@ -219,7 +222,8 @@
       "title-box",
       "top-title",
       "unstyle-list",
-      "w-100"
+      "w-100",
+      "wrap"
     ],
     "ids": [
       "a",

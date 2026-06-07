@@ -5,28 +5,28 @@ label: Minky
 colors:
   - color_id: '#1'
     label: Babakék
-    image: /IMG_4081.JPG
+    image: /IMG_4081.jpeg
   - color_id: '#2'
     label: Pasztellkék
-    image: /IMG_4080.JPG
+    image: /IMG_4080.jpeg
   - color_id: '#3'
     label: Világos mályva
-    image: /IMG_4077.JPG
+    image: /IMG_4077.jpeg
   - color_id: '#4'
     label: 'Babarózsaszín '
-    image: /IMG_4076.JPG
+    image: /IMG_4076.jpeg
   - color_id: '#5'
     label: Sötézöld
-    image: /IMG_4072.JPG
+    image: /IMG_4072.jpeg
   - color_id: '#6'
     label: Csokibarna
-    image: /IMG_3334.JPG
+    image: /IMG_3334.jpeg
   - color_id: '#7'
     label: 'Világos bézs '
-    image: /IMG_3079.JPG
+    image: /IMG_3079.jpeg
   - color_id: '#8'
     label: Zsálya
-    image: /IMG_1454.JPG
+    image: /IMG_1454.jpeg
   - color_id: '#9'
     label: Menta
     image: /IMG_6675.jpeg
@@ -63,9 +63,3 @@ colors:
 thumbnail: '/IMG_6615,1.JPG'
 categories: 'puha, pöttyös felületű anyag'
 ---
-
-|   |   |   |   |   |
-| - | - | - | - | - |
-|   |   |   |   |   |
-|   |   |   |   |   |
-|   |   |   |   |   |
