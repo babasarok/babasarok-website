@@ -1,17 +1,17 @@
 <head>
-  <meta charset="utf-8" />
-  <meta http-equiv="x-ua-compatible" content="ie=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  {{ block "head/resource-hints" . }}{{ partial "head/resource-hints.html" . }}{{ end }}
-  {{ block "head/stylesheet" . }}{{ partial "head/stylesheet.html" . }}{{ end }}
-  {{ block "head/seo" . }}{{ partial "head/seo.html" . }}{{ end }}
-  {{ block "head/meta-pixel" . }}{{ partial "head/meta-pixel.html" . }}{{ end }}
-  {{ block "head/favicons" . }}{{ partial "head/favicons.html" . }}{{ end }}
-  {{ block "head/script-header" . }}{{ partial "head/script-header.html" . }}{{ end }}
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {{ block "head/resource-hints" . }}{{ partial "head/resource-hints.html" . }}{{ end }}
+    {{ block "head/stylesheet" . }}{{ partial "head/stylesheet.html" . }}{{ end }}
+    {{ block "head/seo" . }}{{ partial "head/seo.html" . }}{{ end }}
+    {{ block "head/meta-pixel" . }}{{ partial "head/meta-pixel.html" . }}{{ end }}
+    {{ block "head/favicons" . }}{{ partial "head/favicons.html" . }}{{ end }}
+    {{ block "head/script-header" . }}{{ partial "head/script-header.html" . }}{{ end }}
 
-  {{ with site.Params.googleAnalytics }}
-    {{ "<!-- Google Analytics -->" | safeHTML }}
-    <script async src="https://www.googletagmanager.com/gtag/js?id={{ . }}"></script>
+    {{ with site.Params.googleAnalytics }}
+        {{ "<!-- Google Analytics -->" | safeHTML }}
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ . }}"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
@@ -19,7 +19,20 @@
 
     gtag('config', '{{ . }}');
   </script>
-  {{ end }}
-  <script type="module" src="/components/elements.js" defer></script>
-  <link rel="stylesheet" href="/components/elements.css" />
+    {{ end }}
+    {{ with resources.Get "components/elements.js" | resources.Fingerprint "sha512" }}
+        <script
+            type="module"
+            src="{{ .RelPermalink }}"
+            integrity="{{ .Data.Integrity }}"
+            crossorigin="anonymous"
+            defer></script>
+    {{ end }}
+    {{ with resources.Get "components/elements.css" | resources.Fingerprint "sha512" }}
+        <link
+            rel="stylesheet"
+            href="{{ .RelPermalink }}"
+            integrity="{{ .Data.Integrity }}"
+            crossorigin="anonymous" />
+    {{ end }}
 </head>
