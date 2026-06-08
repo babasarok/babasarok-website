@@ -1,7 +1,0 @@
-enable: true
-topTitle: Referenciamunkák
-title: >
-  ## Referenciamunkák
-buttonName: Összes
-buttonTarget: blog
-_template: blog_section_template

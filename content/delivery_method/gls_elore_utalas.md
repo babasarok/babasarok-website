@@ -1,5 +1,0 @@
----
-  delivery_name: "gls_elore_utalas"
-  name: "__GLS házhozszállítás__ előre utalással"
-  price: 2500
----
