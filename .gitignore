@@ -66,3 +66,4 @@ deno.lock
 # builds
 .vercel
 dist
+old/
