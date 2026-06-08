@@ -27,7 +27,7 @@ const button = tv({
 type Props = VariantProps<typeof button> &
 	Omit<HTMLAttributes<'a'>, 'href'> &
 	Omit<HTMLAttributes<'button'>, 'type'> & {
-		href?: string | null;
+		href?: string | null | undefined;
 	};
 
 const { variant, size, href, class: className, ...rest } = Astro.props;
