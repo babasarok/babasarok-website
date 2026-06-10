@@ -12,6 +12,8 @@ colors:
   - color_id: '#2.1'
     label: Pasztellkék
     image: /IMG_3058.jpeg
-  - {}
+  - color_id: '#21'
+    label: Barackos rózsaszín
+    image: /IMG_2356.jpeg
 ---
 
