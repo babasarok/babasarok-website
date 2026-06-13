@@ -1,10 +1,13 @@
 {
+    "title": "Babasarok",
     "images": ["favicon.ico"],
-    "titleHome": "Babasarok",
     "footerContact": {
         "topTitle": "Kapcsolat",
         "title": "Rendelj most!",
         "button": "Érdeklődj itt"
+    },
+    "pagination": {
+        "pagerSize": 6
     },
     "titleSeparator": "-",
     "titleAddition": "Egyedi, kézzel készített babakelengye",

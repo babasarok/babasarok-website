@@ -16,6 +16,29 @@ export const GlobalConfigCollection: Collection = {
   fields: [
     {
             type: "string",
+            name: "languageCode",
+            label: "Nyelvi kód",
+        },
+        {
+            type: "string",
+            name: "title",
+            label: "Cím",
+            required: true,
+        },
+        {
+            type: "object",
+            name: "pagination",
+            label: "Oldalankénti bejegyzések száma",
+            fields: [
+                {
+                    type: "number",
+                    name: "pagerSize",
+                    label: "Egy oldalankénti bejegyzések száma",
+                },
+            ],
+        },
+    {
+            type: "string",
             name: "titleSeparator",
             label: "Cím elválasztó",
         },

@@ -1,15 +1,14 @@
 ---
 import Base from '../layouts/Base.astro';
+import { getConfig } from '../lib/data';
 
-const slug = 'home';
-// const page = await getPage(slug);
-// const data = page.data?.page;
-// if (!data) return new Response('Not Found', { status: 404 });
-// const config = (await getConfig()).data?.config ?? null;
+const config = (await getConfig()).data?.config ?? null;
 ---
 
 <Base
-	title={""}
-	description={""}
+	title={config.titleSeparator
+		? `${config.title} ${config.titleSeparator} ${config.description}`
+		: config.title ?? ""}
+	description={config.description}
 >
 </Base>
