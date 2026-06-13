@@ -1,39 +1,38 @@
 {
-    "title": "Babasarok",
-    "images": ["favicon.ico"],
-    "footerContact": {
-        "topTitle": "Kapcsolat",
-        "title": "Rendelj most!",
-        "button": "Érdeklődj itt"
+  "title": "Babasarok",
+  "footerContact": {
+    "topTitle": "Kapcsolat",
+    "title": "Rendelj most!",
+    "button": "Érdeklődj itt"
+  },
+  "pagination": {
+    "pagerSize": 6
+  },
+  "titleSeparator": "-",
+  "titleAddition": "Egyedi, kézzel készített babakelengye",
+  "logo": "images/site-navigation/logo.png",
+  "footerLogo": "images/site-navigation/logo-dark.png",
+  "contactLink": "contact",
+  "copyright": "All right reserved copyright © Babasarok 2025",
+  "fabformURL": "1ffa9477-1db3-47f2-bc9e-1226e3a3b858",
+  "address": {
+    "phone": "+36 30 2121 709",
+    "email": "halminoemi99@gmail.com",
+    "address": "3896, Telkibánya Petőfi út 87."
+  },
+  "social": [
+    {
+      "icon": "streamline-logos:facebook-logo-2",
+      "url": "https://www.facebook.com/share/1AsACc4DuU/?mibextid=wwXIfr"
     },
-    "pagination": {
-        "pagerSize": 6
+    {
+      "icon": "fa:instagram",
+      "url": "https://www.instagram.com/babasarokk/"
     },
-    "titleSeparator": "-",
-    "titleAddition": "Egyedi, kézzel készített babakelengye",
-    "logo": "images/site-navigation/logo.png",
-    "footerLogo": "images/site-navigation/logo-dark.png",
-    "contactLink": "contact",
-    "copyright": "All right reserved copyright © Babasarok 2025",
-    "fabformURL": "1ffa9477-1db3-47f2-bc9e-1226e3a3b858",
-    "address": {
-        "phone": "+36 30 2121 709",
-        "email": "halminoemi99@gmail.com",
-        "address": "3896, Telkibánya Petőfi út 87."
-    },
-    "social": [
-        {
-            "icon": "streamline-logos:facebook-logo-2",
-            "url": "https://www.facebook.com/share/1AsACc4DuU/?mibextid=wwXIfr"
-        },
-        {
-            "icon": "fa:instagram",
-            "url": "https://www.instagram.com/babasarokk/"
-        },
-        {
-            "icon": "fa-brands:tiktok",
-            "url": "https://www.tiktok.com/@halminoemi99?_t=ZG-8wgf8AuszwG&_r=1",
-            "weight": 1
-        }
-    ]
+    {
+      "icon": "fa-brands:tiktok",
+      "url": "https://www.tiktok.com/@halminoemi99?_t=ZG-8wgf8AuszwG&_r=1",
+      "weight": 1
+    }
+  ]
 }

@@ -15,123 +15,140 @@ export const GlobalConfigCollection: Collection = {
   },
   fields: [
     {
-            type: "string",
-            name: "languageCode",
-            label: "Nyelvi kód",
-        },
-        {
-            type: "string",
-            name: "title",
-            label: "Cím",
-            required: true,
-        },
-        {
-            type: "object",
-            name: "pagination",
-            label: "Oldalankénti bejegyzések száma",
-            fields: [
-                {
-                    type: "number",
-                    name: "pagerSize",
-                    label: "Egy oldalankénti bejegyzések száma",
-                },
-            ],
-        },
+      type: "string",
+      name: "title",
+      label: "Cím",
+      required: true,
+    },
     {
-            type: "string",
-            name: "titleSeparator",
-            label: "Cím elválasztó",
+      type: "object",
+      name: "pagination",
+      label: "Oldalankénti bejegyzések száma",
+      fields: [
+        {
+          type: "number",
+          name: "pagerSize",
+          label: "Egy oldalankénti bejegyzések száma",
+        },
+      ],
+    },
+    {
+      type: "string",
+      name: "titleSeparator",
+      label: "Cím elválasztó",
+    },
+    {
+      type: "string",
+      name: "titleAddition",
+      label: "Cím kiegészítés",
+    },
+    {
+      type: "string",
+      name: "description",
+      label: "Oldal leírása",
+    },
+    {
+      type: "string",
+      name: "blogPageURL",
+      label: "Referenciamunkák URL",
+    },
+    {
+      type: "image",
+      name: "logo",
+      label: "Logó",
+    },
+    {
+      type: "image",
+      name: "footerLogo",
+      label: "Footer Logó",
+    },
+    {
+      type: "string",
+      name: "contactLink",
+      label: "Rendelés oldal URL",
+    },
+    {
+      type: "string",
+      name: "copyright",
+      label: "Copyright",
+    },
+    {
+      type: "string",
+      label: "Rendelés form kód",
+      name: "fabformURL",
+      description: "A https://web3forms.com-ról származó form kód.",
+    },
+    {
+      type: "object",
+      name: "footerContact",
+      label: "Footer Kapcsolat Doboz",
+      fields: [
+        {
+          type: "string",
+          name: "topTitle",
+          label: "Felső cím",
         },
         {
-            type: "string",
-            name: "titleAddition",
-            label: "Cím kiegészítés",
+          type: "string",
+          name: "title",
+          label: "Cím",
         },
         {
-            type: "string",
-            name: "description",
-            label: "Oldal leírása",
+          type: "string",
+          name: "button",
+          label: "Gomb szöveg",
+        },
+      ],
+    },
+    {
+      type: "object",
+      name: "address",
+      label: "Kapcsolat",
+      fields: [
+        {
+          type: "string",
+          name: "phone",
+          label: "Telefonszám",
         },
         {
-            type: "string",
-            name: "blogPageURL",
-            label: "Referenciamunkák URL",
+          type: "string",
+          name: "email",
+          label: "Email",
         },
         {
-            type: "image",
-            name: "logo",
-            label: "Logó",
+          type: "string",
+          name: "address",
+          label: "Cím",
         },
         {
-            type: "image",
-            name: "footerLogo",
-            label: "Footer Logó",
+          type: "string",
+          name: "openingHours",
+          label: "Elérhetőségi idő (nincs as oldalba beépítve)",
+        },
+      ],
+    },
+    {
+      type: "object",
+      name: "social",
+      label: "Közösségi Média",
+      list: true,
+      fields: [
+        {
+          type: "string",
+          name: "icon",
+          label: "Ikon (https://icon-sets.iconify.design/)",
         },
         {
-            type: "string",
-            name: "contactLink",
-            label: "Rendelés oldal URL",
+          type: "string",
+          name: "url",
+          label: "URL",
         },
         {
-            type: "string",
-            name: "copyright",
-            label: "Copyright",
+          type: "number",
+          name: "weight",
+          label: "Prioritás (kisebb előrébb)",
         },
-        {
-            type: "string",
-            label: "Rendelés form kód",
-            name: "fabformURL",
-            description: "A https://web3forms.com-ról származó form kód.",
-        },
-        {
-            type: "object",
-            name: "address",
-            label: "Kapcsolat",
-            fields: [
-                {
-                    type: "string",
-                    name: "phone",
-                    label: "Telefonszám",
-                },
-                {
-                    type: "string",
-                    name: "email",
-                    label: "Email",
-                },
-                {
-                    type: "string",
-                    name: "address",
-                    label: "Cím",
-                },
-                {
-                    type: "string",
-                    name: "openingHours",
-                    label: "Elérhetőségi idő (nincs as oldalba beépítve)",
-                },
-            ],
-        },
-        {
-            type: "object",
-            name: "social",
-            label: "Közösségi Média",
-            list: true,
-            fields: [
-                {
-                    type: "string",
-                    name: "icon",
-                    label: "Ikon (https://icon-sets.iconify.design/)",
-                },
-                {
-                    type: "string",
-                    name: "url",
-                    label: "URL",
-                },
-                {
-                    type: "number",
-                    name: "weight",
-                    label: "Prioritás (kisebb előrébb)",
-                },
-            ],
-        },
-  ]
-}
+      ],
+    },
+  ],
+};

@@ -1,6 +1,35 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 @plugin '@tailwindcss/typography';
 
 /* Drive the dark: variant from the .dark class (toggled by ThemeToggle),
    not the prefers-color-scheme media query. */
 @custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-bg-main: hsl(28.52, 49.59%, 97%);
+  --color-bg-light: hsl(28.52, 49.59%, 90.88%);
+  --color-bg-dark: hsl(28.52, 49.59%, 42%);
+  --color-primary: hsl(28.52, 49.59%, 75.88%);
+
+  --color-light: #f8f9fa;
+
+  --font-base: "Poppins", sans-serif;
+  --font-heading: "Yeseva One", cursive;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-bg-main);
+  overflow-x: hidden;
+  margin: 0;
+  font-family: var(--font-base), sans-serif;
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 1.75;
+  color: #7e7e8a;
+  text-align: left;
+  height: inherit;
+}
