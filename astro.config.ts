@@ -6,13 +6,11 @@ import icon from 'astro-icon';
 import tina from '@tinacms/astro/integration';
 import { tinaAdminDevRedirect } from '@tinacms/astro/vite';
 import tailwindcss from '@tailwindcss/vite';
-import vercel from '@astrojs/vercel';
 
 // https://astro.build/config
 export default defineConfig({
 	site: process.env.SITE_URL || `https://${process.env.VERCEL_URL}`,
 	output: 'static',
-	adapter: vercel(),
 	redirects: { '/home': '/' },
 	integrations: [mdx(), sitemap(), icon(), tina()],
 	build: {
