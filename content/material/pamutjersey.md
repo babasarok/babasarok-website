@@ -57,7 +57,8 @@ colors:
     image: /att.977wkI9MriAB2Q68VSbjdzuTa1pyhbj1FX9tnMLEmo4.jpeg
   - color_id: mályva
     label: Mályva
-    hex: '#DDA0DD'
+    hex: ''
+    image: /IMG_0928.jpeg
   - color_id: pink
     label: Pink
     hex: '#FF69B4'
