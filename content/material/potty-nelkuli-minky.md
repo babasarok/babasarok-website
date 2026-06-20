@@ -15,5 +15,9 @@ colors:
   - color_id: '#21'
     label: Barackos rózsaszín
     image: /IMG_2356.jpeg
+  - color_id: '#22'
+    label: Világos mályva
+    image: /IMG_4305.jpeg
+  - {}
 ---
 
