@@ -23,10 +23,11 @@ colors:
     image: /AAA6572B-DB3D-4403-A6B2-2F128B79E2CB.png
   - color_id: vilagosszurke
     label: Világosszürke
-    hex: '#D3D3D3'
+    hex: ''
   - color_id: barna
     label: Barna
-    hex: '#8B4513'
+    hex: ''
+    image: /IMG_8073.jpeg
   - color_id: bezs
     label: Bézs
     hex: '#F5F5DC'
