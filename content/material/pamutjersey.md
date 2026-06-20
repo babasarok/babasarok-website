@@ -40,9 +40,6 @@ colors:
     label: Drapp
     hex: ''
     image: /IMG_2913.jpeg
-  - color_id: homok
-    label: Homok
-    hex: '#E4D96F'
   - color_id: vilagoskek
     label: Világoskék
     hex: '#ADD8E6'
@@ -54,7 +51,8 @@ colors:
     hex: '#FFC0CB'
   - color_id: puderrózsaszín
     label: Púderrózsaszín
-    hex: '#FADADD'
+    hex: ''
+    image: /att.977wkI9MriAB2Q68VSbjdzuTa1pyhbj1FX9tnMLEmo4.jpeg
   - color_id: mályva
     label: Mályva
     hex: '#DDA0DD'
