@@ -15,7 +15,8 @@ colors:
     hex: '#98FF98'
   - color_id: feher
     label: Fehér
-    hex: '#FFFFFF'
+    hex: ''
+    image: /IMG_0424.jpeg
   - color_id: sotetszurke
     label: Sötétszürke
     hex: '#555555'
