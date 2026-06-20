@@ -49,7 +49,8 @@ colors:
     hex: '#00008B'
   - color_id: babarozsaszin
     label: Babarózsaszín
-    hex: '#FFC0CB'
+    hex: ''
+    image: /IMG_6605.jpeg
   - color_id: puderrózsaszín
     label: Púderrózsaszín
     hex: ''
