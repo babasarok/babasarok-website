@@ -62,7 +62,8 @@ colors:
     image: /IMG_0928.jpeg
   - color_id: pink
     label: Pink
-    hex: '#FF69B4'
+    hex: ''
+    image: /9CCE6DE9-9F24-4204-BEEF-3EBCF1BF63E9.png
   - color_id: lila
     label: Lila
     hex: '#800080'
