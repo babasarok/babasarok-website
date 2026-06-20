@@ -45,7 +45,8 @@ colors:
     image: /IMG_2913.jpeg
   - color_id: vilagoskek
     label: Világoskék
-    hex: '#ADD8E6'
+    hex: ''
+    image: /9E9E406A-6EC4-4FC8-B792-0C14A95A0092.png
   - color_id: sotetkek
     label: Sötétkék
     hex: ''
