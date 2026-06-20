@@ -19,7 +19,8 @@ colors:
     image: /IMG_0424.jpeg
   - color_id: sotetszurke
     label: Sötétszürke
-    hex: '#555555'
+    hex: '#FFFFFF'
+    image: /AAA6572B-DB3D-4403-A6B2-2F128B79E2CB.png
   - color_id: vilagosszurke
     label: Világosszürke
     hex: '#D3D3D3'
