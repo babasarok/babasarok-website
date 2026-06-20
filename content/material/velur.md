@@ -11,7 +11,8 @@ colors:
     hex: '#F5F5DC'
   - color_id: barna
     label: Barna
-    hex: '#8B4513'
+    hex: ''
+    image: /IMG_4206.jpeg
   - color_id: mogyoro
     label: Mogyoró
     hex: '#D2B48C'
