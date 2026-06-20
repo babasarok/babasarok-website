@@ -30,7 +30,8 @@ colors:
     image: /IMG_8073.jpeg
   - color_id: bezs
     label: Bézs
-    hex: '#F5F5DC'
+    hex: ''
+    image: /IMG_0048.jpeg
   - color_id: mogyoro
     label: Mogyoró
     hex: '#D2B48C'
