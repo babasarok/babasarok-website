@@ -66,7 +66,8 @@ colors:
     image: /9CCE6DE9-9F24-4204-BEEF-3EBCF1BF63E9.png
   - color_id: lila
     label: Lila
-    hex: '#800080'
+    hex: ''
+    image: /6DC08737-FF26-4485-8565-A94705E87159.png
   - color_id: mustar
     label: Mustár
     hex: ''
