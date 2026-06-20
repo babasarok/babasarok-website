@@ -38,7 +38,8 @@ colors:
     hex: '#D2B48C'
   - color_id: drapp
     label: Drapp
-    hex: '#D3B583'
+    hex: ''
+    image: /IMG_2913.jpeg
   - color_id: homok
     label: Homok
     hex: '#E4D96F'
