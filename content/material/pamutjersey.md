@@ -24,6 +24,7 @@ colors:
   - color_id: vilagosszurke
     label: Világosszürke
     hex: ''
+    image: /BC57D6E7-6776-4612-8781-A017EC5BF87F.png
   - color_id: barna
     label: Barna
     hex: ''
