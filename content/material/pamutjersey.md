@@ -8,7 +8,8 @@ colors:
     hex: '#186A13'
   - color_id: zsalya
     label: Zsálya
-    hex: '#B2AC88'
+    hex: ''
+    image: /IMG_7926.jpeg
   - color_id: menta
     label: Menta
     hex: '#98FF98'
