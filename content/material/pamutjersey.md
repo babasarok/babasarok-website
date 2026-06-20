@@ -13,7 +13,8 @@ colors:
     image: /IMG_7926.jpeg
   - color_id: menta
     label: Menta
-    hex: '#98FF98'
+    hex: ''
+    image: /A4EF85E9-FBFA-4458-A5E5-7A0C594171D5.png
   - color_id: feher
     label: Fehér
     hex: ''
