@@ -46,7 +46,8 @@ colors:
     hex: '#ADD8E6'
   - color_id: sotetkek
     label: Sötétkék
-    hex: '#00008B'
+    hex: ''
+    image: /9D11B22B-697E-4455-BD2D-21A9C6EDDAA3.png
   - color_id: babarozsaszin
     label: Babarózsaszín
     hex: ''
@@ -62,9 +63,6 @@ colors:
   - color_id: pink
     label: Pink
     hex: '#FF69B4'
-  - color_id: barack
-    label: Barack
-    hex: '#FFA07A'
   - color_id: lila
     label: Lila
     hex: '#800080'
