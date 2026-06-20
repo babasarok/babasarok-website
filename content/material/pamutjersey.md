@@ -35,7 +35,8 @@ colors:
     image: /IMG_0048.jpeg
   - color_id: mogyoro
     label: Mogyoró
-    hex: '#D2B48C'
+    hex: ''
+    image: /IMG_3585.jpeg
   - color_id: drapp
     label: Drapp
     hex: ''
