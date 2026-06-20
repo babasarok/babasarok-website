@@ -5,7 +5,8 @@ label: PamutJersey
 colors:
   - color_id: sotetzold
     label: Sötétzöld
-    hex: '#186A13'
+    hex: ''
+    image: /IMG_4369.png
   - color_id: zsalya
     label: Zsálya
     hex: ''
