@@ -24,12 +24,12 @@ export function sanitizeItem(item: Product): Product {
         prefillField(field);
     }
 
-    for (const material of item.material_values ?? []) {
+    for (const material of item.materials.values ?? []) {
         if (!material) {
             continue;
         }
 
-        const materialInfo = item.materials.find((m) => m.material.material_id === material.material_id);
+        const materialInfo = item.materials.materials.find((m) => m.material.material_id === material.material_id);
         // Resolving failed, bail, or we are using custom color, in which case we don't know if we need a limit.
         if (materialInfo?.color_count == null || material.custom_color) {
             continue;
@@ -118,21 +118,21 @@ function updateMaterialWithErrors(value: ProductMaterialValue, material: Product
 }
 
 function updateMaterialsWithErrors(item: Product): void {
-    if (item.materials.length === 0) {
+    if (item.materials.materials.length === 0) {
         return;
     }
 
-    if (item.material_values.length < item.material_required_count) {
-        for (let i = item.material_values.length; i < item.material_required_count; i++) {
-            item.material_values.push({ material_id: "", colors: [] });
+    if (item.materials.values.length < item.materials.material_required_count) {
+        for (let i = item.materials.values.length; i < item.materials.material_required_count; i++) {
+            item.materials.values.push({ material_id: "", colors: [] });
         }
     }
 
-    item.material_values?.forEach((materialValue) => {
+    item.materials.values?.forEach((materialValue) => {
         if (!materialValue) {
             return;
         }
-        const materialInfo = item.materials.find((m) => m.material.material_id === materialValue.material_id);
+        const materialInfo = item.materials.materials.find((m) => m.material.material_id === materialValue.material_id);
         if (materialInfo) {
             updateMaterialWithErrors(materialValue, materialInfo);
         } else {
@@ -157,15 +157,15 @@ export function isItemValid(item: Product): boolean {
         }
     }
 
-    if (item.materials.length === 0) {
+    if (item.materials.materials.length === 0) {
         return true;
     }
 
-    if (item.material_values.length < item.material_required_count) {
+    if (item.materials.values.length < item.materials.material_required_count) {
         return false;
     }
 
-    for (const materialValue of item.material_values ?? []) {
+    for (const materialValue of item.materials.values ?? []) {
         if (materialValue?.error) {
             return false;
         }

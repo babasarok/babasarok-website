@@ -90,9 +90,9 @@ export function generateProductData(product: Product) {
         darabszám: serialised.count,
     };
 
-    if (serialised.materials.length > 0 && serialised.material_required_count > 0) {
-        result.anyagok = serialised.material_values.map((mv) => {
-            const material = serialised.materials.find((m) => m.material.material_id === mv?.material_id);
+    if (serialised.materials.materials.length > 0 && serialised.materials.material_required_count > 0) {
+        result.anyagok = serialised.materials.values.map((mv) => {
+            const material = serialised.materials.materials.find((m) => m.material.material_id === mv?.material_id);
             const res: ReadableMaterialData = {
                 név: material?.material.label ?? mv?.material_id ?? "Ismeretlen anyag",
                 ár: material?.price,

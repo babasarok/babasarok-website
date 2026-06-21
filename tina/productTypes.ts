@@ -80,6 +80,13 @@ const productMaterialValidator = z.object({
 
 export type TinaProductMaterial = z.infer<typeof productMaterialValidator>;
 
+const productMaterialsValidator = z.object({
+    materials: z.array(productMaterialValidator.or(emptyObject)).optional(),
+    material_required_count: z.number().optional(),
+});
+
+export type TinaProductMaterials = z.infer<typeof productMaterialsValidator>;
+
 export const productValidator = z.object({
     product_id: z.string(),
     title: z.string(),
@@ -89,8 +96,7 @@ export const productValidator = z.object({
     discount: z.number().optional(),
     discount_valid_until: z.coerce.date().optional(),
     fields: z.array(fieldValidator.or(emptyObject)).optional(),
-    materials: z.array(productMaterialValidator.or(emptyObject)).optional(),
-    material_required_count: z.number().optional(),
+    materials: productMaterialsValidator.or(emptyObject).optional(),
 });
 
 export type TinaProduct = z.infer<typeof productValidator>;

@@ -9,6 +9,7 @@ import type {
     TinaProductMaterial,
     TinaRadioField,
     TinaSelectField,
+    TinaProductMaterials,
 } from "../../tina/productTypes";
 import type { TinaMaterial, TinaMaterialColor } from "../../tina/materialTypes";
 import type { TinaDeliveryMethod } from "../../tina/deliveryMethodTypes";
@@ -19,6 +20,10 @@ export interface TinaResolvedMaterial extends TinaMaterial {
 
 export interface TinaResolvedProductMaterial extends TinaProductMaterial {
     material: TinaResolvedMaterial;
+}
+
+export interface TinaResolvedProductMaterials extends TinaProductMaterials {
+    materials?: TinaResolvedProductMaterial[];
 }
 
 export type TinaResolvedInputField = TinaInputField & {
@@ -88,7 +93,7 @@ export interface ProductMaterialValue {
 }
 
 export interface TinaProductResolved extends TinaProduct {
-    materials?: TinaResolvedProductMaterial[];
+    materials?: TinaResolvedProductMaterials;
     fields?: TinaResolvedProductField[];
     product_path: string;
 }

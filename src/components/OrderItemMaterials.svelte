@@ -17,25 +17,25 @@
     const { product, onChange, material_index = 0 }: Props = $props();
 </script>
 
-{#if product.materials && product.materials.length > 0}
+{#if product.materials && product.materials.materials.length > 0}
     <div class="flex flex-col gap-1">
         <p class="text-sm text-primary-500">
-            {(product.material_required_count ?? 1) == 1 ? "Anyag" : `Anyag ${material_index + 1}`}
+            {(product.materials.material_required_count ?? 1) == 1 ? "Anyag" : `Anyag ${material_index + 1}`}
         </p>
         <div class="flex gap-1 flex-wrap">
-            {#each product.materials as material}
+            {#each product.materials.materials as material}
                 {@const materialInfo = material.material}
                 {#if materialInfo}
                     {@const selected =
-                        product.material_values?.[material_index]?.material_id === materialInfo.material_id}
+                        product.materials.values?.[material_index]?.material_id === materialInfo.material_id}
                     <Button
                         type="button"
                         class="flex items-center gap-0.5"
                         {selected}
                         onclick={() => {
                             const result = product;
-                            result.material_values = result.material_values || [];
-                            result.material_values[material_index] = {
+                            result.materials.values = result.materials.values || [];
+                            result.materials.values[material_index] = {
                                 material_id: materialInfo.material_id,
                                 colors: [],
                             };
@@ -47,9 +47,11 @@
             {/each}
         </div>
     </div>
-    {#if product.material_values?.[material_index] && !!product.material_values[material_index].material_id}
-        {@const value = product.material_values[material_index]}
-        {@const productMaterial = product.materials?.find((m) => m.material.material_id === value?.material_id)}
+    {#if product.materials.values?.[material_index] && !!product.materials.values[material_index].material_id}
+        {@const value = product.materials.values[material_index]}
+        {@const productMaterial = product.materials.materials.find(
+            (m) => m.material.material_id === value?.material_id
+        )}
         {@const materialInfo = productMaterial?.material}
         {@const custom = value.custom_color != undefined || (materialInfo?.colors?.length ?? 0) === 0}
         {@const colorCount = productMaterial?.color_count}
@@ -86,10 +88,10 @@
                                 bgImage={colorInfo.image}
                                 onClose={() => {
                                     const result = product;
-                                    if (result.material_values?.[material_index]) {
-                                        result.material_values[material_index].colors = [
-                                            ...result.material_values[material_index].colors.slice(0, index),
-                                            ...result.material_values[material_index].colors.slice(index + 1),
+                                    if (result.materials.values?.[material_index]) {
+                                        result.materials.values[material_index].colors = [
+                                            ...result.materials.values[material_index].colors.slice(0, index),
+                                            ...result.materials.values[material_index].colors.slice(index + 1),
                                         ];
                                     }
                                     onChange?.(result);
@@ -110,16 +112,16 @@
                             selected={!multiColor && selected}
                             onclick={() => {
                                 const result = product;
-                                if (!result.material_values?.[material_index]) {
+                                if (!result.materials.values?.[material_index]) {
                                     return;
                                 }
 
                                 if (multiColor) {
-                                    result.material_values[material_index].colors.push(color.color_id);
+                                    result.materials.values[material_index].colors.push(color.color_id);
                                 } else {
-                                    result.material_values[material_index].colors = [color.color_id];
+                                    result.materials.values[material_index].colors = [color.color_id];
                                 }
-                                result.material_values[material_index].custom_color = undefined;
+                                result.materials.values[material_index].custom_color = undefined;
                                 onChange?.(result);
                             }} />
                     {/each}
@@ -132,11 +134,11 @@
                 type="button"
                 onclick={() => {
                     const result = product;
-                    if (!result.material_values?.[material_index]) {
+                    if (!result.materials.values?.[material_index]) {
                         return;
                     }
-                    result.material_values[material_index].colors = [];
-                    result.material_values[material_index].custom_color = "";
+                    result.materials.values[material_index].colors = [];
+                    result.materials.values[material_index].custom_color = "";
                     onChange?.(result);
                 }}>
                 Egyéb

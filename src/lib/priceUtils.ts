@@ -76,13 +76,13 @@ export function calculatePriceForItem(product: Product): Price | LengthBasedPric
         parts.push(fieldPrice);
     }
 
-    if (product.materials && product.materials.length > 0) {
-        for (let i = 0; i < (product.material_required_count ?? 1); i++) {
-            const value = product.material_values?.[i];
+    if (product.materials && product.materials.materials.length > 0) {
+        for (let i = 0; i < (product.materials.material_required_count ?? 1); i++) {
+            const value = product.materials.values?.[i];
             const price = getMaterialPrice(
                 value ?? { material_id: "" },
-                product.materials,
-                product.material_required_count ?? 1,
+                product.materials.materials,
+                product.materials.material_required_count ?? 1,
                 i
             );
             if (!price) {

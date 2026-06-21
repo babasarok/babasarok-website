@@ -56,16 +56,25 @@
                     if (!page.can_be_ordered) {
                         continue;
                     }
+
                     result[page.product_id] = {
                         ...page,
                         product_path: page.path,
-                        materials:
-                            page.materials
-                                ?.filter((x) => nonEmptyObject(x))
-                                .map((material) => ({
-                                    ...material,
-                                    material: materials[material.material_path],
-                                })) ?? [],
+                        materials: {
+                            ...page.materials,
+                            materials:
+                                page.materials &&
+                                page.materials?.materials &&
+                                nonEmptyObject(page.materials) &&
+                                nonEmptyObject(page.materials?.materials)
+                                    ? (page.materials?.materials
+                                          .filter((x) => nonEmptyObject(x))
+                                          .map((material) => ({
+                                              ...material,
+                                              material: materials[material.material_path],
+                                          })) ?? [])
+                                    : [],
+                        },
                         fields:
                             page.fields
                                 ?.filter((x) => nonEmptyObject(x))

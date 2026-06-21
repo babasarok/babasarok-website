@@ -19,5 +19,5 @@ export function getValue(props: ComponentProps, path: string): any {
         }
     }, selPath);
 
-    return fullPath.split(".").reduce((obj, key) => obj && obj[key], form.getState().values);
+    return fullPath.split(".").reduce((obj: any, key: any) => obj && obj[key], form.getState().values);
 }

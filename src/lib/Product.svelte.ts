@@ -6,10 +6,12 @@ import type { Serialised } from "./typeUtils";
 export interface IProduct extends Required<Omit<TinaProductResolved, "materials">> {
     uuid: string;
     count: number;
-    material_values: Array<ProductMaterialValue | undefined>;
-    materials: ProductMaterial[];
+    materials: {
+        materials: ProductMaterial[];
+        values: Array<ProductMaterialValue | undefined>;
+        material_required_count: number;
+    }
     fields: Field[];
-    material_required_count: number;
 }
 
 export class Product implements IProduct {
@@ -19,8 +21,12 @@ export class Product implements IProduct {
     title: string;
 
     material_values: Array<ProductMaterialValue | undefined>;
-    materials: ProductMaterial[];
-    material_required_count: number;
+    materials: {
+        /** allowed materials to select */
+        materials: ProductMaterial[];
+        values: Array<ProductMaterialValue | undefined>;
+        material_required_count: number;
+    }
     private original_materials: TinaResolvedProductMaterial[];
     fields: Field[];
     icon: string | undefined;
@@ -36,10 +42,13 @@ export class Product implements IProduct {
         this.icon = $state(item.icon);
         this.priced_by_length = $state(item.priced_by_length);
         this.price = $state(item.price);
-        this.original_materials = item.materials ?? [];
-        this.material_required_count = $state(item.material_required_count ?? 1);
+        this.original_materials = item.materials?.materials ?? [];
         this.fields = $state(item.fields ?? []);
-        this.materials = item.materials?.map((m) => new ProductMaterial(m, { fields: this.fields })) ?? [];
+        this.materials = $state({
+            materials: item.materials?.materials?.map((m) => new ProductMaterial(m, { fields: this.fields })) ?? [],
+            values: [],
+            material_required_count: item.materials?.material_required_count ?? 1,
+        });
         this.material_values = $state([]);
         this.product_path = item.product_path;
         this.discount = $state(item.discount);
@@ -53,8 +62,10 @@ export class Product implements IProduct {
             icon: $state.snapshot(this.icon),
             priced_by_length: $state.snapshot(this.priced_by_length),
             price: $state.snapshot(this.price),
-            materials: this.original_materials,
-            material_required_count: $state.snapshot(this.material_required_count),
+            materials: {
+                materials: this.original_materials,
+                material_required_count: $state.snapshot(this.materials.material_required_count),
+            },
             fields: $state.snapshot(this.fields),
             product_path: $state.snapshot(this.product_path),
             discount: $state.snapshot(this.discount),
@@ -69,14 +80,16 @@ export class Product implements IProduct {
             icon: $state.snapshot(this.icon),
             priced_by_length: $state.snapshot(this.priced_by_length),
             price: $state.snapshot(this.price),
-            materials: this.materials.map((m) => m.serialise()),
-            material_required_count: $state.snapshot(this.material_required_count),
+            materials: {
+                materials: this.materials.materials.map((m) => m.serialise()),
+                values: $state.snapshot(this.materials.values),
+                material_required_count: $state.snapshot(this.materials.material_required_count),
+            },
             fields: $state.snapshot(this.fields),
             product_path: $state.snapshot(this.product_path),
             discount: $state.snapshot(this.discount),
             discount_valid_until: $state.snapshot(this.discount_valid_until),
             count: $state.snapshot(this.count),
-            material_values: $state.snapshot(this.material_values),
             uuid: $state.snapshot(this.uuid),
         };
     }
