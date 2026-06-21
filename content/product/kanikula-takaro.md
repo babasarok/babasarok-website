@@ -17,5 +17,23 @@ materials:
     - materials:
         - material_path: content/material/waffle.md
         - material_path: content/material/waffle.md
+fields:
+  - name: meret
+    price: 0
+    label: Méret
+    type: radio
+    items:
+      - value: 70x100cm
+        label: Gyerek
+        price: 6000
+        tooltip: 70x100cm
+      - value: 100x140cm
+        label: Ovis
+        price: 10000
+        tooltip: 100x140cm
+      - value: 140x200cm
+        label: Felnőtt
+        price: 14000
+        tooltip: 140x200cm
 ---
 
