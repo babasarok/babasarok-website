@@ -16,6 +16,9 @@ fields:
       - value: duplagez+pamutvaszon
         label: Duplagéz+Pamutvászon
         price: 5.5
+      - value: Pamut+waffle
+        label: Pamutvászon+waffle
+        price: 4.5
   - name: szin
     label: Szín 1
     type: color
