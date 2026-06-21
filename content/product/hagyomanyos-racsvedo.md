@@ -4,12 +4,13 @@ product_id: hagyomanyos-racsvedo
 priced_by_length: true
 price: 6500
 materials:
-  - material_path: content/material/minky.md
-  - material_path: content/material/teddy.md
-  - material_path: content/material/potty-nelkuli-minky.md
-  - material_path: content/material/pamutvaszon.md
-  - material_path: content/material/wellsoft.md
-material_required_count: 2
+  materials:
+    - material_path: content/material/minky.md
+    - material_path: content/material/teddy.md
+    - material_path: content/material/potty-nelkuli-minky.md
+    - material_path: content/material/pamutvaszon.md
+    - material_path: content/material/wellsoft.md
+  material_required_count: 2
 fields:
   - name: meret
     length_based_pricing_source: true

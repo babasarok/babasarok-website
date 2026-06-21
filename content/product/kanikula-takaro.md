@@ -4,28 +4,11 @@ title: Kánikulatakaró
 hidden_in_product_list: true
 can_be_ordered: true
 price: 0
-fields:
-  - name: fajta
-    price: 0
-    label: Fajta
-    type: radio
-    items:
-      - value: ketretegu
-        label: Kétrétegű
-        price: 6000
-      - value: duplagez+pamutvaszon
-        label: Duplagéz+Pamutvászon
-        price: 5.5
-      - value: Pamut+waffle
-        label: Pamutvászon+waffle
-        price: 4.5
-  - name: szin
-    label: Szín 1
-    type: color
-    allow_custom_value: true
-  - name: szin2
-    label: Szín 2
-    type: color
-    allow_custom_value: true
+materials:
+  materials:
+    - material_path: content/material/duplagez.md
+    - material_path: content/material/waffle.md
+    - material_path: content/material/pamutvaszon.md
+  material_required_count: 2
 ---
 

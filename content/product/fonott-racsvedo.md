@@ -5,12 +5,13 @@ icon: /product/braids.svg
 priced_by_length: true
 price: 0
 materials:
-  - material_path: content/material/velur.md
-    price: 0
-    color_count: fonas
-  - material_path: content/material/teddy.md
-    price: 0
-    color_count: fonas
+  materials:
+    - material_path: content/material/velur.md
+      price: 0
+      color_count: fonas
+    - material_path: content/material/teddy.md
+      price: 0
+      color_count: fonas
 fields:
   - name: sizes
     length_based_pricing_source: true

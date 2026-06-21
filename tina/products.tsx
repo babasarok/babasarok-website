@@ -137,45 +137,54 @@ export const PRODUCT: TinaField<false>[] = [
     {
         type: "object",
         name: "materials",
-        list: true,
         label: "Anyagok",
         description:
-            "A termékhez tartozó anyagok. Ha nincs egy se hozzáadva, akkor a termékhez nem lesz anyag kiválasztási lehetőség a rendelési felületen.",
-        ui: {
-            itemProps: (item) => {
-                return { label: item?.material_path || "Új anyag" };
-            },
-        },
+            "A termékhez tartozó anyagok beállításai. Ha nincs egy se hozzáadva, akkor a termékhez nem lesz anyag kiválasztási lehetőség a rendelési felületen.",
         fields: [
             {
-                type: "reference",
-                name: "material_path",
-                label: "Anyag",
-                description: "Válassz egy anyagot a listából.",
-                collections: ["product_materials"],
-                required: true,
+                type: "object",
+                name: "materials",
+                list: true,
+                label: "Anyag lista",
+                description:
+                    "A termékhez tartozó anyagok listája. Ha nincs egy se hozzáadva, akkor a termékhez nem lesz anyag kiválasztási lehetőség a rendelési felületen.",
+                ui: {
+                    itemProps: (item) => {
+                        return { label: item?.material_path || "Új anyag" };
+                    },
+                },
+                fields: [
+                    {
+                        type: "reference",
+                        name: "material_path",
+                        label: "Anyag",
+                        description: "Válassz egy anyagot a listából.",
+                        collections: ["product_materials"],
+                        required: true,
+                    },
+                    {
+                        type: "number",
+                        name: "price",
+                        required: true,
+                        label: "Ár",
+                        description: "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni.",
+                    },
+                    {
+                        type: "string",
+                        name: "color_count",
+                        label: "Választható színek/minták száma",
+                        description: "Az alap 1. Ha egy másik mező az alapja, írd be a Mező ID-jét. A Mezó szám alapú legyen.",
+                    },
+                ],
             },
             {
                 type: "number",
-                name: "price",
-                required: true,
-                label: "Ár",
-                description: "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni.",
-            },
-            {
-                type: "string",
-                name: "color_count",
-                label: "Választható színek/minták száma",
-                description: "Az alap 1. Ha egy másik mező az alapja, írd be a Mező ID-jét. A Mezó szám alapú legyen.",
+                name: "material_required_count",
+                label: "Szükséges anyagok száma",
+                description:
+                    "Ennek a terméknek a rendeléséhez hány anyagra van szükség. Ez csak akkor lesz releváns, ha anyagokat adtál hozzá a termékhez. Az alap 1.",
             },
         ],
-    },
-    {
-        type: "number",
-        name: "material_required_count",
-        label: "Szükséges anyagok száma",
-        description:
-            "Ennek a terméknek a rendeléséhez hány anyagra van szükség. Ez csak akkor lesz releváns, ha anyagokat adtál hozzá a termékhez. Az alap 1.",
     },
     {
         type: "object",

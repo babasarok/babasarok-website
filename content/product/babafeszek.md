@@ -3,14 +3,15 @@ title: Babafészek
 product_id: babafeszek
 price: 15000
 materials:
-  - material_path: content/material/teddy.md
-  - material_path: content/material/pamutvaszon.md
-  - material_path: content/material/minky.md
-  - material_path: content/material/potty-nelkuli-minky.md
-  - material_path: content/material/wellsoft.md
-  - material_path: content/material/duplagez.md
-  - material_path: content/material/waffle.md
-material_required_count: 2
+  materials:
+    - material_path: content/material/teddy.md
+    - material_path: content/material/pamutvaszon.md
+    - material_path: content/material/minky.md
+    - material_path: content/material/potty-nelkuli-minky.md
+    - material_path: content/material/wellsoft.md
+    - material_path: content/material/duplagez.md
+    - material_path: content/material/waffle.md
+  material_required_count: 2
 fields:
   - name: meret
     price: 0
