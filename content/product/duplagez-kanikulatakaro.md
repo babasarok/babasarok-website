@@ -10,7 +10,7 @@ table:
   - title: 2 rétegű
     description: 6.000Ft
   - title: Duplagéz+Pamutvászon
-    description: 4.900Ft
+    description: 5.500Ft
 shortDescription: |-
   Duplagéz kánikulatakaró, a nyár slágere!
   - Két rétegben takaróként, egy rétegben pedig textilpelusként használható, sőt, sok baba imádja "nyunyókaként" is.
