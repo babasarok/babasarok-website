@@ -1,6 +1,8 @@
 ---
-title: Kánikulatakaró
 product_id: kanikula-takaro
+title: Kánikulatakaró
+hidden_in_product_list: true
+can_be_ordered: true
 price: 0
 fields:
   - name: fajta
@@ -10,7 +12,7 @@ fields:
     items:
       - value: ketretegu
         label: Kétrétegű
-        price: 5800
+        price: 6000
       - value: duplagez+pamutvaszon
         label: Duplagéz+Pamutvászon
         price: 4900
@@ -22,7 +24,5 @@ fields:
     label: Szín 2
     type: color
     allow_custom_value: true
-hidden_in_product_list: true
-can_be_ordered: true
-
 ---
+
