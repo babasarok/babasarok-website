@@ -1,6 +1,6 @@
 ---
-title: Duplagéz Kánikulatakaró
 product_id: kanikulatakaro-all
+title: Duplagéz Kánikulatakaró
 categories: A tökéletes megoldás a forró napokra
 date: 2025-05-01T12:07:16.000Z
 thumbnail: /Photo Collage Facebook Post.PNG
@@ -8,7 +8,7 @@ table:
   - title: 'Extra vékony, egyrétegű, akár textilpelusnak is'
     description: 3.000Ft
   - title: 2 rétegű
-    description: 5.800Ft
+    description: 6.000Ft
   - title: Duplagéz+Pamutvászon
     description: 4.900Ft
 shortDescription: |-
