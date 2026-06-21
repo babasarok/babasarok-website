@@ -74,6 +74,13 @@
                                               material: materials[material.material_path],
                                           })) ?? [])
                                     : [],
+                            banned_combinations:
+                                page.materials?.banned_combinations
+                                    ?.filter((x) => nonEmptyObject(x))
+                                    ?.map((combination) => ({
+                                        ...combination,
+                                        materials: combination.materials?.filter((y) => nonEmptyObject(y)) ?? [],
+                                    })) ?? [],
                         },
                         fields:
                             page.fields

@@ -1,5 +1,11 @@
 import { v4 } from "uuid";
-import type { Field, ProductMaterialValue, TinaProductResolved, TinaResolvedProductMaterial } from "./types.svelte";
+import type {
+    Field,
+    ProductMaterialValue,
+    TinaProductResolved,
+    TinaResolvedProductBannedCombinationItem,
+    TinaResolvedProductMaterial,
+} from "./types.svelte";
 import { ProductMaterial } from "./ProductMaterial.svelte";
 import type { Serialised } from "./typeUtils";
 
@@ -10,7 +16,8 @@ export interface IProduct extends Required<Omit<TinaProductResolved, "materials"
         materials: ProductMaterial[];
         values: Array<ProductMaterialValue | undefined>;
         material_required_count: number;
-    }
+        banned_combinations: TinaResolvedProductBannedCombinationItem[];
+    };
     fields: Field[];
 }
 
@@ -26,7 +33,8 @@ export class Product implements IProduct {
         materials: ProductMaterial[];
         values: Array<ProductMaterialValue | undefined>;
         material_required_count: number;
-    }
+        banned_combinations: TinaResolvedProductBannedCombinationItem[];
+    };
     private original_materials: TinaResolvedProductMaterial[];
     fields: Field[];
     icon: string | undefined;
@@ -48,6 +56,7 @@ export class Product implements IProduct {
             materials: item.materials?.materials?.map((m) => new ProductMaterial(m, { fields: this.fields })) ?? [],
             values: [],
             material_required_count: item.materials?.material_required_count ?? 1,
+            banned_combinations: item.materials?.banned_combinations ?? [],
         });
         this.material_values = $state([]);
         this.product_path = item.product_path;
@@ -65,6 +74,7 @@ export class Product implements IProduct {
             materials: {
                 materials: this.original_materials,
                 material_required_count: $state.snapshot(this.materials.material_required_count),
+                banned_combinations: $state.snapshot(this.materials.banned_combinations),
             },
             fields: $state.snapshot(this.fields),
             product_path: $state.snapshot(this.product_path),
@@ -84,6 +94,7 @@ export class Product implements IProduct {
                 materials: this.materials.materials.map((m) => m.serialise()),
                 values: $state.snapshot(this.materials.values),
                 material_required_count: $state.snapshot(this.materials.material_required_count),
+                banned_combinations: $state.snapshot(this.materials.banned_combinations),
             },
             fields: $state.snapshot(this.fields),
             product_path: $state.snapshot(this.product_path),

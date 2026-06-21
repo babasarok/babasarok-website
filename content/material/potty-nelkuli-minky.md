@@ -18,6 +18,5 @@ colors:
   - color_id: '#22'
     label: Világos mályva
     image: /IMG_4305.jpeg
-  - {}
 ---
 

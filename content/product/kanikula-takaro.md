@@ -10,5 +10,12 @@ materials:
     - material_path: content/material/waffle.md
     - material_path: content/material/pamutvaszon.md
   material_required_count: 2
+  banned_combinations:
+    - materials:
+        - material_path: content/material/pamutvaszon.md
+        - material_path: content/material/pamutvaszon.md
+    - materials:
+        - material_path: content/material/waffle.md
+        - material_path: content/material/waffle.md
 ---
 

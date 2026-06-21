@@ -184,6 +184,44 @@ export const PRODUCT: TinaField<false>[] = [
                 description:
                     "Ennek a terméknek a rendeléséhez hány anyagra van szükség. Ez csak akkor lesz releváns, ha anyagokat adtál hozzá a termékhez. Az alap 1.",
             },
+            {
+                type: "object",
+                name: "banned_combinations",
+                list: true,
+                label: "Tiltott anyag kombinációk",
+                description:
+                    "Olyan anyag kombinációk, amik nem rendelhetőek együtt. Ha nincs egy se hozzáadva, akkor a termékhez nem lesz anyag kombinációs korlátozás a rendelési felületen.",
+                ui: {
+                    itemProps: (item) => {
+                        return { label: item?.materials?.map((m: any) => m.material_path).join(", ") || "Új kombináció" };
+                    },
+                },
+                fields: [
+                    {
+                        type: "object",
+                        name: "materials",
+                        list: true,
+                        label: "Tiltott anyag kombináció",
+                        description:
+                            "Olyan anyag kombinációk, amik nem rendelhetőek együtt. Annyi anyagból állhat egy kombináció, amennyit a 'Szükséges anyagok száma' mezőben megadtál.",
+                        ui: {
+                            itemProps: (item) => {
+                                return { label: item?.material_path || "Új anyag" };
+                            },
+                        },
+                        fields: [
+                            {
+                                type: "reference",
+                                name: "material_path",
+                                label: "Anyag",
+                                description: "Válassz egy anyagot a listából.",
+                                collections: ["product_materials"],
+                                required: true,
+                            },
+                        ],
+                    },
+                ],
+            },
         ],
     },
     {

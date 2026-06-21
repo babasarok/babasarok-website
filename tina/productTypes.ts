@@ -80,9 +80,16 @@ const productMaterialValidator = z.object({
 
 export type TinaProductMaterial = z.infer<typeof productMaterialValidator>;
 
+const productMaterialBannedCombinationValidator = z.object({ material_path: z.string() });
+
+export type TinaProductMaterialBannedCombination = z.infer<typeof productMaterialBannedCombinationValidator>;
+
 const productMaterialsValidator = z.object({
     materials: z.array(productMaterialValidator.or(emptyObject)).optional(),
     material_required_count: z.number().optional(),
+    banned_combinations: z
+        .array(z.object({ materials: z.array(productMaterialBannedCombinationValidator.or(emptyObject)) }))
+        .optional(),
 });
 
 export type TinaProductMaterials = z.infer<typeof productMaterialsValidator>;

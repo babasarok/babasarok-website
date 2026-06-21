@@ -15,6 +15,80 @@
     }
 
     const { product, onChange, material_index = 0 }: Props = $props();
+
+    /**
+     * Returns true if selected materials satisfy required materials using count-aware matching.
+     *
+     * This treats material lists as multisets, not sets, so repeated entries are respected.
+     * Example: required [A, A] is only satisfied when selected contains at least two A values.
+     */
+    const hasRequiredCounts = (requiredMaterialIds: string[], selectedCounts: Map<string, number>) => {
+        const requiredCounts = new Map<string, number>();
+        for (const materialId of requiredMaterialIds) {
+            requiredCounts.set(materialId, (requiredCounts.get(materialId) ?? 0) + 1);
+        }
+
+        for (const [materialId, requiredCount] of requiredCounts) {
+            if ((selectedCounts.get(materialId) ?? 0) < requiredCount) {
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+    /**
+     * Material IDs that must be disabled in the current slot.
+     *
+     * Rules:
+     * - Banned combinations come from product.materials.banned_combinations.
+     * - Paths are resolved to material IDs before matching.
+     * - Only selections in other slots are considered.
+     * - A candidate is disabled only if choosing it now would complete a banned combination.
+     * - Single-item combinations are ignored here.
+     */
+    const bannedMaterials = $derived.by(() => {
+        const selectedInOtherSlots = (product.materials.values ?? [])
+            .filter((value, index) => index !== material_index && !!value?.material_id)
+            .map((value) => value?.material_id)
+            .filter((materialId): materialId is string => !!materialId);
+
+        const selectedCounts = new Map<string, number>();
+        for (const materialId of selectedInOtherSlots) {
+            selectedCounts.set(materialId, (selectedCounts.get(materialId) ?? 0) + 1);
+        }
+
+        const pathToId = new Map(
+            (product.materials.materials ?? []).map((material) => [
+                material.material_path,
+                material.material.material_id,
+            ])
+        );
+
+        const banned = new Set<string>();
+        for (const combination of product.materials?.banned_combinations ?? []) {
+            const combinationMaterialIds =
+                combination.materials
+                    ?.map((item) => pathToId.get(item.material_path))
+                    .filter((materialId): materialId is string => !!materialId) ?? [];
+
+            if (combinationMaterialIds.length <= 1) {
+                continue;
+            }
+
+            for (const [index, candidateId] of combinationMaterialIds.entries()) {
+                const requiredOtherIds = [
+                    ...combinationMaterialIds.slice(0, index),
+                    ...combinationMaterialIds.slice(index + 1),
+                ];
+                if (hasRequiredCounts(requiredOtherIds, selectedCounts)) {
+                    banned.add(candidateId);
+                }
+            }
+        }
+
+        return [...banned];
+    });
 </script>
 
 {#if product.materials && product.materials.materials.length > 0}
@@ -25,6 +99,7 @@
         <div class="flex gap-1 flex-wrap">
             {#each product.materials.materials as material}
                 {@const materialInfo = material.material}
+                {@const disabled = bannedMaterials?.includes(materialInfo?.material_id)}
                 {#if materialInfo}
                     {@const selected =
                         product.materials.values?.[material_index]?.material_id === materialInfo.material_id}
@@ -32,6 +107,7 @@
                         type="button"
                         class="flex items-center gap-0.5"
                         {selected}
+                        disabled={disabled && !selected}
                         onclick={() => {
                             const result = product;
                             result.materials.values = result.materials.values || [];
