@@ -7,8 +7,11 @@ price: 0
 materials:
   materials:
     - material_path: content/material/duplagez.md
+      price: 3000
     - material_path: content/material/waffle.md
+      price: 3000
     - material_path: content/material/pamutvaszon.md
+      price: 2500
   material_required_count: 2
   banned_combinations:
     - materials:
@@ -25,15 +28,15 @@ fields:
     items:
       - value: 70x100cm
         label: Gyerek
-        price: 6000
+        price: 0
         tooltip: 70x100cm
       - value: 100x140cm
         label: Ovis
-        price: 10000
+        price: 4000
         tooltip: 100x140cm
       - value: 140x200cm
         label: Felnőtt
-        price: 14000
+        price: 8000
         tooltip: 140x200cm
 ---
 
