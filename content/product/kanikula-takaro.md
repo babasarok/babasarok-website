@@ -15,7 +15,7 @@ fields:
         price: 6000
       - value: duplagez+pamutvaszon
         label: Duplagéz+Pamutvászon
-        price: 4900
+        price: 5.5
   - name: szin
     label: Szín 1
     type: color
