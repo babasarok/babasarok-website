@@ -109,7 +109,7 @@ export const PRODUCT: TinaField<false>[] = [
         type: "number",
         name: "price",
         label: "Alap Ár - Forintban",
-        required: true,
+        description: "Ha üres akkor 0.",
     },
     {
         type: "number",
@@ -165,15 +165,16 @@ export const PRODUCT: TinaField<false>[] = [
                     {
                         type: "number",
                         name: "price",
-                        required: true,
                         label: "Ár",
-                        description: "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni.",
+                        description:
+                            "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni. Ha nincs megadva akkor 0.",
                     },
                     {
                         type: "string",
                         name: "color_count",
                         label: "Választható színek/minták száma",
-                        description: "Az alap 1. Ha egy másik mező az alapja, írd be a Mező ID-jét. A Mezó szám alapú legyen.",
+                        description:
+                            "Az alap 1. Ha egy másik mező az alapja, írd be a Mező ID-jét. A Mezó szám alapú legyen.",
                     },
                 ],
             },
@@ -193,7 +194,9 @@ export const PRODUCT: TinaField<false>[] = [
                     "Olyan anyag kombinációk, amik nem rendelhetőek együtt. Ha nincs egy se hozzáadva, akkor a termékhez nem lesz anyag kombinációs korlátozás a rendelési felületen.",
                 ui: {
                     itemProps: (item) => {
-                        return { label: item?.materials?.map((m: any) => m.material_path).join(", ") || "Új kombináció" };
+                        return {
+                            label: item?.materials?.map((m: any) => m.material_path).join(", ") || "Új kombináció",
+                        };
                     },
                 },
                 fields: [

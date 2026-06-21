@@ -1,0 +1,16 @@
+{
+    "extends": "../tsconfig.json",
+    "compilerOptions": {
+        "lib": ["ES2024"],
+        "types": ["node"],
+        "moduleResolution": "NodeNext",
+        "module": "NodeNext",
+        "allowImportingTsExtensions": true,
+        "target": "ES2024",
+        "noEmit": true,
+        "rootDir": "../",
+        "allowJs": true,
+        "checkJs": true
+    },
+    "include": ["./**/*", "../tina/__generated__/*"]
+}

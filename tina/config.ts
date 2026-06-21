@@ -26,7 +26,6 @@ export default defineConfig({
     branch,
     clientId: process.env.TINA_CMS_CLIENT_ID!, // Get this from tina.io
     token: process.env.TINA_CMS_CLIENT_TOKEN!, // Get this from tina.io
-    client: { skip: true },
     build: {
         outputFolder: "admin",
         publicFolder: "static",
