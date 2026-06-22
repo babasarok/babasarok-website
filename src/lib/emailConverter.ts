@@ -102,7 +102,8 @@ export function generateProductData(product: Product) {
                 res.egyedi_szín = mv.custom_color;
                 return res;
             } else {
-                res.színek = mv?.colors.map(x => material?.material.colors?.find(c => c.color_id === x)?.label ?? x) ?? [];
+                res.színek =
+                    mv?.colors.map((x) => material?.material.colors?.find((c) => c.color_id === x)?.label ?? x) ?? [];
             }
 
             return res;

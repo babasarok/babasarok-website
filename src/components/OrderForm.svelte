@@ -205,7 +205,7 @@
                 result += `  Anyagok:\n`;
 
                 for (const material of p.anyagok ?? []) {
-                    result += `    - ${material.név} (${material.egyedi_szín ?? material.színek?.join(", ")})\n`;
+                    result += `    - ${material.név} (${material.egyedi_szín ? `Egyedi szín: ${material.egyedi_szín}` : material.színek?.join(", ")})\n`;
                 }
             }
 
