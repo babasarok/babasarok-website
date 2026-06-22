@@ -1,6 +1,4 @@
-import z, { optional } from "zod";
-
-const emptyObject = z.object({});
+import z from "zod";
 
 const optionValidator = z.object({
     value: z.string(),
@@ -25,7 +23,7 @@ const inputFieldValidator = baseFieldValidator.extend({
     type: z.literal("input"),
     placeholder: z.string().optional(),
     optional: z.boolean().optional(),
-    items: z.array(optionValidator.or(emptyObject)).optional(),
+    items: z.array(optionValidator).optional(),
 });
 
 export type TinaInputField = z.infer<typeof inputFieldValidator>;
@@ -35,7 +33,7 @@ const selectFieldValidator = baseFieldValidator.extend({
     multiple: z.boolean().optional(),
     placeholder: z.string().optional(),
     allow_custom_value: z.boolean().optional(),
-    items: z.array(optionValidator.or(emptyObject)).optional(),
+    items: z.array(optionValidator).optional(),
 });
 
 export type TinaSelectField = z.infer<typeof selectFieldValidator>;
@@ -43,7 +41,7 @@ export type TinaSelectField = z.infer<typeof selectFieldValidator>;
 const radioFieldValidator = baseFieldValidator.extend({
     type: z.literal("radio"),
     allow_custom_value: z.boolean().optional(),
-    items: z.array(optionValidator.or(emptyObject)).optional(),
+    items: z.array(optionValidator).optional(),
 });
 
 export type TinaRadioField = z.infer<typeof radioFieldValidator>;
@@ -51,7 +49,7 @@ export type TinaRadioField = z.infer<typeof radioFieldValidator>;
 const colorFieldValidator = baseFieldValidator.extend({
     type: z.literal("color"),
     allow_custom_value: z.boolean().optional(),
-    items: z.array(optionValidator.or(emptyObject)).optional(),
+    items: z.array(optionValidator).optional(),
 });
 
 export type TinaColorField = z.infer<typeof colorFieldValidator>;
@@ -85,10 +83,10 @@ const productMaterialBannedCombinationValidator = z.object({ material_path: z.st
 export type TinaProductMaterialBannedCombination = z.infer<typeof productMaterialBannedCombinationValidator>;
 
 const productMaterialsValidator = z.object({
-    materials: z.array(productMaterialValidator.or(emptyObject)).optional(),
+    materials: z.array(productMaterialValidator).optional(),
     material_required_count: z.number().optional(),
     banned_combinations: z
-        .array(z.object({ materials: z.array(productMaterialBannedCombinationValidator.or(emptyObject)) }))
+        .array(z.object({ materials: z.array(productMaterialBannedCombinationValidator) }))
         .optional(),
 });
 
@@ -102,8 +100,8 @@ export const productValidator = z.object({
     price: z.number().default(0),
     discount: z.number().optional(),
     discount_valid_until: z.coerce.date().optional(),
-    fields: z.array(fieldValidator.or(emptyObject)).optional(),
-    materials: productMaterialsValidator.or(emptyObject).optional(),
+    fields: z.array(fieldValidator).optional(),
+    materials: productMaterialsValidator.optional(),
 });
 
 export type TinaProduct = z.infer<typeof productValidator>;

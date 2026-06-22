@@ -10,7 +10,7 @@
     import Button from "./common/Button.svelte";
     import type { TinaDeliveryMethodResolved, TinaProductResolved, TinaResolvedMaterial } from "../lib/types.svelte";
     import z from "zod";
-    import { isItemValid, nonEmptyObject, validateItem } from "../lib/validation";
+    import { isItemValid, validateItem } from "../lib/validation";
     import { Product } from "../lib/Product.svelte";
     import { sanitizeItem } from "../lib/validation";
     import Masonry from "svelte-bricks";
@@ -39,7 +39,7 @@
             for (const page of obj.pages) {
                 result[page.path] = {
                     ...page,
-                    colors: page.colors?.filter((x) => nonEmptyObject(x)) ?? [],
+                    colors: page.colors ?? [],
                 };
             }
             return result;
@@ -63,58 +63,44 @@
                         materials: {
                             ...page.materials,
                             materials:
-                                page.materials &&
-                                page.materials?.materials &&
-                                nonEmptyObject(page.materials) &&
-                                nonEmptyObject(page.materials?.materials)
-                                    ? (page.materials?.materials
-                                          .filter((x) => nonEmptyObject(x))
-                                          .map((material) => ({
-                                              ...material,
-                                              material: materials[material.material_path],
-                                          })) ?? [])
+                                page.materials && page.materials?.materials
+                                    ? (page.materials?.materials.map((material) => ({
+                                          ...material,
+                                          material: materials[material.material_path],
+                                      })) ?? [])
                                     : [],
-                            banned_combinations:
-                                page.materials?.banned_combinations
-                                    ?.filter((x) => nonEmptyObject(x))
-                                    ?.map((combination) => ({
-                                        ...combination,
-                                        materials: combination.materials?.filter((y) => nonEmptyObject(y)) ?? [],
-                                    })) ?? [],
                         },
                         fields:
-                            page.fields
-                                ?.filter((x) => nonEmptyObject(x))
-                                .map((field) => {
-                                    switch (field.type) {
-                                        case "input":
-                                            return {
-                                                ...field,
-                                                type: "input",
-                                                items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
-                                            };
-                                        case "select":
-                                            return {
-                                                ...field,
-                                                type: "select",
-                                                items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
-                                            };
-                                        case "radio":
-                                            return {
-                                                ...field,
-                                                type: "radio",
-                                                items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
-                                            };
-                                        case "color":
-                                            return {
-                                                ...field,
-                                                type: "color",
-                                                items: field.items?.filter((x) => nonEmptyObject(x)) ?? [],
-                                            };
-                                        case "toggle":
-                                            return { ...field, type: "toggle" };
-                                    }
-                                }) ?? [],
+                            page.fields?.map((field) => {
+                                switch (field.type) {
+                                    case "input":
+                                        return {
+                                            ...field,
+                                            type: "input",
+                                            items: field.items ?? [],
+                                        };
+                                    case "select":
+                                        return {
+                                            ...field,
+                                            type: "select",
+                                            items: field.items ?? [],
+                                        };
+                                    case "radio":
+                                        return {
+                                            ...field,
+                                            type: "radio",
+                                            items: field.items ?? [],
+                                        };
+                                    case "color":
+                                        return {
+                                            ...field,
+                                            type: "color",
+                                            items: field.items ?? [],
+                                        };
+                                    case "toggle":
+                                        return { ...field, type: "toggle" };
+                                }
+                            }) ?? [],
                     };
                 }
                 return result;

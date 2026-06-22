@@ -33,8 +33,8 @@ export interface TinaResolvedProductBannedCombinationItem {
 }
 
 export interface TinaResolvedProductMaterials extends TinaProductMaterials {
-    materials?: TinaResolvedProductMaterial[];
-    banned_combinations?: TinaResolvedProductBannedCombinationItem[];
+    materials?: TinaResolvedProductMaterial[] | undefined;
+    banned_combinations?: TinaResolvedProductBannedCombinationItem[] | undefined;
 }
 
 export type TinaResolvedInputField = TinaInputField & {
@@ -104,7 +104,7 @@ export interface ProductMaterialValue {
 }
 
 export interface TinaProductResolved extends TinaProduct {
-    materials?: TinaResolvedProductMaterials;
+    materials?: TinaResolvedProductMaterials | undefined;
     fields?: TinaResolvedProductField[];
     product_path: string;
 }
