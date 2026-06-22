@@ -60,7 +60,7 @@
                                         {{ $img := dict "RelPermalink" "" }}
                                         {{ $asset := resources.Get .image }}
                                         {{ if $asset }}
-                                            {{ $img = $asset.Fill "150x150 Center" }}
+                                            {{ $img = $asset.Fill "600x600 Center" }}
                                         {{ end }}
                                         <img
                                             src="{{ $img.RelPermalink }}"

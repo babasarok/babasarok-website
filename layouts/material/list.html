@@ -55,9 +55,9 @@
                                 <div class="product-item-content">
                                     <span>{{ .Params.categories }}</span>
                                     <h3 class="mb-0">
-                                        <a class="text-dark" href="{{ .Permalink }}">{{ .Params.label }}</a>
+                                        <a class="text-dark" href="{{ .RelPermalink }}">{{ .Params.label }}</a>
                                     </h3>
-                                    <a class="see-more-btn" href="{{ .Permalink }}">Részletek</a>
+                                    <a class="see-more-btn" href="{{ .RelPermalink }}">Részletek</a>
                                 </div>
                             </div>
                         {{ end }}
