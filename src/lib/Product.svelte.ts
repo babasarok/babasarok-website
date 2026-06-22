@@ -27,7 +27,6 @@ export class Product implements IProduct {
     product_id: string;
     title: string;
 
-    material_values: Array<ProductMaterialValue | undefined>;
     materials: {
         /** allowed materials to select */
         materials: ProductMaterial[];
@@ -58,7 +57,6 @@ export class Product implements IProduct {
             material_required_count: item.materials?.material_required_count ?? 1,
             banned_combinations: item.materials?.banned_combinations ?? [],
         });
-        this.material_values = $state([]);
         this.product_path = item.product_path;
         this.discount = $state(item.discount);
         this.discount_valid_until = $state(item.discount_valid_until);

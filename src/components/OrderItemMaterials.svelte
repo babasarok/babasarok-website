@@ -225,17 +225,17 @@
                 value={value.custom_color}
                 oninput={(e) => {
                     const result = product;
-                    if (!result.material_values?.[material_index]) {
+                    if (!result.materials.values?.[material_index]) {
                         return;
                     }
-                    result.material_values[material_index].custom_color = (e.target as HTMLInputElement).value;
+                    result.materials.values[material_index].custom_color = (e.target as HTMLInputElement).value;
                     onChange?.(result);
                 }} />
         {/if}
     {/if}
-    {#if product.material_values?.[material_index]?.error}
+    {#if product.materials.values?.[material_index]?.error}
         <p class="text-sm text-red-500">
-            {product.material_values[material_index].error}
+            {product.materials.values[material_index].error}
         </p>
     {/if}
 {/if}

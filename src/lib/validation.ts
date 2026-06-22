@@ -108,6 +108,7 @@ function updateMaterialWithErrors(value: ProductMaterialValue, material: Product
 
     if (value.colors.length < colorCount) {
         value.error = `${colorCount == 1 ? "" : colorCount} színt kell választani`;
+        return;
     }
 }
 

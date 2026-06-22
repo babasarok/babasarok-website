@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const scrollLinks = document.querySelectorAll(".scroll");
     scrollLinks.forEach((scrollLink) => {
         scrollLink.addEventListener("click", function (e) {
+            // @ts-expect-error hash might be nonexistent
             let elem = document.querySelector(this.hash);
             if (elem) {
                 e.preventDefault();
@@ -32,7 +33,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     new ScrollSnapper(
-        document.getElementsByClassName("service__slider")[0],
-        document.getElementsByClassName("service__indicator")[0]
+        document.getElementsByClassName("service__slider")[0] as HTMLElement,
+        document.getElementsByClassName("service__indicator")[0] as HTMLElement
     );
 });
