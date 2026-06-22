@@ -16,7 +16,7 @@ import type { TinaMaterial, TinaMaterialColor } from "../../tina/materialTypes";
 import type { TinaDeliveryMethod } from "../../tina/deliveryMethodTypes";
 
 export interface TinaResolvedMaterial extends TinaMaterial {
-    colors?: TinaMaterialColor[];
+    colors?: TinaMaterialColor[] | undefined;
 }
 
 export interface TinaResolvedProductMaterial extends TinaProductMaterial {
@@ -105,7 +105,7 @@ export interface ProductMaterialValue {
 
 export interface TinaProductResolved extends TinaProduct {
     materials?: TinaResolvedProductMaterials | undefined;
-    fields?: TinaResolvedProductField[];
+    fields?: TinaResolvedProductField[] | undefined;
     product_path: string;
 }
 

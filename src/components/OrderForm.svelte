@@ -37,10 +37,7 @@
         .transform((obj) => {
             const result: Record<string, TinaResolvedMaterial> = {};
             for (const page of obj.pages) {
-                result[page.path] = {
-                    ...page,
-                    colors: page.colors ?? [],
-                };
+                result[page.path] = page;
             }
             return result;
         });
