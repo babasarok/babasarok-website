@@ -9,7 +9,7 @@ materials:
     - material_path: content/material/duplagez.md
       price: 3000
     - material_path: content/material/waffle.md
-      price: 3000
+      price: 4000
     - material_path: content/material/pamutvaszon.md
       price: 2500
   material_required_count: 2
