@@ -9,6 +9,9 @@
  * queries it with `getCollection('product')`. Its schema only validates the
  * fields the site renders; product-configurator frontmatter (materials,
  * fields, table, pricing) is kept but untyped via `.passthrough()`.
+ *
+ * `blog` is a real Astro content collection: the landing blog preview queries
+ * it with `getCollection('blog')`. `_index.md` is excluded from the glob.
  */
 import { defineCollection, z } from "astro:content";
 import { glob } from "astro/loaders";
@@ -31,4 +34,20 @@ const product = defineCollection({
     .passthrough(),
 });
 
-export const collections = { config, product };
+const blog = defineCollection({
+  loader: glob({
+    pattern: "!(_index)*.md",
+    base: "src/content/blog",
+  }),
+  schema: z
+    .object({
+      title: z.string(),
+      date: z.coerce.date().optional(),
+      featureImage: z.string().optional(),
+      categories: z.string().optional(),
+      tags: z.union([z.array(z.string()), z.string()]).optional(),
+    })
+    .passthrough(),
+});
+
+export const collections = { config, product, blog };
