@@ -19,6 +19,11 @@ fields:
     price: 4
     label: Tornazsák
     type: input
+  - name: 'Vállfás zsák '
+    price: 4.5
+    label: Vállfás zsák
+    type: input
+  - {}
 ---
 
 | ![](/IMG_4454.png) | ![](/IMG_4455.png) | ![](/IMG_4348.jpeg) |
