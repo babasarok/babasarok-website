@@ -21,6 +21,48 @@ export const GlobalConfigCollection: Collection = {
       required: true,
     },
     {
+      type: "string",
+      name: "description",
+      label: "Oldal leírása (SEO)",
+    },
+    {
+      type: "string",
+      name: "ogLocale",
+      label: "OG Locale (pl. hu_HU)",
+    },
+    {
+      type: "string",
+      name: "themeColor",
+      label: "Böngésző chrome szín (hex)",
+    },
+    {
+      type: "string",
+      name: "googleAnalytics",
+      label: "Google Analytics azonosító (pl. G-XXXXXXXX)",
+    },
+    {
+      type: "object",
+      name: "mainMenu",
+      label: "Főmenü",
+      list: true,
+      fields: [
+        { type: "string", name: "name", label: "Név" },
+        { type: "string", name: "url", label: "URL" },
+        { type: "number", name: "weight", label: "Sorrend" },
+      ],
+    },
+    {
+      type: "object",
+      name: "sitemapMenu",
+      label: "Lábléc oldaltérkép",
+      list: true,
+      fields: [
+        { type: "string", name: "name", label: "Név" },
+        { type: "string", name: "url", label: "URL" },
+        { type: "number", name: "weight", label: "Sorrend" },
+      ],
+    },
+    {
       type: "object",
       name: "pagination",
       label: "Oldalankénti bejegyzések száma",
@@ -41,11 +83,6 @@ export const GlobalConfigCollection: Collection = {
       type: "string",
       name: "titleAddition",
       label: "Cím kiegészítés",
-    },
-    {
-      type: "string",
-      name: "description",
-      label: "Oldal leírása",
     },
     {
       type: "string",

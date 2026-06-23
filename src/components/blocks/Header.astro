@@ -1,0 +1,184 @@
+---
+import { Image } from "astro:assets";
+import { getConfig } from "../../lib/data";
+import { resolveImage } from "../../lib/assets";
+import Button from "../ui/Button.astro";
+
+const config = (await getConfig()).data?.config ?? null;
+const logo = resolveImage(config?.logo);
+const contactLink = config?.contactLink ? `/${config.contactLink}` : "/contact";
+
+const isHome = Astro.url.pathname === "/";
+
+const rawMenu = config?.mainMenu ?? [];
+const mainMenu = (rawMenu.filter((item): item is NonNullable<typeof item> => item !== null))
+	.sort((a, b) => (a.weight ?? 99) - (b.weight ?? 99));
+---
+
+<nav id="navbar" class="fixed top-0 left-0 z-50 w-full transition-all duration-300">
+	<div class="mx-auto w-full max-w-135 px-3.75 sm:max-w-180 md:max-w-240 lg:max-w-285">
+		<div class="flex flex-wrap items-center justify-between">
+			<a href="/" class="block shrink-0">
+				{
+					logo && (
+						<Image
+							src={logo}
+							alt="Babasarok logó"
+							width={200}
+							class="h-17.5 w-auto object-contain lg:w-4/5"
+						/>
+					)
+				}
+			</a>
+
+			<button
+				id="navbar-toggler"
+				type="button"
+				aria-label="Menü"
+				aria-controls="navbar-collapse"
+				aria-expanded="false"
+				class="flex cursor-pointer flex-col gap-1.25 border-0 bg-transparent p-0 lg:hidden"
+			>
+				<span class="toggler-bar"></span>
+				<span class="toggler-bar"></span>
+				<span class="toggler-bar"></span>
+			</button>
+
+			<div id="navbar-collapse" class="w-full">
+				<ul class="mx-auto my-0 flex flex-col items-center gap-2 py-4 lg:flex-row lg:py-0">
+					{
+						mainMenu.map((item) => (
+							<li>
+								<a
+									href={item.url ?? "/"}
+									class:list={[
+										"block p-2 text-center text-dark hover:text-primary",
+										isHome && item.url?.includes("#") && "scroll",
+									]}
+								>
+									{item.name}
+								</a>
+							</li>
+						))
+					}
+				</ul>
+				<div class="flex justify-center pb-4 lg:pb-0">
+					<Button href={contactLink} variant="primary">Rendelés</Button>
+				</div>
+			</div>
+		</div>
+	</div>
+</nav>
+
+<style>
+	/* ── Base: always white ───────────────────────────────────────── */
+	#navbar {
+		background: #fff;
+		padding: 20px 0; /* desktop default */
+	}
+
+	/* ── Mobile: card look (rounded, side-padded) ────────────────── */
+	@media (max-width: 1023px) {
+		#navbar {
+			padding: 15px 20px;
+			border-radius: 5px;
+		}
+		/* When scrolled: floating card with gap from edges + shadow */
+		#navbar.scrolled {
+			margin: 10px 10px 0;
+			box-shadow: 0 10px 20px 0 rgba(50, 65, 141, 0.1);
+		}
+	}
+
+	/* ── Desktop scrolled: shadow only ───────────────────────────── */
+	@media (min-width: 1024px) {
+		#navbar.scrolled {
+			padding-top: 10px;
+			padding-bottom: 10px;
+			box-shadow: 0 10px 20px 0 rgba(50, 65, 141, 0.1);
+		}
+	}
+
+	/* ── Hamburger bars ──────────────────────────────────────────── */
+	.toggler-bar {
+		display: block;
+		height: 2px;
+		width: 25px;
+		background: var(--color-primary);
+		transition: all 0.2s;
+	}
+	#navbar-toggler[aria-expanded="true"] .toggler-bar:nth-child(1) {
+		transform: rotate(45deg);
+		transform-origin: 10% 10%;
+	}
+	#navbar-toggler[aria-expanded="true"] .toggler-bar:nth-child(2) {
+		opacity: 0;
+	}
+	#navbar-toggler[aria-expanded="true"] .toggler-bar:nth-child(3) {
+		transform: rotate(-45deg);
+		transform-origin: 10% 90%;
+	}
+
+	/* ── Mobile collapse animation ───────────────────────────────── */
+	#navbar-collapse {
+		max-height: 0;
+		overflow: hidden;
+		transition: max-height 0.3s ease-in-out;
+	}
+	/* Desktop: always visible, flex layout */
+	@media (min-width: 1024px) {
+		#navbar-collapse {
+			/* stylelint-disable-next-line declaration-no-important */
+			max-height: none !important;
+			overflow: visible;
+			display: flex;
+			flex: 1;
+			align-items: center;
+			justify-content: space-between;
+		}
+	}
+</style>
+
+<script>
+	const navbar = document.getElementById("navbar");
+	const toggler = document.getElementById("navbar-toggler");
+	const collapse = document.getElementById("navbar-collapse");
+
+	// ── Scroll behaviour ───────────────────────────────────────────
+	function reactToScroll() {
+		if (!navbar) return;
+		navbar.classList.toggle(
+			"scrolled",
+			document.documentElement.scrollTop > 200,
+		);
+	}
+	window.addEventListener("scroll", reactToScroll, { passive: true });
+	reactToScroll();
+
+	// ── Mobile menu toggle with animation ─────────────────────────
+	toggler?.addEventListener("click", () => {
+		if (!collapse || !toggler) return;
+		const isOpen = collapse.style.maxHeight !== "" && collapse.style.maxHeight !== "0px";
+		if (isOpen) {
+			collapse.style.maxHeight = "0";
+			toggler.setAttribute("aria-expanded", "false");
+		} else {
+			collapse.style.maxHeight = collapse.scrollHeight + "px";
+			toggler.setAttribute("aria-expanded", "true");
+		}
+	});
+
+	// ── Smooth scroll for in-page anchors (home page) ─────────────
+	document.querySelectorAll<HTMLAnchorElement>("a.scroll").forEach((link) => {
+		link.addEventListener("click", (e) => {
+			if (!link.hash) return;
+			const target = document.querySelector<HTMLElement>(link.hash);
+			if (!target) return;
+			e.preventDefault();
+			window.scrollTo({ top: target.offsetTop, behavior: "smooth" });
+			// Close mobile menu after navigation
+			if (collapse) collapse.style.maxHeight = "0";
+			toggler?.setAttribute("aria-expanded", "false");
+		});
+	});
+</script>

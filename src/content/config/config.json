@@ -1,5 +1,23 @@
 {
   "title": "Babasarok",
+  "description": "Egyedi, kézzel készített babakelengye",
+  "ogLocale": "hu_HU",
+  "themeColor": "#F1D3B2",
+  "googleAnalytics": "",
+  "blogPageURL": "blog",
+  "mainMenu": [
+    { "name": "Főoldal", "url": "/", "weight": 1 },
+    { "name": "Rólunk", "url": "/#about", "weight": 4 },
+    { "name": "Termékek", "url": "/product/", "weight": 5 },
+    { "name": "Referenciamunkák", "url": "/#blog", "weight": 7 },
+    { "name": "Anyagok", "url": "/material/", "weight": 8 }
+  ],
+  "sitemapMenu": [
+    { "name": "Főoldal", "url": "/", "weight": 1 },
+    { "name": "Kapcsolat", "url": "/contact", "weight": 2 },
+    { "name": "Termékek", "url": "/product", "weight": 3 },
+    { "name": "Referenciamunkák", "url": "/blog", "weight": 4 }
+  ],
   "footerContact": {
     "topTitle": "Kapcsolat",
     "title": "Rendelj most!",

@@ -6,9 +6,9 @@ const config = (await getConfig()).data?.config ?? null;
 ---
 
 <Base
-	title={config.titleSeparator
+	title={config?.titleSeparator
 		? `${config.title} ${config.titleSeparator} ${config.titleAddition}`
-		: config.title ?? ""}
-	description={config.description}
+		: config?.title ?? "Babasarok"}
+	description={config?.description}
 >
 </Base>
