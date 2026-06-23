@@ -15,8 +15,8 @@ const mainMenu = (rawMenu.filter((item): item is NonNullable<typeof item> => ite
 	.sort((a, b) => (a.weight ?? 99) - (b.weight ?? 99));
 ---
 
-<nav id="navbar" class="fixed top-0 left-0 z-50 w-full transition-all duration-300">
-	<div class="mx-auto w-full max-w-135 px-3.75 sm:max-w-180 md:max-w-240 lg:max-w-285">
+<nav id="navbar" class="fixed top-0 z-50">
+	<div class="container">
 		<div class="flex flex-wrap items-center justify-between">
 			<a href="/" class="block shrink-0">
 				{
@@ -63,7 +63,7 @@ const mainMenu = (rawMenu.filter((item): item is NonNullable<typeof item> => ite
 					}
 				</ul>
 				<div class="flex justify-center pb-4 lg:pb-0">
-					<Button href={contactLink} variant="primary">Rendelés</Button>
+					<Button href={contactLink} size="lg" variant="primary">Rendelés</Button>
 				</div>
 			</div>
 		</div>
@@ -71,28 +71,46 @@ const mainMenu = (rawMenu.filter((item): item is NonNullable<typeof item> => ite
 </nav>
 
 <style>
-	/* ── Base: always white ───────────────────────────────────────── */
+	/* ── All screens: base positioning + transition ─────────────── */
 	#navbar {
-		background: #fff;
-		padding: 20px 0; /* desktop default */
+		left: 0;
+		right: 0;
+		background-color: #fff;
+		padding: 15px 20px;
+		border-radius: 5px;
+		/* Transition only the properties that actually change */
+		transition:
+			background-color 0.3s ease,
+			box-shadow 0.3s ease,
+			padding-top 0.3s ease,
+			padding-bottom 0.3s ease,
+			left 0.3s ease,
+			right 0.3s ease,
+			top 0.3s ease;
 	}
 
-	/* ── Mobile: card look (rounded, side-padded) ────────────────── */
+	/* ── Mobile scrolled: floating card, no overflow ─────────────── */
+	/* left/right with no explicit width = element fills the gap, fully animatable */
 	@media (max-width: 1023px) {
-		#navbar {
-			padding: 15px 20px;
-			border-radius: 5px;
-		}
-		/* When scrolled: floating card with gap from edges + shadow */
 		#navbar.scrolled {
-			margin: 10px 10px 0;
+			top: 10px;
+			left: 10px;
+			right: 10px;
 			box-shadow: 0 10px 20px 0 rgba(50, 65, 141, 0.1);
 		}
 	}
 
-	/* ── Desktop scrolled: shadow only ───────────────────────────── */
+	/* ── Desktop: transparent→white on scroll ────────────────────── */
+	/* rgba(255,255,255,0) keeps the colour channel white so the transition
+	   fades opacity only — no dark intermediate frames */
 	@media (min-width: 1024px) {
+		#navbar {
+			background-color: rgba(255, 255, 255, 0);
+			padding: 20px 0;
+			border-radius: 0;
+		}
 		#navbar.scrolled {
+			background-color: rgba(255, 255, 255, 1);
 			padding-top: 10px;
 			padding-bottom: 10px;
 			box-shadow: 0 10px 20px 0 rgba(50, 65, 141, 0.1);
