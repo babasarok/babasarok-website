@@ -8,6 +8,8 @@ table:
     description: 4.000Ft
   - title: Vállfás zsák
     description: 4.500Ft
+  - title: 'Ovizsák szettben '
+    description: 7.200Ft
 shortDescription: |-
   Tornazsák: 4.000Ft
   Vállfás zsák: 4.500Ft 
