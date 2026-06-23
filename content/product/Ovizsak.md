@@ -6,6 +6,8 @@ thumbnail: /IMG_4447.jpeg
 table:
   - title: Tornazsák
     description: 4.000Ft
+  - title: Vállfás zsák
+    description: 4.500Ft
 shortDescription: |-
   Tornazsák: 4.000Ft
   Vállfás zsák: 4.500Ft 
