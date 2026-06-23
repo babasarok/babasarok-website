@@ -23,7 +23,10 @@ fields:
     price: 4.5
     label: Vállfás zsák
     type: input
-  - {}
+  - name: 'Szettben '
+    price: 7.2
+    label: Szettben kérem
+    type: input
 ---
 
 | ![](/IMG_4454.png) | ![](/IMG_4455.png) | ![](/IMG_4348.jpeg) |
