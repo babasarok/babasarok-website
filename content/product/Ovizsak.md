@@ -16,3 +16,9 @@ shortDescription: |-
   Vállfás zsák mérete: kb. 40x60cm
 ---
 
+|   |   |   |
+| - | - | - |
+|   |   |   |
+
+|   |   |   |
+| - | - | - |
