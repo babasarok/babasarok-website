@@ -1,0 +1,78 @@
+---
+import { Image } from "astro:assets";
+import { getCollection } from "astro:content";
+import { Markdown } from "astro-md-2";
+import productSection from "../../content/sections/product.json";
+import { resolveImage } from "../../lib/assets";
+import Button from "../ui/Button.astro";
+
+const { enable, title, itemCount, buttonName, buttonTarget } = productSection;
+
+const products = (await getCollection("product"))
+  .sort(
+    (a, b) =>
+      (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0),
+  )
+  .slice(0, itemCount ?? 6);
+
+const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
+---
+
+{
+  enable && (
+    <section id="product" class="pt-25 pb-33.75 max-lg:pb-25">
+      <div class="container">
+        {/* Section title (centered) */}
+        <div class="mb-12 text-center lg:mx-auto lg:w-1/2">
+          <Markdown of={title} />
+        </div>
+
+        {/* Product grid */}
+        <div class="flex flex-wrap justify-center gap-8 max-sm:gap-y-12">
+          {products.map((product) => {
+            const thumb = resolveImage(product.data.thumbnail);
+            const href = `/product/${product.id}/`;
+            return (
+              <div class="group w-1/2 max-w-62.5 p-7.5 max-md:w-full max-md:p-0 max-sm:flex max-sm:flex-col">
+                {thumb && (
+                  <Image
+                    src={thumb}
+                    alt={product.data.title}
+                    widths={[300, 500]}
+                    sizes="(max-width: 575px) 50vw, 300px"
+                    class="w-full max-w-75 rounded-[20px] transition-all duration-300 group-hover:shadow-[0_20px_40px_0_rgba(0,0,0,0.12)] max-sm:mx-auto max-sm:max-w-[50vw]"
+                  />
+                )}
+                <div class="max-sm:flex max-sm:flex-col max-sm:items-center max-sm:text-center">
+                  {product.data.categories && (
+                    <span class="mt-7 mb-5 block text-lg leading-none text-body max-sm:mt-3.5 max-sm:mb-2.5 max-sm:text-[0.9rem]">
+                      {product.data.categories}
+                    </span>
+                  )}
+                  <h3 class="mb-0">
+                    <a class="text-dark hover:text-primary" href={href}>
+                      {product.data.title}
+                    </a>
+                  </h3>
+                  <a
+                    href={href}
+                    class="relative ml-7.5 inline-block origin-bottom scale-y-0 text-primary transition-all duration-300 before:absolute before:top-1/2 before:-left-7.5 before:h-0.5 before:w-5 before:-translate-y-1/2 before:bg-primary before:content-[''] group-hover:scale-y-100 max-md:scale-y-100"
+                  >
+                    Részletek
+                  </a>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* All-products button */}
+        <div class="mt-4 flex justify-center">
+          <Button href={buttonHref} variant="primary" size="lg">
+            {buttonName}
+          </Button>
+        </div>
+      </div>
+    </section>
+  )
+}

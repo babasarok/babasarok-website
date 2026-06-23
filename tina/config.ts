@@ -3,6 +3,7 @@ import { GlobalConfigCollection } from "./collections/global-config";
 import { HeroCollection } from "./collections/hero";
 import { ServiceCollection } from "./collections/service";
 import { AboutCollection } from "./collections/about";
+import { ProductSectionCollection } from "./collections/product-section";
 
 // Your hosting provider likely exposes this as an environment variable
 const branch =
@@ -39,6 +40,7 @@ export default defineConfig({
       HeroCollection,
       ServiceCollection,
       AboutCollection,
+      ProductSectionCollection,
     ],
   },
 });
