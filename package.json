@@ -25,6 +25,7 @@
     "@tinacms/astro": "^0.4.1",
     "astro": "^6.4.4",
     "astro-icon": "^1.1.5",
+    "astro-md-2": "^2.0.0",
     "clsx": "^2.1.1",
     "sharp": "^0.34.5",
     "tailwind-merge": "^3.6.0",

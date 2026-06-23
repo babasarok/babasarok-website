@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Hero from '../components/blocks/Hero.astro';
+import Service from '../components/blocks/Service.astro';
 import { getConfig } from '../lib/data';
 
 const config = (await getConfig()).data?.config ?? null;
@@ -13,4 +14,5 @@ const config = (await getConfig()).data?.config ?? null;
 	description={config?.description}
 >
 	<Hero />
+	<Service />
 </Base>
