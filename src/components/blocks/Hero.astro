@@ -28,7 +28,7 @@ const buttonHref = buttonURL ? `/${buttonURL}` : undefined;
       </div>
 
       {/* Floating decorative svg, desktop only */}
-      <div class="absolute bottom-5 -left-32.5 hidden animate-[move_top_5s_infinite_linear] lg:block">
+      <div class="absolute bottom-5 -left-32.5 hidden animate-float-y lg:block">
         <img src={figureSvg} alt="" />
       </div>
 
@@ -81,7 +81,7 @@ const buttonHref = buttonURL ? `/${buttonURL}` : undefined;
           <div class="w-full lg:w-1/2">
             <div class="relative ml-auto w-full rounded-[20px] lg:w-[90%]">
               {/* Floating svg behind the photo */}
-              <div class="absolute -top-14 left-1/2 -z-10 h-37.5 -translate-x-1/2 animate-[move_left_5s_infinite_linear]">
+              <div class="absolute -top-14 left-1/2 -z-10 h-37.5 animate-float-x">
                 <img src={figureSvg} alt="" class="h-full w-full" />
               </div>
               {heroImage && (
@@ -92,7 +92,7 @@ const buttonHref = buttonURL ? `/${buttonURL}` : undefined;
                   sizes="(max-width: 991px) 100vw, 45vw"
                   loading="eager"
                   fetchpriority="high"
-                  class="h-full w-full rounded-[30px] object-cover max-sm:max-h-[40vh] max-sm:object-contain"
+                  class="hero-photo h-full w-full object-cover max-sm:max-h-[40vh] max-sm:object-contain"
                 />
               )}
             </div>
@@ -114,5 +114,21 @@ const buttonHref = buttonURL ? `/${buttonURL}` : undefined;
     width: 20px;
     transform: translateX(-50%);
     background: #806548;
+  }
+
+  /* Rounded-corner clip ported verbatim from the old hero image. */
+  .hero-photo {
+    clip-path: shape(
+      from 30px 0%,
+      hline to calc(100% - 30px),
+      arc to 100% 30px of 30px 30px cw small,
+      vline to calc(100% - 30px),
+      arc to calc(100% - 30px) 100% of 30px 30px cw small,
+      line to 30px calc(100% - 30px),
+      arc to 0% calc(100% - 60px) of 30px 30px cw small,
+      vline to 30px,
+      arc to 30px 0% of 30px 30px cw small,
+      close
+    );
   }
 </style>

@@ -53,11 +53,18 @@
   --breakpoint-lg: 62rem;
   --breakpoint-xl: 75rem;
   --breakpoint-2xl: 87.5rem;
+
+  /* Decorative float animations (ported from the old SCSS, reused across
+     hero/service/about/etc.). Registered as tokens so `animate-float-y` /
+     `animate-float-x` utilities work — arbitrary `animate-[...]` would mangle
+     the underscored keyframe names into spaces. */
+  --animate-float-y: float-y 5s infinite linear;
+  --animate-float-x: float-x 9s infinite linear;
 }
 
 /* Shared decorative float animations (ported from the old SCSS, reused
    across hero/service/about/etc.). */
-@keyframes move_top {
+@keyframes float-y {
   0%,
   100% {
     transform: translateY(0);
@@ -67,8 +74,9 @@
   }
 }
 
-@keyframes move_left {
-  0% {
+@keyframes float-x {
+  0%,
+  100% {
     transform: translateX(-50%);
   }
   50% {
