@@ -55,6 +55,30 @@ export const PRODUCT: TinaField<false>[] = [
     },
     {
         type: "object",
+        name: "images",
+        list: true,
+        label: "Képek",
+        description: "A termékhez tartozó képek listája.",
+        ui: {
+            itemProps: (item) => {
+                return { label: item?.image || "Új kép" };
+            },
+        },
+        fields: [
+            {
+                type: "image",
+                name: "image",
+                label: "Kép",
+            },
+            {
+                type: "string",
+                name: "description",
+                label: "Leírás",
+            },
+        ],
+    },
+    {
+        type: "object",
         name: "table",
         label: "Ár táblázat",
         description: "Ártáblázat, ami megjelenik a termék saját oldalán.",

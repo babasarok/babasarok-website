@@ -11,27 +11,25 @@ table:
   - title: 'Ovizsák szettben '
     description: 7.200Ft
 shortDescription: |-
-  Bölcsőde és óvodakezdésre alkalmas, pakolható vállfás és tornazsák. 
+  Bölcsőde és óvodakezdésre alkalmas, pakolható vállfás és tornazsák.
   Tornazsák mérete: kb. 30x40cm
   Vállfás zsák mérete: kb. 40x60cm
 fields:
   - name: 'Tornazsák '
-    price: 4
+    price: 4000
     label: Tornazsák
     type: input
   - name: 'Vállfás zsák '
-    price: 4.5
+    price: 4500
     label: Vállfás zsák
     type: input
   - name: 'Szettben '
-    price: 7.2
+    price: 7200
     label: Szettben kérem
     type: input
+images:
+  - image: /IMG_4454.png
+    description: Ovizsák szett
+  - image: /IMG_4455.png
+  - image: /IMG_4348.jpeg
 ---
-
-| ![](/IMG_4454.png) | ![](/IMG_4455.png) | ![](/IMG_4348.jpeg) |
-| ------------------ | ------------------ | ------------------- |
-|                    |                    |                     |
-
-|   |   |   |
-| - | - | - |

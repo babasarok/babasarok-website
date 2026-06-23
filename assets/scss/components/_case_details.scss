@@ -100,8 +100,174 @@
 .case-details-thumb {
     border-radius: 30px;
     overflow: hidden;
+    width: 100%;
+
+    > img,
+    .case-details-carousel {
+        height: 500px;
+
+        @include mobile {
+            max-width: 70%;
+        }
+    }
+
+    .case-details-carousel {
+        position: relative;
+
+        .case-details-carousel-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .case-details-carousel-viewport {
+            overflow: hidden;
+        }
+
+        .case-details-carousel-track {
+            display: flex;
+            transition: transform 0.45s ease;
+            will-change: transform;
+            align-items: flex-start;
+        }
+
+        .case-details-carousel-slide {
+            min-width: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            img {
+                display: block;
+                max-width: 100%;
+                height: 500px;
+                width: auto;
+                border-radius: 20px;
+            }
+
+            figcaption {
+                font-size: 0.95rem;
+                margin-top: 12px;
+                color: $body-color;
+            }
+        }
+
+        .case-details-carousel-captions {
+            margin-top: 12px;
+
+            .case-details-carousel-caption {
+                display: none;
+                font-size: 0.95rem;
+                color: $body-color;
+                margin: 0;
+            }
+        }
+
+        .case-details-carousel-nav {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 16px;
+            position: relative;
+            z-index: 3;
+
+            label {
+                display: block;
+                width: 11px;
+                height: 11px;
+                border-radius: 50%;
+                background-color: rgba($secondary, 0.35);
+                cursor: pointer;
+                transition:
+                    transform 0.3s ease,
+                    background-color 0.3s ease;
+            }
+        }
+
+        .case-details-carousel-arrows {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+
+            .case-details-carousel-arrows-set {
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.25s ease;
+                height: 100%;
+            }
+
+            .case-details-carousel-arrow {
+                position: absolute;
+                top: 50%;
+                width: 42px;
+                height: 42px;
+                border-radius: 50%;
+                background-color: rgba($white, 0.88);
+                cursor: pointer;
+                display: block;
+                transition:
+                    transform 0.2s ease,
+                    background-color 0.2s ease;
+                transform: translateY(-50%);
+
+                &::before {
+                    content: "";
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 10px;
+                    height: 10px;
+                    border-right: 2px solid $secondary;
+                    border-bottom: 2px solid $secondary;
+                }
+
+                &:hover {
+                    background-color: $white;
+                    transform: translateY(-50%) scale(1.05);
+                }
+
+                &:active {
+                    transform: translateY(-50%) scale(0.97);
+                }
+            }
+
+            .case-details-carousel-arrow-prev {
+                left: 16px;
+
+                &::before {
+                    transform: translate(-38%, -50%) rotate(135deg);
+                }
+            }
+
+            .case-details-carousel-arrow-next {
+                right: 16px;
+
+                &::before {
+                    transform: translate(-62%, -50%) rotate(-45deg);
+                }
+            }
+
+            @include mobile {
+                .case-details-carousel-arrow {
+                    width: 36px;
+                    height: 36px;
+                }
+
+                .case-details-carousel-arrow-prev {
+                    left: 10px;
+                }
+
+                .case-details-carousel-arrow-next {
+                    right: 10px;
+                }
+            }
+        }
+    }
+
     img {
-        max-width: 500px;
+        min-height: 500px;
         border-radius: 20px;
 
         @include mobile {

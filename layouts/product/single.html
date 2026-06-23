@@ -37,10 +37,112 @@
                         </div>
                         <p>{{ .Params.shortDescription }}</p>
                         <div class="case-details-thumb d-flex flex-column align-items-center mb-5">
+                            {{ $page := . }}
+                            {{ $carouselImages := slice }}
+
                             {{ if (isset .Params "thumbnail") }}
-                                {{ $asset := resources.Get .Params.thumbnail }}
-                                {{ $img := $asset.Resize "1000x" }}
-                                <img src="{{ $img.RelPermalink }}" alt="case-details" />
+                                {{ with resources.Get .Params.thumbnail }}
+                                    {{ $img := .Resize "1000x" }}
+                                    {{ $carouselImages = $carouselImages | append (dict "src" $img.RelPermalink "alt" $page.Title) }}
+                                {{ else }}
+                                    {{ $carouselImages = $carouselImages | append (dict "src" (.Params.thumbnail | relURL) "alt" $page.Title) }}
+                                {{ end }}
+                            {{ end }}
+
+                            {{ if (isset .Params "images") }}
+                                {{ range .Params.images }}
+                                    {{ $entry := . }}
+                                    {{ with $entry.image }}
+                                        {{ with resources.Get . }}
+                                            {{ $img := .Resize "1000x" }}
+                                            {{ $carouselImages = $carouselImages | append (dict "src" $img.RelPermalink "alt" $page.Title "description" $entry.description) }}
+                                        {{ else }}
+                                            {{ $carouselImages = $carouselImages | append (dict "src" (. | relURL) "alt" $page.Title "description" $entry.description) }}
+                                        {{ end }}
+                                    {{ end }}
+                                {{ end }}
+                            {{ end }}
+
+                            {{ if gt (len $carouselImages) 0 }}
+                                {{ $carouselId := printf "case-details-carousel-%s" .File.BaseFileName }}
+                                <div id="{{ $carouselId }}" class="case-details-carousel">
+                                    {{ range $index, $_ := $carouselImages }}
+                                        {{ $inputId := printf "%s-input-%d" $carouselId $index }}
+                                        <input
+                                            class="case-details-carousel-input"
+                                            type="radio"
+                                            name="{{ $carouselId }}-selector"
+                                            id="{{ $inputId }}"
+                                            {{ if eq $index 0 }}checked{{ end }} />
+                                    {{ end }}
+                                    <div class="case-details-carousel-viewport">
+                                        <div class="case-details-carousel-track">
+                                            {{ range $carouselImages }}
+                                                <div class="case-details-carousel-slide">
+                                                    <img src="{{ .src }}" alt="{{ .alt }}" />
+                                                </div>
+                                            {{ end }}
+                                        </div>
+                                    </div>
+                                    {{ $hasCaptions := false }}
+                                    {{ range $carouselImages }}
+                                        {{ with .description }}{{ $hasCaptions = true }}{{ end }}
+                                    {{ end }}
+                                    {{ if $hasCaptions }}
+                                        <div class="case-details-carousel-captions">
+                                            {{ range $index, $img := $carouselImages }}
+                                                <p
+                                                    class="case-details-carousel-caption case-details-carousel-caption-{{ $index }}">
+                                                    {{ $img.description }}
+                                                </p>
+                                            {{ end }}
+                                        </div>
+                                    {{ end }}
+                                    {{ if gt (len $carouselImages) 1 }}
+                                        <div class="case-details-carousel-arrows" aria-hidden="true">
+                                            {{ $lastIndex := sub (len $carouselImages) 1 }}
+                                            {{ range $index, $_ := $carouselImages }}
+                                                {{ $prevIndex := cond (eq $index 0) $lastIndex (sub $index 1) }}
+                                                {{ $nextIndex := cond (eq $index $lastIndex) 0 (add $index 1) }}
+                                                <div
+                                                    class="case-details-carousel-arrows-set case-details-carousel-arrows-set-{{ $index }}">
+                                                    <label
+                                                        class="case-details-carousel-arrow case-details-carousel-arrow-prev"
+                                                        for="{{ $carouselId }}-input-{{ $prevIndex }}"
+                                                        aria-label="Előző kép"></label>
+                                                    <label
+                                                        class="case-details-carousel-arrow case-details-carousel-arrow-next"
+                                                        for="{{ $carouselId }}-input-{{ $nextIndex }}"
+                                                        aria-label="Következő kép"></label>
+                                                </div>
+                                            {{ end }}
+                                        </div>
+                                    {{ end }}
+                                </div>
+                                {{ if gt (len $carouselImages) 1 }}
+                                    <style>
+                                        {{ range $index, $_ := $carouselImages }}
+                                            #{{ $carouselId }}-input-{{ $index }}:checked
+                                                ~ .case-details-carousel-viewport
+                                                .case-details-carousel-track {
+                                                transform: translateX(-{{ mul $index 100 }}%);
+                                            }
+
+                                            #{{ $carouselId }}-input-{{ $index }}:checked
+                                                ~ .case-details-carousel-arrows
+                                                .case-details-carousel-arrows-set-{{ $index }} {
+                                                opacity: 1;
+                                                pointer-events: auto;
+                                            }
+
+                                            #{{ $carouselId }}-input-{{ $index }}:checked
+                                                ~ .case-details-carousel-captions
+                                                .case-details-carousel-caption-{{ $index }} {
+                                                display: block;
+                                            }
+                                        {{ end }}
+                                    </style>
+                                {{ end }}
                             {{ end }}
                         </div>
                         {{ if (isset .Params "table") }}
