@@ -48,14 +48,13 @@ export const REPORTS = r("scripts", "migrate", ".reports");
  */
 export const ASSET_PUBLIC_PREFIX = "/assets";
 
-/** Landing-page sections in render order (old/layouts/index.html). */
+/** Landing-page sections in render order (old/layouts/index.html).
+ *  `resume` and `testimonial` are intentionally dropped — unused on the new site. */
 export const SECTIONS = [
   "hero",
   "service",
-  "resume",
   "about",
   "product",
-  "testimonial",
   "blog",
 ] as const;
 
@@ -65,10 +64,8 @@ export type SectionName = (typeof SECTIONS)[number];
 export const SECTION_DATA_FILE: Record<SectionName, string> = {
   hero: "hero.yml",
   service: "serviceSection.yml",
-  resume: "resumeSection.yml",
   about: "aboutSection.yml",
   product: "productSection.yml",
-  testimonial: "testimonialSection.yml",
   blog: "blogSection.yml",
 };
 
