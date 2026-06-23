@@ -53,6 +53,9 @@ node_modules/
 # Astro
 .astro
 
+# Migration script reports (regenerated on demand)
+scripts/migrate/.reports
+
 # TODO: After scaffolding from this template, DELETE the block below so your
 # chosen lockfile (we recommend pnpm-lock.yaml) is committed. See README → "Commit your lockfile".
 # Package Manager Lock Files
