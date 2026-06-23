@@ -4,6 +4,7 @@ import { Content, frontmatter } from "../../content/sections/hero.md";
 import { resolveImage } from "../../lib/assets";
 import figureSvg from "../../assets/images/hero/figure-svg.svg?url";
 import Button from "../ui/Button.astro";
+import TopTitle from "../ui/TopTitle.astro";
 
 const { enable, topTitle, buttonName, buttonURL, image } = frontmatter;
 const heroImage = resolveImage(image);
@@ -65,9 +66,9 @@ const buttonHref = buttonURL ? `/${buttonURL}` : undefined;
               </div>
 
               <div class="title-box mb-2 sm:mb-12">
-                <span class="top-title relative mb-5 ml-7.5 inline-block text-dark sm:text-xl lg:block lg:text-2xl">
+                <TopTitle class="mb-5 inline-block text-dark sm:text-xl lg:block lg:text-2xl">
                   {topTitle}
-                </span>
+                </TopTitle>
                 <Content />
               </div>
 

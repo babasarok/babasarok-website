@@ -4,6 +4,7 @@ import { Markdown } from "astro-md-2";
 import service from "../../content/sections/service.json";
 import { resolveImage } from "../../lib/assets";
 import patternSvg from "../../assets/images/service/background-pattern.svg?url";
+import TopTitle from "../ui/TopTitle.astro";
 
 const { enable, topTitle, title, service: items } = service;
 ---
@@ -55,9 +56,7 @@ const { enable, topTitle, title, service: items } = service;
       <div class="container">
         <div class="lg:w-1/2">
           <div class="mb-12">
-            <span class="top-title ml-7.5 block text-dark sm:text-xl">
-              {topTitle}
-            </span>
+            <TopTitle class="block text-dark sm:text-xl">{topTitle}</TopTitle>
             <Markdown of={title} />
           </div>
         </div>
@@ -168,7 +167,7 @@ const { enable, topTitle, title, service: items } = service;
     padding: 0;
     border: 0;
     border-radius: 50%;
-    background: #c2c8cc;
+    background: var(--color-indicator);
     text-indent: -9999px;
     cursor: pointer;
     transition: all 0.3s ease;
