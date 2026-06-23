@@ -40,6 +40,7 @@ export default defineConfig({
       provider: fontProviders.google(),
       name: "Yeseva One",
       weights: ["400", "500"],
+      subsets: ["latin", "latin-ext"],
     },
   ],
   vite: {
