@@ -11,9 +11,8 @@ table:
   - title: 'Ovizsák szettben '
     description: 7.200Ft
 shortDescription: |-
-  Tornazsák: 4.000Ft
-  Vállfás zsák: 4.500Ft 
-
-  Szettben, együtt: 7.200Ft
+  Bölcsőde és óvodakezdésre alkalmas, pakolható vállfás és tornazsák. 
+  Tornazsák mérete: kb. 30x40cm
+  Vállfás zsák mérete: kb. 40x60cm
 ---
 
