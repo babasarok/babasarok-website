@@ -107,7 +107,8 @@
         height: 500px;
 
         @include mobile {
-            max-width: 70%;
+            max-width: 90%;
+            height: 300px;
         }
     }
 
@@ -144,6 +145,11 @@
                 height: 500px;
                 width: auto;
                 border-radius: 20px;
+                object-fit: cover;
+
+                @include mobile {
+                    height: 300px;
+                }
             }
 
             figcaption {
@@ -272,6 +278,7 @@
 
         @include mobile {
             max-width: 70%;
+            min-height: 300px;
         }
     }
 }
