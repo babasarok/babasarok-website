@@ -1,5 +1,6 @@
 ---
 import { getConfig } from "../../lib/data";
+import Button from "../ui/Button.astro";
 
 
 const config = (await getConfig()).data?.config ?? null;
@@ -46,9 +47,9 @@ const config = (await getConfig()).data?.config ?? null;
                         <span class="toptitle text-lg lg:block leading-none mb-5 ml-10 relative inline-block">{ config.footerContact?.topTitle }</span>
                         <h2 class="mb-0 text-3xl lg:text-5xl font-heading">{ config.footerContact?.title }</h2>
                     </div>
-                        <a class="inline-block align-middle text-center select-none border font-normal whitespace-no-wrap py-2 px-4 rounded text-base leading-normal no-underline text-grey-lightest-lightest bg-grey-lightest hover:bg-grey-lightest-light btn-zoom" href={ config.contactLink }>
+                        <Button variant="secondary" size="lg" href={ config.contactLink ?? undefined }>
                             { config.footerContact?.button }
-                </a>
+                        </Button>
                     </div>
                 </div>
             </div>
