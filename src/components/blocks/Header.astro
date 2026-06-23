@@ -25,7 +25,7 @@ const mainMenu = (rawMenu.filter((item): item is NonNullable<typeof item> => ite
 							src={logo}
 							alt="Babasarok logó"
 							width={200}
-							class="h-17.5 w-auto object-contain lg:w-4/5"
+							class="h-17.5 w-auto object-contain lg:w-25 shrink-0"
 						/>
 					)
 				}
@@ -52,7 +52,7 @@ const mainMenu = (rawMenu.filter((item): item is NonNullable<typeof item> => ite
 								<a
 									href={item.url ?? "/"}
 									class:list={[
-										"block p-2 text-center text-dark hover:text-primary",
+										"block p-2 text-center text-dark hover:text-primary transition-all",
 										isHome && item.url?.includes("#") && "scroll",
 									]}
 								>

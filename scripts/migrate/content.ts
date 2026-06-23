@@ -15,6 +15,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parse as parseYaml } from "yaml";
+import matter from "gray-matter";
 import {
   NEW,
   OLD,
@@ -27,6 +28,7 @@ import {
   log,
   rewriteAssetRef,
   writeJsonIfChanged,
+  writeTextIfChanged,
 } from "./lib.ts";
 
 interface ContentStats {
@@ -35,6 +37,15 @@ interface ContentStats {
   missingFiles: string[];
   unresolved: Set<string>;
 }
+
+/**
+ * Sections whose data carries a markdown body. The named field is split
+ * out as the markdown body of a `.md` file (the rest becomes frontmatter),
+ * so Astro can import it directly and Tina edits it as `isBody` rich-text.
+ */
+const SECTION_BODY_FIELD: Partial<Record<SectionName, string>> = {
+  hero: "content",
+};
 
 /**
  * Deep-clone `value`, rewriting any asset reference found inside strings to
@@ -69,6 +80,28 @@ function migrateSection(section: SectionName, stats: ContentStats): void {
   }
   const parsed = parseYaml(fs.readFileSync(src, "utf8"));
   const data = rewriteAssets(parsed, stats.unresolved);
+  const bodyField = SECTION_BODY_FIELD[section];
+
+  if (
+    bodyField &&
+    data &&
+    typeof data === "object" &&
+    typeof (data as Record<string, unknown>)[bodyField] === "string"
+  ) {
+    // Split the body field out into the markdown body; rest is frontmatter.
+    const { [bodyField]: body, ...frontmatter } = data as Record<
+      string,
+      unknown
+    >;
+    const dest = path.join(NEW.sections, `${section}.md`);
+    const text = matter.stringify(`${body as string}\n`, frontmatter);
+    if (writeTextIfChanged(dest, text)) {
+      stats.written++;
+      log.dim(`${section} -> src/content/sections/${section}.md`);
+    } else stats.unchanged++;
+    return;
+  }
+
   const dest = path.join(NEW.sections, `${section}.json`);
   if (writeJsonIfChanged(dest, data)) {
     stats.written++;

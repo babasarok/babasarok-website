@@ -21,6 +21,8 @@ export const OLD = {
   root: r("old"),
   assets: r("old", "assets"),
   images: r("old", "assets", "images"),
+  /** Decorative imagery Hugo served as static files (template `images/...` refs). */
+  staticImages: r("old", "static", "images"),
   scss: r("old", "assets", "scss"),
   data: r("old", "data"),
   content: r("old", "content"),

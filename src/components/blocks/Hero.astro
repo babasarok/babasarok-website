@@ -1,0 +1,118 @@
+---
+import { Image } from "astro:assets";
+import { Content, frontmatter } from "../../content/sections/hero.md";
+import { resolveImage } from "../../lib/assets";
+import figureSvg from "../../assets/images/hero/figure-svg.svg?url";
+import Button from "../ui/Button.astro";
+
+const { enable, topTitle, buttonName, buttonURL, image } = frontmatter;
+const heroImage = resolveImage(image);
+const buttonHref = buttonURL ? `/${buttonURL}` : undefined;
+---
+
+{
+  enable && (
+    <section
+      id="home"
+      class="relative flex items-center justify-center overflow-hidden pt-37.5 pb-7.5 lg:py-50"
+    >
+      {/* Light background shape */}
+      <div class="absolute top-0 left-0 -z-10 w-[65%]">
+        <svg viewBox="0 0 1437 1180" class="h-full w-full">
+          <path
+            class="fill-bg-light"
+            d="M0 0h1377l60 1010a120 120 0 01-120 120L0 1180z"
+            data-name="Path 1350"
+          />
+        </svg>
+      </div>
+
+      {/* Floating decorative svg, desktop only */}
+      <div class="absolute bottom-5 -left-32.5 hidden animate-[move_top_5s_infinite_linear] lg:block">
+        <img src={figureSvg} alt="" />
+      </div>
+
+      <div class="container">
+        <div class="flex flex-wrap items-center">
+          {/* Content */}
+          <div class="w-full lg:w-1/2">
+            <div class="relative mb-15 text-center lg:mb-0 lg:pr-5 lg:text-start">
+              {/* Gradient blob behind the copy, desktop only */}
+              <div class="absolute top-[-45%] left-[-45%] -z-10 hidden h-110 w-110 lg:block">
+                <svg viewBox="0 0 550 550" class="relative w-full">
+                  <defs>
+                    <linearGradient
+                      id="hero-blob"
+                      x1=".069"
+                      x2=".753"
+                      y1=".116"
+                      y2=".858"
+                      gradientUnits="objectBoundingBox"
+                    >
+                      <stop offset="0" style="stop-color: var(--color-primary)" />
+                      <stop
+                        offset="1"
+                        style="stop-color: var(--color-primary)"
+                        stop-opacity=".012"
+                      />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    fill="url(#hero-blob)"
+                    d="M455.4 151.1c43.1 36.7 73.4 92.8 60.8 136.3-12.7 43.5-68.1 74.4-111.3 119.4-43.1 45-74 104.1-109.8 109-35.9 5-76.7-44.2-111.8-89.2-35.2-45-64.7-85.8-70.8-132.6-6-46.8 11.6-99.6 46.7-136.3 35.2-36.6 88-57.2 142.4-58.8 54.5-1.7 110.6 15.6 153.8 52.2z"
+                  />
+                </svg>
+              </div>
+
+              <div class="title-box mb-2 sm:mb-12">
+                <span class="top-title relative mb-5 ml-7.5 inline-block text-dark sm:text-xl lg:block lg:text-2xl">
+                  {topTitle}
+                </span>
+                <Content />
+              </div>
+
+              <Button href={buttonHref} size="lg">
+                {buttonName}
+              </Button>
+            </div>
+          </div>
+
+          {/* Figure */}
+          <div class="w-full lg:w-1/2">
+            <div class="relative ml-auto w-full rounded-[20px] lg:w-[90%]">
+              {/* Floating svg behind the photo */}
+              <div class="absolute -top-14 left-1/2 -z-10 h-37.5 -translate-x-1/2 animate-[move_left_5s_infinite_linear]">
+                <img src={figureSvg} alt="" class="h-full w-full" />
+              </div>
+              {heroImage && (
+                <Image
+                  src={heroImage}
+                  alt="hero-image"
+                  widths={[600, 900, 1200, 1500]}
+                  sizes="(max-width: 991px) 100vw, 45vw"
+                  loading="eager"
+                  fetchpriority="high"
+                  class="h-full w-full rounded-[30px] object-cover max-sm:max-h-[40vh] max-sm:object-contain"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  /* Decorative dash before the top-title (old `.pre-line`). */
+  .top-title::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -20px;
+    height: 2px;
+    width: 20px;
+    transform: translateX(-50%);
+    background: #806548;
+  }
+</style>
