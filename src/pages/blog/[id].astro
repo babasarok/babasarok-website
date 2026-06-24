@@ -1,0 +1,121 @@
+---
+import type { GetStaticPaths } from "astro";
+import { getCollection, render } from "astro:content";
+import { Image } from "astro:assets";
+import { Icon } from "astro-icon/components";
+import Base from "../../layouts/Base.astro";
+import FloatingShapes from "../../components/ui/FloatingShapes.astro";
+import { resolveImage } from "../../lib/assets";
+
+export const getStaticPaths = (async () => {
+  const posts = (await getCollection("blog")).sort(
+    (a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0),
+  );
+
+  return posts.map((post) => ({
+    params: { id: post.id },
+    props: { post },
+  }));
+}) satisfies GetStaticPaths;
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const { title, date, categories } = post.data;
+const feature = resolveImage(post.data.postImage ?? post.data.featureImage);
+
+const tags = Array.isArray(post.data.tags)
+  ? post.data.tags
+  : post.data.tags
+    ? [post.data.tags]
+    : [];
+
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+---
+
+<Base title={title} isArticle>
+  <header class="relative pt-50 max-lg:pt-30">
+    <FloatingShapes />
+
+    <div class="container">
+      <div class="text-center lg:mx-auto lg:w-10/12">
+        <h1 class="mb-7.5 text-5xl leading-none max-lg:text-3xl">{title}</h1>
+        <nav aria-label="breadcrumb" class="flex justify-center">
+          <ol class="flex items-center whitespace-nowrap">
+            <li>
+              <a class="text-accent no-underline hover:underline" href="/">
+                Főoldal
+              </a>
+            </li>
+            <li class="before:mx-2 before:content-['-']">
+              <a class="text-accent no-underline hover:underline" href="/blog">
+                Összes
+              </a>
+            </li>
+            <li
+              class="text-accent before:mx-2 before:content-['-']"
+              aria-current="page"
+            >
+              {title}
+            </li>
+          </ol>
+        </nav>
+      </div>
+
+      <ul
+        class="mt-6 flex flex-wrap justify-center gap-x-7.5 gap-y-2 text-body"
+      >
+        {
+          date && (
+            <li class="flex items-center gap-2">
+              <Icon name="tabler:calendar" class="text-primary" />
+              {dateFormatter.format(date)}
+            </li>
+          )
+        }
+        {
+          tags.length > 0 && (
+            <li class="flex items-center gap-2">
+              <Icon name="tabler:tag" class="text-primary" />
+              {tags.join(", ")}
+            </li>
+          )
+        }
+        {
+          categories && (
+            <li class="flex items-center gap-2">
+              <Icon name="tabler:folder" class="text-primary" />
+              {categories}
+            </li>
+          )
+        }
+      </ul>
+    </div>
+  </header>
+
+  <section class="relative overflow-hidden py-25 max-sm:py-12.5">
+    <div class="container">
+      {
+        feature && (
+          <div class="mb-12.5 overflow-hidden rounded-[20px]">
+            <Image
+              src={feature}
+              alt={title}
+              widths={[480, 768, 960, 1152, 1536]}
+              sizes="(min-width: 1200px) 1140px, 100vw"
+              class="w-full object-cover"
+            />
+          </div>
+        )
+      }
+
+      <div class="prose mx-auto max-w-none">
+        <Content />
+      </div>
+    </div>
+  </section>
+</Base>
