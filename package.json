@@ -27,6 +27,7 @@
     "astro-icon": "^1.1.5",
     "astro-md-2": "^2.0.0",
     "clsx": "^2.1.1",
+    "react-tinacms-editor": "^0.53.26",
     "sharp": "^0.34.5",
     "tailwind-merge": "^3.6.0",
     "tailwind-variants": "^3.2.2",
@@ -46,5 +47,11 @@
     "tinacms": "^3.9.1",
     "typescript": "^6.0.3",
     "yaml": "^2.6.0"
+  },
+  "overrides": {
+    "vite": "^7",
+    "@tinacms/cli": {
+      "vite": "^4.5.9"
+    }
   }
 }

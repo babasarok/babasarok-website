@@ -169,3 +169,27 @@ body {
     }
   }
 }
+
+/* @tailwindcss/typography customization for rendered markdown bodies
+   (product / blog content). Maps the prose tokens onto the site theme and
+   forces the heading font. Kept unlayered so it overrides the plugin's
+   layered `.prose` utility. */
+.prose {
+  --tw-prose-body: var(--color-body);
+  --tw-prose-headings: var(--color-headings);
+  --tw-prose-lead: var(--color-body);
+  --tw-prose-links: var(--color-accent);
+  --tw-prose-bold: var(--color-headings);
+  --tw-prose-counters: var(--color-body);
+  --tw-prose-bullets: var(--color-primary);
+  --tw-prose-hr: var(--color-bg-light);
+  --tw-prose-quotes: var(--color-headings);
+  --tw-prose-quote-borders: var(--color-primary);
+  --tw-prose-captions: var(--color-body);
+  --tw-prose-th-borders: var(--color-bg-dark);
+  --tw-prose-td-borders: var(--color-bg-light);
+}
+
+.prose :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-heading), serif;
+}
