@@ -1,0 +1,185 @@
+---
+import { Image } from "astro:assets";
+
+/**
+ * Product image gallery. A single image renders as a static figure; multiple
+ * images render as a pure-CSS (radio + label) carousel with optional captions
+ * and prev/next arrows — a faithful port of the old Hugo `case-details-carousel`.
+ */
+export interface GalleryImage {
+  src: ImageMetadata;
+  alt: string;
+  description?: string | undefined;
+}
+
+interface Props {
+  id: string;
+  images: GalleryImage[];
+}
+
+const { id, images } = Astro.props;
+
+const widths = [600, 900, 1200, 1500, 1880];
+const sizes = "(min-width: 992px) 940px, 90vw";
+const hasCaptions = images.some((img) => img.description);
+
+// Per-slide state rules (global, but every selector is scoped under #id).
+let stateCss = "";
+images.forEach((_, i) => {
+  stateCss += `#${id} .cd-input-${i}:checked~.cd-viewport .cd-track{transform:translateX(-${i * 100}%)}`;
+  stateCss += `#${id} .cd-input-${i}:checked~.cd-arrows .cd-arrows-set-${i}{opacity:1;pointer-events:auto}`;
+  stateCss += `#${id} .cd-input-${i}:checked~.cd-captions .cd-caption-${i}{display:block}`;
+});
+---
+
+{
+  images.length === 1 && (
+    <div class="w-full overflow-hidden rounded-[30px]">
+      <Image
+        src={images[0]!.src}
+        alt={images[0]!.alt}
+        widths={widths}
+        sizes={sizes}
+        class="h-125 w-full rounded-[20px] object-cover max-sm:h-75"
+      />
+    </div>
+  )
+}
+
+{
+  images.length > 1 && (
+    <div class="w-full overflow-hidden rounded-[30px]">
+      <div id={id} class="relative">
+        {images.map((_, i) => (
+          <input
+            class:list={[`cd-input-${i}`, "pointer-events-none absolute opacity-0"]}
+            type="radio"
+            name={`${id}-sel`}
+            id={`${id}-i-${i}`}
+            checked={i === 0}
+          />
+        ))}
+
+        <div class="cd-viewport overflow-hidden rounded-[20px]">
+          <div class="cd-track flex items-start transition-transform duration-450 ease-out">
+            {images.map((img) => (
+              <div class="flex min-w-full flex-col items-center">
+                <Image
+                  src={img.src}
+                  alt={img.alt}
+                  widths={widths}
+                  sizes={sizes}
+                  class="h-125 w-auto max-w-full rounded-[20px] object-cover max-sm:h-75"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {hasCaptions && (
+          <div class="cd-captions mt-3 text-center">
+            {images.map((img, i) => (
+              <p class:list={[`cd-caption-${i}`, "m-0 hidden text-[0.95rem] text-body"]}>
+                {img.description}
+              </p>
+            ))}
+          </div>
+        )}
+
+        <div class="cd-arrows pointer-events-none absolute inset-0 z-2" aria-hidden="true">
+          {images.map((_, i) => {
+            const prev = i === 0 ? images.length - 1 : i - 1;
+            const next = i === images.length - 1 ? 0 : i + 1;
+            return (
+              <div
+                class:list={[
+                  `cd-arrows-set-${i}`,
+                  "pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-250",
+                ]}
+              >
+                <label
+                  class="cd-arrow cd-arrow-prev"
+                  for={`${id}-i-${prev}`}
+                  aria-label="Előző kép"
+                />
+                <label
+                  class="cd-arrow cd-arrow-next"
+                  for={`${id}-i-${next}`}
+                  aria-label="Következő kép"
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <style set:html={stateCss} />
+    </div>
+  )
+}
+
+<style>
+  .cd-arrow {
+    position: absolute;
+    top: 50%;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.88);
+    cursor: pointer;
+    display: block;
+    transform: translateY(-50%);
+    transition:
+      transform 0.2s ease,
+      background-color 0.2s ease;
+  }
+
+  .cd-arrow::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid var(--color-accent);
+    border-bottom: 2px solid var(--color-accent);
+  }
+
+  .cd-arrow:hover {
+    background-color: #fff;
+    transform: translateY(-50%) scale(1.05);
+  }
+
+  .cd-arrow:active {
+    transform: translateY(-50%) scale(0.97);
+  }
+
+  .cd-arrow-prev {
+    left: 16px;
+  }
+
+  .cd-arrow-prev::before {
+    transform: translate(-38%, -50%) rotate(135deg);
+  }
+
+  .cd-arrow-next {
+    right: 16px;
+  }
+
+  .cd-arrow-next::before {
+    transform: translate(-62%, -50%) rotate(-45deg);
+  }
+
+  @media (max-width: 575px) {
+    .cd-arrow {
+      width: 36px;
+      height: 36px;
+    }
+    .cd-arrow-prev {
+      left: 10px;
+    }
+    .cd-arrow-next {
+      right: 10px;
+    }
+  }
+</style>

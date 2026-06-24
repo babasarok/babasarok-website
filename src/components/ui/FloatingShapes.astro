@@ -1,0 +1,56 @@
+---
+import figureSvg from "../../assets/images/hero/figure-svg.svg?url";
+import patternSvg from "../../assets/images/service/background-pattern.svg?url";
+
+/**
+ * Decorative floating shapes (figure + gradient blob + dotted pattern) used by
+ * the breadcrumb page header and the product detail header. All hidden below
+ * the `lg` breakpoint, matching the old SCSS (`@include desktop`). Pass the
+ * position utility classes per element; defaults match the breadcrumb header.
+ */
+interface Props {
+  figureClass?: string;
+  blobClass?: string;
+  patternClass?: string;
+}
+
+const {
+  figureClass = "bottom-[-35%] left-[-7%]",
+  blobClass = "right-[2%] bottom-[-60%]",
+  patternClass = "right-[10%] bottom-[-40%]",
+} = Astro.props;
+---
+
+{/* Floating figure */}
+<div class:list={["absolute animate-float-y max-lg:hidden", figureClass]}>
+  <img src={figureSvg} alt="" />
+</div>
+
+{/* Soft gradient blob */}
+<div class:list={["absolute h-75 w-75 max-lg:hidden", blobClass]}>
+  <svg viewBox="0 0 600 600" class="w-full">
+    <defs>
+      <linearGradient
+        id="floating-blob"
+        x1="0.929"
+        y1="0.111"
+        x2="0.263"
+        y2="0.935"
+        gradientUnits="objectBoundingBox"
+      >
+        <stop offset="0" stop-color="var(--color-bg-light)"></stop>
+        <stop offset="1" stop-color="var(--color-bg-light)" stop-opacity="0"
+        ></stop>
+      </linearGradient>
+    </defs>
+    <path
+      fill="url(#floating-blob)"
+      d="M455.4 151.1c43.1 36.7 73.4 92.8 60.8 136.3-12.7 43.5-68.1 74.4-111.3 119.4-43.1 45-74 104.1-109.8 109-35.9 5-76.7-44.2-111.8-89.2-35.2-45-64.7-85.8-70.8-132.6-6-46.8 11.6-99.6 46.7-136.3 35.2-36.6 88-57.2 142.4-58.8 54.5-1.7 110.6 15.6 153.8 52.2z"
+    ></path>
+  </svg>
+</div>
+
+{/* Animated dotted pattern */}
+<div class:list={["absolute h-25 w-25 animate-float-y max-lg:hidden", patternClass]}>
+  <img src={patternSvg} alt="" class="h-full w-full" />
+</div>
