@@ -5,6 +5,7 @@ import { ServiceCollection } from "./collections/service";
 import { AboutCollection } from "./collections/about";
 import { ProductSectionCollection } from "./collections/product-section";
 import { BlogSectionCollection } from "./collections/blog-section";
+import { BlogCollection } from "./collections/blog";
 import { ProductCollection } from "./collections/product";
 import { MaterialCollection } from "./collections/material";
 import { DeliveryMethodCollection } from "./collections/delivery-method";
@@ -46,6 +47,7 @@ export default defineConfig({
       AboutCollection,
       ProductSectionCollection,
       BlogSectionCollection,
+      BlogCollection,
       ProductCollection,
       MaterialCollection,
       DeliveryMethodCollection,
