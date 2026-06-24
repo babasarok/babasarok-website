@@ -91,4 +91,12 @@ const material = defineCollection({
   }),
 });
 
-export const collections = { config, product, blog, material };
+const contact = defineCollection({
+  loader: glob({ pattern: "_index.md", base: "src/content/contact" }),
+  schema: z.object({
+    title: z.string(),
+    breadcrumb: z.string().optional(),
+  }),
+});
+
+export const collections = { config, product, blog, material, contact };
