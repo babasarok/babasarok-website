@@ -1,10 +1,10 @@
 ---
-import { Image } from "astro:assets";
 import { getCollection } from "astro:content";
 import { Markdown } from "astro-md-2";
 import productSection from "../../content/sections/product.json";
 import { resolveImage } from "../../lib/assets";
 import Button from "../ui/Button.astro";
+import ProductCard from "../ui/ProductCard.astro";
 
 const { enable, title, itemCount, buttonName, buttonTarget } = productSection;
 
@@ -29,41 +29,15 @@ const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
 
         {/* Product grid */}
         <div class="flex flex-wrap justify-center gap-8 max-sm:gap-y-12">
-          {products.map((product) => {
-            const thumb = resolveImage(product.data.thumbnail);
-            const href = `/product/${product.id}/`;
-            return (
-              <div class="group flex w-1/2 max-w-62.5 flex-col p-7.5 max-md:w-full max-md:p-0 max-sm:items-center">
-                {thumb && (
-                  <Image
-                    src={thumb}
-                    alt={product.data.title}
-                    widths={[300, 500]}
-                    sizes="(max-width: 575px) 50vw, 300px"
-                    class="aspect-square w-full max-w-75 rounded-[20px] object-cover transition-all duration-300 group-hover:shadow-[0_20px_40px_0_rgba(0,0,0,0.12)] max-sm:mx-auto max-sm:max-w-[50vw]"
-                  />
-                )}
-                <div class="flex flex-1 flex-col max-sm:items-center max-sm:text-center">
-                  {product.data.categories && (
-                    <span class="mt-7 mb-5 block text-lg leading-none text-body max-sm:mt-3.5 max-sm:mb-2.5 max-sm:text-[0.9rem]">
-                      {product.data.categories}
-                    </span>
-                  )}
-                  <h3 class="mb-0">
-                    <a class="text-dark hover:text-primary" href={href}>
-                      {product.data.title}
-                    </a>
-                  </h3>
-                  <a
-                    href={href}
-                    class="relative ml-7.5 inline-block origin-bottom scale-y-0 text-primary transition-all duration-300 before:absolute before:top-1/2 before:-left-7.5 before:h-0.5 before:w-5 before:-translate-y-1/2 before:bg-primary before:content-[''] group-hover:scale-y-100 max-md:scale-y-100"
-                  >
-                    Részletek
-                  </a>
-                </div>
-              </div>
-            );
-          })}
+          {products.map((product) => (
+            <ProductCard
+              href={`/product/${product.id}/`}
+              title={product.data.title}
+              image={resolveImage(product.data.thumbnail)}
+              category={product.data.categories}
+              square
+            />
+          ))}
         </div>
 
         {/* All-products button */}

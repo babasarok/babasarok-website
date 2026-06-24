@@ -1,5 +1,4 @@
 ---
-import { Image } from "astro:assets";
 import { getCollection } from "astro:content";
 import { Markdown } from "astro-md-2";
 import blogSection from "../../content/sections/blog.json";
@@ -7,6 +6,7 @@ import blogShape from "../../assets/images/blog/blog-shape.svg?url";
 import { resolveImage } from "../../lib/assets";
 import Button from "../ui/Button.astro";
 import TopTitle from "../ui/TopTitle.astro";
+import BlogCard from "../ui/BlogCard.astro";
 
 const { enable, topTitle, title, buttonName, buttonTarget } = blogSection;
 
@@ -18,12 +18,6 @@ const posts = (await getCollection("blog"))
   .slice(0, 3);
 
 const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
-
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-});
 ---
 
 {
@@ -64,39 +58,14 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
 
         {/* Posts */}
         <div class="flex flex-wrap">
-          {posts.map((post) => {
-            const img = resolveImage(post.data.featureImage);
-            const href = `/blog/${post.id}/`;
-            return (
-              <div class="w-1/3 px-3.75 max-lg:w-full">
-                <div class="group relative mb-5 max-lg:mb-32.5">
-                  <div class="w-[90%] overflow-hidden rounded-[20px] max-lg:mx-auto max-lg:w-[80%]">
-                    {img && (
-                      <Image
-                        src={img}
-                        alt={post.data.title}
-                        widths={[320, 640]}
-                        sizes="320px"
-                        class="aspect-320/370 w-full object-cover transition-all duration-300 group-hover:scale-110"
-                      />
-                    )}
-                  </div>
-                  <div class="absolute -bottom-25 left-10 rounded-[20px] bg-white p-7.5 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] max-lg:left-0">
-                    {post.data.date && (
-                      <span class="relative mb-5 ml-10 block leading-none text-primary before:absolute before:top-1/2 before:-left-10 before:h-px before:w-5 before:-translate-y-1/2 before:bg-accent before:content-['']">
-                        {dateFormatter.format(post.data.date)}
-                      </span>
-                    )}
-                    <h5 class="mb-0">
-                      <a class="text-dark hover:text-primary" href={href}>
-                        {post.data.title}
-                      </a>
-                    </h5>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {posts.map((post) => (
+            <BlogCard
+              href={`/blog/${post.id}/`}
+              title={post.data.title}
+              image={resolveImage(post.data.featureImage)}
+              date={post.data.date}
+            />
+          ))}
         </div>
 
         {/* Mobile button */}

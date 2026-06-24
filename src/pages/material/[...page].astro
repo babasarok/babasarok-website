@@ -1,0 +1,57 @@
+---
+import type { GetStaticPaths } from "astro";
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import PageHeader from "../../components/ui/PageHeader.astro";
+import ProductCard from "../../components/ui/ProductCard.astro";
+import Pagination from "../../components/ui/Pagination.astro";
+import { resolveImage } from "../../lib/assets";
+
+export const getStaticPaths = (async () => {
+  const PAGE_SIZE = 6;
+  const materials = (await getCollection("material")).sort((a, b) =>
+    (a.data.label ?? a.data.title).localeCompare(b.data.label ?? b.data.title),
+  );
+
+  const lastPage = Math.max(1, Math.ceil(materials.length / PAGE_SIZE));
+
+  return Array.from({ length: lastPage }, (_, i) => {
+    const currentPage = i + 1;
+    return {
+      params: { page: currentPage === 1 ? undefined : `page/${currentPage}` },
+      props: {
+        items: materials.slice(i * PAGE_SIZE, (i + 1) * PAGE_SIZE),
+        currentPage,
+        lastPage,
+      },
+    };
+  });
+}) satisfies GetStaticPaths;
+
+const { items, currentPage, lastPage } = Astro.props;
+---
+
+<Base title="Anyagok">
+  <PageHeader title="Anyagok" />
+  <section class="py-25">
+    <div class="container">
+      <div class="flex flex-wrap justify-center gap-8 max-sm:gap-y-12">
+        {
+          items.map((material) => (
+            <ProductCard
+              href={`/material/${material.id}/`}
+              title={material.data.label ?? material.data.title}
+              image={resolveImage(material.data.thumbnail)}
+              category={material.data.categories}
+            />
+          ))
+        }
+      </div>
+      <Pagination
+        currentPage={currentPage}
+        lastPage={lastPage}
+        basePath="/material"
+      />
+    </div>
+  </section>
+</Base>

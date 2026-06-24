@@ -12,9 +12,13 @@
  *
  * `blog` is a real Astro content collection: the landing blog preview queries
  * it with `getCollection('blog')`. `_index.md` is excluded from the glob.
+ *
+ * `material` backs the `/material` list page. `_index.html` is excluded by the
+ * `*.md` glob.
  */
-import { defineCollection, z } from "astro:content";
+import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
+import z from "astro/zod";
 
 const config = defineCollection({
   loader: glob({ pattern: "**/*.json", base: "src/content/config" }),
@@ -30,6 +34,7 @@ const product = defineCollection({
       date: z.coerce.date().optional(),
       thumbnail: z.string().optional(),
       shortDescription: z.string().optional(),
+      hidden_in_product_list: z.boolean().optional(),
     })
     .passthrough(),
 });
@@ -50,4 +55,17 @@ const blog = defineCollection({
     .passthrough(),
 });
 
-export const collections = { config, product, blog };
+const material = defineCollection({
+  loader: glob({ pattern: "*.md", base: "src/content/material" }),
+  schema: z
+    .object({
+      title: z.string(),
+      label: z.string().optional(),
+      material_id: z.string().optional(),
+      thumbnail: z.string().optional(),
+      categories: z.string().optional(),
+    })
+    .passthrough(),
+});
+
+export const collections = { config, product, blog, material };
