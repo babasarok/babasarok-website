@@ -77,6 +77,17 @@ const material = defineCollection({
     material_id: z.string().optional(),
     thumbnail: z.string().optional(),
     categories: z.string().optional(),
+    shortDescription: z.string().optional(),
+    colors: z
+      .array(
+        z.object({
+          color_id: z.string().optional(),
+          label: z.string().optional(),
+          hex: z.string().optional(),
+          image: z.string().optional(),
+        }),
+      )
+      .optional(),
   }),
 });
 
