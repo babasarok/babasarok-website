@@ -32,8 +32,8 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
           <Image
             src={image}
             alt={title}
-            widths={[320, 640]}
-            sizes="320px"
+            widths={[320, 480, 640, 768, 960, 1152, 1536]}
+            sizes="(min-width: 992px) 342px, (min-width: 768px) 70vw, 80vw"
             class="aspect-320/370 w-full object-cover transition-all duration-300 group-hover:scale-110"
           />
         )
