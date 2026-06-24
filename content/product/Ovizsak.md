@@ -3,9 +3,14 @@ product_id: Ovis szett
 title: Ovis zsák&Vállfás zsák
 can_be_ordered: true
 thumbnail: /IMG_4447.jpeg
+images:
+  - image: /IMG_4454.png
+    description: Ovizsák szett
+  - image: /IMG_4455.png
+  - image: /IMG_4348.jpeg
 table:
   - title: Tornazsák
-    description: 4.000Ft
+    description: 4000Ft
   - title: Vállfás zsák
     description: 4.500Ft
   - title: 'Ovizsák szettben '
@@ -27,9 +32,5 @@ fields:
     price: 7200
     label: Szettben kérem
     type: input
-images:
-  - image: /IMG_4454.png
-    description: Ovizsák szett
-  - image: /IMG_4455.png
-  - image: /IMG_4348.jpeg
 ---
+
