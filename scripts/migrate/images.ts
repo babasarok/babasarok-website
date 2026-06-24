@@ -67,7 +67,8 @@ function rewriteRef(
   { requireSlash = true } = {},
 ): string {
   if (/^https?:/i.test(raw)) return raw;
-  if (requireSlash && (!raw.startsWith("/") || raw.startsWith("//"))) return raw;
+  if (requireSlash && (!raw.startsWith("/") || raw.startsWith("//")))
+    return raw;
   const canon = canonicalAssetRef(raw);
   if (!canon) {
     if (raw.startsWith("/")) stats.unresolved.add(raw);
@@ -153,9 +154,7 @@ export function migrateImages(): ImageStats {
     const isJson = /\.json$/i.test(file);
     if (!isJson && !/\.mdx?$/i.test(file)) continue;
     const raw = fs.readFileSync(file, "utf8");
-    const next = isJson
-      ? rewriteJson(raw, stats)
-      : rewriteText(raw, stats);
+    const next = isJson ? rewriteJson(raw, stats) : rewriteText(raw, stats);
     if (next === raw) {
       stats.unchanged++;
       continue;
