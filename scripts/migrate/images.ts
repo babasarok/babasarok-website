@@ -1,11 +1,12 @@
 /**
  * Content image normalization: rewrite every image reference inside the
- * migrated content markdown (`src/content/**​/*.md`) to TinaCMS's canonical
+ * migrated content (`src/content/**​/*.{md,mdx,json}`) to TinaCMS's canonical
  * `/assets/...` form.
  *
  * The old Hugo content stored images as root-absolute, sometimes
  * percent-encoded refs (`/IMG_8843.JPG`, `/No%C3%A9mi-25.jpg`,
- * `/images/single-blog/x.jpg`). Tina is configured with
+ * `/images/single-blog/x.jpg`), and the global config stored media-root
+ * relative refs (`images/site-navigation/logo.png`). Tina is configured with
  * `mediaRoot: "assets"` + `publicFolder: "src"`, so it reads/writes media
  * refs as `/assets/<path>` (decoded). With mixed forms the admin media
  * picker can't match the files; normalizing the content makes Tina display
@@ -13,8 +14,8 @@
  *
  * A ref is only rewritten when the target actually exists under
  * `src/assets`; unresolved refs are left untouched and reported (e.g. stray
- * typos or genuinely missing files). Operates on raw text so frontmatter
- * formatting and key order are preserved.
+ * typos or genuinely missing files). Operates on raw text so frontmatter /
+ * JSON formatting and key order are preserved.
  *
  * Idempotent: re-running is a no-op once everything is `/assets/...`.
  *
@@ -60,12 +61,16 @@ function canonicalAssetRef(ref: string): string | null {
 }
 
 /** Rewrite one ref, tracking stats. Returns the canonical ref or the original. */
-function rewriteRef(raw: string, stats: ImageStats): string {
-  if (!raw.startsWith("/") || raw.startsWith("//")) return raw;
+function rewriteRef(
+  raw: string,
+  stats: ImageStats,
+  { requireSlash = true } = {},
+): string {
   if (/^https?:/i.test(raw)) return raw;
+  if (requireSlash && (!raw.startsWith("/") || raw.startsWith("//"))) return raw;
   const canon = canonicalAssetRef(raw);
   if (!canon) {
-    stats.unresolved.add(raw);
+    if (raw.startsWith("/")) stats.unresolved.add(raw);
     return raw;
   }
   if (canon !== raw) stats.rewrites++;
@@ -119,6 +124,22 @@ function rewriteText(text: string, stats: ImageStats): string {
   return out;
 }
 
+/**
+ * Rewrite image references inside a JSON content file (Tina section/config
+ * collections). Every quoted asset-extension value that resolves under
+ * `src/assets` is normalized — including media-root-relative refs without a
+ * leading slash (e.g. `images/site-navigation/logo.png`).
+ */
+function rewriteJson(text: string, stats: ImageStats): string {
+  return text.replace(
+    new RegExp(`"([^"]*\\.(${EXT_GROUP}))"`, "gi"),
+    (full, value: string) => {
+      const canon = rewriteRef(value, stats, { requireSlash: false });
+      return canon === value ? full : `"${canon}"`;
+    },
+  );
+}
+
 export function migrateImages(): ImageStats {
   log.step("Normalizing content image refs -> /assets/...");
   const stats: ImageStats = {
@@ -129,9 +150,12 @@ export function migrateImages(): ImageStats {
   };
 
   for (const file of walk(NEW.content)) {
-    if (!/\.mdx?$/i.test(file)) continue;
+    const isJson = /\.json$/i.test(file);
+    if (!isJson && !/\.mdx?$/i.test(file)) continue;
     const raw = fs.readFileSync(file, "utf8");
-    const next = rewriteText(raw, stats);
+    const next = isJson
+      ? rewriteJson(raw, stats)
+      : rewriteText(raw, stats);
     if (next === raw) {
       stats.unchanged++;
       continue;

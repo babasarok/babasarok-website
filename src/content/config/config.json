@@ -28,8 +28,8 @@
   },
   "titleSeparator": "-",
   "titleAddition": "Egyedi, kézzel készített babakelengye",
-  "logo": "images/site-navigation/logo.png",
-  "footerLogo": "images/site-navigation/logo-dark.png",
+  "logo": "/assets/images/site-navigation/logo.png",
+  "footerLogo": "/assets/images/site-navigation/logo-dark.png",
   "contactLink": "contact",
   "fabformURL": "1ffa9477-1db3-47f2-bc9e-1226e3a3b858",
   "address": {
