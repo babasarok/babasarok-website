@@ -2,7 +2,7 @@
 title: Fonott rácsvédő
 product_id: negyes-fonat
 categories: 4-es fonat
-thumbnail: /IMG_7422 (1).jpg
+thumbnail: /assets/IMG_7422 (1).jpg
 table:
   - title: 200cm
     description: 16.000Ft
@@ -29,12 +29,12 @@ shortDescription: |-
   magassága nagyobb, mint a hármas fonat, mivel 4szálból készül, kb. 21 cm.
 ---
 
-![](/IMG_8843.JPG)
+![](/assets/IMG_8843.JPG)
 
-![](/IMG_8842.JPG)
+![](/assets/IMG_8842.JPG)
 
-![](/IMG_8058.JPG)
+![](/assets/IMG_8058.JPG)
 
-![](/IMG_8382.JPG)
+![](/assets/IMG_8382.JPG)
 
-![](/IMG_9101.JPG)
+![](/assets/IMG_9101.JPG)

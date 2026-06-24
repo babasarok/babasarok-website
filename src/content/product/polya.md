@@ -17,7 +17,7 @@ fields:
     label: Kókuszbetéttel
     type: toggle
 date: 2020-08-11T12:07:16.000Z
-thumbnail: /Noémi-19.jpg
+thumbnail: /assets/Noémi-19.jpg
 table:
   - title: Pólya kókuszbetéttel
     description: 7.700Ft

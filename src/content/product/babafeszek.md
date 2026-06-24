@@ -39,7 +39,7 @@ fields:
     type: toggle
 categories: A nyugodt alvás titka
 date: 2024-02-02T06:49:27.000Z
-thumbnail: /Noémi-04.jpg
+thumbnail: /assets/Noémi-04.jpg
 table:
   - title: Normál méret 35x65cm
     description: 15.000Ft

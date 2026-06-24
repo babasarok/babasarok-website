@@ -5,10 +5,15 @@ import type { Root } from "mdast";
 import type { VFile } from "vfile";
 
 /**
- * Rewrites root-absolute markdown image URLs (e.g. `/IMG_8843.JPG`, written by
- * TinaCMS) into paths relative to the markdown file, pointing at `src/assets`,
- * so Astro's asset pipeline imports + optimizes them instead of treating them
- * as missing `public/` files.
+ * Rewrites root-absolute markdown image URLs (e.g. `/assets/IMG_8843.JPG`,
+ * `/IMG_8843.JPG`, written by TinaCMS) into paths relative to the markdown
+ * file, pointing at `src/assets`, so Astro's asset pipeline imports +
+ * optimizes them instead of treating them as missing `public/` files.
+ *
+ * Both the canonical Tina form (`/assets/...`, with `mediaRoot: "assets"` +
+ * `publicFolder: "src"`) and the legacy root-absolute form (`/...`) are
+ * supported; an optional leading `assets/` segment is stripped before the
+ * lookup under `src/assets`.
  *
  * URLs are percent-decoded because some refs are encoded (e.g.
  * `/No%C3%A9mi-18.jpg` → `Noémi-18.jpg`) while the files on disk are not.
@@ -26,7 +31,10 @@ export function remarkAssetImages() {
     visit(tree, "image", (node) => {
       if (!node.url.startsWith("/") || node.url.startsWith("//")) return;
 
-      const rel = decodeURIComponent(node.url.slice(1));
+      const rel = decodeURIComponent(node.url.slice(1)).replace(
+        /^assets\//,
+        "",
+      );
       const absolute = path.join(assetsDir, rel);
       if (!existsSync(absolute)) return;
 

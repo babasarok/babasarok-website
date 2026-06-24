@@ -1,7 +1,7 @@
 ---
 title: Mályva és giselle őzike
-featureImage: /IMG_2481.jpg
+featureImage: /assets/IMG_2481.jpg
 ---
 
-| ![](/IMG_2482.jpg) | ![](</IMG_2480 (1).JPG>) |
+| ![](/assets/IMG_2482.jpg) | ![](</IMG_2480 (1).JPG>) |
 | ------------------ | ------------------------ |

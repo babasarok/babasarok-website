@@ -25,7 +25,7 @@ fields:
     type: toggle
 categories: A babaszoba stílusos kiegészítője
 date: 2024-02-02T06:49:27.000Z
-thumbnail: /Noémi-51.jpg
+thumbnail: /assets/Noémi-51.jpg
 table:
   - title: 6m sűrűségű
     description: 12000Ft

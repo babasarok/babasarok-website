@@ -4,6 +4,7 @@
  *   node scripts/migrate/index.ts            # all steps
  *   node scripts/migrate/index.ts assets     # only assets
  *   node scripts/migrate/index.ts content    # only section data
+ *   node scripts/migrate/index.ts images     # only content image-ref normalization
  *   node scripts/migrate/index.ts report     # only the Bootstrap→Tailwind report
  *
  * (Also wired as `npm run migrate` / `npm run migrate -- assets`.)
@@ -13,12 +14,14 @@
  */
 import { migrateAssets } from "./assets.ts";
 import { migrateContent } from "./content.ts";
+import { migrateImages } from "./images.ts";
 import { buildBootstrapReport } from "./bootstrap-report.ts";
 import { log } from "./lib.ts";
 
 const steps: Record<string, () => unknown> = {
   assets: migrateAssets,
   content: migrateContent,
+  images: migrateImages,
   report: buildBootstrapReport,
 };
 

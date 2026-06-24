@@ -5,62 +5,62 @@ label: Minky
 colors:
   - color_id: '#1'
     label: Babakék
-    image: /IMG_4081.jpeg
+    image: /assets/IMG_4081.jpeg
   - color_id: '#2'
     label: Pasztellkék
-    image: /IMG_4080.jpeg
+    image: /assets/IMG_4080.jpeg
   - color_id: '#3'
     label: Világos mályva
-    image: /IMG_4077.jpeg
+    image: /assets/IMG_4077.jpeg
   - color_id: '#4'
     label: 'Babarózsaszín '
-    image: /IMG_4076.jpeg
+    image: /assets/IMG_4076.jpeg
   - color_id: '#5'
     label: Sötézöld
-    image: /IMG_4072.jpeg
+    image: /assets/IMG_4072.jpeg
   - color_id: '#6'
     label: Csokibarna
-    image: /IMG_3334.jpeg
+    image: /assets/IMG_3334.jpeg
   - color_id: '#7'
     label: 'Világos bézs '
-    image: /IMG_3079.jpeg
+    image: /assets/IMG_3079.jpeg
   - color_id: '#8'
     label: Zsálya
-    image: /IMG_1454.jpeg
+    image: /assets/IMG_1454.jpeg
   - color_id: '#9'
     label: Menta
-    image: /IMG_6675.jpeg
+    image: /assets/IMG_6675.jpeg
   - color_id: '#10'
     label: 'Királykék '
-    image: /IMG_6673.jpeg
+    image: /assets/IMG_6673.jpeg
   - color_id: '#11'
     label: Halványszürke
-    image: /IMG_6668.jpeg
+    image: /assets/IMG_6668.jpeg
   - color_id: '#12'
     label: 'Fehér '
-    image: /IMG_6658.jpeg
+    image: /assets/IMG_6658.jpeg
   - color_id: '#13'
     label: Hamvas olajbarna
-    image: /IMG_6663.jpeg
+    image: /assets/IMG_6663.jpeg
   - color_id: '#14'
     label: Ekrü
-    image: /IMG_6657.jpeg
+    image: /assets/IMG_6657.jpeg
   - color_id: '#15'
     label: Lila
-    image: /IMG_6655.jpeg
+    image: /assets/IMG_6655.jpeg
   - color_id: '#16'
     label: 'Halvány rózsaszín '
-    image: /IMG_6648.jpeg
+    image: /assets/IMG_6648.jpeg
   - color_id: '#17'
     label: Rosegold
-    image: /IMG_6646.jpeg
+    image: /assets/IMG_6646.jpeg
   - color_id: '#18'
     label: Mályva
-    image: /IMG_6644.jpeg
+    image: /assets/IMG_6644.jpeg
   - color_id: '#19'
     label: Mogyoró
-    image: /IMG_6638.jpeg
-thumbnail: '/IMG_6615,1.JPG'
+    image: /assets/IMG_6638.jpeg
+thumbnail: '/assets/IMG_6615,1.JPG'
 categories: 'puha, pöttyös felületű anyag'
 ---
 

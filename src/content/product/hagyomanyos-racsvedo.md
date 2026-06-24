@@ -33,7 +33,7 @@ fields:
     regex: '^(\d+)$'
 categories: A biztonságos pihenésért
 date: 2020-08-12T12:07:16.000Z
-thumbnail: /IMG_9614.jpg
+thumbnail: /assets/IMG_9614.jpg
 table:
   - title: 140cm
     description: 8.200Ft
@@ -50,6 +50,6 @@ can_be_ordered: true
 
 ---
 
-![](/IMG_7914.JPG)
+![](/assets/IMG_7914.JPG)
 
-![](/IMG_7656.JPG)
+![](/assets/IMG_7656.JPG)

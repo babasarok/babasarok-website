@@ -17,6 +17,11 @@ export function resolveImage(
   path: string | null | undefined,
 ): ImageMetadata | undefined {
   if (!path) return undefined;
-  const clean = path.replace(/^\/?(assets\/)?/, "");
+  let clean = path.replace(/^\/?(assets\/)?/, "");
+  try {
+    clean = decodeURIComponent(clean);
+  } catch {
+    /* malformed encoding — fall back to the literal form */
+  }
   return images[`../assets/${clean}`];
 }

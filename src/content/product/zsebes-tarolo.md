@@ -10,7 +10,7 @@ materials:
   - material_path: content/material/wellsoft.md
 categories: Rendszerezz könnyebben
 date: 2020-08-11T12:07:16.000Z
-thumbnail: /IMG_6078.jpg
+thumbnail: /assets/IMG_6078.jpg
 table:
   - title: null
     description: 7500Ft
