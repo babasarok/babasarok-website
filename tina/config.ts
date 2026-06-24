@@ -5,6 +5,9 @@ import { ServiceCollection } from "./collections/service";
 import { AboutCollection } from "./collections/about";
 import { ProductSectionCollection } from "./collections/product-section";
 import { BlogSectionCollection } from "./collections/blog-section";
+import { ProductCollection } from "./collections/product";
+import { MaterialCollection } from "./collections/material";
+import { DeliveryMethodCollection } from "./collections/delivery-method";
 
 // Your hosting provider likely exposes this as an environment variable
 const branch =
@@ -43,6 +46,9 @@ export default defineConfig({
       AboutCollection,
       ProductSectionCollection,
       BlogSectionCollection,
+      ProductCollection,
+      MaterialCollection,
+      DeliveryMethodCollection,
     ],
   },
 });
