@@ -20,17 +20,19 @@ shortDescription: |-
   Tornazsák mérete: kb. 30x40cm
   Vállfás zsák mérete: kb. 40x60cm
 fields:
-  - name: 'Tornazsák '
-    price: 4000
-    label: Tornazsák
-    type: input
-  - name: 'Vállfás zsák '
-    price: 4500
-    label: Vállfás zsák
-    type: input
-  - name: 'Szettben '
-    price: 7200
-    label: Szettben kérem
-    type: input
+  - name: 'Termék '
+    price: 0
+    label: 'Termék '
+    type: radio
+    items:
+      - value: Tornazsák
+        label: Tornazsák
+        price: 4000
+      - value: Vállfás zsák
+        label: Vállfás zsák
+        price: 4500
+      - value: Mindkettő
+        label: Mindkettő
+        price: 7200
 ---
 
