@@ -135,6 +135,9 @@ export const ProductCollection: Collection = {
       name: "content",
       label: "Tartalom",
       isBody: true,
+      overrides: {
+        showFloatingToolbar: false,
+      },
     },
     {
       type: "image",

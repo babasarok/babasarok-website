@@ -1,11 +1,12 @@
-// @ts-check
 import { defineConfig, fontProviders } from "astro/config";
 import mdx from "@astrojs/mdx";
+import svelte from "@astrojs/svelte";
 import sitemap from "@astrojs/sitemap";
 import icon from "astro-icon";
 import tina from "@tinacms/astro/integration";
 import { tinaAdminDevRedirect } from "@tinacms/astro/vite";
 import tailwindcss from "@tailwindcss/vite";
+import { unified } from "@astrojs/markdown-remark";
 import { remarkAssetImages } from "./src/lib/remark-asset-images";
 
 // https://astro.build/config
@@ -14,11 +15,13 @@ export default defineConfig({
   output: "static",
   redirects: { "/home": "/" },
   prefetch: true,
-  integrations: [mdx(), sitemap(), icon(), tina()],
+  integrations: [mdx(), sitemap(), icon(), tina(), svelte()],
   markdown: {
-    // Rewrite Tina's root-absolute image refs so Astro optimizes them from
-    // src/assets instead of 404-ing against public/.
-    remarkPlugins: [remarkAssetImages],
+    processor: unified({
+      // Rewrite Tina's root-absolute image refs so Astro optimizes them from
+      // src/assets instead of 404-ing against public/.
+      remarkPlugins: [remarkAssetImages],
+    }),
   },
   build: {
     // Inline the (~10 KiB) bundled CSS into a <style> in <head> instead of a
