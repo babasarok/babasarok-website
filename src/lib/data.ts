@@ -11,62 +11,45 @@
  * is the source of truth; regen with `tinacms dev` and everything
  * downstream updates.
  */
-import type { TinaRichTextContent } from '@tinacms/astro';
-import { requestWithMetadata } from '@tinacms/astro/data';
-import client from '../../tina/__generated__/client';
+import { requestWithMetadata } from "@tinacms/astro/data";
+import client from "../../tina/__generated__/client";
 
 export const getConfig = () =>
-	requestWithMetadata(client.queries.config({ relativePath: 'config.json' }));
+  requestWithMetadata(client.queries.config({ relativePath: "config.json" }));
 
-// export const getPage = (slug: string) =>
-// 	requestWithMetadata(client.queries.page({ relativePath: `${slug}.mdx` }), { priority: 'primary' });
+export const getProducts = async () => {
+  const result = await client.queries.productConnection();
 
-// export const getBlog = (slug: string) =>
-// 	requestWithMetadata(client.queries.blog({ relativePath: `${slug}.mdx` }), { priority: 'primary' });
+  const products = result.data.productConnection.edges?.flatMap((edge) =>
+    edge?.node ? [edge.node] : [],
+  );
 
-// export async function listPages() {
-// 	const result = await client.queries.pageConnection();
-// 	return (result.data.pageConnection.edges ?? [])
-// 		.flatMap((edge) => (edge?.node ? [edge.node] : []));
-// }
+  return products?.sort((a, b) => a.title.localeCompare(b.title)) ?? [];
+};
 
-// export async function listBlogs() {
-// 	const result = await client.queries.blogConnection();
-// 	return (result.data.blogConnection.edges ?? [])
-// 		.flatMap((edge) => (edge?.node ? [edge.node] : []))
-// 		.sort((a, b) => {
-// 			const ad = a.pubDate ? new Date(a.pubDate).valueOf() : 0;
-// 			const bd = b.pubDate ? new Date(b.pubDate).valueOf() : 0;
-// 			return bd - ad;
-// 		});
-// }
+export const getMaterials = async () => {
+  const result = await client.queries.product_materialsConnection();
 
-// export type CmsConfig = Awaited<ReturnType<typeof getConfig>>['data']['config'];
-// export type CmsPage = Awaited<ReturnType<typeof getPage>>['data']['page'];
-// export type CmsBlog = Awaited<ReturnType<typeof getBlog>>['data']['blog'];
+  const materials = result.data.product_materialsConnection.edges?.flatMap(
+    (edge) => (edge?.node ? [edge.node] : []),
+  );
 
-// export type PageBlock = NonNullable<NonNullable<CmsPage['blocks']>[number]>;
-// export type PageBlockTypename = PageBlock['__typename'];
+  return materials?.sort((a, b) => a.label.localeCompare(b.label)) ?? [];
+};
 
-// export type HeroBlock = Extract<PageBlock, { __typename: 'PageBlocksHero' }>;
-// export type CalloutBlock = Extract<PageBlock, { __typename: 'PageBlocksCallout' }>;
-// export type FeaturesBlock = Extract<PageBlock, { __typename: 'PageBlocksFeatures' }>;
-// export type StatsBlock = Extract<PageBlock, { __typename: 'PageBlocksStats' }>;
-// export type CtaBlock = Extract<PageBlock, { __typename: 'PageBlocksCta' }>;
-// export type ContentBlock = Extract<PageBlock, { __typename: 'PageBlocksContent' }>;
-// export type TestimonialBlock = Extract<PageBlock, { __typename: 'PageBlocksTestimonial' }>;
-// export type VideoBlock = Extract<PageBlock, { __typename: 'PageBlocksVideo' }>;
-// export type SplitBlock = Extract<PageBlock, { __typename: 'PageBlocksSplit' }>;
+export const getDeliveryMethods = async () => {
+  const result = await client.queries.delivery_methodsConnection();
 
-// export type CmsConfigNav = NonNullable<NonNullable<CmsConfig['nav']>[number]>;
-// export type CmsConfigContactLink = NonNullable<NonNullable<CmsConfig['contactLinks']>[number]>;
-// export type CmsConfigSeo = NonNullable<CmsConfig['seo']>;
+  const deliveryMethods = result.data.delivery_methodsConnection.edges?.flatMap(
+    (edge) => (edge?.node ? [edge.node] : []),
+  );
 
-// export type Action = NonNullable<NonNullable<HeroBlock['actions']>[number]>;
-// export type ImageField = NonNullable<HeroBlock['image']>;
-// export type FeatureItem = NonNullable<NonNullable<FeaturesBlock['items']>[number]>;
-// export type StatItem = NonNullable<NonNullable<StatsBlock['stats']>[number]>;
-// export type TestimonialItem = NonNullable<NonNullable<TestimonialBlock['testimonials']>[number]>;
+  return deliveryMethods ?? [];
+};
 
-// /** Tina rich-text bodies are typed as `any` in the generated client; this is what `<TinaMarkdown>` expects. */
-// export type RichText = TinaRichTextContent;
+export type CmsConfig = Awaited<ReturnType<typeof getConfig>>["data"]["config"];
+export type CmsProduct = Awaited<ReturnType<typeof getProducts>>[number];
+export type CmsMaterial = Awaited<ReturnType<typeof getMaterials>>[number];
+export type CmsDeliveryMethod = Awaited<
+  ReturnType<typeof getDeliveryMethods>
+>[number];
