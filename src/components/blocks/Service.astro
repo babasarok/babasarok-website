@@ -121,10 +121,12 @@ const { enable, topTitle, title, service: items } = service;
 
 <script>
   import { ScrollSnapper } from "../../lib/scrollSnapper";
+  document.addEventListener("astro:page-load", () => {
+      const slider = document.getElementById("service-slider");
+      const indicator = document.getElementById("service-indicator");
+      if (slider && indicator) new ScrollSnapper(slider, indicator);
+  });
 
-  const slider = document.getElementById("service-slider");
-  const indicator = document.getElementById("service-indicator");
-  if (slider && indicator) new ScrollSnapper(slider, indicator);
 </script>
 
 <style>

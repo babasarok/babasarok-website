@@ -13,6 +13,7 @@ export default defineConfig({
   site: process.env.SITE_URL || `https://${process.env.VERCEL_URL}`,
   output: "static",
   redirects: { "/home": "/" },
+  prefetch: true,
   integrations: [mdx(), sitemap(), icon(), tina()],
   markdown: {
     // Rewrite Tina's root-absolute image refs so Astro optimizes them from

@@ -158,45 +158,33 @@ const mainMenu = (rawMenu.filter((item): item is NonNullable<typeof item> => ite
 </style>
 
 <script>
-	const navbar = document.getElementById("navbar");
-	const toggler = document.getElementById("navbar-toggler");
-	const collapse = document.getElementById("navbar-collapse");
+	document.addEventListener("astro:page-load", () => {
+		const navbar = document.getElementById("navbar");
+		const toggler = document.getElementById("navbar-toggler");
+		const collapse = document.getElementById("navbar-collapse");
 
-	// ── Scroll behaviour ───────────────────────────────────────────
-	function reactToScroll() {
-		if (!navbar) return;
-		navbar.classList.toggle(
-			"scrolled",
-			document.documentElement.scrollTop > 200,
-		);
-	}
-	window.addEventListener("scroll", reactToScroll, { passive: true });
-	reactToScroll();
-
-	// ── Mobile menu toggle with animation ─────────────────────────
-	toggler?.addEventListener("click", () => {
-		if (!collapse || !toggler) return;
-		const isOpen = collapse.style.maxHeight !== "" && collapse.style.maxHeight !== "0px";
-		if (isOpen) {
-			collapse.style.maxHeight = "0";
-			toggler.setAttribute("aria-expanded", "false");
-		} else {
-			collapse.style.maxHeight = collapse.scrollHeight + "px";
-			toggler.setAttribute("aria-expanded", "true");
+		// ── Scroll behaviour ───────────────────────────────────────────
+		function reactToScroll() {
+			if (!navbar) return;
+			navbar.classList.toggle(
+				"scrolled",
+				document.documentElement.scrollTop > 200,
+			);
 		}
-	});
+		window.addEventListener("scroll", reactToScroll, { passive: true });
+		reactToScroll();
 
-	// ── Smooth scroll for in-page anchors (home page) ─────────────
-	document.querySelectorAll<HTMLAnchorElement>("a.scroll").forEach((link) => {
-		link.addEventListener("click", (e) => {
-			if (!link.hash) return;
-			const target = document.querySelector<HTMLElement>(link.hash);
-			if (!target) return;
-			e.preventDefault();
-			window.scrollTo({ top: target.offsetTop, behavior: "smooth" });
-			// Close mobile menu after navigation
-			if (collapse) collapse.style.maxHeight = "0";
-			toggler?.setAttribute("aria-expanded", "false");
+		// ── Mobile menu toggle with animation ─────────────────────────
+		toggler?.addEventListener("click", () => {
+			if (!collapse || !toggler) return;
+			const isOpen = collapse.style.maxHeight !== "" && collapse.style.maxHeight !== "0px";
+			if (isOpen) {
+				collapse.style.maxHeight = "0";
+				toggler.setAttribute("aria-expanded", "false");
+			} else {
+				collapse.style.maxHeight = collapse.scrollHeight + "px";
+				toggler.setAttribute("aria-expanded", "true");
+			}
 		});
 	});
 </script>
