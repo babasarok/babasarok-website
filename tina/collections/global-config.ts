@@ -36,11 +36,6 @@ export const GlobalConfigCollection: Collection = {
       label: "Böngésző chrome szín (hex)",
     },
     {
-      type: "string",
-      name: "googleAnalytics",
-      label: "Google Analytics azonosító (pl. G-XXXXXXXX)",
-    },
-    {
       type: "object",
       name: "mainMenu",
       label: "Főmenü",

@@ -3,7 +3,6 @@
   "description": "Egyedi, kézzel készített babakelengye",
   "ogLocale": "hu_HU",
   "themeColor": "#F1D3B2",
-  "googleAnalytics": "",
   "blogPageURL": "blog",
   "mainMenu": [
     { "name": "Főoldal", "url": "/", "weight": 1 },

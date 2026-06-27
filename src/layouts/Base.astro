@@ -11,6 +11,7 @@ import favicon16 from '../assets/favicons/favicon-16x16.png?url';
 import favicon32 from '../assets/favicons/favicon-32x32.png?url';
 import appleTouchIcon from '../assets/favicons/apple-touch-icon.png?url';
 import safariPinnedTab from '../assets/favicons/safari-pinned-tab.svg?url';
+import MetaPixel from '../components/MetaPixel.astro';
 
 interface Props {
 	title: string;
@@ -35,7 +36,6 @@ const config = (await getConfig()).data?.config ?? null;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin);
 const ogLocale = config?.ogLocale ?? "hu_HU";
 const themeColor = config?.themeColor ?? "#F1D3B2";
-const ga = config?.googleAnalytics ?? "";
 ---
 
 <!doctype html>
@@ -73,22 +73,11 @@ const ga = config?.googleAnalytics ?? "";
 		<link rel="manifest" href="/site.webmanifest" />
 		<link rel="mask-icon" href={safariPinnedTab} color="#5bbad5" />
 
+
 		<!-- Fonts -->
 		<Font cssVariable="--font-base" preload />
 		<Font cssVariable="--font-heading" preload />
-
-		<!-- Google Analytics -->
-		{ga && (
-			<>
-				<script async src={`https://www.googletagmanager.com/gtag/js?id=${ga}`}></script>
-				<script define:vars={{ ga }}>
-					window.dataLayer = window.dataLayer || [];
-					function gtag() { dataLayer.push(arguments); }
-					gtag('js', new Date());
-					gtag('config', ga);
-				</script>
-			</>
-		)}
+		<MetaPixel />
 	</head>
 	<body>
 		<Header />
