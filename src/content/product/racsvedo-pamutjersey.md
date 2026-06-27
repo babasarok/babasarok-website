@@ -2,7 +2,7 @@
 title: Fonott rácsvédő (Pamutjersey)
 product_id: racsvedo-pamutjersey
 name: Fonott rácsvédő (Pamutjersey)
-icon: /assets/product/braids.svg
+icon: /src/assets/product/braids.svg
 priced_by_length: true
 price: 0
 materials:

@@ -16,8 +16,12 @@ const images = import.meta.glob<ImageMetadata>(
 export function resolveImage(
   path: string | null | undefined,
 ): ImageMetadata | undefined {
-  if (!path) return undefined;
-  let clean = path.replace(/^\/?(assets\/)?/, "");
+  if (!path) {
+    return undefined;
+  }
+
+  let clean = path.replace(/^\/?(src\/assets\/)?/, "");
+
   try {
     clean = decodeURIComponent(clean);
   } catch {

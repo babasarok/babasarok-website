@@ -12,7 +12,7 @@ materials:
   - material_path: content/material/waffle.md
 material_required_count: 2
 date: 2025-04-20T12:07:16.000Z
-thumbnail: /assets/Noémi-41.jpg
+thumbnail: /src/assets/Noémi-41.jpg
 table:
   - title: Takaró és Párna
     description: 7500Ft

@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
  * asset at build time (and serves them in dev), bridging the gap without
  * duplicating anything into `public`.
  */
-const ASSETS_DIR = fileURLToPath(new URL("../../assets", import.meta.url));
+const ASSETS_DIR = fileURLToPath(new URL("../../../assets", import.meta.url));
 
 const MIME: Record<string, string> = {
   ".jpg": "image/jpeg",

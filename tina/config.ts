@@ -30,13 +30,10 @@ export default defineConfig({
     outputFolder: "admin",
     publicFolder: "public",
   },
-  // Media lives in `src/assets` so Astro processes it (<Image>) instead of
-  // serving it raw from `public`. With publicFolder="src" + mediaRoot="assets",
-  // Tina uploads to `src/assets/...` and stores refs as `/assets/...`.
   media: {
     tina: {
-      mediaRoot: "assets",
-      publicFolder: "src",
+      mediaRoot: "src/assets",
+      publicFolder: "",
     },
   },
   // See docs on content modeling for more info on how to setup new content models: https://tina.io/docs/schema/

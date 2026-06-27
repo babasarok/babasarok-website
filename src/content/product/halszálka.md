@@ -2,7 +2,7 @@
 title: Fonott rácsvédő-halszálka
 categories: 5-ös fonat
 product_id: halszalka
-thumbnail: /assets/Noémi-25.jpg
+thumbnail: /src/assets/Noémi-25.jpg
 table:
   - title: 200cm
     description: 19.000Ft
@@ -27,6 +27,6 @@ table:
 shortDescription: 'Ez a különleges rácsvédő 5 szálból készül. Halszálka fonás, magassága kb. 20-21cm. Funkciója a többi rácsvédőhöz hasonlóan, hogy védje a babát vagy a baba fejét a rácsokhoz való ütközéstől. Dizájnos, rendkívül különleges fonat, igazán feldobja a kiságyat és a babaszobát.'
 ---
 
-![](/assets/IMG_8891.JPG)
+![](/src/assets/IMG_8891.JPG)
 
 ![](</IMG_9137 (1).jpg>)

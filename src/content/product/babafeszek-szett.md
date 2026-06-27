@@ -3,7 +3,7 @@ title: Babafészek szett
 product_id: babafeszek-szett
 categories: Kuckós biztonság az első pillanattól
 date: 2025-05-02T06:49:27.000Z
-thumbnail: /assets/IMG_3617.JPG
+thumbnail: /src/assets/IMG_3617.JPG
 table:
   - title: Normál méret 35x65cm
     description: 21.500Ft

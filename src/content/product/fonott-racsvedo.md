@@ -1,7 +1,7 @@
 ---
 title: Fonott Rácsvédő (Teddy/Velúr)
 product_id: racsvedo
-icon: /assets/product/braids.svg
+icon: /src/assets/product/braids.svg
 priced_by_length: true
 price: 0
 materials:
@@ -52,7 +52,7 @@ fields:
     regex: '^(\d+)$'
 categories: A baba biztonsága és stílusa egyben
 date: 2025-05-20T12:07:16.000Z
-thumbnail: /assets/Noémi-35.jpg
+thumbnail: /src/assets/Noémi-35.jpg
 table:
   - title: 200cm
     description: 12.800Ft
@@ -89,5 +89,5 @@ Fonataink háromféle anyagtípussal is kérhetők.
 
 Antiallergén töltete és mosóbarát jellege minden fonatnak garantálja a bababarát környezetet, míg strapabíró kialakítása hosszú távú használatot biztosít.
 
-| ![](/assets/Noémi-25.jpg) | ![](/assets/Noémi-18.jpg) | ![](/assets/Noémi-39.jpg) |
+| ![](/src/assets/Noémi-25.jpg) | ![](/src/assets/Noémi-18.jpg) | ![](/src/assets/Noémi-39.jpg) |
 | ----------------------- | ----------------------- | ------------------ |
