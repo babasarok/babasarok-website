@@ -1,5 +1,5 @@
 ---
-import type { GetStaticPaths } from "astro";
+import type { GetStaticPaths, ImageMetadata } from "astro";
 import { getCollection, render } from "astro:content";
 import { Icon } from "astro-icon/components";
 import Base from "../../layouts/Base.astro";
@@ -72,7 +72,7 @@ const shareLinks = [
 
     <div class="container">
       <div class="relative z-1 mb-12 text-center lg:mx-auto lg:w-10/12">
-        <h1>{title}</h1>
+        <h1 class="text-h1 mb-6">{title}</h1>
         {shortDescription && <p>{shortDescription}</p>}
 
         <div class="mt-7.5 mb-12 flex flex-col items-center">
@@ -84,7 +84,7 @@ const shareLinks = [
             <div class="bg-accent mt-17.5 mb-12.5 flex flex-wrap justify-center rounded-[20px] px-5 py-7.5 text-white max-sm:my-12.5 max-sm:mb-2.5 max-sm:flex-col max-sm:px-0 max-sm:py-7.5">
               {table.map((item) => (
                 <div class="w-1/3 py-2.5 max-md:w-1/2 max-sm:w-full max-sm:py-0 max-sm:not-last:mb-7.5">
-                  <h5 class="text-light mb-0">{item.title}</h5>
+                  <h5 class="text-h5 text-light">{item.title}</h5>
                   <p class="m-0">{item.description}</p>
                 </div>
               ))}
