@@ -2,16 +2,15 @@
   import Icon from "@iconify/svelte";
   import IconButton from "./common/IconButton.svelte";
   import type { HTMLAttributes } from "svelte/elements";
-  import Tooltip from "./common/Tooltip.svelte";
   import OrderItemMaterials from "./OrderItemMaterials.svelte";
   import OrderItemFields from "./OrderItemFields.svelte";
   import OrderItemPrice from "./OrderItemPrice.svelte";
-  import type { Product } from "../lib/Product.svelte";
+  import type { IProduct } from "@/lib/Product.svelte";
 
   interface Props extends HTMLAttributes<HTMLDivElement> {
     onClose: () => void;
-    product: Product;
-    onChange?: (product: Product) => void;
+    product: IProduct;
+    onChange?: (product: IProduct) => void;
   }
 
   let { onClose, product, onChange, class: className, ...rest }: Props = $props();
@@ -46,7 +45,7 @@
   </div>
   <div class="w-full h-0.5 bg-border"></div>
   <OrderItemFields {product} {onChange} />
-  {#each Array(product.materials.material_required_count ?? 1) as _, i}
+  {#each Array.from({ length: product.materials.material_required_count ?? 1 }) as _, i (i)}
     <OrderItemMaterials {product} {onChange} material_index={i} />
   {/each}
   <!-- <div class="w-full h-0.5 bg-border"></div>

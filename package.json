@@ -16,6 +16,9 @@
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx,.astro,.svelte",
     "format": "prettier --write ."
   },
+  "imports": {
+    "#global.css": "./src/styles/global.css"
+  },
   "dependencies": {
     "@astrojs/mdx": "^6.0.2",
     "@astrojs/rss": "^4.0.18",

@@ -6,12 +6,11 @@
   import { slide } from "svelte/transition";
   import Color from "./common/Color.svelte";
   import Switch from "./common/Switch.svelte";
-  import type { Field } from "../lib/types.svelte";
-  import type { Product } from "../lib/Product.svelte";
+  import type { IProduct, Field } from "@/lib/Product.svelte";
 
   interface Props {
-    product: Product;
-    onChange?: ((product: Product) => void) | undefined;
+    product: IProduct;
+    onChange?: ((product: IProduct) => void) | undefined;
   }
 
   const { product, onChange }: Props = $props();
@@ -30,7 +29,7 @@
         }
 
         const result = product;
-        const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
+        const fieldToUpdate = result.fields.find((f) => f.name === field.name);
         if (fieldToUpdate) {
           fieldToUpdate.value = {
             value: e.target.value,
@@ -41,8 +40,10 @@
       }}
     />
     {#if field.type === "input" && field.items}
+      {@const items = field.items.filter((item) => item != null)}
+      {@const id = v4()}
       <datalist {id}>
-        {#each field.items as item}
+        {#each items as item (item.label)}
           <option value={item.value}>{item.label}</option>
         {/each}
       </datalist>
@@ -51,12 +52,13 @@
 {/snippet}
 
 <!-- Generic fields -->
-{#each product.fields ?? [] as field}
+{#each product.fields as field (field.name)}
   <div class="flex flex-col gap-1">
     <p class="text-sm text-primary-500">{field.label || field.name}</p>
     <div class="flex gap-1 flex-wrap">
       {#if field.type === "radio" && "items" in field}
-        {#each field.items as item}
+        {@const items = field.items?.filter((item) => item != null)}
+        {#each items as item (item.label)}
           {@const selected = field.value?.value === item.value}
           {#snippet button(hasTooltip: boolean)}
             <Button
@@ -65,7 +67,7 @@
               {selected}
               onclick={() => {
                 const result = product;
-                const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
+                const fieldToUpdate = result.fields.find((f) => f.name === field.name);
                 if (fieldToUpdate) {
                   fieldToUpdate.value = {
                     value: item.value,
@@ -99,7 +101,7 @@
               selected={field.value?.is_custom ?? false}
               onclick={() => {
                 const result = product;
-                const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
+                const fieldToUpdate = result.fields.find((f) => f.name === field.name);
                 if (fieldToUpdate) {
                   fieldToUpdate.value = {
                     value: "",
@@ -115,6 +117,7 @@
         {/if}
         {@render Input(field)}
       {:else if field.type === "select" && "items" in field}
+        {@const items = field.items?.filter((item) => item != null)}
         <select
           value={field.value?.value}
           onchange={(e) => {
@@ -123,7 +126,7 @@
             }
 
             const result = product;
-            const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
+            const fieldToUpdate = result.fields.find((f) => f.name === field.name);
             if (fieldToUpdate) {
               fieldToUpdate.value = {
                 value: e.target.value,
@@ -134,7 +137,7 @@
           }}
         >
           <option value="" disabled selected>{field.placeholder || "Válassz egy opciót"}</option>
-          {#each field.items as item}
+          {#each items as item (item.label)}
             <option value={item.value}>
               {item.label || item.value}
             </option>
@@ -143,15 +146,16 @@
       {:else if field.type === "input"}
         {@render Input(field)}
       {:else if field.type === "color"}
+        {@const items = field.items?.filter((item) => item != null)}
         <div class="flex gap-1 flex-wrap">
-          {#each field.items as item}
+          {#each items as item (item.label)}
             {@const selected = field.value?.value === item.value}
             <Color
-              color={{ color_id: item.value, hex: item.value, label: item.label }}
+              color={{ color_id: item.value, hex: item.value, label: item.label ?? undefined }}
               {selected}
               onclick={(color_id) => {
                 const result = product;
-                const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
+                const fieldToUpdate = result.fields.find((f) => f.name === field.name);
                 if (fieldToUpdate) {
                   fieldToUpdate.value = {
                     value: color_id,
@@ -169,7 +173,7 @@
                 selected={field.value?.is_custom ?? false}
                 onclick={() => {
                   const result = product;
-                  const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
+                  const fieldToUpdate = result.fields.find((f) => f.name === field.name);
                   if (fieldToUpdate) {
                     fieldToUpdate.value = {
                       value: "",
@@ -195,7 +199,7 @@
               }
 
               const result = product;
-              const fieldToUpdate = result.fields?.find((f) => f.name === field.name);
+              const fieldToUpdate = result.fields.find((f) => f.name === field.name);
               if (fieldToUpdate) {
                 fieldToUpdate.value = {
                   value: e.target.checked ? "true" : "false",

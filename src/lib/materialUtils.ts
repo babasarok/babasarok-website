@@ -1,8 +1,7 @@
-import type { Product } from "./Product.svelte";
-import type { TinaResolvedProductMaterial } from "./types.svelte";
+import type { IProduct, CmsProductMaterial } from "./Product.svelte";
 
-function resolveValue(name: string, product: Pick<Product, "fields">): number | undefined {
-  const current = product.fields?.find((f) => f.name === name)?.value?.value;
+function resolveValue(name: string, product: Pick<IProduct, "fields">): number | undefined {
+  const current = product.fields.find((f) => f.name === name)?.value?.value;
 
   if (!current) {
     return undefined;
@@ -17,11 +16,11 @@ function resolveValue(name: string, product: Pick<Product, "fields">): number | 
   return val;
 }
 
-export function generateColorCount(
-  material: TinaResolvedProductMaterial,
-  product: Pick<Product, "fields">
+export function resolveColorCount(
+  material: CmsProductMaterial,
+  product: Pick<IProduct, "fields">
 ): number | undefined {
-  if (material.color_count === undefined) {
+  if (material?.color_count == null) {
     return 1;
   }
 

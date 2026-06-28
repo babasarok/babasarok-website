@@ -35,10 +35,14 @@ const { title, shortDescription, table = [] } = product.data;
 
 const gallery: GalleryImage[] = [];
 const thumb = resolveImage(product.data.thumbnail);
-if (thumb) gallery.push({ src: thumb, alt: title });
+if (thumb) {
+  gallery.push({ src: thumb, alt: title });
+}
 for (const entry of product.data.images ?? []) {
   const img = resolveImage(entry.image);
-  if (img) gallery.push({ src: img, alt: title, description: entry.description });
+  if (img) {
+    gallery.push({ src: img, alt: title, description: entry.description });
+  }
 }
 
 const shareUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;

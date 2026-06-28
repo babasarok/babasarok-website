@@ -6,12 +6,12 @@
   import Icon from "@iconify/svelte";
   import Color from "./common/Color.svelte";
   import { slide } from "svelte/transition";
-  import type { Product } from "../lib/Product.svelte";
+  import type { IProduct } from "@/lib/Product.svelte";
 
   interface Props {
-    product: Product;
+    product: IProduct;
     material_index?: number;
-    onChange?: ((product: Product) => void) | undefined;
+    onChange?: ((product: IProduct) => void) | undefined;
   }
 
   const { product, onChange, material_index = 0 }: Props = $props();
@@ -25,7 +25,8 @@
   const hasRequiredCounts = (
     requiredMaterialIds: string[],
     selectedCounts: Map<string, number>
-  ) => {
+  ): boolean => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const requiredCounts = new Map<string, number>();
     for (const materialId of requiredMaterialIds) {
       requiredCounts.set(materialId, (requiredCounts.get(materialId) ?? 0) + 1);
@@ -51,11 +52,12 @@
    * - Single-item combinations are ignored here.
    */
   const bannedMaterials = $derived.by(() => {
-    const selectedInOtherSlots = (product.materials.values ?? [])
+    const selectedInOtherSlots = product.materials.values
       .filter((value, index) => index !== material_index && !!value?.material_id)
       .map((value) => value?.material_id)
       .filter((materialId): materialId is string => !!materialId);
 
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const selectedCounts = new Map<string, number>();
     for (const materialId of selectedInOtherSlots) {
       selectedCounts.set(materialId, (selectedCounts.get(materialId) ?? 0) + 1);
@@ -63,11 +65,12 @@
 
     const pathToId = new Map(
       (product.materials.materials ?? []).map((material) => [
-        material.material_path,
-        material.material.material_id,
+        material?.material_path,
+        material?.material_id,
       ])
     );
 
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const banned = new Set<string>();
     for (const combination of product.materials?.banned_combinations ?? []) {
       const combinationMaterialIds =

@@ -110,6 +110,7 @@ export default defineConfig([
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/restrict-template-expressions": "off",
       "no-restricted-syntax": [
         "warn",
         {
@@ -132,6 +133,7 @@ export default defineConfig([
     },
     rules: {
       "unicorn/prefer-top-level-await": "off",
+      "@typescript-eslint/no-confusing-void-expression": "off",
     },
   },
 ]);

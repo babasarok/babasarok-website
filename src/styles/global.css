@@ -1,4 +1,5 @@
 @import "tailwindcss";
+
 @plugin "@tailwindcss/typography";
 
 /* Bootstrap 4-equivalent responsive container */
@@ -9,16 +10,19 @@
   margin-right: auto;
   margin-left: auto;
 
-  @media (min-width: 576px) {
+  @media (width >= 576px) {
     max-width: 540px;
   }
-  @media (min-width: 768px) {
+
+  @media (width >= 768px) {
     max-width: 720px;
   }
-  @media (min-width: 992px) {
+
+  @media (width >= 992px) {
     max-width: 960px;
   }
-  @media (min-width: 1200px) {
+
+  @media (width >= 1200px) {
     max-width: 1140px;
   }
 }
@@ -28,26 +32,23 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-bg-main: hsl(28.52, 49.59%, 97%);
-  --color-bg-light: hsl(28.52, 49.59%, 90.88%);
-  --color-bg-dark: hsl(28.52, 49.59%, 42%);
-  --color-primary: hsl(28.52, 49.59%, 75.88%);
-  --color-primary-dark: hsl(28.52, 49.59%, 65%);
-
+  --color-bg-main: hsl(28.52deg 49.59% 97%);
+  --color-bg-light: hsl(28.52deg 49.59% 90.88%);
+  --color-bg-dark: hsl(28.52deg 49.59% 42%);
+  --color-primary: hsl(28.52deg 49.59% 75.88%);
+  --color-primary-dark: hsl(28.52deg 49.59% 65%);
   --color-secondary: #f8f9fa;
   --color-secondary-dark: #e2e6ea;
-
   --color-headings: #28341d;
   --color-body: #7e7e8a;
 
   /* Brown accent (old SCSS $secondary) — used for the section-label dash. */
   --color-accent: #806548;
+
   /* Inactive slider dot color (old slick-dots). */
   --color-indicator: #c2c8cc;
-
   --color-light: #f8f9fa;
   --color-dark: #343a40;
-
   --font-base: "Poppins", sans-serif;
   --font-heading: "Yeseva One", cursive;
 
@@ -75,6 +76,7 @@
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(15px);
   }
@@ -85,6 +87,7 @@
   100% {
     transform: translateX(-50%);
   }
+
   50% {
     transform: translateX(-57%);
   }
@@ -94,6 +97,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -133,38 +137,48 @@ body {
     line-height: 1.2;
     color: var(--color-headings);
   }
+
   h1 {
     font-size: 60px;
   }
+
   h2 {
     font-size: 50px;
   }
+
   h3 {
     font-size: 30px;
   }
+
   h4 {
     font-size: 25px;
   }
+
   h5 {
     font-size: 22px;
   }
+
   h6 {
     font-size: 16px;
   }
 
-  @media (max-width: 575px) {
+  @media (width <= 575px) {
     p {
       font-size: 1rem;
     }
+
     h1 {
       font-size: 2.25rem;
     }
+
     h2 {
       font-size: 1.9rem;
     }
+
     h3 {
       font-size: 1.75rem;
     }
+
     h4 {
       font-size: 1.5rem;
     }

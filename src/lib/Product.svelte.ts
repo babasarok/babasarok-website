@@ -8,11 +8,12 @@ export interface ValueWithError {
   error?: string | undefined;
 }
 
-type CmsField = NonNullable<CmsProduct["fields"]>[number];
-type CmsProductMaterial = NonNullable<CmsProduct["materials"]>;
+export type CmsField = NonNullable<CmsProduct["fields"]>[number];
+export type CmsProductMaterials = NonNullable<CmsProduct["materials"]>;
+export type CmsProductMaterial = NonNullable<CmsProductMaterials["materials"]>[number];
 
 export type Field = CmsField & { value?: ValueWithError | undefined };
-export type ProductMaterials = CmsProductMaterial & {
+export type ProductMaterials = CmsProductMaterials & {
   values: Array<ProductMaterialValue | undefined>;
 };
 

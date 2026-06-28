@@ -1,4 +1,4 @@
-<script module lang="ts">
+<script lang="ts">
   import Icon from "@iconify/svelte";
   import OrderItem from "./OrderItem.svelte";
   import { fade } from "svelte/transition";
@@ -11,15 +11,16 @@
   import OrderDelivery from "./OrderDelivery.svelte";
   import type { CmsConfig, CmsDeliveryMethod, CmsMaterial, CmsProduct } from "@/lib/data";
   import type { IProduct } from "@/lib/Product.svelte";
+  import { v4 } from "uuid";
 
   interface Props {
-    products: CmsProduct[];
-    deliveryMethods: CmsDeliveryMethod[];
-    materials: CmsMaterial[];
+    products: Record<string, CmsProduct>;
+    deliveryMethods: Record<string, CmsDeliveryMethod>;
+    materials: Record<string, CmsMaterial>;
     config: CmsConfig;
   }
 
-  const { products: productsInfo, deliveryMethods, materials, config: params }: Props = $props();
+  let { products: productInfo, deliveryMethods, materials, config: params }: Props = $props();
 
   let error: string | null = $state(null);
   let success: string | null = $state(null);
@@ -61,7 +62,9 @@
       }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const deliveryMethodData = deliveryMethods?.[deliveryMethod];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!deliveryMethodData) {
       error = "Kérem, válassz egy szállítási módot.";
       return;
@@ -125,12 +128,12 @@
 
     formData.append(
       "szallitasimod",
-      `${serializedData.szállítási_mód.név} (${serializedData.szállítási_mód.ár?.toString() ?? ""} Ft)`
+      `${serializedData.szállítási_mód.név} (${serializedData.szállítási_mód.ár.toString()} Ft)`
     );
     formData.append("uzenet", message);
     formData.append(
       "ar",
-      `${serializedData.ár.összár} Ft ${serializedData.ár.nem_teljes_ár ? "(nem teljes ár)" : ""}`
+      `${serializedData.ár.összár.toString()} Ft ${serializedData.ár.nem_teljes_ár ? "(nem teljes ár)" : ""}`
     );
     sending = true;
     try {
@@ -139,10 +142,12 @@
         body: formData,
       });
 
-      const result = await res.json();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+      const result: any = await res.json();
 
       if (!res.ok) {
-        error = `Hiba történt az árajánlatkérés elküldése közben. Kérlek, próbáld meg újra később. (${result.message})`;
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+        error = `Hiba történt az árajánlatkérés elküldése közben. Kérlek, próbáld meg újra később. (${result?.message ?? "Ismeretlen hiba"})`;
         console.log("Failed to submit order", result);
         sending = false;
         return;
@@ -228,7 +233,7 @@
             </IconButton>
           </div>
           <div class="flex-1 overflow-auto flex flex-col gap-2">
-            {#each Object.values(productInfo || {}).sort( (a, b) => a.title.localeCompare(b.title) ) as product}
+            {#each Object.values(productInfo).toSorted( (a, b) => a.title.localeCompare(b.title) ) as product (product.product_id)}
               {@const addedCount = products.reduce(
                 (count, p) => (p.title === product.title ? count + 1 : count),
                 0
@@ -237,12 +242,25 @@
                 type="button"
                 class="flex font-normal w-full justify-between items-center gap-4 p-1 px-4 rounded hover:bg-border transition-all"
                 onclick={() => {
-                  const snapshot = $state.snapshot(product);
-                  products.splice(0, 0, sanitizeItem(new Product(snapshot)));
+                  const clone = structuredClone(product);
+                  products.splice(
+                    0,
+                    0,
+                    sanitizeItem({
+                      ...clone,
+                      uuid: v4(),
+                      count: 1,
+                      fields: clone.fields?.filter((f) => f != null) ?? [],
+                      materials: {
+                        ...clone.materials,
+                        values: [],
+                      },
+                    })
+                  );
                 }}
               >
                 <div class="flex flex-col text-start">
-                  {product.title}{addedCount > 0 ? ` (${addedCount})` : ""}
+                  {product.title}{addedCount > 0 ? ` (${addedCount.toString()})` : ""}
                 </div>
                 <Icon icon="mdi:add" class="shrink-0" />
               </button>
@@ -270,7 +288,7 @@
               onChange={(updatedProduct) => {
                 const index = products.findIndex((p) => p.uuid === updatedProduct.uuid);
                 if (index !== -1) {
-                  ((products[index] = sanitizeItem(updatedProduct)), false);
+                  products[index] = updatedProduct;
                 }
               }}
             />

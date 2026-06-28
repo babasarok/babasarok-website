@@ -1,6 +1,6 @@
-import { calculatePriceForItem } from "./lib/priceUtils";
-import type { Product } from "./lib/Product.svelte";
-import type { TinaDeliveryMethodResolved } from "./lib/types.svelte";
+import { calculatePriceForItem } from "@/lib/priceUtils";
+import type { IProduct } from "@/lib/Product.svelte";
+import type { CmsDeliveryMethod } from "./data";
 
 export interface ReadableMaterialData {
   név: string;
@@ -50,7 +50,7 @@ export interface ReadableProductData {
 }
 
 export function generatePriceData(
-  product: Product
+  product: IProduct
 ): ReadablePriceData | ReadableLengthBasedPriceData {
   const price = calculatePriceForItem(product);
   if (price.priced_by_length) {
@@ -63,7 +63,7 @@ export function generatePriceData(
       })),
       egységár: price.unitPrice,
       összár: price.totalPrice,
-      kedvezmény: price.discount ? `${(1 - price.discount) * 100}%` : undefined,
+      kedvezmény: price.discount ? `${((1 - price.discount) * 100).toFixed(2)}%` : undefined,
       hossz_méter: price.length,
       méterár: price.per_meter_price,
       nem_teljes_ár: price.indeterminate,
@@ -79,36 +79,35 @@ export function generatePriceData(
     })),
     egységár: price.unitPrice,
     összár: price.totalPrice,
-    kedvezmény: price.discount ? `${(1 - price.discount) * 100}%` : undefined,
+    kedvezmény: price.discount ? `${((1 - price.discount) * 100).toFixed(2)}%` : undefined,
     nem_teljes_ár: price.indeterminate,
   };
 }
 
-export function generateProductData(product: Product) {
-  const serialised = product.serialise();
-
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function generateProductData(product: IProduct) {
   const result: ReadableProductData = {
-    név: serialised.title,
+    név: product.title,
     kedvezmény:
-      serialised.discount &&
-      (serialised.discount_valid_until ? new Date() < serialised.discount_valid_until : true)
-        ? serialised.discount
+      product.discount &&
+      (product.discount_valid_until ? new Date() < new Date(product.discount_valid_until) : true)
+        ? product.discount
         : undefined,
     ár: generatePriceData(product),
-    darabszám: serialised.count,
+    darabszám: product.count,
   };
 
   if (
-    serialised.materials.materials.length > 0 &&
-    serialised.materials.material_required_count > 0
+    (product.materials.materials?.length ?? 0) > 0 &&
+    (product.materials.material_required_count ?? 0) > 0
   ) {
-    result.anyagok = serialised.materials.values.map((mv) => {
-      const material = serialised.materials.materials.find(
-        (m) => m.material.material_id === mv?.material_id
+    result.anyagok = product.materials.values.map((mv) => {
+      const material = product.materials.materials?.find(
+        (m) => m?.material_path.material_id === mv?.material_id
       );
       const res: ReadableMaterialData = {
-        név: material?.material.label ?? mv?.material_id ?? "Ismeretlen anyag",
-        ár: material?.price,
+        név: material?.material_path.label ?? mv?.material_id ?? "Ismeretlen anyag",
+        ár: material?.price ?? undefined,
       };
 
       if (mv?.custom_color) {
@@ -117,7 +116,7 @@ export function generateProductData(product: Product) {
       } else {
         res.színek =
           mv?.colors.map(
-            (x) => material?.material.colors?.find((c) => c.color_id === x)?.label ?? x
+            (x) => material?.material_path.colors?.find((c) => c?.color_id === x)?.label ?? x
           ) ?? [];
       }
 
@@ -125,28 +124,31 @@ export function generateProductData(product: Product) {
     });
   }
 
-  result.opciók = serialised.fields
+  result.opciók = product.fields
     .filter((f) => !("optional" in f) || !f.optional)
     .map((f) => {
       const label =
-        "items" in f ? f.items.find((option) => option.value === f.value?.value)?.label : "";
+        "items" in f
+          ? f.items?.find((option) => option?.value === f.value?.value)?.label
+          : undefined;
       return {
-        név: f.label ?? f.name,
-        érték: `${label ?? f.value?.value}`,
+        név: f.label,
+        érték: label ?? f.value?.value ?? "",
         egyedi: f.value?.is_custom ?? false,
-        ár: f.length_based_pricing_source ? 0 : f.price, // length based pricing options don't have a price here, as the price is calculated in the price data
+        ár: f.length_based_pricing_source ? 0 : (f.price ?? undefined), // length based pricing options don't have a price here, as the price is calculated in the price data
       };
     });
 
   return result;
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function generateFormData(
   name: string,
   email: string,
   phone: string,
-  deliveryMethod: TinaDeliveryMethodResolved,
-  products: Product[]
+  deliveryMethod: CmsDeliveryMethod,
+  products: IProduct[]
 ) {
   const productData = products.map((p) => generateProductData(p));
   return {

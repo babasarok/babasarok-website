@@ -2,12 +2,12 @@
   import Icon from "@iconify/svelte";
   import Tooltip from "./common/Tooltip.svelte";
   import { calculatePriceForItem } from "@/lib/priceUtils";
-  import type { Product } from "@/lib/Product.svelte";
+  import type { IProduct } from "@/lib/Product.svelte";
   import IconButton from "./common/IconButton.svelte";
 
   interface Props {
-    product: Product;
-    onChange?: ((product: Product) => void) | undefined;
+    product: IProduct;
+    onChange?: ((product: IProduct) => void) | undefined;
   }
 
   const { product, onChange }: Props = $props();

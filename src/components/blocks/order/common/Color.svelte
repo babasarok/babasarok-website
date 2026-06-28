@@ -37,7 +37,10 @@
       {#if color.image}
         <img src={color.image} alt="" class="block size-full rounded-full object-cover" />
       {:else}
-        <div class="rounded-full h-full w-full" style={`background-color: ${color.hex}`}></div>
+        <div
+          class="rounded-full h-full w-full"
+          style={`background-color: ${color.hex ?? ""}`}
+        ></div>
       {/if}
     </div>
   </IconButton>

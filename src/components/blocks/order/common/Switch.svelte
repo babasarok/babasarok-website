@@ -9,10 +9,10 @@
 <input type="checkbox" class={["toggle", className]} {...rest} />
 
 <style lang="postcss">
-  @reference "../../styles/global.css";
+  @reference "#global.css";
+
   .toggle {
     appearance: none;
-    -webkit-appearance: none;
     width: 2.75rem;
     height: 1.5rem;
     border-radius: 9999px;
@@ -36,7 +36,7 @@
     height: 1.25rem;
     border-radius: 9999px;
     background: #fff;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 20%);
     transition: transform 0.2s ease;
   }
 
@@ -51,7 +51,7 @@
 
   .toggle:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(var(--color-primary-500), 0.35);
+    box-shadow: 0 0 0 3px rgb(var(--color-primary-500) / 35%);
   }
 
   .toggle:disabled {
