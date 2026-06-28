@@ -10,7 +10,6 @@ import { ProductCollection } from "./collections/product";
 import { MaterialCollection } from "./collections/material";
 import { DeliveryMethodCollection } from "./collections/delivery-method";
 import { ContactCollection } from "./collections/contact";
-// import { HtmlFieldPlugin, MarkdownFieldPlugin } from "react-tinacms-editor";
 
 // Your hosting provider likely exposes this as an environment variable
 const branch =
