@@ -4,26 +4,37 @@ import { Image } from "astro:assets";
 import { Icon } from "astro-icon/components";
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
-import { getConfig } from "../lib/data";
+import { getConfig, getDeliveryMethods, getMaterials, getProducts } from "../lib/data";
 import locationIcon from "../assets/images/contact/location.svg";
 import phoneIcon from "../assets/images/contact/phone.svg";
 import socialIcon from "../assets/images/contact/social-media.svg";
+import OrderForm from "@/components/blocks/order/OrderForm.svelte";
 
 const [entry] = await getCollection("contact");
 const { Content } = await render(entry);
 const { title, breadcrumb } = entry.data;
 
-const config = (await getConfig()).data?.config ?? null;
-const address = config?.address ?? null;
-const social = [...(config?.social ?? [])]
+const config = (await getConfig()).data.config;
+const address = config.address ?? null;
+const social = [...(config.social ?? [])]
   .filter((s): s is NonNullable<typeof s> => !!s && !!s.icon)
-  .sort((a, b) => (a.weight ?? 99) - (b.weight ?? 99));
+  .toSorted((a, b) => (a.weight ?? 99) - (b.weight ?? 99));
+
+const products = await getProducts();
+const materials = await getMaterials();
+const deliveryMethods = await getDeliveryMethods();
 ---
 
 <Base title={breadcrumb ?? title}>
   <PageHeader title={title} breadcrumb={breadcrumb ?? title} no-shapes />
 
-  {/* TODO: <order-form> (Svelte custom element) — migrated separately. */}
+  <OrderForm
+    products={products}
+    materials={materials}
+    deliveryMethods={deliveryMethods}
+    config={config}
+    client:load
+  />
 
   <section class="py-12.5">
     <div class="container">

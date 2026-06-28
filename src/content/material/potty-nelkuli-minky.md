@@ -9,6 +9,4 @@ colors:
   - color_id: "#20"
     label: "Bézs "
     image: /src/assets/IMG_4084.jpeg
-  - {}
-  - {}
 ---

@@ -14,9 +14,11 @@
 import { requestWithMetadata } from "@tinacms/astro/data";
 import client from "../../tina/__generated__/client";
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const getConfig = () =>
   requestWithMetadata(client.queries.config({ relativePath: "config.json" }));
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const getProducts = async () => {
   const result = await client.queries.productConnection();
 
@@ -24,9 +26,10 @@ export const getProducts = async () => {
     edge?.node ? [edge.node] : []
   );
 
-  return products?.sort((a, b) => a.title.localeCompare(b.title)) ?? [];
+  return products?.toSorted((a, b) => a.title.localeCompare(b.title)) ?? [];
 };
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const getMaterials = async () => {
   const result = await client.queries.product_materialsConnection();
 
@@ -34,9 +37,10 @@ export const getMaterials = async () => {
     edge?.node ? [edge.node] : []
   );
 
-  return materials?.sort((a, b) => a.label.localeCompare(b.label)) ?? [];
+  return materials?.toSorted((a, b) => a.label.localeCompare(b.label)) ?? [];
 };
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const getDeliveryMethods = async () => {
   const result = await client.queries.delivery_methodsConnection();
 

@@ -6,5 +6,49 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[svelte]": {
     "editor.defaultFormatter": "svelte.svelte-vscode"
+  },
+  "stylelint.configFile": "stylelint.config.mjs",
+  "stylelint.packageManager": "pnpm",
+  "stylelint.validate": ["css", "postcss", "astro", "svelte", "html", "vue"],
+  "stylelint.reportNeedlessDisables": true,
+  "stylelint.reportInvalidScopeDisables": true,
+  "stylelint.reportDescriptionlessDisables": true,
+  "todo-tree.highlights.useColourScheme": true,
+  "todo-tree.highlights.foregroundColourScheme": [
+    "white",
+    "black",
+    "black",
+    "white",
+    "white",
+    "white",
+    "black"
+  ],
+  "todo-tree.highlights.backgroundColourScheme": [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "blue",
+    "indigo",
+    "violet"
+  ],
+  "codemetrics.basics.DecorationModeEnabled": false,
+  "css.customData": [".vscode/css/custom-data/tailwind.json"],
+  "extensions": {
+    "recommendations": [
+      "astro-build.astro-vscode",
+      "streetsidesoftware.code-spell-checker",
+      "kisstkondoros.vscode-codemetrics",
+      "dbaeumer.vscode-eslint",
+      "davidanson.vscode-markdownlint",
+      "esbenp.prettier-vscode",
+      "timonwong.shellcheck",
+      "gruntfuggly.todo-tree",
+      "editorconfig.editorconfig",
+      "jasonnutter.vscode-codeowners",
+      "bradlc.vscode-tailwindcss",
+      "stylelint.vscode-stylelint"
+    ],
+    "unwantedRecommendations": []
   }
 }

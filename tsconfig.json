@@ -4,6 +4,9 @@
   "exclude": ["dist", "tina/__generated__", "tina/collections", "tina/config.ts"],
   "compilerOptions": {
     "strictNullChecks": true,
-    "exactOptionalPropertyTypes": true
+    "exactOptionalPropertyTypes": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   }
 }

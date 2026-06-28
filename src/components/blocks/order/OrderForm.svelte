@@ -1,8 +1,6 @@
 <script module lang="ts">
   import Icon from "@iconify/svelte";
   import OrderItem from "./OrderItem.svelte";
-  import { productValidator } from "../../tina/productTypes";
-  import { materialValidator } from "../../tina/materialTypes";
   import { fade } from "svelte/transition";
   import IconButton from "./common/IconButton.svelte";
   import Button from "./common/Button.svelte";
@@ -10,16 +8,15 @@
     TinaDeliveryMethodResolved,
     TinaProductResolved,
     TinaResolvedMaterial,
-  } from "../lib/types.svelte";
+  } from "@/lib/types.svelte";
   import z from "zod";
-  import { isItemValid, validateItem } from "../lib/validation";
-  import { Product } from "../lib/Product.svelte";
-  import { sanitizeItem } from "../lib/validation";
+  import { isItemValid, validateItem } from "@/lib/validation";
+  import { Product } from "@/lib/Product.svelte";
+  import { sanitizeItem } from "@/lib/validation";
   import Masonry from "svelte-bricks";
-  import { generateFormData } from "../lib/emailConverter";
-  import { deliveryMethodValidator } from "../../tina/deliveryMethodTypes";
+  import { generateFormData } from "@/lib/emailConverter";
   import OrderDelivery from "./OrderDelivery.svelte";
-  import params from "../../config/_default/params.json";
+  import type { CmsConfig, CmsDeliveryMethod, CmsMaterial, CmsProduct } from "@/lib/data";
 
   export const deliveryMethodsResponseValidator = z
     .object({ pages: z.array(deliveryMethodValidator.extend({ path: z.string() })) })
@@ -160,6 +157,15 @@
   });
   main();
   let sending = $state(false);
+
+  interface Props {
+    products: CmsProduct[];
+    deliveryMethods: CmsDeliveryMethod[];
+    materials: CmsMaterial[];
+    config: CmsConfig;
+  }
+
+  const { products, deliveryMethods, materials, config: params }: Props = $props();
 </script>
 
 <form
