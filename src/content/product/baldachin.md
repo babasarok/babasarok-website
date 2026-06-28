@@ -35,8 +35,6 @@ table:
     description: 18000Ft
   - title: 2db pompom
     description: +3000Ft
-shortDescription: 'A finom, puha tüllből készült baldachin eleganciát és modern vonalat csempész a babaszobába.'
+shortDescription: "A finom, puha tüllből készült baldachin eleganciát és modern vonalat csempész a babaszobába."
 can_be_ordered: true
-
 ---
-

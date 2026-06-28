@@ -48,8 +48,7 @@ export const ServiceCollection: Collection = {
       list: true,
       ui: {
         itemProps: (item) => ({
-          label:
-            item?.content?.split("\n")[0]?.replace(/^#+\s*/, "") ?? "Termék",
+          label: item?.content?.split("\n")[0]?.replace(/^#+\s*/, "") ?? "Termék",
         }),
       },
       fields: [

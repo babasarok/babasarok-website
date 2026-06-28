@@ -19,6 +19,4 @@ shortDescription: >+
   pelenkák, textilpelusok, cumik mindig kéznél vannak, mégsem lesz rendetlenség.
   Szép, hasznos, és helyet spórol!
 can_be_ordered: true
-
 ---
-

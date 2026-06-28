@@ -33,9 +33,9 @@ date: 2025-04-27T06:49:27.000Z
 thumbnail: /src/assets/polish_save (1).JPG
 table:
   - title: 2 ágú cumi és rágcsalánc egyben
-    description: '8500'
+    description: "8500"
   - title: Rágcsalánc
-    description: '6500'
+    description: "6500"
   - title: Cumilánc névvel
     description: 3500Ft
 shortDescription: >-
@@ -44,6 +44,4 @@ shortDescription: >-
   segítenek enyhíteni a fogzás okozta kellemetlenségeket is.  Stílusos és
   praktikus!
 can_be_ordered: true
-
 ---
-

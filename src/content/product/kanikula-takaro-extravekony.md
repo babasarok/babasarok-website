@@ -11,4 +11,3 @@ fields:
     type: color
     allow_custom_value: true
 ---
-

@@ -11,10 +11,7 @@ import BlogCard from "../ui/BlogCard.astro";
 const { enable, topTitle, title, buttonName, buttonTarget } = blogSection;
 
 const posts = (await getCollection("blog"))
-  .sort(
-    (a, b) =>
-      (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0),
-  )
+  .sort((a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0))
   .slice(0, 3);
 
 const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
@@ -25,12 +22,7 @@ const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
     <section id="blog" class="relative mb-7.5 py-25">
       {/* Rotating decorative shape (desktop only) */}
       <div class="pointer-events-none absolute top-[11%] right-[12%] -z-10 h-75 w-75 max-lg:hidden">
-        <img
-          src={blogShape}
-          alt=""
-          aria-hidden="true"
-          class="h-full w-full animate-rotate-slow"
-        />
+        <img src={blogShape} alt="" aria-hidden="true" class="animate-rotate-slow h-full w-full" />
       </div>
 
       <div class="container">
@@ -38,19 +30,12 @@ const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
         <div class="mb-12 flex flex-wrap items-end">
           <div class="w-1/2 max-lg:w-full">
             <div>
-              <TopTitle class="block whitespace-pre-line text-dark sm:text-xl">
-                {topTitle}
-              </TopTitle>
+              <TopTitle class="text-dark block whitespace-pre-line sm:text-xl">{topTitle}</TopTitle>
               <Markdown of={title} />
             </div>
           </div>
           <div class="flex w-1/2 justify-end max-lg:hidden">
-            <Button
-              href={buttonHref}
-              variant="outline-secondary"
-              size="lg"
-              class="m-3"
-            >
+            <Button href={buttonHref} variant="outline-secondary" size="lg" class="m-3">
               {buttonName}
             </Button>
           </div>

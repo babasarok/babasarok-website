@@ -58,10 +58,7 @@ export function copyIfChanged(from: string, to: string): boolean {
   if (fs.existsSync(to)) {
     const a = fs.statSync(from);
     const b = fs.statSync(to);
-    if (
-      a.size === b.size &&
-      fs.readFileSync(from).equals(fs.readFileSync(to))
-    ) {
+    if (a.size === b.size && fs.readFileSync(from).equals(fs.readFileSync(to))) {
       return false;
     }
   }
@@ -88,10 +85,7 @@ export function writeTextIfChanged(to: string, text: string): boolean {
  * Asset references
  * ------------------------------------------------------------------ */
 
-const ASSET_EXT_RE = new RegExp(
-  `\\.(${ASSET_EXTENSIONS.map((e) => e.slice(1)).join("|")})$`,
-  "i",
-);
+const ASSET_EXT_RE = new RegExp(`\\.(${ASSET_EXTENSIONS.map((e) => e.slice(1)).join("|")})$`, "i");
 
 export function looksLikeAsset(ref: string): boolean {
   return ASSET_EXT_RE.test(ref.split(/[?#]/)[0] ?? "");
@@ -123,12 +117,7 @@ export function findAssetRefs(text: string): string[] {
  */
 export function assetCandidates(value: string): string[] {
   const trimmed = value.trim();
-  if (
-    trimmed &&
-    !/[\n\r]/.test(trimmed) &&
-    looksLikeAsset(trimmed) &&
-    resolveOldAsset(trimmed)
-  ) {
+  if (trimmed && !/[\n\r]/.test(trimmed) && looksLikeAsset(trimmed) && resolveOldAsset(trimmed)) {
     return [trimmed];
   }
   return findAssetRefs(value);

@@ -1,0 +1,10 @@
+node_modules
+dist
+.astro
+package.json
+package-lock.json
+.npm
+old
+public/admin
+tina/tina-lock.json
+tina/__generated__

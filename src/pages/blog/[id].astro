@@ -9,7 +9,7 @@ import { resolveImage } from "../../lib/assets";
 
 export const getStaticPaths = (async () => {
   const posts = (await getCollection("blog")).sort(
-    (a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0),
+    (a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0)
   );
 
   return posts.map((post) => ({
@@ -47,28 +47,19 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
         <nav aria-label="breadcrumb" class="flex justify-center">
           <ol class="flex items-center whitespace-nowrap">
             <li>
-              <a class="text-accent no-underline hover:underline" href="/">
-                Főoldal
-              </a>
+              <a class="text-accent no-underline hover:underline" href="/"> Főoldal </a>
             </li>
             <li class="before:mx-2 before:content-['-']">
-              <a class="text-accent no-underline hover:underline" href="/blog">
-                Összes
-              </a>
+              <a class="text-accent no-underline hover:underline" href="/blog"> Összes </a>
             </li>
-            <li
-              class="text-accent before:mx-2 before:content-['-']"
-              aria-current="page"
-            >
+            <li class="text-accent before:mx-2 before:content-['-']" aria-current="page">
               {title}
             </li>
           </ol>
         </nav>
       </div>
 
-      <ul
-        class="mt-6 flex flex-wrap justify-center gap-x-7.5 gap-y-2 text-body"
-      >
+      <ul class="text-body mt-6 flex flex-wrap justify-center gap-x-7.5 gap-y-2">
         {
           date && (
             <li class="flex items-center gap-2">

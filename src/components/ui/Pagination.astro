@@ -8,8 +8,7 @@ interface Props {
 
 const { currentPage, lastPage, basePath } = Astro.props;
 
-const pageUrl = (n: number) =>
-  n === 1 ? `${basePath}/` : `${basePath}/page/${n}/`;
+const pageUrl = (n: number) => (n === 1 ? `${basePath}/` : `${basePath}/page/${n}/`);
 
 const links = Array.from({ length: lastPage }, (_, i) => {
   const n = i + 1;
@@ -37,7 +36,7 @@ if (currentPage < lastPage) {
                 idx === 0 && "rounded-l-[0.3rem]",
                 idx === links.length - 1 && "rounded-r-[0.3rem]",
                 link.active
-                  ? "z-10 border-primary bg-primary text-white"
+                  ? "border-primary bg-primary z-10 text-white"
                   : "text-primary hover:bg-bg-light",
               ]}
             >

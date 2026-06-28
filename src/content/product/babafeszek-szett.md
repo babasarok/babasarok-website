@@ -11,7 +11,7 @@ table:
     description: 23.000Ft
   - title: XXL méret 50x90cm
     description: 26.500Ft
-shortDescription: 'A babafészek szűk, ölelő formája anyaméhhez hasonló környezetet teremt, ami megnyugtatja a babát és segíti a pihentető alvást. A szett tartalmazza a babafészket, párnát és takarót – mindent, amire a kényelmes pihenéshez szükség van.'
+shortDescription: "A babafészek szűk, ölelő formája anyaméhhez hasonló környezetet teremt, ami megnyugtatja a babát és segíti a pihentető alvást. A szett tartalmazza a babafészket, párnát és takarót – mindent, amire a kényelmes pihenéshez szükség van."
 ---
 
 Beletartozik a [Babafészek](/product/babafeszek/) és a [Babatakaró szett](/product/babatakaro-szett/).

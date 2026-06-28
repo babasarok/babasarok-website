@@ -71,8 +71,7 @@ export const ProductCollection: Collection = {
       type: "boolean",
       name: "can_be_ordered",
       label: "Rendelhető",
-      description:
-        "Ha be van kapcsolva, ez a termék megjelenik a rendelési listában.",
+      description: "Ha be van kapcsolva, ez a termék megjelenik a rendelési listában.",
     },
     {
       type: "string",
@@ -175,8 +174,7 @@ export const ProductCollection: Collection = {
       type: "number",
       name: "discount",
       label: "Kedvezmény %",
-      description:
-        "Opcionális kedvezmény százalékban. A teljes árra lesz alkalmazva.",
+      description: "Opcionális kedvezmény százalékban. A teljes árra lesz alkalmazva.",
     },
     {
       type: "datetime",
@@ -257,9 +255,7 @@ export const ProductCollection: Collection = {
             itemProps: (item) => {
               return {
                 label:
-                  item?.materials
-                    ?.map((m: any) => m.material_path)
-                    .join(", ") || "Új kombináció",
+                  item?.materials?.map((m: any) => m.material_path).join(", ") || "Új kombináció",
               };
             },
           },
@@ -331,10 +327,7 @@ export const ProductCollection: Collection = {
                 NumberProps,
                 Parameters<typeof ReferenceField>[0]
               >;
-              const length_based_pricing_source = getValue(
-                props,
-                "length_based_pricing_source",
-              );
+              const length_based_pricing_source = getValue(props, "length_based_pricing_source");
               if (length_based_pricing_source) {
                 return null;
               }
@@ -354,8 +347,7 @@ export const ProductCollection: Collection = {
         {
           type: "string",
           name: "label",
-          description:
-            "A mező megjelenítendő neve, ami a felhasználó számára látható.",
+          description: "A mező megjelenítendő neve, ami a felhasználó számára látható.",
           label: "Mező név",
           isTitle: true,
           required: true,
@@ -435,7 +427,7 @@ export const ProductCollection: Collection = {
                 component(props) {
                   const length_based_pricing_source = getValue(
                     props,
-                    "../../length_based_pricing_source",
+                    "../../length_based_pricing_source"
                   );
                   if (length_based_pricing_source) {
                     return null;
@@ -465,17 +457,12 @@ export const ProductCollection: Collection = {
         {
           type: "boolean",
           name: "allow_custom_value",
-          description:
-            "Ha engedélyezve van, a felhasználó egyedi értéket is megadhat a mezőhöz.",
+          description: "Ha engedélyezve van, a felhasználó egyedi értéket is megadhat a mezőhöz.",
           label: "Egyedi érték engedélyezése",
           ui: {
             component(props) {
               const typeValue = getValue(props, "type");
-              if (
-                typeValue != "select" &&
-                typeValue != "radio" &&
-                typeValue != "color"
-              ) {
+              if (typeValue != "select" && typeValue != "radio" && typeValue != "color") {
                 return null;
               }
 
@@ -486,8 +473,7 @@ export const ProductCollection: Collection = {
         {
           type: "string",
           name: "regex",
-          description:
-            "Opcionális reguláris kifejezés, aminek a mező értékének meg kell felelnie.",
+          description: "Opcionális reguláris kifejezés, aminek a mező értékének meg kell felelnie.",
           label: "Érvényességi minta (regex)",
         },
         {

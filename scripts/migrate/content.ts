@@ -16,13 +16,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { parse as parseYaml } from "yaml";
 import matter from "gray-matter";
-import {
-  NEW,
-  OLD,
-  SECTIONS,
-  SECTION_DATA_FILE,
-  type SectionName,
-} from "./config.ts";
+import { NEW, OLD, SECTIONS, SECTION_DATA_FILE, type SectionName } from "./config.ts";
 import {
   assetCandidates,
   log,
@@ -61,12 +55,10 @@ function rewriteAssets(value: unknown, unresolved: Set<string>): unknown {
     }
     return out;
   }
-  if (Array.isArray(value))
-    return value.map((v) => rewriteAssets(v, unresolved));
+  if (Array.isArray(value)) return value.map((v) => rewriteAssets(v, unresolved));
   if (value && typeof value === "object") {
     const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value))
-      out[k] = rewriteAssets(v, unresolved);
+    for (const [k, v] of Object.entries(value)) out[k] = rewriteAssets(v, unresolved);
     return out;
   }
   return value;
@@ -89,10 +81,7 @@ function migrateSection(section: SectionName, stats: ContentStats): void {
     typeof (data as Record<string, unknown>)[bodyField] === "string"
   ) {
     // Split the body field out into the markdown body; rest is frontmatter.
-    const { [bodyField]: body, ...frontmatter } = data as Record<
-      string,
-      unknown
-    >;
+    const { [bodyField]: body, ...frontmatter } = data as Record<string, unknown>;
     const dest = path.join(NEW.sections, `${section}.md`);
     const text = matter.stringify(`${body as string}\n`, frontmatter);
     if (writeTextIfChanged(dest, text)) {
@@ -121,8 +110,7 @@ export function migrateContent(): ContentStats {
   for (const section of SECTIONS) migrateSection(section, stats);
 
   log.ok(`${stats.written} written, ${stats.unchanged} unchanged`);
-  if (stats.missingFiles.length)
-    log.warn(`Missing source data: ${stats.missingFiles.join(", ")}`);
+  if (stats.missingFiles.length) log.warn(`Missing source data: ${stats.missingFiles.join(", ")}`);
   if (stats.unresolved.size) {
     log.warn(`${stats.unresolved.size} asset ref(s) could not be resolved:`);
     for (const m of [...stats.unresolved].sort()) log.dim(`  ${m}`);

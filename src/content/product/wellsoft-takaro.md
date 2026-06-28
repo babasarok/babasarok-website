@@ -16,6 +16,4 @@ fields:
     allow_custom_value: true
 hidden_in_product_list: true
 can_be_ordered: true
-
-
 ---

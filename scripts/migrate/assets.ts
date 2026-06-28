@@ -87,11 +87,7 @@ function copyCuratedImages(stats: AssetStats): void {
   // Decorative SVGs/PNGs Hugo served statically (template `images/...` refs).
   // They land alongside the curated images under `src/assets/images/...`.
   for (const file of walk(OLD.staticImages)) {
-    const dest = path.join(
-      NEW.assets,
-      "images",
-      path.relative(OLD.staticImages, file),
-    );
+    const dest = path.join(NEW.assets, "images", path.relative(OLD.staticImages, file));
     if (copyIfChanged(file, dest)) {
       stats.copied++;
       log.dim(`+ /assets/images/${path.relative(OLD.staticImages, file)}`);

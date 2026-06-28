@@ -54,8 +54,7 @@ export const GET: APIRoute = ({ params }) => {
   if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
     return new Response("Not found", { status: 404 });
   }
-  const type =
-    MIME[path.extname(filePath).toLowerCase()] ?? "application/octet-stream";
+  const type = MIME[path.extname(filePath).toLowerCase()] ?? "application/octet-stream";
   return new Response(fs.readFileSync(filePath), {
     headers: { "Content-Type": type },
   });

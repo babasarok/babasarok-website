@@ -52,13 +52,7 @@ export const ASSET_PUBLIC_PREFIX = "/assets";
 
 /** Landing-page sections in render order (old/layouts/index.html).
  *  `resume` and `testimonial` are intentionally dropped — unused on the new site. */
-export const SECTIONS = [
-  "hero",
-  "service",
-  "about",
-  "product",
-  "blog",
-] as const;
+export const SECTIONS = ["hero", "service", "about", "product", "blog"] as const;
 
 export type SectionName = (typeof SECTIONS)[number];
 

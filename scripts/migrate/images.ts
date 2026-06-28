@@ -61,14 +61,9 @@ function canonicalAssetRef(ref: string): string | null {
 }
 
 /** Rewrite one ref, tracking stats. Returns the canonical ref or the original. */
-function rewriteRef(
-  raw: string,
-  stats: ImageStats,
-  { requireSlash = true } = {},
-): string {
+function rewriteRef(raw: string, stats: ImageStats, { requireSlash = true } = {}): string {
   if (/^https?:/i.test(raw)) return raw;
-  if (requireSlash && (!raw.startsWith("/") || raw.startsWith("//")))
-    return raw;
+  if (requireSlash && (!raw.startsWith("/") || raw.startsWith("//"))) return raw;
   const canon = canonicalAssetRef(raw);
   if (!canon) {
     if (raw.startsWith("/")) stats.unresolved.add(raw);
@@ -101,7 +96,7 @@ function rewriteText(text: string, stats: ImageStats): string {
       // Wrap in <> when the canonical (decoded) path contains spaces.
       const wrapped = /\s/.test(canon) ? `<${canon}>` : canon;
       return open + wrapped + close;
-    },
+    }
   );
 
   // 2. Frontmatter single-value image fields (incl. `- image:` list items),
@@ -113,13 +108,12 @@ function rewriteText(text: string, stats: ImageStats): string {
       const canon = rewriteRef(value, stats);
       if (canon === value) return full;
       return `${prefix}${quote}${canon}${quote}`;
-    },
+    }
   );
 
   // 3. Any remaining root-absolute asset token (e.g. inline links to PDFs).
-  out = out.replace(
-    new RegExp(`[^\\s"'()<>\\[\\]]*\\.(${EXT_GROUP})`, "giu"),
-    (token: string) => rewriteRef(token, stats),
+  out = out.replace(new RegExp(`[^\\s"'()<>\\[\\]]*\\.(${EXT_GROUP})`, "giu"), (token: string) =>
+    rewriteRef(token, stats)
   );
 
   return out;
@@ -132,13 +126,10 @@ function rewriteText(text: string, stats: ImageStats): string {
  * leading slash (e.g. `images/site-navigation/logo.png`).
  */
 function rewriteJson(text: string, stats: ImageStats): string {
-  return text.replace(
-    new RegExp(`"([^"]*\\.(${EXT_GROUP}))"`, "gi"),
-    (full, value: string) => {
-      const canon = rewriteRef(value, stats, { requireSlash: false });
-      return canon === value ? full : `"${canon}"`;
-    },
-  );
+  return text.replace(new RegExp(`"([^"]*\\.(${EXT_GROUP}))"`, "gi"), (full, value: string) => {
+    const canon = rewriteRef(value, stats, { requireSlash: false });
+    return canon === value ? full : `"${canon}"`;
+  });
 }
 
 export function migrateImages(): ImageStats {
@@ -167,7 +158,7 @@ export function migrateImages(): ImageStats {
 
   log.ok(
     `${stats.rewrites} ref(s) rewritten in ${stats.written} file(s), ` +
-      `${stats.unchanged} unchanged`,
+      `${stats.unchanged} unchanged`
   );
   if (stats.unresolved.size) {
     log.warn(`${stats.unresolved.size} ref(s) had no file under src/assets:`);

@@ -76,8 +76,7 @@ export const MaterialCollection: Collection = {
           type: "string",
           name: "hex",
           label: "Kód",
-          description:
-            "Megközelítőleges színe az anyagnak. Ha nincs kitöltve, akkor kép legyen.",
+          description: "Megközelítőleges színe az anyagnak. Ha nincs kitöltve, akkor kép legyen.",
           ui: {
             component: "color",
           },
@@ -86,8 +85,7 @@ export const MaterialCollection: Collection = {
           type: "image",
           name: "image",
           label: "Kép",
-          description:
-            "A szín/minta képe. Ha nincs kitöltve, akkor szín legyen.",
+          description: "A szín/minta képe. Ha nincs kitöltve, akkor szín legyen.",
         },
       ],
     },

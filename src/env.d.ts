@@ -3,7 +3,7 @@ declare global {
     fbq?: (
       name: "track",
       event: "Purchase",
-      params: { currency: string; value: number; num_items?: number },
+      params: { currency: string; value: number; num_items?: number }
     ) => void;
   }
 }

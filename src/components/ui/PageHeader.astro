@@ -19,14 +19,9 @@ const { title, breadcrumb = title, "no-shapes": noShapes = false } = Astro.props
       <nav aria-label="breadcrumb" class="flex justify-center">
         <ol class="flex items-center whitespace-nowrap">
           <li>
-            <a class="text-accent no-underline hover:underline" href="/">
-              Főoldal
-            </a>
+            <a class="text-accent no-underline hover:underline" href="/"> Főoldal </a>
           </li>
-          <li
-            class="text-accent before:mx-2 before:content-['-']"
-            aria-current="page"
-          >
+          <li class="text-accent before:mx-2 before:content-['-']" aria-current="page">
             {breadcrumb}
           </li>
         </ol>

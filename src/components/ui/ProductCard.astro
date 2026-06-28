@@ -13,7 +13,9 @@ interface Props {
 const { href, title, image, category, square = false } = Astro.props;
 ---
 
-<div class="group flex w-1/2 max-w-62.5 flex-col p-7.5 max-md:w-full max-md:p-0 max-sm:items-center">
+<div
+  class="group flex w-1/2 max-w-62.5 flex-col p-7.5 max-md:w-full max-md:p-0 max-sm:items-center"
+>
   {
     image && (
       <Image
@@ -28,15 +30,10 @@ const { href, title, image, category, square = false } = Astro.props;
       />
     )
   }
-  <div
-    class:list={[
-      "flex flex-col max-sm:items-center max-sm:text-center",
-      square && "flex-1",
-    ]}
-  >
+  <div class:list={["flex flex-col max-sm:items-center max-sm:text-center", square && "flex-1"]}>
     {
       category && (
-        <span class="mt-7 mb-5 block text-lg leading-none text-body max-sm:mt-3.5 max-sm:mb-2.5 max-sm:text-[0.9rem]">
+        <span class="text-body mt-7 mb-5 block text-lg leading-none max-sm:mt-3.5 max-sm:mb-2.5 max-sm:text-[0.9rem]">
           {category}
         </span>
       )
@@ -46,7 +43,7 @@ const { href, title, image, category, square = false } = Astro.props;
     </h3>
     <a
       href={href}
-      class="relative ml-7.5 inline-block origin-bottom scale-y-0 text-primary transition-all duration-300 before:absolute before:top-1/2 before:-left-7.5 before:h-0.5 before:w-5 before:-translate-y-1/2 before:bg-primary before:content-[''] group-hover:scale-y-100 max-md:scale-y-100"
+      class="text-primary before:bg-primary relative ml-7.5 inline-block origin-bottom scale-y-0 transition-all duration-300 group-hover:scale-y-100 before:absolute before:top-1/2 before:-left-7.5 before:h-0.5 before:w-5 before:-translate-y-1/2 before:content-[''] max-md:scale-y-100"
     >
       Részletek
     </a>

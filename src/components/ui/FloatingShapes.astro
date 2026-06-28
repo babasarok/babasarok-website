@@ -22,7 +22,7 @@ const {
 ---
 
 {/* Floating figure */}
-<div class:list={["absolute animate-float-y max-lg:hidden", figureClass]}>
+<div class:list={["animate-float-y absolute max-lg:hidden", figureClass]}>
   <img src={figureSvg} alt="" />
 </div>
 
@@ -39,8 +39,7 @@ const {
         gradientUnits="objectBoundingBox"
       >
         <stop offset="0" stop-color="var(--color-bg-light)"></stop>
-        <stop offset="1" stop-color="var(--color-bg-light)" stop-opacity="0"
-        ></stop>
+        <stop offset="1" stop-color="var(--color-bg-light)" stop-opacity="0"></stop>
       </linearGradient>
     </defs>
     <path
@@ -51,6 +50,6 @@ const {
 </div>
 
 {/* Animated dotted pattern */}
-<div class:list={["absolute h-25 w-25 animate-float-y max-lg:hidden", patternClass]}>
+<div class:list={["animate-float-y absolute h-25 w-25 max-lg:hidden", patternClass]}>
   <img src={patternSvg} alt="" class="h-full w-full" />
 </div>

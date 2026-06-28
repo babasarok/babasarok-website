@@ -41,8 +41,7 @@ export const DeliveryMethodCollection: Collection = {
     {
       type: "string",
       name: "name",
-      description:
-        "A szállítási mód megjelenítendő neve, ami a felhasználó számára látható.",
+      description: "A szállítási mód megjelenítendő neve, ami a felhasználó számára látható.",
       label: "Szállítási mód név",
       required: true,
     },

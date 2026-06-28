@@ -9,10 +9,7 @@ import ProductCard from "../ui/ProductCard.astro";
 const { enable, title, itemCount, buttonName, buttonTarget } = productSection;
 
 const products = (await getCollection("product"))
-  .sort(
-    (a, b) =>
-      (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0),
-  )
+  .sort((a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0))
   .slice(0, itemCount ?? 6);
 
 const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;

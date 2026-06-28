@@ -73,9 +73,7 @@ function suggestTailwind(cls: string): string | null {
   }
 
   // Display: d-flex, d-none, d-md-block
-  m = cls.match(
-    /^d-(?:(sm|md|lg|xl)-)?(none|inline|inline-block|block|flex|inline-flex|grid)$/,
-  );
+  m = cls.match(/^d-(?:(sm|md|lg|xl)-)?(none|inline|inline-block|block|flex|inline-flex|grid)$/);
   if (m) {
     const bp = m[1] ? `${m[1]}:` : "";
     const map: Record<string, string> = {
@@ -91,16 +89,12 @@ function suggestTailwind(cls: string): string | null {
   }
 
   // Flex helpers
-  m = cls.match(
-    /^justify-content-(?:(sm|md|lg|xl)-)?(start|end|center|between|around|evenly)$/,
-  );
+  m = cls.match(/^justify-content-(?:(sm|md|lg|xl)-)?(start|end|center|between|around|evenly)$/);
   if (m) return `${m[1] ? m[1] + ":" : ""}justify-${m[2]}`;
-  m = cls.match(
-    /^align-items-(?:(sm|md|lg|xl)-)?(start|end|center|baseline|stretch)$/,
-  );
+  m = cls.match(/^align-items-(?:(sm|md|lg|xl)-)?(start|end|center|baseline|stretch)$/);
   if (m) return `${m[1] ? m[1] + ":" : ""}items-${m[2]}`;
   m = cls.match(
-    /^flex-(?:(sm|md|lg|xl)-)?(row|column|wrap|nowrap|fill|grow-0|grow-1|shrink-0|shrink-1)$/,
+    /^flex-(?:(sm|md|lg|xl)-)?(row|column|wrap|nowrap|fill|grow-0|grow-1|shrink-0|shrink-1)$/
   );
   if (m) {
     const bp = m[1] ? `${m[1]}:` : "";
@@ -196,10 +190,8 @@ function suggestComponent(cls: string): string | null {
     return "mobile-menu toggle (Astro JS — replaces Bootstrap collapse)";
   if (cls === "carousel" || cls.startsWith("carousel-"))
     return "carousel component (custom Astro JS — replaces Bootstrap carousel)";
-  if (cls === "pagination" || cls.startsWith("pagination-"))
-    return "<Pagination> component";
-  if (cls === "page-item" || cls === "page-link")
-    return "<Pagination> component";
+  if (cls === "pagination" || cls.startsWith("pagination-")) return "<Pagination> component";
+  if (cls === "page-item" || cls === "page-link") return "<Pagination> component";
   return null;
 }
 
@@ -231,8 +223,7 @@ function isHugoArtifact(cls: string): boolean {
  */
 function suggestIconify(cls: string): string | null {
   if (cls === "fa") return "(icon base marker — use <Icon>)";
-  if (cls === "fa-ul" || cls === "fa-li")
-    return "icon list layout — use flex + <Icon>";
+  if (cls === "fa-ul" || cls === "fa-li") return "icon list layout — use flex + <Icon>";
   if (!cls.startsWith("fa-")) return null;
   const name = cls.slice(3);
   const brands = /facebook|twitter|linkedin|instagram|youtube|pinterest|tiktok/;
@@ -276,13 +267,7 @@ function collectJsClasses(): Set<string> {
 const CLASS_ATTR_RE = /class(?:Name)?\s*=\s*["']([^"']+)["']/g;
 const SCSS_SELECTOR_RE = /\.([a-zA-Z_][\w-]*)/g;
 
-type Category =
-  | "bootstrap"
-  | "component"
-  | "font-awesome"
-  | "hugo"
-  | "custom"
-  | "unknown";
+type Category = "bootstrap" | "component" | "font-awesome" | "hugo" | "custom" | "unknown";
 
 interface Row {
   class: string;
@@ -298,7 +283,7 @@ interface Row {
 
 function classify(
   cls: string,
-  customClasses: Set<string>,
+  customClasses: Set<string>
 ): { category: Category; suggestion: string | null } {
   if (isHugoArtifact(cls))
     return {
@@ -376,7 +361,7 @@ export function buildBootstrapReport(): void {
     "unknown",
   ];
   const counts = Object.fromEntries(
-    allCategories.map((c) => [c, rows.filter((r) => r.category === c).length]),
+    allCategories.map((c) => [c, rows.filter((r) => r.category === c).length])
   ) as Record<Category, number>;
 
   const jsRow = (r: Row) => (r.js ? " ⚠ JS" : "");
@@ -401,7 +386,7 @@ export function buildBootstrapReport(): void {
     "| Class | Uses | Tailwind 4 |",
     "| --- | --- | --- |",
     ...filtered("bootstrap").map(
-      (r) => `| \`${r.class}\`${jsRow(r)} | ${r.count} | \`${r.suggestion}\` |`,
+      (r) => `| \`${r.class}\`${jsRow(r)} | ${r.count} | \`${r.suggestion}\` |`
     ),
     "",
     "## Components to build (replace Bootstrap JS with Astro)",
@@ -409,24 +394,21 @@ export function buildBootstrapReport(): void {
     "| Class | Uses | Component |",
     "| --- | --- | --- |",
     ...filtered("component").map(
-      (r) => `| \`${r.class}\`${jsRow(r)} | ${r.count} | ${r.suggestion} |`,
+      (r) => `| \`${r.class}\`${jsRow(r)} | ${r.count} | ${r.suggestion} |`
     ),
     "",
     "## Font Awesome → Iconify (astro-icon)",
     "",
     "| Class | Uses | Iconify |",
     "| --- | --- | --- |",
-    ...filtered("font-awesome").map(
-      (r) => `| \`${r.class}\` | ${r.count} | \`${r.suggestion}\` |`,
-    ),
+    ...filtered("font-awesome").map((r) => `| \`${r.class}\` | ${r.count} | \`${r.suggestion}\` |`),
     "",
     "## Project custom classes (port from SCSS)",
     "",
     "| Class | Uses | Pages | Recommendation |",
     "| --- | --- | --- | --- |",
     ...filtered("custom").map(
-      (r) =>
-        `| \`${r.class}\`${jsRow(r)} | ${r.count} | ${r.files.length} | ${r.recommend} |`,
+      (r) => `| \`${r.class}\`${jsRow(r)} | ${r.count} | ${r.files.length} | ${r.recommend} |`
     ),
     "",
     "## Hugo template artifacts (ignore — handle in Astro logic)",
@@ -441,9 +423,7 @@ export function buildBootstrapReport(): void {
     "",
     "| Class | Uses |",
     "| --- | --- |",
-    ...filtered("unknown").map(
-      (r) => `| \`${r.class}\`${jsRow(r)} | ${r.count} |`,
-    ),
+    ...filtered("unknown").map((r) => `| \`${r.class}\`${jsRow(r)} | ${r.count} |`),
     "",
   ];
 
@@ -456,7 +436,7 @@ export function buildBootstrapReport(): void {
 
   log.ok(
     `${rows.length} classes — ${counts.bootstrap} util, ${counts.component} component, ` +
-      `${counts["font-awesome"]} icon, ${counts.custom} custom, ${counts.hugo} hugo, ${counts.unknown} unknown`,
+      `${counts["font-awesome"]} icon, ${counts.custom} custom, ${counts.hugo} hugo, ${counts.unknown} unknown`
   );
   log.dim("report: scripts/migrate/.reports/bootstrap-classes.md");
 }

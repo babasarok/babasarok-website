@@ -13,7 +13,8 @@
     "migrate": "node scripts/migrate/index.ts",
     "preview": "astro preview",
     "astro": "astro",
-    "lint": "eslint . --ext .ts,.tsx,.js,.jsx,.astro,.svelte"
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx,.astro,.svelte",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@astrojs/mdx": "^6.0.2",
@@ -53,7 +54,10 @@
     "eslint-plugin-svelte": "^3.20.0",
     "eslint-plugin-unicorn": "^64.0.0",
     "gray-matter": "^4.0.3",
-    "prettier": "^3.8.4",
+    "prettier": "^3.9.1",
+    "prettier-plugin-astro": "^0.14.1",
+    "prettier-plugin-svelte": "^3.5.2",
+    "prettier-plugin-tailwindcss": "^0.8.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "svelte-check": "^4.7.1",

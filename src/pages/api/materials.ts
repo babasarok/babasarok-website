@@ -7,11 +7,8 @@ export const GET: APIRoute = async (context) => {
     return new Response(JSON.stringify(result), { status: 200 });
   } catch (error) {
     console.error("Error fetching materials:", error);
-    return new Response(
-      JSON.stringify({ error: "Failed to fetch materials" }),
-      {
-        status: 500,
-      },
-    );
+    return new Response(JSON.stringify({ error: "Failed to fetch materials" }), {
+      status: 500,
+    });
   }
 };

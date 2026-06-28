@@ -79,7 +79,7 @@ images.forEach((_, i) => {
         {hasCaptions && (
           <div class="cd-captions mt-3 text-center">
             {images.map((img, i) => (
-              <p class:list={[`cd-caption-${i}`, "m-0 hidden text-[0.95rem] text-body"]}>
+              <p class:list={[`cd-caption-${i}`, "text-body m-0 hidden text-[0.95rem]"]}>
                 {img.description}
               </p>
             ))}

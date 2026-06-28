@@ -17,10 +17,7 @@ export function remarkAssetImages() {
       }
 
       // Replace all leading slashes with nothing for node.url so we can resolve the path to the file in src/assets
-      const absolute = path.join(
-        rootDir,
-        node.url.at(0) === "/" ? node.url.slice(1) : node.url,
-      );
+      const absolute = path.join(rootDir, node.url.at(0) === "/" ? node.url.slice(1) : node.url);
 
       if (!existsSync(absolute)) {
         return;

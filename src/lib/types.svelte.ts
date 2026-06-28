@@ -1,114 +1,114 @@
 import type {
-    TinaBaseField,
-    TinaBooleanField,
-    TinaColorField,
-    TinaProductField,
-    TinaInputField,
-    TinaOption,
-    TinaProduct,
-    TinaProductMaterial,
-    TinaRadioField,
-    TinaSelectField,
-    TinaProductMaterials,
-    TinaProductMaterialBannedCombination,
+  TinaBaseField,
+  TinaBooleanField,
+  TinaColorField,
+  TinaProductField,
+  TinaInputField,
+  TinaOption,
+  TinaProduct,
+  TinaProductMaterial,
+  TinaRadioField,
+  TinaSelectField,
+  TinaProductMaterials,
+  TinaProductMaterialBannedCombination,
 } from "../../tina/productTypes";
 import type { TinaMaterial, TinaMaterialColor } from "../../tina/materialTypes";
 import type { TinaDeliveryMethod } from "../../tina/deliveryMethodTypes";
 
 export interface TinaResolvedMaterial extends TinaMaterial {
-    colors?: TinaMaterialColor[] | undefined;
+  colors?: TinaMaterialColor[] | undefined;
 }
 
 export interface TinaResolvedProductMaterial extends TinaProductMaterial {
-    material: TinaResolvedMaterial;
+  material: TinaResolvedMaterial;
 }
 
 export interface TinaResolvedProductMaterialBannedCombination extends TinaProductMaterialBannedCombination {
-    material_path: string;
-    // material: TinaResolvedProductMaterial;
+  material_path: string;
+  // material: TinaResolvedProductMaterial;
 }
 
 export interface TinaResolvedProductBannedCombinationItem {
-    materials: TinaResolvedProductMaterialBannedCombination[];
+  materials: TinaResolvedProductMaterialBannedCombination[];
 }
 
 export interface TinaResolvedProductMaterials extends TinaProductMaterials {
-    materials?: TinaResolvedProductMaterial[] | undefined;
-    banned_combinations?: TinaResolvedProductBannedCombinationItem[] | undefined;
+  materials?: TinaResolvedProductMaterial[] | undefined;
+  banned_combinations?: TinaResolvedProductBannedCombinationItem[] | undefined;
 }
 
 export type TinaResolvedInputField = TinaInputField & {
-    type: "input";
-    items: TinaOption[];
+  type: "input";
+  items: TinaOption[];
 };
 
 export type TinaResolvedSelectField = TinaSelectField & {
-    type: "select";
-    items: TinaOption[];
+  type: "select";
+  items: TinaOption[];
 };
 
 export type TinaResolvedRadioField = TinaRadioField & {
-    type: "radio";
-    items: TinaOption[];
+  type: "radio";
+  items: TinaOption[];
 };
 
 export type TinaResolvedColorField = TinaColorField & {
-    type: "color";
-    items: TinaOption[];
+  type: "color";
+  items: TinaOption[];
 };
 
 export type TinaResolvedBooleanField = TinaBooleanField & {
-    type: "toggle";
+  type: "toggle";
 };
 
 export type TinaResolvedProductField =
-    | TinaResolvedInputField
-    | TinaResolvedSelectField
-    | TinaResolvedRadioField
-    | TinaResolvedColorField
-    | TinaResolvedBooleanField;
+  | TinaResolvedInputField
+  | TinaResolvedSelectField
+  | TinaResolvedRadioField
+  | TinaResolvedColorField
+  | TinaResolvedBooleanField;
 
 export type InputField = TinaResolvedInputField & {
-    value?: ValueWithError;
+  value?: ValueWithError;
 };
 
 export type SelectField = TinaResolvedSelectField & {
-    value?: ValueWithError;
+  value?: ValueWithError;
 };
 
 export type RadioField = TinaResolvedRadioField & {
-    value?: ValueWithError;
+  value?: ValueWithError;
 };
 
 export type ColorField = TinaResolvedColorField & {
-    value?: ValueWithError;
+  value?: ValueWithError;
 };
 
 export type BooleanField = TinaResolvedBooleanField & {
-    value?: ValueWithError;
+  value?: ValueWithError;
 };
 
 export type Field = InputField | SelectField | RadioField | ColorField | BooleanField;
 
 export interface ValueWithError {
-    value: string;
-    is_custom?: boolean;
-    error?: string | undefined;
+  value: string;
+  is_custom?: boolean;
+  error?: string | undefined;
 }
 
 export interface ProductMaterialValue {
-    material_id: string;
-    colors: string[];
-    custom_color?: string | undefined;
-    error?: string | undefined;
+  material_id: string;
+  colors: string[];
+  custom_color?: string | undefined;
+  error?: string | undefined;
 }
 
 export interface TinaProductResolved extends TinaProduct {
-    materials?: TinaResolvedProductMaterials | undefined;
-    fields?: TinaResolvedProductField[] | undefined;
-    product_path: string;
+  materials?: TinaResolvedProductMaterials | undefined;
+  fields?: TinaResolvedProductField[] | undefined;
+  product_path: string;
 }
 
 export interface TinaDeliveryMethodResolved extends TinaDeliveryMethod {
-    delivery_path: string;
+  delivery_path: string;
 }

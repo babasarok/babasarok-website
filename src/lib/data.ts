@@ -21,7 +21,7 @@ export const getProducts = async () => {
   const result = await client.queries.productConnection();
 
   const products = result.data.productConnection.edges?.flatMap((edge) =>
-    edge?.node ? [edge.node] : [],
+    edge?.node ? [edge.node] : []
   );
 
   return products?.sort((a, b) => a.title.localeCompare(b.title)) ?? [];
@@ -30,8 +30,8 @@ export const getProducts = async () => {
 export const getMaterials = async () => {
   const result = await client.queries.product_materialsConnection();
 
-  const materials = result.data.product_materialsConnection.edges?.flatMap(
-    (edge) => (edge?.node ? [edge.node] : []),
+  const materials = result.data.product_materialsConnection.edges?.flatMap((edge) =>
+    edge?.node ? [edge.node] : []
   );
 
   return materials?.sort((a, b) => a.label.localeCompare(b.label)) ?? [];
@@ -40,8 +40,8 @@ export const getMaterials = async () => {
 export const getDeliveryMethods = async () => {
   const result = await client.queries.delivery_methodsConnection();
 
-  const deliveryMethods = result.data.delivery_methodsConnection.edges?.flatMap(
-    (edge) => (edge?.node ? [edge.node] : []),
+  const deliveryMethods = result.data.delivery_methodsConnection.edges?.flatMap((edge) =>
+    edge?.node ? [edge.node] : []
   );
 
   return deliveryMethods ?? [];
@@ -50,6 +50,4 @@ export const getDeliveryMethods = async () => {
 export type CmsConfig = Awaited<ReturnType<typeof getConfig>>["data"]["config"];
 export type CmsProduct = Awaited<ReturnType<typeof getProducts>>[number];
 export type CmsMaterial = Awaited<ReturnType<typeof getMaterials>>[number];
-export type CmsDeliveryMethod = Awaited<
-  ReturnType<typeof getDeliveryMethods>
->[number];
+export type CmsDeliveryMethod = Awaited<ReturnType<typeof getDeliveryMethods>>[number];

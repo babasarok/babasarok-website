@@ -11,10 +11,7 @@ const { enable, topTitle, title, service: items } = service;
 
 {
   enable && (
-    <section
-      id="service"
-      class="relative overflow-visible py-25 pb-68.75"
-    >
+    <section id="service" class="relative overflow-visible py-25 pb-68.75">
       {/* Light background shape (top-right) */}
       <div class="absolute top-0 right-0 -z-10 w-[61%]">
         <svg viewBox="0 0 1283 1126" class="h-auto w-full">
@@ -49,14 +46,14 @@ const { enable, topTitle, title, service: items } = service;
       </div>
 
       {/* Animated dotted pattern (desktop only) */}
-      <div class="absolute bottom-[4%] left-[6%] hidden animate-float-y lg:block">
+      <div class="animate-float-y absolute bottom-[4%] left-[6%] hidden lg:block">
         <img src={patternSvg} alt="" />
       </div>
 
       <div class="container">
         <div class="lg:w-1/2">
           <div class="mb-12">
-            <TopTitle class="block text-dark sm:text-xl">{topTitle}</TopTitle>
+            <TopTitle class="text-dark block sm:text-xl">{topTitle}</TopTitle>
             <Markdown of={title} />
           </div>
         </div>
@@ -64,12 +61,12 @@ const { enable, topTitle, title, service: items } = service;
         <div class="w-full">
           <div
             id="service-slider"
-            class="service__slider flex snap-x snap-mandatory scroll-smooth overflow-x-scroll"
+            class="service__slider flex snap-x snap-mandatory overflow-x-scroll scroll-smooth"
           >
             {items.map((item) => {
               const img = resolveImage(item.image);
               return (
-                <div class="w-[33%] shrink-0 snap-always snap-center p-3.75 max-sm:w-full">
+                <div class="w-[33%] shrink-0 snap-center snap-always p-3.75 max-sm:w-full">
                   <div class="rounded-[20px] bg-white p-7.5 shadow-[0_5px_10px_0_rgba(50,65,141,0.12)]">
                     <div class="relative h-27.5 w-31.25">
                       <div class="absolute top-0 right-0">
@@ -122,11 +119,10 @@ const { enable, topTitle, title, service: items } = service;
 <script>
   import { ScrollSnapper } from "../../lib/scrollSnapper";
   document.addEventListener("astro:page-load", () => {
-      const slider = document.getElementById("service-slider");
-      const indicator = document.getElementById("service-indicator");
-      if (slider && indicator) new ScrollSnapper(slider, indicator);
+    const slider = document.getElementById("service-slider");
+    const indicator = document.getElementById("service-indicator");
+    if (slider && indicator) new ScrollSnapper(slider, indicator);
   });
-
 </script>
 
 <style>

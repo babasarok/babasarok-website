@@ -11,9 +11,7 @@ export const getStaticPaths = (async () => {
   const PAGE_SIZE = 6;
   const products = (await getCollection("product"))
     .filter((p) => p.data.hidden_in_product_list !== true)
-    .sort(
-      (a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0),
-    );
+    .sort((a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0));
 
   const lastPage = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
 
@@ -50,11 +48,7 @@ const { items, currentPage, lastPage } = Astro.props;
           ))
         }
       </div>
-      <Pagination
-        currentPage={currentPage}
-        lastPage={lastPage}
-        basePath="/product"
-      />
+      <Pagination currentPage={currentPage} lastPage={lastPage} basePath="/product" />
     </div>
   </section>
 </Base>

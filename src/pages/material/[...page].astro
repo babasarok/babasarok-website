@@ -10,7 +10,7 @@ import { resolveImage } from "../../lib/assets";
 export const getStaticPaths = (async () => {
   const PAGE_SIZE = 6;
   const materials = (await getCollection("material")).sort((a, b) =>
-    (a.data.label ?? a.data.title).localeCompare(b.data.label ?? b.data.title),
+    (a.data.label ?? a.data.title).localeCompare(b.data.label ?? b.data.title)
   );
 
   const lastPage = Math.max(1, Math.ceil(materials.length / PAGE_SIZE));
@@ -47,11 +47,7 @@ const { items, currentPage, lastPage } = Astro.props;
           ))
         }
       </div>
-      <Pagination
-        currentPage={currentPage}
-        lastPage={lastPage}
-        basePath="/material"
-      />
+      <Pagination currentPage={currentPage} lastPage={lastPage} basePath="/material" />
     </div>
   </section>
 </Base>

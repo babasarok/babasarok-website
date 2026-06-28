@@ -10,6 +10,4 @@ fields:
     type: input
 can_be_ordered: true
 hidden_in_product_list: true
-
 ---
-

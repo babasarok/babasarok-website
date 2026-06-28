@@ -7,5 +7,4 @@ materials:
     price: 0
 hidden_in_product_list: true
 can_be_ordered: true
-
 ---

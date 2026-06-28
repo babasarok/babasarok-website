@@ -74,8 +74,7 @@ export class ScrollSnapper {
 
     if (this.scrollTimeout) clearTimeout(this.scrollTimeout);
     this.scrollTimeout = window.setTimeout(() => {
-      const pageWidth =
-        currentTarget.scrollWidth / currentTarget.children.length;
+      const pageWidth = currentTarget.scrollWidth / currentTarget.children.length;
       const currentIndex = Math.round(currentTarget.scrollLeft / pageWidth);
       this.onIndexChange(currentIndex);
     }, 100);

@@ -16,8 +16,6 @@ thumbnail: /src/assets/Noémi-41.jpg
 table:
   - title: Takaró és Párna
     description: 7500Ft
-shortDescription: 'Univerzális takaró és párna minden évszakra '
+shortDescription: "Univerzális takaró és párna minden évszakra "
 can_be_ordered: true
-
 ---
-

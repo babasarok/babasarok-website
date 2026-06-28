@@ -29,7 +29,7 @@ const buttonHref = buttonURL ? `/${buttonURL}` : undefined;
       </div>
 
       {/* Floating decorative svg, desktop only */}
-      <div class="absolute bottom-5 -left-32.5 hidden animate-float-y lg:block">
+      <div class="animate-float-y absolute bottom-5 -left-32.5 hidden lg:block">
         <img src={figureSvg} alt="" />
       </div>
 
@@ -66,7 +66,7 @@ const buttonHref = buttonURL ? `/${buttonURL}` : undefined;
               </div>
 
               <div class="title-box mb-2 sm:mb-12">
-                <TopTitle class="mb-5 inline-block text-dark sm:text-xl lg:block lg:text-2xl">
+                <TopTitle class="text-dark mb-5 inline-block sm:text-xl lg:block lg:text-2xl">
                   {topTitle}
                 </TopTitle>
                 <Content />
@@ -82,7 +82,7 @@ const buttonHref = buttonURL ? `/${buttonURL}` : undefined;
           <div class="w-full lg:w-1/2">
             <div class="relative ml-auto w-full rounded-[20px] lg:w-[90%]">
               {/* Floating svg behind the photo */}
-              <div class="absolute -top-14 left-1/2 -z-10 h-37.5 animate-float-x">
+              <div class="animate-float-x absolute -top-14 left-1/2 -z-10 h-37.5">
                 <img src={figureSvg} alt="" class="h-full w-full" />
               </div>
               {heroImage && (

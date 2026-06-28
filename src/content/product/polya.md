@@ -26,6 +26,4 @@ table:
 shortDescription: |
   A puha, kókuszbetét nélküli pólya tökéletes a legelső hónapokra: biztonságérzetet ad a babának, könnyű vele ölelni, tartani. Igény szerint kókuszbetéttel is kérhető, ha egy kis extra tartást szeretnél hozzá.
 can_be_ordered: true
-
 ---
-

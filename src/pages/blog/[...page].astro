@@ -10,7 +10,7 @@ import { resolveImage } from "../../lib/assets";
 export const getStaticPaths = (async () => {
   const PAGE_SIZE = 6;
   const posts = (await getCollection("blog")).sort(
-    (a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0),
+    (a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0)
   );
 
   const lastPage = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
@@ -48,11 +48,7 @@ const { items, currentPage, lastPage } = Astro.props;
           ))
         }
       </div>
-      <Pagination
-        currentPage={currentPage}
-        lastPage={lastPage}
-        basePath="/blog"
-      />
+      <Pagination currentPage={currentPage} lastPage={lastPage} basePath="/blog" />
     </div>
   </section>
 </Base>

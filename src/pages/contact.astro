@@ -38,9 +38,10 @@ const social = [...(config?.social ?? [])]
       <h3 class="mb-10">Elérhetőségek</h3>
       <div class="flex flex-wrap gap-y-8">
         <div class="w-1/3 max-lg:w-full">
-          <div class="rounded-[20px] px-10 py-12.5 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] max-sm:px-6.25 max-sm:py-6.25">
+          <div
+            class="rounded-[20px] px-10 py-12.5 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] max-sm:px-6.25 max-sm:py-6.25"
+          >
             <div class="relative mb-8.75 h-27.5 w-31.25 max-sm:h-17.5 max-sm:w-18.75">
-
               <Image
                 src={locationIcon}
                 alt="location"
@@ -53,7 +54,9 @@ const social = [...(config?.social ?? [])]
         </div>
 
         <div class="w-1/3 max-lg:w-full">
-          <div class="rounded-[20px] px-10 py-12.5 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] max-sm:px-6.25 max-sm:py-6.25">
+          <div
+            class="rounded-[20px] px-10 py-12.5 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] max-sm:px-6.25 max-sm:py-6.25"
+          >
             <div class="relative mb-8.75 h-27.5 w-31.25 max-sm:h-17.5 max-sm:w-18.75">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -65,11 +68,7 @@ const social = [...(config?.social ?? [])]
                   d="M49.855527 9.984102c-4.337424-.815024-8.766002-1.633779-13.152776-1.113889-8.196034.975107-15.344329 6.696991-19.41555 13.879649s-5.363288 15.655094-5.187042 23.907191c.156996 7.385448 1.479849 14.875357 4.972905 21.38465s9.337384 11.961229 16.458344 13.922244c4.833752 1.331211 10.056683 1.044827 14.74081 2.829827 7.560693 2.881382 12.209757 10.489626 19.01235 14.870016a25.650039 25.650039 0 0024.16316 1.698928c8.342551-3.846451 14.03857-12.107291 16.641338-20.918947s2.471077-18.187687 1.756125-27.346305c-.843101-10.912846-3.01686-22.783019-11.354287-29.869462-6.037066-5.130853-14.208558-6.772976-21.995428-8.235353z"
                 ></path>
               </svg>
-              <Image
-                src={phoneIcon}
-                alt="phone"
-                class="absolute bottom-0 left-0 z-1 h-3/5 w-3/5"
-              />
+              <Image src={phoneIcon} alt="phone" class="absolute bottom-0 left-0 z-1 h-3/5 w-3/5" />
             </div>
             <h4>Telefon &amp; Email</h4>
             <p class="mb-0">
@@ -78,7 +77,7 @@ const social = [...(config?.social ?? [])]
               {
                 address?.email && (
                   <a
-                    class="text-body underline hover:text-primary"
+                    class="text-body hover:text-primary underline"
                     href={`mailto:${address.email}`}
                   >
                     {address.email}
@@ -90,7 +89,9 @@ const social = [...(config?.social ?? [])]
         </div>
 
         <div class="w-1/3 max-lg:w-full">
-          <div class="rounded-[20px] px-10 py-12.5 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] max-sm:px-6.25 max-sm:py-6.25">
+          <div
+            class="rounded-[20px] px-10 py-12.5 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] max-sm:px-6.25 max-sm:py-6.25"
+          >
             <div class="relative mb-8.75 h-27.5 w-31.25 max-sm:h-17.5 max-sm:w-18.75">
               <svg
                 xmlns="http://www.w3.org/2000/svg"

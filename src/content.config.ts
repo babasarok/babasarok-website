@@ -40,7 +40,7 @@ const product = defineCollection({
         z.object({
           title: z.string().nullable().optional(),
           description: z.string().nullable().optional(),
-        }),
+        })
       )
       .optional(),
     images: z
@@ -48,7 +48,7 @@ const product = defineCollection({
         z.object({
           image: z.string().optional(),
           description: z.string().optional(),
-        }),
+        })
       )
       .optional(),
   }),
@@ -85,7 +85,7 @@ const material = defineCollection({
           label: z.string().optional(),
           hex: z.string().optional(),
           image: z.string().optional(),
-        }),
+        })
       )
       .optional(),
   }),

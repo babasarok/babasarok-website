@@ -10,12 +10,10 @@ import type { ImageMetadata } from "astro";
 
 const images = import.meta.glob<ImageMetadata>(
   "../assets/**/*.{jpg,jpeg,png,gif,svg,webp,avif,JPG,JPEG,PNG}",
-  { eager: true, import: "default" },
+  { eager: true, import: "default" }
 );
 
-export function resolveImage(
-  path: string | null | undefined,
-): ImageMetadata | undefined {
+export function resolveImage(path: string | null | undefined): ImageMetadata | undefined {
   if (!path) {
     return undefined;
   }

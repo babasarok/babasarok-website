@@ -50,7 +50,7 @@ export interface ReadableProductData {
 }
 
 export function generatePriceData(
-  product: Product,
+  product: Product
 ): ReadablePriceData | ReadableLengthBasedPriceData {
   const price = calculatePriceForItem(product);
   if (price.priced_by_length) {
@@ -91,9 +91,7 @@ export function generateProductData(product: Product) {
     név: serialised.title,
     kedvezmény:
       serialised.discount &&
-      (serialised.discount_valid_until
-        ? new Date() < serialised.discount_valid_until
-        : true)
+      (serialised.discount_valid_until ? new Date() < serialised.discount_valid_until : true)
         ? serialised.discount
         : undefined,
     ár: generatePriceData(product),
@@ -106,7 +104,7 @@ export function generateProductData(product: Product) {
   ) {
     result.anyagok = serialised.materials.values.map((mv) => {
       const material = serialised.materials.materials.find(
-        (m) => m.material.material_id === mv?.material_id,
+        (m) => m.material.material_id === mv?.material_id
       );
       const res: ReadableMaterialData = {
         név: material?.material.label ?? mv?.material_id ?? "Ismeretlen anyag",
@@ -119,9 +117,7 @@ export function generateProductData(product: Product) {
       } else {
         res.színek =
           mv?.colors.map(
-            (x) =>
-              material?.material.colors?.find((c) => c.color_id === x)?.label ??
-              x,
+            (x) => material?.material.colors?.find((c) => c.color_id === x)?.label ?? x
           ) ?? [];
       }
 
@@ -133,9 +129,7 @@ export function generateProductData(product: Product) {
     .filter((f) => !("optional" in f) || !f.optional)
     .map((f) => {
       const label =
-        "items" in f
-          ? f.items.find((option) => option.value === f.value?.value)?.label
-          : "";
+        "items" in f ? f.items.find((option) => option.value === f.value?.value)?.label : "";
       return {
         név: f.label ?? f.name,
         érték: `${label ?? f.value?.value}`,
@@ -152,7 +146,7 @@ export function generateFormData(
   email: string,
   phone: string,
   deliveryMethod: TinaDeliveryMethodResolved,
-  products: Product[],
+  products: Product[]
 ) {
   const productData = products.map((p) => generateProductData(p));
   return {
@@ -165,9 +159,7 @@ export function generateFormData(
     },
     termékek: productData,
     ár: {
-      összár:
-        productData.reduce((sum, p) => sum + (p.ár.összár ?? 0), 0) +
-        deliveryMethod.price,
+      összár: productData.reduce((sum, p) => sum + (p.ár.összár ?? 0), 0) + deliveryMethod.price,
       nem_teljes_ár: productData.some((p) => p.ár.nem_teljes_ár),
     },
   };

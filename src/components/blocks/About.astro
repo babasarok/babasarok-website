@@ -6,16 +6,8 @@ import { resolveImage } from "../../lib/assets";
 import figureSvg from "../../assets/images/hero/figure-svg.svg?url";
 import Button from "../ui/Button.astro";
 
-const {
-  enable,
-  title,
-  content,
-  button1Name,
-  button1Target,
-  button2Name,
-  button2Target,
-  image,
-} = about;
+const { enable, title, content, button1Name, button1Target, button2Name, button2Target, image } =
+  about;
 
 const aboutImage = resolveImage(image);
 const button1Href = button1Target ? `/${button1Target}` : undefined;
@@ -35,7 +27,7 @@ const button2Href = button2Target ? `/${button2Target}` : undefined;
         <div class="flex flex-wrap items-center justify-center">
           {/* Image with decorative floating svg + svg mask */}
           <div class="relative w-[45%] max-lg:w-full">
-            <div class="absolute top-[-11%] left-[-17%] -z-10 h-37.5 animate-float-y max-md:top-[-7%] max-md:left-[-16%]">
+            <div class="animate-float-y absolute top-[-11%] left-[-17%] -z-10 h-37.5 max-md:top-[-7%] max-md:left-[-16%]">
               <img src={figureSvg} alt="" class="h-full w-full" />
             </div>
 
@@ -51,7 +43,7 @@ const button2Href = button2Target ? `/${button2Target}` : undefined;
           </div>
 
           {/* Dark content card */}
-          <div class="relative -ml-3.75 w-[55%] rounded-[20px] bg-bg-dark px-12.5 py-15 max-lg:mt-7.5 max-lg:ml-0 max-lg:w-full max-lg:p-6.25">
+          <div class="bg-bg-dark relative -ml-3.75 w-[55%] rounded-[20px] px-12.5 py-15 max-lg:mt-7.5 max-lg:ml-0 max-lg:w-full max-lg:p-6.25">
             {/* Soft gradient blob behind the card (tablet+ only) */}
             <div class="absolute top-[-55%] right-[-22%] -z-10 h-[362.909px] w-[400.369px] max-md:hidden">
               <svg viewBox="0 0 600 600" class="w-[140%]">
@@ -97,10 +89,8 @@ const button2Href = button2Target ? `/${button2Target}` : undefined;
 <style>
   /* SVG-shape mask on the about photo (old `-webkit-mask` inline style). */
   .about-photo {
-    -webkit-mask: url("../../assets/images/about/about-mask-svg.svg") center /
-      contain no-repeat;
-    mask: url("../../assets/images/about/about-mask-svg.svg") center / contain
-      no-repeat;
+    -webkit-mask: url("../../assets/images/about/about-mask-svg.svg") center / contain no-repeat;
+    mask: url("../../assets/images/about/about-mask-svg.svg") center / contain no-repeat;
   }
 
   /* The content card sits on a dark background, so make the markdown-rendered
