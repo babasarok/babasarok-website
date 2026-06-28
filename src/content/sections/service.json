@@ -5,27 +5,27 @@
   "service": [
     {
       "content": "#### Fonott Rácsvédő\nA fonott rácsvédő nemcsak dizájnos kiegészítője a kiságyának, hanem praktikus védelmet is nyújt. Puha, pufi anyaga megóvja a baba fejét a rácsokkal való ütközéstől, különösen, amikor a pici már forogni kezd.\n",
-      "image": "/assets/Noémi-11.jpg"
+      "image": "/src/assetsNoémi-11.jpg"
     },
     {
       "content": "#### Babafészek szett\nA babafészek szűk, ölelő formája anyaméhhez hasonló környezetet teremt, ami megnyugtatja a babát és segíti a pihentető alvást. A szett tartalmazza a babafészket, párnát és takarót – mindent, amire a kényelmes pihenéshez szükség van.\n",
-      "image": "/assets/images/service/babafeszek-szett.jpeg"
+      "image": "/src/assetsimages/service/babafeszek-szett.jpeg"
     },
     {
       "content": "#### Kánikulatakaró\nA duplagéz kánikulatakaró ideális választás a nyári hőségben, amikor még a legkisebbek is kényelmetlenül érzik magukat a melegben. Két rétegben takaróként, egy rétegben pedig textilpelusként használható, sőt, sok baba imádja \"nyunyókaként\" is.\n",
-      "image": "/assets/IMG_6152.jpg"
+      "image": "/src/assetsIMG_6152.jpg"
     },
     {
       "content": "#### Kismama párna\nEz a sokoldalú párna nemcsak a szoptatás során nyújt kényelmet, hanem a terhesség alatt is tökéletes alvást biztosít a növekvő pocaknak. A szoptatás során enyhíti a hát- és nyakfájdalmakat, miközben támogatja a baba megfelelő pozicionálását.\n",
-      "image": "/assets/IMG_6927.jpeg"
+      "image": "/src/assetsIMG_6927.jpeg"
     },
     {
       "content": "#### Dekorbetűk\nFedezd fel a babaszoba legújabb trendjét: a falra ragasztható dekorbetűket! Egyedivé varázsolhatod vele a szobát, legyen szó a baba nevéről vagy egy kedves üzenetről. Kiegészítő elemekkel, mint virágok, pillangók, állatok, hajók vagy más tárgyak, még kedvesebbé teheted a dekorációt – csak a képzelet szab határt!\n",
-      "image": "/assets/IMG_7073.jpeg"
+      "image": "/src/assetsIMG_7073.jpeg"
     },
     {
       "content": "#### Cumi- és rágcsáláncok\nA szilikon cumi- és rágcsáláncok tökéletesek arra, hogy a baba mindig kéznél találja a cumit, így nem kell aggódni, ha lepottyan, ezek mellett pedig segítenek enyhíteni a fogzás okozta kellemetlenségeket is. Stílusos és praktikus!\n",
-      "image": "/assets/IMG_7060.jpeg"
+      "image": "/src/assetsIMG_7060.jpeg"
     }
   ]
 }
