@@ -12,7 +12,6 @@ export function remarkAssetImages() {
     // TODO: This needs to happen before astro image processing otherwise it will just get
     // it from /src/assets instead of going though image processing.
     visit(tree, "image", (node) => {
-      console.log("remarkAssetImages", node.url, file.path);
       if (!node.url.startsWith("/") || node.url.startsWith("//")) {
         return;
       }
@@ -32,7 +31,6 @@ export function remarkAssetImages() {
         relPath = "./" + relPath;
       }
       node.url = relPath;
-      console.log("remarkAssetImages written to", relPath);
     });
   };
 }

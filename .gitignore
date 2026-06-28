@@ -56,16 +56,6 @@ node_modules/
 # Migration script reports (regenerated on demand)
 scripts/migrate/.reports
 
-# TODO: After scaffolding from this template, DELETE the block below so your
-# chosen lockfile (we recommend pnpm-lock.yaml) is committed. See README → "Commit your lockfile".
-# Package Manager Lock Files
-package-lock.json
-pnpm-lock.yaml
-yarn.lock
-.yarn/cache
-bun.lockb
-deno.lock
-
 # builds
 .vercel
 dist
