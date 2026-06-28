@@ -14,6 +14,21 @@ export const DeliveryMethodCollection: Collection = {
   match: {
     include: "**/*",
   },
+  ui: {
+    filename: {
+      // optional: stop editors from typing the name freehand
+      readonly: true,
+      slugify: (values) => {
+        const base = String(values?.delivery_name ?? "")
+          .normalize("NFKD") // split accents from letters (á -> a +  ́)
+          .replace(/[\u0300-\u036f]/g, "") // drop the accent marks
+          .replace(/[^a-zA-Z0-9]+/g, "-") // non-ascii/alnum -> dash
+          .replace(/^-+|-+$/g, "") // trim dashes
+          .toLowerCase();
+        return base || "untitled";
+      },
+    },
+  },
   fields: [
     {
       type: "string",
