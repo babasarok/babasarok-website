@@ -15,12 +15,13 @@
     type UseInteractionsReturn,
   } from "@skeletonlabs/floating-ui-svelte";
   import type { HTMLAttributes, HTMLObjectAttributes } from "svelte/elements";
+  import type { Snippet } from "svelte";
 
   import { fade } from "svelte/transition";
 
   interface Props {
-    children: import("svelte").Snippet;
-    content: import("svelte").Snippet;
+    children: Snippet;
+    content: Snippet;
     contentProps?: HTMLAttributes<HTMLDivElement>;
     disabled?: boolean;
   }

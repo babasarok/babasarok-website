@@ -4,159 +4,13 @@
   import { fade } from "svelte/transition";
   import IconButton from "./common/IconButton.svelte";
   import Button from "./common/Button.svelte";
-  import type {
-    TinaDeliveryMethodResolved,
-    TinaProductResolved,
-    TinaResolvedMaterial,
-  } from "@/lib/types.svelte";
-  import z from "zod";
   import { isItemValid, validateItem } from "@/lib/validation";
-  import { Product } from "@/lib/Product.svelte";
   import { sanitizeItem } from "@/lib/validation";
   import Masonry from "svelte-bricks";
   import { generateFormData } from "@/lib/emailConverter";
   import OrderDelivery from "./OrderDelivery.svelte";
   import type { CmsConfig, CmsDeliveryMethod, CmsMaterial, CmsProduct } from "@/lib/data";
-
-  export const deliveryMethodsResponseValidator = z
-    .object({ pages: z.array(deliveryMethodValidator.extend({ path: z.string() })) })
-    .transform((obj) => {
-      const result: Record<string, TinaDeliveryMethodResolved> = {};
-      for (const page of obj.pages) {
-        result[page.delivery_name] = {
-          ...page,
-          delivery_path: page.path,
-        };
-      }
-      return result;
-    });
-
-  export const materialsResponseValidator = z
-    .object({ pages: z.array(materialValidator.extend({ path: z.string() })) })
-    .transform((obj) => {
-      const result: Record<string, TinaResolvedMaterial> = {};
-      for (const page of obj.pages) {
-        result[page.path] = page;
-      }
-      return result;
-    });
-
-  export const productsResponseValidator = (materials: Record<string, TinaResolvedMaterial>) =>
-    z
-      .object({
-        pages: z.array(
-          productValidator.extend({ path: z.string(), can_be_ordered: z.boolean().optional() })
-        ),
-      })
-      .transform((obj) => {
-        const result: Record<string, TinaProductResolved> = {};
-        for (const page of obj.pages) {
-          if (!page.can_be_ordered) {
-            continue;
-          }
-
-          result[page.product_id] = {
-            ...page,
-            product_path: page.path,
-            materials: {
-              ...page.materials,
-              materials:
-                page.materials && page.materials?.materials
-                  ? (page.materials?.materials.map((material) => ({
-                      ...material,
-                      material: materials[material.material_path],
-                    })) ?? [])
-                  : [],
-            },
-            fields:
-              page.fields?.map((field) => {
-                switch (field.type) {
-                  case "input":
-                    return {
-                      ...field,
-                      type: "input",
-                      items: field.items ?? [],
-                    };
-                  case "select":
-                    return {
-                      ...field,
-                      type: "select",
-                      items: field.items ?? [],
-                    };
-                  case "radio":
-                    return {
-                      ...field,
-                      type: "radio",
-                      items: field.items ?? [],
-                    };
-                  case "color":
-                    return {
-                      ...field,
-                      type: "color",
-                      items: field.items ?? [],
-                    };
-                  case "toggle":
-                    return { ...field, type: "toggle" };
-                }
-              }) ?? [],
-          };
-        }
-        return result;
-      });
-
-  let productInfo: Record<string, TinaProductResolved> | null = $state(null);
-  let deliveryMethods: Record<string, TinaDeliveryMethodResolved> | null = $state(null);
-
-  async function main() {
-    const productResponse = await fetch("/product/index.json");
-    const materialsResponse = await fetch("/material/index.json");
-    const deliveryMethodsResponse = await fetch("/delivery_method/index.json");
-    const materialsResult = await materialsResponseValidator.safeParseAsync(
-      await materialsResponse.json()
-    );
-    if (!materialsResult.success) {
-      console.error("Failed to parse materials data", materialsResult.error);
-      return;
-    }
-
-    const productsResult = await productsResponseValidator(materialsResult.data).safeParseAsync(
-      await productResponse.json()
-    );
-    if (!productsResult.success) {
-      console.error("Failed to parse products data", productsResult.error);
-      return;
-    }
-
-    const deliveryMethodsResult = await deliveryMethodsResponseValidator.safeParseAsync(
-      await deliveryMethodsResponse.json()
-    );
-    if (!deliveryMethodsResult.success) {
-      console.error("Failed to parse delivery methods data", deliveryMethodsResult.error);
-      return;
-    }
-
-    productInfo = productsResult.data;
-    deliveryMethods = deliveryMethodsResult.data;
-    deliveryMethod = Object.values(deliveryMethods)[0]?.delivery_name ?? "";
-  }
-
-  let products: Product[] = $state([]);
-  let error: string | null = $state(null);
-  let success: string | null = $state(null);
-  let name = $state("");
-  let email = $state("");
-  let phone = $state("");
-  let deliveryMethod = $state<string>("");
-  let message = $state("");
-
-  let valid = $derived.by(() => {
-    if (products.length === 0) return false;
-    if (name.trim() === "" || email.trim() === "") return false;
-
-    return true;
-  });
-  main();
-  let sending = $state(false);
+  import type { IProduct } from "@/lib/Product.svelte";
 
   interface Props {
     products: CmsProduct[];
@@ -165,7 +19,29 @@
     config: CmsConfig;
   }
 
-  const { products, deliveryMethods, materials, config: params }: Props = $props();
+  const { products: productsInfo, deliveryMethods, materials, config: params }: Props = $props();
+
+  let error: string | null = $state(null);
+  let success: string | null = $state(null);
+  let name = $state("");
+  let email = $state("");
+  let phone = $state("");
+  let deliveryMethod = $state<string>("");
+  let message = $state("");
+  let products = $state<IProduct[]>([]);
+
+  let valid = $derived.by(() => {
+    if (products.length === 0) {
+      return false;
+    }
+    if (name.trim() === "" || email.trim() === "") {
+      return false;
+    }
+
+    return true;
+  });
+
+  let sending = $state(false);
 </script>
 
 <form
@@ -206,7 +82,7 @@
     const formData = new FormData();
     const productStrings = serializedData.termékek.map((p) => {
       let result = p.név;
-      result += ` (${p.darabszám}db)`;
+      result += ` (${p.darabszám.toString()}db)`;
       result += `\n`;
       if (p.opciók && p.opciók.length > 0) {
         for (const option of p.opciók ?? []) {
@@ -217,39 +93,39 @@
         result += `  Anyagok:\n`;
 
         for (const material of p.anyagok ?? []) {
-          result += `    - ${material.név} (${material.egyedi_szín ? `Egyedi szín: ${material.egyedi_szín}` : material.színek?.join(", ")})\n`;
+          result += `    - ${material.név} (${material.egyedi_szín ? `Egyedi szín: ${material.egyedi_szín}` : (material.színek?.join(", ") ?? "")})\n`;
         }
       }
 
       result += "\n";
-      result += `Alapár: ${p.ár.alapár} Ft\n`;
-      if (p.ár.tételek && p.ár.tételek.length > 0) {
+      result += `Alapár: ${p.ár.alapár?.toString() ?? ""} Ft\n`;
+      if (p.ár.tételek.length > 0) {
         for (const tétel of p.ár.tételek) {
-          result += `${tétel.tétel}: ${tétel.ár ?? "??"}Ft \n`;
+          result += `${tétel.tétel}: ${tétel.ár?.toString() ?? "??"}Ft \n`;
         }
       }
       result += "\n";
-      result += `${p.ár.egységár ? `  Egységár: ${p.ár.egységár}Ft` : ""}\n`;
+      result += `${p.ár.egységár ? `  Egységár: ${p.ár.egységár.toString()}Ft` : ""}\n`;
       if (p.ár.hossz_alapú) {
-        result += `  Méterár: ${p.ár.méterár}Ft/m\n`;
+        result += `  Méterár: ${p.ár.méterár?.toString() ?? ""}Ft/m\n`;
       }
-      result += `Összár: ${p.ár.összár}Ft ${p.ár.nem_teljes_ár ? "(nem teljes ár)" : ""}`;
+      result += `Összár: ${p.ár.összár?.toString() ?? ""}Ft ${p.ár.nem_teljes_ár ? "(nem teljes ár)" : ""}`;
 
       return result;
     });
     // formData.append("h-captcha-response", captcha.value);
-    formData.append("access_key", params.fabformURL);
+    formData.append("access_key", params.fabformURL ?? "");
     formData.append("subject", `Új árajánlatkérés - ${serializedData.név}`);
     formData.append("nev", serializedData.név);
     formData.append("email", serializedData.email);
     formData.append("telefonszam", serializedData.telefonszám);
     for (const [index, productString] of productStrings.entries()) {
-      formData.append(`termek ${index + 1}`, productString);
+      formData.append(`termek ${(index + 1).toString()}`, productString);
     }
 
     formData.append(
       "szallitasimod",
-      `${serializedData.szállítási_mód.név} (${serializedData.szállítási_mód.ár} Ft)`
+      `${serializedData.szállítási_mód.név} (${serializedData.szállítási_mód.ár?.toString() ?? ""} Ft)`
     );
     formData.append("uzenet", message);
     formData.append(
@@ -282,9 +158,9 @@
     success = "Árajánlatkérésed sikeresen elküldve! Hamarosan felvesszük veled a kapcsolatot.";
     products = [];
 
-    if (window.fbq) {
+    if (globalThis.window.fbq) {
       try {
-        window.fbq("track", "Purchase", {
+        globalThis.window.fbq("track", "Purchase", {
           currency: "HUF",
           value: serializedData.ár.összár,
           num_items: serializedData.termékek.length,
@@ -425,7 +301,7 @@
         Jelenleg a rendelési folyamat tesztelés alatt áll. Ha bármilyen problémát tapasztalsz,
         kérlek, jelezd nekünk a <a
           class="text-yellow-700 underline hover:text-yellow-900"
-          href={`mailto:${params.address.email}?subject=Babasarok rendelési probléma&body=Kérlek, írd le a problémát, ha lehet screenshot-tal együtt.&cc=attilagreguss@protonmail.com`}
+          href={`mailto:${params.address?.email ?? ""}?subject=Babasarok rendelési probléma&body=Kérlek, írd le a problémát, ha lehet screenshot-tal együtt.&cc=attilagreguss@protonmail.com`}
           >email címünkön</a
         >.
       </p>
@@ -448,6 +324,6 @@
 
 <style>
   dialog::backdrop {
-    background: rgba(0, 0, 0, 0.5);
+    background: rgb(0 0 0 / 50%);
   }
 </style>

@@ -1,107 +1,24 @@
 import { v4 } from "uuid";
-import type {
-  Field,
-  ProductMaterialValue,
-  TinaProductResolved,
-  TinaResolvedProductBannedCombinationItem,
-  TinaResolvedProductMaterial,
-} from "./types.svelte";
-import { ProductMaterial } from "./ProductMaterial.svelte";
-import type { Serialised } from "./typeUtils";
+import type { ProductMaterialValue } from "./types.svelte";
+import type { CmsProduct } from "./data";
 
-export interface IProduct extends Required<Omit<TinaProductResolved, "materials">> {
-  uuid: string;
-  count: number;
-  materials: {
-    materials: ProductMaterial[];
-    values: Array<ProductMaterialValue | undefined>;
-    material_required_count: number;
-    banned_combinations: TinaResolvedProductBannedCombinationItem[];
-  };
-  fields: Field[];
+export interface ValueWithError {
+  value: string;
+  is_custom?: boolean;
+  error?: string | undefined;
 }
 
-export class Product implements IProduct {
-  uuid: string = v4();
-  count: number = $state(1);
-  product_id: string;
-  title: string;
+type CmsField = NonNullable<CmsProduct["fields"]>[number];
+type CmsProductMaterial = NonNullable<CmsProduct["materials"]>;
 
-  materials: {
-    /** allowed materials to select */
-    materials: ProductMaterial[];
-    values: Array<ProductMaterialValue | undefined>;
-    material_required_count: number;
-    banned_combinations: TinaResolvedProductBannedCombinationItem[];
-  };
-  private original_materials: TinaResolvedProductMaterial[];
+export type Field = CmsField & { value?: ValueWithError | undefined };
+export type ProductMaterials = CmsProductMaterial & {
+  values: Array<ProductMaterialValue | undefined>;
+};
+
+export interface IProduct extends Required<Omit<CmsProduct, "materials">> {
+  uuid: string;
+  count: number;
+  materials: ProductMaterials;
   fields: Field[];
-  icon: string | undefined;
-  priced_by_length: boolean | undefined;
-  price: number;
-  product_path: string;
-  discount: number | undefined;
-  discount_valid_until: Date | undefined;
-
-  constructor(item: TinaProductResolved) {
-    this.product_id = $state(item.product_id);
-    this.title = $state(item.title);
-    this.icon = $state(item.icon);
-    this.priced_by_length = $state(item.priced_by_length);
-    this.price = $state(item.price);
-    this.original_materials = item.materials?.materials ?? [];
-    this.fields = $state(item.fields ?? []);
-    this.materials = $state({
-      materials:
-        item.materials?.materials?.map((m) => new ProductMaterial(m, { fields: this.fields })) ??
-        [],
-      values: [],
-      material_required_count: item.materials?.material_required_count ?? 1,
-      banned_combinations: item.materials?.banned_combinations ?? [],
-    });
-    this.product_path = item.product_path;
-    this.discount = $state(item.discount);
-    this.discount_valid_until = $state(item.discount_valid_until);
-  }
-
-  clone(): Product {
-    return new Product({
-      product_id: $state.snapshot(this.product_id),
-      title: $state.snapshot(this.title),
-      icon: $state.snapshot(this.icon),
-      priced_by_length: $state.snapshot(this.priced_by_length),
-      price: $state.snapshot(this.price),
-      materials: {
-        materials: this.original_materials,
-        material_required_count: $state.snapshot(this.materials.material_required_count),
-        banned_combinations: $state.snapshot(this.materials.banned_combinations),
-      },
-      fields: $state.snapshot(this.fields),
-      product_path: $state.snapshot(this.product_path),
-      discount: $state.snapshot(this.discount),
-      discount_valid_until: $state.snapshot(this.discount_valid_until),
-    });
-  }
-
-  serialise(): Serialised<IProduct> {
-    return {
-      product_id: $state.snapshot(this.product_id),
-      title: $state.snapshot(this.title),
-      icon: $state.snapshot(this.icon),
-      priced_by_length: $state.snapshot(this.priced_by_length),
-      price: $state.snapshot(this.price),
-      materials: {
-        materials: this.materials.materials.map((m) => m.serialise()),
-        values: $state.snapshot(this.materials.values),
-        material_required_count: $state.snapshot(this.materials.material_required_count),
-        banned_combinations: $state.snapshot(this.materials.banned_combinations),
-      },
-      fields: $state.snapshot(this.fields),
-      product_path: $state.snapshot(this.product_path),
-      discount: $state.snapshot(this.discount),
-      discount_valid_until: $state.snapshot(this.discount_valid_until),
-      count: $state.snapshot(this.count),
-      uuid: $state.snapshot(this.uuid),
-    };
-  }
 }
