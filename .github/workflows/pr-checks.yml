@@ -1,0 +1,38 @@
+name: PR Checks
+
+on:
+  pull_request:
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # `typegen` generates the Tina client + Astro types, needed by any
+        # check that type-checks the app. `build:local` does its own tina build.
+        include:
+          - { name: Format, run: "npx prettier --check .", typegen: "false" }
+          - { name: Lint, run: "npm run lint", typegen: "true" }
+          - { name: Astro Check, run: "npx astro check", typegen: "true" }
+          - {
+              name: Svelte Check,
+              run: "npx svelte-check --tsconfig ./tsconfig.json",
+              typegen: "true",
+            }
+          - { name: Build, run: "npm run build:local", typegen: "false" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          typegen: ${{ matrix.typegen }}
+      - run: ${{ matrix.run }}

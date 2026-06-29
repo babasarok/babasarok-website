@@ -8,3 +8,14 @@ old
 public/admin
 tina/tina-lock.json
 tina/__generated__
+
+# Tina-managed content (Tina owns the formatting of these files; letting
+# prettier reformat them causes spurious diffs whenever content is edited
+# through the CMS). Mirrors the collection `path`s in tina/collections/*.
+src/content/blog
+src/content/config
+src/content/contact
+src/content/delivery_method
+src/content/material
+src/content/product
+src/content/sections
