@@ -1,69 +1,79 @@
 ---
-title: "PamutJersey"
-label: "PamutJersey"
-material_id: "pamutjersey"
+title: PamutJersey
+material_id: pamutjersey
+label: PamutJersey
 colors:
-  - color_id: "sotetzold"
-    label: "Sötétzöld"
-    hex: "#186A13"
-  - color_id: "zsalya"
-    label: "Zsálya"
-    hex: "#B2AC88"
-  - color_id: "menta"
-    label: "Menta"
-    hex: "#98FF98"
-  - color_id: "feher"
-    label: "Fehér"
-    hex: "#FFFFFF"
-  - color_id: "sotetszurke"
-    label: "Sötétszürke"
-    hex: "#555555"
-  - color_id: "vilagosszurke"
-    label: "Világosszürke"
-    hex: "#D3D3D3"
-  - color_id: "barna"
-    label: "Barna"
-    hex: "#8B4513"
-  - color_id: "bezs"
-    label: "Bézs"
-    hex: "#F5F5DC"
-  - color_id: "mogyoro"
-    label: "Mogyoró"
-    hex: "#D2B48C"
-  - color_id: "drapp"
-    label: "Drapp"
-    hex: "#D3B583"
-  - color_id: "homok"
-    label: "Homok"
-    hex: "#E4D96F"
-  - color_id: "vilagoskek"
-    label: "Világoskék"
-    hex: "#ADD8E6"
-  - color_id: "sotetkek"
-    label: "Sötétkék"
-    hex: "#00008B"
-  - color_id: "babarozsaszin"
-    label: "Babarózsaszín"
-    hex: "#FFC0CB"
-  - color_id: "puderrózsaszín"
-    label: "Púderrózsaszín"
-    hex: "#FADADD"
-  - color_id: "mályva"
-    label: "Mályva"
-    hex: "#DDA0DD"
-  - color_id: "pink"
-    label: "Pink"
-    hex: "#FF69B4"
-  - color_id: "barack"
-    label: "Barack"
-    hex: "#FFA07A"
-  - color_id: "lila"
-    label: "Lila"
-    hex: "#800080"
-  - color_id: "bordo"
-    label: "Bordó"
-    hex: "#800000"
-  - color_id: "mustar"
-    label: "Mustár"
-    hex: "#FFDB58"
+  - color_id: sotetzold
+    label: Sötétzöld
+    hex: ''
+    image: /src/assets/IMG_4369.png
+  - color_id: zsalya
+    label: Zsálya
+    hex: ''
+    image: /src/assets/IMG_7926.jpeg
+  - color_id: menta
+    label: Menta
+    hex: ''
+    image: /src/assets/A4EF85E9-FBFA-4458-A5E5-7A0C594171D5.png
+  - color_id: feher
+    label: Fehér
+    hex: ''
+    image: /src/assets/IMG_0424.jpeg
+  - color_id: sotetszurke
+    label: Sötétszürke
+    hex: ''
+    image: /src/assets/AAA6572B-DB3D-4403-A6B2-2F128B79E2CB.png
+  - color_id: vilagosszurke
+    label: Világosszürke
+    hex: ''
+    image: /src/assets/BC57D6E7-6776-4612-8781-A017EC5BF87F.png
+  - color_id: barna
+    label: Barna
+    hex: ''
+    image: /src/assets/IMG_8073.jpeg
+  - color_id: bezs
+    label: Bézs
+    hex: ''
+    image: /src/assets/IMG_0048.jpeg
+  - color_id: mogyoro
+    label: Mogyoró
+    hex: ''
+    image: /src/assets/IMG_3585.jpeg
+  - color_id: drapp
+    label: Drapp
+    hex: ''
+    image: /src/assets/IMG_2913.jpeg
+  - color_id: vilagoskek
+    label: Világoskék
+    hex: ''
+    image: /src/assets/9E9E406A-6EC4-4FC8-B792-0C14A95A0092.png
+  - color_id: sotetkek
+    label: Sötétkék
+    hex: ''
+    image: /src/assets/9D11B22B-697E-4455-BD2D-21A9C6EDDAA3.png
+  - color_id: babarozsaszin
+    label: Babarózsaszín
+    hex: ''
+    image: /src/assets/IMG_6605.jpeg
+  - color_id: puderrózsaszín
+    label: Púderrózsaszín
+    hex: ''
+    image: /src/assets/att.977wkI9MriAB2Q68VSbjdzuTa1pyhbj1FX9tnMLEmo4.jpeg
+  - color_id: mályva
+    label: Mályva
+    hex: ''
+    image: /src/assets/IMG_0928.jpeg
+  - color_id: pink
+    label: Pink
+    hex: ''
+    image: /src/assets/9CCE6DE9-9F24-4204-BEEF-3EBCF1BF63E9.png
+  - color_id: lila
+    label: Lila
+    hex: ''
+    image: /src/assets/6DC08737-FF26-4485-8565-A94705E87159.png
+  - color_id: mustar
+    label: Mustár
+    hex: ''
+    image: /src/assets/IMG_6524.jpeg
 ---
+
