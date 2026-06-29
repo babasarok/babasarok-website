@@ -23,6 +23,7 @@ jobs:
         include:
           - { name: Format, run: "npx prettier --check .", typegen: "false" }
           - { name: Lint, run: "npm run lint", typegen: "true" }
+          - { name: Stylelint, run: "npm run lint:style", typegen: "false" }
           - { name: Astro Check, run: "npx astro check", typegen: "true" }
           - {
               name: Svelte Check,

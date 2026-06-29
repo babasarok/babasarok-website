@@ -14,7 +14,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx,.astro,.svelte",
-    "lint:style": "stylelint \"**/*.{css,scss,sass,less,pcss,postcss}\"",
+    "lint:style": "stylelint \"**/*.{css,astro,svelte}\"",
     "format": "prettier --write ."
   },
   "imports": {
