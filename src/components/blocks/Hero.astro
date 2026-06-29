@@ -69,7 +69,9 @@ const buttonHref = buttonURL ? `/${buttonURL}` : undefined;
                 <TopTitle class="text-dark mb-5 inline-block sm:text-xl lg:block lg:text-2xl">
                   {topTitle}
                 </TopTitle>
-                <Content />
+                <div class="prose">
+                  <Content />
+                </div>
               </div>
 
               <Button href={buttonHref} size="lg">

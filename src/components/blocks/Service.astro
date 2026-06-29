@@ -54,7 +54,9 @@ const { enable, topTitle, title, service: items } = service;
         <div class="lg:w-1/2">
           <div class="mb-12">
             <TopTitle class="text-dark block sm:text-xl">{topTitle}</TopTitle>
-            <Markdown of={title} />
+            <div class="prose">
+              <Markdown of={title} />
+            </div>
           </div>
         </div>
 
@@ -94,7 +96,7 @@ const { enable, topTitle, title, service: items } = service;
                         )}
                       </div>
                     </div>
-                    <div class="service-item-content mt-12">
+                    <div class="prose service-item-content mt-12">
                       <Markdown of={item.content} />
                     </div>
                   </div>

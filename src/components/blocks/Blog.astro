@@ -31,7 +31,9 @@ const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
           <div class="w-1/2 max-lg:w-full">
             <div>
               <TopTitle class="text-dark block whitespace-pre-line sm:text-xl">{topTitle}</TopTitle>
-              <Markdown of={title} />
+              <div class="prose">
+                <Markdown of={title} />
+              </div>
             </div>
           </div>
           <div class="flex w-1/2 justify-end max-lg:hidden">

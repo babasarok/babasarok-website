@@ -9,8 +9,8 @@ import ProductCard from "../ui/ProductCard.astro";
 const { enable, title, itemCount, buttonName, buttonTarget } = productSection;
 
 const products = (await getCollection("product"))
-  .sort((a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0))
-  .slice(0, itemCount ?? 6);
+  .toSorted((a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0))
+  .slice(0, itemCount);
 
 const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
 ---
@@ -20,7 +20,7 @@ const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
     <section id="product" class="pt-25 pb-33.75 max-lg:pb-25">
       <div class="container">
         {/* Section title (centered) */}
-        <div class="mb-12 text-center lg:mx-auto lg:w-1/2">
+        <div class="prose mb-12 text-center lg:mx-auto lg:w-1/2">
           <Markdown of={title} />
         </div>
 

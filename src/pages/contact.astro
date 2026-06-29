@@ -70,11 +70,11 @@ const deliveryMethods = await getDeliveryMethods();
 
     <section class="py-25 max-sm:py-12.5">
       <div class="container">
-        <h3 class="text-h3 mb-10">Elérhetőségek</h3>
-        <div class="flex flex-wrap gap-y-8">
-          <div class="w-1/3 max-lg:w-full">
+        <h3 class="text-h3 text-headings mb-10">Elérhetőségek</h3>
+        <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
+          <div class="h-full flex-1 max-lg:w-full">
             <div
-              class="rounded-[20px] px-10 py-12.5 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] max-sm:px-6.25 max-sm:py-6.25"
+              class="h-full rounded-[20px] px-10 py-12.5 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] max-sm:px-6.25 max-sm:py-6.25"
             >
               <div class="relative mb-8.75 h-27.5 w-31.25 max-sm:h-17.5 max-sm:w-18.75">
                 <Image
@@ -83,14 +83,14 @@ const deliveryMethods = await getDeliveryMethods();
                   class="absolute bottom-0 left-0 z-1 h-3/5 w-3/5"
                 />
               </div>
-              <h4 class="text-h4 mb-6">Cím</h4>
-              <p class="mb-0">{address?.address}</p>
+              <h4 class="text-h4 text-headings mb-6">Cím</h4>
+              <p class="mb-0 text-sm">{address?.address}</p>
             </div>
           </div>
 
-          <div class="w-1/3 max-lg:w-full">
+          <div class="flex-1 max-lg:w-full">
             <div
-              class="rounded-[20px] px-10 py-12.5 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] max-sm:px-6.25 max-sm:py-6.25"
+              class="h-full rounded-[20px] px-10 py-12.5 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] max-sm:px-6.25 max-sm:py-6.25"
             >
               <div class="relative mb-8.75 h-27.5 w-31.25 max-sm:h-17.5 max-sm:w-18.75">
                 <svg
@@ -109,16 +109,13 @@ const deliveryMethods = await getDeliveryMethods();
                   class="absolute bottom-0 left-0 z-1 h-3/5 w-3/5"
                 />
               </div>
-              <h4 class="text-h4 mb-6">Telefon &amp; Email</h4>
-              <p class="mb-0">
+              <h4 class="text-h4 text-headings mb-6">Telefon &amp; Email</h4>
+              <p class="mb-0 text-sm">
                 {address?.phone}
                 {address?.email && <br />}
                 {
                   address?.email && (
-                    <a
-                      class="text-body hover:text-primary underline"
-                      href={`mailto:${address.email}`}
-                    >
+                    <a class="hover:text-primary underline" href={`mailto:${address.email}`}>
                       {address.email}
                     </a>
                   )
@@ -127,9 +124,9 @@ const deliveryMethods = await getDeliveryMethods();
             </div>
           </div>
 
-          <div class="w-1/3 max-lg:w-full">
+          <div class="flex-1 max-lg:w-full">
             <div
-              class="rounded-[20px] px-10 py-12.5 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] max-sm:px-6.25 max-sm:py-6.25"
+              class="h-full rounded-[20px] px-10 py-12.5 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] max-sm:px-6.25 max-sm:py-6.25"
             >
               <div class="relative mb-8.75 h-27.5 w-31.25 max-sm:h-17.5 max-sm:w-18.75">
                 <svg
@@ -148,8 +145,8 @@ const deliveryMethods = await getDeliveryMethods();
                   class="absolute bottom-0 left-0 z-1 h-3/5 w-3/5"
                 />
               </div>
-              <h4 class="text-h4 mb-6">Közösségi Média</h4>
-              <ul class="m-0 flex list-none gap-4 p-0 text-2xl">
+              <h4 class="text-h4 text-headings mb-6">Közösségi Média</h4>
+              <ul class="m-0 flex list-none gap-4 p-0 text-sm">
                 {
                   social.map((s) => (
                     <li>
