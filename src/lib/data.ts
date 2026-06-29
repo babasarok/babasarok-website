@@ -15,6 +15,37 @@ import { requestWithMetadata } from "@tinacms/astro/data";
 import client from "../../tina/__generated__/client";
 import { resolveImage } from "./assets";
 
+/**
+ * Resolve image URLs embedded in a Tina rich-text body to local optimized
+ * assets. Tina rich-text `img` nodes carry a `url` that, in cloud builds, is an
+ * absolute Tina Cloud CDN URL; left untouched it would be serialized into a
+ * client island's props and hot-link to Tina Cloud (see
+ * scripts/test/no-tina-cloud-urls.ts). `resolveImage` already normalizes both
+ * the cloud (`.../__file/<path>`) and local (`/src/assets/<path>`) forms, so we
+ * walk the value and swap each `img` node's `url` for the hashed local `src`.
+ *
+ * Only nodes shaped like `{ type: "img", url }` are touched; every other value
+ * (link hrefs, resolved `ImageMetadata` fields, plain strings) is passed
+ * through unchanged, so the generic walk is safe to run over a whole entity.
+ */
+function resolveRichTextImages<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return (value as unknown[]).map((item) => resolveRichTextImages(item)) as T;
+  }
+  if (value !== null && typeof value === "object") {
+    const source = value as Record<string, unknown>;
+    const result: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(source)) {
+      result[key] = resolveRichTextImages(val);
+    }
+    if (source.type === "img" && typeof source.url === "string") {
+      result.url = resolveImage(source.url)?.src ?? source.url;
+    }
+    return result as T;
+  }
+  return value;
+}
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const getConfig = async () => {
   const result = await requestWithMetadata(client.queries.config({ relativePath: "config.json" }));
@@ -43,33 +74,35 @@ export const getProducts = async () => {
   return (
     products
       ?.toSorted((a, b) => a.title.localeCompare(b.title))
-      .map((product) => ({
-        ...product,
-        icon: resolveImage(product.icon),
-        thumbnail: resolveImage(product.thumbnail),
-        images: product.images?.map((entry) =>
-          entry ? { ...entry, image: resolveImage(entry.image) } : entry
-        ),
-        materials: product.materials
-          ? {
-              ...product.materials,
-              materials: product.materials.materials?.map((material) =>
-                material?.material_path
-                  ? {
-                      ...material,
-                      material_path: {
-                        ...material.material_path,
-                        thumbnail: resolveImage(material.material_path.thumbnail),
-                        colors: material.material_path.colors?.map((color) =>
-                          color ? { ...color, image: resolveImage(color.image) } : color
-                        ),
-                      },
-                    }
-                  : material
-              ),
-            }
-          : product.materials,
-      })) ?? []
+      .map((product) =>
+        resolveRichTextImages({
+          ...product,
+          icon: resolveImage(product.icon),
+          thumbnail: resolveImage(product.thumbnail),
+          images: product.images?.map((entry) =>
+            entry ? { ...entry, image: resolveImage(entry.image) } : entry
+          ),
+          materials: product.materials
+            ? {
+                ...product.materials,
+                materials: product.materials.materials?.map((material) =>
+                  material?.material_path
+                    ? {
+                        ...material,
+                        material_path: {
+                          ...material.material_path,
+                          thumbnail: resolveImage(material.material_path.thumbnail),
+                          colors: material.material_path.colors?.map((color) =>
+                            color ? { ...color, image: resolveImage(color.image) } : color
+                          ),
+                        },
+                      }
+                    : material
+                ),
+              }
+            : product.materials,
+        })
+      ) ?? []
   );
 };
 
@@ -84,13 +117,15 @@ export const getMaterials = async () => {
   return (
     materials
       ?.toSorted((a, b) => a.label.localeCompare(b.label))
-      .map((material) => ({
-        ...material,
-        thumbnail: resolveImage(material.thumbnail),
-        colors: material.colors?.map((color) =>
-          color ? { ...color, image: resolveImage(color.image) } : color
-        ),
-      })) ?? []
+      .map((material) =>
+        resolveRichTextImages({
+          ...material,
+          thumbnail: resolveImage(material.thumbnail),
+          colors: material.colors?.map((color) =>
+            color ? { ...color, image: resolveImage(color.image) } : color
+          ),
+        })
+      ) ?? []
   );
 };
 

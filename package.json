@@ -13,6 +13,7 @@
     "migrate": "node scripts/migrate/index.ts",
     "preview": "astro preview",
     "astro": "astro",
+    "test:dist-tina-urls": "node scripts/test/no-tina-cloud-urls.ts",
     "check": "npx astro check && npx sv check",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx,.astro,.svelte",
     "lint:style": "stylelint \"**/*.{css,astro,svelte}\"",
