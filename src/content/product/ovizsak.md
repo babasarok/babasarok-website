@@ -5,7 +5,6 @@ can_be_ordered: true
 thumbnail: /src/assets/IMG_4447.jpeg
 images:
   - image: /src/assets/IMG_4454.png
-    description: Ovizsák szett
   - image: /src/assets/IMG_4455.png
   - image: /src/assets/IMG_4348.jpeg
 table:

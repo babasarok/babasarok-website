@@ -1,6 +1,7 @@
 ---
 import type { ImageMetadata } from "astro";
 import { Image } from "astro:assets";
+import { Icon } from "astro-icon/components";
 
 /**
  * Product image gallery. A single image renders as a static figure; multiple
@@ -22,14 +23,13 @@ const { id, images } = Astro.props;
 
 const widths = [600, 900, 1200, 1500, 1880];
 const sizes = "(min-width: 992px) 940px, 90vw";
-const hasCaptions = images.some((img) => img.description);
 
-// Per-slide state rules (global, but every selector is scoped under #id).
+// The track transform and the per-slide arrow visibility are generated;
+// captions move with their slide. Every selector is scoped under #id.
 let stateCss = "";
-for (const [i, _] of images.entries()) {
+for (const i of images.keys()) {
   stateCss += `#${id} .cd-input-${i}:checked~.cd-viewport .cd-track{transform:translateX(-${i * 100}%)}`;
-  stateCss += `#${id} .cd-input-${i}:checked~.cd-arrows .cd-arrows-set-${i}{opacity:1;pointer-events:auto}`;
-  stateCss += `#${id} .cd-input-${i}:checked~.cd-captions .cd-caption-${i}{display:block}`;
+  stateCss += `#${id} .cd-input-${i}:checked~.cd-arrows .cd-arrows-${i}{opacity:1;pointer-events:auto}`;
 }
 ---
 
@@ -72,42 +72,37 @@ for (const [i, _] of images.entries()) {
                   sizes={sizes}
                   class="h-125 w-auto max-w-full rounded-[20px] object-cover max-sm:h-75"
                 />
+                {img.description && <p class="mt-3 text-center text-black">{img.description}</p>}
               </div>
             ))}
           </div>
         </div>
 
-        {hasCaptions && (
-          <div class="cd-captions mt-3 text-center">
-            {images.map((img, i) => (
-              <p class:list={[`cd-caption-${i}`, "text-body m-0 hidden text-[0.95rem]"]}>
-                {img.description}
-              </p>
-            ))}
-          </div>
-        )}
-
-        <div class="cd-arrows pointer-events-none absolute inset-0 z-2" aria-hidden="true">
+        <div class="cd-arrows pointer-events-none absolute inset-x-0 top-0 z-2 h-125 max-sm:h-75">
           {images.map((_, i) => {
             const prev = i === 0 ? images.length - 1 : i - 1;
             const next = i === images.length - 1 ? 0 : i + 1;
             return (
               <div
                 class:list={[
-                  `cd-arrows-set-${i}`,
-                  "pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-250",
+                  `cd-arrows-${i}`,
+                  "pointer-events-none absolute inset-0 flex items-center justify-between px-2 opacity-0 transition-opacity duration-200",
                 ]}
               >
                 <label
-                  class="cd-arrow cd-arrow-prev"
+                  class="bg-accent grid size-10.5 cursor-pointer place-items-center rounded-full text-white transition-transform hover:scale-105 active:scale-95 max-sm:size-9"
                   for={`${id}-i-${prev}`}
                   aria-label="Előző kép"
-                />
+                >
+                  <Icon name="tabler:chevron-left" class="block text-xl" />
+                </label>
                 <label
-                  class="cd-arrow cd-arrow-next"
+                  class="bg-accent grid size-10.5 cursor-pointer place-items-center rounded-full text-white transition-transform hover:scale-105 active:scale-95 max-sm:size-9"
                   for={`${id}-i-${next}`}
                   aria-label="Következő kép"
-                />
+                >
+                  <Icon name="tabler:chevron-right" class="block text-xl" />
+                </label>
               </div>
             );
           })}
@@ -118,71 +113,3 @@ for (const [i, _] of images.entries()) {
     </div>
   )
 }
-
-<style>
-  .cd-arrow {
-    position: absolute;
-    top: 50%;
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background-color: rgb(255 255 255 / 88%);
-    cursor: pointer;
-    display: block;
-    transform: translateY(-50%);
-    transition:
-      transform 0.2s ease,
-      background-color 0.2s ease;
-  }
-
-  .cd-arrow::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 10px;
-    height: 10px;
-    border-right: 2px solid var(--color-accent);
-    border-bottom: 2px solid var(--color-accent);
-  }
-
-  .cd-arrow:hover {
-    background-color: #fff;
-    transform: translateY(-50%) scale(1.05);
-  }
-
-  .cd-arrow:active {
-    transform: translateY(-50%) scale(0.97);
-  }
-
-  .cd-arrow-prev {
-    left: 16px;
-  }
-
-  .cd-arrow-prev::before {
-    transform: translate(-38%, -50%) rotate(135deg);
-  }
-
-  .cd-arrow-next {
-    right: 16px;
-  }
-
-  .cd-arrow-next::before {
-    transform: translate(-62%, -50%) rotate(-45deg);
-  }
-
-  @media (width <= 575px) {
-    .cd-arrow {
-      width: 36px;
-      height: 36px;
-    }
-
-    .cd-arrow-prev {
-      left: 10px;
-    }
-
-    .cd-arrow-next {
-      right: 10px;
-    }
-  }
-</style>
