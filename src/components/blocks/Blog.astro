@@ -21,14 +21,14 @@ const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
   enable && (
     <section id="blog" class="relative mb-7.5 py-25">
       {/* Rotating decorative shape (desktop only) */}
-      <div class="pointer-events-none absolute top-[11%] right-[12%] -z-10 h-75 w-75 max-lg:hidden">
+      <div class="pointer-events-none absolute top-[11%] right-[12%] -z-10 hidden h-75 w-75 lg:block">
         <img src={blogShape} alt="" aria-hidden="true" class="animate-rotate-slow h-full w-full" />
       </div>
 
       <div class="container">
         {/* Header: title + desktop button */}
         <div class="mb-12 flex flex-wrap items-end">
-          <div class="w-1/2 max-lg:w-full">
+          <div class="w-full lg:w-1/2">
             <div>
               <TopTitle class="text-dark block whitespace-pre-line sm:text-xl">{topTitle}</TopTitle>
               <div class="prose">
@@ -36,7 +36,7 @@ const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
               </div>
             </div>
           </div>
-          <div class="flex w-1/2 justify-end max-lg:hidden">
+          <div class="hidden w-1/2 justify-end lg:flex">
             <Button href={buttonHref} variant="outline-secondary" size="lg" class="m-3">
               {buttonName}
             </Button>
@@ -56,7 +56,7 @@ const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
         </div>
 
         {/* Mobile button */}
-        <div class="hidden text-center max-lg:block">
+        <div class="block text-center lg:hidden">
           <Button href={buttonHref} variant="outline-secondary" size="lg">
             {buttonName}
           </Button>

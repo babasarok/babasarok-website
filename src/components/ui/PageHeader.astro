@@ -10,12 +10,12 @@ interface Props {
 const { title, breadcrumb = title, "no-shapes": noShapes = false } = Astro.props;
 ---
 
-<header class="relative pt-50 max-lg:pt-30">
+<header class="relative pt-30 lg:pt-50">
   {!noShapes && <FloatingShapes />}
 
   <div class="container">
     <div class="text-center">
-      <h1 class="text-h1 text-headings mb-7.5 text-5xl leading-none max-lg:text-3xl">{title}</h1>
+      <h1 class="text-h1 text-headings mb-7.5 text-3xl leading-none lg:text-5xl">{title}</h1>
       <nav aria-label="breadcrumb" class="flex justify-center">
         <ol class="flex items-center whitespace-nowrap">
           <li>

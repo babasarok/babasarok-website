@@ -35,7 +35,7 @@ const { items, currentPage, lastPage } = Astro.props;
   <PageHeader title="Anyagok" />
   <section class="py-25">
     <div class="container">
-      <div class="flex flex-wrap justify-center gap-8 max-sm:gap-y-12">
+      <div class="flex flex-wrap justify-center gap-8 gap-y-12 sm:gap-y-8">
         {
           items.map((material) => (
             <ProductCard

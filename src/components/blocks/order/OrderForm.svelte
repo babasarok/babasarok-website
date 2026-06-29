@@ -47,7 +47,7 @@
 </script>
 
 <form
-  class="flex flex-col px-3.75 sm:max-w-135 md:max-w-180 lg:max-w-240 xl:max-w-285 mx-auto text-foreground"
+  class="flex flex-col px-3.75 sm:max-w-135 md:max-w-180 lg:max-w-240 xl:max-w-285 mx-auto text-body"
   onsubmit={async (e) => {
     e.preventDefault();
     error = null;
@@ -183,7 +183,7 @@
       <div class="flex items-center gap-2">
         <Icon
           icon="mdi:account"
-          class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary"
+          class="shrink-0 text-4xl rounded-full p-2 text-brown-500 bg-brown-50"
         />
         <div class="flex flex-col gap-2">
           <h4 class="text-lg uppercase">Hova küldhetjük a terveket?</h4>
@@ -191,21 +191,21 @@
       </div>
       <div class="flex gap-2 flex-col sm:flex-row">
         <input
-          class="text-sm border rounded bg-white px-2 py-1 border-border w-full focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+          class="text-sm border rounded bg-white px-2 py-1 border-brown-200 w-full focus:outline-none focus:ring-2 focus:ring-sand-300/40 transition-all"
           type="text"
           placeholder="Név *"
           required
           bind:value={name}
         />
         <input
-          class="text-sm border rounded bg-white px-2 py-1 border-border w-full focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+          class="text-sm border rounded bg-white px-2 py-1 border-brown-200 w-full focus:outline-none focus:ring-2 focus:ring-sand-300/40 transition-all"
           type="email"
           placeholder="Email cím *"
           required
           bind:value={email}
         />
         <input
-          class="text-sm border rounded bg-white px-2 py-1 border-border w-full focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+          class="text-sm border rounded bg-white px-2 py-1 border-brown-200 w-full focus:outline-none focus:ring-2 focus:ring-sand-300/40 transition-all"
           type="tel"
           placeholder="Telefonszám"
           bind:value={phone}
@@ -217,7 +217,7 @@
         <div class="flex items-center gap-2">
           <Icon
             icon="mdi:cart"
-            class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary"
+            class="shrink-0 text-4xl rounded-full p-2 text-brown-500 bg-brown-50"
           />
           <div class="flex flex-col gap">
             <h4 class="text-lg uppercase">Miket szeretnél a csomagba?</h4>
@@ -240,7 +240,7 @@
             <div class="flex items-center gap-2">
               <Icon
                 icon="mdi:cart"
-                class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary"
+                class="shrink-0 text-4xl rounded-full p-2 text-brown-500 bg-brown-50"
               />
               <div class="flex flex-col gap">
                 <h4 class="text-xl uppercase">Termékek</h4>
@@ -258,7 +258,7 @@
               )}
               <button
                 type="button"
-                class="flex font-normal w-full justify-between items-center gap-4 p-1 px-4 rounded hover:bg-border transition-all cursor-pointer"
+                class="flex font-normal w-full justify-between items-center gap-4 p-1 px-4 rounded hover:bg-brown-200 transition-all cursor-pointer"
                 onclick={() => {
                   const clone = $state.snapshot(product);
                   products.splice(
@@ -319,24 +319,24 @@
         {/snippet}
       </Masonry>
     </div>
-    <div class="w-full h-0.5 bg-border mt-4"></div>
+    <div class="w-full h-0.5 bg-brown-200 mt-4"></div>
     <div class="flex gap-4 flex-wrap mt-6 relative">
       <OrderDelivery {deliveryMethods} bind:deliveryMethod />
-      <div class="flex flex-col rounded-xl bg-border p-4 flex-1">
+      <div class="flex flex-col rounded-xl bg-brown-200 p-4 flex-1">
         <div class="flex items-center gap-2">
-          <Icon icon="mdi:message-text" class="shrink-0 text-2xl  text-primary-500" />
+          <Icon icon="mdi:message-text" class="shrink-0 text-2xl  text-brown-500" />
           <h4 class="text-lg uppercase">Van valami különleges kérésed?</h4>
         </div>
         <textarea
           bind:value={message}
           placeholder="Írd meg ide, milyen egyedi színekre, mintákra gondoltál, vagy ha van bármilyen egyedi kérésed (pl. név hímzése)!"
-          class="mt-4 flex-1 text-sm min-h-22 bg-white border border-border rounded p-2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+          class="mt-4 flex-1 text-sm min-h-22 bg-white border border-brown-200 rounded p-2 focus:outline-none focus:ring-2 focus:ring-sand-300/40 transition-all"
         >
         </textarea>
       </div>
     </div>
     <div class="flex flex-col gap-2 mt-4"></div>
-    <div class="flex items-center gap-2 p-2 rounded bg-bg-secondary border border-gray-300">
+    <div class="flex items-center gap-2 p-2 rounded bg-brown-100 border border-gray-300">
       <Icon icon="mdi:info" class="shrink-0 text-2xl text-yellow-500" />
       <p class="text-xs text-yellow-700">
         Jelenleg a rendelési folyamat tesztelés alatt áll. Ha bármilyen problémát tapasztalsz,

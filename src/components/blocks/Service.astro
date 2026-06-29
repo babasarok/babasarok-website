@@ -16,7 +16,7 @@ const { enable, topTitle, title, service: items } = service;
       <div class="absolute top-0 right-0 -z-10 w-[61%]">
         <svg viewBox="0 0 1283 1126" class="h-auto w-full">
           <path
-            class="fill-bg-light"
+            class="fill-sand-100"
             d="M100 0h1183v1126l-1183-80A100 100 0 010 946V100A100 100 0 01100 0z"
           />
         </svg>
@@ -34,8 +34,8 @@ const { enable, topTitle, title, service: items } = service;
               y2="1.164"
               gradientUnits="objectBoundingBox"
             >
-              <stop offset="0" stop-color="var(--color-bg-light)" />
-              <stop offset="1" stop-color="var(--color-bg-light)" stop-opacity="0" />
+              <stop offset="0" stop-color="var(--color-sand-100)" />
+              <stop offset="1" stop-color="var(--color-sand-100)" stop-opacity="0" />
             </linearGradient>
           </defs>
           <path
@@ -68,7 +68,7 @@ const { enable, topTitle, title, service: items } = service;
             {items.map((item) => {
               const img = resolveImage(item.image);
               return (
-                <div class="w-[33%] shrink-0 snap-center snap-always p-3.75 max-sm:w-full">
+                <div class="w-full shrink-0 snap-center snap-always p-3.75 sm:w-[33%]">
                   <div class="rounded-[20px] bg-white p-7.5 shadow-[0_5px_10px_0_rgba(50,65,141,0.12)]">
                     <div class="relative h-27.5 w-31.25">
                       <div class="absolute top-0 right-0">
@@ -79,7 +79,7 @@ const { enable, topTitle, title, service: items } = service;
                           viewBox="0 0 122.457 109.702"
                         >
                           <path
-                            class="fill-bg-light"
+                            class="fill-sand-100"
                             d="M49.855527 9.984102c-4.337424-.815024-8.766002-1.633779-13.152776-1.113889-8.196034.975107-15.344329 6.696991-19.41555 13.879649s-5.363288 15.655094-5.187042 23.907191c.156996 7.385448 1.479849 14.875357 4.972905 21.38465s9.337384 11.961229 16.458344 13.922244c4.833752 1.331211 10.056683 1.044827 14.74081 2.829827 7.560693 2.881382 12.209757 10.489626 19.01235 14.870016a25.650039 25.650039 0 0024.16316 1.698928c8.342551-3.846451 14.03857-12.107291 16.641338-20.918947s2.471077-18.187687 1.756125-27.346305c-.843101-10.912846-3.01686-22.783019-11.354287-29.869462-6.037066-5.130853-14.208558-6.772976-21.995428-8.235353z"
                           />
                         </svg>
@@ -178,7 +178,7 @@ const { enable, topTitle, title, service: items } = service;
   }
 
   .slick-dots li button:hover {
-    background: var(--color-primary);
+    background: var(--color-sand-300);
   }
 
   .slick-dots li button:focus {
@@ -191,6 +191,6 @@ const { enable, topTitle, title, service: items } = service;
   }
 
   .slick-dots li.slick-active button {
-    background: var(--color-primary);
+    background: var(--color-sand-300);
   }
 </style>

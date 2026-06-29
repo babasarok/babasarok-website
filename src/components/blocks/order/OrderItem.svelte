@@ -17,16 +17,13 @@
 
 <div
   {...rest}
-  class={[
-    "flex flex-col gap-2 rounded-xl border shadow-md border-primary-light p-2 w-full",
-    className,
-  ]}
+  class={["flex flex-col gap-2 rounded-xl border shadow-md border-brown-200 p-2 w-full", className]}
 >
   <div class="flex items-center">
     <div class="flex items-center gap-2 flex-1 overflow-hidden">
       {#if product.icon}
         <div
-          class="shrink-0 w-8 h-8 bg-primary-400 rounded-full flex items-center justify-center fill-white text-white"
+          class="shrink-0 w-8 h-8 bg-brown-400 rounded-full flex items-center justify-center fill-white text-white"
         >
           <div
             class="bg-white w-6 h-6"
@@ -34,7 +31,7 @@
           ></div>
         </div>
       {:else}
-        <Icon icon="mdi:circle" class="text-primary-400 text-4xl shrink-0" />
+        <Icon icon="mdi:circle" class="text-brown-400 text-4xl shrink-0" />
       {/if}
       <p class="whitespace-nowrap overflow-hidden text-ellipsis">{product.title}</p>
     </div>
@@ -42,11 +39,11 @@
       <Icon icon="mdi:close" />
     </IconButton>
   </div>
-  <div class="w-full h-0.5 bg-border"></div>
+  <div class="w-full h-0.5 bg-brown-200"></div>
   <OrderItemFields {product} {onChange} />
   {#each Array.from({ length: product.materials.material_required_count }) as _, i (i)}
     <OrderItemMaterials {product} {onChange} material_index={i} />
   {/each}
-  <!-- <div class="w-full h-0.5 bg-border"></div>
+  <!-- <div class="w-full h-0.5 bg-brown-200"></div>
     <OrderItemPrice {product} {onChange} /> -->
 </div>

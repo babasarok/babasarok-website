@@ -53,7 +53,7 @@ const mainMenu = rawMenu
                 <a
                   href={item.url ?? "/"}
                   class:list={[
-                    "text-dark hover:text-primary block p-2 text-center transition-all",
+                    "text-dark hover:text-sand-300 block p-2 text-center transition-all",
                     isHome && item.url?.includes("#") && "scroll",
                   ]}
                 >
@@ -94,13 +94,11 @@ const mainMenu = rawMenu
   /* ── Mobile scrolled: floating card, no overflow ─────────────── */
 
   /* left/right with no explicit width = element fills the gap, fully animatable */
-  @media (width <= 1023px) {
-    #navbar.scrolled {
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      box-shadow: 0 10px 20px 0 rgb(50 65 141 / 10%);
-    }
+  #navbar.scrolled {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    box-shadow: 0 10px 20px 0 rgb(50 65 141 / 10%);
   }
 
   /* ── Desktop: transparent→white on scroll ────────────────────── */
@@ -115,6 +113,9 @@ const mainMenu = rawMenu
     }
 
     #navbar.scrolled {
+      top: 0;
+      left: 0;
+      right: 0;
       background-color: rgb(255 255 255 / 100%);
       padding-top: 10px;
       padding-bottom: 10px;
@@ -127,7 +128,7 @@ const mainMenu = rawMenu
     display: block;
     height: 2px;
     width: 25px;
-    background: var(--color-primary);
+    background: var(--color-sand-300);
     transition: all 0.2s;
   }
 

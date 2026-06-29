@@ -20,7 +20,7 @@
   {#if field.type === "input" || field.value?.is_custom}
     {@const id = v4()}
     <input
-      class="text-sm border rounded bg-white px-2 py-1 border-border w-full focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+      class="text-sm border rounded bg-white px-2 py-1 border-brown-200 w-full focus:outline-none focus:ring-2 focus:ring-sand-300/40 transition-all"
       type="text"
       value={field.value?.value ?? ""}
       list={field.type === "input" && field.items ? id : undefined}
@@ -54,7 +54,7 @@
 <!-- Generic fields -->
 {#each product.fields as field (field.name)}
   <div class="flex flex-col gap-1">
-    <p class="text-sm text-primary-500">{field.label || field.name}</p>
+    <p class="text-sm text-brown-500">{field.label || field.name}</p>
     <div class="flex gap-1 flex-wrap">
       {#if field.type === "radio" && "items" in field}
         {@const items = field.items?.filter((item) => item != null)}

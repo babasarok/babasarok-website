@@ -72,7 +72,7 @@
     bind:this={floating.elements.floating}
     style={floating.floatingStyles}
     {...interactions.getFloatingProps()}
-    class="rounded-md bg-bg-secondary p-2 text-sm shadow-lg z-50 transition-opacity"
+    class="rounded-md bg-brown-100 p-2 text-sm shadow-lg z-50 transition-opacity"
     transition:fade={{ duration: 200 }}
   >
     {@render content()}
@@ -80,7 +80,7 @@
       bind:ref={elemArrow}
       context={floating.context}
       fill="#EDE6DF"
-      className="fill-bg-secondary"
+      className="fill-brown-100"
     />
   </div>
 {/if}

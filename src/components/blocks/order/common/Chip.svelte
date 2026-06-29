@@ -35,7 +35,7 @@
   .chip {
     background-size: cover;
     background-position: center;
-    -webkit-text-stroke: 1px white;
+    -webkit-text-stroke: 3px white;
     paint-order: stroke fill;
   }
 </style>

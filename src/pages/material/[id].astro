@@ -53,7 +53,7 @@ const shareLinks = [
 ---
 
 <Base title={heading} description={shortDescription} isArticle>
-  <section class="relative overflow-hidden pt-50 pb-25 max-sm:pt-30">
+  <section class="relative overflow-hidden pt-30 pb-25 sm:pt-50">
     <FloatingShapes
       figureClass="top-[30%] left-[-7%]"
       blobClass="right-[4%] top-[29%]"
@@ -116,7 +116,7 @@ const shareLinks = [
       </div>
 
       <div class="relative z-1 lg:mx-auto lg:w-10/12">
-        <nav class="flex items-center justify-between gap-8 max-sm:gap-4">
+        <nav class="flex items-center justify-between gap-4 sm:gap-8">
           {
             prev ? (
               <a class="group flex items-center" href={`/material/${prev.id}/`}>
@@ -134,7 +134,7 @@ const shareLinks = [
                 </span>
                 <span class="text-left">
                   <span class="text-body block text-sm">Előző</span>
-                  <span class="font-heading text-dark group-hover:text-primary block text-xl">
+                  <span class="font-heading text-dark group-hover:text-sand-300 block text-xl">
                     {prev.data.label ?? prev.data.title}
                   </span>
                 </span>
@@ -144,12 +144,12 @@ const shareLinks = [
             )
           }
 
-          <ul class="flex items-center max-sm:hidden">
+          <ul class="hidden items-center sm:flex">
             {
               shareLinks.map((link) => (
                 <li class="not-last:mr-6">
                   <a
-                    class="text-body hover:text-primary block transition-colors hover:scale-110"
+                    class="text-body hover:text-sand-300 block transition-colors hover:scale-110"
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -166,7 +166,7 @@ const shareLinks = [
               <a class="group flex items-center" href={`/material/${next.id}/`}>
                 <span class="text-right">
                   <span class="text-body block text-sm">Következő</span>
-                  <span class="font-heading text-dark group-hover:text-primary block text-xl">
+                  <span class="font-heading text-dark group-hover:text-sand-300 block text-xl">
                     {next.data.label ?? next.data.title}
                   </span>
                 </span>

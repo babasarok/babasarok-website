@@ -38,12 +38,12 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
 ---
 
 <Base title={title} isArticle>
-  <header class="relative pt-50 max-lg:pt-30">
+  <header class="relative pt-30 lg:pt-50">
     <FloatingShapes />
 
     <div class="container">
       <div class="text-center lg:mx-auto lg:w-10/12">
-        <h1 class="text-h1 text-headings mb-7.5 text-5xl leading-none max-lg:text-3xl">{title}</h1>
+        <h1 class="text-h1 text-headings mb-7.5 text-3xl leading-none lg:text-5xl">{title}</h1>
         <nav aria-label="breadcrumb" class="flex justify-center">
           <ol class="flex items-center whitespace-nowrap">
             <li>
@@ -63,7 +63,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
         {
           date && (
             <li class="flex items-center gap-2">
-              <Icon name="tabler:calendar" class="text-primary" />
+              <Icon name="tabler:calendar" class="text-sand-300" />
               {dateFormatter.format(date)}
             </li>
           )
@@ -71,7 +71,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
         {
           tags.length > 0 && (
             <li class="flex items-center gap-2">
-              <Icon name="tabler:tag" class="text-primary" />
+              <Icon name="tabler:tag" class="text-sand-300" />
               {tags.join(", ")}
             </li>
           )
@@ -79,7 +79,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
         {
           categories && (
             <li class="flex items-center gap-2">
-              <Icon name="tabler:folder" class="text-primary" />
+              <Icon name="tabler:folder" class="text-sand-300" />
               {categories}
             </li>
           )
@@ -88,7 +88,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
     </div>
   </header>
 
-  <section class="relative overflow-hidden py-25 max-sm:py-12.5">
+  <section class="relative overflow-hidden py-12.5 sm:py-25">
     <div class="container">
       {
         feature && (

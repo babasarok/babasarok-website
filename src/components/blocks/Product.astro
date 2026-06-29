@@ -17,7 +17,7 @@ const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
 
 {
   enable && (
-    <section id="product" class="pt-25 pb-33.75 max-lg:pb-25">
+    <section id="product" class="pt-25 pb-25 lg:pb-33.75">
       <div class="container">
         {/* Section title (centered) */}
         <div class="prose mb-12 text-center lg:mx-auto lg:w-1/2">
@@ -25,7 +25,7 @@ const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
         </div>
 
         {/* Product grid */}
-        <div class="flex flex-wrap justify-center gap-8 max-sm:gap-y-12">
+        <div class="flex flex-wrap justify-center gap-8 gap-y-12 sm:gap-y-8">
           {products.map((product) => (
             <ProductCard
               href={`/product/${product.id}/`}

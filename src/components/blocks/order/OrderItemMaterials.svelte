@@ -92,7 +92,7 @@
 
 {#if product.materials.materials.length > 0}
   <div class="flex flex-col gap-1">
-    <p class="text-sm text-primary-500">
+    <p class="text-sm text-brown-500">
       {product.materials.material_required_count == 1 ? "Anyag" : `Anyag ${material_index + 1}`}
     </p>
     <div class="flex gap-1 flex-wrap">
@@ -135,7 +135,7 @@
     {@const disabled =
       colorCount === undefined || (multiColor ? (value?.colors.length ?? 0) >= colorCount : false)}
     <div class="flex flex-col gap-1">
-      <p class="text-sm text-primary-500 flex items-center gap-1 justify-between">
+      <p class="text-sm text-brown-500 flex items-center gap-1 justify-between">
         <span> Szín </span>
         <span class="text-xs">
           {#if custom}
@@ -150,7 +150,7 @@
       {#if (materialInfo?.colors?.length ?? 0) > 0}
         <p
           transition:slide
-          class="text-xs text-primary-500 flex items-center gap-1 border border-primary-light rounded p-1"
+          class="text-xs text-brown-500 flex items-center gap-1 border border-brown-200 rounded p-1"
         >
           <Icon icon="mdi:alert-circle" class="inline-block size-6 text-orange-500" />
           <span> A színek tájékoztató jellegűek, a pontos árnyalatok eltérhetnek. </span>
@@ -227,7 +227,7 @@
     {/if}
     {#if custom}
       <input
-        class="text-sm border rounded bg-white px-2 py-1 border-border w-full focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+        class="text-sm border rounded bg-white px-2 py-1 border-brown-200 w-full focus:outline-none focus:ring-2 focus:ring-sand-300/40 transition-all"
         value={value?.custom_color}
         oninput={(e) => {
           const result = product;

@@ -41,7 +41,7 @@ for (const i of images.keys()) {
         alt={images[0].alt}
         widths={widths}
         sizes={sizes}
-        class="h-125 w-full rounded-[20px] object-cover max-sm:h-75"
+        class="h-75 w-full rounded-[20px] object-cover sm:h-125"
       />
     </div>
   )
@@ -70,7 +70,7 @@ for (const i of images.keys()) {
                   alt={img.alt}
                   widths={widths}
                   sizes={sizes}
-                  class="h-125 w-auto max-w-full rounded-[20px] object-cover max-sm:h-75"
+                  class="h-75 w-auto max-w-full rounded-[20px] object-cover sm:h-125"
                 />
                 {img.description && <p class="mt-3 text-center text-black">{img.description}</p>}
               </div>
@@ -78,7 +78,7 @@ for (const i of images.keys()) {
           </div>
         </div>
 
-        <div class="cd-arrows pointer-events-none absolute inset-x-0 top-0 z-2 h-125 max-sm:h-75">
+        <div class="cd-arrows pointer-events-none absolute inset-x-0 top-0 z-2 h-75 sm:h-125">
           {images.map((_, i) => {
             const prev = i === 0 ? images.length - 1 : i - 1;
             const next = i === images.length - 1 ? 0 : i + 1;
@@ -90,14 +90,14 @@ for (const i of images.keys()) {
                 ]}
               >
                 <label
-                  class="bg-accent grid size-10.5 cursor-pointer place-items-center rounded-full text-white transition-transform hover:scale-105 active:scale-95 max-sm:size-9"
+                  class="bg-accent grid size-9 cursor-pointer place-items-center rounded-full text-white transition-transform hover:scale-105 active:scale-95 sm:size-10.5"
                   for={`${id}-i-${prev}`}
                   aria-label="Előző kép"
                 >
                   <Icon name="tabler:chevron-left" class="block text-xl" />
                 </label>
                 <label
-                  class="bg-accent grid size-10.5 cursor-pointer place-items-center rounded-full text-white transition-transform hover:scale-105 active:scale-95 max-sm:size-9"
+                  class="bg-accent grid size-9 cursor-pointer place-items-center rounded-full text-white transition-transform hover:scale-105 active:scale-95 sm:size-10.5"
                   for={`${id}-i-${next}`}
                   aria-label="Következő kép"
                 >

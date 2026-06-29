@@ -37,7 +37,7 @@
       </div>
     {/each}
     {#if priceParts.length > 0}
-      <div class="w-full h-0.5 bg-border"></div>
+      <div class="w-full h-0.5 bg-brown-200"></div>
     {/if}
     {#if price.priced_by_length}
       <div class="flex justify-between">

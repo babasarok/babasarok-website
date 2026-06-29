@@ -26,8 +26,8 @@ const button2Href = button2Target ? `/${button2Target}` : undefined;
         {/* Image + content card */}
         <div class="flex flex-wrap items-center justify-center">
           {/* Image with decorative floating svg + svg mask */}
-          <div class="relative w-[45%] max-lg:w-full">
-            <div class="animate-float-y absolute top-[-11%] left-[-17%] -z-10 h-37.5 max-md:top-[-7%] max-md:left-[-16%]">
+          <div class="relative w-full lg:w-[45%]">
+            <div class="animate-float-y absolute top-[-7%] left-[-16%] -z-10 h-37.5 md:top-[-11%] md:left-[-17%]">
               <img src={figureSvg} alt="" class="h-full w-full" />
             </div>
 
@@ -43,9 +43,9 @@ const button2Href = button2Target ? `/${button2Target}` : undefined;
           </div>
 
           {/* Dark content card */}
-          <div class="bg-bg-dark relative -ml-3.75 w-[55%] rounded-[20px] px-12.5 py-15 max-lg:mt-7.5 max-lg:ml-0 max-lg:w-full max-lg:p-6.25">
+          <div class="bg-sand-700 relative mt-7.5 ml-0 w-full rounded-[20px] p-6.25 lg:mt-0 lg:-ml-3.75 lg:w-[55%] lg:px-12.5 lg:py-15">
             {/* Soft gradient blob behind the card (tablet+ only) */}
-            <div class="absolute top-[-55%] right-[-22%] -z-10 h-[362.909px] w-[400.369px] max-md:hidden">
+            <div class="absolute top-[-55%] right-[-22%] -z-10 hidden h-[362.909px] w-[400.369px] md:block">
               <svg viewBox="0 0 600 600" class="w-[140%]">
                 <defs>
                   <linearGradient
@@ -56,8 +56,8 @@ const button2Href = button2Target ? `/${button2Target}` : undefined;
                     y2="0.935"
                     gradientUnits="objectBoundingBox"
                   >
-                    <stop offset="0" stop-color="var(--color-bg-light)" />
-                    <stop offset="1" stop-color="var(--color-bg-light)" stop-opacity="0" />
+                    <stop offset="0" stop-color="var(--color-sand-100)" />
+                    <stop offset="1" stop-color="var(--color-sand-100)" stop-opacity="0" />
                   </linearGradient>
                 </defs>
                 <path

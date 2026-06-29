@@ -30,8 +30,8 @@
     <div
       class={[
         "size-6 border-2 rounded-full transition-all p-px",
-        selected ? "border-primary-500" : "border-transparent",
-        disabled ? "" : "hover:border-primary-400",
+        selected ? "border-brown-500" : "border-transparent",
+        disabled ? "" : "hover:border-brown-400",
       ]}
     >
       {#if color.image}

@@ -1,0 +1,96 @@
+/* Bootstrap 4-equivalent responsive container (mobile-first min-widths). */
+@utility container {
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+
+  @media (width >= 576px) {
+    max-width: 540px;
+  }
+
+  @media (width >= 768px) {
+    max-width: 720px;
+  }
+
+  @media (width >= 992px) {
+    max-width: 960px;
+  }
+
+  @media (width >= 1200px) {
+    max-width: 1140px;
+  }
+}
+
+/* Mobile-first heading sizes: the base (mobile) values live in the @theme
+   tokens; from sm up they scale to the larger desktop sizes. */
+@media (width >= 36rem) {
+  :root {
+    --text-h1: 60px;
+    --text-h2: 50px;
+    --text-h3: 30px;
+    --text-h4: 25px;
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading), serif;
+}
+
+html {
+  height: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-sand-50);
+  overflow-x: hidden;
+  margin: 0;
+  font-family: var(--font-base), sans-serif;
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 1.75;
+  color: var(--color-body);
+  text-align: left;
+  height: inherit;
+}
+
+/* Shared decorative float animations (ported from the old SCSS, reused
+   across hero/service/about/etc.). */
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(15px);
+  }
+}
+
+@keyframes float-x {
+  0%,
+  100% {
+    transform: translateX(-50%);
+  }
+
+  50% {
+    transform: translateX(-57%);
+  }
+}
+
+@keyframes rotate-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
