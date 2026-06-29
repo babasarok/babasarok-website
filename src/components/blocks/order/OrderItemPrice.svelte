@@ -29,7 +29,7 @@
       <div class="flex justify-between">
         <p class="text-xs">{part.label}</p>
         <p class="text-xs">
-          {part.price !== undefined ? `${part.price} Ft` : "??"}
+          {part.price === undefined ? "??" : `${part.price} Ft`}
           {#if price.priced_by_length}
             /m
           {/if}
@@ -43,7 +43,7 @@
       <div class="flex justify-between">
         <p class="text-xs">Méterár</p>
         <p class="text-xs">
-          {price.per_meter_price !== undefined ? `${price.per_meter_price} Ft/m` : "??"}
+          {price.per_meter_price === undefined ? "??" : `${price.per_meter_price} Ft/m`}
         </p>
       </div>
     {/if}
@@ -82,7 +82,7 @@
           </IconButton>
         </div>
         <p class="flex gap-0.5 text-xs">
-          {price.totalPrice !== undefined ? `${price.totalPrice} Ft` : "??"}
+          {price.totalPrice === undefined ? "??" : `${price.totalPrice} Ft`}
           {price.indeterminate ? " + ??" : ""}
           <Tooltip>
             {#snippet content()}

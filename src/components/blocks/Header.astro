@@ -4,16 +4,16 @@ import { getConfig } from "../../lib/data";
 import { resolveImage } from "../../lib/assets";
 import Button from "../ui/Button.astro";
 
-const config = (await getConfig()).data?.config ?? null;
-const logo = resolveImage(config?.logo);
-const contactLink = config?.contactLink ? `/${config.contactLink}` : "/contact";
+const config = (await getConfig()).data.config;
+const logo = resolveImage(config.logo);
+const contactLink = config.contactLink ? `/${config.contactLink}` : "/contact";
 
 const isHome = Astro.url.pathname === "/";
 
-const rawMenu = config?.mainMenu ?? [];
+const rawMenu = config.mainMenu ?? [];
 const mainMenu = rawMenu
   .filter((item): item is NonNullable<typeof item> => item !== null)
-  .sort((a, b) => (a.weight ?? 99) - (b.weight ?? 99));
+  .toSorted((a, b) => (a.weight ?? 99) - (b.weight ?? 99));
 ---
 
 <nav id="navbar" class="fixed top-0 z-50">
@@ -79,6 +79,7 @@ const mainMenu = rawMenu
     background-color: #fff;
     padding: 15px 20px;
     border-radius: 5px;
+
     /* Transition only the properties that actually change */
     transition:
       background-color 0.3s ease,
@@ -91,30 +92,33 @@ const mainMenu = rawMenu
   }
 
   /* ── Mobile scrolled: floating card, no overflow ─────────────── */
+
   /* left/right with no explicit width = element fills the gap, fully animatable */
-  @media (max-width: 1023px) {
+  @media (width <= 1023px) {
     #navbar.scrolled {
       top: 10px;
       left: 10px;
       right: 10px;
-      box-shadow: 0 10px 20px 0 rgba(50, 65, 141, 0.1);
+      box-shadow: 0 10px 20px 0 rgb(50 65 141 / 10%);
     }
   }
 
   /* ── Desktop: transparent→white on scroll ────────────────────── */
-  /* rgba(255,255,255,0) keeps the colour channel white so the transition
+
+  /* rgb(255 255 255 / 0%) keeps the colour channel white so the transition
 	   fades opacity only — no dark intermediate frames */
-  @media (min-width: 1024px) {
+  @media (width >= 1024px) {
     #navbar {
-      background-color: rgba(255, 255, 255, 0);
+      background-color: rgb(255 255 255 / 0%);
       padding: 20px 0;
       border-radius: 0;
     }
+
     #navbar.scrolled {
-      background-color: rgba(255, 255, 255, 1);
+      background-color: rgb(255 255 255 / 100%);
       padding-top: 10px;
       padding-bottom: 10px;
-      box-shadow: 0 10px 20px 0 rgba(50, 65, 141, 0.1);
+      box-shadow: 0 10px 20px 0 rgb(50 65 141 / 10%);
     }
   }
 
@@ -126,13 +130,16 @@ const mainMenu = rawMenu
     background: var(--color-primary);
     transition: all 0.2s;
   }
+
   #navbar-toggler[aria-expanded="true"] .toggler-bar:nth-child(1) {
     transform: rotate(45deg);
     transform-origin: 10% 10%;
   }
+
   #navbar-toggler[aria-expanded="true"] .toggler-bar:nth-child(2) {
     opacity: 0;
   }
+
   #navbar-toggler[aria-expanded="true"] .toggler-bar:nth-child(3) {
     transform: rotate(-45deg);
     transform-origin: 10% 90%;
@@ -144,10 +151,10 @@ const mainMenu = rawMenu
     overflow: hidden;
     transition: max-height 0.3s ease-in-out;
   }
+
   /* Desktop: always visible, flex layout */
-  @media (min-width: 1024px) {
+  @media (width >= 1024px) {
     #navbar-collapse {
-      /* stylelint-disable-next-line declaration-no-important */
       max-height: none !important;
       overflow: visible;
       display: flex;

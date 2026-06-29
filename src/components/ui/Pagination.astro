@@ -8,7 +8,7 @@ interface Props {
 
 const { currentPage, lastPage, basePath } = Astro.props;
 
-const pageUrl = (n: number) => (n === 1 ? `${basePath}/` : `${basePath}/page/${n}/`);
+const pageUrl = (n: number): string => (n === 1 ? `${basePath}/` : `${basePath}/page/${n}/`);
 
 const links = Array.from({ length: lastPage }, (_, i) => {
   const n = i + 1;

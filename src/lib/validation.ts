@@ -23,7 +23,7 @@ export function sanitizeItem(item: IProduct): IProduct {
       continue;
     }
 
-    const materialInfo = item.materials.materials?.find(
+    const materialInfo = item.materials.materials.find(
       (m) => m?.material_path.material_id === material.material_id
     );
 
@@ -125,16 +125,12 @@ function updateMaterialWithErrors(
 }
 
 function updateMaterialsWithErrors(item: IProduct): void {
-  if (item.materials.materials?.length === 0) {
+  if (item.materials.materials.length === 0) {
     return;
   }
 
-  if (item.materials.values.length < (item.materials.material_required_count ?? 1)) {
-    for (
-      let i = item.materials.values.length;
-      i < (item.materials.material_required_count ?? 1);
-      i++
-    ) {
+  if (item.materials.values.length < item.materials.material_required_count) {
+    for (let i = item.materials.values.length; i < item.materials.material_required_count; i++) {
       item.materials.values.push({ material_id: "", colors: [] });
     }
   }
@@ -143,8 +139,8 @@ function updateMaterialsWithErrors(item: IProduct): void {
     if (!materialValue) {
       continue;
     }
-    const materialInfo = item.materials.materials?.find(
-      (m) => m?.material_path.material_id === materialValue.material_id
+    const materialInfo = item.materials.materials.find(
+      (m) => !!m && m.material_path.material_id === materialValue.material_id
     );
     if (materialInfo) {
       updateMaterialWithErrors(materialValue, materialInfo, item);
@@ -170,11 +166,11 @@ export function isItemValid(item: IProduct): boolean {
     }
   }
 
-  if (item.materials.materials?.length === 0) {
+  if (item.materials.materials.length === 0) {
     return true;
   }
 
-  if (item.materials.values.length < (item.materials.material_required_count ?? 1)) {
+  if (item.materials.values.length < item.materials.material_required_count) {
     return false;
   }
 

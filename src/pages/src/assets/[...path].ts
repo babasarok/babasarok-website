@@ -28,12 +28,18 @@ const MIME: Record<string, string> = {
 };
 
 function walk(dir: string): string[] {
-  if (!fs.existsSync(dir)) return [];
+  if (!fs.existsSync(dir)) {
+    return [];
+  }
+
   const out: string[] = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) out.push(...walk(full));
-    else out.push(full);
+    if (entry.isDirectory()) {
+      out.push(...walk(full));
+    } else {
+      out.push(full);
+    }
   }
   return out;
 }

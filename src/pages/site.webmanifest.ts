@@ -16,7 +16,8 @@ export const GET: APIRoute = () => {
     background_color: "#ffffff",
     display: "standalone",
   };
-  return new Response(JSON.stringify(manifest), {
+
+  return Response.json(manifest, {
     headers: { "Content-Type": "application/manifest+json" },
   });
 };

@@ -4,7 +4,6 @@
   import type { HTMLAttributes } from "svelte/elements";
   import OrderItemMaterials from "./OrderItemMaterials.svelte";
   import OrderItemFields from "./OrderItemFields.svelte";
-  import OrderItemPrice from "./OrderItemPrice.svelte";
   import type { IProduct } from "@/lib/Product.svelte";
 
   interface Props extends HTMLAttributes<HTMLDivElement> {

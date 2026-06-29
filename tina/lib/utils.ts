@@ -40,3 +40,12 @@ export function getValue(props: ComponentProps, path: string): any {
       .reduce((obj: any, key: any) => obj && obj[key], form.getState().values)
   );
 }
+
+export function slugify(value: string): string {
+  return value
+    .normalize("NFKD") // split accents from letters (á -> a +  ́)
+    .replaceAll(/[\u0300-\u036F]/g, "") // drop the accent marks
+    .replaceAll(/[^a-zA-Z0-9]+/g, "-") // non-ascii/alnum -> dash
+    .replaceAll(/^-+|-+$/g, "") // trim dashes
+    .toLowerCase();
+}

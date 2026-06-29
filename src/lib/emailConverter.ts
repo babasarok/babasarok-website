@@ -97,12 +97,9 @@ export function generateProductData(product: IProduct) {
     darabszám: product.count,
   };
 
-  if (
-    (product.materials.materials?.length ?? 0) > 0 &&
-    (product.materials.material_required_count ?? 0) > 0
-  ) {
+  if (product.materials.materials.length > 0 && product.materials.material_required_count > 0) {
     result.anyagok = product.materials.values.map((mv) => {
-      const material = product.materials.materials?.find(
+      const material = product.materials.materials.find(
         (m) => m?.material_path.material_id === mv?.material_id
       );
       const res: ReadableMaterialData = {

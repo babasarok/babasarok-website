@@ -4,7 +4,6 @@
     arrow,
     autoUpdate,
     flip,
-    autoPlacement,
     offset,
     shift,
     useDismiss,
@@ -12,9 +11,8 @@
     useHover,
     useInteractions,
     useRole,
-    type UseInteractionsReturn,
   } from "@skeletonlabs/floating-ui-svelte";
-  import type { HTMLAttributes, HTMLObjectAttributes } from "svelte/elements";
+  import type { HTMLAttributes } from "svelte/elements";
   import type { Snippet } from "svelte";
 
   import { fade } from "svelte/transition";
@@ -47,6 +45,7 @@
         offset(10),
         flip(),
         shift({ padding: 5, mainAxis: true }),
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         elemArrow && arrow({ element: elemArrow }),
       ];
     },
@@ -65,7 +64,7 @@
   bind:this={floating.elements.reference}
   {...interactions.getReferenceProps()}
 >
-  {@render children?.()}
+  {@render children()}
 </div>
 <!-- Floating Element -->
 {#if open && !disabled}
@@ -76,7 +75,7 @@
     class="rounded-md bg-bg-secondary p-2 text-sm shadow-lg z-50 transition-opacity"
     transition:fade={{ duration: 200 }}
   >
-    {@render content?.()}
+    {@render content()}
     <FloatingArrow
       bind:ref={elemArrow}
       context={floating.context}

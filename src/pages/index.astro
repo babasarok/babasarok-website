@@ -7,14 +7,14 @@ import Blog from "../components/blocks/Blog.astro";
 import About from "../components/blocks/About.astro";
 import { getConfig } from "../lib/data";
 
-const config = (await getConfig()).data?.config ?? null;
+const config = (await getConfig()).data.config;
 ---
 
 <Base
-  title={config?.titleSeparator
+  title={config.titleSeparator
     ? `${config.title} ${config.titleSeparator} ${config.titleAddition}`
-    : (config?.title ?? "Babasarok")}
-  description={config?.description}
+    : config.title}
+  description={config.description}
 >
   <Hero />
   <Service />

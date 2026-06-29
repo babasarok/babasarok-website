@@ -1,4 +1,5 @@
 import type { Collection } from "tinacms";
+import { slugify } from "../lib/utils";
 
 /**
  * Materials ("Anyagok") — backs `src/content/material/*.md` and also the
@@ -19,12 +20,7 @@ export const MaterialCollection: Collection = {
       // optional: stop editors from typing the name freehand
       readonly: true,
       slugify: (values) => {
-        const base = String(values?.label ?? "")
-          .normalize("NFKD") // split accents from letters (á -> a +  ́)
-          .replace(/[\u0300-\u036f]/g, "") // drop the accent marks
-          .replace(/[^a-zA-Z0-9]+/g, "-") // non-ascii/alnum -> dash
-          .replace(/^-+|-+$/g, "") // trim dashes
-          .toLowerCase();
+        const base = slugify(String(values.label ?? ""));
         return base || "untitled";
       },
     },
@@ -53,6 +49,7 @@ export const MaterialCollection: Collection = {
       description: "A termékhez tartozó színek vagy minták.",
       ui: {
         itemProps: (item) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-condition
           return { label: item?.label || "Új mező" };
         },
       },

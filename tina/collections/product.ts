@@ -9,8 +9,7 @@ import {
   DateField,
   type Collection,
 } from "tinacms";
-import { getValue } from "../lib/utils";
-import type { CmsProductMaterial } from "@/lib/Product.svelte";
+import { getValue, slugify } from "../lib/utils";
 
 /**
  * Products ("Termékek") — backs `src/content/product/*.md` and the `/product`
@@ -36,12 +35,7 @@ export const ProductCollection: Collection = {
       // optional: stop editors from typing the name freehand
       readonly: true,
       slugify: (values) => {
-        const base = String(values?.title ?? "")
-          .normalize("NFKD") // split accents from letters (á -> a +  ́)
-          .replaceAll(/[\u0300-\u036f]/g, "") // drop the accent marks
-          .replaceAll(/[^a-zA-Z0-9]+/g, "-") // non-ascii/alnum -> dash
-          .replaceAll(/^-+|-+$/g, "") // trim dashes
-          .toLowerCase();
+        const base = slugify(String(values.title ?? ""));
         return base || "untitled";
       },
     },
@@ -386,11 +380,13 @@ export const ProductCollection: Collection = {
           label: "Opcionális mező",
           ui: {
             component(props) {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               const typeValue = getValue(props, "type");
               if (typeValue !== "input") {
                 return null;
               }
 
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
               return ToggleField(props as any);
             },
           },
@@ -403,14 +399,17 @@ export const ProductCollection: Collection = {
           description: "A mezőhöz tartozó választható lehetőségek.",
           ui: {
             itemProps: (item) => {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-condition
               return { label: item?.label || item?.value || "Új mező" };
             },
             component(props) {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               const type = getValue(props, "type");
               if (type === "toggle") {
                 return null;
               }
 
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
               return GroupListField(props as any);
             },
           },
@@ -437,6 +436,7 @@ export const ProductCollection: Collection = {
                 "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni.",
               ui: {
                 component(props) {
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                   const length_based_pricing_source = getValue(
                     props,
                     "../../length_based_pricing_source"
@@ -445,6 +445,7 @@ export const ProductCollection: Collection = {
                     return null;
                   }
 
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
                   return NumberField(props as any);
                 },
                 parse(value) {
@@ -473,11 +474,13 @@ export const ProductCollection: Collection = {
           label: "Egyedi érték engedélyezése",
           ui: {
             component(props) {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               const typeValue = getValue(props, "type");
               if (typeValue != "select" && typeValue != "radio" && typeValue != "color") {
                 return null;
               }
 
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
               return ToggleField(props as any);
             },
           },
@@ -495,11 +498,13 @@ export const ProductCollection: Collection = {
           description: "Jelzi, hogy a mező több értéket is engedélyez-e.",
           ui: {
             component(props) {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               const typeValue = getValue(props, "type");
               if (typeValue != "select") {
                 return null;
               }
 
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
               return ToggleField(props as any);
             },
           },
@@ -512,11 +517,13 @@ export const ProductCollection: Collection = {
             "A mező helykitöltő szövege, ami megjelenik, amikor nincs kiválasztott érték.",
           ui: {
             component(props) {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               const typeValue = getValue(props, "type");
               if (typeValue === "select" || typeValue === "radio") {
                 return null;
               }
 
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
               return TextField(props as any);
             },
           },

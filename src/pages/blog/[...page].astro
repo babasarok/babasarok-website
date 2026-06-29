@@ -9,7 +9,7 @@ import { resolveImage } from "../../lib/assets";
 
 export const getStaticPaths = (async () => {
   const PAGE_SIZE = 6;
-  const posts = (await getCollection("blog")).sort(
+  const posts = (await getCollection("blog")).toSorted(
     (a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0)
   );
 

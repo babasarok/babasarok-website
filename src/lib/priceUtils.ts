@@ -86,14 +86,14 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
     parts.push(fieldPrice);
   }
 
-  if ((product.materials.materials?.length ?? 0) > 0) {
-    for (let i = 0; i < (product.materials.material_required_count ?? 1); i++) {
+  if (product.materials.materials.length > 0) {
+    for (let i = 0; i < product.materials.material_required_count; i++) {
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       const value = product.materials.values?.[i];
       const price = getMaterialPrice(
         value ?? { material_id: "" },
-        product.materials.materials ?? [],
-        product.materials.material_required_count ?? 1,
+        product.materials.materials,
+        product.materials.material_required_count,
         i
       );
       if (!price) {
