@@ -2,6 +2,7 @@
 title: Kedvezményes termékek
 product_id: kedvezmenyes-termekek
 thumbnail: /src/assets/IMG_3353.jpg
+
 table:
   - title: "Csajos, virágos babafészek szettben (közepes)"
     description: "Régi ár: 23.000Ft Új ár: 18.000Ft"

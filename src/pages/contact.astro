@@ -40,6 +40,10 @@ const deliveryMethods = await getDeliveryMethods();
     <div class="not-prose container">
       <OrderForm
         products={products.reduce<Record<string, CmsProduct>>((acc, p) => {
+          if (!p.can_be_ordered) {
+            return acc;
+          }
+
           acc[p.product_id] = p;
           return acc;
         }, {})}
