@@ -86,7 +86,7 @@ export const getProducts = async () => {
             ? {
                 ...product.materials,
                 materials: product.materials.materials?.map((material) =>
-                  material?.material_path
+                  material
                     ? {
                         ...material,
                         material_path: {
