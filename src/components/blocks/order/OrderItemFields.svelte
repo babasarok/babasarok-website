@@ -42,7 +42,6 @@
     />
     {#if field.type === "input" && field.items}
       {@const items = field.items.filter((item) => item != null)}
-      {@const id = v4()}
       <datalist {id}>
         {#each items as item (item.label)}
           <option value={item.value}>{item.label}</option>

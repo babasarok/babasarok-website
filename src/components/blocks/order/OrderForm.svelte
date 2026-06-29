@@ -311,7 +311,7 @@
               onChange={(updatedProduct) => {
                 const index = products.findIndex((p) => p.uuid === updatedProduct.uuid);
                 if (index !== -1) {
-                  products[index] = $state.snapshot(updatedProduct);
+                  products[index] = sanitizeItem(updatedProduct);
                 }
               }}
             />
