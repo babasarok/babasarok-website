@@ -1,11 +1,10 @@
 ---
 import { Image } from "astro:assets";
 import { getConfig } from "@/lib/data";
-import { resolveImage } from "@/lib/assets";
 import Button from "@/components/ui/Button.astro";
 
 const config = (await getConfig()).data.config;
-const logo = resolveImage(config.logo);
+const logo = config.logo;
 const contactLink = config.contactLink ? `/${config.contactLink}` : "/contact";
 
 const isHome = Astro.url.pathname === "/";

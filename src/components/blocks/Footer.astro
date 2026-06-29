@@ -2,11 +2,10 @@
 import { Image } from "astro:assets";
 import { Icon } from "astro-icon/components";
 import { getConfig } from "../../lib/data";
-import { resolveImage } from "../../lib/assets";
 import Button from "../ui/Button.astro";
 
 const config = (await getConfig()).data.config;
-const footerLogo = resolveImage(config.footerLogo);
+const footerLogo = config.footerLogo;
 const contactLink = config.contactLink ? `/${config.contactLink}` : "/contact";
 
 const rawSitemap = config.sitemapMenu ?? [];

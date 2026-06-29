@@ -13,10 +13,24 @@
  */
 import { requestWithMetadata } from "@tinacms/astro/data";
 import client from "../../tina/__generated__/client";
+import { resolveImage } from "./assets";
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const getConfig = () =>
-  requestWithMetadata(client.queries.config({ relativePath: "config.json" }));
+export const getConfig = async () => {
+  const result = await requestWithMetadata(client.queries.config({ relativePath: "config.json" }));
+
+  return {
+    ...result,
+    data: {
+      ...result.data,
+      config: {
+        ...result.data.config,
+        logo: resolveImage(result.data.config.logo),
+        footerLogo: resolveImage(result.data.config.footerLogo),
+      },
+    },
+  };
+};
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const getProducts = async () => {
@@ -26,7 +40,37 @@ export const getProducts = async () => {
     edge?.node ? [edge.node] : []
   );
 
-  return products?.toSorted((a, b) => a.title.localeCompare(b.title)) ?? [];
+  return (
+    products
+      ?.toSorted((a, b) => a.title.localeCompare(b.title))
+      .map((product) => ({
+        ...product,
+        icon: resolveImage(product.icon),
+        thumbnail: resolveImage(product.thumbnail),
+        images: product.images?.map((entry) =>
+          entry ? { ...entry, image: resolveImage(entry.image) } : entry
+        ),
+        materials: product.materials
+          ? {
+              ...product.materials,
+              materials: product.materials.materials?.map((material) =>
+                material?.material_path
+                  ? {
+                      ...material,
+                      material_path: {
+                        ...material.material_path,
+                        thumbnail: resolveImage(material.material_path.thumbnail),
+                        colors: material.material_path.colors?.map((color) =>
+                          color ? { ...color, image: resolveImage(color.image) } : color
+                        ),
+                      },
+                    }
+                  : material
+              ),
+            }
+          : product.materials,
+      })) ?? []
+  );
 };
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -37,7 +81,17 @@ export const getMaterials = async () => {
     edge?.node ? [edge.node] : []
   );
 
-  return materials?.toSorted((a, b) => a.label.localeCompare(b.label)) ?? [];
+  return (
+    materials
+      ?.toSorted((a, b) => a.label.localeCompare(b.label))
+      .map((material) => ({
+        ...material,
+        thumbnail: resolveImage(material.thumbnail),
+        colors: material.colors?.map((color) =>
+          color ? { ...color, image: resolveImage(color.image) } : color
+        ),
+      })) ?? []
+  );
 };
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
