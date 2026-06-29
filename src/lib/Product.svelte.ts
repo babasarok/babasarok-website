@@ -13,11 +13,16 @@ export type CmsProductMaterials = NonNullable<CmsProduct["materials"]>;
 export type CmsProductMaterial = NonNullable<CmsProductMaterials["materials"]>[number];
 
 export type Field = CmsField & { value?: ValueWithError | undefined };
-export type ProductMaterials = CmsProductMaterials & {
+export type ProductMaterials = Omit<
+  CmsProductMaterials,
+  "values" | "materials" | "material_required_count"
+> & {
   values: Array<ProductMaterialValue | undefined>;
+  material_required_count: number;
+  materials: CmsProductMaterial[];
 };
 
-export interface IProduct extends Required<Omit<CmsProduct, "materials">> {
+export interface IProduct extends Omit<CmsProduct, "materials" | "fields"> {
   uuid: string;
   count: number;
   materials: ProductMaterials;

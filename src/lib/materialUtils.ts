@@ -17,7 +17,7 @@ function resolveValue(name: string, product: Pick<IProduct, "fields">): number |
 }
 
 export function resolveColorCount(
-  material: CmsProductMaterial,
+  material: CmsProductMaterial | null,
   product: Pick<IProduct, "fields">
 ): number | undefined {
   if (material?.color_count == null) {

@@ -2,8 +2,8 @@
   import type { HTMLAttributes } from "svelte/elements";
   interface Props extends HTMLAttributes<HTMLDivElement> {
     onClose?: () => void;
-    color?: string | undefined;
-    bgImage?: string | undefined;
+    color?: string | undefined | null;
+    bgImage?: string | undefined | null;
   }
 
   const { children, class: className, onClose, color, bgImage, ...rest }: Props = $props();

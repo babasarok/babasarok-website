@@ -7,6 +7,7 @@
   import Color from "./common/Color.svelte";
   import { slide } from "svelte/transition";
   import type { IProduct } from "@/lib/Product.svelte";
+  import { resolveColorCount } from "@/lib/materialUtils";
 
   interface Props {
     product: IProduct;
@@ -105,9 +106,9 @@
         : `Anyag ${material_index + 1}`}
     </p>
     <div class="flex gap-1 flex-wrap">
-      {#each product.materials.materials as material}
-        {@const materialInfo = material.material}
-        {@const disabled = bannedMaterials?.includes(materialInfo?.material_id)}
+      {#each product.materials.materials.filter((x) => x != null) as material}
+        {@const materialInfo = material.material_path}
+        {@const disabled = bannedMaterials?.includes(materialInfo.material_id)}
         {#if materialInfo}
           {@const selected =
             product.materials.values?.[material_index]?.material_id === materialInfo.material_id}
@@ -135,11 +136,11 @@
   {#if product.materials.values?.[material_index] && !!product.materials.values[material_index].material_id}
     {@const value = product.materials.values[material_index]}
     {@const productMaterial = product.materials.materials.find(
-      (m) => m.material.material_id === value?.material_id
+      (m) => !!m && m.material_path.material_id === value?.material_id
     )}
-    {@const materialInfo = productMaterial?.material}
+    {@const materialInfo = productMaterial?.material_path}
     {@const custom = value.custom_color != undefined || (materialInfo?.colors?.length ?? 0) === 0}
-    {@const colorCount = productMaterial?.color_count}
+    {@const colorCount = resolveColorCount(productMaterial ?? null, product)}
     {@const multiColor = (colorCount ?? 0) > 1}
     {@const disabled =
       colorCount === undefined || (multiColor ? (value?.colors.length ?? 0) >= colorCount : false)}
@@ -168,7 +169,7 @@
       {#if multiColor}
         <div class="flex gap-1 flex-wrap">
           {#each value?.colors as colorId, index}
-            {@const colorInfo = materialInfo?.colors?.find((c) => c.color_id === colorId)}
+            {@const colorInfo = materialInfo?.colors?.find((c) => !!c && c.color_id === colorId)}
             {#if colorInfo}
               <Chip
                 color={colorInfo.hex}
@@ -192,7 +193,7 @@
       {/if}
       {#if (materialInfo?.colors?.length ?? 0) > 0}
         <div transition:slide class="flex gap-1 flex-wrap leading-0">
-          {#each materialInfo?.colors || [] as color (color.color_id)}
+          {#each materialInfo?.colors?.filter((x) => x != null) || [] as color (color.color_id)}
             {@const selected = value?.colors.includes(color.color_id)}
             <Color
               {color}

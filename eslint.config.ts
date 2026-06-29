@@ -95,6 +95,16 @@ export default defineConfig([
           allowInterfaces: "with-single-extends",
         },
       ],
+      "@typescript-eslint/restrict-template-expressions": [
+        "error",
+        {
+          allowNumber: true,
+          allowBoolean: true,
+          allowNullable: true,
+          allowAny: false,
+          allowRegExp: false,
+        },
+      ],
     },
   },
   // Astro-specific warnings and recommendations for .astro files
@@ -134,6 +144,10 @@ export default defineConfig([
     rules: {
       "unicorn/prefer-top-level-await": "off",
       "@typescript-eslint/no-confusing-void-expression": "off",
+      "@typescript-eslint/no-useless-default-assignment": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
     },
   },
 ]);

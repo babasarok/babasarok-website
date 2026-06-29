@@ -45,7 +45,7 @@
   </div>
   <div class="w-full h-0.5 bg-border"></div>
   <OrderItemFields {product} {onChange} />
-  {#each Array.from({ length: product.materials.material_required_count ?? 1 }) as _, i (i)}
+  {#each Array.from({ length: product.materials.material_required_count }) as _, i (i)}
     <OrderItemMaterials {product} {onChange} material_index={i} />
   {/each}
   <!-- <div class="w-full h-0.5 bg-border"></div>

@@ -89,12 +89,12 @@ const button2Href = button2Target ? `/${button2Target}` : undefined;
 <style>
   /* SVG-shape mask on the about photo (old `-webkit-mask` inline style). */
   .about-photo {
-    -webkit-mask: url("../../assets/images/about/about-mask-svg.svg") center / contain no-repeat;
     mask: url("../../assets/images/about/about-mask-svg.svg") center / contain no-repeat;
   }
 
   /* The content card sits on a dark background, so make the markdown-rendered
      copy light (old Bootstrap `.text-light { h1..h6, p { color } }`). */
+  /* stylelint-disable-next-line selector-pseudo-class-no-unknown -- this is valid */
   .about-content :global(:where(h1, h2, h3, h4, h5, h6, p)) {
     color: var(--color-light);
   }

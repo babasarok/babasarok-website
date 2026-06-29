@@ -12,6 +12,7 @@
   import type { CmsConfig, CmsDeliveryMethod, CmsMaterial, CmsProduct } from "@/lib/data";
   import type { IProduct } from "@/lib/Product.svelte";
   import { v4 } from "uuid";
+  import type { ProductMaterialValue } from "@/lib/types.svelte";
 
   interface Props {
     products: Record<string, CmsProduct>;
@@ -46,7 +47,7 @@
 </script>
 
 <form
-  class="flex flex-col px-3.75 sm:max-w-135 md:max-w-180 lg:max-w-240 xl:max-w-285 mx-auto"
+  class="flex flex-col px-3.75 sm:max-w-135 md:max-w-180 lg:max-w-240 xl:max-w-285 mx-auto text-foreground"
   onsubmit={async (e) => {
     e.preventDefault();
     error = null;
@@ -142,7 +143,7 @@
         body: formData,
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line , @typescript-eslint/no-explicit-any
       const result: any = await res.json();
 
       if (!res.ok) {
@@ -176,7 +177,7 @@
     }
   }}
 >
-  <h3 class="mb-4">Tervezzük meg a szettet!</h3>
+  <h3 class="text-h3 mb-4">Tervezzük meg a szettet!</h3>
   <div class="flex flex-col">
     <div class="flex flex-col gap-4 pb-6">
       <div class="flex items-center gap-2">
@@ -185,13 +186,30 @@
           class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary"
         />
         <div class="flex flex-col gap-2">
-          <h4 class="text-lg text-uppercase">Hova küldhetjük a terveket?</h4>
+          <h4 class="text-lg uppercase">Hova küldhetjük a terveket?</h4>
         </div>
       </div>
       <div class="flex gap-2 flex-col sm:flex-row">
-        <input type="text" placeholder="Név *" required bind:value={name} />
-        <input type="email" placeholder="Email cím *" required bind:value={email} />
-        <input type="tel" placeholder="Telefonszám" bind:value={phone} />
+        <input
+          class="text-sm border rounded bg-white px-2 py-1 border-border w-full focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+          type="text"
+          placeholder="Név *"
+          required
+          bind:value={name}
+        />
+        <input
+          class="text-sm border rounded bg-white px-2 py-1 border-border w-full focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+          type="email"
+          placeholder="Email cím *"
+          required
+          bind:value={email}
+        />
+        <input
+          class="text-sm border rounded bg-white px-2 py-1 border-border w-full focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+          type="tel"
+          placeholder="Telefonszám"
+          bind:value={phone}
+        />
       </div>
     </div>
     <div class="flex flex-col gap-4">
@@ -202,7 +220,7 @@
             class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary"
           />
           <div class="flex flex-col gap">
-            <h4 class="text-lg text-uppercase">Miket szeretnél a csomagba?</h4>
+            <h4 class="text-lg uppercase">Miket szeretnél a csomagba?</h4>
             <p class="text-sm">
               Kattints a gombra, és válaszd ki azokat a darabokat, amikből összeállítjuk a szettet.
             </p>
@@ -225,7 +243,7 @@
                 class="shrink-0 text-4xl rounded-full p-2 text-primary-500 bg-bg-primary"
               />
               <div class="flex flex-col gap">
-                <h4 class="text-xl text-uppercase">Termékek</h4>
+                <h4 class="text-xl uppercase">Termékek</h4>
               </div>
             </div>
             <IconButton type="button" popovertarget="product-dialog" popovertargetaction="hide">
@@ -242,7 +260,7 @@
                 type="button"
                 class="flex font-normal w-full justify-between items-center gap-4 p-1 px-4 rounded hover:bg-border transition-all"
                 onclick={() => {
-                  const clone = structuredClone(product);
+                  const clone = $state.snapshot(product);
                   products.splice(
                     0,
                     0,
@@ -253,7 +271,12 @@
                       fields: clone.fields?.filter((f) => f != null) ?? [],
                       materials: {
                         ...clone.materials,
-                        values: [],
+                        __typename: clone.materials?.__typename ?? "ProductMaterials",
+                        materials: clone.materials?.materials?.filter((m) => m != null) ?? [],
+                        banned_combinations:
+                          clone.materials?.banned_combinations?.filter((c) => c != null) ?? [],
+                        material_required_count: clone.materials?.material_required_count ?? 1,
+                        values: [] as Array<ProductMaterialValue | undefined>,
                       },
                     })
                   );
@@ -288,7 +311,7 @@
               onChange={(updatedProduct) => {
                 const index = products.findIndex((p) => p.uuid === updatedProduct.uuid);
                 if (index !== -1) {
-                  products[index] = updatedProduct;
+                  products[index] = $state.snapshot(updatedProduct);
                 }
               }}
             />
@@ -302,18 +325,18 @@
       <div class="flex flex-col rounded-xl bg-border p-4 flex-1">
         <div class="flex items-center gap-2">
           <Icon icon="mdi:message-text" class="shrink-0 text-2xl  text-primary-500" />
-          <h4 class="text-lg text-uppercase">Van valami különleges kérésed?</h4>
+          <h4 class="text-lg uppercase">Van valami különleges kérésed?</h4>
         </div>
         <textarea
           bind:value={message}
           placeholder="Írd meg ide, milyen egyedi színekre, mintákra gondoltál, vagy ha van bármilyen egyedi kérésed (pl. név hímzése)!"
-          class="mt-4 flex-1 text-sm min-h-22"
+          class="mt-4 flex-1 text-sm min-h-22 bg-white border border-border rounded p-2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
         >
         </textarea>
       </div>
     </div>
     <div class="flex flex-col gap-2 mt-4"></div>
-    <div class="flex items-center gap-2 p-2 rounded bg-bg-secondary border border-yellow-200">
+    <div class="flex items-center gap-2 p-2 rounded bg-bg-secondary border border-gray-300">
       <Icon icon="mdi:info" class="shrink-0 text-2xl text-yellow-500" />
       <p class="text-xs text-yellow-700">
         Jelenleg a rendelési folyamat tesztelés alatt áll. Ha bármilyen problémát tapasztalsz,

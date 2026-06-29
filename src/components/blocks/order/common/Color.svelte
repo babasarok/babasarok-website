@@ -5,9 +5,9 @@
   interface Props {
     color: {
       color_id: string;
-      hex?: string | undefined;
-      label?: string | undefined;
-      image?: string | undefined;
+      hex?: string | undefined | null;
+      label?: string | undefined | null;
+      image?: string | undefined | null;
     };
     selected?: boolean;
     onclick?: (color_id: string) => void;

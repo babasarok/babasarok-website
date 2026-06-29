@@ -1,4 +1,4 @@
-/* stylelint-disable custom-property-pattern */
+/* stylelint-disable custom-property-pattern -- tailwind have these */
 @import "tailwindcss";
 
 @plugin "@tailwindcss/typography";
@@ -42,9 +42,26 @@
   --color-secondary-dark: #e2e6ea;
   --color-headings: #28341d;
   --color-body: #7e7e8a;
+  --color-foreground: #444;
 
   /* Brown accent (old SCSS $secondary) — used for the section-label dash. */
   --color-accent: #806548;
+  --color-bg-primary: #f4efea;
+  --color-bg-secondary: #ede6df;
+  --color-surface: #fff;
+  --color-surface-soft: #faf8f6;
+  --color-primary-500: #8c6b5a;
+  --color-primary-400: #a18472;
+  --color-primary-600: #6f5447;
+  --color-primary-700: #5f4437;
+  --color-text-primary: #5f5147;
+  --color-text-secondary: #8a7a6e;
+  --color-text-muted: #b0a79f;
+  --color-text-on-primary: #fff;
+  --color-border: #e3ddd7;
+  --color-border-light: #efeae5;
+  --color-input-bg: #fff;
+  --color-placeholder: #b7aea6;
 
   /* Inactive slider dot color (old slick-dots). */
   --color-indicator: #c2c8cc;

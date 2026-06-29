@@ -10,7 +10,7 @@
 <button
   class={twMerge(
     clsx(
-      "text-2xl text-primary-500 rounded-full hover:bg-border transition-all leading-none disabled:text-gray-500",
+      "cursor-pointer disabled:cursor-not-allowed text-2xl text-primary-500 rounded-full hover:bg-border transition-all leading-none disabled:text-gray-500",
       className
     )
   )}
