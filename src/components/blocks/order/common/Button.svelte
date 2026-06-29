@@ -15,7 +15,7 @@
     clsx([
       "text-sm font-medium transition-all rounded-md cursor-pointer disabled:cursor-not-allowed",
       {
-        "border text-foreground border-border  px-3 py-1 hover:bg-primary-500 disabled:bg-transparent disabled:text-foreground hover:text-surface":
+        "border text-foreground border-border  px-3 py-1 hover:bg-primary-500 disabled:bg-transparent disabled:text-gray-400 disabled:border-gray-200 hover:text-surface":
           variant === "outlined",
         "bg-primary-500 text-surface": selected && variant === "outlined",
         "text-primary-500 hover:text-primary-700": variant === "text",

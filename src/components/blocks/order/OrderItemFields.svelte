@@ -20,6 +20,7 @@
   {#if field.type === "input" || field.value?.is_custom}
     {@const id = v4()}
     <input
+      class="text-sm border rounded bg-white px-2 py-1 border-border w-full focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
       type="text"
       value={field.value?.value ?? ""}
       list={field.type === "input" && field.items ? id : undefined}

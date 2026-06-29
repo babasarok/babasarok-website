@@ -6,6 +6,7 @@
   import { slide } from "svelte/transition";
   import type { IProduct } from "@/lib/Product.svelte";
   import { resolveColorCount } from "@/lib/materialUtils";
+  import type { ProductMaterialValue } from "@/lib/types.svelte";
 
   interface Props {
     product: IProduct;
@@ -62,19 +63,12 @@
       selectedCounts.set(materialId, (selectedCounts.get(materialId) ?? 0) + 1);
     }
 
-    const pathToId = new Map(
-      (product.materials.materials ?? []).map((material) => [
-        material?.material_path,
-        material?.material_id,
-      ])
-    );
-
     // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const banned = new Set<string>();
-    for (const combination of product.materials?.banned_combinations ?? []) {
+    for (const combination of product.materials.banned_combinations ?? []) {
       const combinationMaterialIds =
-        combination.materials
-          ?.map((item) => pathToId.get(item.material_path))
+        combination?.materials
+          ?.map((item) => item?.material_path.material_id)
           .filter((materialId): materialId is string => !!materialId) ?? [];
 
       if (combinationMaterialIds.length <= 1) {
@@ -96,20 +90,18 @@
   });
 </script>
 
-{#if product.materials && product.materials.materials.length > 0}
+{#if product.materials.materials.length > 0}
   <div class="flex flex-col gap-1">
     <p class="text-sm text-primary-500">
-      {(product.materials.material_required_count ?? 1) == 1
-        ? "Anyag"
-        : `Anyag ${material_index + 1}`}
+      {product.materials.material_required_count == 1 ? "Anyag" : `Anyag ${material_index + 1}`}
     </p>
     <div class="flex gap-1 flex-wrap">
-      {#each product.materials.materials.filter((x) => x != null) as material}
+      {#each product.materials.materials.filter((x) => x != null) as material (material.material_path.material_id)}
         {@const materialInfo = material.material_path}
-        {@const disabled = bannedMaterials?.includes(materialInfo.material_id)}
+        {@const disabled = bannedMaterials.includes(materialInfo.material_id)}
         {#if materialInfo}
           {@const selected =
-            product.materials.values?.[material_index]?.material_id === materialInfo.material_id}
+            product.materials.values[material_index]?.material_id === materialInfo.material_id}
           <Button
             type="button"
             class="flex items-center gap-0.5"
@@ -117,7 +109,7 @@
             disabled={disabled && !selected}
             onclick={() => {
               const result = product;
-              result.materials.values = result.materials.values || [];
+              result.materials.values = result.materials.values;
               result.materials.values[material_index] = {
                 material_id: materialInfo.material_id,
                 colors: [],
@@ -131,13 +123,13 @@
       {/each}
     </div>
   </div>
-  {#if product.materials.values?.[material_index] && !!product.materials.values[material_index].material_id}
-    {@const value = product.materials.values[material_index]}
+  {#if product.materials.values[material_index] && !!product.materials.values[material_index].material_id}
+    {@const value = product.materials.values[material_index] as ProductMaterialValue | undefined}
     {@const productMaterial = product.materials.materials.find(
       (m) => !!m && m.material_path.material_id === value?.material_id
     )}
     {@const materialInfo = productMaterial?.material_path}
-    {@const custom = value.custom_color != undefined || (materialInfo?.colors?.length ?? 0) === 0}
+    {@const custom = value?.custom_color != undefined || (materialInfo?.colors?.length ?? 0) === 0}
     {@const colorCount = resolveColorCount(productMaterial ?? null, product)}
     {@const multiColor = (colorCount ?? 0) > 1}
     {@const disabled =
@@ -158,7 +150,7 @@
       {#if (materialInfo?.colors?.length ?? 0) > 0}
         <p
           transition:slide
-          class="text-xs text-primary-500 flex items-center gap-1 border-1 border-primary-light rounded p-1"
+          class="text-xs text-primary-500 flex items-center gap-1 border border-primary-light rounded p-1"
         >
           <Icon icon="mdi:alert-circle" class="inline-block size-6 text-orange-500" />
           <span> A színek tájékoztató jellegűek, a pontos árnyalatok eltérhetnek. </span>
@@ -166,7 +158,7 @@
       {/if}
       {#if multiColor}
         <div class="flex gap-1 flex-wrap">
-          {#each value?.colors as colorId, index}
+          {#each value?.colors as colorId, index (colorId)}
             {@const colorInfo = materialInfo?.colors?.find((c) => !!c && c.color_id === colorId)}
             {#if colorInfo}
               <Chip
@@ -174,7 +166,7 @@
                 bgImage={colorInfo.image}
                 onClose={() => {
                   const result = product;
-                  if (result.materials.values?.[material_index]) {
+                  if (result.materials.values[material_index]) {
                     result.materials.values[material_index].colors = [
                       ...result.materials.values[material_index].colors.slice(0, index),
                       ...result.materials.values[material_index].colors.slice(index + 1),
@@ -196,10 +188,10 @@
             <Color
               {color}
               {disabled}
-              selected={!multiColor && selected}
+              selected={!multiColor && !!selected}
               onclick={() => {
                 const result = product;
-                if (!result.materials.values?.[material_index]) {
+                if (!result.materials.values[material_index]) {
                   return;
                 }
 
@@ -222,7 +214,7 @@
         type="button"
         onclick={() => {
           const result = product;
-          if (!result.materials.values?.[material_index]) {
+          if (!result.materials.values[material_index]) {
             return;
           }
           result.materials.values[material_index].colors = [];
@@ -235,10 +227,11 @@
     {/if}
     {#if custom}
       <input
-        value={value.custom_color}
+        class="text-sm border rounded bg-white px-2 py-1 border-border w-full focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+        value={value?.custom_color}
         oninput={(e) => {
           const result = product;
-          if (!result.materials.values?.[material_index]) {
+          if (!result.materials.values[material_index]) {
             return;
           }
           result.materials.values[material_index].custom_color = (
@@ -249,7 +242,7 @@
       />
     {/if}
   {/if}
-  {#if product.materials.values?.[material_index]?.error}
+  {#if product.materials.values[material_index]?.error}
     <p class="text-sm text-red-500">
       {product.materials.values[material_index].error}
     </p>
