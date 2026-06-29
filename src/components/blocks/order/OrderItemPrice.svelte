@@ -2,7 +2,7 @@
   import Icon from "@iconify/svelte";
   import Tooltip from "./common/Tooltip.svelte";
   import { calculatePriceForItem } from "@/lib/priceUtils";
-  import type { IProduct } from "@/lib/Product.svelte";
+  import type { IProduct } from "@/lib/types.svelte";
   import IconButton from "./common/IconButton.svelte";
 
   interface Props {

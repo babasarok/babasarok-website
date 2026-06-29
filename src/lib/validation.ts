@@ -1,5 +1,5 @@
 import { resolveColorCount } from "./materialUtils";
-import type { CmsProductMaterial, Field, IProduct } from "./Product.svelte";
+import type { CmsProductMaterial, Field, IProduct } from "./types.svelte";
 import type { ProductMaterialValue } from "./types.svelte";
 
 function prefillField(field: Field): void {

@@ -4,7 +4,7 @@
   import Icon from "@iconify/svelte";
   import Color from "./common/Color.svelte";
   import { slide } from "svelte/transition";
-  import type { IProduct } from "@/lib/Product.svelte";
+  import type { IProduct } from "@/lib/types.svelte";
   import { resolveColorCount } from "@/lib/materialUtils";
   import type { ProductMaterialValue } from "@/lib/types.svelte";
 

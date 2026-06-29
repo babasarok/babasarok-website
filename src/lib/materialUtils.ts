@@ -1,4 +1,4 @@
-import type { IProduct, CmsProductMaterial } from "./Product.svelte";
+import type { IProduct, CmsProductMaterial } from "./types.svelte";
 
 function resolveValue(name: string, product: Pick<IProduct, "fields">): number | undefined {
   const current = product.fields.find((f) => f.name === name)?.value?.value;

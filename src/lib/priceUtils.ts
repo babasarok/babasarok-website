@@ -1,4 +1,4 @@
-import type { IProduct, Field, CmsProductMaterial } from "./Product.svelte";
+import type { IProduct, Field, CmsProductMaterial } from "./types.svelte";
 import type { ProductMaterialValue } from "./types.svelte";
 
 interface PricePart {

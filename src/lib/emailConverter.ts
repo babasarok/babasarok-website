@@ -1,5 +1,5 @@
 import { calculatePriceForItem } from "@/lib/priceUtils";
-import type { IProduct } from "@/lib/Product.svelte";
+import type { IProduct } from "@/lib/types.svelte";
 import type { CmsDeliveryMethod } from "./data";
 
 export interface ReadableMaterialData {

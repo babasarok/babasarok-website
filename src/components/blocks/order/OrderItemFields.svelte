@@ -6,7 +6,7 @@
   import { slide } from "svelte/transition";
   import Color from "./common/Color.svelte";
   import Switch from "./common/Switch.svelte";
-  import type { IProduct, Field } from "@/lib/Product.svelte";
+  import type { IProduct, Field } from "@/lib/types.svelte";
 
   interface Props {
     product: IProduct;

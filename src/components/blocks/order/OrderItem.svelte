@@ -4,7 +4,7 @@
   import type { HTMLAttributes } from "svelte/elements";
   import OrderItemMaterials from "./OrderItemMaterials.svelte";
   import OrderItemFields from "./OrderItemFields.svelte";
-  import type { IProduct } from "@/lib/Product.svelte";
+  import type { IProduct } from "@/lib/types.svelte";
 
   interface Props extends HTMLAttributes<HTMLDivElement> {
     onClose: () => void;

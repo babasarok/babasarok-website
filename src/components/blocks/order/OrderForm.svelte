@@ -10,7 +10,7 @@
   import { generateFormData } from "@/lib/emailConverter";
   import OrderDelivery from "./OrderDelivery.svelte";
   import type { CmsConfig, CmsDeliveryMethod, CmsMaterial, CmsProduct } from "@/lib/data";
-  import type { IProduct } from "@/lib/Product.svelte";
+  import type { IProduct } from "@/lib/types.svelte";
   import { v4 } from "uuid";
   import type { ProductMaterialValue } from "@/lib/types.svelte";
 
