@@ -8,7 +8,7 @@ import FloatingShapes from "../../components/ui/FloatingShapes.astro";
 import { resolveImage } from "../../lib/assets";
 
 export const getStaticPaths = (async () => {
-  const materials = (await getCollection("material")).sort((a, b) =>
+  const materials = (await getCollection("material")).toSorted((a, b) =>
     (a.data.label ?? a.data.title).localeCompare(b.data.label ?? b.data.title)
   );
 

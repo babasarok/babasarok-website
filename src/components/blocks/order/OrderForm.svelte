@@ -258,7 +258,7 @@
               )}
               <button
                 type="button"
-                class="flex font-normal w-full justify-between items-center gap-4 p-1 px-4 rounded hover:bg-border transition-all"
+                class="flex font-normal w-full justify-between items-center gap-4 p-1 px-4 rounded hover:bg-border transition-all cursor-pointer"
                 onclick={() => {
                   const clone = $state.snapshot(product);
                   products.splice(

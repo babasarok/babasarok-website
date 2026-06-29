@@ -1,4 +1,3 @@
-import { v4 } from "uuid";
 import type { ProductMaterialValue } from "./types.svelte";
 import type { CmsProduct } from "./data";
 

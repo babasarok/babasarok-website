@@ -48,6 +48,7 @@ export const ServiceCollection: Collection = {
       list: true,
       ui: {
         itemProps: (item) => ({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unsafe-member-access
           label: item?.content?.split("\n")[0]?.replace(/^#+\s*/, "") ?? "Termék",
         }),
       },

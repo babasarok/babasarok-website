@@ -3,10 +3,11 @@ title: Díszpárna
 product_id: diszparna
 price: 3500
 materials:
-  - material_path: content/material/teddy.md
-  - material_path: content/material/minky.md
-  - material_path: content/material/potty-nelkuli-minky.md
-  - material_path: content/material/wellsoft.md
+  materials:
+    - material_path: src/content/material/teddy.md
+    - material_path: src/content/material/minky.md
+    - material_path: src/content/material/potty-nelkuli-minky.md
+    - material_path: src/content/material/wellsoft.md
 fields:
   - name: fajta
     price: 0

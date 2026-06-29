@@ -1,7 +1,5 @@
 <script lang="ts">
-  import IconButton from "./common/IconButton.svelte";
   import Button from "./common/Button.svelte";
-  import Tooltip from "./common/Tooltip.svelte";
   import Chip from "./common/Chip.svelte";
   import Icon from "@iconify/svelte";
   import Color from "./common/Color.svelte";

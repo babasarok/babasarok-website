@@ -14,7 +14,7 @@ type GalleryImage = {
 };
 
 export const getStaticPaths = (async () => {
-  const products = (await getCollection("product")).sort(
+  const products = (await getCollection("product")).toSorted(
     (a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0)
   );
 

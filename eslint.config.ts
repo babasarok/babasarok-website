@@ -100,7 +100,7 @@ export default defineConfig([
         {
           allowNumber: true,
           allowBoolean: true,
-          allowNullable: true,
+          allowNullish: true,
           allowAny: false,
           allowRegExp: false,
         },

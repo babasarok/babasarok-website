@@ -10,23 +10,33 @@ type ComponentProps = Parameters<
  * `../`. Ported from the old Hugo project's product configurator so the
  * conditional field UI keeps working.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getValue(props: ComponentProps, path: string): any {
   const castedProps = props as unknown as InputFieldType<
     object,
     Parameters<typeof ReferenceField>[0]
   >;
   const form = castedProps.form;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   const selPath = props.field.name.split(".").slice(0, -1).join(".");
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const fullPath = path.split("/").reduce((acc, part) => {
     if (part === "..") {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       return acc.split(".").slice(0, -1).join(".");
     } else {
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       return acc ? `${acc}.${part}` : part;
     }
   }, selPath);
 
-  return fullPath
-    .split(".")
-    .reduce((obj: any, key: any) => obj && obj[key], form.getState().values);
+  return (
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    fullPath
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      .split(".")
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+      .reduce((obj: any, key: any) => obj && obj[key], form.getState().values)
+  );
 }

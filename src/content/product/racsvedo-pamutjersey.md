@@ -6,9 +6,10 @@ icon: /src/assets/product/braids.svg
 priced_by_length: true
 price: 0
 materials:
-  - material_path: content/material/pamutjersey.md
-    price: 0
-    color_count: fonas
+  materials:
+    - material_path: src/content/material/pamutjersey.md
+      price: 0
+      color_count: fonas
 fields:
   - name: sizes
     length_based_pricing_source: true

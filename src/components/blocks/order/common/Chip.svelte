@@ -22,7 +22,7 @@
   {#if onClose}
     <button
       type="button"
-      class="text-xs text-[constrast-color(var(--color))] hover:text-[constrast-color(var(--color))]/70 transition-opacity"
+      class="text-xs text-[constrast-color(var(--color))] hover:text-[constrast-color(var(--color))]/70 transition-opacity cursor-pointer leading-none"
       style={`--color: ${color ?? "--color-gray-800"};`}
       onclick={onClose}
     >
@@ -35,7 +35,7 @@
   .chip {
     background-size: cover;
     background-position: center;
-    -webkit-text-stroke: 3px white;
+    -webkit-text-stroke: 1px white;
     paint-order: stroke fill;
   }
 </style>

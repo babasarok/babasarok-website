@@ -8,7 +8,7 @@ import FloatingShapes from "../../components/ui/FloatingShapes.astro";
 import { resolveImage } from "../../lib/assets";
 
 export const getStaticPaths = (async () => {
-  const posts = (await getCollection("blog")).sort(
+  const posts = (await getCollection("blog")).toSorted(
     (a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0)
   );
 
