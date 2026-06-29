@@ -36,4 +36,20 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           typegen: ${{ matrix.typegen }}
+      # Branch-scoped build cache. Restored after `npm ci` (which wipes
+      # node_modules) so Astro's persistent cache survives. `dist` is included
+      # for completeness, but the real speedup is `node_modules/.astro`, which
+      # holds Astro's image-optimization + content cache (e.g. transcoded Tina
+      # images), avoiding re-fetching/re-encoding on every run.
+      # key:    new entry per commit so each build saves fresh cache.
+      # restore-keys: fall back to the latest cache on the same branch.
+      - name: Cache Astro build output
+        if: matrix.name == 'Build'
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.astro
+          key: astro-build-${{ github.head_ref }}-${{ github.sha }}
+          restore-keys: |
+            astro-build-${{ github.head_ref }}-
       - run: ${{ matrix.run }}
