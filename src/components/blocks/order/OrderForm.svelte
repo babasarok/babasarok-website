@@ -9,6 +9,7 @@
   import { sanitizeItem } from "@/lib/validation";
   import Masonry from "svelte-bricks";
   import { generateFormData } from "@/lib/emailConverter";
+  import { submitOrder } from "@/lib/orderSubmit";
   import OrderDelivery from "./OrderDelivery.svelte";
   import type { CmsConfig, CmsDeliveryMethod, CmsProduct } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
@@ -56,11 +57,9 @@
       validateItem(product);
     }
 
-    for (const product of products) {
-      if (!isItemValid(product)) {
-        error = "Kérem, ellenőrizd a termékek adatait, és töltsd ki a hiányzó mezőket.";
-        return;
-      }
+    if (products.some((product) => !isItemValid(product))) {
+      error = "Kérem, ellenőrizd a termékek adatait, és töltsd ki a hiányzó mezőket.";
+      return;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -71,96 +70,20 @@
       return;
     }
 
-    // const captcha = e.currentTarget.querySelector("textarea[name=h-captcha-response]");
-    // if (
-    //     !captcha ||
-    //     "value" in captcha === false ||
-    //     typeof captcha.value !== "string" ||
-    //     captcha.value.trim() === ""
-    // ) {
-    //     error = "Kérem, erősítsd meg, hogy nem vagy robot.";
-    //     return;
-    // }
-
     const serializedData = generateFormData(name, email, phone, deliveryMethodData, products);
-    const formData = new FormData();
-    const productStrings = serializedData.termékek.map((p) => {
-      let result = p.név;
-      result += ` (${p.darabszám.toString()}db)`;
-      result += `\n`;
-      if (p.opciók && p.opciók.length > 0) {
-        for (const option of p.opciók ?? []) {
-          result += `  ${option.név}: ${option.érték}\n`;
-        }
-      }
-      if (p.anyagok && p.anyagok.length > 0) {
-        result += `  Anyagok:\n`;
 
-        for (const material of p.anyagok ?? []) {
-          result += `    - ${material.név} (${material.egyedi_szín ? `Egyedi szín: ${material.egyedi_szín}` : (material.színek?.join(", ") ?? "")})\n`;
-        }
-      }
-
-      result += "\n";
-      result += `Alapár: ${p.ár.alapár?.toString() ?? ""} Ft\n`;
-      if (p.ár.tételek.length > 0) {
-        for (const tétel of p.ár.tételek) {
-          result += `${tétel.tétel}: ${tétel.ár?.toString() ?? "??"}Ft \n`;
-        }
-      }
-      result += "\n";
-      result += `${p.ár.egységár ? `  Egységár: ${p.ár.egységár.toString()}Ft` : ""}\n`;
-      if (p.ár.hossz_alapú) {
-        result += `  Méterár: ${p.ár.méterár?.toString() ?? ""}Ft/m\n`;
-      }
-      result += `Összár: ${p.ár.összár?.toString() ?? ""}Ft ${p.ár.nem_teljes_ár ? "(nem teljes ár)" : ""}`;
-
-      return result;
-    });
-    // formData.append("h-captcha-response", captcha.value);
-    formData.append("access_key", params.fabformURL ?? "");
-    formData.append("subject", `Új árajánlatkérés - ${serializedData.név}`);
-    formData.append("nev", serializedData.név);
-    formData.append("email", serializedData.email);
-    formData.append("telefonszam", serializedData.telefonszám);
-    for (const [index, productString] of productStrings.entries()) {
-      formData.append(`termek ${(index + 1).toString()}`, productString);
-    }
-
-    formData.append(
-      "szallitasimod",
-      `${serializedData.szállítási_mód.név} (${serializedData.szállítási_mód.ár.toString()} Ft)`
-    );
-    formData.append("uzenet", message);
-    formData.append(
-      "ar",
-      `${serializedData.ár.összár.toString()} Ft ${serializedData.ár.nem_teljes_ár ? "(nem teljes ár)" : ""}`
-    );
     sending = true;
-    try {
-      const res = await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        body: formData,
-      });
+    const result = await submitOrder(serializedData, {
+      accessKey: params.fabformURL ?? "",
+      message,
+    });
+    sending = false;
 
-      // eslint-disable-next-line , @typescript-eslint/no-explicit-any
-      const result: any = await res.json();
-
-      if (!res.ok) {
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-        error = `Hiba történt az árajánlatkérés elküldése közben. Kérlek, próbáld meg újra később. (${result?.message ?? "Ismeretlen hiba"})`;
-        console.log("Failed to submit order", result);
-        sending = false;
-        return;
-      }
-    } catch (e) {
-      error = `Hiba történt az árajánlatkérés elküldése közben. Kérlek, próbáld meg újra később.`;
-      console.log("Failed to submit order", e);
-      sending = false;
+    if (!result.ok) {
+      error = result.message;
       return;
     }
 
-    sending = false;
     success = "Árajánlatkérésed sikeresen elküldve! Hamarosan felvesszük veled a kapcsolatot.";
     products = [];
 

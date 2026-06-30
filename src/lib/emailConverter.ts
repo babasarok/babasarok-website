@@ -139,14 +139,22 @@ export function generateProductData(product: IProduct) {
   return result;
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export interface OrderEmailData {
+  név: string;
+  email: string;
+  telefonszám: string;
+  szállítási_mód: { név: string; ár: number };
+  termékek: ReadableProductData[];
+  ár: { összár: number; nem_teljes_ár: boolean };
+}
+
 export function generateFormData(
   name: string,
   email: string,
   phone: string,
   deliveryMethod: CmsDeliveryMethod,
   products: IProduct[]
-) {
+): OrderEmailData {
   const productData = products.map((p) => generateProductData(p));
   return {
     név: name,
