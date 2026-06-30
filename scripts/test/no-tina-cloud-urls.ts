@@ -130,7 +130,7 @@ function main(): void {
     }
     console.error(
       "\nFix: resolve these to local assets (src/lib/assets.ts resolveImage / " +
-        "src/lib/data.ts resolveRichTextImages)."
+        "src/lib/data.ts resolveTinaImageRefs)."
     );
     process.exit(1);
   }

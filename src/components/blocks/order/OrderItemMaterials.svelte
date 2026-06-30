@@ -163,7 +163,7 @@
             {#if colorInfo}
               <Chip
                 color={colorInfo.hex}
-                bgImage={colorInfo.image?.src}
+                bgImage={colorInfo.image}
                 onClose={() => {
                   const result = product;
                   if (result.materials.values[material_index]) {

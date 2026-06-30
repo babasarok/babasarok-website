@@ -1,5 +1,4 @@
 ---
-import { Image } from "astro:assets";
 import { getConfig } from "@/lib/data";
 import Button from "@/components/ui/Button.astro";
 
@@ -21,10 +20,12 @@ const mainMenu = rawMenu
       <a href="/" class="block shrink-0">
         {
           logo && (
-            <Image
+            <img
               src={logo}
               alt="Babasarok logó"
               width={200}
+              loading="lazy"
+              decoding="async"
               class="h-17.5 w-auto shrink-0 object-contain lg:w-25"
             />
           )

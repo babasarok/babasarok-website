@@ -27,7 +27,7 @@
         >
           <div
             class="bg-white w-6 h-6"
-            style={`-webkit-mask-image: url(${product.icon.src}); mask-image: url(${product.icon.src}); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-position: center; mask-position: center; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;`}
+            style={`-webkit-mask-image: url(${product.icon}); mask-image: url(${product.icon}); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-position: center; mask-position: center; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;`}
           ></div>
         </div>
       {:else}

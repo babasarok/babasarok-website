@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { ImageMetadata } from "astro";
   import IconButton from "./IconButton.svelte";
   import Tooltip from "./Tooltip.svelte";
 
@@ -8,7 +7,7 @@
       color_id: string;
       hex?: string | undefined | null;
       label?: string | undefined | null;
-      image?: ImageMetadata | undefined | null;
+      image?: string | undefined | null;
     };
     selected?: boolean;
     onclick?: (color_id: string) => void;
@@ -36,7 +35,7 @@
       ]}
     >
       {#if color.image}
-        <img src={color.image.src} alt="" class="block size-full rounded-full object-cover" />
+        <img src={color.image} alt="" class="block size-full rounded-full object-cover" />
       {:else}
         <div
           class="rounded-full h-full w-full"

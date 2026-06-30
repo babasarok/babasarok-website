@@ -1,5 +1,4 @@
 ---
-import { Image } from "astro:assets";
 import { Icon } from "astro-icon/components";
 import { getConfig } from "../../lib/data";
 import Button from "../ui/Button.astro";
@@ -86,10 +85,12 @@ const social = [...(config.social ?? [])]
       <div class="mb-5 w-full lg:mb-0 lg:w-1/3">
         {
           footerLogo && (
-            <Image
+            <img
               src={footerLogo}
               alt="Babasarok logó"
               width={255}
+              loading="lazy"
+              decoding="async"
               class="mx-auto h-42.5 w-auto object-contain lg:mx-0"
             />
           )

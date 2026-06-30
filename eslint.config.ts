@@ -118,14 +118,6 @@ export default defineConfig([
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-unsafe-return": "off",
       "@typescript-eslint/restrict-template-expressions": "off",
-      "no-restricted-syntax": [
-        "warn",
-        {
-          selector: "JSXElement[openingElement.name.name='img']",
-          message:
-            "You should use the Image or Picture component instead of the img tag for better performance and optimization. If you are trying to display an svg just import it and use it directly. See https://docs.astro.build/en/guides/images/ for more details.",
-        },
-      ],
     },
   },
   {
