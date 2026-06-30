@@ -3,7 +3,7 @@
  * it to web3forms. Kept out of the Svelte component so the form stays declarative.
  */
 import { calculatePriceForItem } from "@/lib/priceUtils";
-import type { IProduct } from "./types.svelte";
+import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "./types.svelte";
 import type { CmsDeliveryMethod } from "./data";
 
 const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
@@ -28,52 +28,59 @@ export function calculateOrderTotal(
   };
 }
 
+/** The selected option label/value pair for a field, as shown in the email. */
+function formatFieldValue(field: Field): string {
+  const label =
+    "items" in field
+      ? field.items?.find((option) => option?.value === field.value?.value)?.label
+      : undefined;
+  return label ?? field.value?.value ?? "";
+}
+
+/** The "- material (colors)" line for one chosen material value. */
+function formatMaterialLine(
+  mv: ProductMaterialValue | undefined,
+  materials: CmsProductMaterial[]
+): string {
+  const material = materials.find((m) => m?.material_path.material_id === mv?.material_id);
+  const név = material?.material_path.label ?? mv?.material_id ?? "Ismeretlen anyag";
+  const color = mv?.custom_color
+    ? `Egyedi szín: ${mv.custom_color}`
+    : (mv?.colors
+        .map((x) => material?.material_path.colors?.find((c) => c?.color_id === x)?.label ?? x)
+        .join(", ") ?? "");
+  return `    - ${név} (${color})`;
+}
+
 /** Render a single product into the plain-text block used in the email body. */
 function formatProductString(product: IProduct): string {
   const price = calculatePriceForItem(product);
+  const { materials, material_required_count, values } = product.materials;
 
-  let result = product.title;
-  result += ` (${product.count.toString()}db)`;
-  result += `\n`;
+  const lines = [
+    `${product.title} (${product.count.toString()}db)`,
 
-  const options = product.fields.filter((f) => !("optional" in f) || !f.optional);
-  for (const field of options) {
-    const label =
-      "items" in field
-        ? field.items?.find((option) => option?.value === field.value?.value)?.label
-        : undefined;
-    result += `  ${field.label}: ${label ?? field.value?.value ?? ""}\n`;
-  }
+    ...product.fields
+      .filter((f) => !("optional" in f) || !f.optional)
+      .map((f) => `  ${f.label}: ${formatFieldValue(f)}`),
 
-  if (product.materials.materials.length > 0 && product.materials.material_required_count > 0) {
-    result += `  Anyagok:\n`;
-    for (const mv of product.materials.values) {
-      const material = product.materials.materials.find(
-        (m) => m?.material_path.material_id === mv?.material_id
-      );
-      const név = material?.material_path.label ?? mv?.material_id ?? "Ismeretlen anyag";
-      const color = mv?.custom_color
-        ? `Egyedi szín: ${mv.custom_color}`
-        : (mv?.colors
-            .map((x) => material?.material_path.colors?.find((c) => c?.color_id === x)?.label ?? x)
-            .join(", ") ?? "");
-      result += `    - ${név} (${color})\n`;
-    }
-  }
+    ...(materials.length > 0 && material_required_count > 0
+      ? ["  Anyagok:", ...values.map((mv) => formatMaterialLine(mv, materials))]
+      : []),
 
-  result += "\n";
-  result += `Alapár: ${price.basePrice.price?.toString() ?? ""} Ft\n`;
-  for (const option of price.options) {
-    result += `${option.label}: ${option.price?.toString() ?? "??"}Ft \n`;
-  }
-  result += "\n";
-  result += `${price.unitPrice ? `  Egységár: ${price.unitPrice.toString()}Ft` : ""}\n`;
-  if (price.priced_by_length) {
-    result += `  Méterár: ${price.per_meter_price?.toString() ?? ""}Ft/m\n`;
-  }
-  result += `Összár: ${price.totalPrice?.toString() ?? ""}Ft ${price.indeterminate ? "(nem teljes ár)" : ""}`;
+    "",
+    `Alapár: ${price.basePrice.price?.toString() ?? ""} Ft`,
+    ...price.options.map((o) => `${o.label}: ${o.price?.toString() ?? "??"}Ft`),
 
-  return result;
+    "",
+    ...(price.unitPrice ? [`  Egységár: ${price.unitPrice.toString()}Ft`] : []),
+    ...(price.priced_by_length
+      ? [`  Méterár: ${price.per_meter_price?.toString() ?? ""}Ft/m`]
+      : []),
+    `Összár: ${price.totalPrice?.toString() ?? ""}Ft${price.indeterminate ? " (nem teljes ár)" : ""}`,
+  ];
+
+  return lines.join("\n");
 }
 
 function buildOrderFormData(order: OrderDetails, accessKey: string, message: string): FormData {
