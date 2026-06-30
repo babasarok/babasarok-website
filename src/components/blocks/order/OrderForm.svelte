@@ -253,7 +253,6 @@
         >.
       </p>
     </div>
-    <!-- <div class="h-captcha mt-4" data-captcha="true"></div> -->
     {#if success}
       <p class="pt-4 text-sm text-green-500">{success}</p>
     {/if}
