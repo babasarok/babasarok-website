@@ -3,6 +3,7 @@
   import Chip from "./common/Chip.svelte";
   import Icon from "@iconify/svelte";
   import Color from "./common/Color.svelte";
+  import TextInput from "./common/TextInput.svelte";
   import { slide } from "svelte/transition";
   import type { IProduct } from "@/lib/types.svelte";
   import { resolveColorCount } from "@/lib/materialUtils";
@@ -226,8 +227,7 @@
       </Button>
     {/if}
     {#if custom}
-      <input
-        class="text-sm border rounded bg-white px-2 py-1 border-brown-200 w-full focus:outline-none focus:ring-2 focus:ring-sand-300/40 transition-all"
+      <TextInput
         value={value?.custom_color}
         oninput={(e) => {
           const result = product;

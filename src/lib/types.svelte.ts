@@ -12,12 +12,6 @@ export interface ProductMaterialValue {
   error?: string | undefined;
 }
 
-export interface ValueWithError {
-  value: string;
-  is_custom?: boolean;
-  error?: string | undefined;
-}
-
 export type CmsField = NonNullable<CmsProduct["fields"]>[number];
 export type CmsProductMaterials = NonNullable<CmsProduct["materials"]>;
 export type CmsProductMaterial = NonNullable<CmsProductMaterials["materials"]>[number];

@@ -2,7 +2,7 @@
   import Icon from "@iconify/svelte";
   import Button from "./common/Button.svelte";
   import Tooltip from "./common/Tooltip.svelte";
-  import { v4 } from "uuid";
+  import TextInput from "./common/TextInput.svelte";
   import { slide } from "svelte/transition";
   import Color from "./common/Color.svelte";
   import Switch from "./common/Switch.svelte";
@@ -18,9 +18,8 @@
 
 {#snippet Input(field: Field)}
   {#if field.type === "input" || field.value?.is_custom}
-    {@const id = v4()}
-    <input
-      class="text-sm border rounded bg-white px-2 py-1 border-brown-200 w-full focus:outline-none focus:ring-2 focus:ring-sand-300/40 transition-all"
+    {@const id = crypto.randomUUID()}
+    <TextInput
       type="text"
       value={field.value?.value ?? ""}
       list={field.type === "input" && field.items ? id : undefined}

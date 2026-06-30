@@ -32,6 +32,16 @@ import { resolveImage } from "./assets";
  */
 const IMAGE_REF = /\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
 
+/**
+ * Flatten a Tina `*Connection` query result into a plain array of nodes,
+ * dropping the nullable `edges` / `edge` / `node` wrappers Tina emits.
+ */
+function nodesFrom<TNode>(
+  connection: { edges?: ({ node?: TNode | null } | null)[] | null } | null | undefined
+): TNode[] {
+  return connection?.edges?.flatMap((edge) => (edge?.node ? [edge.node] : [])) ?? [];
+}
+
 function resolveTinaImageRefs<T>(value: T): T {
   if (typeof value === "string") {
     if (IMAGE_REF.test(value)) {
@@ -70,41 +80,25 @@ export const getConfig = async () => {
 export const getProducts = async () => {
   const result = await client.queries.productConnection();
 
-  const products = result.data.productConnection.edges?.flatMap((edge) =>
-    edge?.node ? [edge.node] : []
-  );
-
-  return (
-    products
-      ?.toSorted((a, b) => a.title.localeCompare(b.title))
-      .map((product) => resolveTinaImageRefs(product)) ?? []
-  );
+  return nodesFrom(result.data.productConnection)
+    .toSorted((a, b) => a.title.localeCompare(b.title))
+    .map((product) => resolveTinaImageRefs(product));
 };
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const getMaterials = async () => {
   const result = await client.queries.product_materialsConnection();
 
-  const materials = result.data.product_materialsConnection.edges?.flatMap((edge) =>
-    edge?.node ? [edge.node] : []
-  );
-
-  return (
-    materials
-      ?.toSorted((a, b) => a.label.localeCompare(b.label))
-      .map((material) => resolveTinaImageRefs(material)) ?? []
-  );
+  return nodesFrom(result.data.product_materialsConnection)
+    .toSorted((a, b) => a.label.localeCompare(b.label))
+    .map((material) => resolveTinaImageRefs(material));
 };
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const getDeliveryMethods = async () => {
   const result = await client.queries.delivery_methodsConnection();
 
-  const deliveryMethods = result.data.delivery_methodsConnection.edges?.flatMap((edge) =>
-    edge?.node ? [edge.node] : []
-  );
-
-  return deliveryMethods ?? [];
+  return nodesFrom(result.data.delivery_methodsConnection);
 };
 
 export type CmsConfig = Awaited<ReturnType<typeof getConfig>>["data"]["config"];

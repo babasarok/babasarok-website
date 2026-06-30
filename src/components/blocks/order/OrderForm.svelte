@@ -4,6 +4,7 @@
   import { fade } from "svelte/transition";
   import IconButton from "./common/IconButton.svelte";
   import Button from "./common/Button.svelte";
+  import TextInput from "./common/TextInput.svelte";
   import { isItemValid, validateItem } from "@/lib/validation";
   import { sanitizeItem } from "@/lib/validation";
   import Masonry from "svelte-bricks";
@@ -11,7 +12,7 @@
   import OrderDelivery from "./OrderDelivery.svelte";
   import type { CmsConfig, CmsDeliveryMethod, CmsProduct } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
-  import { v4 } from "uuid";
+
   import type { ProductMaterialValue } from "@/lib/types.svelte";
 
   interface Props {
@@ -189,26 +190,9 @@
         </div>
       </div>
       <div class="flex gap-2 flex-col sm:flex-row">
-        <input
-          class="text-sm border rounded bg-white px-2 py-1 border-brown-200 w-full focus:outline-none focus:ring-2 focus:ring-sand-300/40 transition-all"
-          type="text"
-          placeholder="Név *"
-          required
-          bind:value={name}
-        />
-        <input
-          class="text-sm border rounded bg-white px-2 py-1 border-brown-200 w-full focus:outline-none focus:ring-2 focus:ring-sand-300/40 transition-all"
-          type="email"
-          placeholder="Email cím *"
-          required
-          bind:value={email}
-        />
-        <input
-          class="text-sm border rounded bg-white px-2 py-1 border-brown-200 w-full focus:outline-none focus:ring-2 focus:ring-sand-300/40 transition-all"
-          type="tel"
-          placeholder="Telefonszám"
-          bind:value={phone}
-        />
+        <TextInput type="text" placeholder="Név *" required bind:value={name} />
+        <TextInput type="email" placeholder="Email cím *" required bind:value={email} />
+        <TextInput type="tel" placeholder="Telefonszám" bind:value={phone} />
       </div>
     </div>
     <div class="flex flex-col gap-4">
@@ -265,7 +249,7 @@
                     0,
                     sanitizeItem({
                       ...clone,
-                      uuid: v4(),
+                      uuid: crypto.randomUUID(),
                       count: 1,
                       fields: clone.fields?.filter((f) => f != null) ?? [],
                       materials: {
