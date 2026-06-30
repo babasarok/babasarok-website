@@ -62,7 +62,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          TINA_CMS_CLIENT_ID: ${{ variables.TINA_CMS_CLIENT_ID }}
+          TINA_CMS_CLIENT_ID: ${{ vars.TINA_CMS_CLIENT_ID }}
           TINA_CMS_CLIENT_TOKEN: ${{ secrets.TINA_CMS_CLIENT_TOKEN }}
       - name: Upload dist
         uses: actions/upload-artifact@v4
