@@ -34,7 +34,6 @@ export interface FieldOpts {
   optional?: boolean;
   items?: FieldItem[];
   allow_custom_value?: boolean;
-  multiple?: boolean;
   regex?: string;
   length_based_pricing_source?: boolean;
   value?: ValueWithError;

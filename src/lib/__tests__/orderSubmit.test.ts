@@ -148,8 +148,8 @@ describe("product string content", () => {
     expect(form_text(await captureForm(baseOrder([product])))).toMatchInlineSnapshot(`
       "Babafészek (2db)
         Méret: Közepes
-        Babatakaró és párna: true
-        Betét: false
+        Babatakaró és párna: Igen
+        Betét: Nem
         Anyagok:
           - Teddy (Bézs, Szürke)
           - Minky (Rózsaszín)
@@ -166,7 +166,7 @@ describe("product string content", () => {
     `);
   });
 
-  it("renders a custom (Egyéb) radio value as the raw typed text", async () => {
+  it("marks a custom (Egyéb) field value with an 'Egyedi:' prefix", async () => {
     const product = makeProduct({
       title: "Baldachin",
       price: 12_000,
@@ -183,7 +183,7 @@ describe("product string content", () => {
 
     expect(form_text(await captureForm(baseOrder([product])))).toMatchInlineSnapshot(`
       "Baldachin (1db)
-        Szín: mályva
+        Szín: Egyedi: mályva
 
       Alapár: 12000 Ft
       Szín: ??Ft
@@ -193,7 +193,7 @@ describe("product string content", () => {
     `);
   });
 
-  it("OMITS optional fields even when the customer filled them in (current behaviour)", async () => {
+  it("includes filled-in optional fields but still hides empty ones", async () => {
     const product = makeProduct({
       title: "Cumilánc",
       price: 3500,
@@ -207,16 +207,23 @@ describe("product string content", () => {
           price: 0,
           value: { value: "Sürgős, kérlek!" },
         }),
+        makeField({
+          name: "ures",
+          label: "Üres megjegyzés",
+          type: "input",
+          optional: true,
+          price: 0,
+        }),
       ],
     });
 
     const text = form_text(await captureForm(baseOrder([product])));
-    expect(text).toContain("Név: Anna");
-    // Regression marker for a known gap: the customer's typed optional value
-    // never reaches the email — only the (value-less) price line survives, in
-    // the price breakdown rather than the answers block.
-    expect(text).not.toContain("Sürgős");
-    expect(text).not.toContain("Egyéb megjegyzés: Sürgős");
+    expect(text).toContain("  Név: Anna");
+    // The filled-in optional note now reaches the email's answers block …
+    expect(text).toContain("  Egyéb megjegyzés: Sürgős, kérlek!");
+    // … while an empty optional field stays out of the answers block (the
+    // 2-space indent distinguishes answer lines from the price breakdown).
+    expect(text).not.toContain("  Üres megjegyzés:");
   });
 
   it("renders a length-priced (méteráru) product", async () => {

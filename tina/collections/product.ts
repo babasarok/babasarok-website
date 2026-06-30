@@ -492,24 +492,6 @@ export const ProductCollection: Collection = {
           label: "Érvényességi minta (regex)",
         },
         {
-          type: "boolean",
-          name: "multiple",
-          label: "Több érték engedélyezése",
-          description: "Jelzi, hogy a mező több értéket is engedélyez-e.",
-          ui: {
-            component(props) {
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-              const typeValue = getValue(props, "type");
-              if (typeValue != "select") {
-                return null;
-              }
-
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return ToggleField(props as any);
-            },
-          },
-        },
-        {
           type: "string",
           name: "placeholder",
           label: "Placeholder",

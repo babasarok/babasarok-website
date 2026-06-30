@@ -30,6 +30,12 @@ export function calculateOrderTotal(
 
 /** The selected option label/value pair for a field, as shown in the email. */
 function formatFieldValue(field: Field): string {
+  if (field.type === "toggle") {
+    return field.value?.value === "true" ? "Igen" : "Nem";
+  }
+  if (field.value?.is_custom) {
+    return `Egyedi: ${field.value.value}`;
+  }
   const label =
     "items" in field
       ? field.items?.find((option) => option?.value === field.value?.value)?.label
@@ -61,7 +67,9 @@ function formatProductString(product: IProduct): string {
     `${product.title} (${product.count.toString()}db)`,
 
     ...product.fields
-      .filter((f) => !("optional" in f) || !f.optional)
+      // Hide only *empty* optional fields; a filled-in optional answer (e.g. a
+      // custom note) must still reach the email.
+      .filter((f) => !("optional" in f) || !f.optional || !!f.value?.value)
       .map((f) => `  ${f.label}: ${formatFieldValue(f)}`),
 
     ...(materials.length > 0 && material_required_count > 0

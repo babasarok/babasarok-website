@@ -251,10 +251,7 @@ describe("validateItem / isItemValid", () => {
         fields: [makeField({ name: "meret", type: "radio", items: [{ value: "s" }] })],
       })
     );
-    // Current behaviour: the "empty → Kötelező mező" message is overwritten by
-    // the membership check, so an untouched required radio reports the (less
-    // helpful) "Érvénytelen érték". Pinned so the message can't silently drift.
-    expect(item.fields[0].value?.error).toBe("Érvénytelen érték");
+    expect(item.fields[0].value?.error).toBe("Kötelező mező");
     expect(isItemValid(item)).toBe(false);
   });
 

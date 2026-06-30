@@ -38,6 +38,18 @@ jobs:
           typegen: ${{ matrix.typegen }}
       - run: ${{ matrix.run }}
 
+  # Fast unit tests for the order-form domain logic (pricing, validation,
+  # order-string formatting). These are pure functions whose only `data.ts`
+  # imports are type-only (elided at transform time), so no Tina client, Astro
+  # sync, or production build is needed — it runs straight off source.
+  unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: npm test
+
   # Real production build (`npm run build` -> `tinacms build`, talks to Tina
   # Cloud). The resulting `dist/` is uploaded so the guard jobs below can reuse
   # it without rebuilding.

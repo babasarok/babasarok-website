@@ -88,7 +88,13 @@ function updateFieldWithErrors(item: Field): void {
       }
 
       const items = item.items;
-      if (items && !items.some((option) => option && option.value === item.value?.value)) {
+      // Only validate membership for a *non-empty* value, otherwise this would
+      // overwrite the more helpful "Kötelező mező" set above for empty fields.
+      if (
+        item.value.value &&
+        items &&
+        !items.some((option) => option && option.value === item.value?.value)
+      ) {
         item.value.error = "Érvénytelen érték";
       }
       break;
