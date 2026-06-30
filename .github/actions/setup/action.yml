@@ -1,0 +1,34 @@
+name: Setup
+description: Install Node, restore the npm cache, install dependencies, and (optionally) generate Tina + Astro types.
+
+inputs:
+  typegen:
+    description: >-
+      When "true", generate the Tina client (tina/__generated__) and run
+      `astro sync`. Required by any check that type-checks the app, because
+      src/lib/data.ts imports the generated Tina client and the Astro content
+      types are produced by `astro sync`.
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: "24"
+        cache: npm
+
+    # `--ignore-scripts` is intentional: sharp and esbuild ship prebuilt
+    # platform binaries via optionalDependencies, so lifecycle scripts are not
+    # needed and only slow installs down / risk failures.
+    - name: Install dependencies
+      shell: bash
+      run: npm ci --ignore-scripts
+
+    - name: Generate Tina client and Astro types
+      if: inputs.typegen == 'true'
+      shell: bash
+      run: |
+        npx tinacms build --local --skip-cloud-checks
+        npx astro sync

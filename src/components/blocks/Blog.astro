@@ -1,0 +1,67 @@
+---
+import { getCollection } from "astro:content";
+import { Markdown } from "astro-md-2";
+import blogSection from "../../content/sections/blog.json";
+import blogShape from "../../assets/images/blog/blog-shape.svg?url";
+import { resolveImage } from "../../lib/assets";
+import Button from "../ui/Button.astro";
+import TopTitle from "../ui/TopTitle.astro";
+import BlogCard from "../ui/BlogCard.astro";
+
+const { enable, topTitle, title, buttonName, buttonTarget } = blogSection;
+
+const posts = (await getCollection("blog"))
+  .toSorted((a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0))
+  .slice(0, 3);
+
+const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
+---
+
+{
+  enable && (
+    <section id="blog" class="relative mb-7.5 py-25">
+      {/* Rotating decorative shape (desktop only) */}
+      <div class="pointer-events-none absolute top-[11%] right-[12%] -z-10 hidden h-75 w-75 lg:block">
+        <img src={blogShape} alt="" aria-hidden="true" class="animate-rotate-slow h-full w-full" />
+      </div>
+
+      <div class="container">
+        {/* Header: title + desktop button */}
+        <div class="mb-12 flex flex-wrap items-end">
+          <div class="w-full lg:w-1/2">
+            <div>
+              <TopTitle class="text-dark block whitespace-pre-line sm:text-xl">{topTitle}</TopTitle>
+              <div class="prose">
+                <Markdown of={title} />
+              </div>
+            </div>
+          </div>
+          <div class="hidden w-1/2 justify-end lg:flex">
+            <Button href={buttonHref} variant="outline-secondary" size="lg" class="m-3">
+              {buttonName}
+            </Button>
+          </div>
+        </div>
+
+        {/* Posts */}
+        <div class="flex flex-wrap">
+          {posts.map((post) => (
+            <BlogCard
+              href={`/blog/${post.id}/`}
+              title={post.data.title}
+              image={resolveImage(post.data.featureImage)}
+              date={post.data.date}
+            />
+          ))}
+        </div>
+
+        {/* Mobile button */}
+        <div class="block text-center lg:hidden">
+          <Button href={buttonHref} variant="outline-secondary" size="lg">
+            {buttonName}
+          </Button>
+        </div>
+      </div>
+    </section>
+  )
+}

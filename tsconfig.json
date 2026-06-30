@@ -1,20 +1,23 @@
 {
-    "compilerOptions": {
-        "lib": ["ESNext", "DOM"],
-        "target": "ESNext",
-        "strict": true,
-        "moduleResolution": "bundler",
-        "module": "ESNext",
-        "jsx": "react",
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true,
-        "resolveJsonModule": true,
-        "isolatedModules": true,
-        "noEmit": true,
-        "verbatimModuleSyntax": true,
-        "exactOptionalPropertyTypes": true
-    },
-    "include": ["./**/*"],
-    "exclude": ["./static/components/**/*", "./resources/**/*", "./public/**/*", "./tina/__generated__/**/*"]
+  "extends": "astro/tsconfigs/strict",
+  "include": [
+    ".astro/types.d.ts",
+    "src/**/*",
+    "scripts/**/*",
+    "tests/**/*",
+    "tina/**/*",
+    "*.ts",
+    "stylelint.config.mjs",
+    "astro.config.ts",
+    "eslint.config.ts",
+    "playwright.config.ts"
+  ],
+  "exclude": ["dist", "tina/__generated__", "public/admin", "old"],
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "exactOptionalPropertyTypes": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
 }

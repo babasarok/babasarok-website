@@ -1,0 +1,120 @@
+name: PR Checks
+
+on:
+  pull_request:
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Static checks that only need the source + generated types, never a build.
+  static:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # `typegen` generates the Tina client + Astro types, needed by any
+        # check that type-checks the app.
+        include:
+          - { name: Format, run: "npx prettier --check .", typegen: "false" }
+          - { name: Lint, run: "npm run lint", typegen: "true" }
+          - { name: Stylelint, run: "npm run lint:style", typegen: "false" }
+          - { name: Astro Check, run: "npx astro check", typegen: "true" }
+          - {
+              name: Svelte Check,
+              run: "npx svelte-check --tsconfig ./tsconfig.json",
+              typegen: "true",
+            }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          typegen: ${{ matrix.typegen }}
+      - run: ${{ matrix.run }}
+
+  # Fast unit tests for the order-form domain logic (pricing, validation,
+  # order-string formatting). These are pure functions whose only `data.ts`
+  # imports are type-only (elided at transform time), so no Tina client, Astro
+  # sync, or production build is needed — it runs straight off source.
+  unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: npm test
+
+  # Real production build (`npm run build` -> `tinacms build`, talks to Tina
+  # Cloud). The resulting `dist/` is uploaded so the guard jobs below can reuse
+  # it without rebuilding.
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      # Branch-scoped build cache. Restored after `npm ci` (which wipes
+      # node_modules) so Astro's persistent cache survives — `node_modules/.astro`
+      # holds the image-optimization + content cache (e.g. transcoded Tina
+      # images), avoiding re-fetching/re-encoding on every run.
+      - name: Cache Astro build output
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.astro
+          key: astro-build-${{ github.head_ref }}-${{ github.sha }}
+          restore-keys: |
+            astro-build-${{ github.head_ref }}-
+      - name: Build
+        run: npm run build
+        env:
+          TINA_CMS_CLIENT_ID: ${{ vars.TINA_CMS_CLIENT_ID }}
+          TINA_CMS_CLIENT_TOKEN: ${{ secrets.TINA_CMS_CLIENT_TOKEN }}
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 1
+
+  # Guard: no Tina Cloud asset URLs leaked into the built output.
+  test-tina-urls:
+    name: Test Tina URLs
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - run: npm run test:dist-tina-urls
+
+  # Guard: Svelte client islands hydrate against the real production build.
+  # `npm run test:hydration` runs Playwright, whose `webServer` boots
+  # `npm run preview` (astro preview) over the downloaded `dist/`.
+  test-hydration:
+    name: Test Hydration
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      # `npm ci --ignore-scripts` skips Playwright's browser download, so install
+      # the Chromium the hydration test drives.
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - run: npm run test:hydration

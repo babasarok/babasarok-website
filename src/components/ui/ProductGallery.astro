@@ -1,0 +1,115 @@
+---
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+import { Icon } from "astro-icon/components";
+
+/**
+ * Product image gallery. A single image renders as a static figure; multiple
+ * images render as a pure-CSS (radio + label) carousel with optional captions
+ * and prev/next arrows — a faithful port of the old Hugo `case-details-carousel`.
+ */
+export interface GalleryImage {
+  src: ImageMetadata;
+  alt: string;
+  description?: string | undefined;
+}
+
+interface Props {
+  id: string;
+  images: GalleryImage[];
+}
+
+const { id, images } = Astro.props;
+
+const widths = [600, 900, 1200, 1500, 1880];
+const sizes = "(min-width: 992px) 940px, 90vw";
+
+// The track transform and the per-slide arrow visibility are generated;
+// captions move with their slide. Every selector is scoped under #id.
+let stateCss = "";
+for (const i of images.keys()) {
+  stateCss += `#${id} .cd-input-${i}:checked~.cd-viewport .cd-track{transform:translateX(-${i * 100}%)}`;
+  stateCss += `#${id} .cd-input-${i}:checked~.cd-arrows .cd-arrows-${i}{opacity:1;pointer-events:auto}`;
+}
+---
+
+{
+  images.length === 1 && (
+    <div class="w-full overflow-hidden rounded-[30px]">
+      <Image
+        src={images[0].src}
+        alt={images[0].alt}
+        widths={widths}
+        sizes={sizes}
+        class="h-75 w-full rounded-[20px] object-cover sm:h-125"
+      />
+    </div>
+  )
+}
+
+{
+  images.length > 1 && (
+    <div class="w-full overflow-hidden rounded-[30px]">
+      <div id={id} class="relative">
+        {images.map((_, i) => (
+          <input
+            class:list={[`cd-input-${i}`, "pointer-events-none absolute opacity-0"]}
+            type="radio"
+            name={`${id}-sel`}
+            id={`${id}-i-${i}`}
+            checked={i === 0}
+          />
+        ))}
+
+        <div class="cd-viewport overflow-hidden rounded-[20px]">
+          <div class="cd-track flex items-start transition-transform duration-450 ease-out">
+            {images.map((img) => (
+              <div class="flex min-w-full flex-col items-center">
+                <Image
+                  src={img.src}
+                  alt={img.alt}
+                  widths={widths}
+                  sizes={sizes}
+                  class="h-75 w-auto max-w-full rounded-[20px] object-cover sm:h-125"
+                />
+                {img.description && <p class="mt-3 text-center text-black">{img.description}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div class="cd-arrows pointer-events-none absolute inset-x-0 top-0 z-2 h-75 sm:h-125">
+          {images.map((_, i) => {
+            const prev = i === 0 ? images.length - 1 : i - 1;
+            const next = i === images.length - 1 ? 0 : i + 1;
+            return (
+              <div
+                class:list={[
+                  `cd-arrows-${i}`,
+                  "pointer-events-none absolute inset-0 flex items-center justify-between px-2 opacity-0 transition-opacity duration-200",
+                ]}
+              >
+                <label
+                  class="bg-accent grid size-9 cursor-pointer place-items-center rounded-full text-white transition-transform hover:scale-105 active:scale-95 sm:size-10.5"
+                  for={`${id}-i-${prev}`}
+                  aria-label="Előző kép"
+                >
+                  <Icon name="tabler:chevron-left" class="block text-xl" />
+                </label>
+                <label
+                  class="bg-accent grid size-9 cursor-pointer place-items-center rounded-full text-white transition-transform hover:scale-105 active:scale-95 sm:size-10.5"
+                  for={`${id}-i-${next}`}
+                  aria-label="Következő kép"
+                >
+                  <Icon name="tabler:chevron-right" class="block text-xl" />
+                </label>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <style set:html={stateCss} />
+    </div>
+  )
+}

@@ -1,0 +1,11 @@
+{
+  "enable": true,
+  "title": "## Rólunk\n",
+  "content": "### Üdvözöllek!\nMi egyedi, kézzel készített babatermékekkel foglalkozunk, hogy minden kicsi a legnagyobb kényelemben pihenhessen. Minden darabunk a Te elképzeléseid szerint készül, legyen szó színválasztásról vagy dizájnról, hogy a babaszoba stílusához tökéletesen illeszkedjen. Kétgyermekes anyukaként rengeteg tapasztalatot szereztem, és csak a legjobb minőségű alapanyagokkal dolgozom. Családi vállalkozásként, lendületes fiatalos csapatunk minden tagja segítőkész és rugalmas, hogy a legjobbat biztosíthassuk számodra. Nézd meg referenciamunkáinkat, és tudd meg, hogyan varázsolhatjuk még kényelmesebbé a kicsik mindennapjait!\n",
+  "button1Name": "Kapcsolat",
+  "button2Name": "Termékeink",
+  "button1Target": "contact",
+  "button2Target": "product",
+  "image": "/src/assets/images/about/IMG_5375.jpg",
+  "_template": "about_template"
+}

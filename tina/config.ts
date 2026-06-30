@@ -1,277 +1,55 @@
 import { defineConfig } from "tinacms";
-import {
-    about_templateFields,
-    blog_section_templateFields,
-    blog_templateFields,
-    config_templateFields,
-    hero_templateFields,
-    menus_templateFields,
-    parameters_templateFields,
-    product_section_templateFields,
-    resume_templateFields,
-    service_templateFields,
-    testimonial_templateFields,
-} from "./templates";
-import { PRODUCT } from "./products";
-import { MATERIALS } from "./materials";
-import { DELIVER_METHODS } from "./deliveryMethods";
+import { GlobalConfigCollection } from "./collections/global-config";
+import { HeroCollection } from "./collections/hero";
+import { ServiceCollection } from "./collections/service";
+import { AboutCollection } from "./collections/about";
+import { ProductSectionCollection } from "./collections/product-section";
+import { BlogSectionCollection } from "./collections/blog-section";
+import { BlogCollection } from "./collections/blog";
+import { ProductCollection } from "./collections/product";
+import { MaterialCollection } from "./collections/material";
+import { DeliveryMethodCollection } from "./collections/delivery-method";
+import { ContactCollection } from "./collections/contact";
 
-// Your hosting provider likely exposes this as an environment variable
-const branch = process.env.HEAD || process.env.CF_PAGES_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || "main";
+const branch =
+  process.env.CF_PAGES_BRANCH ||
+  process.env.GITHUB_HEAD_REF ||
+  process.env.GITHUB_REF_NAME ||
+  process.env.HEAD ||
+  "main";
 
 export default defineConfig({
-    cmsCallback: (cms) => {
-        return cms;
+  branch,
+
+  // Get this from tina.io
+  clientId: process.env.TINA_CMS_CLIENT_ID ?? null,
+  // Get this from tina.io
+  token: process.env.TINA_CMS_CLIENT_TOKEN ?? null,
+
+  build: {
+    outputFolder: "admin",
+    publicFolder: "public",
+  },
+  media: {
+    tina: {
+      mediaRoot: "src/assets",
+      publicFolder: "",
     },
-    branch,
-    clientId: process.env.TINA_CMS_CLIENT_ID!, // Get this from tina.io
-    token: process.env.TINA_CMS_CLIENT_TOKEN!, // Get this from tina.io
-    build: {
-        outputFolder: "admin",
-        publicFolder: "static",
-    },
-    media: {
-        tina: {
-            mediaRoot: "",
-            publicFolder: "assets",
-            static: false,
-        },
-    },
-    schema: {
-        collections: [
-            {
-                format: "yml",
-                label: "Hero szekció",
-                name: "hero",
-                path: "data",
-                frontmatterFormat: "yaml",
-                ui: {
-                    allowedActions: {
-                        create: false,
-                        delete: false,
-                    },
-                },
-                match: {
-                    include: "hero",
-                },
-                fields: hero_templateFields(),
-            },
-            {
-                format: "yml",
-                label: "Rólunk szekció",
-                name: "about",
-                path: "data",
-                frontmatterFormat: "yaml",
-                ui: {
-                    allowedActions: {
-                        create: false,
-                        delete: false,
-                    },
-                },
-                match: {
-                    include: "aboutSection",
-                },
-                fields: about_templateFields(),
-            },
-            {
-                format: "yml",
-                label: "Termék ismertető szekció",
-                name: "services",
-                path: "data",
-                frontmatterFormat: "yaml",
-                ui: {
-                    allowedActions: {
-                        create: false,
-                        delete: false,
-                    },
-                },
-                match: {
-                    include: "serviceSection",
-                },
-                fields: service_templateFields(),
-            },
-            {
-                format: "yml",
-                label: "Önélatrajz szekció",
-                name: "resume",
-                path: "data",
-                frontmatterFormat: "yaml",
-                ui: {
-                    allowedActions: {
-                        create: false,
-                        delete: false,
-                    },
-                },
-                match: {
-                    include: "resumeSection",
-                },
-                fields: resume_templateFields(),
-            },
-            {
-                format: "yml",
-                label: "Ajánlások szekció",
-                name: "testimonials",
-                path: "data",
-                frontmatterFormat: "yaml",
-                ui: {
-                    allowedActions: {
-                        create: false,
-                        delete: false,
-                    },
-                },
-                match: {
-                    include: "testimonialSection",
-                },
-                fields: testimonial_templateFields(),
-            },
-            {
-                format: "yml",
-                label: "Termék szekció",
-                name: "product_section",
-                path: "data",
-                frontmatterFormat: "yaml",
-                ui: {
-                    allowedActions: {
-                        create: false,
-                        delete: false,
-                    },
-                },
-                match: {
-                    include: "productSection",
-                },
-                fields: product_section_templateFields(),
-            },
-            {
-                format: "yml",
-                label: "Referenciamunkák szekció",
-                name: "blog_section",
-                path: "data",
-                frontmatterFormat: "yaml",
-                ui: {
-                    allowedActions: {
-                        create: false,
-                        delete: false,
-                    },
-                },
-                match: {
-                    include: "blogSection",
-                },
-                fields: blog_section_templateFields(),
-            },
-            {
-                format: "md",
-                label: "Rendelés (Kapcsolat)",
-                name: "contact",
-                path: "content/contact",
-                frontmatterFormat: "yaml",
-                match: {
-                    include: "**/*",
-                },
-                fields: [
-                    {
-                        type: "rich-text",
-                        name: "body",
-                        label: "Body of Document",
-                        description: "This is the markdown body",
-                        isBody: true,
-                    },
-                ],
-            },
-            {
-                format: "md",
-                label: "Összes Referenciamunka",
-                name: "blog",
-                path: "content/blog",
-                frontmatterFormat: "yaml",
-                match: {
-                    include: "**/*",
-                },
-                fields: blog_templateFields(),
-            },
-            {
-                format: "yaml",
-                label: "Config Fájl",
-                name: "config_file",
-                path: "config/_default",
-                frontmatterFormat: "yaml",
-                ui: {
-                    allowedActions: {
-                        create: false,
-                        delete: false,
-                    },
-                },
-                match: {
-                    include: "hugo",
-                },
-                fields: config_templateFields(),
-            },
-            {
-                format: "yaml",
-                label: "Menü Fájl",
-                name: "menus_file",
-                path: "config/_default",
-                frontmatterFormat: "yaml",
-                ui: {
-                    allowedActions: {
-                        create: false,
-                        delete: false,
-                    },
-                },
-                match: {
-                    include: "menus",
-                },
-                fields: menus_templateFields(),
-            },
-            {
-                format: "json",
-                label: "Paraméter Fájl",
-                name: "parameters_file",
-                path: "config/_default",
-                frontmatterFormat: "json",
-                ui: {
-                    allowedActions: {
-                        create: false,
-                        delete: false,
-                    },
-                },
-                match: {
-                    include: "params",
-                },
-                fields: parameters_templateFields(),
-            },
-            {
-                format: "md",
-                label: "Termékek",
-                name: "product",
-                path: "content/product",
-                frontmatterFormat: "yaml",
-                match: {
-                    include: "**/*",
-                },
-                fields: PRODUCT,
-            },
-            {
-                format: "md",
-                label: "Anyagok",
-                name: "product_materials",
-                path: "content/material",
-                frontmatterFormat: "yaml",
-                match: {
-                    include: "**/*",
-                },
-                fields: MATERIALS,
-            },
-            {
-                format: "md",
-                label: "Szállítási módok",
-                name: "delivery_methods",
-                path: "content/delivery_method",
-                frontmatterFormat: "yaml",
-                match: {
-                    include: "**/*",
-                },
-                fields: DELIVER_METHODS,
-            },
-        ],
-    },
+  },
+  // See docs on content modeling for more info on how to setup new content models: https://tina.io/docs/schema/
+  schema: {
+    collections: [
+      GlobalConfigCollection,
+      HeroCollection,
+      ServiceCollection,
+      AboutCollection,
+      ProductSectionCollection,
+      BlogSectionCollection,
+      BlogCollection,
+      ProductCollection,
+      MaterialCollection,
+      DeliveryMethodCollection,
+      ContactCollection,
+    ],
+  },
 });

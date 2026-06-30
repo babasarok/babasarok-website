@@ -1,0 +1,50 @@
+---
+interface Props {
+  currentPage: number;
+  lastPage: number;
+  /** e.g. "/product" — page 1 is `${basePath}/`, page n is `${basePath}/page/n/`. */
+  basePath: string;
+}
+
+const { currentPage, lastPage, basePath } = Astro.props;
+
+const pageUrl = (n: number): string => (n === 1 ? `${basePath}/` : `${basePath}/page/${n}/`);
+
+const links = Array.from({ length: lastPage }, (_, i) => {
+  const n = i + 1;
+  return { href: pageUrl(n), label: String(n), active: n === currentPage };
+});
+
+if (currentPage < lastPage) {
+  links.push({ href: pageUrl(currentPage + 1), label: "→", active: false });
+}
+---
+
+{
+  lastPage > 1 && (
+    <nav aria-label="Page navigation" class="mt-12 w-full">
+      <ul class="flex justify-center">
+        {links.map((link, idx) => (
+          <li>
+            <a
+              href={link.href}
+              rel={link.label === "→" ? "next" : undefined}
+              aria-current={link.active ? "page" : undefined}
+              class:list={[
+                "relative block border border-[#dee2e6] px-6 py-3 text-xl leading-normal transition-colors",
+                idx > 0 && "-ml-px",
+                idx === 0 && "rounded-l-[0.3rem]",
+                idx === links.length - 1 && "rounded-r-[0.3rem]",
+                link.active
+                  ? "border-sand-300 bg-sand-300 z-10 text-white"
+                  : "text-sand-300 hover:bg-sand-100",
+              ]}
+            >
+              {link.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}

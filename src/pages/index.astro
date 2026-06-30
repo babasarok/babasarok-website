@@ -1,0 +1,24 @@
+---
+import Base from "../layouts/Base.astro";
+import Hero from "../components/blocks/Hero.astro";
+import Service from "../components/blocks/Service.astro";
+import Product from "../components/blocks/Product.astro";
+import Blog from "../components/blocks/Blog.astro";
+import About from "../components/blocks/About.astro";
+import { getConfig } from "../lib/data";
+
+const config = (await getConfig()).data.config;
+---
+
+<Base
+  title={config.titleSeparator
+    ? `${config.title} ${config.titleSeparator} ${config.titleAddition}`
+    : config.title}
+  description={config.description}
+>
+  <Hero />
+  <Service />
+  <About />
+  <Product />
+  <Blog />
+</Base>

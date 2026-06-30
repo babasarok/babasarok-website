@@ -1,0 +1,77 @@
+/* stylelint-disable custom-property-pattern -- tailwind have these */
+
+/* Drive the dark: variant from the .dark class (toggled by ThemeToggle),
+   not the prefers-color-scheme media query. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* ── Brand palettes ──────────────────────────────────────────────
+     Two warm, Tailwind-style scales:
+       sand-*  : saturated tan (the marketing hue, hsl 28.52 49.59%)
+       brown-* : muted taupe/brown (the order island + warm surfaces) */
+
+  --color-sand-50: hsl(28.52deg 49.59% 97%); /* #fbf7f4 */
+  --color-sand-100: hsl(28.52deg 49.59% 90.88%); /* #f3e7dc */
+  --color-sand-300: hsl(28.52deg 49.59% 75.88%); /* #e0c0a3 */
+  --color-sand-400: hsl(28.52deg 49.59% 65%); /* #d2a47a */
+  --color-sand-700: hsl(28.52deg 49.59% 42%); /* #a06836 */
+
+  /* brown */
+  --color-brown-50: #f4efea;
+  --color-brown-100: #ede6df;
+  --color-brown-200: #e3ddd7;
+  --color-brown-400: #a18472;
+  --color-brown-500: #8c6b5a;
+  --color-brown-600: #6f5447;
+  --color-brown-700: #5f4437;
+
+  /* ── Semantic neutrals ───────────────────────────────────────────
+     One-off roles that don't form a scale. */
+  --color-accent: #806548; /* brown brand accent (links, dashes, gallery arrows) */
+  --color-headings: #28341d; /* dark green headings */
+  --color-body: #444; /* paragraph / body copy */
+  --color-dark: #343a40; /* dark text & links */
+  --color-light: #f8f9fa; /* light text on dark surfaces */
+  --color-muted: #e2e6ea; /* subtle hover / border grey */
+  --color-indicator: #c2c8cc; /* inactive slider dots */
+
+  /* ── Typography ── */
+  --font-base: "Poppins", sans-serif;
+  --font-heading: "Yeseva One", cursive;
+
+  /* Bootstrap 4 breakpoints, so utility variants line up with the
+     `@utility container` widths (sm 576 / md 768 / lg 992 / xl 1200). */
+  --breakpoint-sm: 36rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 62rem;
+  --breakpoint-xl: 75rem;
+  --breakpoint-2xl: 87.5rem;
+
+  /* Decorative float animations (ported from the old SCSS, reused across
+     hero/service/about/etc.). Registered as tokens so `animate-float-y` /
+     `animate-float-x` utilities work — arbitrary `animate-[...]` would mangle
+     the underscored keyframe names into spaces. */
+  --animate-float-y: float-y 5s infinite linear;
+  --animate-float-x: float-x 9s infinite linear;
+  --animate-rotate-slow: rotate-slow 25s infinite linear;
+
+  /* Heading font sizes (mobile-first base; scaled up from sm in base.css). */
+  --text-h1: 2.25rem;
+  --text-h1--font-weight: 400;
+  --text-h1--line-height: 1.2;
+  --text-h2: 1.9rem;
+  --text-h2--font-weight: 400;
+  --text-h2--line-height: 1.2;
+  --text-h3: 1.75rem;
+  --text-h3--font-weight: 400;
+  --text-h3--line-height: 1.2;
+  --text-h4: 1.5rem;
+  --text-h4--font-weight: 400;
+  --text-h4--line-height: 1.2;
+  --text-h5: 22px;
+  --text-h5--font-weight: 400;
+  --text-h5--line-height: 1.2;
+  --text-h6: 16px;
+  --text-h6--font-weight: 400;
+  --text-h6--line-height: 1.2;
+}

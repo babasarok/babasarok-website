@@ -1,0 +1,194 @@
+---
+import type { GetStaticPaths } from "astro";
+import { getCollection, render } from "astro:content";
+import { Image } from "astro:assets";
+import { Icon } from "astro-icon/components";
+import Base from "../../layouts/Base.astro";
+import FloatingShapes from "../../components/ui/FloatingShapes.astro";
+import { resolveImage } from "../../lib/assets";
+
+export const getStaticPaths = (async () => {
+  const materials = (await getCollection("material")).toSorted((a, b) =>
+    (a.data.label ?? a.data.title).localeCompare(b.data.label ?? b.data.title)
+  );
+
+  return materials.map((material, i) => ({
+    params: { id: material.id },
+    props: {
+      material,
+      prev: materials[i - 1] ?? null,
+      next: materials[i + 1] ?? null,
+    },
+  }));
+}) satisfies GetStaticPaths;
+
+const { material, prev, next } = Astro.props;
+const { Content } = await render(material);
+
+const { title, label, shortDescription } = material.data;
+const heading = label ?? title;
+
+const thumb = resolveImage(material.data.thumbnail);
+const colors = (material.data.colors ?? []).map((color) => ({
+  label: color.label,
+  hex: color.hex,
+  image: resolveImage(color.image),
+}));
+
+const shareUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;
+const shareLinks = [
+  {
+    icon: "fa-brands:facebook",
+    href: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`,
+  },
+  {
+    icon: "fa-brands:linkedin",
+    href: `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`,
+  },
+  {
+    icon: "fa-brands:twitter",
+    href: `https://twitter.com/intent/tweet?&url=${shareUrl}`,
+  },
+];
+---
+
+<Base title={heading} description={shortDescription} isArticle>
+  <section class="relative overflow-hidden pt-30 pb-25 sm:pt-50">
+    <FloatingShapes
+      figureClass="top-[30%] left-[-7%]"
+      blobClass="right-[4%] top-[29%]"
+      patternClass="right-[12%] top-[46%]"
+    />
+
+    <div class="container">
+      <div class="relative z-1 mb-12 text-center lg:mx-auto lg:w-10/12">
+        <h1 class="text-h1 text-headings mb-6">{heading}</h1>
+        {shortDescription && <p>{shortDescription}</p>}
+
+        {
+          thumb && (
+            <div class="mt-7.5 mb-12 flex flex-col items-center">
+              <div class="overflow-hidden rounded-[20px]">
+                <Image
+                  src={thumb}
+                  alt={heading}
+                  widths={[480, 768, 1000]}
+                  sizes="(min-width: 768px) 1000px, 100vw"
+                  class="w-full object-cover lg:max-w-1000"
+                />
+              </div>
+            </div>
+          )
+        }
+
+        {
+          colors.length > 0 && (
+            <div class="mb-12.5">
+              <h2 class="text-h2 text-headings mb-7.5">Színek</h2>
+              <div class="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] items-start gap-5">
+                {colors.map((color) => (
+                  <div class="flex flex-col items-center">
+                    {color.image ? (
+                      <Image
+                        src={color.image}
+                        alt={color.label ?? ""}
+                        width={150}
+                        height={150}
+                        class="size-37.5 rounded-[25%] object-cover"
+                      />
+                    ) : (
+                      <div
+                        class="size-37.5 rounded-[25%]"
+                        style={`background-color: ${color.hex};`}
+                      />
+                    )}
+                    <div class="mt-2 text-sm">{color.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        }
+
+        <div class="prose mx-auto max-w-none text-center">
+          <Content />
+        </div>
+      </div>
+
+      <div class="relative z-1 lg:mx-auto lg:w-10/12">
+        <nav class="flex items-center justify-between gap-4 sm:gap-8">
+          {
+            prev ? (
+              <a class="group flex items-center" href={`/material/${prev.id}/`}>
+                <span class="text-dark mr-3 leading-none">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="15.556"
+                    height="28.285"
+                    viewBox="0 0 15.556 28.285"
+                    fill="currentColor"
+                  >
+                    <path d="M3.391 12.728l9.75 14.142-.982 1.414-9.742-14.142z" />
+                    <path d="M13.137 1.41L3.39 15.558l-.975-1.415L12.166 0z" />
+                  </svg>
+                </span>
+                <span class="text-left">
+                  <span class="text-body block text-sm">Előző</span>
+                  <span class="font-heading text-dark group-hover:text-sand-300 block text-xl">
+                    {prev.data.label ?? prev.data.title}
+                  </span>
+                </span>
+              </a>
+            ) : (
+              <span />
+            )
+          }
+
+          <ul class="hidden items-center sm:flex">
+            {
+              shareLinks.map((link) => (
+                <li class="not-last:mr-6">
+                  <a
+                    class="text-body hover:text-sand-300 block transition-colors hover:scale-110"
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Icon name={link.icon} class="text-lg" />
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+
+          {
+            next ? (
+              <a class="group flex items-center" href={`/material/${next.id}/`}>
+                <span class="text-right">
+                  <span class="text-body block text-sm">Következő</span>
+                  <span class="font-heading text-dark group-hover:text-sand-300 block text-xl">
+                    {next.data.label ?? next.data.title}
+                  </span>
+                </span>
+                <span class="text-dark ml-3 leading-none">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="15.556"
+                    height="28.285"
+                    viewBox="0 0 15.556 28.285"
+                    fill="currentColor"
+                  >
+                    <path d="M12.162 12.725L2.416 26.87l.978 1.41 9.746-14.138z" />
+                    <path d="M2.416 1.415l9.743 14.141.975-1.414L3.39 0z" />
+                  </svg>
+                </span>
+              </a>
+            ) : (
+              <span />
+            )
+          }
+        </nav>
+      </div>
+    </div>
+  </section>
+</Base>

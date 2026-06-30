@@ -1,0 +1,54 @@
+{
+  "title": "Babasarok",
+  "description": "Egyedi, kézzel készített babakelengye",
+  "ogLocale": "hu_HU",
+  "themeColor": "#F1D3B2",
+  "blogPageURL": "blog",
+  "mainMenu": [
+    { "name": "Főoldal", "url": "/", "weight": 1 },
+    { "name": "Rólunk", "url": "/#about", "weight": 4 },
+    { "name": "Termékek", "url": "/product/", "weight": 5 },
+    { "name": "Referenciamunkák", "url": "/#blog", "weight": 7 },
+    { "name": "Anyagok", "url": "/material/", "weight": 8 }
+  ],
+  "sitemapMenu": [
+    { "name": "Főoldal", "url": "/", "weight": 1 },
+    { "name": "Kapcsolat", "url": "/contact", "weight": 2 },
+    { "name": "Termékek", "url": "/product", "weight": 3 },
+    { "name": "Referenciamunkák", "url": "/blog", "weight": 4 }
+  ],
+  "footerContact": {
+    "topTitle": "Kapcsolat",
+    "title": "Rendelj most!",
+    "button": "Érdeklődj itt"
+  },
+  "pagination": {
+    "pagerSize": 6
+  },
+  "titleSeparator": "-",
+  "titleAddition": "Egyedi, kézzel készített babakelengye",
+  "logo": "/src/assets/images/site-navigation/logo.png",
+  "footerLogo": "/src/assets/images/site-navigation/logo-dark.png",
+  "contactLink": "contact",
+  "fabformURL": "1ffa9477-1db3-47f2-bc9e-1226e3a3b858",
+  "address": {
+    "phone": "+36 30 2121 709",
+    "email": "halminoemi99@gmail.com",
+    "address": "3896, Telkibánya Petőfi út 87."
+  },
+  "social": [
+    {
+      "icon": "streamline-logos:facebook-logo-2",
+      "url": "https://www.facebook.com/share/1AsACc4DuU/?mibextid=wwXIfr"
+    },
+    {
+      "icon": "fa:instagram",
+      "url": "https://www.instagram.com/babasarokk/"
+    },
+    {
+      "icon": "fa-brands:tiktok",
+      "url": "https://www.tiktok.com/@halminoemi99?_t=ZG-8wgf8AuszwG&_r=1",
+      "weight": 1
+    }
+  ]
+}

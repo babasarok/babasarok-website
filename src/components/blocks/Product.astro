@@ -1,0 +1,49 @@
+---
+import { getCollection } from "astro:content";
+import { Markdown } from "astro-md-2";
+import productSection from "../../content/sections/product.json";
+import { resolveImage } from "../../lib/assets";
+import Button from "../ui/Button.astro";
+import ProductCard from "../ui/ProductCard.astro";
+
+const { enable, title, itemCount, buttonName, buttonTarget } = productSection;
+
+const products = (await getCollection("product"))
+  .toSorted((a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0))
+  .slice(0, itemCount);
+
+const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
+---
+
+{
+  enable && (
+    <section id="product" class="pt-25 pb-25 lg:pb-33.75">
+      <div class="container">
+        {/* Section title (centered) */}
+        <div class="prose mb-12 text-center lg:mx-auto lg:w-1/2">
+          <Markdown of={title} />
+        </div>
+
+        {/* Product grid */}
+        <div class="flex flex-wrap justify-center gap-8 gap-y-12 sm:gap-y-8">
+          {products.map((product) => (
+            <ProductCard
+              href={`/product/${product.id}/`}
+              title={product.data.title}
+              image={resolveImage(product.data.thumbnail)}
+              category={product.data.categories}
+              square
+            />
+          ))}
+        </div>
+
+        {/* All-products button */}
+        <div class="mt-4 flex justify-center">
+          <Button href={buttonHref} variant="primary" size="lg">
+            {buttonName}
+          </Button>
+        </div>
+      </div>
+    </section>
+  )
+}

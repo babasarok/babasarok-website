@@ -1,0 +1,35 @@
+---
+/**
+ * Section label ("top-title" / old `.pre-line`) — a small heading shown above a
+ * section title, prefixed with a decorative brown dash. Reused by the hero,
+ * service and other landing sections.
+ *
+ * Pass display / size / spacing utilities via `class`; the dash, relative
+ * positioning and left offset are baked in here so callers don't repeat them.
+ */
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<span class:list={["top-title", className]}><slot /></span>
+
+<style>
+  .top-title {
+    position: relative;
+    margin-left: 30px;
+  }
+
+  .top-title::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -20px;
+    height: 2px;
+    width: 20px;
+    transform: translateX(-50%);
+    background: var(--color-accent);
+  }
+</style>

@@ -1,0 +1,31 @@
+---
+import FloatingShapes from "./FloatingShapes.astro";
+
+interface Props {
+  title: string;
+  breadcrumb?: string;
+  "no-shapes"?: boolean;
+}
+
+const { title, breadcrumb = title, "no-shapes": noShapes = false } = Astro.props;
+---
+
+<header class="relative pt-30 lg:pt-50">
+  {!noShapes && <FloatingShapes />}
+
+  <div class="container">
+    <div class="text-center">
+      <h1 class="text-h1 text-headings mb-7.5 text-3xl leading-none lg:text-5xl">{title}</h1>
+      <nav aria-label="breadcrumb" class="flex justify-center">
+        <ol class="flex items-center whitespace-nowrap">
+          <li>
+            <a class="text-accent no-underline hover:underline" href="/"> Főoldal </a>
+          </li>
+          <li class="text-accent before:mx-2 before:content-['-']" aria-current="page">
+            {breadcrumb}
+          </li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+</header>

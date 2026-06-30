@@ -1,53 +1,21 @@
-############################
-# Logs and databases
-############################
-
-.tmp
-*.log
-*.sql
-*.sqlite
-*.sqlite3
-
-############################
-# Hugo
-############################
-
-resources/
-public/
-.hugo_build.lock
-assets/**/vendor
-pnpm-lock.yaml
-static/components/
-
-############################
-# Misc.
-############################
-
-*#
-ssl
-.idea
-nbproject
-.netlify
-
-############################
-# Node.js
-############################
-
-lib-cov
-lcov.info
-pids
-logs
-results
 node_modules
-.node_history
+dist
+.astro
+package.json
+package-lock.json
+.npm
+old
+public/admin
+tina/tina-lock.json
+tina/__generated__
 
-############################
-# Tests
-############################
-
-testApp
-coverage
-
-############################
-# Temp
-############################
+# Tina-managed content (Tina owns the formatting of these files; letting
+# prettier reformat them causes spurious diffs whenever content is edited
+# through the CMS). Mirrors the collection `path`s in tina/collections/*.
+src/content/blog
+src/content/config
+src/content/contact
+src/content/delivery_method
+src/content/material
+src/content/product
+src/content/sections
