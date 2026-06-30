@@ -52,3 +52,10 @@ These are listed in priority order. When values conflict, prefer the one higher 
   Specs live in `src/**/*.test.ts` (e.g. the order-form logic in
   [src/lib/**tests**/](src/lib/__tests__/)); fast pure-function tests, no build needed.
 - **Hydration tests:** `npm run test:hydration` (Playwright; needs a `dist/` build).
+
+## Gotchas
+
+- **Install with `npm ci --ignore-scripts`** (or `npm install --ignore-scripts`).
+  Plain `npm ci` aborts on `sharp`'s install script (it falls through to a
+  from-source build that fails with `Please add node-addon-api`).
+- **This repo is npm-managed.** Do not use pnpm/yarn.

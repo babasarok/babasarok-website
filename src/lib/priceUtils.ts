@@ -104,10 +104,11 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
   }
 
   const basePrice: PricePart = { label: "Alapár", price: product.price ?? undefined };
+  const allParts = [basePrice, ...parts];
   const unitPrice = Math.round(
-    [basePrice, ...parts].reduce((sum, part) => sum + Math.round(part.price ?? 0), 0)
+    allParts.reduce((sum, part) => sum + Math.round(part.price ?? 0), 0)
   );
-  const indeterminate = parts.some((part) => part.price === undefined) || product.price === null;
+  const indeterminate = allParts.some((part) => part.price === undefined);
   const discountMultiplier =
     product.discount &&
     product.discount_valid_until &&
