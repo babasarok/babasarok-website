@@ -11,9 +11,28 @@
  * is the source of truth; regen with `tinacms dev` and everything
  * downstream updates.
  */
+import type { ImageMetadata } from "astro";
 import { requestWithMetadata } from "@tinacms/astro/data";
 import client from "../../tina/__generated__/client";
 import { resolveImage } from "./assets";
+
+/**
+ * Return a plain, serialization-safe copy of an `ImageMetadata`.
+ *
+ * Astro serializes client-island props with a `[type, value]` tuple scheme that
+ * only recurses into *plain* objects. SVG `ImageMetadata` (Astro's SVG import)
+ * is an exotic, non-plain object, so Astro emits its fields as bare values
+ * instead of tuples; the island's `reviveTuple` then does `const [t, v] = raw`
+ * on a bare value and throws "x is not iterable" while hydrating, which silently
+ * kills the whole island (no icons, no interactivity). Spreading into a fresh
+ * object literal yields a plain `[object Object]` Astro can round-trip.
+ *
+ * Only used for data that crosses into the OrderForm island; `.astro` `<Image>`
+ * usage keeps the original metadata so the image pipeline is untouched.
+ */
+function plainImage(meta: ImageMetadata | undefined): ImageMetadata | undefined {
+  return meta ? { ...meta } : undefined;
+}
 
 /**
  * Resolve image URLs embedded in a Tina rich-text body to local optimized
@@ -77,10 +96,10 @@ export const getProducts = async () => {
       .map((product) =>
         resolveRichTextImages({
           ...product,
-          icon: resolveImage(product.icon),
-          thumbnail: resolveImage(product.thumbnail),
+          icon: plainImage(resolveImage(product.icon)),
+          thumbnail: plainImage(resolveImage(product.thumbnail)),
           images: product.images?.map((entry) =>
-            entry ? { ...entry, image: resolveImage(entry.image) } : entry
+            entry ? { ...entry, image: plainImage(resolveImage(entry.image)) } : entry
           ),
           materials: product.materials
             ? {
@@ -91,9 +110,11 @@ export const getProducts = async () => {
                         ...material,
                         material_path: {
                           ...material.material_path,
-                          thumbnail: resolveImage(material.material_path.thumbnail),
+                          thumbnail: plainImage(resolveImage(material.material_path.thumbnail)),
                           colors: material.material_path.colors?.map((color) =>
-                            color ? { ...color, image: resolveImage(color.image) } : color
+                            color
+                              ? { ...color, image: plainImage(resolveImage(color.image)) }
+                              : color
                           ),
                         },
                       }
@@ -120,9 +141,9 @@ export const getMaterials = async () => {
       .map((material) =>
         resolveRichTextImages({
           ...material,
-          thumbnail: resolveImage(material.thumbnail),
+          thumbnail: plainImage(resolveImage(material.thumbnail)),
           colors: material.colors?.map((color) =>
-            color ? { ...color, image: resolveImage(color.image) } : color
+            color ? { ...color, image: plainImage(resolveImage(color.image)) } : color
           ),
         })
       ) ?? []

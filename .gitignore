@@ -60,3 +60,4 @@ scripts/migrate/.reports
 .vercel
 dist
 old/
+public/admin
