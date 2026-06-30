@@ -61,3 +61,9 @@ scripts/migrate/.reports
 dist
 old/
 public/admin
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+.playwright/

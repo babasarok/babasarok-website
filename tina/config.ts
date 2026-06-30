@@ -11,8 +11,12 @@ import { MaterialCollection } from "./collections/material";
 import { DeliveryMethodCollection } from "./collections/delivery-method";
 import { ContactCollection } from "./collections/contact";
 
-// Your hosting provider likely exposes this as an environment variable
-const branch = process.env.CF_PAGES_BRANCH || process.env.HEAD || "main";
+const branch =
+  process.env.CF_PAGES_BRANCH ||
+  process.env.GITHUB_HEAD_REF ||
+  process.env.GITHUB_REF_NAME ||
+  process.env.HEAD ||
+  "main";
 
 export default defineConfig({
   branch,
