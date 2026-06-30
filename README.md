@@ -42,20 +42,20 @@ the Tina editor.
 
 ## Scripts
 
-| Command                     | What it does                                                   |
-| --------------------------- | -------------------------------------------------------------- |
-| `npm run dev`               | Tina backend + Astro dev server                                |
-| `npm run build`             | Production build (talks to Tina Cloud — needs creds)           |
-| `npm run build:local`       | Self-contained build, no Tina Cloud creds needed               |
-| `npm run preview`           | Serve the built `dist/` locally                                |
-| `npm run check`             | `astro check` + `sv check` (type/diagnostics)                  |
-| `npm run lint`              | ESLint                                                         |
-| `npm run lint:style`        | Stylelint                                                      |
-| `npm run format`            | Prettier (write)                                               |
-| `npm test`                  | Vitest unit tests (`vitest run`)                               |
-| `npm run test:watch`        | Vitest in watch mode                                           |
-| `npm run test:hydration`    | Playwright island-hydration tests (needs a `dist/` build)      |
-| `npm run test:dist-tina-urls` | Guard: fail if any Tina Cloud URL leaked into `dist/`        |
+| Command                       | What it does                                              |
+| ----------------------------- | --------------------------------------------------------- |
+| `npm run dev`                 | Tina backend + Astro dev server                           |
+| `npm run build`               | Production build (talks to Tina Cloud — needs creds)      |
+| `npm run build:local`         | Self-contained build, no Tina Cloud creds needed          |
+| `npm run preview`             | Serve the built `dist/` locally                           |
+| `npm run check`               | `astro check` + `sv check` (type/diagnostics)             |
+| `npm run lint`                | ESLint                                                    |
+| `npm run lint:style`          | Stylelint                                                 |
+| `npm run format`              | Prettier (write)                                          |
+| `npm test`                    | Vitest unit tests (`vitest run`)                          |
+| `npm run test:watch`          | Vitest in watch mode                                      |
+| `npm run test:hydration`      | Playwright island-hydration tests (needs a `dist/` build) |
+| `npm run test:dist-tina-urls` | Guard: fail if any Tina Cloud URL leaked into `dist/`     |
 
 ## Project structure
 

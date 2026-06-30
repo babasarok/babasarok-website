@@ -9,7 +9,7 @@ opportunities for improvement are.
 
 ## 1. Stack overview
 
-| Concern             | Technology                                                         |
+| Concern             | Technology                                                        |
 | ------------------- | ----------------------------------------------------------------- |
 | Site framework      | **Astro 6** (`output: "static"`)                                  |
 | Interactive islands | **Svelte 5** (runes), hydrated only where needed                  |
@@ -213,5 +213,7 @@ Much of the hard-won operational knowledge currently lives only in agent/repo
 memory (Vite override rationale, `--ignore-scripts`, Tina dev ports, the Plate
 duplicate-dependency crash). Promoting the essentials into this repo's docs would
 de-risk onboarding for humans who don't have that memory.
+
+```
 
 ```
