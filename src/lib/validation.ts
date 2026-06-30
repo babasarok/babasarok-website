@@ -56,15 +56,14 @@ function updateFieldWithErrors(item: Field): void {
       case "toggle":
       case "radio": {
         item.value.error = "Kötelező mező";
-
-        break;
+        return;
       }
       case "input": {
         if (item.optional) {
           break;
         }
         item.value.error = "Kötelező mező";
-        break;
+        return;
       }
     }
   }
@@ -73,18 +72,19 @@ function updateFieldWithErrors(item: Field): void {
     const regex = new RegExp(item.regex);
     if (!regex.test(item.value.value)) {
       item.value.error = "Érvénytelen formátum";
+      return;
     }
   }
 
   switch (item.type) {
     case "input": {
-      break;
+      return;
     }
     case "select":
     case "color":
     case "radio": {
       if (item.value.is_custom) {
-        break;
+        return;
       }
 
       const items = item.items;
@@ -96,8 +96,9 @@ function updateFieldWithErrors(item: Field): void {
         !items.some((option) => option && option.value === item.value?.value)
       ) {
         item.value.error = "Érvénytelen érték";
+        return;
       }
-      break;
+      return;
     }
   }
 }

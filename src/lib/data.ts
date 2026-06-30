@@ -11,6 +11,7 @@
  * is the source of truth; regen with `tinacms dev` and everything
  * downstream updates.
  */
+import { getImage } from "astro:assets";
 import { requestWithMetadata } from "@tinacms/astro/data";
 import client from "../../tina/__generated__/client";
 import { resolveImage } from "./assets";
@@ -30,7 +31,7 @@ import { resolveImage } from "./assets";
  * forms). Strings that don't resolve to a `src/assets` file are left as-is, so
  * the walk is safe to run over an entire entity.
  */
-const IMAGE_REF = /\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
+const IMAGE_REF = /\.(?:avif|gif|jpe?g|png|svg|webp|svg)$/i;
 
 /**
  * Flatten a Tina `*Connection` query result into a plain array of nodes,
@@ -66,6 +67,24 @@ function resolveTinaImageRefs<T>(value: T): T {
   return value;
 }
 
+/**
+ * Color swatches render at ~24px (`size-6`) in the order island, so handing the
+ * island the full-resolution original is wasteful. Pre-resize each swatch to a
+ * small WebP (2x for retina) via Astro's build-time image pipeline and return
+ * the optimized `src`. Falls back to the original path when it can't resolve to
+ * a local asset (e.g. an already-optimized or unknown reference).
+ */
+const SWATCH_WIDTH = 200;
+
+async function optimizeSwatch(path: string): Promise<string> {
+  const meta = resolveImage(path);
+  if (!meta) {
+    return path;
+  }
+  const optimized = await getImage({ src: meta, width: SWATCH_WIDTH, format: "webp" });
+  return optimized.src;
+}
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const getConfig = async () => {
   const result = await requestWithMetadata(client.queries.config({ relativePath: "config.json" }));
@@ -80,9 +99,25 @@ export const getConfig = async () => {
 export const getProducts = async () => {
   const result = await client.queries.productConnection();
 
-  return nodesFrom(result.data.productConnection)
-    .toSorted((a, b) => a.title.localeCompare(b.title))
-    .map((product) => resolveTinaImageRefs(product));
+  const products = nodesFrom(result.data.productConnection).toSorted((a, b) =>
+    a.title.localeCompare(b.title)
+  );
+
+  // Optimize the color swatches before they're serialized into the order island.
+  await Promise.all(
+    products.flatMap(
+      (product) =>
+        product.materials?.materials?.flatMap((material) =>
+          (material?.material_path.colors ?? []).map(async (color) => {
+            if (color?.image) {
+              color.image = await optimizeSwatch(color.image);
+            }
+          })
+        ) ?? []
+    )
+  );
+
+  return products.map((product) => resolveTinaImageRefs(product));
 };
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
