@@ -7,10 +7,8 @@ import PageHeader from "../components/ui/PageHeader.astro";
 import {
   getConfig,
   getDeliveryMethods,
-  getMaterials,
   getProducts,
   type CmsDeliveryMethod,
-  type CmsMaterial,
   type CmsProduct,
 } from "../lib/data";
 import locationIcon from "../assets/images/contact/location.svg";
@@ -29,7 +27,6 @@ const social = [...(config.social ?? [])]
   .toSorted((a, b) => (a.weight ?? 99) - (b.weight ?? 99));
 
 const products = await getProducts();
-const materials = await getMaterials();
 const deliveryMethods = await getDeliveryMethods();
 ---
 
@@ -45,10 +42,6 @@ const deliveryMethods = await getDeliveryMethods();
           }
 
           acc[p.product_id] = p;
-          return acc;
-        }, {})}
-        materials={materials.reduce<Record<string, CmsMaterial>>((acc, m) => {
-          acc[m.material_id] = m;
           return acc;
         }, {})}
         deliveryMethods={deliveryMethods.reduce<Record<string, CmsDeliveryMethod>>((acc, d) => {

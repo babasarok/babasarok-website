@@ -1,6 +1,17 @@
 {
   "extends": "astro/tsconfigs/strict",
-  "include": [".astro/types.d.ts", "src/**/*", "scripts/**/*", "tests/**/*", "tina/**/*", "*.ts"],
+  "include": [
+    ".astro/types.d.ts",
+    "src/**/*",
+    "scripts/**/*",
+    "tests/**/*",
+    "tina/**/*",
+    "*.ts",
+    "stylelint.config.mjs",
+    "astro.config.ts",
+    "eslint.config.ts",
+    "playwright.config.ts"
+  ],
   "exclude": ["dist", "tina/__generated__", "public/admin", "old"],
   "compilerOptions": {
     "strictNullChecks": true,

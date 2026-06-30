@@ -25,7 +25,7 @@
 
 <div class="flex flex-col gap-1">
   <div class="flex flex-col gap-1 text-xs">
-    {#each priceParts as part, index (part.label)}
+    {#each priceParts as part (part.label)}
       <div class="flex justify-between">
         <p class="text-xs">{part.label}</p>
         <p class="text-xs">

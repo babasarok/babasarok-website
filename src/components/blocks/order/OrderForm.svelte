@@ -9,7 +9,7 @@
   import Masonry from "svelte-bricks";
   import { generateFormData } from "@/lib/emailConverter";
   import OrderDelivery from "./OrderDelivery.svelte";
-  import type { CmsConfig, CmsDeliveryMethod, CmsMaterial, CmsProduct } from "@/lib/data";
+  import type { CmsConfig, CmsDeliveryMethod, CmsProduct } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
   import { v4 } from "uuid";
   import type { ProductMaterialValue } from "@/lib/types.svelte";
@@ -17,11 +17,10 @@
   interface Props {
     products: Record<string, CmsProduct>;
     deliveryMethods: Record<string, CmsDeliveryMethod>;
-    materials: Record<string, CmsMaterial>;
     config: CmsConfig;
   }
 
-  let { products: productInfo, deliveryMethods, materials, config: params }: Props = $props();
+  let { products: productInfo, deliveryMethods, config: params }: Props = $props();
 
   let error: string | null = $state(null);
   let success: string | null = $state(null);
