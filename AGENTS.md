@@ -48,4 +48,7 @@ These are listed in priority order. When values conflict, prefer the one higher 
 - **Type/check:** `npm run check` (`astro check` + `sv check`)
 - **Lint:** `npm run lint` · **Styles:** `npm run lint:style`
 - **Format:** `npm run format` (Prettier)
-- **Tests:** `npm run test:hydration` (Playwright)
+- **Unit tests:** `npm test` (Vitest, `vitest run`) · watch with `npm run test:watch`.
+  Specs live in `src/**/*.test.ts` (e.g. the order-form logic in
+  [src/lib/**tests**/](src/lib/__tests__/)); fast pure-function tests, no build needed.
+- **Hydration tests:** `npm run test:hydration` (Playwright; needs a `dist/` build).
