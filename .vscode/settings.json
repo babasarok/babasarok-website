@@ -2,6 +2,8 @@
   "files.associations": {
     "*.html": "handlebars"
   },
+  "typescript.experimental.useTsgo": true,
+  "typescript.tsserver.maxTsServerMemory": 4096,
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[svelte]": {
@@ -36,6 +38,7 @@
   "css.customData": [".vscode/css/custom-data/tailwind.json"],
   "extensions": {
     "recommendations": [
+      "typescriptteam.native-preview",
       "astro-build.astro-vscode",
       "streetsidesoftware.code-spell-checker",
       "kisstkondoros.vscode-codemetrics",
