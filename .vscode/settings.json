@@ -53,5 +53,6 @@
       "stylelint.vscode-stylelint"
     ],
     "unwantedRecommendations": []
-  }
+  },
+  "typescript.native-preview.tsdk": "node_modules/@typescript/native-preview"
 }

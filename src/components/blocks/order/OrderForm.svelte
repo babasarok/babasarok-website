@@ -8,8 +8,7 @@
   import { isItemValid, validateItem } from "@/lib/validation";
   import { sanitizeItem } from "@/lib/validation";
   import Masonry from "svelte-bricks";
-  import { generateFormData } from "@/lib/emailConverter";
-  import { submitOrder } from "@/lib/orderSubmit";
+  import { submitOrder, calculateOrderTotal } from "@/lib/orderSubmit";
   import OrderDelivery from "./OrderDelivery.svelte";
   import type { CmsConfig, CmsDeliveryMethod, CmsProduct } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
@@ -70,13 +69,14 @@
       return;
     }
 
-    const serializedData = generateFormData(name, email, phone, deliveryMethodData, products);
-
     sending = true;
-    const result = await submitOrder(serializedData, {
-      accessKey: params.fabformURL ?? "",
-      message,
-    });
+    const result = await submitOrder(
+      { name, email, phone, deliveryMethod: deliveryMethodData, products },
+      {
+        accessKey: params.fabformURL ?? "",
+        message,
+      }
+    );
     sending = false;
 
     if (!result.ok) {
@@ -85,19 +85,20 @@
     }
 
     success = "Árajánlatkérésed sikeresen elküldve! Hamarosan felvesszük veled a kapcsolatot.";
-    products = [];
 
     if (globalThis.window.fbq) {
       try {
         globalThis.window.fbq("track", "Purchase", {
           currency: "HUF",
-          value: serializedData.ár.összár,
-          num_items: serializedData.termékek.length,
+          value: calculateOrderTotal(products, deliveryMethodData).total,
+          num_items: products.length,
         });
       } catch (e) {
         console.error("Failed to record purchase", e);
       }
     }
+
+    products = [];
   }}
 >
   <h3 class="text-h3 mb-4">Tervezzük meg a szettet!</h3>
