@@ -13,6 +13,8 @@
     "migrate": "node scripts/migrate/index.ts",
     "preview": "astro preview",
     "astro": "astro",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:dist-tina-urls": "node scripts/test/no-tina-cloud-urls.ts",
     "test:hydration": "playwright test",
     "check": "npx astro check && npx sv check",
@@ -79,6 +81,7 @@
     "tinacms": "^3.9.3",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.62.0",
+    "vitest": "^4.1.9",
     "yaml": "^2.6.0"
   },
   "overrides": {
