@@ -31,7 +31,7 @@ import { resolveImage } from "./assets";
  * forms). Strings that don't resolve to a `src/assets` file are left as-is, so
  * the walk is safe to run over an entire entity.
  */
-const IMAGE_REF = /\.(?:avif|gif|jpe?g|png|svg|webp|svg)$/i;
+const IMAGE_REF = /\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
 
 /**
  * Flatten a Tina `*Connection` query result into a plain array of nodes,
