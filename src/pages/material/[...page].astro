@@ -5,7 +5,6 @@ import Base from "../../layouts/Base.astro";
 import PageHeader from "../../components/ui/PageHeader.astro";
 import ProductCard from "../../components/ui/ProductCard.astro";
 import Pagination from "../../components/ui/Pagination.astro";
-import { resolveImage } from "../../lib/assets";
 
 export const getStaticPaths = (async () => {
   const PAGE_SIZE = 6;
@@ -41,7 +40,7 @@ const { items, currentPage, lastPage } = Astro.props;
             <ProductCard
               href={`/material/${material.id}/`}
               title={material.data.label ?? material.data.title}
-              image={resolveImage(material.data.thumbnail)}
+              image={material.data.thumbnail}
               category={material.data.categories}
             />
           ))

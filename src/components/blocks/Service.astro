@@ -1,12 +1,14 @@
 ---
 import { Image } from "astro:assets";
 import { Markdown } from "astro-md-2";
-import service from "../../content/sections/service.json";
-import { resolveImage } from "../../lib/assets";
 import patternSvg from "../../assets/images/service/background-pattern.svg?url";
 import TopTitle from "../ui/TopTitle.astro";
+import { getEntry } from "astro:content";
 
-const { enable, topTitle, title, service: items } = service;
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const entry = await getEntry("servicesBlock", "service")!;
+
+const { enable, topTitle, title, service: items } = entry.data;
 ---
 
 {
@@ -66,7 +68,6 @@ const { enable, topTitle, title, service: items } = service;
             class="service-slider flex snap-x snap-mandatory overflow-x-scroll scroll-smooth"
           >
             {items.map((item) => {
-              const img = resolveImage(item.image);
               return (
                 <div class="w-full shrink-0 snap-center snap-always p-3.75 sm:w-[33%]">
                   <div class="rounded-[20px] bg-white p-7.5 shadow-[0_5px_10px_0_rgba(50,65,141,0.12)]">
@@ -85,15 +86,13 @@ const { enable, topTitle, title, service: items } = service;
                         </svg>
                       </div>
                       <div class="absolute bottom-0 left-0 z-1">
-                        {img && (
-                          <Image
-                            src={img}
-                            alt=""
-                            width={168}
-                            height={168}
-                            class="h-21 w-21 object-contain [clip-path:circle()]"
-                          />
-                        )}
+                        <Image
+                          src={item.image}
+                          alt=""
+                          width={168}
+                          height={168}
+                          class="h-21 w-21 object-contain [clip-path:circle()]"
+                        />
                       </div>
                     </div>
                     <div class="prose service-item-content mt-12">

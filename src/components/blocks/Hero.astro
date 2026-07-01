@@ -1,13 +1,15 @@
 ---
 import { Image } from "astro:assets";
-import { Content, frontmatter } from "../../content/sections/hero.md";
-import { resolveImage } from "../../lib/assets";
+import { Content } from "../../content/sections/hero.md";
 import figureSvg from "../../assets/images/hero/figure-svg.svg?url";
 import Button from "../ui/Button.astro";
 import TopTitle from "../ui/TopTitle.astro";
+import { getEntry } from "astro:content";
 
-const { enable, topTitle, buttonName, buttonURL, image } = frontmatter;
-const heroImage = resolveImage(image);
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const entry = await getEntry("heroBlock", "hero")!;
+const { enable, topTitle, buttonName, image: heroImage, buttonURL } = entry.data;
+
 const buttonHref = buttonURL ? `/${buttonURL}` : undefined;
 ---
 

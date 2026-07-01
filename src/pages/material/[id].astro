@@ -5,7 +5,6 @@ import { Image } from "astro:assets";
 import { Icon } from "astro-icon/components";
 import Base from "../../layouts/Base.astro";
 import FloatingShapes from "../../components/ui/FloatingShapes.astro";
-import { resolveImage } from "../../lib/assets";
 
 export const getStaticPaths = (async () => {
   const materials = (await getCollection("material")).toSorted((a, b) =>
@@ -28,11 +27,11 @@ const { Content } = await render(material);
 const { title, label, shortDescription } = material.data;
 const heading = label ?? title;
 
-const thumb = resolveImage(material.data.thumbnail);
+const thumb = material.data.thumbnail;
 const colors = (material.data.colors ?? []).map((color) => ({
   label: color.label,
   hex: color.hex,
-  image: resolveImage(color.image),
+  image: color.image,
 }));
 
 const shareUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;

@@ -3,14 +3,11 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import type { Root } from "mdast";
 import type { VFile } from "vfile";
+import { tinaCloudMediaPath } from "./tinaImageUrl";
 
 // Tina's media root (see tina/config.ts `media.tina.mediaRoot`). Cloud asset
-// URLs encode the path *relative to this folder* after the `/__file/` marker.
+// URLs encode the path *relative to this folder*.
 const MEDIA_ROOT = "src/assets";
-
-// Cloud builds rewrite body-image URLs to an absolute Tina Cloud CDN URL of the
-// form `https://assets.tina.io/<id>/__staging/<branch>/__file/<media-root-path>`.
-const TINA_CLOUD_FILE = /^https?:\/\/assets\.tina\.io\/.*\/__file\/(.+)$/;
 
 export function remarkAssetImages() {
   return (tree: Root, file: VFile) => {
@@ -36,9 +33,8 @@ export function remarkAssetImages() {
       // Cloud build: reduce the Tina Cloud URL back to its media-root-relative
       // path and resolve it against `src/assets`, otherwise the page would
       // hot-link to Tina Cloud (see scripts/test/no-tina-cloud-urls.ts).
-      const cloud = node.url.match(TINA_CLOUD_FILE);
-      if (cloud) {
-        let mediaRelative = cloud[1];
+      let mediaRelative = tinaCloudMediaPath(node.url);
+      if (mediaRelative) {
         try {
           mediaRelative = decodeURIComponent(mediaRelative);
         } catch {

@@ -1,15 +1,23 @@
 ---
 import { Image } from "astro:assets";
 import { Markdown } from "astro-md-2";
-import about from "../../content/sections/about.json";
-import { resolveImage } from "../../lib/assets";
 import figureSvg from "../../assets/images/hero/figure-svg.svg?url";
 import Button from "../ui/Button.astro";
+import { getEntry } from "astro:content";
 
-const { enable, title, content, button1Name, button1Target, button2Name, button2Target, image } =
-  about;
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const entry = await getEntry("aboutBlock", "about")!;
+const {
+  enable,
+  title,
+  content,
+  button1Name,
+  button1Target,
+  button2Name,
+  button2Target,
+  image: aboutImage,
+} = entry.data;
 
-const aboutImage = resolveImage(image);
 const button1Href = button1Target ? `/${button1Target}` : undefined;
 const button2Href = button2Target ? `/${button2Target}` : undefined;
 ---

@@ -21,37 +21,90 @@ import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import z from "astro/zod";
 
+const heroBlock = defineCollection({
+  loader: glob({ pattern: "hero.md", base: "src/content/sections" }),
+  schema: ({ image }) =>
+    z.object({
+      topTitle: z.string(),
+      buttonName: z.string().optional(),
+      buttonURL: z.string().optional(),
+      image: image().optional(),
+      enable: z.boolean().optional(),
+    }),
+});
+
+const servicesBlock = defineCollection({
+  loader: glob({ pattern: "service.json", base: "src/content/sections" }),
+  schema: ({ image }) =>
+    z.object({
+      enable: z.boolean().optional(),
+      title: z.string(),
+      topTitle: z.string().optional(),
+      service: z.array(
+        z.object({
+          content: z.string(),
+          image: image(),
+        })
+      ),
+    }),
+});
+
+const aboutBlock = defineCollection({
+  loader: glob({ pattern: "about.json", base: "src/content/sections" }),
+  schema: ({ image }) =>
+    z.object({
+      enable: z.boolean().optional(),
+      title: z.string(),
+      content: z.string(),
+      image: image().optional(),
+      button1Name: z.string().optional(),
+      button1Target: z.string().optional(),
+      button2Name: z.string().optional(),
+      button2Target: z.string().optional(),
+    }),
+});
+
 const config = defineCollection({
   loader: glob({ pattern: "**/*.json", base: "src/content/config" }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      logo: image().optional(),
+      footerLogo: image().optional(),
+      favicon: image().optional(),
+      description: z.string().optional(),
+      keywords: z.string().optional(),
+    }),
 });
 
 const product = defineCollection({
   loader: glob({ pattern: "*.md", base: "src/content/product" }),
-  schema: z.object({
-    title: z.string(),
-    product_id: z.string().optional(),
-    categories: z.string().optional(),
-    date: z.coerce.date().optional(),
-    thumbnail: z.string().optional(),
-    shortDescription: z.string().optional(),
-    hidden_in_product_list: z.boolean().optional(),
-    table: z
-      .array(
-        z.object({
-          title: z.string().nullable().optional(),
-          description: z.string().nullable().optional(),
-        })
-      )
-      .optional(),
-    images: z
-      .array(
-        z.object({
-          image: z.string().optional(),
-          description: z.string().optional(),
-        })
-      )
-      .optional(),
-  }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      product_id: z.string().optional(),
+      categories: z.string().optional(),
+      date: z.coerce.date().optional(),
+      thumbnail: image().optional(),
+      shortDescription: z.string().optional(),
+      hidden_in_product_list: z.boolean().optional(),
+      table: z
+        .array(
+          z.object({
+            title: z.string().nullable().optional(),
+            description: z.string().nullable().optional(),
+          })
+        )
+        .optional(),
+      images: z
+        .array(
+          z.object({
+            image: image().optional(),
+            description: z.string().optional(),
+          })
+        )
+        .optional(),
+    }),
 });
 
 const blog = defineCollection({
@@ -59,36 +112,38 @@ const blog = defineCollection({
     pattern: "!(_index)*.md",
     base: "src/content/blog",
   }),
-  schema: z.object({
-    title: z.string(),
-    date: z.coerce.date().optional(),
-    featureImage: z.string().optional(),
-    postImage: z.string().optional(),
-    categories: z.string().optional(),
-    tags: z.union([z.array(z.string()), z.string()]).optional(),
-  }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      date: z.coerce.date().optional(),
+      featureImage: image().optional(),
+      postImage: image().optional(),
+      categories: z.string().optional(),
+      tags: z.union([z.array(z.string()), z.string()]).optional(),
+    }),
 });
 
 const material = defineCollection({
   loader: glob({ pattern: "*.md", base: "src/content/material" }),
-  schema: z.object({
-    title: z.string(),
-    label: z.string().optional(),
-    material_id: z.string().optional(),
-    thumbnail: z.string().optional(),
-    categories: z.string().optional(),
-    shortDescription: z.string().optional(),
-    colors: z
-      .array(
-        z.object({
-          color_id: z.string().optional(),
-          label: z.string().optional(),
-          hex: z.string().optional(),
-          image: z.string().optional(),
-        })
-      )
-      .optional(),
-  }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      label: z.string().optional(),
+      material_id: z.string().optional(),
+      thumbnail: image().optional(),
+      categories: z.string().optional(),
+      shortDescription: z.string().optional(),
+      colors: z
+        .array(
+          z.object({
+            color_id: z.string().optional(),
+            label: z.string().optional(),
+            hex: z.string().optional(),
+            image: image().optional(),
+          })
+        )
+        .optional(),
+    }),
 });
 
 const contact = defineCollection({
@@ -99,4 +154,13 @@ const contact = defineCollection({
   }),
 });
 
-export const collections = { config, product, blog, material, contact };
+export const collections = {
+  config,
+  product,
+  blog,
+  material,
+  contact,
+  heroBlock,
+  servicesBlock,
+  aboutBlock,
+};

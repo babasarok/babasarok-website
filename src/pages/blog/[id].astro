@@ -5,7 +5,6 @@ import { Image } from "astro:assets";
 import { Icon } from "astro-icon/components";
 import Base from "../../layouts/Base.astro";
 import FloatingShapes from "../../components/ui/FloatingShapes.astro";
-import { resolveImage } from "../../lib/assets";
 
 export const getStaticPaths = (async () => {
   const posts = (await getCollection("blog")).toSorted(
@@ -22,7 +21,7 @@ const { post } = Astro.props;
 const { Content } = await render(post);
 
 const { title, date, categories } = post.data;
-const feature = resolveImage(post.data.postImage ?? post.data.featureImage);
+const feature = post.data.postImage ?? post.data.featureImage;
 
 const tags = Array.isArray(post.data.tags)
   ? post.data.tags
