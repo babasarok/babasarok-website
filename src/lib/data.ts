@@ -18,10 +18,18 @@ import { resolveImage } from "./assets";
 import {
   AssertTrue,
   type IfEquals,
+  type NullableToUndefined,
+  type RecursiveDiff,
   type RecursivelyNullableToUndefined,
   type RecursivelyRemoveKeys,
 } from "./typeUtils";
 import type { InferEntrySchema } from "astro:content";
+import type { ImageFunction } from "astro/content/config";
+import type { z } from "astro/zod";
+
+type Image = z.infer<ReturnType<ImageFunction>>;
+
+// #region DeliveryMethod
 
 type CmsDeliveryMethod = RecursivelyNullableToUndefined<
   RecursivelyRemoveKeys<
@@ -29,40 +37,114 @@ type CmsDeliveryMethod = RecursivelyNullableToUndefined<
     `_${string}`
   >
 >;
-
 interface CmsEnhancedDeliveryMethod extends Omit<CmsDeliveryMethod, "id"> {}
 
-type CmsMaterial = RecursivelyRemoveKeys<
-  Awaited<ReturnType<typeof client.queries.product_materials>>["data"]["product_materials"],
-  `_${string}`
+type AstroDeliveryMethod = InferEntrySchema<"deliveryMethod">;
+AssertTrue<IfEquals<CmsEnhancedDeliveryMethod, AstroDeliveryMethod>>();
+
+// #endregion
+
+// #region Material
+
+type CmsMaterialColor = NonNullable<NonNullable<CmsMaterial["colors"]>[number]>;
+type CmsMaterial = RecursivelyNullableToUndefined<
+  RecursivelyRemoveKeys<
+    Awaited<ReturnType<typeof client.queries.product_materials>>["data"]["product_materials"],
+    `_${string}`
+  >
 >;
 
-interface CmsEnhancedMaterial extends Omit<CmsMaterial, "id" | "thumbnail"> {
-  thumbnail?: ImageMetadata;
-  colors?: Array<
-    Omit<CmsMaterial["colors"][number], "image"> & {
-      image?: ImageMetadata;
-    }
-  >;
+interface CmsEnhancedMaterialColor extends Omit<CmsMaterialColor, "image"> {
+  image?: Image | undefined;
 }
+interface CmsEnhancedMaterial extends Omit<CmsMaterial, "id" | "thumbnail" | "colors" | "content"> {
+  thumbnail?: Image | undefined;
+  colors?: Array<CmsEnhancedMaterialColor> | undefined;
+}
+
+type AstroMaterial = InferEntrySchema<"material">;
+type MaterialDiff = RecursiveDiff<CmsEnhancedMaterial, AstroMaterial>;
+AssertTrue<IfEquals<MaterialDiff, never>>();
+
+// #endregion
+// #region Product
 type CmsProduct = RecursivelyNullableToUndefined<
   RecursivelyRemoveKeys<
     Awaited<ReturnType<typeof client.queries.product>>["data"]["product"],
     `_${string}`
   >
 >;
+
+type CmsProductImage = NonNullable<NonNullable<CmsProduct["images"]>[number]>;
+type CmsProductMaterials = NonNullable<CmsProduct["materials"]>;
+type CmsProductMaterial = NonNullable<NonNullable<CmsProduct["materials"]>["materials"]>[number];
+type CmsProductMaterialsBannedCombination = NonNullable<
+  NonNullable<NonNullable<CmsProduct["materials"]>["banned_combinations"]>[number]
+>;
+
+interface CmsEnhancedProductImage extends Omit<CmsProductImage, "image"> {
+  image?: Image | undefined;
+}
+
+interface CmsEnhancedProductMaterial extends Omit<
+  NonNullable<CmsProductMaterial>,
+  "material_path"
+> {
+  material_path: CmsEnhancedMaterial;
+}
+
+interface CmsEnhancedProductMaterialsBannedCombination extends Omit<
+  NonNullable<CmsProductMaterialsBannedCombination>,
+  "materials"
+> {
+  materials?: Array<{ material_path?: CmsEnhancedMaterial | undefined } | undefined> | undefined;
+}
+
+interface CmsEnhancedProductMaterials extends Omit<
+  CmsProductMaterials,
+  "materials" | "banned_combinations"
+> {
+  materials?: Array<CmsEnhancedProductMaterial | undefined> | undefined;
+  banned_combinations?: Array<CmsEnhancedProductMaterialsBannedCombination | undefined> | undefined;
+}
+interface CmsEnhancedProduct extends Omit<
+  CmsProduct,
+  | "id"
+  | "date"
+  | "thumbnail"
+  | "content"
+  | "discount_valid_until"
+  | "images"
+  | "image"
+  | "materials"
+  | "fields"
+  | "icon"
+> {
+  thumbnail?: Image | undefined;
+  discount_valid_until?: Date | undefined;
+  image?: Image | undefined;
+  icon?: Image | undefined;
+  date?: Date | undefined;
+  images?: Array<CmsEnhancedProductImage | undefined> | undefined;
+  materials?: CmsEnhancedProductMaterials | undefined;
+}
+
+type AstroProduct = InferEntrySchema<"product">;
+type ProductDiff = RecursiveDiff<CmsEnhancedProduct, AstroProduct>;
+AssertTrue<IfEquals<ProductDiff, never>>();
+
+// #endregion
+
+// #region Config
+
 type CmsConfig = RecursivelyRemoveKeys<
   Awaited<ReturnType<typeof client.queries.config>>["data"]["config"],
   `_${string}`
 >;
 
-type AstroDeliveryMethod = InferEntrySchema<"deliveryMethod">;
-type AstroMaterial = InferEntrySchema<"material">;
-type AstroProduct = InferEntrySchema<"product">;
 type AstroConfig = InferEntrySchema<"config">;
 
-AssertTrue<IfEquals<CmsEnhancedDeliveryMethod, AstroDeliveryMethod>>();
-AssertTrue<IfEquals<CmsEnhancedMaterial, AstroMaterial>>();
+// #endregion
 
 /**
  * Resolve every image reference in a loaded entity to its hashed local `src`.

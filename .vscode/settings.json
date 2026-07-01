@@ -2,8 +2,7 @@
   "files.associations": {
     "*.html": "handlebars"
   },
-  "typescript.experimental.useTsgo": true,
-  "typescript.tsserver.maxTsServerMemory": 4096,
+  "js/ts.experimental.useTsgo": true,
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[svelte]": {

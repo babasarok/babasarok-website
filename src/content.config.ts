@@ -20,6 +20,7 @@
 import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import z from "astro/zod";
+import type { SchemaContext } from "astro/content/config";
 
 const heroBlock = defineCollection({
   loader: glob({ pattern: "hero.md", base: "src/content/sections" }),
@@ -77,32 +78,94 @@ const config = defineCollection({
     }),
 });
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+const materialValidator = ({ image }: SchemaContext) =>
+  z.object({
+    material_id: z.string(),
+    label: z.string(),
+    categories: z.string().optional(),
+    shortDescription: z.string().optional(),
+    thumbnail: image().optional(),
+    colors: z
+      .array(
+        z.object({
+          color_id: z.string(),
+          label: z.string(),
+          hex: z.string().optional(),
+          image: image().optional(),
+        })
+      )
+      .optional(),
+  });
+
 const product = defineCollection({
   loader: glob({ pattern: "*.md", base: "src/content/product" }),
   schema: ({ image }) =>
     z.object({
-      title: z.string(),
       product_id: z.string(),
+      title: z.string(),
+      hidden_in_product_list: z.boolean().optional(),
+      can_be_ordered: z.boolean().optional(),
       categories: z.string().optional(),
       date: z.coerce.date().optional(),
       thumbnail: image().optional(),
       shortDescription: z.string().optional(),
-      hidden_in_product_list: z.boolean().optional(),
-      table: z
-        .array(
-          z.object({
-            title: z.string().nullable().optional(),
-            description: z.string().nullable().optional(),
-          })
-        )
-        .optional(),
+      icon: image().optional(),
+      priced_by_length: z.boolean().optional(),
+      price: z.number().optional(),
+      discount: z.number().optional(),
+      discount_valid_until: z.coerce.date().optional(),
       images: z
         .array(
-          z.object({
-            image: image().optional(),
-            description: z.string().optional(),
-          })
+          z
+            .object({
+              image: image().optional(),
+              description: z.string().optional(),
+            })
+            .optional()
         )
+        .optional(),
+      image: image().optional(),
+      table: z
+        .array(
+          z
+            .object({
+              title: z.string().optional(),
+              description: z.string().optional(),
+            })
+            .optional()
+        )
+        .optional(),
+      materials: z
+        .object({
+          material_required_count: z.number().optional(),
+          materials: z
+            .array(
+              z
+                .object({
+                  color_count: z.string().optional(),
+                  price: z.number().optional(),
+                  material_path: materialValidator({ image }),
+                })
+                .optional()
+            )
+            .optional(),
+          banned_combinations: z
+            .array(
+              z
+                .object({
+                  materials: z
+                    .array(
+                      z
+                        .object({ material_path: materialValidator({ image }).optional() })
+                        .optional()
+                    )
+                    .optional(),
+                })
+                .optional()
+            )
+            .optional(),
+        })
         .optional(),
     }),
 });
@@ -125,25 +188,7 @@ const blog = defineCollection({
 
 const material = defineCollection({
   loader: glob({ pattern: "*.md", base: "src/content/material" }),
-  schema: ({ image }) =>
-    z.object({
-      title: z.string(),
-      label: z.string().optional(),
-      material_id: z.string(),
-      thumbnail: image().optional(),
-      categories: z.string().optional(),
-      shortDescription: z.string().optional(),
-      colors: z
-        .array(
-          z.object({
-            color_id: z.string().optional(),
-            label: z.string().optional(),
-            hex: z.string().optional(),
-            image: image().optional(),
-          })
-        )
-        .optional(),
-    }),
+  schema: materialValidator,
 });
 
 const deliveryMethod = defineCollection({
