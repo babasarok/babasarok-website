@@ -130,3 +130,26 @@ export type RecursiveDiff<T, U> =
     : DiffEntries<T, U> extends infer E extends DiffEntry
       ? { [P in E["path"]]: Extract<E, { path: P }>["diff"] }
       : never;
+
+/**
+ * Recursively make every property of `T` required (removing `?` at every
+ * depth). Types assignable to `Stop` are treated as leaves: they are left
+ * untouched and not descended into, so their own optional members stay
+ * optional. The `Stop` check distributes over unions, so a `Stop | undefined`
+ * member is preserved as-is while the rest of the value is still made required.
+ */
+export type RecursiveRequired<T, Stop = never> = T extends Stop
+  ? T
+  : T extends Array<infer U>
+    ? Array<RecursiveRequired<U, Stop>>
+    : T extends object
+      ? { [K in keyof T]-?: RecursiveRequired<T[K], Stop> }
+      : T;
+
+export type RecursivelyReplaceType<T, From, To> = T extends From
+  ? To
+  : T extends Array<infer U>
+    ? Array<RecursivelyReplaceType<U, From, To>>
+    : T extends object
+      ? { [K in keyof T]: RecursivelyReplaceType<T[K], From, To> }
+      : T;

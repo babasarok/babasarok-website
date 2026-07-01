@@ -22,10 +22,13 @@ import {
   type RecursiveDiff,
   type RecursivelyNullableToUndefined,
   type RecursivelyRemoveKeys,
+  type RecursivelyReplaceType,
+  type RecursiveRequired,
 } from "./typeUtils";
 import type { InferEntrySchema } from "astro:content";
 import type { ImageFunction } from "astro/content/config";
 import type { z } from "astro/zod";
+import type { GetImageResult } from "astro";
 
 type Image = z.infer<ReturnType<ImageFunction>>;
 
@@ -55,14 +58,14 @@ type CmsMaterial = RecursivelyNullableToUndefined<
 >;
 
 interface CmsEnhancedMaterialColor extends Omit<CmsMaterialColor, "image"> {
-  image?: Image | undefined;
+  image?: GetImageResult | undefined;
 }
 interface CmsEnhancedMaterial extends Omit<CmsMaterial, "id" | "thumbnail" | "colors" | "content"> {
-  thumbnail?: Image | undefined;
+  thumbnail?: GetImageResult | undefined;
   colors?: Array<CmsEnhancedMaterialColor> | undefined;
 }
 
-type AstroMaterial = InferEntrySchema<"material">;
+type AstroMaterial = RecursivelyReplaceType<InferEntrySchema<"material">, Image, GetImageResult>;
 type MaterialDiff = RecursiveDiff<CmsEnhancedMaterial, AstroMaterial>;
 AssertTrue<IfEquals<MaterialDiff, never>>();
 
@@ -83,7 +86,7 @@ type CmsProductMaterialsBannedCombination = NonNullable<
 >;
 
 interface CmsEnhancedProductImage extends Omit<CmsProductImage, "image"> {
-  image?: Image | undefined;
+  image?: GetImageResult | undefined;
 }
 
 interface CmsEnhancedProductMaterial extends Omit<
@@ -120,16 +123,16 @@ interface CmsEnhancedProduct extends Omit<
   | "fields"
   | "icon"
 > {
-  thumbnail?: Image | undefined;
+  thumbnail?: GetImageResult | undefined;
   discount_valid_until?: Date | undefined;
-  image?: Image | undefined;
-  icon?: Image | undefined;
+  image?: GetImageResult | undefined;
+  icon?: GetImageResult | undefined;
   date?: Date | undefined;
   images?: Array<CmsEnhancedProductImage | undefined> | undefined;
   materials?: CmsEnhancedProductMaterials | undefined;
 }
 
-type AstroProduct = InferEntrySchema<"product">;
+type AstroProduct = RecursivelyReplaceType<InferEntrySchema<"product">, Image, GetImageResult>;
 type ProductDiff = RecursiveDiff<CmsEnhancedProduct, AstroProduct>;
 AssertTrue<IfEquals<ProductDiff, never>>();
 
@@ -210,13 +213,13 @@ function resolveTinaImageRefs<T>(value: T): T {
  * path when it can't resolve to a local asset (e.g. SVGs the pipeline passes
  * through, or unknown references).
  */
-async function optimizeImage(path: string, width: number): Promise<string> {
+async function optimizeImage(path: string, width: number): Promise<GetImageResult> {
   const meta = resolveImage(path);
   if (!meta) {
-    return path;
+    return { src: path };
   }
   const optimized = await getImage({ src: meta, width, format: "webp" });
-  return optimized.src;
+  return optimized;
 }
 
 // Render widths (2x for retina) for images consumed outside `<Image>`.
@@ -225,61 +228,95 @@ const LOGO_WIDTH = 400; // ~100–200px header logo
 const FOOTER_LOGO_WIDTH = 510; // ~255px footer logo
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const getConfig = async () => {
-  const result = await requestWithMetadata(client.queries.config({ relativePath: "config.json" }));
-  const { logo, footerLogo } = result.data.config;
+// export const getConfig = async () => {
+//   const result = await requestWithMetadata(client.queries.config({ relativePath: "config.json" }));
+//   const { logo, footerLogo } = result.data.config;
 
-  const data = resolveTinaImageRefs(result.data);
-  // The header/footer render the logos with a plain `<img>` (and the config is
-  // also serialized into the order island), so neither can go through
-  // `<Image>`. Optimize them here at build time instead.
-  if (logo) {
-    data.config.logo = await optimizeImage(logo, LOGO_WIDTH);
-  }
-  if (footerLogo) {
-    data.config.footerLogo = await optimizeImage(footerLogo, FOOTER_LOGO_WIDTH);
-  }
+//   const data = resolveTinaImageRefs(result.data);
+//   // The header/footer render the logos with a plain `<img>` (and the config is
+//   // also serialized into the order island), so neither can go through
+//   // `<Image>`. Optimize them here at build time instead.
+//   if (logo) {
+//     data.config.logo = await optimizeImage(logo, LOGO_WIDTH);
+//   }
+//   if (footerLogo) {
+//     data.config.footerLogo = await optimizeImage(footerLogo, FOOTER_LOGO_WIDTH);
+//   }
 
-  return { ...result, data };
-};
+//   return { ...result, data };
+// };
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const getProducts = async () => {
-  const result = await client.queries.productConnection();
+// export const getProducts = async (): Promise<Required<CmsEnhancedProduct>[]> => {
+//   const response = await client.queries.productConnection();
 
-  const products = nodesFrom(result.data.productConnection).toSorted((a, b) =>
-    a.title.localeCompare(b.title)
+//   const products = nodesFrom(response.data.productConnection).toSorted((a, b) =>
+//     a.title.localeCompare(b.title)
+//   );
+
+//   const result: CmsEnhancedProduct[] = [];
+
+//   for (const product of products) {
+//     result.push;
+//   }
+
+//   // Optimize the color swatches before they're serialized into the order island.
+//   await Promise.all(
+//     products.flatMap(
+//       (product) =>
+//         product.materials?.materials?.flatMap((material) =>
+//           (material?.material_path.colors ?? []).map(async (color) => {
+//             if (color?.image) {
+//               color.image = await optimizeImage(color.image, SWATCH_WIDTH);
+//             }
+//           })
+//         ) ?? []
+//     )
+//   );
+
+//   return products.map((product) => resolveTinaImageRefs(product));
+// };
+
+export const getMaterials = async (): Promise<CmsEnhancedMaterial[]> => {
+  const response = await client.queries.product_materialsConnection();
+
+  const materials = nodesFrom(response.data.product_materialsConnection).toSorted((a, b) =>
+    a.label.localeCompare(b.label)
   );
 
-  // Optimize the color swatches before they're serialized into the order island.
-  await Promise.all(
-    products.flatMap(
-      (product) =>
-        product.materials?.materials?.flatMap((material) =>
-          (material?.material_path.colors ?? []).map(async (color) => {
-            if (color?.image) {
-              color.image = await optimizeImage(color.image, SWATCH_WIDTH);
-            }
-          })
-        ) ?? []
-    )
-  );
+  const result: RecursiveRequired<CmsEnhancedMaterial, GetImageResult>[] = [];
 
-  return products.map((product) => resolveTinaImageRefs(product));
+  for (const material of materials) {
+    result.push({
+      material_id: material.material_id,
+      label: material.label,
+      categories: material.categories ?? undefined,
+      shortDescription: material.shortDescription ?? undefined,
+      thumbnail: material.thumbnail
+        ? await optimizeImage(material.thumbnail, LOGO_WIDTH)
+        : undefined,
+      colors: material.colors
+        ? await Promise.all(
+            material.colors
+              .filter((color) => color != null)
+              .map(async (color) => ({
+                color_id: color.color_id,
+                label: color.label,
+                hex: color.hex ?? undefined,
+                image: color.image
+                  ? await optimizeImage(color.image, SWATCH_WIDTH)
+                  : undefined,
+              }))
+          )
+        : undefined,
+    });
+  }
+
+  return result;
 };
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const getMaterials = async () => {
-  const result = await client.queries.product_materialsConnection();
+// // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+// export const getDeliveryMethods = async () => {
+//   const result = await client.queries.delivery_methodsConnection();
 
-  return nodesFrom(result.data.product_materialsConnection)
-    .toSorted((a, b) => a.label.localeCompare(b.label))
-    .map((material) => resolveTinaImageRefs(material));
-};
-
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const getDeliveryMethods = async () => {
-  const result = await client.queries.delivery_methodsConnection();
-
-  return nodesFrom(result.data.delivery_methodsConnection);
-};
+//   return nodesFrom(result.data.delivery_methodsConnection);
+// };
