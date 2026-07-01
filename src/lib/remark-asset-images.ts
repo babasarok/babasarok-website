@@ -8,9 +8,21 @@ import type { VFile } from "vfile";
 // URLs encode the path *relative to this folder* after the `/__file/` marker.
 const MEDIA_ROOT = "src/assets";
 
-// Cloud builds rewrite body-image URLs to an absolute Tina Cloud CDN URL of the
-// form `https://assets.tina.io/<id>/__staging/<branch>/__file/<media-root-path>`.
+// Cloud builds rewrite body-image URLs to an absolute Tina Cloud CDN URL. Two
+// forms occur: staging `.../<id>/__staging/<branch>/__file/<media-root-path>`
+// and published `.../<id>/<media-root-path>`.
 const TINA_CLOUD_FILE = /^https?:\/\/assets\.tina\.io\/.*\/__file\/(.+)$/;
+const TINA_CLOUD_ASSET = /^https?:\/\/assets\.tina\.io\/[^/]+\/(.+)$/i;
+
+// Reduce either Tina Cloud asset URL form to its media-root-relative path.
+function tinaMediaPath(url: string): string | undefined {
+  const file = url.match(TINA_CLOUD_FILE);
+  if (file) {
+    return file[1];
+  }
+  const asset = url.match(TINA_CLOUD_ASSET);
+  return asset ? asset[1] : undefined;
+}
 
 export function remarkAssetImages() {
   return (tree: Root, file: VFile) => {
@@ -36,9 +48,8 @@ export function remarkAssetImages() {
       // Cloud build: reduce the Tina Cloud URL back to its media-root-relative
       // path and resolve it against `src/assets`, otherwise the page would
       // hot-link to Tina Cloud (see scripts/test/no-tina-cloud-urls.ts).
-      const cloud = node.url.match(TINA_CLOUD_FILE);
-      if (cloud) {
-        let mediaRelative = cloud[1];
+      let mediaRelative = tinaMediaPath(node.url);
+      if (mediaRelative) {
         try {
           mediaRelative = decodeURIComponent(mediaRelative);
         } catch {

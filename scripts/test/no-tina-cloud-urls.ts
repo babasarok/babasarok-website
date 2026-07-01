@@ -49,8 +49,9 @@ const TINA_CLOUD_URL = /https?:\/\/assets\.tina\.io\/[^\s"'`)\\<>&]*/gi;
  * filenames read normally (e.g. `Noe%CC%81mi-25.jpg` -> `Noémi-25.jpg`).
  */
 function toImageLabel(url: string): string {
-  const match = url.match(/\/__file\/(.+)$/);
-  const raw = match ? match[1] : url;
+  const file = url.match(/\/__file\/(.+)$/);
+  const asset = url.match(/^https?:\/\/assets\.tina\.io\/[^/]+\/(.+)$/i);
+  const raw = file ? file[1] : asset ? asset[1] : url;
   try {
     return decodeURIComponent(raw);
   } catch {
