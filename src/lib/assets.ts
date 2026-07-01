@@ -13,6 +13,7 @@
  * We reduce either back to the media-root-relative path so it still resolves.
  */
 import type { ImageMetadata } from "astro";
+import { tinaCloudMediaPath } from "./tinaImageUrl";
 
 const images = import.meta.glob<ImageMetadata>(
   "../assets/**/*.{jpg,jpeg,png,gif,svg,webp,avif,JPG,JPEG,PNG}",
@@ -33,17 +34,10 @@ export function resolveImage(path: string | null | undefined): ImageMetadata | u
   }
 
   // Tina Cloud rewrites image fields to an absolute asset URL; reduce it back
-  // to the path relative to the media root (`src/assets`). Staging builds put
-  // the path after a `__file/` marker; published builds place it directly after
-  // the `<id>` segment.
-  const tinaFile = clean.match(/\/__file\/(.+)$/);
-  if (tinaFile) {
-    clean = tinaFile[1];
-  } else {
-    const tinaAsset = clean.match(/^https?:\/\/assets\.tina\.io\/[^/]+\/(.+)$/i);
-    if (tinaAsset) {
-      clean = tinaAsset[1];
-    }
+  // to the path relative to the media root (`src/assets`).
+  const tinaPath = tinaCloudMediaPath(clean);
+  if (tinaPath) {
+    clean = tinaPath;
   }
 
   // Strip an optional leading slash and the `src/assets/` media-root prefix.
