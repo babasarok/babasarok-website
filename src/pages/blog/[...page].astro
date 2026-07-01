@@ -5,7 +5,6 @@ import Base from "../../layouts/Base.astro";
 import PageHeader from "../../components/ui/PageHeader.astro";
 import BlogCard from "../../components/ui/BlogCard.astro";
 import Pagination from "../../components/ui/Pagination.astro";
-import { resolveImage } from "../../lib/assets";
 
 export const getStaticPaths = (async () => {
   const PAGE_SIZE = 6;
@@ -41,7 +40,7 @@ const { items, currentPage, lastPage } = Astro.props;
             <BlogCard
               href={`/blog/${post.id}/`}
               title={post.data.title}
-              image={resolveImage(post.data.featureImage)}
+              image={post.data.featureImage}
               date={post.data.date}
               spacing="page"
             />

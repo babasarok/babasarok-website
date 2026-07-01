@@ -3,7 +3,6 @@ import { getCollection } from "astro:content";
 import { Markdown } from "astro-md-2";
 import blogSection from "../../content/sections/blog.json";
 import blogShape from "../../assets/images/blog/blog-shape.svg?url";
-import { resolveImage } from "../../lib/assets";
 import Button from "../ui/Button.astro";
 import TopTitle from "../ui/TopTitle.astro";
 import BlogCard from "../ui/BlogCard.astro";
@@ -49,7 +48,7 @@ const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
             <BlogCard
               href={`/blog/${post.id}/`}
               title={post.data.title}
-              image={resolveImage(post.data.featureImage)}
+              image={post.data.featureImage}
               date={post.data.date}
             />
           ))}

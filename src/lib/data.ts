@@ -68,31 +68,49 @@ function resolveTinaImageRefs<T>(value: T): T {
 }
 
 /**
- * Color swatches render at ~24px (`size-6`) in the order island, so handing the
- * island the full-resolution original is wasteful. Pre-resize each swatch to a
- * small WebP (2x for retina) via Astro's build-time image pipeline and return
- * the optimized `src`. Falls back to the original path when it can't resolve to
- * a local asset (e.g. an already-optimized or unknown reference).
+ * Run a resolvable image reference through Astro's build-time image pipeline
+ * (`getImage`) and return the optimized `src`.
+ *
+ * Plain `<img>` tags and client islands can't use `<Image>` / `getImage` at
+ * runtime, so images that reach them (order-island color swatches, the
+ * header/footer logos that are also serialized alongside the config) would
+ * otherwise ship as the full-resolution original. `getImage` IS available here
+ * — this module runs at build time inside the Astro server graph — so we
+ * pre-optimize and hand the consumer a ready `src`. Falls back to the original
+ * path when it can't resolve to a local asset (e.g. SVGs the pipeline passes
+ * through, or unknown references).
  */
-const SWATCH_WIDTH = 200;
-
-async function optimizeSwatch(path: string): Promise<string> {
+async function optimizeImage(path: string, width: number): Promise<string> {
   const meta = resolveImage(path);
   if (!meta) {
     return path;
   }
-  const optimized = await getImage({ src: meta, width: SWATCH_WIDTH, format: "webp" });
+  const optimized = await getImage({ src: meta, width, format: "webp" });
   return optimized.src;
 }
+
+// Render widths (2x for retina) for images consumed outside `<Image>`.
+const SWATCH_WIDTH = 200; // ~24px swatch (`size-6`) in the order island
+const LOGO_WIDTH = 400; // ~100–200px header logo
+const FOOTER_LOGO_WIDTH = 510; // ~255px footer logo
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const getConfig = async () => {
   const result = await requestWithMetadata(client.queries.config({ relativePath: "config.json" }));
+  const { logo, footerLogo } = result.data.config;
 
-  return {
-    ...result,
-    data: resolveTinaImageRefs(result.data),
-  };
+  const data = resolveTinaImageRefs(result.data);
+  // The header/footer render the logos with a plain `<img>` (and the config is
+  // also serialized into the order island), so neither can go through
+  // `<Image>`. Optimize them here at build time instead.
+  if (logo) {
+    data.config.logo = await optimizeImage(logo, LOGO_WIDTH);
+  }
+  if (footerLogo) {
+    data.config.footerLogo = await optimizeImage(footerLogo, FOOTER_LOGO_WIDTH);
+  }
+
+  return { ...result, data };
 };
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -110,7 +128,7 @@ export const getProducts = async () => {
         product.materials?.materials?.flatMap((material) =>
           (material?.material_path.colors ?? []).map(async (color) => {
             if (color?.image) {
-              color.image = await optimizeSwatch(color.image);
+              color.image = await optimizeImage(color.image, SWATCH_WIDTH);
             }
           })
         ) ?? []

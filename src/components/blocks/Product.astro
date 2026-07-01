@@ -2,7 +2,6 @@
 import { getCollection } from "astro:content";
 import { Markdown } from "astro-md-2";
 import productSection from "../../content/sections/product.json";
-import { resolveImage } from "../../lib/assets";
 import Button from "../ui/Button.astro";
 import ProductCard from "../ui/ProductCard.astro";
 
@@ -30,7 +29,7 @@ const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
             <ProductCard
               href={`/product/${product.id}/`}
               title={product.data.title}
-              image={resolveImage(product.data.thumbnail)}
+              image={product.data.thumbnail}
               category={product.data.categories}
               square
             />
