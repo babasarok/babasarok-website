@@ -86,15 +86,13 @@ const { enable, topTitle, title, service: items } = entry.data;
                         </svg>
                       </div>
                       <div class="absolute bottom-0 left-0 z-1">
-                        {item.image && (
-                          <Image
-                            src={item.image}
-                            alt=""
-                            width={168}
-                            height={168}
-                            class="h-21 w-21 object-contain [clip-path:circle()]"
-                          />
-                        )}
+                        <Image
+                          src={item.image}
+                          alt=""
+                          width={168}
+                          height={168}
+                          class="h-21 w-21 object-contain [clip-path:circle()]"
+                        />
                       </div>
                     </div>
                     <div class="prose service-item-content mt-12">
