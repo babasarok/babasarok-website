@@ -82,7 +82,7 @@ const product = defineCollection({
   schema: ({ image }) =>
     z.object({
       title: z.string(),
-      product_id: z.string().optional(),
+      product_id: z.string(),
       categories: z.string().optional(),
       date: z.coerce.date().optional(),
       thumbnail: image().optional(),
@@ -129,7 +129,7 @@ const material = defineCollection({
     z.object({
       title: z.string(),
       label: z.string().optional(),
-      material_id: z.string().optional(),
+      material_id: z.string(),
       thumbnail: image().optional(),
       categories: z.string().optional(),
       shortDescription: z.string().optional(),
@@ -144,6 +144,15 @@ const material = defineCollection({
         )
         .optional(),
     }),
+});
+
+const deliveryMethod = defineCollection({
+  loader: glob({ pattern: "*.md", base: "src/content/delivery-method" }),
+  schema: z.object({
+    delivery_name: z.string(),
+    name: z.string(),
+    price: z.number(),
+  }),
 });
 
 const contact = defineCollection({
@@ -163,4 +172,5 @@ export const collections = {
   heroBlock,
   servicesBlock,
   aboutBlock,
+  deliveryMethod,
 };

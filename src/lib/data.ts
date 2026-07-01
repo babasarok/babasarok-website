@@ -15,6 +15,54 @@ import { getImage } from "astro:assets";
 import { requestWithMetadata } from "@tinacms/astro/data";
 import client from "../../tina/__generated__/client";
 import { resolveImage } from "./assets";
+import {
+  AssertTrue,
+  type IfEquals,
+  type RecursivelyNullableToUndefined,
+  type RecursivelyRemoveKeys,
+} from "./typeUtils";
+import type { InferEntrySchema } from "astro:content";
+
+type CmsDeliveryMethod = RecursivelyNullableToUndefined<
+  RecursivelyRemoveKeys<
+    Awaited<ReturnType<typeof client.queries.delivery_methods>>["data"]["delivery_methods"],
+    `_${string}`
+  >
+>;
+
+interface CmsEnhancedDeliveryMethod extends Omit<CmsDeliveryMethod, "id"> {}
+
+type CmsMaterial = RecursivelyRemoveKeys<
+  Awaited<ReturnType<typeof client.queries.product_materials>>["data"]["product_materials"],
+  `_${string}`
+>;
+
+interface CmsEnhancedMaterial extends Omit<CmsMaterial, "id" | "thumbnail"> {
+  thumbnail?: ImageMetadata;
+  colors?: Array<
+    Omit<CmsMaterial["colors"][number], "image"> & {
+      image?: ImageMetadata;
+    }
+  >;
+}
+type CmsProduct = RecursivelyNullableToUndefined<
+  RecursivelyRemoveKeys<
+    Awaited<ReturnType<typeof client.queries.product>>["data"]["product"],
+    `_${string}`
+  >
+>;
+type CmsConfig = RecursivelyRemoveKeys<
+  Awaited<ReturnType<typeof client.queries.config>>["data"]["config"],
+  `_${string}`
+>;
+
+type AstroDeliveryMethod = InferEntrySchema<"deliveryMethod">;
+type AstroMaterial = InferEntrySchema<"material">;
+type AstroProduct = InferEntrySchema<"product">;
+type AstroConfig = InferEntrySchema<"config">;
+
+AssertTrue<IfEquals<CmsEnhancedDeliveryMethod, AstroDeliveryMethod>>();
+AssertTrue<IfEquals<CmsEnhancedMaterial, AstroMaterial>>();
 
 /**
  * Resolve every image reference in a loaded entity to its hashed local `src`.
@@ -153,8 +201,3 @@ export const getDeliveryMethods = async () => {
 
   return nodesFrom(result.data.delivery_methodsConnection);
 };
-
-export type CmsConfig = Awaited<ReturnType<typeof getConfig>>["data"]["config"];
-export type CmsProduct = Awaited<ReturnType<typeof getProducts>>[number];
-export type CmsMaterial = Awaited<ReturnType<typeof getMaterials>>[number];
-export type CmsDeliveryMethod = Awaited<ReturnType<typeof getDeliveryMethods>>[number];

@@ -23,3 +23,23 @@ export type IfEquals<T, U, Y = true, N = false> =
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-unnecessary-type-parameters
 export function AssertTrue<T extends true>(): void {}
+
+export type RecursivelyRemoveKeys<T, K extends string> =
+  T extends Array<infer U>
+    ? Array<RecursivelyRemoveKeys<U, K>>
+    : T extends object
+      ? {
+          [P in keyof T as P extends K ? never : P]: RecursivelyRemoveKeys<T[P], K>;
+        }
+      : T;
+
+export type NullableToUndefined<T> = T extends null ? Exclude<T, null> | undefined : T;
+
+export type RecursivelyNullableToUndefined<T> =
+  T extends Array<infer U>
+    ? Array<RecursivelyNullableToUndefined<U>>
+    : T extends object
+      ? {
+          [P in keyof T]: RecursivelyNullableToUndefined<NullableToUndefined<T[P]>>;
+        }
+      : NullableToUndefined<T>;
