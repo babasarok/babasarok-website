@@ -33,7 +33,7 @@ export type RecursivelyRemoveKeys<T, K extends string> =
         }
       : T;
 
-export type NullableToUndefined<T> = T extends null ? Exclude<T, null> | undefined : T;
+export type NullableToUndefined<T> = T extends null ? T | undefined : T;
 
 export type RecursivelyNullableToUndefined<T> =
   T extends Array<infer U>
@@ -122,13 +122,21 @@ type DiffEntries<T, U, Prefix extends string = ""> =
  * its single-key slice (`{ k?: V }` vs `{ k: V }`). Fully-equal types resolve
  * to `never`.
  *
+ * Types that are mutually assignable but not identical in a way `DiffEntries`
+ * cannot localise to a leaf (e.g. the `exactOptionalPropertyTypes` distinction
+ * between `k?: V` and `k?: V | undefined`, which collapses under the indexed
+ * access used while recursing) also resolve to `never` rather than an empty
+ * `{}` — so the result is always either `never` or a populated diff.
+ *
  * Hover the resulting alias (e.g. `ProductDiff`) to read the difference.
  */
 export type RecursiveDiff<T, U> =
   IfEquals<T, U> extends true
     ? never
     : DiffEntries<T, U> extends infer E extends DiffEntry
-      ? { [P in E["path"]]: Extract<E, { path: P }>["diff"] }
+      ? [E] extends [never]
+        ? never
+        : { [P in E["path"]]: Extract<E, { path: P }>["diff"] }
       : never;
 
 /**

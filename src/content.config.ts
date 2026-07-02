@@ -70,70 +70,79 @@ const config = defineCollection({
   schema: ({ image }) =>
     z.object({
       title: z.string(),
-      logo: image().optional(),
-      footerLogo: image().optional(),
-      description: z.string().optional(),
-      blogPageURL: z.string().optional(),
-      contactLink: z.string().optional(),
-      copyright: z.string().optional(),
-      fabformURL: z.string().optional(),
+      logo: image().optional().nullable(),
+      footerLogo: image().optional().nullable(),
+      description: z.string().optional().nullable(),
+      blogPageURL: z.string().optional().nullable(),
+      contactLink: z.string().optional().nullable(),
+      copyright: z.string().optional().nullable(),
+      fabformURL: z.string().optional().nullable(),
       address: z
         .object({
-          phone: z.string().optional(),
-          email: z.string().optional(),
-          address: z.string().optional(),
-          openingHours: z.string().optional(),
+          phone: z.string().optional().nullable(),
+          email: z.string().optional().nullable(),
+          address: z.string().optional().nullable(),
+          openingHours: z.string().optional().nullable(),
         })
-        .optional(),
+        .optional()
+        .nullable(),
       footerContact: z
         .object({
-          title: z.string().optional(),
-          button: z.string().optional(),
-          topTitle: z.string().optional(),
+          title: z.string().optional().nullable(),
+          button: z.string().optional().nullable(),
+          topTitle: z.string().optional().nullable(),
         })
-        .optional(),
+        .optional()
+        .nullable(),
       social: z
         .array(
           z
             .object({
-              icon: z.string().optional(),
-              url: z.string().optional(),
-              weight: z.number().optional(),
+              icon: z.string().optional().nullable(),
+              url: z.string().optional().nullable(),
+              weight: z.number().optional().nullable(),
             })
             .optional()
+            .nullable()
         )
-        .optional(),
-      themeColor: z.string().optional(),
-      titleAddition: z.string().optional(),
-      titleSeparator: z.string().optional(),
+        .optional()
+        .nullable(),
+      themeColor: z.string().optional().nullable(),
+      titleAddition: z.string().optional().nullable(),
+      titleSeparator: z.string().optional().nullable(),
       mainMenu: z
         .array(
           z
             .object({
-              name: z.string().optional(),
-              url: z.string().optional(),
-              weight: z.number().optional(),
+              name: z.string().optional().nullable(),
+              url: z.string().optional().nullable(),
+              weight: z.number().optional().nullable(),
             })
             .optional()
+            .nullable()
         )
-        .optional(),
+        .optional()
+        .nullable(),
       sitemapMenu: z
         .array(
           z
             .object({
-              name: z.string().optional(),
-              url: z.string().optional(),
-              weight: z.number().optional(),
+              name: z.string().optional().nullable(),
+              url: z.string().optional().nullable(),
+              weight: z.number().optional().nullable(),
             })
             .optional()
+            .nullable()
         )
-        .optional(),
-      ogLocale: z.string().optional(),
+        .optional()
+        .nullable(),
+      ogLocale: z.string().optional().nullable(),
       pagination: z
         .object({
-          pagerSize: z.number().optional(),
+          pagerSize: z.number().optional().nullable(),
         })
-        .optional(),
+        .optional()
+        .nullable(),
     }),
 });
 
@@ -142,19 +151,20 @@ const materialValidator = ({ image }: SchemaContext) =>
   z.object({
     material_id: z.string(),
     label: z.string(),
-    categories: z.string().optional(),
-    shortDescription: z.string().optional(),
-    thumbnail: image().optional(),
+    categories: z.string().optional().nullable(),
+    shortDescription: z.string().optional().nullable(),
+    thumbnail: image().optional().nullable(),
     colors: z
       .array(
         z.object({
           color_id: z.string(),
           label: z.string(),
-          hex: z.string().optional(),
-          image: image().optional(),
+          hex: z.string().optional().nullable(),
+          image: image().optional().nullable(),
         })
       )
-      .optional(),
+      .optional()
+      .nullable(),
   });
 
 const product = defineCollection({
@@ -163,51 +173,57 @@ const product = defineCollection({
     z.object({
       product_id: z.string(),
       title: z.string(),
-      hidden_in_product_list: z.boolean().optional(),
-      can_be_ordered: z.boolean().optional(),
-      categories: z.string().optional(),
-      date: z.coerce.date().optional(),
-      thumbnail: image().optional(),
-      shortDescription: z.string().optional(),
-      icon: image().optional(),
-      priced_by_length: z.boolean().optional(),
-      price: z.number().optional(),
-      discount: z.number().optional(),
-      discount_valid_until: z.coerce.date().optional(),
+      hidden_in_product_list: z.boolean().optional().nullable(),
+      can_be_ordered: z.boolean().optional().nullable(),
+      categories: z.string().optional().nullable(),
+      date: z.coerce.date().optional().nullable(),
+      thumbnail: image().optional().nullable(),
+      shortDescription: z.string().optional().nullable(),
+      icon: image().optional().nullable(),
+      priced_by_length: z.boolean().optional().nullable(),
+      price: z.number().optional().nullable(),
+      discount: z.number().optional().nullable(),
+      discount_valid_until: z.coerce.date().optional().nullable(),
       images: z
         .array(
           z
             .object({
-              image: image().optional(),
-              description: z.string().optional(),
+              image: image().optional().nullable(),
+              description: z.string().optional().nullable(),
             })
             .optional()
+            .nullable()
         )
-        .optional(),
+        .optional()
+        .nullable(),
       table: z
         .array(
           z
             .object({
-              title: z.string().optional(),
-              description: z.string().optional(),
+              title: z.string().optional().nullable(),
+              description: z.string().optional().nullable(),
             })
             .optional()
+            .nullable()
         )
-        .optional(),
+        .optional()
+        .nullable(),
       materials: z
         .object({
-          material_required_count: z.number().optional(),
+          material_required_count: z.number().optional().nullable(),
           materials: z
             .array(
               z
                 .object({
-                  color_count: z.string().optional(),
-                  price: z.number().optional(),
-                  material_path: materialValidator({ image }),
+                  color_count: z.string().optional().nullable(),
+                  price: z.number().optional().nullable(),
+                  material_path: z.string(),
                 })
                 .optional()
+                .nullable()
             )
-            .optional(),
+            .optional()
+            .nullable(),
           banned_combinations: z
             .array(
               z
@@ -215,16 +231,21 @@ const product = defineCollection({
                   materials: z
                     .array(
                       z
-                        .object({ material_path: materialValidator({ image }).optional() })
+                        .object({ material_path: z.string().optional().nullable() })
                         .optional()
+                        .nullable()
                     )
-                    .optional(),
+                    .optional()
+                    .nullable(),
                 })
                 .optional()
+                .nullable()
             )
-            .optional(),
+            .optional()
+            .nullable(),
         })
-        .optional(),
+        .optional()
+        .nullable(),
     }),
 });
 

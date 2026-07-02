@@ -59,11 +59,11 @@ type CmsMaterial = RecursivelyNullableToUndefined<
 >;
 
 interface CmsEnhancedMaterialColor extends Omit<CmsMaterialColor, "image"> {
-  image?: GetImageResult | undefined;
+  image?: GetImageResult | undefined | null;
 }
 interface CmsEnhancedMaterial extends Omit<CmsMaterial, "id" | "thumbnail" | "colors" | "content"> {
-  thumbnail?: GetImageResult | undefined;
-  colors?: Array<CmsEnhancedMaterialColor> | undefined;
+  thumbnail?: GetImageResult | undefined | null;
+  colors?: Array<CmsEnhancedMaterialColor> | undefined | null;
 }
 
 type AstroMaterial = RecursivelyReplaceType<InferEntrySchema<"material">, Image, GetImageResult>;
@@ -84,7 +84,7 @@ type CmsProductMaterialsBannedCombination = NonNullable<
 >;
 
 interface CmsEnhancedProductImage extends Omit<CmsProductImage, "image"> {
-  image?: GetImageResult | undefined;
+  image?: GetImageResult | undefined | null;
 }
 
 interface CmsEnhancedProductMaterial extends Omit<
@@ -98,15 +98,19 @@ interface CmsEnhancedProductMaterialsBannedCombination extends Omit<
   NonNullable<CmsProductMaterialsBannedCombination>,
   "materials"
 > {
-  materials?: Array<{ material_path?: CmsEnhancedMaterial | undefined } | undefined> | undefined;
+  materials?:
+    | Array<{ material_path?: CmsEnhancedMaterial | undefined | null } | undefined | null>
+    | undefined
+    | null;
 }
 
 interface CmsEnhancedProductMaterials extends Omit<
   CmsProductMaterials,
   "materials" | "banned_combinations"
 > {
-  materials?: Array<CmsEnhancedProductMaterial | undefined> | undefined;
-  banned_combinations?: Array<CmsEnhancedProductMaterialsBannedCombination | undefined> | undefined;
+  materials?: Array<CmsEnhancedProductMaterial | undefined | null> | undefined | null;
+  banned_combinations?:
+    Array<CmsEnhancedProductMaterialsBannedCombination | undefined | null> | undefined | null;
 }
 interface CmsEnhancedProduct extends Omit<
   CmsProduct,
@@ -120,12 +124,12 @@ interface CmsEnhancedProduct extends Omit<
   | "fields"
   | "icon"
 > {
-  thumbnail?: GetImageResult | undefined;
-  discount_valid_until?: Date | undefined;
-  icon?: GetImageResult | undefined;
-  date?: Date | undefined;
-  images?: Array<CmsEnhancedProductImage | undefined> | undefined;
-  materials?: CmsEnhancedProductMaterials | undefined;
+  thumbnail?: GetImageResult | undefined | null;
+  discount_valid_until?: Date | undefined | null;
+  icon?: GetImageResult | undefined | null;
+  date?: Date | undefined | null;
+  images?: Array<CmsEnhancedProductImage | undefined | null> | undefined | null;
+  materials?: CmsEnhancedProductMaterials | undefined | null;
 }
 
 type AstroProduct = RecursivelyReplaceType<InferEntrySchema<"product">, Image, GetImageResult>;
@@ -144,8 +148,8 @@ type CmsConfig = RecursivelyNullableToUndefined<
 >;
 
 type CmsEnhancedConfig = Omit<CmsConfig, "logo" | "footerLogo" | "id"> & {
-  logo?: GetImageResult | undefined;
-  footerLogo?: GetImageResult | undefined;
+  logo?: GetImageResult | undefined | null;
+  footerLogo?: GetImageResult | undefined | null;
 };
 
 type AstroConfig = RecursivelyReplaceType<InferEntrySchema<"config">, Image, GetImageResult>;
@@ -180,7 +184,7 @@ function nodesFrom<TNode>(
 async function optimizeImage(path: string, width: number): Promise<GetImageResult> {
   const meta = resolveImage(path);
   if (!meta) {
-    return { src: path };
+    return { src: path, options: { width, format: "webp" } };
   }
   const optimized = await getImage({ src: meta, width, format: "webp" });
   return optimized;
