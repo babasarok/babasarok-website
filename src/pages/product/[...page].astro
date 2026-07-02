@@ -40,8 +40,8 @@ const { items, currentPage, lastPage } = Astro.props;
             <ProductCard
               href={`/product/${product.id}/`}
               title={product.data.title}
-              image={product.data.thumbnail}
-              category={product.data.categories}
+              image={product.data.thumbnail ?? undefined}
+              category={product.data.categories ?? undefined}
               square
             />
           ))

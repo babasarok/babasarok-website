@@ -27,7 +27,7 @@ interface Props {
 
 const { title, description, image, isArticle = false, robots = "index, follow" } = Astro.props;
 
-const config = (await getConfig()).data.config;
+const config = await getConfig();
 const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin);
 const ogLocale = config.ogLocale ?? "hu_HU";
 const themeColor = config.themeColor ?? "#F1D3B2";

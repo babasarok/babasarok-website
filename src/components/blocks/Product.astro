@@ -29,8 +29,8 @@ const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
             <ProductCard
               href={`/product/${product.id}/`}
               title={product.data.title}
-              image={product.data.thumbnail}
-              category={product.data.categories}
+              image={product.data.thumbnail ?? undefined}
+              category={product.data.categories ?? undefined}
               square
             />
           ))}

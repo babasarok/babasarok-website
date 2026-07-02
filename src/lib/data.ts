@@ -21,6 +21,7 @@ import {
   type RecursiveDiff,
   type RecursivelyNullableToUndefined,
   type RecursivelyRemoveKeys,
+  type RecursivelyReplaceKeyType,
   type RecursivelyReplaceType,
   type RecursiveRequired,
 } from "./typeUtils";
@@ -44,7 +45,7 @@ type CmsOriginalDeliveryMethod = Awaited<
 type CmsDeliveryMethod = RecursivelyNullableToUndefined<
   RecursivelyRemoveKeys<CmsOriginalDeliveryMethod, `_${string}`>
 >;
-interface CmsEnhancedDeliveryMethod extends Omit<CmsDeliveryMethod, "id"> {}
+export interface CmsEnhancedDeliveryMethod extends Omit<CmsDeliveryMethod, "id"> {}
 
 type AstroDeliveryMethod = InferEntrySchema<"deliveryMethod">;
 AssertTrue<IfEquals<CmsEnhancedDeliveryMethod, AstroDeliveryMethod>>();
@@ -112,7 +113,9 @@ interface CmsEnhancedProductMaterials extends Omit<
   banned_combinations?:
     Array<CmsEnhancedProductMaterialsBannedCombination | undefined | null> | undefined | null;
 }
-interface CmsEnhancedProduct extends Omit<
+
+type CmsField = NonNullable<NonNullable<CmsProduct["fields"]>[number]>;
+export interface CmsEnhancedProduct extends Omit<
   CmsProduct,
   | "id"
   | "date"
@@ -130,9 +133,14 @@ interface CmsEnhancedProduct extends Omit<
   date?: Date | undefined | null;
   images?: Array<CmsEnhancedProductImage | undefined | null> | undefined | null;
   materials?: CmsEnhancedProductMaterials | undefined | null;
+  fields?: Array<CmsField | undefined | null> | undefined | null;
 }
 
-type AstroProduct = RecursivelyReplaceType<InferEntrySchema<"product">, Image, GetImageResult>;
+type AstroProduct = RecursivelyReplaceKeyType<
+  RecursivelyReplaceType<InferEntrySchema<"product">, Image, GetImageResult>,
+  "material_path",
+  CmsEnhancedMaterial
+>;
 type ProductDiff = RecursiveDiff<CmsEnhancedProduct, AstroProduct>;
 AssertTrue<IfEquals<ProductDiff, never>>();
 
@@ -147,10 +155,10 @@ type CmsConfig = RecursivelyNullableToUndefined<
   >
 >;
 
-type CmsEnhancedConfig = Omit<CmsConfig, "logo" | "footerLogo" | "id"> & {
+export interface CmsEnhancedConfig extends Omit<CmsConfig, "logo" | "footerLogo" | "id"> {
   logo?: GetImageResult | undefined | null;
   footerLogo?: GetImageResult | undefined | null;
-};
+}
 
 type AstroConfig = RecursivelyReplaceType<InferEntrySchema<"config">, Image, GetImageResult>;
 type ConfigDiff = RecursiveDiff<CmsEnhancedConfig, AstroConfig>;
@@ -187,7 +195,7 @@ async function optimizeImage(path: string, width: number): Promise<GetImageResul
     return { src: path, options: { width, format: "webp" } };
   }
   const optimized = await getImage({ src: meta, width, format: "webp" });
-  return optimized;
+  return { ...optimized };
 }
 
 // Render widths (2x for retina) for images consumed outside `<Image>`.
@@ -314,6 +322,29 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
           .map((row) => ({
             description: row.description ?? undefined,
             title: row.title ?? undefined,
+          })) ?? undefined,
+      fields:
+        product.fields
+          ?.filter((field) => field != null)
+          .map((field) => ({
+            allow_custom_value: field.allow_custom_value ?? undefined,
+            label: field.label,
+            length_based_pricing_source: field.length_based_pricing_source ?? undefined,
+            name: field.name,
+            optional: field.optional ?? undefined,
+            type: field.type,
+            placeholder: field.placeholder ?? undefined,
+            price: field.price ?? undefined,
+            regex: field.regex ?? undefined,
+            items:
+              field.items
+                ?.filter((item) => item != null)
+                .map((item) => ({
+                  label: item.label,
+                  value: item.value,
+                  price: item.price ?? undefined,
+                  tooltip: item.tooltip ?? undefined,
+                })) ?? undefined,
           })) ?? undefined,
     });
   }

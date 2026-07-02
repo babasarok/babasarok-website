@@ -10,15 +10,19 @@
   import Masonry from "svelte-bricks";
   import { submitOrder, calculateOrderTotal } from "@/lib/orderSubmit";
   import OrderDelivery from "./OrderDelivery.svelte";
-  import type { CmsConfig, CmsDeliveryMethod, CmsProduct } from "@/lib/data";
+  import type {
+    CmsEnhancedDeliveryMethod,
+    CmsEnhancedProduct,
+    CmsEnhancedConfig,
+  } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
 
   import type { ProductMaterialValue } from "@/lib/types.svelte";
 
   interface Props {
-    products: Record<string, CmsProduct>;
-    deliveryMethods: Record<string, CmsDeliveryMethod>;
-    config: CmsConfig;
+    products: Record<string, CmsEnhancedProduct>;
+    deliveryMethods: Record<string, CmsEnhancedDeliveryMethod>;
+    config: CmsEnhancedConfig;
   }
 
   let { products: productInfo, deliveryMethods, config: params }: Props = $props();
@@ -178,7 +182,6 @@
                       fields: clone.fields?.filter((f) => f != null) ?? [],
                       materials: {
                         ...clone.materials,
-                        __typename: clone.materials?.__typename ?? "ProductMaterials",
                         materials: clone.materials?.materials?.filter((m) => m != null) ?? [],
                         banned_combinations:
                           clone.materials?.banned_combinations?.filter((c) => c != null) ?? [],

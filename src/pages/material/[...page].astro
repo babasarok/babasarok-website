@@ -9,7 +9,7 @@ import Pagination from "../../components/ui/Pagination.astro";
 export const getStaticPaths = (async () => {
   const PAGE_SIZE = 6;
   const materials = (await getCollection("material")).toSorted((a, b) =>
-    (a.data.label ?? a.data.title).localeCompare(b.data.label ?? b.data.title)
+    a.data.label.localeCompare(b.data.label)
   );
 
   const lastPage = Math.max(1, Math.ceil(materials.length / PAGE_SIZE));
@@ -39,9 +39,9 @@ const { items, currentPage, lastPage } = Astro.props;
           items.map((material) => (
             <ProductCard
               href={`/material/${material.id}/`}
-              title={material.data.label ?? material.data.title}
-              image={material.data.thumbnail}
-              category={material.data.categories}
+              title={material.data.label}
+              image={material.data.thumbnail ?? undefined}
+              category={material.data.categories ?? undefined}
             />
           ))
         }

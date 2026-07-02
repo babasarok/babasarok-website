@@ -161,3 +161,26 @@ export type RecursivelyReplaceType<T, From, To> = T extends From
     : T extends object
       ? { [K in keyof T]: RecursivelyReplaceType<T[K], From, To> }
       : T;
+
+/**
+ * Recursively replace the value type of every property named `K` with `To`,
+ * preserving whatever `null` / `undefined` the original value allowed (so an
+ * optional / nullable `K` stays optional / nullable). Property modifiers
+ * (`?`, `readonly`) are kept because the mapping is homomorphic.
+ *
+ * Used to graft a resolved reference type onto a schema where the same field is
+ * only an unresolved key: e.g. the Astro content collection stores
+ * `material_path` as the raw `string` path from the `.md` frontmatter, while
+ * Tina resolves it to a full material — this rewrites those `string`s to the
+ * resolved shape so the two derived types line up.
+ */
+export type RecursivelyReplaceKeyType<T, K extends PropertyKey, To> =
+  T extends Array<infer U>
+    ? Array<RecursivelyReplaceKeyType<U, K, To>>
+    : T extends object
+      ? {
+          [P in keyof T]: P extends K
+            ? To | Extract<T[P], null | undefined>
+            : RecursivelyReplaceKeyType<T[P], K, To>;
+        }
+      : T;

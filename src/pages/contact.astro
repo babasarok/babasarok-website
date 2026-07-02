@@ -8,8 +8,8 @@ import {
   getConfig,
   getDeliveryMethods,
   getProducts,
-  type CmsDeliveryMethod,
-  type CmsProduct,
+  type CmsEnhancedProduct,
+  type CmsEnhancedDeliveryMethod,
 } from "../lib/data";
 import locationIcon from "../assets/images/contact/location.svg";
 import phoneIcon from "../assets/images/contact/phone.svg";
@@ -20,7 +20,7 @@ const [entry] = await getCollection("contact");
 const { Content } = await render(entry);
 const { title, breadcrumb } = entry.data;
 
-const config = (await getConfig()).data.config;
+const config = await getConfig();
 const address = config.address ?? null;
 const social = [...(config.social ?? [])]
   .filter((s): s is NonNullable<typeof s> => !!s && !!s.icon)
@@ -36,7 +36,7 @@ const deliveryMethods = await getDeliveryMethods();
   <section class="py-12.5">
     <div class="not-prose container">
       <OrderForm
-        products={products.reduce<Record<string, CmsProduct>>((acc, p) => {
+        products={products.reduce<Record<string, CmsEnhancedProduct>>((acc, p) => {
           if (!p.can_be_ordered) {
             return acc;
           }
@@ -44,10 +44,13 @@ const deliveryMethods = await getDeliveryMethods();
           acc[p.product_id] = p;
           return acc;
         }, {})}
-        deliveryMethods={deliveryMethods.reduce<Record<string, CmsDeliveryMethod>>((acc, d) => {
-          acc[d.delivery_name] = d;
-          return acc;
-        }, {})}
+        deliveryMethods={deliveryMethods.reduce<Record<string, CmsEnhancedDeliveryMethod>>(
+          (acc, d) => {
+            acc[d.delivery_name] = d;
+            return acc;
+          },
+          {}
+        )}
         config={config}
         client:load
       />

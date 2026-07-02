@@ -246,6 +246,39 @@ const product = defineCollection({
         })
         .optional()
         .nullable(),
+      fields: z
+        .array(
+          z
+            .object({
+              name: z.string(),
+              length_based_pricing_source: z.boolean().optional().nullable(),
+              price: z.number().optional().nullable(),
+              label: z.string(),
+              type: z.string(),
+              optional: z.boolean().optional().nullable(),
+              allow_custom_value: z.boolean().optional().nullable(),
+              regex: z.string().optional().nullable(),
+              placeholder: z.string().optional().nullable(),
+              items: z
+                .array(
+                  z
+                    .object({
+                      value: z.string(),
+                      label: z.string().optional().nullable(),
+                      price: z.number().optional().nullable(),
+                      tooltip: z.string().optional().nullable(),
+                    })
+                    .optional()
+                    .nullable()
+                )
+                .optional()
+                .nullable(),
+            })
+            .optional()
+            .nullable()
+        )
+        .optional()
+        .nullable(),
     }),
 });
 
@@ -271,7 +304,7 @@ const material = defineCollection({
 });
 
 const deliveryMethod = defineCollection({
-  loader: glob({ pattern: "*.md", base: "src/content/delivery-method" }),
+  loader: glob({ pattern: "*.md", base: "src/content/delivery_method" }),
   schema: z.object({
     delivery_name: z.string(),
     name: z.string(),

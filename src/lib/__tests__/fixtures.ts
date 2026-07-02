@@ -15,7 +15,7 @@ import type {
   ProductMaterialValue,
   ValueWithError,
 } from "@/lib/types.svelte";
-import type { CmsDeliveryMethod } from "@/lib/data";
+import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
 
 type FieldType = "input" | "select" | "radio" | "color" | "toggle";
 
@@ -47,7 +47,7 @@ export function makeField(opts: FieldOpts): Field {
     ...rest,
     ...(items ? { items: items.map((i) => ({ label: i.value, ...i })) } : {}),
     ...(value ? { value } : {}),
-  } as unknown as Field;
+  };
 }
 
 interface MaterialColor {
@@ -120,11 +120,10 @@ export function makeDelivery(
   name = "Személyes átvétel",
   price = 0,
   delivery_name = "szemelyes"
-): CmsDeliveryMethod {
+): CmsEnhancedDeliveryMethod {
   return {
-    __typename: "Delivery_methods",
     delivery_name,
     name,
     price,
-  } as unknown as CmsDeliveryMethod;
+  };
 }

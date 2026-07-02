@@ -1,8 +1,10 @@
 ---
-import { getConfig } from "@/lib/data";
 import Button from "@/components/ui/Button.astro";
+import { Image } from "astro:assets";
+import { getEntry } from "astro:content";
 
-const config = (await getConfig()).data.config;
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const config = (await getEntry("config", "config")!).data;
 const logo = config.logo;
 const contactLink = config.contactLink ? `/${config.contactLink}` : "/contact";
 
@@ -20,7 +22,7 @@ const mainMenu = rawMenu
       <a href="/" class="block shrink-0">
         {
           logo && (
-            <img
+            <Image
               src={logo}
               alt="Babasarok logó"
               width={200}

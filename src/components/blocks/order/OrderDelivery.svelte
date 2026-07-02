@@ -1,10 +1,10 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { marked } from "marked";
-  import type { CmsDeliveryMethod } from "@/lib/data";
+  import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
 
   interface Props {
-    deliveryMethods: Record<string, CmsDeliveryMethod> | null;
+    deliveryMethods: Record<string, CmsEnhancedDeliveryMethod> | null;
     deliveryMethod: string;
   }
 
