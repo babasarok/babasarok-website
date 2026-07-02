@@ -72,9 +72,68 @@ const config = defineCollection({
       title: z.string(),
       logo: image().optional(),
       footerLogo: image().optional(),
-      favicon: image().optional(),
       description: z.string().optional(),
-      keywords: z.string().optional(),
+      blogPageURL: z.string().optional(),
+      contactLink: z.string().optional(),
+      copyright: z.string().optional(),
+      fabformURL: z.string().optional(),
+      address: z
+        .object({
+          phone: z.string().optional(),
+          email: z.string().optional(),
+          address: z.string().optional(),
+          openingHours: z.string().optional(),
+        })
+        .optional(),
+      footerContact: z
+        .object({
+          title: z.string().optional(),
+          button: z.string().optional(),
+          topTitle: z.string().optional(),
+        })
+        .optional(),
+      social: z
+        .array(
+          z
+            .object({
+              icon: z.string().optional(),
+              url: z.string().optional(),
+              weight: z.number().optional(),
+            })
+            .optional()
+        )
+        .optional(),
+      themeColor: z.string().optional(),
+      titleAddition: z.string().optional(),
+      titleSeparator: z.string().optional(),
+      mainMenu: z
+        .array(
+          z
+            .object({
+              name: z.string().optional(),
+              url: z.string().optional(),
+              weight: z.number().optional(),
+            })
+            .optional()
+        )
+        .optional(),
+      sitemapMenu: z
+        .array(
+          z
+            .object({
+              name: z.string().optional(),
+              url: z.string().optional(),
+              weight: z.number().optional(),
+            })
+            .optional()
+        )
+        .optional(),
+      ogLocale: z.string().optional(),
+      pagination: z
+        .object({
+          pagerSize: z.number().optional(),
+        })
+        .optional(),
     }),
 });
 
@@ -125,7 +184,6 @@ const product = defineCollection({
             .optional()
         )
         .optional(),
-      image: image().optional(),
       table: z
         .array(
           z
