@@ -36,7 +36,13 @@
       ]}
     >
       {#if color.image}
-        <img {...color.image} alt="" class="block size-full rounded-full object-cover" />
+        <img
+          src={color.image.src}
+          srcset={color.image.srcSet.attribute || undefined}
+          {...color.image.attributes}
+          alt=""
+          class="block size-full rounded-full object-cover"
+        />
       {:else}
         <div
           class="rounded-full h-full w-full"
