@@ -11,10 +11,8 @@
  * is the source of truth; regen with `tinacms dev` and everything
  * downstream updates.
  */
-import { getImage } from "astro:assets";
 import { requestWithMetadata } from "@tinacms/astro/data";
 import client from "../../tina/__generated__/client";
-import { resolveImage } from "./assets";
 import {
   AssertTrue,
   type IfEquals,
@@ -29,6 +27,7 @@ import type { InferEntrySchema } from "astro:content";
 import type { ImageFunction } from "astro/content/config";
 import type { z } from "astro/zod";
 import type { GetImageResult } from "astro";
+import { resolveImage } from "./assets";
 
 type Image = z.infer<ReturnType<ImageFunction>>;
 
@@ -190,11 +189,7 @@ function nodesFrom<TNode>(
  * through, or unknown references).
  */
 async function optimizeImage(path: string, width: number): Promise<GetImageResult> {
-  const meta = resolveImage(path);
-  if (!meta) {
-    return { src: path, options: { width, format: "webp" } };
-  }
-  const optimized = await getImage({ src: meta, width, format: "webp" });
+  const optimized = await resolveImage({ src: path, width, format: "webp" });
   return { ...optimized };
 }
 

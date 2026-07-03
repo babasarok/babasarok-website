@@ -12,20 +12,25 @@
  *   published `https://assets.tina.io/<id>/<path>`
  * We reduce either back to the media-root-relative path so it still resolves.
  */
-import type { ImageMetadata } from "astro";
+import type { GetImageResult, ImageMetadata, UnresolvedImageTransform } from "astro";
 import { tinaCloudMediaPath } from "./tinaImageUrl";
+import { getImage } from "astro:assets";
 
 const images = import.meta.glob<ImageMetadata>(
   "../assets/**/*.{jpg,jpeg,png,gif,svg,webp,avif,JPG,JPEG,PNG}",
   { eager: true, import: "default" }
 );
 
-export function resolveImage(path: string | null | undefined): ImageMetadata | undefined {
-  if (!path) {
-    return undefined;
+export async function resolveImage(options: UnresolvedImageTransform): Promise<GetImageResult> {
+  let clean: string;
+  if (typeof options.src === "string") {
+    clean = options.src;
+  } else if (typeof options.src === "object" && "src" in options.src) {
+    clean = options.src.src;
+  } else {
+    const src = await options.src;
+    clean = src.default.src;
   }
-
-  let clean = path;
 
   try {
     clean = decodeURIComponent(clean);
@@ -37,11 +42,11 @@ export function resolveImage(path: string | null | undefined): ImageMetadata | u
   // to the path relative to the media root (`src/assets`).
   const tinaPath = tinaCloudMediaPath(clean);
   if (tinaPath) {
-    clean = tinaPath;
+    return getImage({ ...options, src: clean });
   }
 
   // Strip an optional leading slash and the `src/assets/` media-root prefix.
   clean = clean.replace(/^\/?(src\/assets\/)?/, "");
 
-  return images[`../assets/${clean}`];
+  return getImage({ ...options, src: images[`../assets/${clean}`] });
 }
