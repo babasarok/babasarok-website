@@ -190,7 +190,23 @@ function nodesFrom<TNode>(
  */
 async function optimizeImage(path: string, width: number): Promise<GetImageResult> {
   const optimized = await resolveImage({ src: path, width, format: "webp" });
-  return { ...optimized };
+  return {
+    ...optimized,
+    rawOptions: {
+      ...optimized.rawOptions,
+      src:
+        typeof optimized.rawOptions.src === "string"
+          ? optimized.rawOptions.src
+          : { ...optimized.rawOptions.src },
+    },
+    options: {
+      ...optimized.options,
+      src:
+        typeof optimized.options.src === "string"
+          ? optimized.options.src
+          : { ...optimized.options.src },
+    },
+  };
 }
 
 // Render widths (2x for retina) for images consumed outside `<Image>`.
