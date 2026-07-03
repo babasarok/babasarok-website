@@ -42,7 +42,7 @@ export async function resolveImage(options: UnresolvedImageTransform): Promise<G
   // to the path relative to the media root (`src/assets`).
   const tinaPath = tinaCloudMediaPath(clean);
   if (tinaPath) {
-    return getImage({ ...options, src: clean, inferSize: true });
+    return getImage({ inferSize: true, ...options, src: tinaPath });
   }
 
   // Strip an optional leading slash and the `src/assets/` media-root prefix.
