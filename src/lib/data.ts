@@ -189,7 +189,7 @@ function nodesFrom<TNode>(
  * through, or unknown references).
  */
 async function optimizeImage(path: string, width: number): Promise<GetImageResult> {
-  const optimized = await resolveImage({ src: path, width, format: "webp" });
+  const optimized = await resolveImage({ src: path, width });
   return {
     ...optimized,
     rawOptions: {
