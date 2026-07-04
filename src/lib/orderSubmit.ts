@@ -46,7 +46,8 @@ function formatFieldValue(field: Field): string {
 /** The "- material (colors)" line for one chosen material value. */
 function formatMaterialLine(
   mv: ProductMaterialValue | undefined,
-  materials: CmsProductMaterial[]
+  materials: CmsProductMaterial[],
+  i: number
 ): string {
   const material = materials.find((m) => m?.material_path.material_id === mv?.material_id);
   const név = material?.material_path.label ?? mv?.material_id ?? "Ismeretlen anyag";
@@ -55,7 +56,7 @@ function formatMaterialLine(
     : (mv?.colors
         .map((x) => material?.material_path.colors?.find((c) => c?.color_id === x)?.label ?? x)
         .join(", ") ?? "");
-  return `    - ${név} (${color})`;
+  return `    ${i + 1}. ${név} (${color})`;
 }
 
 /** Render a single product into the plain-text block used in the email body. */
@@ -73,7 +74,7 @@ function formatProductString(product: IProduct): string {
       .map((f) => `  ${f.label}: ${formatFieldValue(f)}`),
 
     ...(materials.length > 0 && material_required_count > 0
-      ? ["  Anyagok:", ...values.map((mv) => formatMaterialLine(mv, materials))]
+      ? ["  Anyagok:", ...values.map((mv, i) => formatMaterialLine(mv, materials, i))]
       : []),
 
     "",

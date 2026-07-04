@@ -151,8 +151,8 @@ describe("product string content", () => {
         Babatakaró és párna: Igen
         Betét: Nem
         Anyagok:
-          - Teddy (Bézs, Szürke)
-          - Minky (Rózsaszín)
+          1. Teddy (Bézs, Szürke)
+          2. Minky (Rózsaszín)
 
       Alapár: 15000 Ft
       Méret: 1500Ft
@@ -277,7 +277,7 @@ describe("product string content", () => {
         Méret: 300cm
         Fonás: Négyes
         Anyagok:
-          - Pamutjersey (Fehér, Kék, Zöld, Piros)
+          1. Pamutjersey (Fehér, Kék, Zöld, Piros)
 
       Alapár: 0 Ft
       Fonás: 8000Ft
@@ -302,7 +302,7 @@ describe("product string content", () => {
     expect(form_text(await captureForm(baseOrder([product])))).toMatchInlineSnapshot(`
       "Babafészek (1db)
         Anyagok:
-          - Teddy (Egyedi szín: Mályva pöttyös)
+          1. Teddy (Egyedi szín: Mályva pöttyös)
 
       Alapár: 15000 Ft
       Anyag: 2000Ft

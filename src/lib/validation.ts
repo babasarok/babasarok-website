@@ -136,19 +136,28 @@ function updateMaterialsWithErrors(item: IProduct): void {
     return;
   }
 
-  if (item.materials.values.length < item.materials.material_required_count) {
-    for (let i = item.materials.values.length; i < item.materials.material_required_count; i++) {
-      item.materials.values.push({ material_id: "", colors: [] });
+  for (let i = 0; i < item.materials.material_required_count; i++) {
+    if (item.materials.values[i]) {
+      continue;
     }
+
+    item.materials.values[i] = { material_id: "", colors: [] };
   }
 
   for (const materialValue of item.materials.values) {
     if (!materialValue) {
       continue;
     }
+
+    if (!materialValue.material_id) {
+      materialValue.error = "Kötelező mező";
+      continue;
+    }
+
     const materialInfo = item.materials.materials.find(
       (m) => !!m && m.material_path.material_id === materialValue.material_id
     );
+
     if (materialInfo) {
       updateMaterialWithErrors(materialValue, materialInfo, item);
     } else {
