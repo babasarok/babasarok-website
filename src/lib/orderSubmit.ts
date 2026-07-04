@@ -56,7 +56,7 @@ function formatMaterialLine(
     : (mv?.colors
         .map((x) => material?.material_path.colors?.find((c) => c?.color_id === x)?.label ?? x)
         .join(", ") ?? "");
-  return `    - ${i + 1}. ${név} (${color})`;
+  return `    ${i + 1}. ${név} (${color})`;
 }
 
 /** Render a single product into the plain-text block used in the email body. */
