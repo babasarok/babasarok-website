@@ -124,29 +124,24 @@
       </div>
     </div>
     <div class="flex flex-col gap-4">
-      <div class="flex items-center gap-2 justify-between">
-        <div class="flex items-center gap-2">
-          <Icon
-            icon="mdi:cart"
-            class="shrink-0 text-4xl rounded-full p-2 text-brown-500 bg-brown-50"
-          />
-          <div class="flex flex-col gap">
-            <h4 class="text-lg uppercase">Miket szeretnél a csomagba?</h4>
-            <p class="text-sm">
-              Kattints a gombra, és válaszd ki azokat a darabokat, amikből összeállítjuk a szettet.
-            </p>
-          </div>
+      <div class="flex items-center gap-2">
+        <Icon
+          icon="mdi:cart"
+          class="shrink-0 text-4xl rounded-full p-2 text-brown-500 bg-brown-50"
+        />
+        <div class="flex flex-col gap">
+          <h4 class="text-lg uppercase">Miket szeretnél a csomagba?</h4>
+          <p class="text-sm">
+            Kattints a gombra, és válaszd ki azokat a darabokat, amikből összeállítjuk a szettet.
+          </p>
         </div>
-        <IconButton type="button" popovertarget="product-dialog">
-          <Icon icon="mdi:add" class="size-8" />
-        </IconButton>
       </div>
       <dialog
-        class="h-[80%] w-[80%] md:w-fit md:h-fit md:max-h-[80%] m-auto border-0 rounded-2xl shadow-lg"
+        class="h-[80%] w-[80%] md:w-fit md:h-fit md:max-h-[80%] m-auto border-0 rounded-2xl shadow-lg overflow-hidden relative open:flex flex-col"
         id="product-dialog"
         popover
       >
-        <div class="flex flex-col gap-4 h-full py-4">
+        <div class="flex flex-col gap-4 min-h-0 flex-1 py-4">
           <div class="flex items-center justify-between gap-2 px-4">
             <div class="flex items-center gap-2">
               <Icon
@@ -161,7 +156,7 @@
               <Icon icon="mdi:close" />
             </IconButton>
           </div>
-          <div class="flex-1 overflow-auto flex flex-col gap-2">
+          <div class="flex-1 min-h-0 overflow-auto overscroll-contain flex flex-col gap-2">
             {#each Object.values(productInfo).toSorted( (a, b) => a.title.localeCompare(b.title) ) as product (product.product_id)}
               {@const addedCount = products.reduce(
                 (count, p) => (p.title === product.title ? count + 1 : count),
@@ -172,9 +167,7 @@
                 class="flex font-normal w-full justify-between items-center gap-4 p-1 px-4 rounded hover:bg-brown-200 transition-all cursor-pointer"
                 onclick={() => {
                   const clone = $state.snapshot(product);
-                  products.splice(
-                    0,
-                    0,
+                  products.push(
                     sanitizeItem({
                       ...clone,
                       uuid: crypto.randomUUID(),
@@ -202,30 +195,42 @@
         </div>
       </dialog>
       <Masonry
-        items={products}
+        items={[...products, { uuid: "placeholder", placeholder: true }]}
         getId={(item) => item.uuid}
         gap={16}
         order="column-sequential"
         animate={false}
+        columnStyle="grid-template-columns: minmax(0, 1fr)"
       >
         {#snippet children({ item })}
-          <div transition:fade={{ duration: 250 }}>
-            <OrderItem
-              product={item}
-              onClose={() => {
-                const index = products.findIndex((p) => p.uuid === item.uuid);
-                if (index !== -1) {
-                  products.splice(index, 1);
-                }
-              }}
-              onChange={(updatedProduct) => {
-                const index = products.findIndex((p) => p.uuid === updatedProduct.uuid);
-                if (index !== -1) {
-                  products[index] = sanitizeItem(updatedProduct);
-                }
-              }}
-            />
-          </div>
+          {#if "placeholder" in item && item.placeholder}
+            <button
+              class="flex flex-col w-full h-full items-center justify-center text-lg min-h-48 p-7 rounded-xl border border-brown-200 text-brown-500 font-semibold hover:bg-brown-100 transition-all cursor-pointer gap-2"
+              type="button"
+              popovertarget="product-dialog"
+            >
+              Kattints ide, és válassz termékeket!
+              <Icon icon="mdi:add" class="shrink-0 text-4xl" />
+            </button>
+          {:else}
+            <div transition:fade={{ duration: 250 }}>
+              <OrderItem
+                product={item as IProduct}
+                onClose={() => {
+                  const index = products.findIndex((p) => p.uuid === item.uuid);
+                  if (index !== -1) {
+                    products.splice(index, 1);
+                  }
+                }}
+                onChange={(updatedProduct) => {
+                  const index = products.findIndex((p) => p.uuid === updatedProduct.uuid);
+                  if (index !== -1) {
+                    products[index] = sanitizeItem(updatedProduct);
+                  }
+                }}
+              />
+            </div>
+          {/if}
         {/snippet}
       </Masonry>
     </div>
