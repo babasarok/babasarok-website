@@ -20,6 +20,7 @@
 import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import z from "astro/zod";
+import type { SchemaContext } from "astro/content/config";
 
 const heroBlock = defineCollection({
   loader: glob({ pattern: "hero.md", base: "src/content/sections" }),
@@ -69,41 +70,215 @@ const config = defineCollection({
   schema: ({ image }) =>
     z.object({
       title: z.string(),
-      logo: image().optional(),
-      footerLogo: image().optional(),
-      favicon: image().optional(),
-      description: z.string().optional(),
-      keywords: z.string().optional(),
+      logo: image().optional().nullable(),
+      footerLogo: image().optional().nullable(),
+      description: z.string().optional().nullable(),
+      blogPageURL: z.string().optional().nullable(),
+      contactLink: z.string().optional().nullable(),
+      copyright: z.string().optional().nullable(),
+      fabformURL: z.string().optional().nullable(),
+      address: z
+        .object({
+          phone: z.string().optional().nullable(),
+          email: z.string().optional().nullable(),
+          address: z.string().optional().nullable(),
+          openingHours: z.string().optional().nullable(),
+        })
+        .optional()
+        .nullable(),
+      footerContact: z
+        .object({
+          title: z.string().optional().nullable(),
+          button: z.string().optional().nullable(),
+          topTitle: z.string().optional().nullable(),
+        })
+        .optional()
+        .nullable(),
+      social: z
+        .array(
+          z
+            .object({
+              icon: z.string().optional().nullable(),
+              url: z.string().optional().nullable(),
+              weight: z.number().optional().nullable(),
+            })
+            .optional()
+            .nullable()
+        )
+        .optional()
+        .nullable(),
+      themeColor: z.string().optional().nullable(),
+      titleAddition: z.string().optional().nullable(),
+      titleSeparator: z.string().optional().nullable(),
+      mainMenu: z
+        .array(
+          z
+            .object({
+              name: z.string().optional().nullable(),
+              url: z.string().optional().nullable(),
+              weight: z.number().optional().nullable(),
+            })
+            .optional()
+            .nullable()
+        )
+        .optional()
+        .nullable(),
+      sitemapMenu: z
+        .array(
+          z
+            .object({
+              name: z.string().optional().nullable(),
+              url: z.string().optional().nullable(),
+              weight: z.number().optional().nullable(),
+            })
+            .optional()
+            .nullable()
+        )
+        .optional()
+        .nullable(),
+      ogLocale: z.string().optional().nullable(),
+      pagination: z
+        .object({
+          pagerSize: z.number().optional().nullable(),
+        })
+        .optional()
+        .nullable(),
     }),
 });
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+const materialValidator = ({ image }: SchemaContext) =>
+  z.object({
+    material_id: z.string(),
+    label: z.string(),
+    categories: z.string().optional().nullable(),
+    shortDescription: z.string().optional().nullable(),
+    thumbnail: image().optional().nullable(),
+    colors: z
+      .array(
+        z.object({
+          color_id: z.string(),
+          label: z.string(),
+          hex: z.string().optional().nullable(),
+          image: image().optional().nullable(),
+        })
+      )
+      .optional()
+      .nullable(),
+  });
 
 const product = defineCollection({
   loader: glob({ pattern: "*.md", base: "src/content/product" }),
   schema: ({ image }) =>
     z.object({
+      product_id: z.string(),
       title: z.string(),
-      product_id: z.string().optional(),
-      categories: z.string().optional(),
-      date: z.coerce.date().optional(),
-      thumbnail: image().optional(),
-      shortDescription: z.string().optional(),
-      hidden_in_product_list: z.boolean().optional(),
-      table: z
-        .array(
-          z.object({
-            title: z.string().nullable().optional(),
-            description: z.string().nullable().optional(),
-          })
-        )
-        .optional(),
+      hidden_in_product_list: z.boolean().optional().nullable(),
+      can_be_ordered: z.boolean().optional().nullable(),
+      categories: z.string().optional().nullable(),
+      date: z.coerce.date().optional().nullable(),
+      thumbnail: image().optional().nullable(),
+      shortDescription: z.string().optional().nullable(),
+      icon: image().optional().nullable(),
+      priced_by_length: z.boolean().optional().nullable(),
+      price: z.number().optional().nullable(),
+      discount: z.number().optional().nullable(),
+      discount_valid_until: z.coerce.date().optional().nullable(),
       images: z
         .array(
-          z.object({
-            image: image().optional(),
-            description: z.string().optional(),
-          })
+          z
+            .object({
+              image: image().optional().nullable(),
+              description: z.string().optional().nullable(),
+            })
+            .optional()
+            .nullable()
         )
-        .optional(),
+        .optional()
+        .nullable(),
+      table: z
+        .array(
+          z
+            .object({
+              title: z.string().optional().nullable(),
+              description: z.string().optional().nullable(),
+            })
+            .optional()
+            .nullable()
+        )
+        .optional()
+        .nullable(),
+      materials: z
+        .object({
+          material_required_count: z.number().optional().nullable(),
+          materials: z
+            .array(
+              z
+                .object({
+                  color_count: z.string().optional().nullable(),
+                  price: z.number().optional().nullable(),
+                  material_path: z.string(),
+                })
+                .optional()
+                .nullable()
+            )
+            .optional()
+            .nullable(),
+          banned_combinations: z
+            .array(
+              z
+                .object({
+                  materials: z
+                    .array(
+                      z
+                        .object({ material_path: z.string().optional().nullable() })
+                        .optional()
+                        .nullable()
+                    )
+                    .optional()
+                    .nullable(),
+                })
+                .optional()
+                .nullable()
+            )
+            .optional()
+            .nullable(),
+        })
+        .optional()
+        .nullable(),
+      fields: z
+        .array(
+          z
+            .object({
+              name: z.string(),
+              length_based_pricing_source: z.boolean().optional().nullable(),
+              price: z.number().optional().nullable(),
+              label: z.string(),
+              type: z.string(),
+              optional: z.boolean().optional().nullable(),
+              allow_custom_value: z.boolean().optional().nullable(),
+              regex: z.string().optional().nullable(),
+              placeholder: z.string().optional().nullable(),
+              items: z
+                .array(
+                  z
+                    .object({
+                      value: z.string(),
+                      label: z.string().optional().nullable(),
+                      price: z.number().optional().nullable(),
+                      tooltip: z.string().optional().nullable(),
+                    })
+                    .optional()
+                    .nullable()
+                )
+                .optional()
+                .nullable(),
+            })
+            .optional()
+            .nullable()
+        )
+        .optional()
+        .nullable(),
     }),
 });
 
@@ -125,25 +300,16 @@ const blog = defineCollection({
 
 const material = defineCollection({
   loader: glob({ pattern: "*.md", base: "src/content/material" }),
-  schema: ({ image }) =>
-    z.object({
-      title: z.string(),
-      label: z.string().optional(),
-      material_id: z.string().optional(),
-      thumbnail: image().optional(),
-      categories: z.string().optional(),
-      shortDescription: z.string().optional(),
-      colors: z
-        .array(
-          z.object({
-            color_id: z.string().optional(),
-            label: z.string().optional(),
-            hex: z.string().optional(),
-            image: image().optional(),
-          })
-        )
-        .optional(),
-    }),
+  schema: materialValidator,
+});
+
+const deliveryMethod = defineCollection({
+  loader: glob({ pattern: "*.md", base: "src/content/delivery_method" }),
+  schema: z.object({
+    delivery_name: z.string(),
+    name: z.string(),
+    price: z.number(),
+  }),
 });
 
 const contact = defineCollection({
@@ -163,4 +329,5 @@ export const collections = {
   heroBlock,
   servicesBlock,
   aboutBlock,
+  deliveryMethod,
 };

@@ -1,9 +1,11 @@
 ---
 import { Icon } from "astro-icon/components";
-import { getConfig } from "../../lib/data";
 import Button from "../ui/Button.astro";
+import { Image } from "astro:assets";
+import { getEntry } from "astro:content";
 
-const config = (await getConfig()).data.config;
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const config = (await getEntry("config", "config")!).data;
 const footerLogo = config.footerLogo;
 const contactLink = config.contactLink ? `/${config.contactLink}` : "/contact";
 
@@ -85,7 +87,7 @@ const social = [...(config.social ?? [])]
       <div class="mb-5 w-full lg:mb-0 lg:w-1/3">
         {
           footerLogo && (
-            <img
+            <Image
               src={footerLogo}
               alt="Babasarok logó"
               width={255}

@@ -4,7 +4,7 @@
  */
 import { calculatePriceForItem } from "@/lib/priceUtils";
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "./types.svelte";
-import type { CmsDeliveryMethod } from "./data";
+import type { CmsEnhancedDeliveryMethod } from "./data";
 
 const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
 
@@ -12,14 +12,14 @@ export interface OrderDetails {
   name: string;
   email: string;
   phone: string;
-  deliveryMethod: CmsDeliveryMethod;
+  deliveryMethod: CmsEnhancedDeliveryMethod;
   products: IProduct[];
 }
 
 /** Sum of every product's total plus delivery, and whether any price is partial. */
 export function calculateOrderTotal(
   products: IProduct[],
-  deliveryMethod: CmsDeliveryMethod
+  deliveryMethod: CmsEnhancedDeliveryMethod
 ): { total: number; indeterminate: boolean } {
   const prices = products.map((p) => calculatePriceForItem(p));
   return {
@@ -54,7 +54,7 @@ function formatMaterialLine(
   const color = mv?.custom_color
     ? `Egyedi szín: ${mv.custom_color}`
     : (mv?.colors
-        .map((x) => material?.material_path.colors?.find((c) => c?.color_id === x)?.label ?? x)
+        .map((x) => material?.material_path.colors?.find((c) => c.color_id === x)?.label ?? x)
         .join(", ") ?? "");
   return `    ${i + 1}. ${név} (${color})`;
 }

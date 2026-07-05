@@ -69,7 +69,7 @@
     for (const combination of product.materials.banned_combinations ?? []) {
       const combinationMaterialIds =
         combination?.materials
-          ?.map((item) => item?.material_path.material_id)
+          ?.map((item) => item?.material_path?.material_id)
           .filter((materialId): materialId is string => !!materialId) ?? [];
 
       if (combinationMaterialIds.length <= 1) {
@@ -160,11 +160,11 @@
       {#if multiColor}
         <div class="flex gap-1 flex-wrap">
           {#each value?.colors as colorId, index (colorId)}
-            {@const colorInfo = materialInfo?.colors?.find((c) => !!c && c.color_id === colorId)}
+            {@const colorInfo = materialInfo?.colors?.find((c) => c.color_id === colorId)}
             {#if colorInfo}
               <Chip
                 color={colorInfo.hex}
-                bgImage={colorInfo.image}
+                bgImage={colorInfo.image?.src}
                 onClose={() => {
                   const result = product;
                   if (result.materials.values[material_index]) {
@@ -184,7 +184,7 @@
       {/if}
       {#if (materialInfo?.colors?.length ?? 0) > 0}
         <div transition:slide class="flex gap-1 flex-wrap leading-0">
-          {#each materialInfo?.colors?.filter((x) => x != null) || [] as color (color.color_id)}
+          {#each materialInfo?.colors || [] as color (color.color_id)}
             {@const selected = value?.colors.includes(color.color_id)}
             <Color
               {color}

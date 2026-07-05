@@ -11,27 +11,159 @@
  * is the source of truth; regen with `tinacms dev` and everything
  * downstream updates.
  */
-import { getImage } from "astro:assets";
 import { requestWithMetadata } from "@tinacms/astro/data";
 import client from "../../tina/__generated__/client";
+import {
+  AssertTrue,
+  type IfEquals,
+  type RecursiveDiff,
+  type RecursivelyNullableToUndefined,
+  type RecursivelyRemoveKeys,
+  type RecursivelyReplaceKeyType,
+  type RecursivelyReplaceType,
+  type RecursiveRequired,
+} from "./typeUtils";
+import type { InferEntrySchema } from "astro:content";
+import type { ImageFunction } from "astro/content/config";
+import type { z } from "astro/zod";
+import type { GetImageResult } from "astro";
 import { resolveImage } from "./assets";
 
-/**
- * Resolve every image reference in a loaded entity to its hashed local `src`.
- *
- * Tina image fields and rich-text `img` urls are stored as paths: a local
- * `/src/assets/...` path in `--local` builds, or an absolute Tina Cloud CDN URL
- * (`https://assets.tina.io/.../__file/<path>`) in cloud builds. Left untouched
- * the cloud form is serialized into a client island's props and hot-links to
- * Tina Cloud (see scripts/test/no-tina-cloud-urls.ts).
- *
- * Rather than enumerate every (easily-missed, deeply-nested) image field, we
- * walk the whole value and replace any string that looks like an image
- * reference with the optimized local `src` (`resolveImage` normalizes both
- * forms). Strings that don't resolve to a `src/assets` file are left as-is, so
- * the walk is safe to run over an entire entity.
- */
-const IMAGE_REF = /\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
+type Image = z.infer<ReturnType<ImageFunction>>;
+
+type CmsOriginalMaterial = Awaited<
+  ReturnType<typeof client.queries.product_materials>
+>["data"]["product_materials"];
+type CmsOriginalProduct = Awaited<ReturnType<typeof client.queries.product>>["data"]["product"];
+type CmsOriginalDeliveryMethod = Awaited<
+  ReturnType<typeof client.queries.delivery_methods>
+>["data"]["delivery_methods"];
+
+// #region DeliveryMethod
+
+type CmsDeliveryMethod = RecursivelyNullableToUndefined<
+  RecursivelyRemoveKeys<CmsOriginalDeliveryMethod, `_${string}`>
+>;
+export interface CmsEnhancedDeliveryMethod extends Omit<CmsDeliveryMethod, "id"> {}
+
+type AstroDeliveryMethod = InferEntrySchema<"deliveryMethod">;
+AssertTrue<IfEquals<CmsEnhancedDeliveryMethod, AstroDeliveryMethod>>();
+
+// #endregion
+
+// #region Material
+
+type CmsMaterialColor = NonNullable<NonNullable<CmsMaterial["colors"]>[number]>;
+type CmsMaterial = RecursivelyNullableToUndefined<
+  RecursivelyRemoveKeys<CmsOriginalMaterial, `_${string}`>
+>;
+
+interface CmsEnhancedMaterialColor extends Omit<CmsMaterialColor, "image"> {
+  image?: GetImageResult | undefined | null;
+}
+interface CmsEnhancedMaterial extends Omit<CmsMaterial, "id" | "thumbnail" | "colors" | "content"> {
+  thumbnail?: GetImageResult | undefined | null;
+  colors?: Array<CmsEnhancedMaterialColor> | undefined | null;
+}
+
+type AstroMaterial = RecursivelyReplaceType<InferEntrySchema<"material">, Image, GetImageResult>;
+type MaterialDiff = RecursiveDiff<CmsEnhancedMaterial, AstroMaterial>;
+AssertTrue<IfEquals<MaterialDiff, never>>();
+
+// #endregion
+// #region Product
+type CmsProduct = RecursivelyNullableToUndefined<
+  RecursivelyRemoveKeys<CmsOriginalProduct, `_${string}`>
+>;
+
+type CmsProductImage = NonNullable<NonNullable<CmsProduct["images"]>[number]>;
+type CmsProductMaterials = NonNullable<CmsProduct["materials"]>;
+type CmsProductMaterial = NonNullable<NonNullable<CmsProduct["materials"]>["materials"]>[number];
+type CmsProductMaterialsBannedCombination = NonNullable<
+  NonNullable<NonNullable<CmsProduct["materials"]>["banned_combinations"]>[number]
+>;
+
+interface CmsEnhancedProductImage extends Omit<CmsProductImage, "image"> {
+  image?: GetImageResult | undefined | null;
+}
+
+interface CmsEnhancedProductMaterial extends Omit<
+  NonNullable<CmsProductMaterial>,
+  "material_path"
+> {
+  material_path: CmsEnhancedMaterial;
+}
+
+interface CmsEnhancedProductMaterialsBannedCombination extends Omit<
+  NonNullable<CmsProductMaterialsBannedCombination>,
+  "materials"
+> {
+  materials?:
+    | Array<{ material_path?: CmsEnhancedMaterial | undefined | null } | undefined | null>
+    | undefined
+    | null;
+}
+
+interface CmsEnhancedProductMaterials extends Omit<
+  CmsProductMaterials,
+  "materials" | "banned_combinations"
+> {
+  materials?: Array<CmsEnhancedProductMaterial | undefined | null> | undefined | null;
+  banned_combinations?:
+    Array<CmsEnhancedProductMaterialsBannedCombination | undefined | null> | undefined | null;
+}
+
+type CmsField = NonNullable<NonNullable<CmsProduct["fields"]>[number]>;
+export interface CmsEnhancedProduct extends Omit<
+  CmsProduct,
+  | "id"
+  | "date"
+  | "thumbnail"
+  | "content"
+  | "discount_valid_until"
+  | "images"
+  | "materials"
+  | "fields"
+  | "icon"
+> {
+  thumbnail?: GetImageResult | undefined | null;
+  discount_valid_until?: Date | undefined | null;
+  icon?: GetImageResult | undefined | null;
+  date?: Date | undefined | null;
+  images?: Array<CmsEnhancedProductImage | undefined | null> | undefined | null;
+  materials?: CmsEnhancedProductMaterials | undefined | null;
+  fields?: Array<CmsField | undefined | null> | undefined | null;
+}
+
+type AstroProduct = RecursivelyReplaceKeyType<
+  RecursivelyReplaceType<InferEntrySchema<"product">, Image, GetImageResult>,
+  "material_path",
+  CmsEnhancedMaterial
+>;
+type ProductDiff = RecursiveDiff<CmsEnhancedProduct, AstroProduct>;
+AssertTrue<IfEquals<ProductDiff, never>>();
+
+// #endregion
+
+// #region Config
+
+type CmsConfig = RecursivelyNullableToUndefined<
+  RecursivelyRemoveKeys<
+    Awaited<ReturnType<typeof client.queries.config>>["data"]["config"],
+    `_${string}`
+  >
+>;
+
+export interface CmsEnhancedConfig extends Omit<CmsConfig, "logo" | "footerLogo" | "id"> {
+  logo?: GetImageResult | undefined | null;
+  footerLogo?: GetImageResult | undefined | null;
+}
+
+type AstroConfig = RecursivelyReplaceType<InferEntrySchema<"config">, Image, GetImageResult>;
+type ConfigDiff = RecursiveDiff<CmsEnhancedConfig, AstroConfig>;
+AssertTrue<IfEquals<ConfigDiff, never>>();
+
+// #endregion
 
 /**
  * Flatten a Tina `*Connection` query result into a plain array of nodes,
@@ -41,30 +173,6 @@ function nodesFrom<TNode>(
   connection: { edges?: ({ node?: TNode | null } | null)[] | null } | null | undefined
 ): TNode[] {
   return connection?.edges?.flatMap((edge) => (edge?.node ? [edge.node] : [])) ?? [];
-}
-
-function resolveTinaImageRefs<T>(value: T): T {
-  if (typeof value === "string") {
-    if (IMAGE_REF.test(value)) {
-      const resolved = resolveImage(value);
-      if (resolved) {
-        return resolved.src as T;
-      }
-    }
-    return value;
-  }
-  if (Array.isArray(value)) {
-    return (value as unknown[]).map((item) => resolveTinaImageRefs(item)) as T;
-  }
-  if (value !== null && typeof value === "object") {
-    const source = value as Record<string, unknown>;
-    const result: Record<string, unknown> = {};
-    for (const [key, val] of Object.entries(source)) {
-      result[key] = resolveTinaImageRefs(val);
-    }
-    return result as T;
-  }
-  return value;
 }
 
 /**
@@ -80,13 +188,25 @@ function resolveTinaImageRefs<T>(value: T): T {
  * path when it can't resolve to a local asset (e.g. SVGs the pipeline passes
  * through, or unknown references).
  */
-async function optimizeImage(path: string, width: number): Promise<string> {
-  const meta = resolveImage(path);
-  if (!meta) {
-    return path;
-  }
-  const optimized = await getImage({ src: meta, width, format: "webp" });
-  return optimized.src;
+async function optimizeImage(path: string, width: number): Promise<GetImageResult> {
+  const optimized = await resolveImage({ src: path, width });
+  return {
+    ...optimized,
+    rawOptions: {
+      ...optimized.rawOptions,
+      src:
+        typeof optimized.rawOptions.src === "string"
+          ? optimized.rawOptions.src
+          : { ...optimized.rawOptions.src },
+    },
+    options: {
+      ...optimized.options,
+      src:
+        typeof optimized.options.src === "string"
+          ? optimized.options.src
+          : { ...optimized.options.src },
+    },
+  };
 }
 
 // Render widths (2x for retina) for images consumed outside `<Image>`.
@@ -94,67 +214,198 @@ const SWATCH_WIDTH = 200; // ~24px swatch (`size-6`) in the order island
 const LOGO_WIDTH = 400; // ~100–200px header logo
 const FOOTER_LOGO_WIDTH = 510; // ~255px footer logo
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const getConfig = async () => {
+export const getConfig = async (): Promise<
+  RecursiveRequired<CmsEnhancedConfig, GetImageResult>
+> => {
   const result = await requestWithMetadata(client.queries.config({ relativePath: "config.json" }));
   const { logo, footerLogo } = result.data.config;
 
-  const data = resolveTinaImageRefs(result.data);
-  // The header/footer render the logos with a plain `<img>` (and the config is
-  // also serialized into the order island), so neither can go through
-  // `<Image>`. Optimize them here at build time instead.
-  if (logo) {
-    data.config.logo = await optimizeImage(logo, LOGO_WIDTH);
-  }
-  if (footerLogo) {
-    data.config.footerLogo = await optimizeImage(footerLogo, FOOTER_LOGO_WIDTH);
-  }
-
-  return { ...result, data };
+  return {
+    logo: logo ? await optimizeImage(logo, LOGO_WIDTH) : undefined,
+    footerLogo: footerLogo ? await optimizeImage(footerLogo, FOOTER_LOGO_WIDTH) : undefined,
+    blogPageURL: result.data.config.blogPageURL ?? undefined,
+    contactLink: result.data.config.contactLink ?? undefined,
+    copyright: result.data.config.copyright ?? undefined,
+    description: result.data.config.description ?? undefined,
+    ogLocale: result.data.config.ogLocale ?? undefined,
+    pagination: {
+      pagerSize: result.data.config.pagination?.pagerSize ?? undefined,
+    },
+    fabformURL: result.data.config.fabformURL ?? undefined,
+    title: result.data.config.title,
+    titleAddition: result.data.config.titleAddition ?? undefined,
+    titleSeparator: result.data.config.titleSeparator ?? undefined,
+    themeColor: result.data.config.themeColor ?? undefined,
+    social: (result.data.config.social ?? []).map((social) => ({
+      icon: social?.icon ?? undefined,
+      url: social?.url ?? undefined,
+      weight: social?.weight ?? undefined,
+    })),
+    mainMenu: (result.data.config.mainMenu ?? []).map((menu) => ({
+      name: menu?.name ?? undefined,
+      url: menu?.url ?? undefined,
+      weight: menu?.weight ?? undefined,
+    })),
+    sitemapMenu: (result.data.config.sitemapMenu ?? []).map((menu) => ({
+      name: menu?.name ?? undefined,
+      url: menu?.url ?? undefined,
+      weight: menu?.weight ?? undefined,
+    })),
+    address: {
+      phone: result.data.config.address?.phone ?? undefined,
+      email: result.data.config.address?.email ?? undefined,
+      address: result.data.config.address?.address ?? undefined,
+      openingHours: result.data.config.address?.openingHours ?? undefined,
+    },
+    footerContact: {
+      title: result.data.config.footerContact?.title ?? undefined,
+      button: result.data.config.footerContact?.button ?? undefined,
+      topTitle: result.data.config.footerContact?.topTitle ?? undefined,
+    },
+  };
 };
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const getProducts = async () => {
-  const result = await client.queries.productConnection();
+export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
+  const response = await client.queries.productConnection();
 
-  const products = nodesFrom(result.data.productConnection).toSorted((a, b) =>
+  const products = nodesFrom(response.data.productConnection).toSorted((a, b) =>
     a.title.localeCompare(b.title)
   );
 
-  // Optimize the color swatches before they're serialized into the order island.
-  await Promise.all(
-    products.flatMap(
-      (product) =>
-        product.materials?.materials?.flatMap((material) =>
-          (material?.material_path.colors ?? []).map(async (color) => {
-            if (color?.image) {
-              color.image = await optimizeImage(color.image, SWATCH_WIDTH);
-            }
-          })
-        ) ?? []
-    )
+  const result: RecursiveRequired<CmsEnhancedProduct, GetImageResult | Date>[] = [];
+
+  for (const product of products) {
+    result.push({
+      product_id: product.product_id,
+      title: product.title,
+      hidden_in_product_list: product.hidden_in_product_list ?? undefined,
+      can_be_ordered: product.can_be_ordered ?? undefined,
+      categories: product.categories ?? undefined,
+      date: product.date ? new Date(product.date) : undefined,
+      thumbnail: product.thumbnail ? await optimizeImage(product.thumbnail, LOGO_WIDTH) : undefined,
+      shortDescription: product.shortDescription ?? undefined,
+      icon: product.icon ? await optimizeImage(product.icon, LOGO_WIDTH) : undefined,
+      priced_by_length: product.priced_by_length ?? undefined,
+      price: product.price ?? undefined,
+      discount: product.discount ?? undefined,
+      discount_valid_until: product.discount_valid_until
+        ? new Date(product.discount_valid_until)
+        : undefined,
+      images: await Promise.all(
+        (product.images ?? [])
+          .filter((image) => image != null)
+          .map(async (image) => ({
+            image: image.image ? await optimizeImage(image.image, LOGO_WIDTH) : undefined,
+            description: image.description ?? undefined,
+          }))
+      ),
+      materials: {
+        materials: await Promise.all(
+          (product.materials?.materials ?? [])
+            .filter((material) => material != null)
+            .map(async (material) => {
+              const material_path = material.material_path;
+              return {
+                price: material.price ?? undefined,
+                color_count: material.color_count ?? undefined,
+                material_path: await transformMaterial(material_path),
+              };
+            })
+        ),
+        banned_combinations: await Promise.all(
+          (product.materials?.banned_combinations ?? [])
+            .filter((combination) => combination != null)
+            .map(async (combination) => ({
+              materials: await Promise.all(
+                (combination.materials ?? [])
+                  .filter((material) => material != null)
+                  .map(async (material) => ({
+                    material_path: await transformMaterial(material.material_path),
+                  }))
+              ),
+            }))
+        ),
+        material_required_count: product.materials?.material_required_count ?? undefined,
+      },
+      table:
+        product.table
+          ?.filter((row) => row != null)
+          .map((row) => ({
+            description: row.description ?? undefined,
+            title: row.title ?? undefined,
+          })) ?? undefined,
+      fields:
+        product.fields
+          ?.filter((field) => field != null)
+          .map((field) => ({
+            allow_custom_value: field.allow_custom_value ?? undefined,
+            label: field.label,
+            length_based_pricing_source: field.length_based_pricing_source ?? undefined,
+            name: field.name,
+            optional: field.optional ?? undefined,
+            type: field.type,
+            placeholder: field.placeholder ?? undefined,
+            price: field.price ?? undefined,
+            regex: field.regex ?? undefined,
+            items:
+              field.items
+                ?.filter((item) => item != null)
+                .map((item) => ({
+                  label: item.label,
+                  value: item.value,
+                  price: item.price ?? undefined,
+                  tooltip: item.tooltip ?? undefined,
+                })) ?? undefined,
+          })) ?? undefined,
+    });
+  }
+
+  return result;
+};
+
+const transformMaterial = async (
+  material: CmsOriginalMaterial
+): Promise<RecursiveRequired<CmsEnhancedMaterial, GetImageResult>> => {
+  return {
+    material_id: material.material_id,
+    label: material.label,
+    categories: material.categories ?? undefined,
+    shortDescription: material.shortDescription ?? undefined,
+    thumbnail: material.thumbnail ? await optimizeImage(material.thumbnail, LOGO_WIDTH) : undefined,
+    colors: material.colors
+      ? await Promise.all(
+          material.colors
+            .filter((color) => color != null)
+            .map(async (color) => ({
+              color_id: color.color_id,
+              label: color.label,
+              hex: color.hex ?? undefined,
+              image: color.image ? await optimizeImage(color.image, SWATCH_WIDTH) : undefined,
+            }))
+        )
+      : undefined,
+  };
+};
+
+export const getMaterials = async (): Promise<CmsEnhancedMaterial[]> => {
+  const response = await client.queries.product_materialsConnection();
+
+  const materials = nodesFrom(response.data.product_materialsConnection).toSorted((a, b) =>
+    a.label.localeCompare(b.label)
   );
 
-  return products.map((product) => resolveTinaImageRefs(product));
+  const result: RecursiveRequired<CmsEnhancedMaterial, GetImageResult>[] = [];
+
+  for (const material of materials) {
+    result.push(await transformMaterial(material));
+  }
+
+  return result;
 };
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const getMaterials = async () => {
-  const result = await client.queries.product_materialsConnection();
-
-  return nodesFrom(result.data.product_materialsConnection)
-    .toSorted((a, b) => a.label.localeCompare(b.label))
-    .map((material) => resolveTinaImageRefs(material));
-};
-
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const getDeliveryMethods = async () => {
+export const getDeliveryMethods = async (): Promise<CmsEnhancedDeliveryMethod[]> => {
   const result = await client.queries.delivery_methodsConnection();
 
-  return nodesFrom(result.data.delivery_methodsConnection);
+  const nodes = nodesFrom(result.data.delivery_methodsConnection);
+  return nodes;
 };
-
-export type CmsConfig = Awaited<ReturnType<typeof getConfig>>["data"]["config"];
-export type CmsProduct = Awaited<ReturnType<typeof getProducts>>[number];
-export type CmsMaterial = Awaited<ReturnType<typeof getMaterials>>[number];
-export type CmsDeliveryMethod = Awaited<ReturnType<typeof getDeliveryMethods>>[number];

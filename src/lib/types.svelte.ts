@@ -1,4 +1,4 @@
-import type { CmsProduct } from "./data";
+import type { CmsEnhancedProduct } from "./data";
 export interface ValueWithError {
   value: string;
   is_custom?: boolean;
@@ -12,8 +12,8 @@ export interface ProductMaterialValue {
   error?: string | undefined;
 }
 
-export type CmsField = NonNullable<CmsProduct["fields"]>[number];
-export type CmsProductMaterials = NonNullable<CmsProduct["materials"]>;
+export type CmsField = NonNullable<CmsEnhancedProduct["fields"]>[number];
+export type CmsProductMaterials = NonNullable<CmsEnhancedProduct["materials"]>;
 export type CmsProductMaterial = NonNullable<CmsProductMaterials["materials"]>[number];
 
 export type Field = CmsField & { value?: ValueWithError | undefined };
@@ -26,7 +26,7 @@ export type ProductMaterials = Omit<
   materials: CmsProductMaterial[];
 };
 
-export interface IProduct extends Omit<CmsProduct, "materials" | "fields"> {
+export interface IProduct extends Omit<CmsEnhancedProduct, "materials" | "fields"> {
   uuid: string;
   count: number;
   materials: ProductMaterials;
