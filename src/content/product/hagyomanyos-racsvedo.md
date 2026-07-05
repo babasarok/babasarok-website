@@ -1,5 +1,4 @@
 ---
-material_required_count: 2
 product_id: hagyomanyos-racsvedo
 title: Hagyományos Rácsvédő
 can_be_ordered: true

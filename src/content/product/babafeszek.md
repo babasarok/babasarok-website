@@ -1,5 +1,4 @@
 ---
-material_required_count: 2
 product_id: babafeszek
 title: Babafészek
 can_be_ordered: true
