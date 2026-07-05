@@ -1,6 +1,19 @@
 ---
-title: Babafészek
+material_required_count: 2
 product_id: babafeszek
+title: Babafészek
+can_be_ordered: true
+categories: A nyugodt alvás titka
+date: 2024-02-02T06:49:27.000Z
+thumbnail: /src/assets/Noémi-04.jpg
+table:
+  - title: Normál méret 35x65cm
+    description: 15.000Ft
+  - title: Közepes méret 40x75cm
+    description: 16.500Ft
+  - title: XXL méret 50x90cm
+    description: 20.000Ft
+shortDescription: 'A babafészek biztonságos, kényelmes pihenést biztosít a legkisebbeknek. A szűk, anyaméhhez hasonló környezet elősegíti a békés alvást, miközben a fészek alján lévő szalaggal könnyedén szabályozható a tér. Ideális választás a nyugodt, pihentető éjszakákért!'
 price: 15000
 materials:
   materials:
@@ -11,7 +24,7 @@ materials:
     - material_path: src/content/material/wellsoft.md
     - material_path: src/content/material/duplagez.md
     - material_path: src/content/material/waffle.md
-material_required_count: 2
+  material_required_count: 2
 fields:
   - name: meret
     price: 0
@@ -38,16 +51,5 @@ fields:
     price: 3700
     label: Betét
     type: toggle
-categories: A nyugodt alvás titka
-date: 2024-02-02T06:49:27.000Z
-thumbnail: /src/assets/Noémi-04.jpg
-table:
-  - title: Normál méret 35x65cm
-    description: 15.000Ft
-  - title: Közepes méret 40x75cm
-    description: 16.500Ft
-  - title: XXL méret 50x90cm
-    description: 20.000Ft
-shortDescription: "A babafészek biztonságos, kényelmes pihenést biztosít a legkisebbeknek. A szűk, anyaméhhez hasonló környezet elősegíti a békés alvást, miközben a fészek alján lévő szalaggal könnyedén szabályozható a tér. Ideális választás a nyugodt, pihentető éjszakákért!"
-can_be_ordered: true
 ---
+
