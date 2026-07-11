@@ -1,15 +1,38 @@
 ---
-import { getCollection } from "astro:content";
+import { getEntry } from "astro:content";
 import { Markdown } from "astro-md-2";
 import productSection from "../../content/sections/product.json";
 import Button from "../ui/Button.astro";
 import ProductCard from "../ui/ProductCard.astro";
 
-const { enable, title, itemCount, buttonName, buttonTarget } = productSection;
+const {
+  enable,
+  title,
+  itemCount,
+  buttonName,
+  buttonTarget,
+  products: productList,
+} = productSection;
 
-const products = (await getCollection("product"))
-  .toSorted((a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0))
-  .slice(0, itemCount);
+let products = [];
+for (const productRef of productList) {
+  if (!productRef || !productRef.product) {
+    continue;
+  }
+
+  const id = productRef.product.split("/").pop()?.split(".")[0];
+
+  if (!id) {
+    continue;
+  }
+
+  const entry = await getEntry("product", id);
+  if (entry) {
+    products.push(entry);
+  }
+}
+
+products = products.slice(0, itemCount);
 
 const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
 ---

@@ -1,8 +1,27 @@
 {
   "enable": true,
   "title": "## Legnépszerűbb Termékeink\n\nFontos, hogy mivel minden termék egyedi elképzelés alapján készül, a színek és minták széles választéka nem található az oldalon. Ha konkrét elképzelésed van, ne habozz kapcsolatba lépni velünk!\n",
-  "_template": "product_section_template",
+  "itemCount": 6,
   "buttonName": "Összes termék",
   "buttonTarget": "product",
-  "itemCount": 6
+  "products": [
+    {
+      "product": "src/content/product/fonott-racsvedo.md"
+    },
+    {
+      "product": "src/content/product/babafeszek-szett.md"
+    },
+    {
+      "product": "src/content/product/duplagez-kanikulatakaro.md"
+    },
+    {
+      "product": "src/content/product/cumi-ragcsalanc.md"
+    },
+    {
+      "product": "src/content/product/dekorbetuk.md"
+    },
+    {
+      "product": "src/content/product/babatakaro-szett.md"
+    }
+  ]
 }
