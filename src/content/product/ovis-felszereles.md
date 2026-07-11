@@ -22,5 +22,29 @@ fields:
     label: 'Vízhatlan fektető, derékalj'
     type: toggle
     tooltip: 'Egyik oldal vízhatlan, másik oldal színes-mintás, béléssel'
+  - name: paplan
+    price: 10500
+    label: Paplan és párnahuzat
+    type: toggle
+  - name: takaro-lapos-parna
+    price: 12900
+    label: Takaró és lapos párna
+    type: toggle
+    tooltip: 'Egyben mosható. 100x140cm takaró, 40x50cm lapos párna'
+  - name: pufi-parna
+    price: 3000
+    label: 'Pufi párna, fehér, huzat nélkül'
+    type: toggle
+    tooltip: 40x50 cm
+  - name: pufi-parna-huzat
+    price: 3800
+    label: Pufi párna huzat
+    type: toggle
+    tooltip: 40x50cm
+  - name: steppelt-takaro-lapos-parna
+    price: 10800
+    label: Steppelt takaró és lapos párna
+    type: toggle
+    tooltip: 'Antiallergén töltettel, huzat nélkül. Takaró: 100x140 cm Párna 40x50 cm'
 ---
 
