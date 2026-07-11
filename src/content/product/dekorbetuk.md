@@ -4,6 +4,12 @@ product_id: dekorbetuk
 categories: Tedd még különlegesebbé a babaszobát!
 date: 2025-04-28T06:49:27.000Z
 thumbnail: /src/assets/IMG_7073.jpg
+images:
+  - image: /src/assets/sophie.jpg
+  - image: /src/assets/IMG_0435.jpg
+  - image: /src/assets/E871C000-8C7F-4662-8288-874788CBA080.PNG
+  - image: /src/assets/IMG_8683.jpg
+  - image: /src/assets/IMG_8684.jpg
 table:
   - title: Kiegészítő figurák (díszítve)
     description: 700Ft
@@ -17,13 +23,3 @@ shortDescription: >-
 
   Minden betű kb. 15 cm magas, a szélessége igazodik az adott betűhöz.
 ---
-
-![](/src/assets/sophie.jpg)
-
-![](/src/assets/IMG_0435.jpg)
-
-![](/src/assets/E871C000-8C7F-4662-8288-874788CBA080.PNG)
-
-![](/src/assets/IMG_8683.jpg)
-
-![](/src/assets/IMG_8684.jpg)

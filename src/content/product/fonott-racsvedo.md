@@ -53,6 +53,10 @@ fields:
 categories: A baba biztonsága és stílusa egyben
 date: 2025-05-20T12:07:16.000Z
 thumbnail: /src/assets/Noémi-35.jpg
+images:
+  - image: /src/assets/Noémi-25.jpg
+  - image: /src/assets/Noémi-18.jpg
+  - image: /src/assets/Noémi-39.jpg
 table:
   - title: 200cm
     description: 12.800Ft
@@ -87,6 +91,3 @@ Fonataink háromféle anyagtípussal is kérhetők.
 3, Pihe-puha teddy (buklé) -dizájnos megjelenés, puha tapintás.
 
 Antiallergén töltete és mosóbarát jellege minden fonatnak garantálja a bababarát környezetet, míg strapabíró kialakítása hosszú távú használatot biztosít.
-
-| ![](/src/assets/Noémi-25.jpg) | ![](/src/assets/Noémi-18.jpg) | ![](/src/assets/Noémi-39.jpg) |
-| ----------------------------- | ----------------------------- | ----------------------------- |
