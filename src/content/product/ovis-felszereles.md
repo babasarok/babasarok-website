@@ -4,7 +4,7 @@ title: Ovis Felszerelés
 hidden_in_product_list: false
 can_be_ordered: true
 date: 2026-07-11T09:26:43.966Z
-thumbnail: /src/assets/ovis-felszereles.jpeg
+thumbnail: /src/assets/ovis-felszereles-header.jpeg
 price: 0
 materials:
   materials:
@@ -56,3 +56,4 @@ fields:
     type: toggle
 ---
 
+![](/src/assets/ovis-felszereles.jpeg)
