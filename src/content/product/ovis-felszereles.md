@@ -12,5 +12,15 @@ materials:
       price: 0
       color_count: '1'
   material_required_count: 1
+fields:
+  - name: vizhatlan-lepedo
+    price: 4900
+    label: Vízhatlan lepedő (egyrétegű)
+    type: toggle
+  - name: fekteto
+    price: 9500
+    label: 'Vízhatlan fektető, derékalj'
+    type: toggle
+    tooltip: 'Egyik oldal vízhatlan, másik oldal színes-mintás, béléssel'
 ---
 

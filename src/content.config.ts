@@ -259,6 +259,7 @@ const product = defineCollection({
               allow_custom_value: z.boolean().optional().nullable(),
               regex: z.string().optional().nullable(),
               placeholder: z.string().optional().nullable(),
+              tooltip: z.string().optional().nullable(),
               items: z
                 .array(
                   z

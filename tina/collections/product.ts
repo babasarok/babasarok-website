@@ -406,6 +406,13 @@ export const ProductCollection: Collection = {
           },
         },
         {
+          type: "string",
+          name: "tooltip",
+          label: "Tooltip",
+          description:
+            "Opcionális leírás, ami megjelenik, amikor a felhasználó a lehetőség fölé viszi az egeret.",
+        },
+        {
           type: "object",
           list: true,
           name: "items",
