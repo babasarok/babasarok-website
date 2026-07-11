@@ -1,7 +1,8 @@
 ---
-title: Fonott rácsvédő
 product_id: negyes-fonat
+title: Fonott rácsvédő
 categories: 4-es fonat
+date: 2026-07-01T09:23:39.567Z
 thumbnail: /src/assets/IMG_7422 (1).jpg
 images:
   - image: /src/assets/IMG_8843.JPG
@@ -34,3 +35,4 @@ shortDescription: |-
   A hármas fonathoz hasonlóan védi a baba fejét a rácsokhoz való ütközéstől.
   magassága nagyobb, mint a hármas fonat, mivel 4szálból készül, kb. 21 cm.
 ---
+

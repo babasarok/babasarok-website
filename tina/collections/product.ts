@@ -77,6 +77,7 @@ export const ProductCollection: Collection = {
       type: "datetime",
       name: "date",
       label: "Dátum",
+      required: true,
     },
     {
       type: "image",
