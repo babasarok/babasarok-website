@@ -1,6 +1,7 @@
 ---
 product_id: kedvezmenyes-termekek
 title: Kedvezményes termékek
+date: 2026-07-06T09:46:20.507Z
 thumbnail: /src/assets/IMG_3353.jpg
 table:
   - title: 'Csajos, virágos babafészek szettben (közepes)'

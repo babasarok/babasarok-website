@@ -3,15 +3,19 @@ product_id: kanikula-takaro
 title: Kánikulatakaró
 hidden_in_product_list: true
 can_be_ordered: true
+date: 2026-06-28T09:45:13.551Z
 price: 0
 materials:
   materials:
     - material_path: src/content/material/duplagez.md
       price: 3000
+      color_count: '1'
     - material_path: src/content/material/waffle.md
       price: 4000
+      color_count: '1'
     - material_path: src/content/material/pamutvaszon.md
       price: 2500
+      color_count: '1'
   material_required_count: 2
   banned_combinations:
     - materials:
