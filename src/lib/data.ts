@@ -325,7 +325,7 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
               ),
             }))
         ),
-        material_required_count: product.materials?.material_required_count ?? undefined,
+        material_required_count: product.materials?.material_required_count ?? 0,
       },
       table:
         product.table
