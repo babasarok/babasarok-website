@@ -46,5 +46,13 @@ fields:
     label: Steppelt takaró és lapos párna
     type: toggle
     tooltip: 'Antiallergén töltettel, huzat nélkül. Takaró: 100x140 cm Párna 40x50 cm'
+  - name: ovis-zsak
+    price: 4500
+    label: Ovis zsák/vállfás zsák
+    type: toggle
+  - name: tornazsak
+    price: 4000
+    label: Béléses tornazsák
+    type: toggle
 ---
 
