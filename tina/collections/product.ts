@@ -199,6 +199,11 @@ export const ProductCollection: Collection = {
       label: "Anyagok",
       description:
         "A termékhez tartozó anyagok beállításai. Ha nincs egy se hozzáadva, akkor a termékhez nem lesz anyag kiválasztási lehetőség a rendelési felületen.",
+      ui: {
+        defaultItem: {
+          material_required_count: 0,
+        },
+      },
       fields: [
         {
           type: "object",
@@ -211,6 +216,11 @@ export const ProductCollection: Collection = {
             itemProps: (item) => {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-condition
               return { label: item?.material_path || "Új anyag" };
+            },
+            defaultItem: {
+              material_path: "",
+              price: 0,
+              color_count: "1",
             },
           },
           fields: [
@@ -228,6 +238,7 @@ export const ProductCollection: Collection = {
               label: "Ár",
               description:
                 "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni. Ha nincs megadva akkor 0.",
+              required: true,
             },
             {
               type: "string",
@@ -235,6 +246,7 @@ export const ProductCollection: Collection = {
               label: "Választható színek/minták száma",
               description:
                 "Az alap 1. Ha egy másik mező az alapja, írd be a Mező ID-jét. A Mezó szám alapú legyen.",
+              required: true,
             },
           ],
         },
@@ -244,6 +256,7 @@ export const ProductCollection: Collection = {
           label: "Szükséges anyagok száma",
           description:
             "Ennek a terméknek a rendeléséhez hány anyagra van szükség. Ez csak akkor lesz releváns, ha anyagokat adtál hozzá a termékhez. Az alap 1.",
+          required: true,
         },
         {
           type: "object",

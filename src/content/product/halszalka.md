@@ -30,5 +30,7 @@ table:
     description: 38.000Ft
 shortDescription: 'Ez a különleges rácsvédő 5 szálból készül. Halszálka fonás, magassága kb. 20-21cm. Funkciója a többi rácsvédőhöz hasonlóan, hogy védje a babát vagy a baba fejét a rácsokhoz való ütközéstől. Dizájnos, rendkívül különleges fonat, igazán feldobja a kiságyat és a babaszobát.'
 price: 0
+materials:
+  material_required_count: 0
 ---
 

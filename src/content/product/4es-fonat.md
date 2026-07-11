@@ -34,5 +34,7 @@ table:
 shortDescription: |-
   A hármas fonathoz hasonlóan védi a baba fejét a rácsokhoz való ütközéstől.
   magassága nagyobb, mint a hármas fonat, mivel 4szálból készül, kb. 21 cm.
+materials:
+  material_required_count: 0
 ---
 

@@ -63,6 +63,7 @@ export const ProductSectionCollection: Collection = {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-condition
           label: item?.product || "Új termék",
         }),
+        max: 6,
       },
       fields: [
         {
