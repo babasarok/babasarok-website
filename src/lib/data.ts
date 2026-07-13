@@ -348,6 +348,12 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
             price: field.price ?? undefined,
             regex: field.regex ?? undefined,
             tooltip: field.tooltip ?? undefined,
+            depends_on: field.depends_on
+              ? {
+                  field: field.depends_on.field ?? undefined,
+                  value: field.depends_on.value ?? undefined,
+                }
+              : undefined,
             items:
               field.items
                 ?.filter((item) => item != null)
