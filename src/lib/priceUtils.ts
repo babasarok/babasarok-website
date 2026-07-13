@@ -1,5 +1,6 @@
 import type { IProduct, Field, CmsProductMaterial } from "./types.svelte";
 import type { ProductMaterialValue } from "./types.svelte";
+import { isFieldVisible } from "./fieldVisibility";
 
 interface PricePart {
   label: string;
@@ -79,6 +80,9 @@ function getMaterialPrice(
 export function calculatePriceForItem(product: IProduct): Price | LengthBasedPrice {
   const parts: PricePart[] = [];
   for (const field of product.fields) {
+    if (!isFieldVisible(field, product.fields)) {
+      continue;
+    }
     const fieldPrice = getFieldPrice(field);
     if (!fieldPrice) {
       continue;

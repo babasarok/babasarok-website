@@ -1,6 +1,7 @@
 import { resolveColorCount } from "./materialUtils";
 import type { CmsProductMaterial, Field, IProduct } from "./types.svelte";
 import type { ProductMaterialValue } from "./types.svelte";
+import { isFieldVisible } from "./fieldVisibility";
 
 function prefillField(field: Field): void {
   switch (field.type) {
@@ -168,6 +169,13 @@ function updateMaterialsWithErrors(item: IProduct): void {
 
 export function validateItem(item: IProduct): IProduct {
   for (const field of item.fields) {
+    // Hidden dependent fields must not block submission; clear any stale error.
+    if (!isFieldVisible(field, item.fields)) {
+      if (field.value) {
+        field.value.error = undefined;
+      }
+      continue;
+    }
     updateFieldWithErrors(field);
   }
 
@@ -177,7 +185,7 @@ export function validateItem(item: IProduct): IProduct {
 
 export function isItemValid(item: IProduct): boolean {
   for (const field of item.fields) {
-    if (field.value?.error) {
+    if (isFieldVisible(field, item.fields) && field.value?.error) {
       return false;
     }
   }
@@ -197,7 +205,7 @@ export function isItemValid(item: IProduct): boolean {
   }
 
   for (const field of item.fields) {
-    if (field.value?.error) {
+    if (isFieldVisible(field, item.fields) && field.value?.error) {
       return false;
     }
   }

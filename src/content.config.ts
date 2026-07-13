@@ -260,6 +260,13 @@ const product = defineCollection({
               regex: z.string().optional().nullable(),
               placeholder: z.string().optional().nullable(),
               tooltip: z.string().optional().nullable(),
+              depends_on: z
+                .object({
+                  field: z.string().optional().nullable(),
+                  value: z.string().optional().nullable(),
+                })
+                .optional()
+                .nullable(),
               items: z
                 .array(
                   z

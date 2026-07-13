@@ -37,6 +37,7 @@ export interface FieldOpts {
   regex?: string;
   length_based_pricing_source?: boolean;
   value?: ValueWithError;
+  depends_on?: { field?: string | null; value?: string | null } | null;
 }
 
 /** Build a single product `Field` (the runtime slice the order logic reads). */
