@@ -53,7 +53,20 @@
 <!-- Generic fields -->
 {#each product.fields as field (field.name)}
   <div class="flex flex-col gap-1">
-    <p class="text-sm text-brown-500">{field.label || field.name}</p>
+    <p class="text-sm text-brown-500 inline-flex items-center gap-1">
+      {field.label || field.name}
+      {#if field.tooltip}
+        <Tooltip contentProps={{ class: "inline-block" }}>
+          {#snippet content()}
+            {field.tooltip}
+          {/snippet}
+          <Icon
+            icon="material-symbols:question-mark-rounded"
+            class="rounded-full bg-accent text-white p-0.5 text-sm leading-none"
+          />
+        </Tooltip>
+      {/if}
+    </p>
     <div class="flex gap-1 flex-wrap">
       {#if field.type === "radio" && "items" in field}
         {@const items = field.items?.filter((item) => item != null)}

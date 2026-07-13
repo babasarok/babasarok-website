@@ -306,8 +306,8 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
             .map(async (material) => {
               const material_path = material.material_path;
               return {
-                price: material.price ?? undefined,
-                color_count: material.color_count ?? undefined,
+                price: material.price,
+                color_count: material.color_count,
                 material_path: await transformMaterial(material_path),
               };
             })
@@ -325,7 +325,7 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
               ),
             }))
         ),
-        material_required_count: product.materials?.material_required_count ?? undefined,
+        material_required_count: product.materials?.material_required_count ?? 0,
       },
       table:
         product.table
@@ -347,6 +347,7 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
             placeholder: field.placeholder ?? undefined,
             price: field.price ?? undefined,
             regex: field.regex ?? undefined,
+            tooltip: field.tooltip ?? undefined,
             items:
               field.items
                 ?.filter((item) => item != null)

@@ -210,13 +210,13 @@ const product = defineCollection({
         .nullable(),
       materials: z
         .object({
-          material_required_count: z.number().optional().nullable(),
+          material_required_count: z.number(),
           materials: z
             .array(
               z
                 .object({
-                  color_count: z.string().optional().nullable(),
-                  price: z.number().optional().nullable(),
+                  color_count: z.string(),
+                  price: z.number(),
                   material_path: z.string(),
                 })
                 .optional()
@@ -259,6 +259,7 @@ const product = defineCollection({
               allow_custom_value: z.boolean().optional().nullable(),
               regex: z.string().optional().nullable(),
               placeholder: z.string().optional().nullable(),
+              tooltip: z.string().optional().nullable(),
               items: z
                 .array(
                   z

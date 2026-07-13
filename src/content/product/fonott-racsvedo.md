@@ -1,58 +1,14 @@
 ---
-title: Fonott Rácsvédő (Teddy/Velúr)
 product_id: racsvedo
-icon: /src/assets/product/braids.svg
-priced_by_length: true
-price: 0
-materials:
-  materials:
-    - material_path: src/content/material/velur.md
-      price: 0
-      color_count: fonas
-    - material_path: src/content/material/teddy.md
-      price: 0
-      color_count: fonas
-fields:
-  - name: sizes
-    length_based_pricing_source: true
-    label: Méret
-    type: radio
-    items:
-      - value: "200"
-        label: 200cm
-      - value: "260"
-        label: 260cm
-      - value: "300"
-        label: 300cm
-      - value: "340"
-        label: 340cm
-      - value: "380"
-        label: 380cm
-      - value: "400"
-        label: 400cm
-    allow_custom_value: true
-    regex: '^(\d+)$'
-  - name: fonas
-    label: Fonás
-    type: radio
-    items:
-      - value: "3"
-        label: Hármas
-        price: 7500
-      - value: "4"
-        label: Négyes
-        price: 9500
-      - value: "5"
-        label: Ötös
-        price: 11500
-        tooltip: Más néven halszálka.
-      - value: "6"
-        label: Hatos
-        price: 13500
-    regex: '^(\d+)$'
+title: Fonott Rácsvédő (Teddy/Velúr)
+can_be_ordered: true
 categories: A baba biztonsága és stílusa egyben
 date: 2025-05-20T12:07:16.000Z
 thumbnail: /src/assets/Noémi-35.jpg
+images:
+  - image: /src/assets/Noémi-25.jpg
+  - image: /src/assets/Noémi-18.jpg
+  - image: /src/assets/Noémi-39.jpg
 table:
   - title: 200cm
     description: 12.800Ft
@@ -74,8 +30,57 @@ table:
     description: 24.300Ft
   - title: 400cm
     description: 25.600Ft
-shortDescription: "A fonott rácsvédő nemcsak dizájnos kiegészítője a kiságyának, hanem praktikus védelmet is nyújt. Puha, pufi anyaga megóvja a baba fejét a rácsokkal való ütközéstől, különösen, amikor a pici már forogni kezd. "
-can_be_ordered: true
+shortDescription: 'A fonott rácsvédő nemcsak dizájnos kiegészítője a kiságyának, hanem praktikus védelmet is nyújt. Puha, pufi anyaga megóvja a baba fejét a rácsokkal való ütközéstől, különösen, amikor a pici már forogni kezd. '
+icon: /src/assets/product/braids.svg
+priced_by_length: true
+price: 0
+materials:
+  materials:
+    - material_path: src/content/material/velur.md
+      price: 0
+      color_count: fonas
+    - material_path: src/content/material/teddy.md
+      price: 0
+      color_count: fonas
+  material_required_count: 1
+fields:
+  - name: sizes
+    length_based_pricing_source: true
+    label: Méret
+    type: radio
+    items:
+      - value: '200'
+        label: 200cm
+      - value: '260'
+        label: 260cm
+      - value: '300'
+        label: 300cm
+      - value: '340'
+        label: 340cm
+      - value: '380'
+        label: 380cm
+      - value: '400'
+        label: 400cm
+    allow_custom_value: true
+    regex: ^(\d+)$
+  - name: fonas
+    label: Fonás
+    type: radio
+    items:
+      - value: '3'
+        label: Hármas
+        price: 7500
+      - value: '4'
+        label: Négyes
+        price: 9500
+      - value: '5'
+        label: Ötös
+        price: 11500
+        tooltip: Más néven halszálka.
+      - value: '6'
+        label: Hatos
+        price: 13500
+    regex: ^(\d+)$
 ---
 
 Fonataink háromféle anyagtípussal is kérhetők.
@@ -87,6 +92,3 @@ Fonataink háromféle anyagtípussal is kérhetők.
 3, Pihe-puha teddy (buklé) -dizájnos megjelenés, puha tapintás.
 
 Antiallergén töltete és mosóbarát jellege minden fonatnak garantálja a bababarát környezetet, míg strapabíró kialakítása hosszú távú használatot biztosít.
-
-| ![](/src/assets/Noémi-25.jpg) | ![](/src/assets/Noémi-18.jpg) | ![](/src/assets/Noémi-39.jpg) |
-| ----------------------------- | ----------------------------- | ----------------------------- |

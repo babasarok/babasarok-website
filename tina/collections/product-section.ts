@@ -50,5 +50,29 @@ export const ProductSectionCollection: Collection = {
       name: "buttonTarget",
       label: "Gomb cél",
     },
+    {
+      type: "object",
+      list: true,
+      name: "products",
+      label: "Termékek",
+
+      description:
+        "A termékek amik a főoldalon megjelennek. A termékek sorrendje a listában meghatározott.",
+      ui: {
+        itemProps: (item) => ({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-condition
+          label: item?.product || "Új termék",
+        }),
+        max: 6,
+      },
+      fields: [
+        {
+          type: "reference",
+          name: "product",
+          label: "Termék",
+          collections: ["product"],
+        },
+      ],
+    },
   ],
 };

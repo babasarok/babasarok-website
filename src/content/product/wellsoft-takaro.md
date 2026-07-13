@@ -1,6 +1,11 @@
 ---
-title: Meleg Wellsoft Takaró
 product_id: wellsoft-takaro
+title: Meleg Wellsoft Takaró
+hidden_in_product_list: true
+can_be_ordered: true
+date: 2026-02-01T10:42:40.867Z
+materials:
+  material_required_count: 0
 fields:
   - name: meret
     label: Méret
@@ -14,6 +19,5 @@ fields:
     label: Szín
     type: color
     allow_custom_value: true
-hidden_in_product_list: true
-can_be_ordered: true
 ---
+
