@@ -52,133 +52,62 @@
 {/snippet}
 
 <!-- Generic fields -->
-{#each product.fields as field (field.name)}
-  {#if isFieldVisible(field, product.fields)}
-    <div class="flex flex-col gap-1">
-      <p class="text-sm text-brown-500 inline-flex items-center gap-1">
-        {field.label || field.name}
-        {#if field.tooltip}
-          <Tooltip contentProps={{ class: "inline-block" }}>
-            {#snippet content()}
-              {field.tooltip}
-            {/snippet}
-            <Icon
-              icon="material-symbols:question-mark-rounded"
-              class="rounded-full bg-accent text-white p-0.5 text-sm leading-none"
-            />
-          </Tooltip>
-        {/if}
-      </p>
-      <div class="flex gap-1 flex-wrap">
-        {#if field.type === "radio" && "items" in field}
-          {@const items = field.items?.filter((item) => item != null)}
-          {#each items as item (item.label)}
-            {@const selected = field.value?.value === item.value}
-            {#snippet button(hasTooltip: boolean)}
-              <Button
-                type="button"
-                class="flex items-center gap-0.5"
-                {selected}
-                onclick={() => {
-                  const result = product;
-                  const fieldToUpdate = result.fields.find((f) => f.name === field.name);
-                  if (fieldToUpdate) {
-                    fieldToUpdate.value = {
-                      value: item.value,
-                      is_custom: false,
-                    };
-                    onChange?.(result);
-                  }
-                }}
-              >
-                {item.label || item.value}
-                {#if hasTooltip}
-                  <Icon icon="material-symbols:question-mark-rounded" class="text-xs" />
-                {/if}
-              </Button>
-            {/snippet}
-            {#if item.tooltip}
-              <Tooltip contentProps={{ class: "inline-block" }}>
-                {#snippet content()}
-                  {item.tooltip}
-                {/snippet}
-                {@render button(true)}
-              </Tooltip>
-            {:else}
-              {@render button(false)}
-            {/if}
-          {/each}
-          {#if field.allow_custom_value}
-            <div transition:slide>
-              <Button
-                type="button"
-                selected={field.value?.is_custom ?? false}
-                onclick={() => {
-                  const result = product;
-                  const fieldToUpdate = result.fields.find((f) => f.name === field.name);
-                  if (fieldToUpdate) {
-                    fieldToUpdate.value = {
-                      value: "",
-                      is_custom: true,
-                    };
-                    onChange?.(result);
-                  }
-                }}
-              >
-                Egyéb
-              </Button>
-            </div>
+<div class="flex flex-col">
+  {#each product.fields as field (field.name)}
+    {#if isFieldVisible(field, product.fields)}
+      <div class="flex flex-col gap-1 mt-2 first:mt-0" transition:slide>
+        <p class="text-sm text-brown-500 inline-flex items-center gap-1">
+          {field.label || field.name}
+          {#if field.tooltip}
+            <Tooltip contentProps={{ class: "inline-block" }}>
+              {#snippet content()}
+                {field.tooltip}
+              {/snippet}
+              <Icon
+                icon="material-symbols:question-mark-rounded"
+                class="rounded-full bg-accent text-white p-0.5 text-sm leading-none"
+              />
+            </Tooltip>
           {/if}
-          {@render Input(field)}
-        {:else if field.type === "select" && "items" in field}
-          {@const items = field.items?.filter((item) => item != null)}
-          <select
-            value={field.value?.value}
-            onchange={(e) => {
-              if (!(e.target instanceof HTMLSelectElement)) {
-                return;
-              }
-
-              const result = product;
-              const fieldToUpdate = result.fields.find((f) => f.name === field.name);
-              if (fieldToUpdate) {
-                fieldToUpdate.value = {
-                  value: e.target.value,
-                  is_custom: false,
-                };
-                onChange?.(result);
-              }
-            }}
-          >
-            <option value="" disabled selected>{field.placeholder || "Válassz egy opciót"}</option>
-            {#each items as item (item.label)}
-              <option value={item.value}>
-                {item.label || item.value}
-              </option>
-            {/each}
-          </select>
-        {:else if field.type === "input"}
-          {@render Input(field)}
-        {:else if field.type === "color"}
-          {@const items = field.items?.filter((item) => item != null)}
-          <div class="flex gap-1 flex-wrap">
+        </p>
+        <div class="flex gap-1 flex-wrap">
+          {#if field.type === "radio" && "items" in field}
+            {@const items = field.items?.filter((item) => item != null)}
             {#each items as item (item.label)}
               {@const selected = field.value?.value === item.value}
-              <Color
-                color={{ color_id: item.value, hex: item.value, label: item.label ?? undefined }}
-                {selected}
-                onclick={(color_id) => {
-                  const result = product;
-                  const fieldToUpdate = result.fields.find((f) => f.name === field.name);
-                  if (fieldToUpdate) {
-                    fieldToUpdate.value = {
-                      value: color_id,
-                      is_custom: false,
-                    };
-                    onChange?.(result);
-                  }
-                }}
-              />
+              {#snippet button(hasTooltip: boolean)}
+                <Button
+                  type="button"
+                  class="flex items-center gap-0.5"
+                  {selected}
+                  onclick={() => {
+                    const result = product;
+                    const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                    if (fieldToUpdate) {
+                      fieldToUpdate.value = {
+                        value: item.value,
+                        is_custom: false,
+                      };
+                      onChange?.(result);
+                    }
+                  }}
+                >
+                  {item.label || item.value}
+                  {#if hasTooltip}
+                    <Icon icon="material-symbols:question-mark-rounded" class="text-xs" />
+                  {/if}
+                </Button>
+              {/snippet}
+              {#if item.tooltip}
+                <Tooltip contentProps={{ class: "inline-block" }}>
+                  {#snippet content()}
+                    {item.tooltip}
+                  {/snippet}
+                  {@render button(true)}
+                </Tooltip>
+              {:else}
+                {@render button(false)}
+              {/if}
             {/each}
             {#if field.allow_custom_value}
               <div transition:slide>
@@ -201,14 +130,13 @@
                 </Button>
               </div>
             {/if}
-          </div>
-          {@render Input(field)}
-        {:else if field.type === "toggle"}
-          <div class="flex">
-            <Switch
-              checked={field.value?.value === "true"}
+            {@render Input(field)}
+          {:else if field.type === "select" && "items" in field}
+            {@const items = field.items?.filter((item) => item != null)}
+            <select
+              value={field.value?.value}
               onchange={(e) => {
-                if (!(e.target instanceof HTMLInputElement)) {
+                if (!(e.target instanceof HTMLSelectElement)) {
                   return;
                 }
 
@@ -216,21 +144,96 @@
                 const fieldToUpdate = result.fields.find((f) => f.name === field.name);
                 if (fieldToUpdate) {
                   fieldToUpdate.value = {
-                    value: e.target.checked ? "true" : "false",
+                    value: e.target.value,
                     is_custom: false,
                   };
                   onChange?.(result);
                 }
               }}
-            />
-          </div>
-        {:else}
-          <p>--</p>
+            >
+              <option value="" disabled selected>{field.placeholder || "Válassz egy opciót"}</option
+              >
+              {#each items as item (item.label)}
+                <option value={item.value}>
+                  {item.label || item.value}
+                </option>
+              {/each}
+            </select>
+          {:else if field.type === "input"}
+            {@render Input(field)}
+          {:else if field.type === "color"}
+            {@const items = field.items?.filter((item) => item != null)}
+            <div class="flex gap-1 flex-wrap">
+              {#each items as item (item.label)}
+                {@const selected = field.value?.value === item.value}
+                <Color
+                  color={{ color_id: item.value, hex: item.value, label: item.label ?? undefined }}
+                  {selected}
+                  onclick={(color_id) => {
+                    const result = product;
+                    const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                    if (fieldToUpdate) {
+                      fieldToUpdate.value = {
+                        value: color_id,
+                        is_custom: false,
+                      };
+                      onChange?.(result);
+                    }
+                  }}
+                />
+              {/each}
+              {#if field.allow_custom_value}
+                <div transition:slide>
+                  <Button
+                    type="button"
+                    selected={field.value?.is_custom ?? false}
+                    onclick={() => {
+                      const result = product;
+                      const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                      if (fieldToUpdate) {
+                        fieldToUpdate.value = {
+                          value: "",
+                          is_custom: true,
+                        };
+                        onChange?.(result);
+                      }
+                    }}
+                  >
+                    Egyéb
+                  </Button>
+                </div>
+              {/if}
+            </div>
+            {@render Input(field)}
+          {:else if field.type === "toggle"}
+            <div class="flex">
+              <Switch
+                checked={field.value?.value === "true"}
+                onchange={(e) => {
+                  if (!(e.target instanceof HTMLInputElement)) {
+                    return;
+                  }
+
+                  const result = product;
+                  const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                  if (fieldToUpdate) {
+                    fieldToUpdate.value = {
+                      value: e.target.checked ? "true" : "false",
+                      is_custom: false,
+                    };
+                    onChange?.(result);
+                  }
+                }}
+              />
+            </div>
+          {:else}
+            <p>--</p>
+          {/if}
+        </div>
+        {#if field.value?.error}
+          <p class="text-sm text-red-500">{field.value.error}</p>
         {/if}
       </div>
-      {#if field.value?.error}
-        <p class="text-sm text-red-500">{field.value.error}</p>
-      {/if}
-    </div>
-  {/if}
-{/each}
+    {/if}
+  {/each}
+</div>
