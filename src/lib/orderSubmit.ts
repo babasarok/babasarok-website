@@ -5,6 +5,7 @@
 import { calculatePriceForItem } from "@/lib/priceUtils";
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "./types.svelte";
 import type { CmsEnhancedDeliveryMethod } from "./data";
+import { isFieldVisible } from "./fieldVisibility";
 
 const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
 
@@ -43,6 +44,29 @@ function formatFieldValue(field: Field): string {
   return label ?? field.value?.value ?? "";
 }
 
+/**
+ * How deep to indent a field, based on its `depends_on` chain: a field that
+ * depends on another sits one level below it, matching the on-screen nesting.
+ * Guards against cycles so a malformed chain can't loop forever.
+ */
+function fieldIndentDepth(field: Field, fields: Field[]): number {
+  let depth = 0;
+  const seen = new Set<string>();
+  let name = field.name;
+  let dependency = field.depends_on?.field;
+  while (dependency && !seen.has(name)) {
+    seen.add(name);
+    const parent = fields.find((f) => f.name === dependency);
+    if (!parent) {
+      break;
+    }
+    depth++;
+    name = parent.name;
+    dependency = parent.depends_on?.field;
+  }
+  return depth;
+}
+
 /** The "- material (colors)" line for one chosen material value. */
 function formatMaterialLine(
   mv: ProductMaterialValue | undefined,
@@ -68,10 +92,16 @@ function formatProductString(product: IProduct): string {
     `${product.title} (${product.count.toString()}db)`,
 
     ...product.fields
+      // Drop fields hidden by an unmet `depends_on` condition — they're not
+      // part of the order.
+      .filter((f) => isFieldVisible(f, product.fields))
       // Hide only *empty* optional fields; a filled-in optional answer (e.g. a
       // custom note) must still reach the email.
       .filter((f) => !("optional" in f) || !f.optional || !!f.value?.value)
-      .map((f) => `  ${f.label}: ${formatFieldValue(f)}`),
+      .map(
+        (f) =>
+          `${"  ".repeat(fieldIndentDepth(f, product.fields) + 1)}${f.label}: ${formatFieldValue(f)}`
+      ),
 
     ...(materials.length > 0 && material_required_count > 0
       ? ["  Anyagok:", ...values.map((mv, i) => formatMaterialLine(mv, materials, i))]

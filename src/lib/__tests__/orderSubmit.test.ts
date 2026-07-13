@@ -328,6 +328,93 @@ describe("product string content", () => {
   });
 });
 
+describe("dependent fields (depends_on)", () => {
+  it("indents a dependent field one level below the field it depends on", async () => {
+    const product = makeProduct({
+      title: "Babafészek",
+      price: 15_000,
+      fields: [
+        makeField({
+          name: "himzes",
+          label: "Hímzés",
+          type: "toggle",
+          value: { value: "true" },
+        }),
+        makeField({
+          name: "himzes_szoveg",
+          label: "Hímzés szövege",
+          type: "input",
+          value: { value: "Anna" },
+          depends_on: { field: "himzes", value: "true" },
+        }),
+      ],
+    });
+
+    const text = form_text(await captureForm(baseOrder([product])));
+    // Parent stays at the normal 2-space indent, the dependent field gets 4.
+    expect(text).toContain("  Hímzés: Igen");
+    expect(text).toContain("    Hímzés szövege: Anna");
+  });
+
+  it("indents a chained dependency two levels deep", async () => {
+    const product = makeProduct({
+      title: "Babafészek",
+      price: 15_000,
+      fields: [
+        makeField({ name: "a", label: "A", type: "toggle", value: { value: "true" } }),
+        makeField({
+          name: "b",
+          label: "B",
+          type: "toggle",
+          value: { value: "true" },
+          depends_on: { field: "a", value: "true" },
+        }),
+        makeField({
+          name: "c",
+          label: "C",
+          type: "input",
+          value: { value: "mély" },
+          depends_on: { field: "b", value: "true" },
+        }),
+      ],
+    });
+
+    const text = form_text(await captureForm(baseOrder([product])));
+    expect(text).toContain("  A: Igen");
+    expect(text).toContain("    B: Igen");
+    expect(text).toContain("      C: mély");
+  });
+
+  it("omits a dependent field whose dependency is not fulfilled", async () => {
+    const product = makeProduct({
+      title: "Babafészek",
+      price: 15_000,
+      fields: [
+        makeField({
+          name: "himzes",
+          label: "Hímzés",
+          type: "toggle",
+          value: { value: "false" },
+        }),
+        makeField({
+          name: "himzes_szoveg",
+          label: "Hímzés szövege",
+          type: "input",
+          value: { value: "Anna" },
+          depends_on: { field: "himzes", value: "true" },
+        }),
+      ],
+    });
+
+    const text = form_text(await captureForm(baseOrder([product])));
+    expect(text).toContain("Hímzés: Nem");
+    // The dependency (Hímzés = Igen) is unmet, so the field must not appear —
+    // not even its filled-in value.
+    expect(text).not.toContain("Hímzés szövege");
+    expect(text).not.toContain("Anna");
+  });
+});
+
 describe("calculateOrderTotal", () => {
   it("sums product totals plus delivery and flags indeterminate prices", () => {
     const known = makeProduct({ price: 5000 });
