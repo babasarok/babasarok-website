@@ -21,6 +21,7 @@ import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import z from "astro/zod";
 import type { SchemaContext } from "astro/content/config";
+import { PRODUCT_FIELD_TYPE_VALUES } from "./lib/productFieldTypes";
 
 const heroBlock = defineCollection({
   loader: glob({ pattern: "hero.md", base: "src/content/sections" }),
@@ -167,6 +168,50 @@ const materialValidator = ({ image }: SchemaContext) =>
       .nullable(),
   });
 
+/**
+ * Product `fields` share one shape with a `type` discriminant drawn from the
+ * central PRODUCT_FIELD_TYPES list. The runtime `Field` type (types.svelte.ts)
+ * turns this into a per-type discriminated union so each kind can carry its own
+ * value shape (see docs/embroidery-field-plan.md).
+ */
+const productFieldBaseShape = {
+  name: z.string(),
+  length_based_pricing_source: z.boolean().optional().nullable(),
+  price: z.number().optional().nullable(),
+  label: z.string(),
+  optional: z.boolean().optional().nullable(),
+  allow_custom_value: z.boolean().optional().nullable(),
+  regex: z.string().optional().nullable(),
+  placeholder: z.string().optional().nullable(),
+  tooltip: z.string().optional().nullable(),
+  depends_on: z
+    .object({
+      field: z.string().optional().nullable(),
+      value: z.string().optional().nullable(),
+    })
+    .optional()
+    .nullable(),
+  items: z
+    .array(
+      z
+        .object({
+          value: z.string(),
+          label: z.string().optional().nullable(),
+          price: z.number().optional().nullable(),
+          tooltip: z.string().optional().nullable(),
+        })
+        .optional()
+        .nullable()
+    )
+    .optional()
+    .nullable(),
+};
+
+const productFieldSchema = z.object({
+  type: z.enum(PRODUCT_FIELD_TYPE_VALUES),
+  ...productFieldBaseShape,
+});
+
 const product = defineCollection({
   loader: glob({ pattern: "*.md", base: "src/content/product" }),
   schema: ({ image }) =>
@@ -246,47 +291,7 @@ const product = defineCollection({
         })
         .optional()
         .nullable(),
-      fields: z
-        .array(
-          z
-            .object({
-              name: z.string(),
-              length_based_pricing_source: z.boolean().optional().nullable(),
-              price: z.number().optional().nullable(),
-              label: z.string(),
-              type: z.string(),
-              optional: z.boolean().optional().nullable(),
-              allow_custom_value: z.boolean().optional().nullable(),
-              regex: z.string().optional().nullable(),
-              placeholder: z.string().optional().nullable(),
-              tooltip: z.string().optional().nullable(),
-              depends_on: z
-                .object({
-                  field: z.string().optional().nullable(),
-                  value: z.string().optional().nullable(),
-                })
-                .optional()
-                .nullable(),
-              items: z
-                .array(
-                  z
-                    .object({
-                      value: z.string(),
-                      label: z.string().optional().nullable(),
-                      price: z.number().optional().nullable(),
-                      tooltip: z.string().optional().nullable(),
-                    })
-                    .optional()
-                    .nullable()
-                )
-                .optional()
-                .nullable(),
-            })
-            .optional()
-            .nullable()
-        )
-        .optional()
-        .nullable(),
+      fields: z.array(productFieldSchema.optional().nullable()).optional().nullable(),
     }),
 });
 

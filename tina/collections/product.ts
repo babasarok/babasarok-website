@@ -11,6 +11,7 @@ import {
   type Collection,
 } from "tinacms";
 import { getValue, slugify } from "../lib/utils";
+import { PRODUCT_FIELD_TYPES } from "../../src/lib/productFieldTypes";
 
 /**
  * Products ("Termékek") — backs `src/content/product/*.md` and the `/product`
@@ -379,13 +380,7 @@ export const ProductCollection: Collection = {
           description:
             "A mező típusa, ami meghatározza, hogy az adatokat milyen formában kell megadni.",
           required: true,
-          options: [
-            { value: "input", label: "Szöveg" },
-            { value: "select", label: "Legördülő" },
-            { value: "radio", label: "Gombos - egyválasztós" },
-            { value: "color", label: "Szín" },
-            { value: "toggle", label: "Igen/Nem" },
-          ],
+          options: PRODUCT_FIELD_TYPES.map((t) => ({ value: t.value, label: t.label })),
           label: "Mező típus",
         },
         {
