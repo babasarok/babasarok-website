@@ -117,6 +117,29 @@ fonts, wires favicons through the Vite asset pipeline, and includes
 - **Astro collections** (`src/content.config.ts`) re-declare a subset with Zod
   schemas, primarily so list/detail pages can use `getCollection()` +
   `<Image>`. Unused configurator frontmatter is stripped by Zod.
+- **Tina is the source of truth for shape.** The Astro/Zod schema can only mirror
+  what Tina stores — it never models more than the CMS can persist. Anything
+  richer (stricter unions, per-variant value types) is layered on downstream, not
+  pushed back into the schema.
+- **CMS↔Astro type reconciliation.** `src/lib/data.ts` derives an "enhanced" TS
+  type per collection from the generated Tina client, and asserts it is
+  structurally identical to the Astro `InferEntrySchema<...>` via
+  `RecursiveDiff` + `AssertTrue<IfEquals<XDiff, never>>()` (see
+  `src/lib/typeUtils.ts`). If the two drift, the build fails at type-check —
+  hover the `XDiff` alias to see the mismatch. Loaders (`getProducts`, etc.)
+  hand-map the raw Tina result into the enhanced shape, which is the one place
+  nullable→undefined normalization and image optimization happen.
+- **Shared value lists live in one module.** Where the same enumerated values are
+  needed by the Tina schema, the Zod schema, and runtime code, they are defined
+  once and imported by all three (e.g. `src/lib/productFieldTypes.ts` feeds the
+  Tina `type` select options, a Zod `z.enum`, and `data.ts`'s discriminant).
+  Tina config imports these with a **relative** path — its esbuild bundling
+  ignores the `@/` tsconfig alias.
+- **Discriminated unions are a runtime/form-side concern.** Because Tina stores a
+  flat record, the CMS/Zod type keeps a single shape with an enum tag. Where code
+  needs a proper discriminated union (e.g. a per-type value shape), it is built
+  by distributing over the shared tag in the app types (`src/lib/types.svelte.ts`),
+  not declared in the schema.
 
 ### 4.3 Image resolution
 

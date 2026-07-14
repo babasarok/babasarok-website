@@ -11,56 +11,51 @@ actually needs.
 
 ---
 
-## Phase 1 — Make `fields` a discriminated union (by `type`)
+## Phase 1 — Central type list + tag `fields` by `type` ✅ done
 
 Today every field is one flat shape and every value is
 `ValueWithError = { value: string; is_custom?; error? }`. That forces string
 values everywhere and leaves embroidery with nowhere to put `enabled` / `text` /
 `color`.
 
-### 1a. Content-collection side (source of truth)
+**Key decision:** the **Tina config is the source of truth** — the content
+schema can't express more than Tina stores, so we don't try to. Instead of a
+schema-level discriminated union, the field `type` is a plain enum drawn from one
+central list, and the **discriminated union lives on the form/runtime side**,
+where it tags the fields we actually control so each can carry its own value
+shape.
 
-In [src/content.config.ts](../src/content.config.ts), turn the `fields` array
-element into a `z.discriminatedUnion("type", [...])` with one variant per type:
+### 1a. Central type list
 
-- `input` — `value` is text; keeps `regex`, `placeholder`, `allow_custom_value`,
-  `optional`.
-- `select` / `radio` / `color` — carry `items`, `allow_custom_value`,
-  `placeholder`.
-- `toggle` — no `items`; carries `price`.
-- `embroidery` — new (Phase 3); no per-product `items` (colors are global).
+[src/lib/productFieldTypes.ts](../src/lib/productFieldTypes.ts) is the single
+source of truth: `PRODUCT_FIELD_TYPES` (value + label), the derived
+`ProductFieldType` union, `PRODUCT_FIELD_TYPE_VALUES` (for `z.enum`), and an
+`isProductFieldType` guard. Consumers:
 
-Shared keys (`name`, `label`, `price`, `length_based_pricing_source`,
-`tooltip`, `depends_on`) live in every variant. This makes the schema express
-which keys are valid for which type instead of "everything optional".
+- [tina/collections/product.ts](../tina/collections/product.ts) — the `type`
+  select `options` map from `PRODUCT_FIELD_TYPES` (relative import; Tina's
+  esbuild ignores the `@/` alias).
+- [src/content.config.ts](../src/content.config.ts) — the field shape is one
+  `z.object` with `type: z.enum(PRODUCT_FIELD_TYPE_VALUES)` plus the shared keys.
+- [src/lib/data.ts](../src/lib/data.ts) — `CmsField.type` is `ProductFieldType`;
+  `toProductFieldType` narrows Tina's loose `type: string` via
+  `isProductFieldType`.
 
 ### 1b. Reconcile in `data.ts`
 
-Tina's generated `CmsProduct["fields"]` stays **flat** (all keys optional). The
-diff assertion `AssertTrue<IfEquals<ProductDiff, never>>` in
-[src/lib/data.ts](../src/lib/data.ts) compares the enhanced CMS type against the
-Astro zod type, so both sides must become the same discriminated union:
+Tina's generated `CmsProduct["fields"]` stays **flat**. `CmsField` re-tags just
+its `type` to `ProductFieldType`, and the `getProducts` mapper builds the shared
+shape once then sets the narrowed `type`. The diff assertion
+`AssertTrue<IfEquals<ProductDiff, never>>` still resolves to `never`. No Tina
+codegen needed — only the zod schema and enhanced type changed. Verified with
+`npm run check`, `npm run lint`, and the unit tests.
 
-1. Define an enhanced discriminated `CmsField` union type mirroring the zod
-   union.
-2. In `getProducts`, add a `narrowField(flat)` mapper that `switch`es on
-   `field.type` and builds the correct variant (dropping keys that don't belong
-   to that type).
-3. Point `CmsEnhancedProduct["fields"]` at the union so the assertion holds.
+## Phase 2 — Per-type value types (`toggle` → boolean) + the form-side union
 
-The flat→union narrowing is the one bit of glue between Tina's loose shape and
-our strict schema; it lives in one place.
-
-### 1c. Regenerate + verify
-
-Run the Tina codegen, then `npm run check` to confirm the diff assertions still
-resolve to `never`.
-
-## Phase 2 — Per-type value types (`toggle` → boolean)
-
-With the union in place, give each variant the value type it needs in
-[src/lib/types.svelte.ts](../src/lib/types.svelte.ts). The `Field` runtime type
-becomes a union too:
+The discriminated union is introduced **here**, on the runtime side: derive the
+`Field` type in [src/lib/types.svelte.ts](../src/lib/types.svelte.ts) by
+distributing over the central `ProductFieldType`, giving each tag the value type
+it needs:
 
 - `input` / `select` / `radio` / `color` → `value?: ValueWithError` (string) —
   unchanged.
@@ -173,7 +168,7 @@ non-obvious rationale:
 
 ## Suggested order of work
 
-1. Phase 1 (union + data.ts reconcile + regen + `npm run check`).
-2. Phase 2 (toggle → boolean, update touch points + tests).
+1. ~~Phase 1 (central type list + `data.ts` reconcile + `npm run check`).~~ ✅ done
+2. Phase 2 (toggle → boolean + form-side union, update touch points + tests).
 3. Phase 3a (thread-color collection + loader + plumbing).
 4. Phase 3b/3c (embroidery value, UI, validation, pricing, submit, tests).
