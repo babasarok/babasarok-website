@@ -50,7 +50,7 @@ shape once then sets the narrowed `type`. The diff assertion
 codegen needed — only the zod schema and enhanced type changed. Verified with
 `npm run check`, `npm run lint`, and the unit tests.
 
-## Phase 2 — Per-type value types (`toggle` → boolean) + the form-side union
+## Phase 2 — Per-type value types (`toggle` → boolean) + the form-side union ✅ done
 
 The discriminated union is introduced **here**, on the runtime side: derive the
 `Field` type in [src/lib/types.svelte.ts](../src/lib/types.svelte.ts) by
@@ -169,6 +169,35 @@ non-obvious rationale:
 ## Suggested order of work
 
 1. ~~Phase 1 (central type list + `data.ts` reconcile + `npm run check`).~~ ✅ done
-2. Phase 2 (toggle → boolean + form-side union, update touch points + tests).
+2. ~~Phase 2 (toggle → boolean + form-side union, update touch points + tests).~~ ✅ done
 3. Phase 3a (thread-color collection + loader + plumbing).
 4. Phase 3b/3c (embroidery value, UI, validation, pricing, submit, tests).
+
+---
+
+## TODO: field value typing (fragile string coercions)
+
+Several places reinterpret a field's stored **string** value as something else,
+with no schema/type link enforcing it. Each is marked `FRAGILE` in code:
+
+- **`depends_on.value`** is always a string, but a target field's value may be a
+  boolean (toggle) or string, so [src/lib/fieldVisibility.ts](../src/lib/fieldVisibility.ts)
+  stringifies before comparing.
+- **Color-count-by-field-reference** parses another field's string value as a
+  number in [src/lib/materialUtils.ts](../src/lib/materialUtils.ts).
+- **`length_based_pricing_source`** parses the referenced field's string value as
+  a number (cm) in [src/lib/priceUtils.ts](../src/lib/priceUtils.ts).
+
+Symptoms: a non-numeric / mistyped value silently degrades to `undefined` or a
+non-match instead of surfacing an error, and cross-field references (`depends_on`,
+color count, length source) are untyped strings that can point at a field of the
+wrong kind.
+
+Plan a better model, e.g.:
+
+- A typed accessor that resolves a field reference to its value **and** validates
+  the referenced field's `type` (numeric source must be `input`/`radio`, etc.).
+- Represent field values as a tagged union (`{ kind: "string"; ... } | { kind:
+  "number"; ... }`) so consumers narrow instead of coercing.
+- Validate cross-field references at load time (in `data.ts`) so a bad reference
+  fails the build rather than silently no-op'ing at runtime.

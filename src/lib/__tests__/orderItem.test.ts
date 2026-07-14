@@ -48,13 +48,13 @@ describe("calculatePriceForItem — field combinations", () => {
     const on = calculatePriceForItem(
       makeProduct({
         price: 0,
-        fields: [makeField({ name: "t", type: "toggle", price: 700, value: { value: "true" } })],
+        fields: [makeField({ name: "t", type: "toggle", price: 700, value: { value: true } })],
       })
     );
     const off = calculatePriceForItem(
       makeProduct({
         price: 0,
-        fields: [makeField({ name: "t", type: "toggle", price: 700, value: { value: "false" } })],
+        fields: [makeField({ name: "t", type: "toggle", price: 700, value: { value: false } })],
       })
     );
     expect(on.unitPrice).toBe(700);
@@ -355,7 +355,7 @@ describe("validateItem / isItemValid", () => {
 describe("sanitizeItem", () => {
   it("prefills a toggle with 'false'", () => {
     const item = sanitizeItem(makeProduct({ fields: [makeField({ name: "t", type: "toggle" })] }));
-    expect(item.fields[0].value).toEqual({ value: "false" });
+    expect(item.fields[0].value).toEqual({ value: false });
   });
 
   it("trims selected colors down to the allowed count", () => {

@@ -13,6 +13,7 @@ import type {
   Field,
   IProduct,
   ProductMaterialValue,
+  ToggleValue,
   ValueWithError,
 } from "@/lib/types.svelte";
 import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
@@ -36,7 +37,7 @@ export interface FieldOpts {
   allow_custom_value?: boolean;
   regex?: string;
   length_based_pricing_source?: boolean;
-  value?: ValueWithError;
+  value?: ValueWithError | ToggleValue;
   depends_on?: { field?: string | null; value?: string | null } | null;
 }
 
@@ -48,7 +49,7 @@ export function makeField(opts: FieldOpts): Field {
     ...rest,
     ...(items ? { items: items.map((i) => ({ label: i.value, ...i })) } : {}),
     ...(value ? { value } : {}),
-  };
+  } as unknown as Field;
 }
 
 interface MaterialColor {

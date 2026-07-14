@@ -45,7 +45,7 @@ function getFieldPrice(field: Field): PricePart | null {
         price:
           field.value?.value === undefined
             ? undefined
-            : field.value.value === "true"
+            : field.value.value
               ? (field.price ?? undefined)
               : 0,
       };
@@ -123,8 +123,13 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
     unitPrice * product.count * (discountMultiplier === undefined ? 1 : discountMultiplier);
 
   if (product.priced_by_length) {
+    // FRAGILE: the length source field's string value is reinterpreted as a
+    // number (cm). Nothing ties the referenced field to a numeric type, so a
+    // non-numeric value silently yields an undefined length. See
+    // docs/embroidery-field-plan.md “Field value typing” TODO.
+    const lengthSource = product.fields.find((x) => x.length_based_pricing_source)?.value?.value;
     let length: number | undefined = Number.parseFloat(
-      product.fields.find((x) => x.length_based_pricing_source)?.value?.value ?? ""
+      typeof lengthSource === "string" ? lengthSource : ""
     );
 
     length = Number.isNaN(length) ? undefined : length / 100;

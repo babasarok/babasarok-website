@@ -6,7 +6,7 @@
   import { slide } from "svelte/transition";
   import Color from "./common/Color.svelte";
   import Switch from "./common/Switch.svelte";
-  import type { IProduct, Field } from "@/lib/types.svelte";
+  import type { IProduct, NonToggleField } from "@/lib/types.svelte";
   import { isFieldVisible } from "@/lib/fieldVisibility";
 
   interface Props {
@@ -17,7 +17,7 @@
   const { product, onChange }: Props = $props();
 </script>
 
-{#snippet Input(field: Field)}
+{#snippet Input(field: NonToggleField)}
   {#if field.type === "input" || field.value?.is_custom}
     {@const id = crypto.randomUUID()}
     <TextInput
@@ -208,7 +208,7 @@
           {:else if field.type === "toggle"}
             <div class="flex">
               <Switch
-                checked={field.value?.value === "true"}
+                checked={field.value?.value ?? false}
                 onchange={(e) => {
                   if (!(e.target instanceof HTMLInputElement)) {
                     return;
@@ -218,8 +218,7 @@
                   const fieldToUpdate = result.fields.find((f) => f.name === field.name);
                   if (fieldToUpdate) {
                     fieldToUpdate.value = {
-                      value: e.target.checked ? "true" : "false",
-                      is_custom: false,
+                      value: e.target.checked,
                     };
                     onChange?.(result);
                   }

@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 import { isFieldVisible } from "@/lib/fieldVisibility";
 import { calculatePriceForItem } from "@/lib/priceUtils";
 import { isItemValid, validateItem } from "@/lib/validation";
+import type { Field } from "@/lib/types.svelte";
 import { makeField, makeProduct } from "./fixtures";
 
 describe("isFieldVisible", () => {
@@ -47,7 +48,7 @@ describe("isFieldVisible", () => {
     });
 
     it("hides when the target value differs", () => {
-      const fields = [{ ...target, value: { value: "s" } }, dependent];
+      const fields = [{ ...target, value: { value: "s" } } as Field, dependent];
       expect(isFieldVisible(dependent, fields)).toBe(false);
     });
 
@@ -56,7 +57,7 @@ describe("isFieldVisible", () => {
     });
 
     it("shows when the target value matches", () => {
-      const fields = [{ ...target, value: { value: "l" } }, dependent];
+      const fields = [{ ...target, value: { value: "l" } } as Field, dependent];
       expect(isFieldVisible(dependent, fields)).toBe(true);
     });
   });
@@ -80,16 +81,16 @@ describe("isFieldVisible", () => {
   });
 
   it("treats a toggle dependency by its string value", () => {
-    const toggle = makeField({ name: "csomagolas", type: "toggle", value: { value: "true" } });
+    const toggle = makeField({ name: "csomagolas", type: "toggle", value: { value: true } });
     const dependent = makeField({
       name: "uzenet",
       type: "input",
       depends_on: { field: "csomagolas", value: "true" },
     });
     expect(isFieldVisible(dependent, [toggle, dependent])).toBe(true);
-    expect(isFieldVisible(dependent, [{ ...toggle, value: { value: "false" } }, dependent])).toBe(
-      false
-    );
+    expect(
+      isFieldVisible(dependent, [{ ...toggle, value: { value: false } } as Field, dependent])
+    ).toBe(false);
   });
 });
 

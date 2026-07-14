@@ -111,14 +111,14 @@ describe("product string content", () => {
           label: "Babatakaró és párna",
           type: "toggle",
           price: 6500,
-          value: { value: "true" },
+          value: { value: true },
         }),
         makeField({
           name: "betet",
           label: "Betét",
           type: "toggle",
           price: 3700,
-          value: { value: "false" },
+          value: { value: false },
         }),
       ],
       materials: [
@@ -338,7 +338,7 @@ describe("dependent fields (depends_on)", () => {
           name: "himzes",
           label: "Hímzés",
           type: "toggle",
-          value: { value: "true" },
+          value: { value: true },
         }),
         makeField({
           name: "himzes_szoveg",
@@ -361,12 +361,12 @@ describe("dependent fields (depends_on)", () => {
       title: "Babafészek",
       price: 15_000,
       fields: [
-        makeField({ name: "a", label: "A", type: "toggle", value: { value: "true" } }),
+        makeField({ name: "a", label: "A", type: "toggle", value: { value: true } }),
         makeField({
           name: "b",
           label: "B",
           type: "toggle",
-          value: { value: "true" },
+          value: { value: true },
           depends_on: { field: "a", value: "true" },
         }),
         makeField({
@@ -394,7 +394,7 @@ describe("dependent fields (depends_on)", () => {
           name: "himzes",
           label: "Hímzés",
           type: "toggle",
-          value: { value: "false" },
+          value: { value: false },
         }),
         makeField({
           name: "himzes_szoveg",

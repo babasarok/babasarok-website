@@ -32,7 +32,7 @@ export function calculateOrderTotal(
 /** The selected option label/value pair for a field, as shown in the email. */
 function formatFieldValue(field: Field): string {
   if (field.type === "toggle") {
-    return field.value?.value === "true" ? "Igen" : "Nem";
+    return field.value?.value ? "Igen" : "Nem";
   }
   if (field.value?.is_custom) {
     return `Egyedi: ${field.value.value}`;

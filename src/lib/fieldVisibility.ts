@@ -19,7 +19,11 @@ export function isFieldVisible(field: Field, fields: Field[]): boolean {
 
   const targetValue = target.value?.value;
   if (dependsOn.value) {
-    return targetValue === dependsOn.value;
+    // FRAGILE: `depends_on.value` is always a string (schema), but a field's
+    // value can be a boolean (toggle) or a string, so we stringify the target
+    // before comparing. See docs/embroidery-field-plan.md “Field value typing”
+    // TODO for a typed cross-field value model.
+    return targetValue != null && String(targetValue) === dependsOn.value;
   }
 
   return !!targetValue;

@@ -7,7 +7,7 @@ function prefillField(field: Field): void {
   switch (field.type) {
     case "toggle": {
       if (field.value?.value === undefined) {
-        field.value = { value: "false" };
+        field.value = { value: false };
       }
     }
   }
@@ -46,6 +46,13 @@ export function sanitizeItem(item: IProduct): IProduct {
 }
 
 function updateFieldWithErrors(item: Field): void {
+  if (item.type === "toggle") {
+    // A toggle always holds a boolean, so there is nothing to require.
+    item.value ??= { value: false };
+    item.value.error = undefined;
+    return;
+  }
+
   // prefill if we are submitting
   item.value ??= { value: "" };
 
@@ -54,7 +61,6 @@ function updateFieldWithErrors(item: Field): void {
     switch (item.type) {
       case "select":
       case "color":
-      case "toggle":
       case "radio": {
         item.value.error = "Kötelező mező";
         return;
