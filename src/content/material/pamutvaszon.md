@@ -30,6 +30,13 @@ colors:
   - color_id: Uj felhon alvo
     label: Felhőkön alvó állatok
     image: /src/assets/IMG_8361.jpeg
+  - color_id: Pillangos
+    label: Pillangók
+    image: /src/assets/IMG_8516.jpeg
+  - {}
+  - {}
+  - {}
+  - {}
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
