@@ -48,7 +48,9 @@ colors:
   - color_id: 'Kék markolos '
     label: Kis kék munkagépek
     image: /src/assets/IMG_3301.jpeg
-  - {}
+  - color_id: Szivarvanyos markolos
+    label: Szivárványos építkezés
+    image: /src/assets/IMG_3297.jpeg
   - {}
   - {}
   - {}
