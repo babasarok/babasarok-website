@@ -43,8 +43,13 @@ colors:
     label: Varázserdő
     image: /src/assets/IMG_4759.jpeg
   - color_id: 'Sárga markolos '
-    label: Munkagépek
+    label: Sárga Munkagépek
     image: /src/assets/IMG_4622.jpeg
+  - {}
+  - {}
+  - {}
+  - {}
+  - {}
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
