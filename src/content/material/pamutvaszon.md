@@ -18,7 +18,9 @@ colors:
   - color_id: Erdei maci zold
     label: 'Medve az erdőben '
     image: /src/assets/IMG_4764.jpeg
-  - {}
+  - color_id: Felhon alvo rozsaszin
+    label: 'Aranyos állatkölykök, rózsaszín alapon'
+    image: /src/assets/IMG_4758.jpeg
   - {}
   - {}
   - {}
