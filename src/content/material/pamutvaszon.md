@@ -69,7 +69,9 @@ colors:
   - color_id: Tündéres rozsazin
     label: 'Rózsaszín tündérkert '
     image: /src/assets/IMG_4741.jpeg
-  - {}
+  - color_id: Pasztell tunderes
+    label: Pasztell tündérkert
+    image: /src/assets/IMG_9641.jpeg
   - {}
   - {}
 thumbnail: /src/assets/IMG_5070.jpeg
