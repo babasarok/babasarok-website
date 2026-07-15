@@ -66,7 +66,9 @@ colors:
   - color_id: Repcsis maci kek
     label: Repülős macik
     image: /src/assets/IMG_9639.jpeg
-  - {}
+  - color_id: Tündéres rozsazin
+    label: 'Rózsaszín tündérkert '
+    image: /src/assets/IMG_4741.jpeg
   - {}
   - {}
   - {}
