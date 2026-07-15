@@ -18,6 +18,6 @@ materials:
 
 | ![](/src/assets/IMG_1514.JPG)                                        | ![](/src/assets/IMG_1515.JPG) | ![](/src/assets/IMG_1513.JPG) |
 | -------------------------------------------------------------------- | ----------------------------- | ----------------------------- |
-| ![](/src/assets/IMG_1362.jpg)                                        | ![](/src/assets/IMG_1364.jpg) |                               |
-| ![](/src/assets/att.rd2klWauRZMtMgb23QTiz9Upgx28N-U5BHih3ifXddU.jpg) | ![](/src/assets/IMG_1936.JPG) |                               |
+|                                                                      |                               |                               |
+| ![](/src/assets/att.rd2klWauRZMtMgb23QTiz9Upgx28N-U5BHih3ifXddU.jpg) |                               |                               |
 |                                                                      |                               |                               |
