@@ -15,7 +15,9 @@ colors:
   - color_id: 'Felhon alvo, feher'
     label: 'Aranyos állatkölykök, fehér alapon'
     image: /src/assets/IMG_0467.jpeg
-  - {}
+  - color_id: Erdei maci zold
+    label: 'Medve az erdőben '
+    image: /src/assets/IMG_4764.jpeg
   - {}
   - {}
   - {}
