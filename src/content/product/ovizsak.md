@@ -5,7 +5,6 @@ can_be_ordered: true
 date: 2026-07-08T09:40:59.374Z
 thumbnail: /src/assets/IMG_4447.jpeg
 images:
-  - image: ''
   - image: /src/assets/IMG_4455.png
   - image: /src/assets/IMG_4348.jpeg
 table:
@@ -42,3 +41,4 @@ fields:
     type: input
 ---
 
+![](/src/assets/52AC01C1-8325-426F-9C41-F1FD1C14DC5C.png)
