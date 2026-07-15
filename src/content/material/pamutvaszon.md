@@ -24,7 +24,9 @@ colors:
   - color_id: Erdei maci zold
     label: 'Medve az erdőben '
     image: /src/assets/IMG_4764.jpeg
-  - {}
+  - color_id: Kosaras maci kek
+    label: 'Kedves macik, kosárban, kék alapon'
+    image: /src/assets/IMG_1373.jpeg
   - {}
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
