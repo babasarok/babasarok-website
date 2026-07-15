@@ -1,6 +1,18 @@
 ---
-title: "Pamutvászon"
-label: "Pamutvászon"
-material_id: "pamutvaszon"
-colors: []
+title: Pamutvászon
+material_id: pamutvaszon
+label: Pamutvászon
+colors:
+  - color_id: Farm
+    label: Farm
+    image: /src/assets/IMG_2598.jpeg
+  - {}
+  - {}
+  - {}
+  - {}
+  - {}
+  - {}
+  - {}
+  - {}
 ---
+
