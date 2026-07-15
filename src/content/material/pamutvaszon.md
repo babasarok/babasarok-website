@@ -36,7 +36,9 @@ colors:
   - color_id: Kek Mancs orjarat
     label: 'Mancs őrjárat, kék'
     image: /src/assets/IMG_4616.jpeg
-  - {}
+  - color_id: Macsorjarat feher
+    label: 'Mancs őrjárat, fehér '
+    image: /src/assets/IMG_4615.jpeg
   - {}
   - {}
 thumbnail: /src/assets/IMG_5070.jpeg
