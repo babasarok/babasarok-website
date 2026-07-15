@@ -42,7 +42,9 @@ colors:
   - color_id: Malyva szarvasos
     label: Varázserdő
     image: /src/assets/IMG_4759.jpeg
-  - {}
+  - color_id: 'Sárga markolos '
+    label: Munkagépek
+    image: /src/assets/IMG_4622.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
