@@ -1,6 +1,7 @@
 ---
 product_id: kedvezmenyes-termekek
 title: Kedvezményes termékek
+hidden_in_product_list: true
 date: 2026-07-06T09:46:20.507Z
 thumbnail: /src/assets/IMG_3353.jpg
 table:
