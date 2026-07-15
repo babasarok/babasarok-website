@@ -72,7 +72,9 @@ colors:
   - color_id: Pasztell tunderes
     label: Pasztell tündérkert
     image: /src/assets/IMG_9641.jpeg
-  - {}
+  - color_id: Erdőben lakó szurke
+    label: 'Erdei barátok '
+    image: /src/assets/IMG_6401.jpeg
   - {}
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
