@@ -51,7 +51,9 @@ colors:
   - color_id: Szivarvanyos markolos
     label: Szivárványos építkezés
     image: /src/assets/IMG_3297.jpeg
-  - {}
+  - color_id: 'Felhon alvó színes '
+    label: 'Aranyos állatkölykök, színes '
+    image: /src/assets/IMG_4329.jpeg
   - {}
   - {}
 thumbnail: /src/assets/IMG_5070.jpeg
