@@ -45,7 +45,9 @@ colors:
   - color_id: 'Sárga markolos '
     label: Sárga Munkagépek
     image: /src/assets/IMG_4622.jpeg
-  - {}
+  - color_id: 'Kék markolos '
+    label: Kis kék munkagépek
+    image: /src/assets/IMG_3301.jpeg
   - {}
   - {}
   - {}
