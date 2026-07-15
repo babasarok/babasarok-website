@@ -12,7 +12,9 @@ colors:
   - color_id: Kosaras maci
     label: 'Kedves macik kosárban '
     image: /src/assets/IMG_4635.jpeg
-  - {}
+  - color_id: 'Felhon alvo, feher'
+    label: 'Aranyos állatkölykök, fehér alapon'
+    image: /src/assets/IMG_0467.jpeg
   - {}
   - {}
   - {}
