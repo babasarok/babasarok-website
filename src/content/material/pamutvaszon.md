@@ -60,6 +60,14 @@ colors:
   - color_id: Cirkuszos
     label: 'Cirkuszi mulatság '
     image: /src/assets/IMG_9069.jpeg
+  - color_id: Hintazo szafari
+    label: Hintázó szafarikölykök
+    image: /src/assets/IMG_9631.jpeg
+  - {}
+  - {}
+  - {}
+  - {}
+  - {}
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
