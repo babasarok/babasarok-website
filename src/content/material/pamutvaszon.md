@@ -9,7 +9,9 @@ colors:
   - color_id: Giselle
     label: Őzike gidával
     image: /src/assets/IMG_4761.jpeg
-  - {}
+  - color_id: Kosaras maci
+    label: 'Kedves macik kosárban '
+    image: /src/assets/IMG_4635.jpeg
   - {}
   - {}
   - {}
