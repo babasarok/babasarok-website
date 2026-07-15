@@ -5,7 +5,7 @@ can_be_ordered: true
 date: 2026-07-08T09:40:59.374Z
 thumbnail: /src/assets/IMG_4447.jpeg
 images:
-  - image: /src/assets/IMG_4454.png
+  - image: ''
   - image: /src/assets/IMG_4455.png
   - image: /src/assets/IMG_4348.jpeg
 table:
