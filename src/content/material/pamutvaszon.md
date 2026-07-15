@@ -24,6 +24,9 @@ colors:
   - color_id: Felhon alvo kek
     label: 'Aranyos állatkölykök, kék alapon'
     image: /src/assets/IMG_4474.jpeg
+  - color_id: 'Felhon alvó színes '
+    label: 'Aranyos állatkölykök, színes '
+    image: /src/assets/IMG_4329.jpeg
   - color_id: Erdei maci zold
     label: 'Medve az erdőben '
     image: /src/assets/IMG_4764.jpeg
@@ -51,10 +54,9 @@ colors:
   - color_id: Szivarvanyos markolos
     label: Szivárványos építkezés
     image: /src/assets/IMG_3297.jpeg
-  - color_id: 'Felhon alvó színes '
-    label: 'Aranyos állatkölykök, színes '
-    image: /src/assets/IMG_4329.jpeg
-  - {}
+  - color_id: Unikornisos
+    label: Unikornis
+    image: /src/assets/IMG_4638.jpeg
   - {}
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
