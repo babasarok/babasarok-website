@@ -63,7 +63,9 @@ colors:
   - color_id: Hintazo szafari
     label: Hintázó szafarikölykök
     image: /src/assets/IMG_9631.jpeg
-  - {}
+  - color_id: Repcsis maci kek
+    label: Repülős macik
+    image: /src/assets/IMG_9639.jpeg
   - {}
   - {}
   - {}
