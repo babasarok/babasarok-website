@@ -12,6 +12,9 @@ colors:
   - color_id: Kosaras maci
     label: 'Kedves macik kosárban '
     image: /src/assets/IMG_4635.jpeg
+  - color_id: Kosaras maci kek
+    label: 'Kedves macik, kosárban, kék alapon'
+    image: /src/assets/IMG_1373.jpeg
   - color_id: 'Felhon alvo, feher'
     label: 'Aranyos állatkölykök, fehér alapon'
     image: /src/assets/IMG_0467.jpeg
@@ -24,10 +27,9 @@ colors:
   - color_id: Erdei maci zold
     label: 'Medve az erdőben '
     image: /src/assets/IMG_4764.jpeg
-  - color_id: Kosaras maci kek
-    label: 'Kedves macik, kosárban, kék alapon'
-    image: /src/assets/IMG_1373.jpeg
-  - {}
+  - color_id: Uj felhon alvo
+    label: Felhőkön alvó állatok
+    image: /src/assets/IMG_8361.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
