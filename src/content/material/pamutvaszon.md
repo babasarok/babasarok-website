@@ -14,5 +14,6 @@ colors:
   - {}
   - {}
   - {}
+thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
