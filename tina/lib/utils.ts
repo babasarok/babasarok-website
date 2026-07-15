@@ -49,3 +49,52 @@ export function slugify(value: string): string {
     .replaceAll(/^-+|-+$/g, "") // trim dashes
     .toLowerCase();
 }
+
+/** Minimal shape of a Tina field needed to derive `required` children. */
+interface RequiredFieldSpec {
+  name: string;
+  label?: string;
+  required?: boolean | null;
+}
+
+function isBlank(value: unknown): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    (typeof value === "string" && value.trim() === "")
+  );
+}
+
+/**
+ * Build a `ui.validate` function for an `object` list field that blocks saving
+ * when any item is missing its `required` child fields.
+ *
+ * Tina uses react-final-form, which only validates fields that are currently
+ * mounted. A list item the editor adds but never expands never mounts its child
+ * fields, so their `required: true` never runs and the item saves as an empty
+ * object. The parent list field IS mounted, so validating the whole array here
+ * catches those empty/partial items on save.
+ */
+export function validateRequiredListItems(
+  fields: readonly RequiredFieldSpec[],
+): (value: unknown) => string | undefined {
+  const required = fields.filter((field) => field.required);
+
+  return (value) => {
+    if (!Array.isArray(value)) {
+      return;
+    }
+
+    for (const [index, item] of value.entries()) {
+      const record = (item ?? {}) as Record<string, unknown>;
+      const missing = required.filter((field) => isBlank(record[field.name]));
+
+      if (missing.length > 0) {
+        const labels = missing.map((field) => field.label ?? field.name).join(", ");
+        return `A(z) ${index + 1}. elem kötelező mezői hiányoznak: ${labels}`;
+      }
+    }
+
+    return;
+  };
+}
