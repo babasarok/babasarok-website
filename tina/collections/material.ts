@@ -1,5 +1,5 @@
 import type { Collection } from "tinacms";
-import { slugify } from "../lib/utils";
+import { slugify, validateRequiredListItems } from "../lib/utils";
 
 /**
  * Materials ("Anyagok") — backs `src/content/material/*.md` and also the
@@ -52,6 +52,10 @@ export const MaterialCollection: Collection = {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-condition
           return { label: item?.label || "Új mező" };
         },
+        validate: validateRequiredListItems([
+          { name: "color_id", label: "Kód", required: true },
+          { name: "label", label: "Név", required: true },
+        ]),
       },
       fields: [
         {

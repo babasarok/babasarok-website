@@ -19,3 +19,7 @@ src/content/delivery_method
 src/content/material
 src/content/product
 src/content/sections
+*.jpg
+*.jpeg
+*.png
+*.gif
