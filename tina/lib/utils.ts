@@ -59,9 +59,7 @@ interface RequiredFieldSpec {
 
 function isBlank(value: unknown): boolean {
   return (
-    value === undefined ||
-    value === null ||
-    (typeof value === "string" && value.trim() === "")
+    value === undefined || value === null || (typeof value === "string" && value.trim() === "")
   );
 }
 
@@ -76,7 +74,7 @@ function isBlank(value: unknown): boolean {
  * catches those empty/partial items on save.
  */
 export function validateRequiredListItems(
-  fields: readonly RequiredFieldSpec[],
+  fields: readonly RequiredFieldSpec[]
 ): (value: unknown) => string | undefined {
   const required = fields.filter((field) => field.required);
 
