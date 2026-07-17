@@ -87,6 +87,9 @@ colors:
   - color_id: Rózsaszín polip
     label: 'Tengeri világ '
     image: /src/assets/IMG_5115.jpeg
+  - color_id: Tuzoltos
+    label: Tűzoltóság
+    image: /src/assets/IMG_5079.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
