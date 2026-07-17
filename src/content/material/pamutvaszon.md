@@ -123,6 +123,9 @@ colors:
   - color_id: Vartacukor
     label: Vattacukor
     image: /src/assets/IMG_6734.jpeg
+  - color_id: 'Fehér '
+    label: 'Fehér '
+    hex: '#FFFFFF'
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
