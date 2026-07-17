@@ -75,6 +75,9 @@ colors:
   - color_id: Erdőben lakó szurke
     label: 'Erdei barátok '
     image: /src/assets/IMG_6401.jpeg
+  - color_id: barna markolos
+    label: 'Kis barna munkagépek '
+    image: /src/assets/IMG_3296.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
