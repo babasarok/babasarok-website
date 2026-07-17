@@ -117,6 +117,9 @@ colors:
   - color_id: Rózsaszín virágmezo
     label: Rózsaszín virágmező
     image: /src/assets/IMG_4875.jpeg
+  - color_id: 'Pasztell virágos '
+    label: Natúr vadvirágok
+    image: /src/assets/IMG_4926.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
