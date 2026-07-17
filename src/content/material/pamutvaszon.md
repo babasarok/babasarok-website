@@ -108,6 +108,9 @@ colors:
   - color_id: Meleg szafaris
     label: 'Szafari állatai '
     image: /src/assets/IMG_4736.jpeg
+  - color_id: 'Erdei kék ozike '
+    label: 'Erdei őzike '
+    image: /src/assets/IMG_4754.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
