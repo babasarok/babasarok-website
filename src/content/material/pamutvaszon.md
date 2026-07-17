@@ -99,6 +99,9 @@ colors:
   - color_id: Lufis maci
     label: Mackók lufival
     image: /src/assets/IMG_5364.jpeg
+  - color_id: Kulucskalo macis
+    label: Kukucskáló macik
+    image: /src/assets/IMG_4476.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
