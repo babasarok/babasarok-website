@@ -102,6 +102,9 @@ colors:
   - color_id: Kulucskalo macis
     label: Kukucskáló macik
     image: /src/assets/IMG_4476.jpeg
+  - color_id: Őszi erdolakok
+    label: Őszi erdőlakók
+    image: /src/assets/IMG_4483.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
