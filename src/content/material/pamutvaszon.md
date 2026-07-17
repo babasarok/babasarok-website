@@ -51,6 +51,9 @@ colors:
   - color_id: 'Kék markolos '
     label: Kis kék munkagépek
     image: /src/assets/IMG_3301.jpeg
+  - color_id: barna markolos
+    label: 'Kis barna munkagépek '
+    image: /src/assets/IMG_3296.jpeg
   - color_id: Szivarvanyos markolos
     label: Szivárványos építkezés
     image: /src/assets/IMG_3297.jpeg
@@ -75,9 +78,6 @@ colors:
   - color_id: Erdőben lakó szurke
     label: 'Erdei barátok '
     image: /src/assets/IMG_6401.jpeg
-  - color_id: barna markolos
-    label: 'Kis barna munkagépek '
-    image: /src/assets/IMG_3296.jpeg
   - color_id: Cicas
     label: 'Cicahorgászat '
     image: /src/assets/IMG_4934.webp
@@ -90,6 +90,9 @@ colors:
   - color_id: Tuzoltos
     label: Tűzoltóság
     image: /src/assets/IMG_5079.jpeg
+  - color_id: hintazo nyuszik
+    label: Hintázó balerina nyuszik
+    image: /src/assets/IMG_5033.webp
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
