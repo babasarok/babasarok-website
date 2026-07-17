@@ -10,6 +10,8 @@ images:
   - image: /src/assets/IMG_4348.jpeg
   - image: /src/assets/4F9DAA80-F79E-491F-9570-37EE56CFFA07.png
     description: készleten lévő termék
+  - image: /src/assets/8C36BD1F-E70B-4715-8F0B-45B00FA9239C.png
+    description: Készleten
 table:
   - title: Tornazsák
     description: 4000Ft
