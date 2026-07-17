@@ -78,6 +78,9 @@ colors:
   - color_id: barna markolos
     label: 'Kis barna munkagépek '
     image: /src/assets/IMG_3296.jpeg
+  - color_id: Cicas
+    label: 'Cicahorgászat '
+    image: /src/assets/IMG_4934.webp
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
