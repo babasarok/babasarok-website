@@ -105,6 +105,9 @@ colors:
   - color_id: Őszi erdolakok
     label: Őszi erdőlakók
     image: /src/assets/IMG_4483.jpeg
+  - color_id: Meleg szafaris
+    label: 'Szafari állatai '
+    image: /src/assets/IMG_4736.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
