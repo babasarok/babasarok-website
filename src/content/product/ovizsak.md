@@ -7,6 +7,7 @@ thumbnail: /src/assets/IMG_4447.jpeg
 images:
   - image: /src/assets/IMG_4455.png
   - image: /src/assets/IMG_4348.jpeg
+  - image: /src/assets/4F9DAA80-F79E-491F-9570-37EE56CFFA07.png
 table:
   - title: Tornazsák
     description: 4000Ft
