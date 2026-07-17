@@ -16,8 +16,10 @@ table:
     description: 7200Ft
 shortDescription: |-
   Bölcsőde és óvodakezdésre alkalmas, pakolható vállfás és tornazsák.
-  Tornazsák mérete: kb. 30x40cm
-  Vállfás zsák mérete: kb. 40x60cm
+  Tornazsák mérete: kb.28x35cm
+  Vállfás zsák mérete: kb. 40x56cm
+
+  (+-3cm eltérés elfogadott)
 materials:
   material_required_count: 0
 fields:
