@@ -114,6 +114,9 @@ colors:
   - color_id: Színes pitypang
     label: 'Pitypangos rét '
     image: /src/assets/IMG_4876.jpeg
+  - color_id: Rózsaszín virágmezo
+    label: Rózsaszín virágmező
+    image: /src/assets/IMG_4875.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
