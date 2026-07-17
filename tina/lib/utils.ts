@@ -127,9 +127,18 @@ function collectMissingListRequired(
  * ("Cannot navigate away from an invalid form") — a dead end. `beforeSubmit`
  * runs only at save time, so it gates the write without blocking navigation.
  *
- * A thrown error is swallowed by Tina into a `FORM_ERROR` that only logs to the
- * console, so we surface the message ourselves via `cms.alerts.error` first,
- * then throw to actually abort the save.
+ * A thrown error is swallowed by Tina into a whole-form `FORM_ERROR` that only
+ * logs to the console, so we surface the message ourselves via `cms.alerts.error`
+ * first, then throw to abort the save.
+ *
+ * That `FORM_ERROR` is a final-form *submission* error, and final-form's
+ * `state.invalid` is true whenever there's a validation OR submission error — so
+ * after the blocked save the Save button greys out and the group-list plugin
+ * again refuses to open items. final-form only drops a submission error once the
+ * form is dirtied again, which the editor can't do without first opening the
+ * item. So we clear the submit state ourselves on the next tick (after
+ * final-form has recorded the error) via `finalForm.restart`, keeping the
+ * current values so nothing the editor typed is lost.
  */
 export async function requiredListItemsBeforeSubmit({
   cms,
@@ -137,7 +146,13 @@ export async function requiredListItemsBeforeSubmit({
   values,
 }: {
   cms: { alerts: { error: (message: string, timeout?: number) => void } };
-  form: { fields?: readonly FieldLike[] };
+  form: {
+    fields?: readonly FieldLike[];
+    finalForm?: {
+      getState: () => { values: Record<string, unknown> };
+      restart: (initialValues?: Record<string, unknown>) => void;
+    };
+  };
   values: Record<string, unknown>;
 }): Promise<void> {
   const errors: string[] = [];
@@ -146,6 +161,14 @@ export async function requiredListItemsBeforeSubmit({
   if (errors.length > 0) {
     const message = `Nem menthető – hiányzó kötelező mezők:\n• ${errors.join("\n• ")}`;
     cms.alerts.error(message);
+
+    const finalForm = form.finalForm;
+    if (finalForm) {
+      setTimeout(() => {
+        finalForm.restart(finalForm.getState().values);
+      }, 0);
+    }
+
     throw new Error(message);
   }
 }
