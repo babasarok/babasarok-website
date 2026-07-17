@@ -93,6 +93,9 @@ colors:
   - color_id: hintazo nyuszik
     label: Hintázó balerina nyuszik
     image: /src/assets/IMG_5033.webp
+  - color_id: Nyuszis vaszon
+    label: Oliva nyuszik
+    image: /src/assets/IMG_9650.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
