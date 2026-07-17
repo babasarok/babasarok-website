@@ -10,7 +10,7 @@ import {
   DateField,
   type Collection,
 } from "tinacms";
-import { getValue, slugify, validateRequiredListItems } from "../lib/utils";
+import { getValue, requiredListItemsBeforeSubmit, slugify } from "../lib/utils";
 
 /**
  * Products ("Termékek") — backs `src/content/product/*.md` and the `/product`
@@ -32,6 +32,7 @@ export const ProductCollection: Collection = {
     include: "**/*",
   },
   ui: {
+    beforeSubmit: requiredListItemsBeforeSubmit,
     filename: {
       // optional: stop editors from typing the name freehand
       readonly: true,
@@ -223,11 +224,6 @@ export const ProductCollection: Collection = {
               price: 0,
               color_count: "1",
             },
-            validate: validateRequiredListItems([
-              { name: "material_path", label: "Anyag", required: true },
-              { name: "price", label: "Ár", required: true },
-              { name: "color_count", label: "Választható színek/minták száma", required: true },
-            ]),
           },
           fields: [
             {
@@ -294,9 +290,6 @@ export const ProductCollection: Collection = {
                   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-condition
                   return { label: item?.material_path || "Új anyag" };
                 },
-                validate: validateRequiredListItems([
-                  { name: "material_path", label: "Anyag", required: true },
-                ]),
               },
               fields: [
                 {
@@ -325,11 +318,6 @@ export const ProductCollection: Collection = {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-condition
           return { label: item?.label || "Új mező" };
         },
-        validate: validateRequiredListItems([
-          { name: "name", label: "Mező ID", required: true },
-          { name: "label", label: "Mező név", required: true },
-          { name: "type", label: "Mező típus", required: true },
-        ]),
       },
       fields: [
         {
@@ -447,9 +435,6 @@ export const ProductCollection: Collection = {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
               return GroupListField(props as any);
             },
-            validate: validateRequiredListItems([
-              { name: "value", label: "Érték", required: true },
-            ]),
           },
           fields: [
             {
