@@ -111,6 +111,9 @@ colors:
   - color_id: 'Erdei kék ozike '
     label: 'Erdei őzike '
     image: /src/assets/IMG_4754.jpeg
+  - color_id: Színes pitypang
+    label: 'Pitypangos rét '
+    image: /src/assets/IMG_4876.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
