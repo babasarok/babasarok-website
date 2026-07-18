@@ -24,6 +24,9 @@ colors:
   - color_id: Aranymasnis
     label: 'Arany masnik pöttyökkel '
     image: /src/assets/IMG_4636.jpeg
+  - color_id: 'Nagy pandas '
+    label: Pandák ölelése
+    image: /src/assets/IMG_4491.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
