@@ -5,7 +5,8 @@ label: Velúr
 colors:
   - color_id: feher
     label: Fehér
-    hex: '#FFFFFF'
+    hex: ''
+    image: /src/assets/IMG_5136.jpeg
   - color_id: bezs
     label: Bézs
     hex: '#F5F5DC'
