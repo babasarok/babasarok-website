@@ -57,6 +57,9 @@ colors:
   - color_id: Lila
     label: Lila
     image: /src/assets/IMG_4596.jpeg
+  - color_id: 'Világoskék '
+    label: 'Világoskék '
+    image: /src/assets/IMG_4591.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
