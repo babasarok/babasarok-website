@@ -36,6 +36,9 @@ colors:
   - color_id: Macis
     label: Mackók
     image: /src/assets/IMG_4089.jpeg
+  - color_id: 'Bézs alapú virágos. '
+    label: Vadvirág bézsen
+    image: /src/assets/IMG_4030.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
