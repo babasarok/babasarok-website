@@ -39,6 +39,9 @@ colors:
   - color_id: 'Barna alapú virágos. '
     label: Vadvirág barnán
     image: /src/assets/IMG_4030.jpeg
+  - color_id: 'Színes pillangos '
+    label: 'Pillangók '
+    image: /src/assets/IMG_4035.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
