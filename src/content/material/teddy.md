@@ -24,8 +24,9 @@ colors:
     hex: ''
     image: /src/assets/IMG_5012.jpeg
   - color_id: sotetzold
-    label: Sötétzöld
-    hex: '#006400'
+    label: Sötétzöld/khaki
+    hex: ''
+    image: /src/assets/IMG_5135.jpeg
   - color_id: sotetszurke
     label: Sötétszürke
     hex: '#A9A9A9'
