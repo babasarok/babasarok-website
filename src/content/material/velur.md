@@ -23,7 +23,7 @@ colors:
     label: Zsálya
     hex: ''
     image: /src/assets/IMG_5137.jpeg
-  - color_id: sotetzold
+  - color_id: sotetzold kelme
     label: Sötétzöld
     hex: ''
     image: /src/assets/IMG_5142.webp
