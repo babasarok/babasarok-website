@@ -60,6 +60,9 @@ colors:
   - color_id: 'Világoskék '
     label: 'Világoskék '
     image: /src/assets/IMG_4591.jpeg
+  - color_id: Turkiz
+    label: 'Világos türkiz '
+    image: /src/assets/IMG_4609.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
