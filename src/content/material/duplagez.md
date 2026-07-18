@@ -18,6 +18,9 @@ colors:
   - color_id: 'Dínós '
     label: Mini dínók
     image: /src/assets/IMG_4768.jpeg
+  - color_id: 'Nyuszis epres '
+    label: Nyuszis eperliget
+    image: /src/assets/IMG_4763.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
