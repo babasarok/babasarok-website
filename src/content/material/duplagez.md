@@ -78,6 +78,9 @@ colors:
   - color_id: 'Tejeskávé '
     label: 'Tejeskávé '
     image: /src/assets/IMG_4597.jpeg
+  - color_id: Ekru
+    label: Ekrü/törtfehér
+    image: /src/assets/IMG_4602.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
