@@ -9,7 +9,8 @@ colors:
     image: /src/assets/IMG_3361.jpeg
   - color_id: ekru
     label: Ekrü
-    hex: '#EFEDE4'
+    hex: ''
+    image: /src/assets/IMG_3359.jpeg
   - color_id: vilagosbarna
     label: Világos barna
     hex: '#D2B48C'
