@@ -21,6 +21,9 @@ colors:
   - color_id: 'Nyuszis epres '
     label: Nyuszis eperliget
     image: /src/assets/IMG_4763.jpeg
+  - color_id: Aranymasnis
+    label: 'Arany masnik pöttyökkel '
+    image: /src/assets/IMG_4636.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
