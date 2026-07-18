@@ -147,6 +147,9 @@ colors:
   - color_id: 'Malyvas lila '
     label: 'Mályvásabb lila '
     image: /src/assets/IMG_6692.jpeg
+  - color_id: 'Barna '
+    label: 'Barna '
+    image: /src/assets/47529CDD-1BE8-473F-A386-21FADEB578F0.png
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
