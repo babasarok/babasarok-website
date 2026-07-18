@@ -48,6 +48,9 @@ colors:
   - color_id: 'Babarózsaszín '
     label: 'Babarózsaszín '
     image: /src/assets/IMG_4588.jpeg
+  - color_id: 'Malyva '
+    label: Mályva
+    image: /src/assets/IMG_4592.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
