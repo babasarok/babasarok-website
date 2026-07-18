@@ -34,5 +34,8 @@ colors:
   - color_id: 'Zsalya '
     label: Zsálya
     image: /src/assets/IMG_5131.jpeg
+  - color_id: Malyva
+    label: Mályva
+    image: /src/assets/IMG_5132.jpeg
 ---
 
