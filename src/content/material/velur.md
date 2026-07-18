@@ -7,9 +7,10 @@ colors:
     label: Fehér
     hex: ''
     image: /src/assets/IMG_5136.jpeg
-  - color_id: bezs
-    label: Bézs
-    hex: '#F5F5DC'
+  - color_id: 'Világos bézs '
+    label: 'Világos bézs '
+    hex: ''
+    image: /src/assets/IMG_5112.jpeg
   - color_id: barna
     label: Barna
     hex: ''
