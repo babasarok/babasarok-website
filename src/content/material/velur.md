@@ -27,7 +27,7 @@ colors:
     label: Sötétzöld
     hex: ''
     image: /src/assets/IMG_5142.webp
-  - color_id: vilagosmalyva
+  - color_id: vilagosmalyva-57
     label: Világos mályva
     hex: ''
     image: /src/assets/IMG_5111.jpeg
