@@ -11,9 +11,10 @@ colors:
     label: Ekrü
     hex: ''
     image: /src/assets/IMG_3359.jpeg
-  - color_id: vilagosbarna
-    label: Világos barna
-    hex: '#D2B48C'
+  - color_id: Barna
+    label: Barna
+    hex: ''
+    image: /src/assets/IMG_3358.jpeg
   - color_id: babarozsaszin
     label: Babarózsaszín
     hex: ''
