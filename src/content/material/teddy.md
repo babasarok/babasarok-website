@@ -14,7 +14,7 @@ colors:
   - color_id: Barna
     label: Barna
     hex: ''
-    image: /src/assets/IMG_3358.jpeg
+    image: /src/assets/IMG_5134.jpeg
   - color_id: babarozsaszin
     label: Babarózsaszín
     hex: ''
