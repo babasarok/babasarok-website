@@ -141,6 +141,9 @@ colors:
   - color_id: 'Bézs '
     label: 'Bézs '
     image: /src/assets/IMG_6718.jpeg
+  - color_id: 'Puder '
+    label: Púder
+    image: /src/assets/IMG_6738.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
