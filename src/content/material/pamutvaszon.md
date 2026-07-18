@@ -144,6 +144,9 @@ colors:
   - color_id: 'Puder '
     label: Púder
     image: /src/assets/IMG_6738.jpeg
+  - color_id: 'Malyvas lila '
+    label: 'Mályvásabb lila '
+    image: /src/assets/IMG_6692.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
