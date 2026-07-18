@@ -40,5 +40,8 @@ colors:
   - color_id: Sötétzöld-43
     label: Sötétzöld
     image: /src/assets/IMG_5141.jpeg
+  - color_id: Világos rózsaszín -53
+    label: 'Világos rózsaszín '
+    image: /src/assets/IMG_5144.jpeg
 ---
 
