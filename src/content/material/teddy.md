@@ -37,5 +37,8 @@ colors:
   - color_id: Malyva
     label: Mályva
     image: /src/assets/IMG_5132.jpeg
+  - color_id: Sötétzöld-43
+    label: Sötétzöld
+    image: /src/assets/IMG_5141.jpeg
 ---
 
