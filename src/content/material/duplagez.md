@@ -42,6 +42,12 @@ colors:
   - color_id: Macis
     label: Mackók
     image: /src/assets/IMG_4089.jpeg
+  - color_id: 'Halvány rózsaszín '
+    label: Halvány rózsaszín/púder
+    image: /src/assets/IMG_4589.jpeg
+  - color_id: 'Babarózsaszín '
+    label: 'Babarózsaszín '
+    image: /src/assets/IMG_4588.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
