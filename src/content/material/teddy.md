@@ -41,7 +41,7 @@ colors:
     label: Sötétzöld
     image: /src/assets/IMG_5141.jpeg
   - color_id: Világos rózsaszín -53
-    label: 'Világos rózsaszín '
+    label: 'Halvány barackos rózsaszín '
     image: /src/assets/IMG_5144.jpeg
 ---
 
