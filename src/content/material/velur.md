@@ -32,7 +32,7 @@ colors:
     hex: ''
     image: /src/assets/IMG_2447.jpeg
   - color_id: vilagosrozsaszin-53
-    label: Halvány rózsaszín
+    label: Halvány barackos rózsaszín
     hex: ''
     image: /src/assets/IMG_5143.jpeg
   - color_id: pink
