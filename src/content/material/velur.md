@@ -31,10 +31,10 @@ colors:
     label: Világos mályva
     hex: ''
     image: /src/assets/IMG_2447.jpeg
-  - color_id: vilagosrozsaszin
+  - color_id: vilagosrozsaszin-53
     label: Halvány rózsaszín
     hex: ''
-    image: /src/assets/IMG_4422.jpeg
+    image: /src/assets/IMG_5143.jpeg
   - color_id: pink
     label: Pink
     hex: ''
