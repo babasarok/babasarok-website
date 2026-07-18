@@ -63,6 +63,9 @@ colors:
   - color_id: Turkiz
     label: 'Világos türkiz '
     image: /src/assets/IMG_4609.jpeg
+  - color_id: Zsalya
+    label: Zsálya
+    image: /src/assets/IMG_4605.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
