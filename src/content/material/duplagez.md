@@ -33,6 +33,9 @@ colors:
   - color_id: 'Nagy dínós '
     label: Dínókert
     image: /src/assets/IMG_4490.jpeg
+  - color_id: Macis
+    label: Mackók
+    image: /src/assets/IMG_4089.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
