@@ -16,7 +16,8 @@ colors:
     hex: '#D2B48C'
   - color_id: babarozsaszin
     label: Babarózsaszín
-    hex: '#FFC0CB'
+    hex: ''
+    image: /src/assets/IMG_5013.jpeg
   - color_id: puderosrozsaszin
     label: Sötét púderrózsaszín
     hex: '#FADADD'
