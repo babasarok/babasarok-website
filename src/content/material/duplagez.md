@@ -66,6 +66,9 @@ colors:
   - color_id: Zsalya
     label: Zsálya
     image: /src/assets/IMG_4605.jpeg
+  - color_id: Sotetzold
+    label: Sötétzöld/khaki
+    image: /src/assets/IMG_4590.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
