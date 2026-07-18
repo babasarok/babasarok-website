@@ -69,6 +69,9 @@ colors:
   - color_id: Sotetzold
     label: Sötétzöld/khaki
     image: /src/assets/IMG_4590.jpeg
+  - color_id: Drapp
+    label: Drapp/világos bézs
+    image: /src/assets/IMG_4595.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
