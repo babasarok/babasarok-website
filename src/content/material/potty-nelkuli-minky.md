@@ -10,7 +10,7 @@ colors:
     label: 'Bézs '
     image: /src/assets/IMG_4084.jpeg
   - color_id: Halvány rózsaszín-53
-    label: 'Halvány rózsaszín '
+    label: 'Halvány barackos rózsaszín '
     image: /src/assets/IMG_5143.jpeg
 ---
 
