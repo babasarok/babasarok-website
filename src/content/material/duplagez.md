@@ -54,6 +54,9 @@ colors:
   - color_id: Pink
     label: Pink
     image: /src/assets/IMG_4594.jpeg
+  - color_id: Lila
+    label: Lila
+    image: /src/assets/IMG_4596.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
