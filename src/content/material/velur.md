@@ -19,12 +19,10 @@ colors:
     label: Halvány babakék
     hex: ''
     image: /src/assets/IMG_5140.jpeg
-  - color_id: sotetkek
-    label: Sötétkék
-    hex: '#00008B'
   - color_id: zsalya
     label: Zsálya
-    hex: '#D3B583'
+    hex: ''
+    image: /src/assets/IMG_5137.jpeg
   - color_id: sotetzold
     label: Sötétzöld
     hex: '#006400'
