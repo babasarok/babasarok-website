@@ -37,6 +37,7 @@ colors:
     image: /src/assets/IMG_4422.jpeg
   - color_id: pink
     label: Pink
-    hex: '#FF69B4'
+    hex: ''
+    image: /src/assets/IMG_5138.jpeg
 ---
 
