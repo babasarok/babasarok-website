@@ -34,7 +34,7 @@ colors:
   - color_id: vilagosrozsaszin
     label: Halvány rózsaszín
     hex: ''
-    image: /src/assets/IMG_2326.jpeg
+    image: /src/assets/IMG_4422.jpeg
   - color_id: pink
     label: Pink
     hex: '#FF69B4'
