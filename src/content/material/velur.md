@@ -30,7 +30,7 @@ colors:
   - color_id: vilagosmalyva
     label: Világos mályva
     hex: ''
-    image: /src/assets/IMG_2447.jpeg
+    image: /src/assets/IMG_5111.jpeg
   - color_id: vilagosrozsaszin-53
     label: Halvány barackos rózsaszín
     hex: ''
