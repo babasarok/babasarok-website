@@ -78,15 +78,18 @@ colors:
   - color_id: 'Tejeskávé '
     label: 'Tejeskávé '
     image: /src/assets/IMG_4597.jpeg
+  - color_id: 'Mustár '
+    label: 'Mustár '
+    image: /src/assets/IMG_4598.jpeg
   - color_id: Ekru
     label: Ekrü/törtfehér
     image: /src/assets/IMG_4602.jpeg
   - color_id: 'Fehér '
     label: 'Fehér '
     image: /src/assets/IMG_4600.jpeg
-  - color_id: 'Mustár '
-    label: 'Mustár '
-    image: /src/assets/IMG_4598.jpeg
+  - color_id: 'Barackos '
+    label: Barack
+    image: /src/assets/IMG_4382.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
