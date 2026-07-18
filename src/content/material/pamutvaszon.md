@@ -129,27 +129,30 @@ colors:
   - color_id: 'Fehér '
     label: 'Fehér '
     hex: '#FFFFFF'
-  - color_id: Babakek
-    label: Babakék
-    image: /src/assets/IMG_6688.jpeg
-  - color_id: 'Halvány rózsaszín '
-    label: 'Babarózsaszín '
-    image: /src/assets/IMG_6700.jpeg
   - color_id: Zsalya
     label: Zsálya
     image: /src/assets/IMG_6697.jpeg
-  - color_id: 'Bézs '
-    label: 'Bézs '
-    image: /src/assets/IMG_6718.jpeg
+  - color_id: 'Halvány rózsaszín '
+    label: 'Babarózsaszín '
+    image: /src/assets/IMG_6700.jpeg
   - color_id: 'Puder '
     label: Púder
     image: /src/assets/IMG_6738.jpeg
   - color_id: 'Malyvas lila '
     label: 'Mályvásabb lila '
     image: /src/assets/IMG_6692.jpeg
+  - color_id: Babakek
+    label: Babakék
+    image: /src/assets/IMG_6688.jpeg
+  - color_id: 'Bézs '
+    label: 'Bézs '
+    image: /src/assets/IMG_6718.jpeg
   - color_id: 'Barna '
     label: 'Barna '
     image: /src/assets/47529CDD-1BE8-473F-A386-21FADEB578F0.png
+  - color_id: Drapp
+    label: Drapp
+    image: /src/assets/IMG_6716.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
