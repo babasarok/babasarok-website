@@ -15,6 +15,9 @@ colors:
   - color_id: 'Autós '
     label: 'Járművek '
     image: /src/assets/IMG_2354.jpeg
+  - color_id: 'Dínós '
+    label: Mini dínók
+    image: /src/assets/IMG_4768.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
