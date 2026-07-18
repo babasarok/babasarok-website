@@ -27,6 +27,9 @@ colors:
   - color_id: 'Nagy pandas '
     label: Pandák ölelése
     image: /src/assets/IMG_4491.jpeg
+  - color_id: Pandafejek
+    label: Pandák
+    image: /src/assets/IMG_4088.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
