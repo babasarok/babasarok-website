@@ -12,6 +12,9 @@ colors:
   - color_id: 'Lila virágos '
     label: 'Lila virágok '
     image: /src/assets/IMG_4762.jpeg
+  - color_id: 'Autós '
+    label: 'Járművek '
+    image: /src/assets/IMG_2354.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
