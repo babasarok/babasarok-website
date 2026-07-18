@@ -31,5 +31,8 @@ colors:
     label: Sötétszürke
     hex: ''
     image: /src/assets/IMG_2542.jpeg
+  - color_id: 'Zsalya '
+    label: Zsálya
+    image: /src/assets/IMG_5131.jpeg
 ---
 
