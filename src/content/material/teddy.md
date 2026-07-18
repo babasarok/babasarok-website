@@ -23,8 +23,8 @@ colors:
     label: Sötét púderrózsaszín
     hex: ''
     image: /src/assets/IMG_5012.jpeg
-  - color_id: sotetzold
-    label: Sötétzöld/khaki
+  - color_id: sotetzsalya-77
+    label: Sötétzsálya/khaki
     hex: ''
     image: /src/assets/IMG_5135.jpeg
   - color_id: sotetszurke
