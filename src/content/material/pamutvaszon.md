@@ -129,6 +129,9 @@ colors:
   - color_id: Babakek
     label: Babakék
     image: /src/assets/IMG_6688.jpeg
+  - color_id: 'Halvány rózsaszín '
+    label: 'Babarózsaszín '
+    image: /src/assets/IMG_6700.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 ---
 
