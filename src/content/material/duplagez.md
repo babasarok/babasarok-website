@@ -75,6 +75,9 @@ colors:
   - color_id: 'Meleg bézs '
     label: 'Meleg bézs '
     image: /src/assets/IMG_4604.jpeg
+  - color_id: 'Tejeskávé '
+    label: 'Tejeskávé '
+    image: /src/assets/IMG_4597.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
