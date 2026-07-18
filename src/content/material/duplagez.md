@@ -51,6 +51,9 @@ colors:
   - color_id: 'Malyva '
     label: Mályva
     image: /src/assets/IMG_4592.jpeg
+  - color_id: Pink
+    label: Pink
+    image: /src/assets/IMG_4594.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
