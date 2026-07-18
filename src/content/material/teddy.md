@@ -20,7 +20,8 @@ colors:
     image: /src/assets/IMG_5013.jpeg
   - color_id: puderosrozsaszin
     label: Sötét púderrózsaszín
-    hex: '#FADADD'
+    hex: ''
+    image: /src/assets/IMG_5012.jpeg
   - color_id: sotetzold
     label: Sötétzöld
     hex: '#006400'
