@@ -21,7 +21,9 @@ const images = import.meta.glob<ImageMetadata>(
   { eager: true, import: "default" }
 );
 
-export async function resolveImage(options: UnresolvedImageTransform): Promise<GetImageResult> {
+export async function resolveImage(
+  options: UnresolvedImageTransform
+): Promise<GetImageResult | undefined> {
   let clean: string;
   if (typeof options.src === "string") {
     clean = options.src;
@@ -47,5 +49,12 @@ export async function resolveImage(options: UnresolvedImageTransform): Promise<G
 
   // Strip an optional leading slash and the `src/assets/` media-root prefix.
   clean = clean.replace(/^\/?(src\/assets\/)?/, "");
+
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (!images[`../assets/${clean}`]) {
+    console.warn(`resolveImage: could not resolve "${clean}"`);
+    return undefined;
+  }
+
   return getImage({ ...options, src: images[`../assets/${clean}`] });
 }
