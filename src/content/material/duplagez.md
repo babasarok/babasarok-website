@@ -81,6 +81,9 @@ colors:
   - color_id: Ekru
     label: Ekrü/törtfehér
     image: /src/assets/IMG_4602.jpeg
+  - color_id: 'Fehér '
+    label: 'Fehér '
+    image: /src/assets/IMG_4600.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
