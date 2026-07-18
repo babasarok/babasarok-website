@@ -15,12 +15,10 @@ colors:
     label: Barna
     hex: ''
     image: /src/assets/IMG_4206.jpeg
-  - color_id: mogyoro
-    label: Mogyoró
-    hex: '#D2B48C'
   - color_id: babakek
-    label: Babakék
-    hex: '#ADD8E6'
+    label: Halvány babakék
+    hex: ''
+    image: /src/assets/IMG_5140.jpeg
   - color_id: sotetkek
     label: Sötétkék
     hex: '#00008B'
