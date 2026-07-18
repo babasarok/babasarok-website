@@ -72,6 +72,9 @@ colors:
   - color_id: Drapp
     label: Drapp/világos bézs
     image: /src/assets/IMG_4595.jpeg
+  - color_id: 'Meleg bézs '
+    label: 'Meleg bézs '
+    image: /src/assets/IMG_4604.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
