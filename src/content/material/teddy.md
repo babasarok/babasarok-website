@@ -29,6 +29,7 @@ colors:
     image: /src/assets/IMG_5135.jpeg
   - color_id: sotetszurke
     label: Sötétszürke
-    hex: '#A9A9A9'
+    hex: ''
+    image: /src/assets/IMG_2542.jpeg
 ---
 
