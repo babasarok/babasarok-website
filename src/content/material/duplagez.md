@@ -84,6 +84,9 @@ colors:
   - color_id: 'Fehér '
     label: 'Fehér '
     image: /src/assets/IMG_4600.jpeg
+  - color_id: 'Mustár '
+    label: 'Mustár '
+    image: /src/assets/IMG_4598.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
