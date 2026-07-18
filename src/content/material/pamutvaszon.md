@@ -96,6 +96,9 @@ colors:
   - color_id: Nyuszis vaszon
     label: Oliva nyuszik
     image: /src/assets/IMG_9650.jpeg
+  - color_id: Mackooleles
+    label: Mackóölelés
+    image: /src/assets/IMG_4087.jpeg
   - color_id: Lufis maci
     label: Mackók lufival
     image: /src/assets/IMG_5364.jpeg
