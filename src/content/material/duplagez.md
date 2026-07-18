@@ -30,6 +30,9 @@ colors:
   - color_id: Pandafejek
     label: Pandák
     image: /src/assets/IMG_4088.jpeg
+  - color_id: 'Nagy dínós '
+    label: Dínókert
+    image: /src/assets/IMG_4490.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
