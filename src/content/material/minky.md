@@ -27,7 +27,7 @@ colors:
   - color_id: '#4 candypink'
     label: 'Babarózsaszín '
     image: /src/assets/IMG_4076.jpeg
-  - color_id: '#19'
+  - color_id: '#16'
     label: 'Extra Halvány rózsaszín '
     image: /src/assets/IMG_6648.jpeg
   - color_id: '#1'
@@ -48,7 +48,7 @@ colors:
   - color_id: '#6'
     label: Csokibarna
     image: /src/assets/IMG_3334.jpeg
-  - color_id: '#20'
+  - color_id: '#19'
     label: Mogyoró
     image: /src/assets/IMG_6638.jpeg
   - color_id: '#13'

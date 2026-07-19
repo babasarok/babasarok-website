@@ -1,5 +1,6 @@
 import type { Collection } from "tinacms";
 import { requiredListItemsBeforeSubmit, slugify } from "../lib/utils";
+import type { Product_Materials } from "../__generated__/types";
 
 /**
  * Materials ("Anyagok") — backs `src/content/material/*.md` and also the
@@ -62,6 +63,15 @@ export const MaterialCollection: Collection = {
             "Egyedi! azonosító a színhez/mintához, csak angol karaktereket és számokat tartalmazhat, szóköz nélkül. Pl: szin-1",
           label: "Kód",
           required: true,
+          ui: {
+            validate: (value: string, material: Product_Materials) => {
+              const duplicates = material.colors?.filter((color) => color?.color_id === value);
+
+              if (duplicates && duplicates.length > 1) {
+                return "Ez az azonosító már létezik a színek/minták között.";
+              }
+            },
+          },
         },
         {
           type: "string",
