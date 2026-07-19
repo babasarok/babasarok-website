@@ -8,6 +8,7 @@ import {
   getConfig,
   getDeliveryMethods,
   getProducts,
+  getThreadColors,
   type CmsEnhancedProduct,
   type CmsEnhancedDeliveryMethod,
 } from "../lib/data";
@@ -28,6 +29,7 @@ const social = [...(config.social ?? [])]
 
 const products = await getProducts();
 const deliveryMethods = await getDeliveryMethods();
+const threadColors = await getThreadColors();
 ---
 
 <Base title={breadcrumb ?? title}>
@@ -52,6 +54,7 @@ const deliveryMethods = await getDeliveryMethods();
           {}
         )}
         config={config}
+        threadColors={threadColors}
         client:load
       />
     </div>

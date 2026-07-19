@@ -11,13 +11,15 @@
 import type {
   CmsProductMaterial,
   Field,
+  EmbroideryValue,
   IProduct,
   ProductMaterialValue,
+  ToggleValue,
   ValueWithError,
 } from "@/lib/types.svelte";
 import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
 
-type FieldType = "input" | "select" | "radio" | "color" | "toggle";
+type FieldType = "input" | "select" | "radio" | "color" | "toggle" | "embroidery";
 
 interface FieldItem {
   value: string;
@@ -31,12 +33,14 @@ export interface FieldOpts {
   type: FieldType;
   label?: string;
   price?: number | null;
+  price_unit?: "flat" | "word" | null;
   optional?: boolean;
   items?: FieldItem[];
   allow_custom_value?: boolean;
   regex?: string;
   length_based_pricing_source?: boolean;
-  value?: ValueWithError;
+  value?: ValueWithError | ToggleValue | EmbroideryValue;
+  depends_on?: { field?: string | null; value?: string | null } | null;
 }
 
 /** Build a single product `Field` (the runtime slice the order logic reads). */
@@ -47,7 +51,14 @@ export function makeField(opts: FieldOpts): Field {
     ...rest,
     ...(items ? { items: items.map((i) => ({ label: i.value, ...i })) } : {}),
     ...(value ? { value } : {}),
-  };
+  } as unknown as Field;
+}
+
+export function fieldError(field: Field | undefined): string | undefined {
+  if (!field || field.type === "embroidery") {
+    return undefined;
+  }
+  return field.value?.error;
 }
 
 interface MaterialColor {

@@ -1,9 +1,15 @@
 import type { IProduct, CmsProductMaterial } from "./types.svelte";
 
 function resolveValue(name: string, product: Pick<IProduct, "fields">): number | undefined {
-  const current = product.fields.find((f) => f.name === name)?.value?.value;
+  const field = product.fields.find((f) => f.name === name);
+  const current =
+    field?.type === "toggle" || field?.type === "embroidery" ? undefined : field?.value?.value;
 
-  if (!current) {
+  // FRAGILE: color-count-by-field-reference reinterprets another field's string
+  // value as a number. There's no schema link between the referenced field and
+  // this numeric use, so a non-numeric value silently resolves to `undefined`.
+  // See docs/embroidery-field-plan.md “Field value typing” TODO.
+  if (typeof current !== "string" || !current) {
     return undefined;
   }
 

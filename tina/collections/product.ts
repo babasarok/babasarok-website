@@ -11,6 +11,7 @@ import {
   type Collection,
 } from "tinacms";
 import { getValue, requiredListItemsBeforeSubmit, slugify } from "../lib/utils";
+import { EMBROIDERY_PRICE_UNITS, PRODUCT_FIELD_TYPES } from "../../src/lib/productFieldTypes";
 
 /**
  * Products ("Termékek") — backs `src/content/product/*.md` and the `/product`
@@ -329,6 +330,23 @@ export const ProductCollection: Collection = {
           required: true,
         },
         {
+          type: "string",
+          name: "label",
+          description: "A mező megjelenítendő neve, ami a felhasználó számára látható.",
+          label: "Mező név",
+          isTitle: true,
+          required: true,
+        },
+        {
+          type: "string",
+          name: "type",
+          description:
+            "A mező típusa, ami meghatározza, hogy az adatokat milyen formában kell megadni.",
+          required: true,
+          options: PRODUCT_FIELD_TYPES.map((t) => ({ value: t.value, label: t.label })),
+          label: "Mező típus",
+        },
+        {
           type: "boolean",
           name: "length_based_pricing_source",
           description:
@@ -367,29 +385,6 @@ export const ProductCollection: Collection = {
           },
         },
         {
-          type: "string",
-          name: "label",
-          description: "A mező megjelenítendő neve, ami a felhasználó számára látható.",
-          label: "Mező név",
-          isTitle: true,
-          required: true,
-        },
-        {
-          type: "string",
-          name: "type",
-          description:
-            "A mező típusa, ami meghatározza, hogy az adatokat milyen formában kell megadni.",
-          required: true,
-          options: [
-            { value: "input", label: "Szöveg" },
-            { value: "select", label: "Legördülő" },
-            { value: "radio", label: "Gombos - egyválasztós" },
-            { value: "color", label: "Szín" },
-            { value: "toggle", label: "Igen/Nem" },
-          ],
-          label: "Mező típus",
-        },
-        {
           type: "boolean",
           name: "optional",
           description: "Jelzi, hogy a mező opcionális-e.",
@@ -404,6 +399,29 @@ export const ProductCollection: Collection = {
 
               // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
               return ToggleField(props as any);
+            },
+          },
+        },
+        {
+          type: "string",
+          name: "price_unit",
+          label: "Árazás módja",
+          description:
+            "Hímzésnél: fix ár vagy szavankénti ár. A mező ára az itt választott egységre vonatkozik.",
+          options: EMBROIDERY_PRICE_UNITS.map((unit) => ({
+            value: unit.value,
+            label: unit.label,
+          })),
+          ui: {
+            component(props) {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              const type = getValue(props, "type");
+              if (type !== "embroidery") {
+                return null;
+              }
+
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+              return SelectField(props as any);
             },
           },
         },
@@ -428,7 +446,7 @@ export const ProductCollection: Collection = {
             component(props) {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               const type = getValue(props, "type");
-              if (type === "toggle") {
+              if (type === "toggle" || type === "embroidery") {
                 return null;
               }
 
@@ -533,148 +551,118 @@ export const ProductCollection: Collection = {
             },
           },
         },
+        {
+          type: "object",
+          name: "depends_on",
+          label: "Feltételes megjelenítés",
+          description:
+            "Ha be van állítva, ez a mező csak akkor jelenik meg a rendelési felületen, ha a kiválasztott másik mező a megadott értékre van állítva.",
+          fields: [
+            {
+              type: "string",
+              name: "field",
+              label: "Mező",
+              description:
+                "Válaszd ki, melyik másik mezőtől függjön ez a mező. Üresen hagyva a mező mindig látszik.",
+              ui: {
+                component(props) {
+                  // Populate the dropdown from this product's own fields so
+                  // editors pick an existing field ID instead of typing one.
+                  // The current field is excluded to prevent self-dependency.
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                  const ownName = getValue(props, "../name");
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                  const productFields = getValue(props, "../../../fields") ?? [];
+                  const options = [
+                    { value: "", label: "— Mindig látszik —" },
+                    ...(
+                      productFields as {
+                        name?: string | null;
+                        label?: string | null;
+                        type?: string | null;
+                      }[]
+                    )
+                      .filter((f) => !!f.name && f.name !== ownName && f.type !== "embroidery")
+                      .map((f) => ({ value: f.name ?? "", label: f.label || (f.name ?? "") })),
+                  ];
+
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument
+                  return SelectField({
+                    ...props,
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+                    field: { ...props.field, options } as any,
+                    options,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  } as any);
+                },
+                validate(value, allValues) {
+                  if (!value) {
+                    return;
+                  }
+                  const productFields =
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+                    ((allValues as any)?.fields ?? []) as { name?: string | null }[];
+                  if (!productFields.some((f) => f.name === value)) {
+                    return `Nincs ilyen mező: "${value}". Válassz a termék mezői közül.`;
+                  }
+                },
+              },
+            },
+            {
+              type: "string",
+              name: "value",
+              label: "Elvárt érték",
+              description:
+                "Opcionális. Ha megadod, a mező csak akkor jelenik meg, ha a fenti mező pontosan erre az értékre van állítva. Üresen hagyva elég, ha a fenti mező ki van töltve.",
+              ui: {
+                component(props) {
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                  const name = getValue(props, "field");
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                  const productFields = getValue(props, "../../../fields") ?? [];
+                  const target = (
+                    productFields as {
+                      name?: string | null;
+                      type?: string | null;
+                      items?: ({ value?: string | null; label?: string | null } | null)[] | null;
+                    }[]
+                  ).find((f) => f.name === name);
+
+                  // No dependency chosen yet, or a free-form field → plain text input.
+                  if (!name || !target || target.type === "input") {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+                    return TextField(props as any);
+                  }
+
+                  const valueOptions =
+                    target.type === "toggle"
+                      ? [
+                          { value: "true", label: "Igen" },
+                          { value: "false", label: "Nem" },
+                        ]
+                      : (target.items ?? [])
+                          .filter((i) => !!i?.value)
+                          .map((i) => ({
+                            value: i?.value ?? "",
+                            label: i?.label || (i?.value ?? ""),
+                          }));
+
+                  const options = [{ value: "", label: "Bármelyik érték" }, ...valueOptions];
+
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument
+                  return SelectField({
+                    ...props,
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+                    field: { ...props.field, options } as any,
+                    options,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  } as any);
+                },
+              },
+            },
+          ],
+        },
       ],
     },
-    // {
-    //   type: "object",
-    //   name: "deals",
-    //   list: true,
-    //   label: "Csomag kedvezmények",
-    //   description:
-    //     "Ha az összes megadott mező ki van választva, a rendszer levonja a megadott kedvezményt az egységárból. A kedvezmények összeadódnak, ha több csomag is teljesül.",
-    //   ui: {
-    //     itemProps: (item) => {
-    //       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-condition
-    //       return { label: item?.label || "Új csomag" };
-    //     },
-    //   },
-    //   fields: [
-    //     {
-    //       type: "string",
-    //       name: "label",
-    //       label: "Csomag neve",
-    //       description: "A kedvezmény megjelenítendő neve az ár bontásában.",
-    //       isTitle: true,
-    //       required: true,
-    //     },
-    //     {
-    //       type: "object",
-    //       name: "fields",
-    //       list: true,
-    //       label: "Mezők",
-    //       description:
-    //         "A csomaghoz tartozó mezők. A kedvezmény akkor érvényes, ha ezek mindegyike ki van választva.",
-    //       ui: {
-    //         itemProps: (item) => {
-    //           const typed = item as { name?: string | null; value?: string | null };
-    //           const name = typed.name || "Új mező";
-    //           return { label: typed.value ? `${name} = ${typed.value}` : name };
-    //         },
-    //       },
-    //       fields: [
-    //         {
-    //           type: "string",
-    //           name: "name",
-    //           label: "Mező",
-    //           description: "Válaszd ki a fentebb megadott mezők közül.",
-    //           required: true,
-    //           ui: {
-    //             component(props) {
-    //               // Populate the dropdown from this product's own fields so
-    //               // editors pick an existing field ID instead of typing one.
-    //               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    //               const productFields = getValue(props, "../../../../fields") ?? [];
-    //               const options = (
-    //                 productFields as { name?: string | null; label?: string | null }[]
-    //               )
-    //                 .filter((f) => !!f.name)
-    //                 .map((f) => ({ value: f.name ?? "", label: f.label || (f.name ?? "") }));
-
-    //               // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument
-    //               return SelectField({
-    //                 ...props,
-    //                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    //                 field: { ...props.field, options } as any,
-    //                 options,
-    //                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //               } as any);
-    //             },
-    //             validate(value, allValues) {
-    //               if (!value) {
-    //                 return;
-    //               }
-    //               const productFields =
-    //                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-    //                 ((allValues as any)?.fields ?? []) as { name?: string | null }[];
-    //               if (!productFields.some((f) => f.name === value)) {
-    //                 return `Nincs ilyen mező: "${value}". Válassz a termék mezői közül.`;
-    //               }
-    //             },
-    //           },
-    //         },
-    //         {
-    //           type: "string",
-    //           name: "value",
-    //           label: "Elvárt érték",
-    //           description:
-    //             "Opcionális. Ha megadod, a kedvezmény csak akkor jár, ha a mező pontosan erre az értékre van állítva. Üresen hagyva elég, ha a mező ki van választva.",
-    //           ui: {
-    //             component(props) {
-    //               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    //               const name = getValue(props, "name");
-    //               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    //               const productFields = getValue(props, "../../../../fields") ?? [];
-    //               const target = (
-    //                 productFields as {
-    //                   name?: string | null;
-    //                   type?: string | null;
-    //                   items?: ({ value?: string | null; label?: string | null } | null)[] | null;
-    //                 }[]
-    //               ).find((f) => f.name === name);
-
-    //               // Free-form field (or nothing selected yet) → plain text input.
-    //               if (!target || target.type === "input") {
-    //                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-    //                 return TextField(props as any);
-    //               }
-
-    //               const valueOptions =
-    //                 target.type === "toggle"
-    //                   ? [
-    //                       { value: "true", label: "Igen" },
-    //                       { value: "false", label: "Nem" },
-    //                     ]
-    //                   : (target.items ?? [])
-    //                       .filter((i) => !!i?.value)
-    //                       .map((i) => ({
-    //                         value: i?.value ?? "",
-    //                         label: i?.label || (i?.value ?? ""),
-    //                       }));
-
-    //               const options = [{ value: "", label: "Bármelyik érték" }, ...valueOptions];
-
-    //               // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument
-    //               return SelectField({
-    //                 ...props,
-    //                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    //                 field: { ...props.field, options } as any,
-    //                 options,
-    //                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //               } as any);
-    //             },
-    //           },
-    //         },
-    //       ],
-    //     },
-    //     {
-    //       type: "number",
-    //       name: "discount",
-    //       label: "Kedvezmény (Ft)",
-    //       description:
-    //         "Mennyivel legyen olcsóbb az egységár, ha a csomag összes mezője ki van választva.",
-    //       required: true,
-    //     },
-    //   ],
-    // },
   ],
 };

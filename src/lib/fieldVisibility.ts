@@ -1,0 +1,37 @@
+import type { Field } from "./types.svelte";
+
+function dependencyValue(field: Field): string | boolean | undefined {
+  if (field.type === "embroidery") {
+    return undefined;
+  }
+  return field.value?.value;
+}
+
+/**
+ * A field configured with `depends_on` is only shown when the referenced field
+ * currently holds the required value (or, when no value is given, any value).
+ * Keeping this in one place lets the order form, validation and pricing all
+ * agree on which fields are active, so hidden fields drop out consistently.
+ */
+export function isFieldVisible(field: Field, fields: Field[]): boolean {
+  const dependsOn = field.depends_on;
+  if (!dependsOn?.field) {
+    return true;
+  }
+
+  const target = fields.find((f) => f.name === dependsOn.field);
+  if (!target) {
+    return true;
+  }
+
+  const targetValue = dependencyValue(target);
+  if (dependsOn.value) {
+    // FRAGILE: `depends_on.value` is always a string (schema), but a field's
+    // value can be a boolean (toggle) or a string, so we stringify the target
+    // before comparing. See docs/embroidery-field-plan.md “Field value typing”
+    // TODO for a typed cross-field value model.
+    return targetValue != null && String(targetValue) === dependsOn.value;
+  }
+
+  return !!targetValue;
+}

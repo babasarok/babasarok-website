@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest";
 import { calculatePriceForItem } from "@/lib/priceUtils";
 import { isItemValid, sanitizeItem, validateItem } from "@/lib/validation";
 import { resolveColorCount } from "@/lib/materialUtils";
-import { makeField, makeMaterial, makeProduct } from "./fixtures";
+import { fieldError, makeField, makeMaterial, makeProduct } from "./fixtures";
 
 describe("calculatePriceForItem — field combinations", () => {
   it("uses the base price when there are no fields", () => {
@@ -48,17 +48,70 @@ describe("calculatePriceForItem — field combinations", () => {
     const on = calculatePriceForItem(
       makeProduct({
         price: 0,
-        fields: [makeField({ name: "t", type: "toggle", price: 700, value: { value: "true" } })],
+        fields: [makeField({ name: "t", type: "toggle", price: 700, value: { value: true } })],
       })
     );
     const off = calculatePriceForItem(
       makeProduct({
         price: 0,
-        fields: [makeField({ name: "t", type: "toggle", price: 700, value: { value: "false" } })],
+        fields: [makeField({ name: "t", type: "toggle", price: 700, value: { value: false } })],
       })
     );
     expect(on.unitPrice).toBe(700);
     expect(off.unitPrice).toBe(0);
+  });
+
+  it("counts an embroidery price only when enabled", () => {
+    const on = calculatePriceForItem(
+      makeProduct({
+        price: 0,
+        fields: [
+          makeField({
+            name: "himzes",
+            type: "embroidery",
+            price: 1500,
+            value: { enabled: true, text: { value: "Anna" }, color: { color: "ekru" } },
+          }),
+        ],
+      })
+    );
+    const off = calculatePriceForItem(
+      makeProduct({
+        price: 0,
+        fields: [
+          makeField({
+            name: "himzes",
+            type: "embroidery",
+            price: 1500,
+            value: { enabled: false, text: { value: "Anna" }, color: { color: "ekru" } },
+          }),
+        ],
+      })
+    );
+    expect(on.unitPrice).toBe(1500);
+    expect(on.options).toContainEqual({ label: "himzes", price: 1500 });
+    expect(off.unitPrice).toBe(0);
+    expect(off.options).toHaveLength(0);
+  });
+
+  it("multiplies embroidery price by word count when priced per word", () => {
+    const price = calculatePriceForItem(
+      makeProduct({
+        price: 0,
+        fields: [
+          makeField({
+            name: "himzes",
+            type: "embroidery",
+            price: 1500,
+            price_unit: "word",
+            value: { enabled: true, text: { value: "Anna baba" }, color: { color: "ekru" } },
+          }),
+        ],
+      })
+    );
+
+    expect(price.unitPrice).toBe(3000);
+    expect(price.options).toContainEqual({ label: "himzes", price: 3000 });
   });
 
   it("adds input and color field prices", () => {
@@ -251,7 +304,7 @@ describe("validateItem / isItemValid", () => {
         fields: [makeField({ name: "meret", type: "radio", items: [{ value: "s" }] })],
       })
     );
-    expect(item.fields[0].value?.error).toBe("Kötelező mező");
+    expect(fieldError(item.fields[0])).toBe("Kötelező mező");
     expect(isItemValid(item)).toBe(false);
   });
 
@@ -262,8 +315,8 @@ describe("validateItem / isItemValid", () => {
     const required = validateItem(
       makeProduct({ fields: [makeField({ name: "x", type: "input" })] })
     );
-    expect(optional.fields[0].value?.error).toBeUndefined();
-    expect(required.fields[0].value?.error).toBe("Kötelező mező");
+    expect(fieldError(optional.fields[0])).toBeUndefined();
+    expect(fieldError(required.fields[0])).toBe("Kötelező mező");
   });
 
   it("rejects a value that fails the regex", () => {
@@ -279,7 +332,7 @@ describe("validateItem / isItemValid", () => {
         ],
       })
     );
-    expect(item.fields[0].value?.error).toBe("Érvénytelen formátum");
+    expect(fieldError(item.fields[0])).toBe("Érvénytelen formátum");
   });
 
   it("rejects a non-custom value that is not among the items", () => {
@@ -290,7 +343,46 @@ describe("validateItem / isItemValid", () => {
         ],
       })
     );
-    expect(item.fields[0].value?.error).toBe("Érvénytelen érték");
+    expect(fieldError(item.fields[0])).toBe("Érvénytelen érték");
+  });
+
+  it("requires embroidery text and thread color only when enabled", () => {
+    const disabled = validateItem(
+      makeProduct({ fields: [makeField({ name: "himzes", type: "embroidery" })] })
+    );
+    expect(isItemValid(disabled)).toBe(true);
+
+    const enabled = validateItem(
+      makeProduct({
+        fields: [
+          makeField({
+            name: "himzes",
+            type: "embroidery",
+            value: { enabled: true, text: { value: "" }, color: { color: "" } },
+          }),
+        ],
+      })
+    );
+    const field = enabled.fields[0];
+    if (field.type !== "embroidery") {
+      throw new Error("expected embroidery field");
+    }
+    expect(field.value?.text.error).toBe("Kötelező mező");
+    expect(field.value?.color.error).toBe("Kötelező mező");
+    expect(isItemValid(enabled)).toBe(false);
+
+    const valid = validateItem(
+      makeProduct({
+        fields: [
+          makeField({
+            name: "himzes",
+            type: "embroidery",
+            value: { enabled: true, text: { value: "Anna" }, color: { color: "ekru" } },
+          }),
+        ],
+      })
+    );
+    expect(isItemValid(valid)).toBe(true);
   });
 
   it("accepts a custom value that is not among the items", () => {
@@ -306,7 +398,7 @@ describe("validateItem / isItemValid", () => {
         ],
       })
     );
-    expect(item.fields[0].value?.error).toBeUndefined();
+    expect(fieldError(item.fields[0])).toBeUndefined();
   });
 
   it("requires the configured number of material colors", () => {
@@ -355,7 +447,18 @@ describe("validateItem / isItemValid", () => {
 describe("sanitizeItem", () => {
   it("prefills a toggle with 'false'", () => {
     const item = sanitizeItem(makeProduct({ fields: [makeField({ name: "t", type: "toggle" })] }));
-    expect(item.fields[0].value).toEqual({ value: "false" });
+    expect(item.fields[0].value).toEqual({ value: false });
+  });
+
+  it("prefills embroidery as disabled", () => {
+    const item = sanitizeItem(
+      makeProduct({ fields: [makeField({ name: "himzes", type: "embroidery" })] })
+    );
+    expect(item.fields[0].value).toEqual({
+      enabled: false,
+      text: { value: "" },
+      color: { color: "" },
+    });
   });
 
   it("trims selected colors down to the allowed count", () => {

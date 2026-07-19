@@ -1,5 +1,6 @@
 import type { IProduct, Field, CmsProductMaterial } from "./types.svelte";
 import type { ProductMaterialValue } from "./types.svelte";
+import { isFieldVisible } from "./fieldVisibility";
 
 interface PricePart {
   label: string;
@@ -25,6 +26,10 @@ export interface LengthBasedPrice extends BasePrice {
   per_meter_price: number | undefined;
 }
 
+function countWords(value: string): number {
+  return value.trim().split(/\s+/).filter(Boolean).length;
+}
+
 function getFieldPrice(field: Field): PricePart | null {
   if (field.length_based_pricing_source) {
     return null;
@@ -44,9 +49,19 @@ function getFieldPrice(field: Field): PricePart | null {
         price:
           field.value?.value === undefined
             ? undefined
-            : field.value.value === "true"
+            : field.value.value
               ? (field.price ?? undefined)
               : 0,
+      };
+    }
+    case "embroidery": {
+      if (!field.value?.enabled) {
+        return null;
+      }
+      const multiplier = field.price_unit === "word" ? countWords(field.value.text.value) : 1;
+      return {
+        label: field.label || field.name,
+        price: field.price == null ? undefined : field.price * multiplier,
       };
     }
     case "input": {
@@ -59,6 +74,13 @@ function getFieldPrice(field: Field): PricePart | null {
       return null;
     }
   }
+}
+
+function stringFieldValue(field: Field | undefined): string | undefined {
+  if (!field || field.type === "toggle" || field.type === "embroidery") {
+    return undefined;
+  }
+  return field.value?.value;
 }
 
 function getMaterialPrice(
@@ -79,6 +101,9 @@ function getMaterialPrice(
 export function calculatePriceForItem(product: IProduct): Price | LengthBasedPrice {
   const parts: PricePart[] = [];
   for (const field of product.fields) {
+    if (!isFieldVisible(field, product.fields)) {
+      continue;
+    }
     const fieldPrice = getFieldPrice(field);
     if (!fieldPrice) {
       continue;
@@ -119,8 +144,15 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
     unitPrice * product.count * (discountMultiplier === undefined ? 1 : discountMultiplier);
 
   if (product.priced_by_length) {
+    // FRAGILE: the length source field's string value is reinterpreted as a
+    // number (cm). Nothing ties the referenced field to a numeric type, so a
+    // non-numeric value silently yields an undefined length. See
+    // docs/embroidery-field-plan.md “Field value typing” TODO.
+    const lengthSource = stringFieldValue(
+      product.fields.find((x) => x.length_based_pricing_source)
+    );
     let length: number | undefined = Number.parseFloat(
-      product.fields.find((x) => x.length_based_pricing_source)?.value?.value ?? ""
+      typeof lengthSource === "string" ? lengthSource : ""
     );
 
     length = Number.isNaN(length) ? undefined : length / 100;

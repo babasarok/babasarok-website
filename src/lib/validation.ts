@@ -1,13 +1,25 @@
 import { resolveColorCount } from "./materialUtils";
 import type { CmsProductMaterial, Field, IProduct } from "./types.svelte";
 import type { ProductMaterialValue } from "./types.svelte";
+import { isFieldVisible } from "./fieldVisibility";
+
+const emptyEmbroideryValue = {
+  enabled: false,
+  text: { value: "" },
+  color: { color: "" },
+};
 
 function prefillField(field: Field): void {
   switch (field.type) {
     case "toggle": {
       if (field.value?.value === undefined) {
-        field.value = { value: "false" };
+        field.value = { value: false };
       }
+      return;
+    }
+    case "embroidery": {
+      field.value ??= structuredClone(emptyEmbroideryValue);
+      return;
     }
   }
 }
@@ -45,6 +57,38 @@ export function sanitizeItem(item: IProduct): IProduct {
 }
 
 function updateFieldWithErrors(item: Field): void {
+  if (item.type === "toggle") {
+    // A toggle always holds a boolean, so there is nothing to require.
+    item.value ??= { value: false };
+    item.value.error = undefined;
+    return;
+  }
+
+  if (item.type === "embroidery") {
+    item.value ??= structuredClone(emptyEmbroideryValue);
+    item.value.error = undefined;
+    item.value.text.error = undefined;
+    item.value.color.error = undefined;
+
+    if (!item.value.enabled) {
+      return;
+    }
+
+    if (!item.value.text.value) {
+      item.value.text.error = "Kötelező mező";
+    } else if (item.regex) {
+      const regex = new RegExp(item.regex);
+      if (!regex.test(item.value.text.value)) {
+        item.value.text.error = "Érvénytelen formátum";
+      }
+    }
+
+    if (!item.value.color.color && !item.value.color.custom_color) {
+      item.value.color.error = "Kötelező mező";
+    }
+    return;
+  }
+
   // prefill if we are submitting
   item.value ??= { value: "" };
 
@@ -53,7 +97,6 @@ function updateFieldWithErrors(item: Field): void {
     switch (item.type) {
       case "select":
       case "color":
-      case "toggle":
       case "radio": {
         item.value.error = "Kötelező mező";
         return;
@@ -101,6 +144,29 @@ function updateFieldWithErrors(item: Field): void {
       return;
     }
   }
+}
+
+function clearFieldErrors(field: Field): void {
+  if (!field.value) {
+    return;
+  }
+  if (field.type === "embroidery") {
+    field.value.error = undefined;
+    field.value.text.error = undefined;
+    field.value.color.error = undefined;
+    return;
+  }
+  field.value.error = undefined;
+}
+
+function fieldHasError(field: Field): boolean {
+  if (!field.value) {
+    return false;
+  }
+  if (field.type === "embroidery") {
+    return !!field.value.error || !!field.value.text.error || !!field.value.color.error;
+  }
+  return !!field.value.error;
 }
 
 function updateMaterialWithErrors(
@@ -168,6 +234,11 @@ function updateMaterialsWithErrors(item: IProduct): void {
 
 export function validateItem(item: IProduct): IProduct {
   for (const field of item.fields) {
+    // Hidden dependent fields must not block submission; clear any stale error.
+    if (!isFieldVisible(field, item.fields)) {
+      clearFieldErrors(field);
+      continue;
+    }
     updateFieldWithErrors(field);
   }
 
@@ -177,7 +248,7 @@ export function validateItem(item: IProduct): IProduct {
 
 export function isItemValid(item: IProduct): boolean {
   for (const field of item.fields) {
-    if (field.value?.error) {
+    if (isFieldVisible(field, item.fields) && fieldHasError(field)) {
       return false;
     }
   }
@@ -197,7 +268,7 @@ export function isItemValid(item: IProduct): boolean {
   }
 
   for (const field of item.fields) {
-    if (field.value?.error) {
+    if (isFieldVisible(field, item.fields) && fieldHasError(field)) {
       return false;
     }
   }

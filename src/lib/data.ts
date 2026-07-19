@@ -28,6 +28,12 @@ import type { ImageFunction } from "astro/content/config";
 import type { z } from "astro/zod";
 import type { GetImageResult } from "astro";
 import { resolveImage } from "./assets";
+import {
+  isEmbroideryPriceUnit,
+  isProductFieldType,
+  type EmbroideryPriceUnit,
+  type ProductFieldType,
+} from "./productFieldTypes";
 
 type Image = z.infer<ReturnType<ImageFunction>>;
 
@@ -113,7 +119,18 @@ interface CmsEnhancedProductMaterials extends Omit<
     Array<CmsEnhancedProductMaterialsBannedCombination | undefined | null> | undefined | null;
 }
 
-type CmsField = NonNullable<NonNullable<CmsProduct["fields"]>[number]>;
+type CmsFlatField = NonNullable<NonNullable<CmsProduct["fields"]>[number]>;
+/**
+ * `fields` share one shape with a `type` discriminant drawn from the central
+ * PRODUCT_FIELD_TYPES list; the runtime `Field` type turns it into a per-type
+ * discriminated union (see docs/embroidery-field-plan.md).
+ */
+type CmsField = {
+  [K in keyof CmsFlatField]: K extends "type" ? ProductFieldType : CmsFlatField[K];
+} & {
+  price_unit?: EmbroideryPriceUnit | undefined | null;
+};
+
 export interface CmsEnhancedProduct extends Omit<
   CmsProduct,
   | "id"
@@ -162,6 +179,33 @@ export interface CmsEnhancedConfig extends Omit<CmsConfig, "logo" | "footerLogo"
 type AstroConfig = RecursivelyReplaceType<InferEntrySchema<"config">, Image, GetImageResult>;
 type ConfigDiff = RecursiveDiff<CmsEnhancedConfig, AstroConfig>;
 AssertTrue<IfEquals<ConfigDiff, never>>();
+
+// #endregion
+
+// #region Embroidery
+
+type CmsEmbroidery = RecursivelyNullableToUndefined<
+  RecursivelyRemoveKeys<
+    Awaited<ReturnType<typeof client.queries.embroidery>>["data"]["embroidery"],
+    `_${string}`
+  >
+>;
+type CmsEmbroideryColor = NonNullable<NonNullable<CmsEmbroidery["colors"]>[number]>;
+
+export interface CmsEnhancedEmbroideryColor extends Omit<CmsEmbroideryColor, "image"> {
+  image?: GetImageResult | undefined | null;
+}
+interface CmsEnhancedEmbroidery extends Omit<CmsEmbroidery, "id" | "colors"> {
+  colors?: Array<CmsEnhancedEmbroideryColor> | undefined | null;
+}
+
+type AstroEmbroidery = RecursivelyReplaceType<
+  InferEntrySchema<"embroidery">,
+  Image,
+  GetImageResult
+>;
+type EmbroideryDiff = RecursiveDiff<CmsEnhancedEmbroidery, AstroEmbroidery>;
+AssertTrue<IfEquals<EmbroideryDiff, never>>();
 
 // #endregion
 
@@ -269,6 +313,36 @@ export const getConfig = async (): Promise<
   };
 };
 
+/**
+ * The shared embroidery thread-colour palette (global config), with images run
+ * through the build-time pipeline like material colours. Consumed by the order
+ * island's `embroidery` field type.
+ */
+export const getThreadColors = async (): Promise<CmsEnhancedEmbroideryColor[]> => {
+  const result = await requestWithMetadata(
+    client.queries.embroidery({ relativePath: "embroidery.json" })
+  );
+
+  return Promise.all(
+    (result.data.embroidery.colors ?? [])
+      .filter((color) => color != null)
+      .map(async (color) => ({
+        color_id: color.color_id,
+        label: color.label,
+        hex: color.hex ?? undefined,
+        image: color.image ? await optimizeImage(color.image, SWATCH_WIDTH) : undefined,
+      }))
+  );
+};
+
+/** Narrow Tina's loose `type: string` to the product-field discriminant. */
+function toProductFieldType(type: string): ProductFieldType {
+  if (isProductFieldType(type)) {
+    return type;
+  }
+  throw new Error(`Ismeretlen termék mező típus: ${type}`);
+}
+
 export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
   const response = await client.queries.productConnection();
 
@@ -341,27 +415,42 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
       fields:
         product.fields
           ?.filter((field) => field != null)
-          .map((field) => ({
-            allow_custom_value: field.allow_custom_value ?? undefined,
-            label: field.label,
-            length_based_pricing_source: field.length_based_pricing_source ?? undefined,
-            name: field.name,
-            optional: field.optional ?? undefined,
-            type: field.type,
-            placeholder: field.placeholder ?? undefined,
-            price: field.price ?? undefined,
-            regex: field.regex ?? undefined,
-            tooltip: field.tooltip ?? undefined,
-            items:
-              field.items
-                ?.filter((item) => item != null)
-                .map((item) => ({
-                  label: item.label,
-                  value: item.value,
-                  price: item.price ?? undefined,
-                  tooltip: item.tooltip ?? undefined,
-                })) ?? undefined,
-          })) ?? undefined,
+          .map((field): RecursiveRequired<CmsField, GetImageResult | Date> => {
+            const base = {
+              allow_custom_value: field.allow_custom_value ?? undefined,
+              label: field.label,
+              length_based_pricing_source: field.length_based_pricing_source ?? undefined,
+              name: field.name,
+              optional: field.optional ?? undefined,
+              placeholder: field.placeholder ?? undefined,
+              price: field.price ?? undefined,
+              price_unit:
+                "price_unit" in field && field.price_unit && isEmbroideryPriceUnit(field.price_unit)
+                  ? field.price_unit
+                  : undefined,
+              regex: field.regex ?? undefined,
+              tooltip: field.tooltip ?? undefined,
+              depends_on: field.depends_on
+                ? {
+                    field: field.depends_on.field ?? undefined,
+                    value: field.depends_on.value ?? undefined,
+                  }
+                : undefined,
+              items:
+                field.items
+                  ?.filter((item) => item != null)
+                  .map((item) => ({
+                    label: item.label,
+                    value: item.value,
+                    price: item.price ?? undefined,
+                    tooltip: item.tooltip ?? undefined,
+                  })) ?? undefined,
+            };
+
+            // Re-tag the shared shape with a literal `type` — the single point
+            // where Tina's loose `type: string` becomes our discriminated union.
+            return { ...base, type: toProductFieldType(field.type) };
+          }) ?? undefined,
     });
   }
 

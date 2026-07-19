@@ -11,6 +11,7 @@
   import { submitOrder, calculateOrderTotal } from "@/lib/orderSubmit";
   import OrderDelivery from "./OrderDelivery.svelte";
   import type {
+    CmsEnhancedEmbroideryColor,
     CmsEnhancedDeliveryMethod,
     CmsEnhancedProduct,
     CmsEnhancedConfig,
@@ -23,9 +24,10 @@
     products: Record<string, CmsEnhancedProduct>;
     deliveryMethods: Record<string, CmsEnhancedDeliveryMethod>;
     config: CmsEnhancedConfig;
+    threadColors: CmsEnhancedEmbroideryColor[];
   }
 
-  let { products: productInfo, deliveryMethods, config: params }: Props = $props();
+  let { products: productInfo, deliveryMethods, config: params, threadColors }: Props = $props();
 
   let error: string | null = $state(null);
   let success: string | null = $state(null);
@@ -75,7 +77,7 @@
 
     sending = true;
     const result = await submitOrder(
-      { name, email, phone, deliveryMethod: deliveryMethodData, products },
+      { name, email, phone, deliveryMethod: deliveryMethodData, products, threadColors },
       {
         accessKey: params.fabformURL ?? "",
         message,
@@ -216,6 +218,7 @@
             <div transition:fade={{ duration: 250 }}>
               <OrderItem
                 product={item as IProduct}
+                {threadColors}
                 onClose={() => {
                   const index = products.findIndex((p) => p.uuid === item.uuid);
                   if (index !== -1) {

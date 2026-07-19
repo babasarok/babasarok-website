@@ -4,7 +4,8 @@
  */
 import { calculatePriceForItem } from "@/lib/priceUtils";
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "./types.svelte";
-import type { CmsEnhancedDeliveryMethod } from "./data";
+import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "./data";
+import { isFieldVisible } from "./fieldVisibility";
 
 const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
 
@@ -14,6 +15,7 @@ export interface OrderDetails {
   phone: string;
   deliveryMethod: CmsEnhancedDeliveryMethod;
   products: IProduct[];
+  threadColors: CmsEnhancedEmbroideryColor[];
 }
 
 /** Sum of every product's total plus delivery, and whether any price is partial. */
@@ -29,9 +31,16 @@ export function calculateOrderTotal(
 }
 
 /** The selected option label/value pair for a field, as shown in the email. */
-function formatFieldValue(field: Field): string {
+function formatFieldValue(field: Field, threadColors: CmsEnhancedEmbroideryColor[]): string {
   if (field.type === "toggle") {
-    return field.value?.value === "true" ? "Igen" : "Nem";
+    return field.value?.value ? "Igen" : "Nem";
+  }
+  if (field.type === "embroidery") {
+    const color = threadColors.find((c) => c.color_id === field.value?.color.color);
+    const colorLabel = field.value?.color.custom_color
+      ? `Egyedi szín: ${field.value.color.custom_color}`
+      : (color?.label ?? field.value?.color.color ?? "");
+    return `${field.value?.text.value ?? ""} (${colorLabel})`;
   }
   if (field.value?.is_custom) {
     return `Egyedi: ${field.value.value}`;
@@ -41,6 +50,29 @@ function formatFieldValue(field: Field): string {
       ? field.items?.find((option) => option?.value === field.value?.value)?.label
       : undefined;
   return label ?? field.value?.value ?? "";
+}
+
+/**
+ * How deep to indent a field, based on its `depends_on` chain: a field that
+ * depends on another sits one level below it, matching the on-screen nesting.
+ * Guards against cycles so a malformed chain can't loop forever.
+ */
+function fieldIndentDepth(field: Field, fields: Field[]): number {
+  let depth = 0;
+  const seen = new Set<string>();
+  let name = field.name;
+  let dependency = field.depends_on?.field;
+  while (dependency && !seen.has(name)) {
+    seen.add(name);
+    const parent = fields.find((f) => f.name === dependency);
+    if (!parent) {
+      break;
+    }
+    depth++;
+    name = parent.name;
+    dependency = parent.depends_on?.field;
+  }
+  return depth;
 }
 
 /** The "- material (colors)" line for one chosen material value. */
@@ -60,7 +92,17 @@ function formatMaterialLine(
 }
 
 /** Render a single product into the plain-text block used in the email body. */
-function formatProductString(product: IProduct): string {
+function shouldSubmitField(field: Field): boolean {
+  if (field.type === "embroidery") {
+    return field.value?.enabled ?? false;
+  }
+  return !("optional" in field) || !field.optional || !!field.value?.value;
+}
+
+function formatProductString(
+  product: IProduct,
+  threadColors: CmsEnhancedEmbroideryColor[]
+): string {
   const price = calculatePriceForItem(product);
   const { materials, material_required_count, values } = product.materials;
 
@@ -68,10 +110,16 @@ function formatProductString(product: IProduct): string {
     `${product.title} (${product.count.toString()}db)`,
 
     ...product.fields
+      // Drop fields hidden by an unmet `depends_on` condition — they're not
+      // part of the order.
+      .filter((f) => isFieldVisible(f, product.fields))
       // Hide only *empty* optional fields; a filled-in optional answer (e.g. a
       // custom note) must still reach the email.
-      .filter((f) => !("optional" in f) || !f.optional || !!f.value?.value)
-      .map((f) => `  ${f.label}: ${formatFieldValue(f)}`),
+      .filter(shouldSubmitField)
+      .map(
+        (f) =>
+          `${"  ".repeat(fieldIndentDepth(f, product.fields) + 1)}${f.label}: ${formatFieldValue(f, threadColors)}`
+      ),
 
     ...(materials.length > 0 && material_required_count > 0
       ? ["  Anyagok:", ...values.map((mv, i) => formatMaterialLine(mv, materials, i))]
@@ -102,7 +150,10 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
   formData.append("email", order.email);
   formData.append("telefonszam", order.phone);
   for (const [index, product] of order.products.entries()) {
-    formData.append(`termek ${(index + 1).toString()}`, formatProductString(product));
+    formData.append(
+      `termek ${(index + 1).toString()}`,
+      formatProductString(product, order.threadColors)
+    );
   }
   formData.append(
     "szallitasimod",

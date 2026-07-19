@@ -47,5 +47,10 @@ fields:
     price: 0
     label: Szín-Minta
     type: input
+  - name: himzes
+    price: 1500
+    price_unit: word
+    label: Hímzés
+    type: embroidery
 ---
 

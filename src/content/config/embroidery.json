@@ -1,0 +1,29 @@
+{
+  "colors": [
+    {
+      "color_id": "zsalyazold",
+      "label": "Zsályazöld",
+      "hex": "#9caf88"
+    },
+    {
+      "color_id": "babakek",
+      "label": "Babakék",
+      "hex": "#a7c7e7"
+    },
+    {
+      "color_id": "babarozsaszin",
+      "label": "Babarózsaszín",
+      "hex": "#f4b6c2"
+    },
+    {
+      "color_id": "ekru",
+      "label": "Ekrü",
+      "hex": "#f2e8d5"
+    },
+    {
+      "color_id": "fekete",
+      "label": "Fekete",
+      "hex": "#000000"
+    }
+  ]
+}

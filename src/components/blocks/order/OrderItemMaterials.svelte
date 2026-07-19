@@ -135,112 +135,114 @@
     {@const multiColor = (colorCount ?? 0) > 1}
     {@const disabled =
       colorCount === undefined || (multiColor ? (value?.colors.length ?? 0) >= colorCount : false)}
-    <div class="flex flex-col gap-1">
-      <p class="text-sm text-brown-500 flex items-center gap-1 justify-between">
-        <span> Szín </span>
-        <span class="text-xs">
-          {#if custom}
-            Egyedi szín
-          {:else if colorCount === undefined}
-            <span class="text-red-600">Válaszz először opciót</span>
-          {:else}
-            {`${value?.colors.length ?? 0} / ${colorCount}`}
-          {/if}
-        </span>
-      </p>
-      {#if (materialInfo?.colors?.length ?? 0) > 0}
-        <p
-          transition:slide
-          class="text-xs text-brown-500 flex items-center gap-1 border border-brown-200 rounded p-1"
-        >
-          <Icon icon="mdi:alert-circle" class="inline-block size-6 text-orange-500" />
-          <span> A színek tájékoztató jellegűek, a pontos árnyalatok eltérhetnek. </span>
+    <div class="flex flex-col gap-2" transition:slide>
+      <div class="flex flex-col">
+        <p class="text-sm text-brown-500 flex items-center gap-1 justify-between">
+          <span> Szín </span>
+          <span class="text-xs">
+            {#if custom}
+              Egyedi szín
+            {:else if colorCount === undefined}
+              <span class="text-red-600">Válaszz először opciót</span>
+            {:else}
+              {`${value?.colors.length ?? 0} / ${colorCount}`}
+            {/if}
+          </span>
         </p>
-      {/if}
-      {#if multiColor}
-        <div class="flex gap-1 flex-wrap">
-          {#each value?.colors as colorId, index (colorId)}
-            {@const colorInfo = materialInfo?.colors?.find((c) => c.color_id === colorId)}
-            {#if colorInfo}
-              <Chip
-                color={colorInfo.hex}
-                bgImage={colorInfo.image?.src}
-                onClose={() => {
+        {#if (materialInfo?.colors?.length ?? 0) > 0}
+          <p
+            transition:slide
+            class="mt-1 text-xs text-brown-500 flex items-center gap-1 border border-brown-200 rounded p-1"
+          >
+            <Icon icon="mdi:alert-circle" class="inline-block size-6 text-orange-500" />
+            <span> A színek tájékoztató jellegűek, a pontos árnyalatok eltérhetnek. </span>
+          </p>
+        {/if}
+        {#if multiColor}
+          <div class="mt-1 flex gap-1 flex-wrap">
+            {#each value?.colors as colorId, index (colorId)}
+              {@const colorInfo = materialInfo?.colors?.find((c) => c.color_id === colorId)}
+              {#if colorInfo}
+                <Chip
+                  color={colorInfo.hex}
+                  bgImage={colorInfo.image?.src}
+                  onClose={() => {
+                    const result = product;
+                    if (result.materials.values[material_index]) {
+                      result.materials.values[material_index].colors = [
+                        ...result.materials.values[material_index].colors.slice(0, index),
+                        ...result.materials.values[material_index].colors.slice(index + 1),
+                      ];
+                    }
+                    onChange?.(result);
+                  }}
+                >
+                  {colorInfo.label || colorInfo.color_id}
+                </Chip>
+              {/if}
+            {/each}
+          </div>
+        {/if}
+        {#if (materialInfo?.colors?.length ?? 0) > 0}
+          <div transition:slide class="mt-1 flex gap-1 flex-wrap leading-0">
+            {#each materialInfo?.colors || [] as color (color.color_id)}
+              {@const selected = value?.colors.includes(color.color_id)}
+              <Color
+                {color}
+                {disabled}
+                selected={!multiColor && !!selected}
+                onclick={() => {
                   const result = product;
-                  if (result.materials.values[material_index]) {
-                    result.materials.values[material_index].colors = [
-                      ...result.materials.values[material_index].colors.slice(0, index),
-                      ...result.materials.values[material_index].colors.slice(index + 1),
-                    ];
+                  if (!result.materials.values[material_index]) {
+                    return;
                   }
+
+                  if (multiColor) {
+                    result.materials.values[material_index].colors.push(color.color_id);
+                  } else {
+                    result.materials.values[material_index].colors = [color.color_id];
+                  }
+                  result.materials.values[material_index].custom_color = undefined;
                   onChange?.(result);
                 }}
-              >
-                {colorInfo.label || colorInfo.color_id}
-              </Chip>
-            {/if}
-          {/each}
-        </div>
-      {/if}
+              />
+            {/each}
+          </div>
+        {/if}
+      </div>
       {#if (materialInfo?.colors?.length ?? 0) > 0}
-        <div transition:slide class="flex gap-1 flex-wrap leading-0">
-          {#each materialInfo?.colors || [] as color (color.color_id)}
-            {@const selected = value?.colors.includes(color.color_id)}
-            <Color
-              {color}
-              {disabled}
-              selected={!multiColor && !!selected}
-              onclick={() => {
-                const result = product;
-                if (!result.materials.values[material_index]) {
-                  return;
-                }
-
-                if (multiColor) {
-                  result.materials.values[material_index].colors.push(color.color_id);
-                } else {
-                  result.materials.values[material_index].colors = [color.color_id];
-                }
-                result.materials.values[material_index].custom_color = undefined;
-                onChange?.(result);
-              }}
-            />
-          {/each}
-        </div>
+        <Button
+          {disabled}
+          type="button"
+          onclick={() => {
+            const result = product;
+            if (!result.materials.values[material_index]) {
+              return;
+            }
+            result.materials.values[material_index].colors = [];
+            result.materials.values[material_index].custom_color = "";
+            onChange?.(result);
+          }}
+        >
+          Egyéb
+        </Button>
+      {/if}
+      {#if custom}
+        <TextInput
+          value={value?.custom_color}
+          oninput={(e) => {
+            const result = product;
+            if (!result.materials.values[material_index]) {
+              return;
+            }
+            result.materials.values[material_index].custom_color = (
+              e.target as HTMLInputElement
+            ).value;
+            onChange?.(result);
+          }}
+        />
       {/if}
     </div>
-    {#if (materialInfo?.colors?.length ?? 0) > 0}
-      <Button
-        {disabled}
-        type="button"
-        onclick={() => {
-          const result = product;
-          if (!result.materials.values[material_index]) {
-            return;
-          }
-          result.materials.values[material_index].colors = [];
-          result.materials.values[material_index].custom_color = "";
-          onChange?.(result);
-        }}
-      >
-        Egyéb
-      </Button>
-    {/if}
-    {#if custom}
-      <TextInput
-        value={value?.custom_color}
-        oninput={(e) => {
-          const result = product;
-          if (!result.materials.values[material_index]) {
-            return;
-          }
-          result.materials.values[material_index].custom_color = (
-            e.target as HTMLInputElement
-          ).value;
-          onChange?.(result);
-        }}
-      />
-    {/if}
   {/if}
   {#if product.materials.values[material_index]?.error}
     <p class="text-sm text-red-500">
