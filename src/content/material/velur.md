@@ -7,6 +7,9 @@ colors:
     label: Fehér
     hex: ''
     image: /src/assets/IMG_5136.jpeg
+  - color_id: Ekru-2
+    label: Ekrü
+    image: /src/assets/IMG_5150.jpeg
   - color_id: 'Világos bézs '
     label: 'Világos bézs '
     hex: ''
@@ -42,9 +45,6 @@ colors:
     label: Pink
     hex: ''
     image: /src/assets/IMG_5138.jpeg
-  - color_id: Ekru-2
-    label: Ekrü
-    image: /src/assets/IMG_5150.jpeg
   - color_id: 'Sotetkek '
     label: 'Sötétkék '
     image: /src/assets/IMG_5178.jpeg
