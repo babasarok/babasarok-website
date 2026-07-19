@@ -15,6 +15,9 @@ colors:
     label: Barna
     hex: ''
     image: /src/assets/IMG_5134.jpeg
+  - color_id: Malyva
+    label: Mályva
+    image: /src/assets/IMG_5132.jpeg
   - color_id: babarozsaszin-20
     label: Babarózsaszín
     hex: ''
@@ -23,28 +26,28 @@ colors:
     label: Sötét púderrózsaszín
     hex: ''
     image: /src/assets/IMG_5012.jpeg
-  - color_id: sotetzsalya-77
-    label: Sötétzsálya/khaki
-    hex: ''
-    image: /src/assets/IMG_5135.jpeg
-  - color_id: sotetszurke
-    label: Sötétszürke
-    hex: ''
-    image: /src/assets/IMG_2542.jpeg
-  - color_id: 'Zsalya '
-    label: Zsálya
-    image: /src/assets/IMG_5131.jpeg
-  - color_id: Malyva
-    label: Mályva
-    image: /src/assets/IMG_5132.jpeg
-  - color_id: Sötétzöld-43
-    label: Sötétzöld
-    image: /src/assets/IMG_5141.jpeg
   - color_id: Világos rózsaszín -53
     label: 'Halvány barackos rózsaszín '
     image: /src/assets/IMG_5144.jpeg
   - color_id: Halvány rózsaszín-19
     label: 'Extra halvány rózsaszín '
     image: /src/assets/IMG_5148.jpeg
+  - color_id: Sötétzöld-43
+    label: Sötétzöld
+    image: /src/assets/IMG_5141.jpeg
+  - color_id: sotetzsalya-77
+    label: Sötétzsálya/khaki
+    hex: ''
+    image: /src/assets/IMG_5135.jpeg
+  - color_id: 'Zsalya '
+    label: Zsálya
+    image: /src/assets/IMG_5131.jpeg
+  - color_id: sotetszurke
+    label: Sötétszürke
+    hex: ''
+    image: /src/assets/IMG_2542.jpeg
+  - color_id: 'Világos bézs '
+    label: 'Világos bézs '
+    image: /src/assets/IMG_3356.jpeg
 ---
 
