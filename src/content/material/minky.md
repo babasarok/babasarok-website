@@ -9,6 +9,9 @@ colors:
   - color_id: '#2'
     label: Pasztellkék
     image: /src/assets/IMG_4080.jpeg
+  - color_id: '#18'
+    label: Mályva
+    image: /src/assets/IMG_6644.jpeg
   - color_id: '#3'
     label: Világos mályva
     image: /src/assets/IMG_4077.jpeg
@@ -54,9 +57,6 @@ colors:
   - color_id: '#17'
     label: Rosegold
     image: /src/assets/IMG_6646.jpeg
-  - color_id: '#18'
-    label: Mályva
-    image: /src/assets/IMG_6644.jpeg
   - color_id: '#19'
     label: Mogyoró
     image: /src/assets/IMG_6638.jpeg
