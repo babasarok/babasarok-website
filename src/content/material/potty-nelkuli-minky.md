@@ -9,6 +9,9 @@ colors:
   - color_id: Ekru-2
     label: Ekrü
     image: /src/assets/IMG_5152.jpeg
+  - color_id: 'Világos bézs '
+    label: 'Világos bézs '
+    image: /src/assets/IMG_5154.jpeg
   - color_id: '#20'
     label: 'Bézs '
     image: /src/assets/IMG_4084.jpeg
@@ -21,8 +24,5 @@ colors:
   - color_id: Babarózsaszín-20
     label: 'Babarózsaszín '
     image: /src/assets/IMG_5149.jpeg
-  - color_id: 'Világos bézs '
-    label: 'Világos bézs '
-    image: /src/assets/IMG_5154.jpeg
 ---
 
