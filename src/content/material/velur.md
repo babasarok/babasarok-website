@@ -19,7 +19,7 @@ colors:
     hex: ''
     image: /src/assets/IMG_5110.jpeg
   - color_id: babakek
-    label: Halvány babakék
+    label: Pasztellkék
     hex: ''
     image: /src/assets/IMG_5140.jpeg
   - color_id: 'Sotetkek '
