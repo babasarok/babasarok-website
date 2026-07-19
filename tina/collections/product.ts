@@ -11,7 +11,7 @@ import {
   type Collection,
 } from "tinacms";
 import { getValue, requiredListItemsBeforeSubmit, slugify } from "../lib/utils";
-import { PRODUCT_FIELD_TYPES } from "../../src/lib/productFieldTypes";
+import { EMBROIDERY_PRICE_UNITS, PRODUCT_FIELD_TYPES } from "../../src/lib/productFieldTypes";
 
 /**
  * Products ("Termékek") — backs `src/content/product/*.md` and the `/product`
@@ -330,6 +330,23 @@ export const ProductCollection: Collection = {
           required: true,
         },
         {
+          type: "string",
+          name: "label",
+          description: "A mező megjelenítendő neve, ami a felhasználó számára látható.",
+          label: "Mező név",
+          isTitle: true,
+          required: true,
+        },
+        {
+          type: "string",
+          name: "type",
+          description:
+            "A mező típusa, ami meghatározza, hogy az adatokat milyen formában kell megadni.",
+          required: true,
+          options: PRODUCT_FIELD_TYPES.map((t) => ({ value: t.value, label: t.label })),
+          label: "Mező típus",
+        },
+        {
           type: "boolean",
           name: "length_based_pricing_source",
           description:
@@ -368,23 +385,6 @@ export const ProductCollection: Collection = {
           },
         },
         {
-          type: "string",
-          name: "label",
-          description: "A mező megjelenítendő neve, ami a felhasználó számára látható.",
-          label: "Mező név",
-          isTitle: true,
-          required: true,
-        },
-        {
-          type: "string",
-          name: "type",
-          description:
-            "A mező típusa, ami meghatározza, hogy az adatokat milyen formában kell megadni.",
-          required: true,
-          options: PRODUCT_FIELD_TYPES.map((t) => ({ value: t.value, label: t.label })),
-          label: "Mező típus",
-        },
-        {
           type: "boolean",
           name: "optional",
           description: "Jelzi, hogy a mező opcionális-e.",
@@ -399,6 +399,29 @@ export const ProductCollection: Collection = {
 
               // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
               return ToggleField(props as any);
+            },
+          },
+        },
+        {
+          type: "string",
+          name: "price_unit",
+          label: "Árazás módja",
+          description:
+            "Hímzésnél: fix ár vagy szavankénti ár. A mező ára az itt választott egységre vonatkozik.",
+          options: EMBROIDERY_PRICE_UNITS.map((unit) => ({
+            value: unit.value,
+            label: unit.label,
+          })),
+          ui: {
+            component(props) {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              const type = getValue(props, "type");
+              if (type !== "embroidery") {
+                return null;
+              }
+
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+              return SelectField(props as any);
             },
           },
         },

@@ -18,6 +18,7 @@ fields:
     allow_custom_value: true
   - name: himzes
     price: 1500
+    price_unit: word
     label: Hímzés
     type: embroidery
 ---

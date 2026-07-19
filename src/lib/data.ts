@@ -28,7 +28,12 @@ import type { ImageFunction } from "astro/content/config";
 import type { z } from "astro/zod";
 import type { GetImageResult } from "astro";
 import { resolveImage } from "./assets";
-import { isProductFieldType, type ProductFieldType } from "./productFieldTypes";
+import {
+  isEmbroideryPriceUnit,
+  isProductFieldType,
+  type EmbroideryPriceUnit,
+  type ProductFieldType,
+} from "./productFieldTypes";
 
 type Image = z.infer<ReturnType<ImageFunction>>;
 
@@ -122,6 +127,8 @@ type CmsFlatField = NonNullable<NonNullable<CmsProduct["fields"]>[number]>;
  */
 type CmsField = {
   [K in keyof CmsFlatField]: K extends "type" ? ProductFieldType : CmsFlatField[K];
+} & {
+  price_unit?: EmbroideryPriceUnit | undefined | null;
 };
 
 export interface CmsEnhancedProduct extends Omit<
@@ -417,6 +424,10 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
               optional: field.optional ?? undefined,
               placeholder: field.placeholder ?? undefined,
               price: field.price ?? undefined,
+              price_unit:
+                "price_unit" in field && field.price_unit && isEmbroideryPriceUnit(field.price_unit)
+                  ? field.price_unit
+                  : undefined,
               regex: field.regex ?? undefined,
               tooltip: field.tooltip ?? undefined,
               depends_on: field.depends_on

@@ -33,6 +33,7 @@ export interface FieldOpts {
   type: FieldType;
   label?: string;
   price?: number | null;
+  price_unit?: "flat" | "word" | null;
   optional?: boolean;
   items?: FieldItem[];
   allow_custom_value?: boolean;

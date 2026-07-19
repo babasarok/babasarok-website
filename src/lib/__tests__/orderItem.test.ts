@@ -94,6 +94,26 @@ describe("calculatePriceForItem — field combinations", () => {
     expect(off.options).toHaveLength(0);
   });
 
+  it("multiplies embroidery price by word count when priced per word", () => {
+    const price = calculatePriceForItem(
+      makeProduct({
+        price: 0,
+        fields: [
+          makeField({
+            name: "himzes",
+            type: "embroidery",
+            price: 1500,
+            price_unit: "word",
+            value: { enabled: true, text: { value: "Anna baba" }, color: { color: "ekru" } },
+          }),
+        ],
+      })
+    );
+
+    expect(price.unitPrice).toBe(3000);
+    expect(price.options).toContainEqual({ label: "himzes", price: 3000 });
+  });
+
   it("adds input and color field prices", () => {
     const price = calculatePriceForItem(
       makeProduct({

@@ -21,7 +21,7 @@ import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import z from "astro/zod";
 import type { SchemaContext } from "astro/content/config";
-import { PRODUCT_FIELD_TYPE_VALUES } from "./lib/productFieldTypes";
+import { EMBROIDERY_PRICE_UNIT_VALUES, PRODUCT_FIELD_TYPE_VALUES } from "./lib/productFieldTypes";
 
 const heroBlock = defineCollection({
   loader: glob({ pattern: "hero.md", base: "src/content/sections" }),
@@ -178,6 +178,7 @@ const productFieldBaseShape = {
   name: z.string(),
   length_based_pricing_source: z.boolean().optional().nullable(),
   price: z.number().optional().nullable(),
+  price_unit: z.enum(EMBROIDERY_PRICE_UNIT_VALUES).optional().nullable(),
   label: z.string(),
   optional: z.boolean().optional().nullable(),
   allow_custom_value: z.boolean().optional().nullable(),

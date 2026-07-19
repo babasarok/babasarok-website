@@ -26,6 +26,10 @@ export interface LengthBasedPrice extends BasePrice {
   per_meter_price: number | undefined;
 }
 
+function countWords(value: string): number {
+  return value.trim().split(/\s+/).filter(Boolean).length;
+}
+
 function getFieldPrice(field: Field): PricePart | null {
   if (field.length_based_pricing_source) {
     return null;
@@ -54,9 +58,10 @@ function getFieldPrice(field: Field): PricePart | null {
       if (!field.value?.enabled) {
         return null;
       }
+      const multiplier = field.price_unit === "word" ? countWords(field.value.text.value) : 1;
       return {
         label: field.label || field.name,
-        price: field.price ?? undefined,
+        price: field.price == null ? undefined : field.price * multiplier,
       };
     }
     case "input": {
