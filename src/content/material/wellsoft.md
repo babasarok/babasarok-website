@@ -30,5 +30,8 @@ colors:
   - color_id: Babakek
     label: Babakek
     image: /src/assets/IMG_5165.jpeg
+  - color_id: 'Meleg bézs '
+    label: 'Meleg bézs '
+    image: /src/assets/IMG_5162.jpeg
 ---
 
