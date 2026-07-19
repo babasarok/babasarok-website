@@ -33,9 +33,6 @@ colors:
   - color_id: 'Autós '
     label: 'Járművek '
     image: /src/assets/IMG_2354.jpeg
-  - color_id: 'Dínós '
-    label: Mini dínók
-    image: /src/assets/IMG_4768.jpeg
   - color_id: 'Nagy dínós '
     label: Dínókert
     image: /src/assets/IMG_4490.jpeg
