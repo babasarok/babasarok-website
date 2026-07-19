@@ -13,5 +13,9 @@ fields:
     label: Szín
     type: color
     allow_custom_value: true
+  - name: himzes
+    price: 1500
+    label: Hímzés
+    type: embroidery
 ---
 

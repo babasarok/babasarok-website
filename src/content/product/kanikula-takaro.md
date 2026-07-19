@@ -42,5 +42,9 @@ fields:
         label: Felnőtt
         price: 8000
         tooltip: 140x200cm
+  - name: himzes
+    price: 1500
+    label: Hímzés
+    type: embroidery
 ---
 

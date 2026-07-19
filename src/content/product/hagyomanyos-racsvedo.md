@@ -58,6 +58,10 @@ fields:
       - value: '140'
         label: 140cm
     regex: ^(\d+)$
+  - name: himzes
+    price: 1500
+    label: Hímzés
+    type: embroidery
 ---
 
 ![](/src/assets/IMG_7914.JPG)

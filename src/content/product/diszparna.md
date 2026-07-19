@@ -35,5 +35,9 @@ fields:
       - value: korona
         label: Korona
         price: 0
+  - name: himzes
+    price: 1500
+    label: Hímzés
+    type: embroidery
 ---
 

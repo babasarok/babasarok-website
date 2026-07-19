@@ -33,5 +33,10 @@ materials:
       price: 0
       color_count: '1'
   material_required_count: 2
+fields:
+  - name: himzes
+    price: 1500
+    label: Hímzés
+    type: embroidery
 ---
 

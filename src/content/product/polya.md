@@ -41,5 +41,9 @@ fields:
     price: 1200
     label: Kókuszbetéttel
     type: toggle
+  - name: himzes
+    price: 1500
+    label: Hímzés
+    type: embroidery
 ---
 
