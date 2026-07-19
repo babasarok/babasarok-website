@@ -33,5 +33,8 @@ colors:
   - color_id: Khaki42
     label: Khaki
     image: /src/assets/IMG_5173.jpeg
+  - color_id: Sotetzold
+    label: 'Sötétzöld '
+    image: /src/assets/IMG_5170.jpeg
 ---
 
