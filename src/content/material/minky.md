@@ -12,7 +12,7 @@ colors:
   - color_id: '#3'
     label: Világos mályva
     image: /src/assets/IMG_4077.jpeg
-  - color_id: '#4'
+  - color_id: '#4 candypink'
     label: 'Babarózsaszín '
     image: /src/assets/IMG_4076.jpeg
   - color_id: '#19'
