@@ -12,5 +12,8 @@ colors:
   - color_id: 'Mogyoro '
     label: Mogyoró
     image: /src/assets/IMG_9451.jpeg
+  - color_id: Extra halvány rozsaszin19
+    label: 'Extra halvány rózsaszín '
+    image: /src/assets/IMG_5156.jpeg
 ---
 
