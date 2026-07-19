@@ -24,6 +24,9 @@ colors:
   - color_id: Aranymasnis
     label: 'Arany masnik pöttyökkel '
     image: /src/assets/IMG_4636.jpeg
+  - color_id: Koala
+    label: Koalák
+    image: /src/assets/IMG_5180.jpeg
   - color_id: 'Autós '
     label: 'Járművek '
     image: /src/assets/IMG_2354.jpeg
