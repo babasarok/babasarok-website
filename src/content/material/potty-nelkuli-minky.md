@@ -48,5 +48,8 @@ colors:
   - color_id: Sotetkek-15
     label: Sötétkék
     image: /src/assets/IMG_5177.jpeg
+  - color_id: 'Világos malyva '
+    label: Világos mályva
+    image: /src/assets/IMG_5174.jpeg
 ---
 
