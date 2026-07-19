@@ -9,8 +9,8 @@ tags:
 categories: Referenciamunka
 ---
 
-![Másik Szögből](/src/assets/images/single-blog/referencia-05-02.jpg "Másik Szögből")![](/src/assets/IMG_6903.jpeg)
+![Másik Szögből](/src/assets/images/single-blog/referencia-05-02.jpg "Másik Szögből")
 
-|   |   |   |
-| - | - | - |
-|   |   |   |
+| ![](/src/assets/IMG_6903.jpeg) | ![](/src/assets/IMG_6904.jpeg) |   |
+| ------------------------------ | ------------------------------ | - |
+|                                |                                |   |
