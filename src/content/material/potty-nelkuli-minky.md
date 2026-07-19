@@ -15,5 +15,8 @@ colors:
   - color_id: Babarózsaszín-20
     label: 'Babarózsaszín '
     image: /src/assets/IMG_5149.jpeg
+  - color_id: Ekru-2
+    label: Ekrü
+    image: /src/assets/IMG_5152.jpeg
 ---
 
