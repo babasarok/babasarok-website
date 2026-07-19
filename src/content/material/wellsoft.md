@@ -39,5 +39,8 @@ colors:
   - color_id: Mustar74
     label: 'Mustár '
     image: /src/assets/IMG_5166.jpeg
+  - color_id: 'Szürke '
+    label: 'Szürke '
+    image: /src/assets/IMG_5161.jpeg
 ---
 
