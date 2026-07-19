@@ -18,12 +18,12 @@ colors:
   - color_id: '#8.1'
     label: Zsálya
     image: /src/assets/IMG_4086.jpeg
-  - color_id: Halvány rózsaszín-53
-    label: 'Halvány barackos rózsaszín '
-    image: /src/assets/IMG_5143.jpeg
   - color_id: Babarózsaszín-20
     label: 'Babarózsaszín '
     image: /src/assets/IMG_5149.jpeg
+  - color_id: Halvány rózsaszín-53
+    label: 'Halvány barackos rózsaszín '
+    image: /src/assets/IMG_5143.jpeg
   - color_id: Extra halvanyrozsaszin-19
     label: 'Extra halvány rózsaszín '
     image: /src/assets/IMG_5157.jpeg
