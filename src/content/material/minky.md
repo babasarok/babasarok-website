@@ -61,6 +61,6 @@ colors:
     label: Lila
     image: /src/assets/IMG_6655.jpeg
 thumbnail: '/src/assets/IMG_6615,1.JPG'
-categories: 'puha, pöttyös felületű anyag'
+categories: 'Puha, pöttyös felületű, melegebb anyag. '
 ---
 
