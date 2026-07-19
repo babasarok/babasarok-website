@@ -49,8 +49,7 @@ colors:
     label: 'Bébi oroszlánok '
     image: /src/assets/IMG_9823.jpeg
 thumbnail: /src/assets/IMG_5184.jpeg
-shortDescription: |-
-  Puha, vastag, szőrös, meleg téli anyag. 
-  100%poliészter
+categories: 'Puha, vastag, szőrös, meleg téli anyag.  100%poliészter'
+shortDescription: ''
 ---
 
