@@ -1,5 +1,6 @@
 import { defineConfig } from "tinacms";
 import { GlobalConfigCollection } from "./collections/global-config";
+import { EmbroideryConfigCollection } from "./collections/embroidery";
 import { HeroCollection } from "./collections/hero";
 import { ServiceCollection } from "./collections/service";
 import { AboutCollection } from "./collections/about";
@@ -40,6 +41,7 @@ export default defineConfig({
   schema: {
     collections: [
       GlobalConfigCollection,
+      EmbroideryConfigCollection,
       HeroCollection,
       ServiceCollection,
       AboutCollection,

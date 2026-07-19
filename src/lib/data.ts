@@ -175,6 +175,33 @@ AssertTrue<IfEquals<ConfigDiff, never>>();
 
 // #endregion
 
+// #region Embroidery
+
+type CmsEmbroidery = RecursivelyNullableToUndefined<
+  RecursivelyRemoveKeys<
+    Awaited<ReturnType<typeof client.queries.embroidery>>["data"]["embroidery"],
+    `_${string}`
+  >
+>;
+type CmsEmbroideryColor = NonNullable<NonNullable<CmsEmbroidery["colors"]>[number]>;
+
+export interface CmsEnhancedEmbroideryColor extends Omit<CmsEmbroideryColor, "image"> {
+  image?: GetImageResult | undefined | null;
+}
+interface CmsEnhancedEmbroidery extends Omit<CmsEmbroidery, "id" | "colors"> {
+  colors?: Array<CmsEnhancedEmbroideryColor> | undefined | null;
+}
+
+type AstroEmbroidery = RecursivelyReplaceType<
+  InferEntrySchema<"embroidery">,
+  Image,
+  GetImageResult
+>;
+type EmbroideryDiff = RecursiveDiff<CmsEnhancedEmbroidery, AstroEmbroidery>;
+AssertTrue<IfEquals<EmbroideryDiff, never>>();
+
+// #endregion
+
 /**
  * Flatten a Tina `*Connection` query result into a plain array of nodes,
  * dropping the nullable `edges` / `edge` / `node` wrappers Tina emits.
@@ -277,6 +304,28 @@ export const getConfig = async (): Promise<
       topTitle: result.data.config.footerContact?.topTitle ?? undefined,
     },
   };
+};
+
+/**
+ * The shared embroidery thread-colour palette (global config), with images run
+ * through the build-time pipeline like material colours. Consumed by the order
+ * island's `embroidery` field type.
+ */
+export const getThreadColors = async (): Promise<CmsEnhancedEmbroideryColor[]> => {
+  const result = await requestWithMetadata(
+    client.queries.embroidery({ relativePath: "embroidery.json" })
+  );
+
+  return Promise.all(
+    (result.data.embroidery.colors ?? [])
+      .filter((color) => color != null)
+      .map(async (color) => ({
+        color_id: color.color_id,
+        label: color.label,
+        hex: color.hex ?? undefined,
+        image: color.image ? await optimizeImage(color.image, SWATCH_WIDTH) : undefined,
+      }))
+  );
 };
 
 /** Narrow Tina's loose `type: string` to the product-field discriminant. */

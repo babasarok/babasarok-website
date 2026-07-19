@@ -67,7 +67,7 @@ const aboutBlock = defineCollection({
 });
 
 const config = defineCollection({
-  loader: glob({ pattern: "**/*.json", base: "src/content/config" }),
+  loader: glob({ pattern: "config.json", base: "src/content/config" }),
   schema: ({ image }) =>
     z.object({
       title: z.string(),
@@ -333,8 +333,27 @@ const contact = defineCollection({
   }),
 });
 
+const embroidery = defineCollection({
+  loader: glob({ pattern: "embroidery.json", base: "src/content/config" }),
+  schema: ({ image }) =>
+    z.object({
+      colors: z
+        .array(
+          z.object({
+            color_id: z.string(),
+            label: z.string(),
+            hex: z.string().optional().nullable(),
+            image: image().optional().nullable(),
+          })
+        )
+        .optional()
+        .nullable(),
+    }),
+});
+
 export const collections = {
   config,
+  embroidery,
   product,
   blog,
   material,

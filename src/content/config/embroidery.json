@@ -1,0 +1,25 @@
+{
+  "colors": [
+    {
+      "color_id": "zsalyazold",
+      "label": "Zsályazöld"
+    },
+    {
+      "color_id": "babakek",
+      "label": "Babakék"
+    },
+    {
+      "color_id": "babarozsaszin",
+      "label": "Babarózsaszín"
+    },
+    {
+      "color_id": "ekru",
+      "label": "Ekrü"
+    },
+    {
+      "color_id": "fekete",
+      "label": "Fekete",
+      "hex": "#000000"
+    }
+  ]
+}

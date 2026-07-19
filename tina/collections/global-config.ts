@@ -6,6 +6,9 @@ export const GlobalConfigCollection: Collection = {
   path: "src/content/config",
   format: "json",
 
+  match: {
+    include: "config",
+  },
   ui: {
     global: true,
     allowedActions: {
