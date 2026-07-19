@@ -42,5 +42,8 @@ colors:
   - color_id: Mustar74
     label: 'Mustár '
     image: /src/assets/IMG_5166.jpeg
+  - color_id: 'Csillagos '
+    label: Csillagok
+    image: /src/assets/IMG_9818.jpeg
 ---
 
