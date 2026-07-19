@@ -48,7 +48,7 @@ colors:
   - color_id: '#6'
     label: Csokibarna
     image: /src/assets/IMG_3334.jpeg
-  - color_id: '#19'
+  - color_id: '#20'
     label: Mogyoró
     image: /src/assets/IMG_6638.jpeg
   - color_id: '#13'
@@ -63,7 +63,7 @@ colors:
 thumbnail: '/src/assets/IMG_6615,1.JPG'
 categories: 'Puha, pöttyös felületű, melegebb anyag. '
 shortDescription: |-
-  Kiváló választás bármilyen babakelengyéhez. 
+  Kiváló választás bármilyen babakelengyéhez.
   Előszeretettel kombinálják mintás vagy egyszínű pamutvászonnal
 ---
 
