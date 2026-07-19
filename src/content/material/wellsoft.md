@@ -27,5 +27,8 @@ colors:
   - color_id: Pink
     label: Pink
     image: /src/assets/IMG_5159.jpeg
+  - color_id: Babakek
+    label: Babakek
+    image: /src/assets/IMG_5165.jpeg
 ---
 
