@@ -36,7 +36,7 @@ colors:
   - color_id: Extra halvanyrozsaszin-19
     label: 'Extra halvány rózsaszín '
     image: /src/assets/IMG_5157.jpeg
-  - color_id: 'Halvány babakek '
+  - color_id: Halvány babakek 13
     label: Halvány babakék
     image: /src/assets/IMG_5167.jpeg
 ---
