@@ -45,5 +45,8 @@ colors:
   - color_id: Turkiz-14
     label: Türkizkék
     image: /src/assets/IMG_5176.jpeg
+  - color_id: Sotetkek-15
+    label: Sötétkék
+    image: /src/assets/IMG_5177.jpeg
 ---
 
