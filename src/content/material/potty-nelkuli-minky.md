@@ -18,6 +18,12 @@ colors:
   - color_id: '#8.1'
     label: Zsálya
     image: /src/assets/IMG_4086.jpeg
+  - color_id: Khaki42
+    label: Khaki
+    image: /src/assets/IMG_5173.jpeg
+  - color_id: Sotetzold
+    label: 'Sötétzöld '
+    image: /src/assets/IMG_5170.jpeg
   - color_id: Babarózsaszín-20
     label: 'Babarózsaszín '
     image: /src/assets/IMG_5149.jpeg
@@ -30,11 +36,5 @@ colors:
   - color_id: Malyva 72
     label: 'Mályva '
     image: /src/assets/IMG_5172.jpeg
-  - color_id: Khaki42
-    label: Khaki
-    image: /src/assets/IMG_5173.jpeg
-  - color_id: Sotetzold
-    label: 'Sötétzöld '
-    image: /src/assets/IMG_5170.jpeg
 ---
 
