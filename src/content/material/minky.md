@@ -37,7 +37,7 @@ colors:
     label: 'Királykék '
     image: /src/assets/IMG_6673.jpeg
   - color_id: '#5'
-    label: Sötézöld
+    label: Sötétzöld
     image: /src/assets/IMG_4072.jpeg
   - color_id: '#8'
     label: Zsálya
