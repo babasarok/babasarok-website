@@ -21,5 +21,8 @@ colors:
   - color_id: Zsalya70wellsoft
     label: Zsálya
     image: /src/assets/IMG_5158.jpeg
+  - color_id: Világos malyva57
+    label: Világos mályva
+    image: /src/assets/IMG_5163.jpeg
 ---
 
