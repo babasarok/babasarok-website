@@ -11,6 +11,9 @@ colors:
     label: Ekrü
     hex: ''
     image: /src/assets/IMG_3359.jpeg
+  - color_id: 'Világos bézs '
+    label: 'Világos bézs '
+    image: /src/assets/IMG_3356.jpeg
   - color_id: Barna
     label: Barna
     hex: ''
@@ -46,8 +49,5 @@ colors:
     label: Sötétszürke
     hex: ''
     image: /src/assets/IMG_2542.jpeg
-  - color_id: 'Világos bézs '
-    label: 'Világos bézs '
-    image: /src/assets/IMG_3356.jpeg
 ---
 
