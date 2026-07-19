@@ -9,6 +9,9 @@ colors:
   - color_id: Ekru-2
     label: Ekrü
     image: /src/assets/IMG_5152.jpeg
+  - color_id: Szürke-8
+    label: 'Szürke '
+    image: /src/assets/IMG_5169.jpeg
   - color_id: 'Világos bézs '
     label: 'Világos bézs '
     image: /src/assets/IMG_5154.jpeg
@@ -39,8 +42,5 @@ colors:
   - color_id: Halvány babakek 13
     label: Halvány babakék
     image: /src/assets/IMG_5175.jpeg
-  - color_id: Szürke-8
-    label: 'Szürke '
-    image: /src/assets/IMG_5169.jpeg
 ---
 
