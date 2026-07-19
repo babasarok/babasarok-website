@@ -96,6 +96,9 @@ colors:
   - color_id: 'Barackos '
     label: Barack
     image: /src/assets/IMG_4382.jpeg
+  - color_id: 'Malyva csillagos '
+    label: Csillagok sötét púder
+    image: /src/assets/IMG_5183.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
