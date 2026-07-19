@@ -35,12 +35,15 @@ colors:
     label: Halvány barackos rózsaszín
     hex: ''
     image: /src/assets/IMG_5143.jpeg
+  - color_id: Halvány rózsaszín 19
+    label: 'Extra halvány rózsaszín '
+    image: /src/assets/IMG_5147.jpeg
   - color_id: pink
     label: Pink
     hex: ''
     image: /src/assets/IMG_5138.jpeg
-  - color_id: Halvány rózsaszín 19
-    label: 'Extra halvány rózsaszín '
-    image: /src/assets/IMG_5147.jpeg
+  - color_id: Ekru-2
+    label: Ekrü
+    image: /src/assets/IMG_5150.jpeg
 ---
 
