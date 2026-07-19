@@ -3,23 +3,23 @@ title: Pötty Nélküli Minky
 material_id: potty-nelkuli-minky
 label: Pötty Nélküli Minky
 colors:
-  - color_id: '#8.1'
-    label: Zsálya
-    image: /src/assets/IMG_4086.jpeg
+  - color_id: 'Fehér '
+    label: 'Fehér '
+    image: /src/assets/IMG_5153.jpeg
+  - color_id: Ekru-2
+    label: Ekrü
+    image: /src/assets/IMG_5152.jpeg
   - color_id: '#20'
     label: 'Bézs '
     image: /src/assets/IMG_4084.jpeg
+  - color_id: '#8.1'
+    label: Zsálya
+    image: /src/assets/IMG_4086.jpeg
   - color_id: Halvány rózsaszín-53
     label: 'Halvány barackos rózsaszín '
     image: /src/assets/IMG_5143.jpeg
   - color_id: Babarózsaszín-20
     label: 'Babarózsaszín '
     image: /src/assets/IMG_5149.jpeg
-  - color_id: Ekru-2
-    label: Ekrü
-    image: /src/assets/IMG_5152.jpeg
-  - color_id: 'Fehér '
-    label: 'Fehér '
-    image: /src/assets/IMG_5153.jpeg
 ---
 
