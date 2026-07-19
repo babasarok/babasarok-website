@@ -51,5 +51,7 @@ colors:
     label: Pink
     hex: ''
     image: /src/assets/IMG_5138.jpeg
+thumbnail: /src/assets/IMG_5189.jpeg
+categories: 'Puha, bársonyos tapintású, selymes anyag '
 ---
 
