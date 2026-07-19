@@ -22,6 +22,9 @@ colors:
     label: Halvány babakék
     hex: ''
     image: /src/assets/IMG_5140.jpeg
+  - color_id: 'Sotetkek '
+    label: 'Sötétkék '
+    image: /src/assets/IMG_5178.jpeg
   - color_id: zsalya
     label: Zsálya
     hex: ''
@@ -45,8 +48,5 @@ colors:
     label: Pink
     hex: ''
     image: /src/assets/IMG_5138.jpeg
-  - color_id: 'Sotetkek '
-    label: 'Sötétkék '
-    image: /src/assets/IMG_5178.jpeg
 ---
 
