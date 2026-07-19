@@ -30,6 +30,9 @@ colors:
   - color_id: Malyva 72
     label: 'Mályva '
     image: /src/assets/IMG_5172.jpeg
+  - color_id: 'Világos malyva '
+    label: Világos mályva
+    image: /src/assets/IMG_5174.jpeg
   - color_id: Babarózsaszín-20
     label: 'Babarózsaszín '
     image: /src/assets/IMG_5149.jpeg
@@ -48,8 +51,5 @@ colors:
   - color_id: Sotetkek-15
     label: Sötétkék
     image: /src/assets/IMG_5177.jpeg
-  - color_id: 'Világos malyva '
-    label: Világos mályva
-    image: /src/assets/IMG_5174.jpeg
 ---
 
