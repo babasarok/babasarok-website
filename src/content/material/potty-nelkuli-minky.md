@@ -39,5 +39,8 @@ colors:
   - color_id: Halvány babakek 13
     label: Halvány babakék
     image: /src/assets/IMG_5175.jpeg
+  - color_id: 'Szürke '
+    label: 'Szürke '
+    image: /src/assets/IMG_5169.jpeg
 ---
 
