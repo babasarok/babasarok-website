@@ -46,7 +46,7 @@ colors:
     label: 'Extra halvány rózsaszín '
     image: /src/assets/IMG_5157.jpeg
   - color_id: Halvány babakek 13
-    label: Halvány babakék
+    label: Pasztellkék
     image: /src/assets/IMG_5175.jpeg
   - color_id: Turkiz-14
     label: Türkizkék
