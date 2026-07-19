@@ -101,5 +101,9 @@ colors:
     image: /src/assets/IMG_4600.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 categories: '100% pamut, extravékony, légáteresztő, nyári anyag'
+shortDescription: |-
+  A nyár legnagyobb slágere a duplagéz. Laza szövésének köszönhetően nagyon lenge, vékony, lélegző anyag.
+  Ideális választás nyári takarónak, 
+  Pamutvászon és waffle anyagokkal kombinálva gyönyörű ágytakaró is készülhet belőle.
 ---
 
