@@ -48,5 +48,8 @@ colors:
     label: Pink
     hex: ''
     image: /src/assets/IMG_5138.jpeg
+  - color_id: Szurke
+    label: Szürke
+    image: /src/assets/IMG_5139.jpeg
 ---
 
