@@ -62,5 +62,8 @@ colors:
     image: /src/assets/IMG_6655.jpeg
 thumbnail: '/src/assets/IMG_6615,1.JPG'
 categories: 'Puha, pöttyös felületű, melegebb anyag. '
+shortDescription: |-
+  Kiváló választás bármilyen babakelengyéhez. 
+  Előszeretettel kombinálják mintás vagy egyszínű pamutvászonnal
 ---
 
