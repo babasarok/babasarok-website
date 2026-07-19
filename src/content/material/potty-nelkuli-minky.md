@@ -30,5 +30,8 @@ colors:
   - color_id: Malyva 72
     label: 'Mályva '
     image: /src/assets/IMG_5172.jpeg
+  - color_id: Khaki42
+    label: Khaki
+    image: /src/assets/IMG_5173.jpeg
 ---
 
