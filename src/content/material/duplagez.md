@@ -93,6 +93,9 @@ colors:
   - color_id: 'Barackos '
     label: Barack
     image: /src/assets/IMG_4382.jpeg
+  - color_id: 'Szivárvány '
+    label: 'Szivárvány '
+    image: /src/assets/IMG_5181.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
