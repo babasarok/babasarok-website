@@ -45,5 +45,8 @@ colors:
   - color_id: 'Csillagos '
     label: Csillagok
     image: /src/assets/IMG_9818.jpeg
+  - color_id: 'Oroszlános '
+    label: 'Bébi oroszlánok '
+    image: /src/assets/IMG_9823.jpeg
 ---
 
