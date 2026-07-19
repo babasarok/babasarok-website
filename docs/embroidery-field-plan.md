@@ -111,14 +111,14 @@ instead of an array:
 
 ```ts
 interface EmbroideryColorValue {
-  color: string;         // selected thread color_id ("" = none)
+  color: string; // selected thread color_id ("" = none)
   custom_color?: string; // backend-supported; no UI for now
   error?: string;
 }
 
 interface EmbroideryValue {
   enabled: boolean;
-  text: ValueWithError;        // text + regex + error
+  text: ValueWithError; // text + regex + error
   color: EmbroideryColorValue; // single color, no material_id
   error?: string;
 }
@@ -130,16 +130,16 @@ they turn embroidery off and back on.
 
 ### 3c. Wiring ✅ done
 
-| Module | Change |
-|---|---|
-| `tina/collections/product.ts` | Add `{ value: "embroidery", label: "Hímzés" }` to the type options; hide `items` for this type. Exclude embroidery fields from the `depends_on` field picker — they can't be depended on (see Design notes). |
-| `data.ts` | `narrowField` builds the embroidery variant. Thread colors loaded separately and passed to the island. |
-| `contact.astro` → `OrderForm` → `OrderItem` → `OrderItemFields` | Pass a `threadColors` prop down (global, not per product). |
-| `OrderItemFields.svelte` | New `{:else if field.type === "embroidery"}` branch: a `Switch` (enabled) that slide-reveals a `TextInput` + a **single-select** `Color` grid fed by `threadColors`. No "Egyéb" custom-color UI for now; `custom_color` stays in the value so it can be surfaced later. |
-| `validation.ts` | When `enabled`: require `text` (+ regex) and `color`; when disabled: clear sub-errors. |
-| `priceUtils.ts` | Add the flat `field.price` only when `enabled`. |
-| `orderSubmit.ts` | When enabled, render text + color label (respecting indent); when disabled, omit the line entirely. |
-| Tests | `fixtures.ts` (`makeField` embroidery); unit tests for enabled/disabled pricing, validation, submit text. |
+| Module                                                          | Change                                                                                                                                                                                                                                                                  |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tina/collections/product.ts`                                   | Add `{ value: "embroidery", label: "Hímzés" }` to the type options; hide `items` for this type. Exclude embroidery fields from the `depends_on` field picker — they can't be depended on (see Design notes).                                                            |
+| `data.ts`                                                       | `narrowField` builds the embroidery variant. Thread colors loaded separately and passed to the island.                                                                                                                                                                  |
+| `contact.astro` → `OrderForm` → `OrderItem` → `OrderItemFields` | Pass a `threadColors` prop down (global, not per product).                                                                                                                                                                                                              |
+| `OrderItemFields.svelte`                                        | New `{:else if field.type === "embroidery"}` branch: a `Switch` (enabled) that slide-reveals a `TextInput` + a **single-select** `Color` grid fed by `threadColors`. No "Egyéb" custom-color UI for now; `custom_color` stays in the value so it can be surfaced later. |
+| `validation.ts`                                                 | When `enabled`: require `text` (+ regex) and `color`; when disabled: clear sub-errors.                                                                                                                                                                                  |
+| `priceUtils.ts`                                                 | Add the flat `field.price` only when `enabled`.                                                                                                                                                                                                                         |
+| `orderSubmit.ts`                                                | When enabled, render text + color label (respecting indent); when disabled, omit the line entirely.                                                                                                                                                                     |
+| Tests                                                           | `fixtures.ts` (`makeField` embroidery); unit tests for enabled/disabled pricing, validation, submit text.                                                                                                                                                               |
 
 ---
 
@@ -159,7 +159,7 @@ non-obvious rationale:
   another field depend on it would force the visibility code to decide what
   "the value" is (enabled? text? color?) and add edge cases to the picker and
   matcher. If something genuinely needs to react to embroidery state, model that
-  coupling *inside* `EmbroideryValue` instead. So embroidery is excluded from the
+  coupling _inside_ `EmbroideryValue` instead. So embroidery is excluded from the
   dependency picker.
 - **Multiple embroidery fields per product are allowed.** Restricting to one was
   considered (see below) but nothing technically requires it, and a product may
@@ -199,6 +199,6 @@ Plan a better model, e.g.:
 - A typed accessor that resolves a field reference to its value **and** validates
   the referenced field's `type` (numeric source must be `input`/`radio`, etc.).
 - Represent field values as a tagged union (`{ kind: "string"; ... } | { kind:
-  "number"; ... }`) so consumers narrow instead of coercing.
+"number"; ... }`) so consumers narrow instead of coercing.
 - Validate cross-field references at load time (in `data.ts`) so a bad reference
   fails the build rather than silently no-op'ing at runtime.
