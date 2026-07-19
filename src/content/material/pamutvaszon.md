@@ -155,5 +155,6 @@ colors:
     image: /src/assets/IMG_6716.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 categories: '100%pamut, mintás vagy egyszínű gyerekbarát anyag. '
+shortDescription: 'Közkedvelt bababarát anyag. Sokféle szín és mintaválasztékban elérhető. '
 ---
 
