@@ -44,6 +44,7 @@ const baseOrder = (products: OrderDetails["products"]): OrderDetails => ({
   phone: "+36301234567",
   deliveryMethod: makeDelivery("Foxpost automata", 990, "foxpost"),
   products,
+  threadColors: [],
 });
 
 describe("order form envelope", () => {
@@ -310,6 +311,42 @@ describe("product string content", () => {
         Egységár: 17000Ft
       Összár: 17000Ft"
     `);
+  });
+
+  it("renders enabled embroidery with thread color label and omits disabled embroidery", async () => {
+    const product = makeProduct({
+      title: "Pólya",
+      price: 8000,
+      fields: [
+        makeField({
+          name: "himzes",
+          label: "Hímzés",
+          type: "embroidery",
+          price: 1500,
+          value: { enabled: true, text: { value: "Anna" }, color: { color: "ekru" } },
+        }),
+        makeField({
+          name: "masik_himzes",
+          label: "Másik hímzés",
+          type: "embroidery",
+          price: 1500,
+          value: { enabled: false, text: { value: "Bori" }, color: { color: "fekete" } },
+        }),
+      ],
+    });
+
+    const form = await captureForm({
+      ...baseOrder([product]),
+      threadColors: [
+        { color_id: "ekru", label: "Ekrü" },
+        { color_id: "fekete", label: "Fekete" },
+      ],
+    });
+    const text = form_text(form);
+    expect(text).toContain("  Hímzés: Anna (Ekrü)");
+    expect(text).toContain("Hímzés: 1500Ft");
+    expect(text).not.toContain("Másik hímzés");
+    expect(text).not.toContain("Bori");
   });
 
   it("applies an active discount to the product total but not the line prices", async () => {

@@ -50,6 +50,15 @@ function getFieldPrice(field: Field): PricePart | null {
               : 0,
       };
     }
+    case "embroidery": {
+      if (!field.value?.enabled) {
+        return null;
+      }
+      return {
+        label: field.label || field.name,
+        price: field.price ?? undefined,
+      };
+    }
     case "input": {
       return {
         label: field.label || field.name,
@@ -60,6 +69,13 @@ function getFieldPrice(field: Field): PricePart | null {
       return null;
     }
   }
+}
+
+function stringFieldValue(field: Field | undefined): string | undefined {
+  if (!field || field.type === "toggle" || field.type === "embroidery") {
+    return undefined;
+  }
+  return field.value?.value;
 }
 
 function getMaterialPrice(
@@ -127,7 +143,9 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
     // number (cm). Nothing ties the referenced field to a numeric type, so a
     // non-numeric value silently yields an undefined length. See
     // docs/embroidery-field-plan.md “Field value typing” TODO.
-    const lengthSource = product.fields.find((x) => x.length_based_pricing_source)?.value?.value;
+    const lengthSource = stringFieldValue(
+      product.fields.find((x) => x.length_based_pricing_source)
+    );
     let length: number | undefined = Number.parseFloat(
       typeof lengthSource === "string" ? lengthSource : ""
     );

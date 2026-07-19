@@ -13,7 +13,7 @@ import { isFieldVisible } from "@/lib/fieldVisibility";
 import { calculatePriceForItem } from "@/lib/priceUtils";
 import { isItemValid, validateItem } from "@/lib/validation";
 import type { Field } from "@/lib/types.svelte";
-import { makeField, makeProduct } from "./fixtures";
+import { fieldError, makeField, makeProduct } from "./fixtures";
 
 describe("isFieldVisible", () => {
   it("shows a field with no dependency", () => {
@@ -173,7 +173,7 @@ describe("validation ignores hidden fields", () => {
       })
     );
     const extra = item.fields.find((f) => f.name === "extra");
-    expect(extra?.value?.error).toBeUndefined();
+    expect(fieldError(extra)).toBeUndefined();
     expect(isItemValid(item)).toBe(true);
   });
 
@@ -196,7 +196,7 @@ describe("validation ignores hidden fields", () => {
       ],
     });
     validateItem(item);
-    expect(item.fields.find((f) => f.name === "extra")?.value?.error).toBeUndefined();
+    expect(fieldError(item.fields.find((f) => f.name === "extra"))).toBeUndefined();
     expect(isItemValid(item)).toBe(true);
   });
 
@@ -219,7 +219,7 @@ describe("validation ignores hidden fields", () => {
         ],
       })
     );
-    expect(item.fields.find((f) => f.name === "extra")?.value?.error).toBe("Kötelező mező");
+    expect(fieldError(item.fields.find((f) => f.name === "extra"))).toBe("Kötelező mező");
     expect(isItemValid(item)).toBe(false);
   });
 });

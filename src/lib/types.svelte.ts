@@ -19,6 +19,19 @@ export interface ProductMaterialValue {
   error?: string | undefined;
 }
 
+export interface EmbroideryColorValue {
+  color: string;
+  custom_color?: string | undefined;
+  error?: string | undefined;
+}
+
+export interface EmbroideryValue {
+  enabled: boolean;
+  text: ValueWithError;
+  color: EmbroideryColorValue;
+  error?: string | undefined;
+}
+
 export type CmsField = NonNullable<NonNullable<CmsEnhancedProduct["fields"]>[number]>;
 export type CmsProductMaterials = NonNullable<CmsEnhancedProduct["materials"]>;
 export type CmsProductMaterial = NonNullable<CmsProductMaterials["materials"]>[number];
@@ -30,6 +43,7 @@ interface FieldValueByType {
   radio: ValueWithError;
   color: ValueWithError;
   toggle: ToggleValue;
+  embroidery: EmbroideryValue;
 }
 
 type FieldOf<T extends ProductFieldType> = Omit<CmsField, "type"> & {
@@ -44,8 +58,8 @@ type FieldOf<T extends ProductFieldType> = Omit<CmsField, "type"> & {
  */
 export type Field = { [T in ProductFieldType]: FieldOf<T> }[ProductFieldType];
 
-/** Every field type except `toggle` (i.e. the string-valued ones). */
-export type NonToggleField = Exclude<Field, { type: "toggle" }>;
+/** Field types with the legacy string-valued `value` shape. */
+export type StringValueField = Exclude<Field, { type: "toggle" | "embroidery" }>;
 export type ProductMaterials = Omit<
   CmsProductMaterials,
   "values" | "materials" | "material_required_count"

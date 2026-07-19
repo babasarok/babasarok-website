@@ -4,7 +4,7 @@
  */
 import { calculatePriceForItem } from "@/lib/priceUtils";
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "./types.svelte";
-import type { CmsEnhancedDeliveryMethod } from "./data";
+import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "./data";
 import { isFieldVisible } from "./fieldVisibility";
 
 const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
@@ -15,6 +15,7 @@ export interface OrderDetails {
   phone: string;
   deliveryMethod: CmsEnhancedDeliveryMethod;
   products: IProduct[];
+  threadColors: CmsEnhancedEmbroideryColor[];
 }
 
 /** Sum of every product's total plus delivery, and whether any price is partial. */
@@ -30,9 +31,16 @@ export function calculateOrderTotal(
 }
 
 /** The selected option label/value pair for a field, as shown in the email. */
-function formatFieldValue(field: Field): string {
+function formatFieldValue(field: Field, threadColors: CmsEnhancedEmbroideryColor[]): string {
   if (field.type === "toggle") {
     return field.value?.value ? "Igen" : "Nem";
+  }
+  if (field.type === "embroidery") {
+    const color = threadColors.find((c) => c.color_id === field.value?.color.color);
+    const colorLabel = field.value?.color.custom_color
+      ? `Egyedi szín: ${field.value.color.custom_color}`
+      : (color?.label ?? field.value?.color.color ?? "");
+    return `${field.value?.text.value ?? ""} (${colorLabel})`;
   }
   if (field.value?.is_custom) {
     return `Egyedi: ${field.value.value}`;
@@ -84,7 +92,17 @@ function formatMaterialLine(
 }
 
 /** Render a single product into the plain-text block used in the email body. */
-function formatProductString(product: IProduct): string {
+function shouldSubmitField(field: Field): boolean {
+  if (field.type === "embroidery") {
+    return field.value?.enabled ?? false;
+  }
+  return !("optional" in field) || !field.optional || !!field.value?.value;
+}
+
+function formatProductString(
+  product: IProduct,
+  threadColors: CmsEnhancedEmbroideryColor[]
+): string {
   const price = calculatePriceForItem(product);
   const { materials, material_required_count, values } = product.materials;
 
@@ -97,10 +115,10 @@ function formatProductString(product: IProduct): string {
       .filter((f) => isFieldVisible(f, product.fields))
       // Hide only *empty* optional fields; a filled-in optional answer (e.g. a
       // custom note) must still reach the email.
-      .filter((f) => !("optional" in f) || !f.optional || !!f.value?.value)
+      .filter(shouldSubmitField)
       .map(
         (f) =>
-          `${"  ".repeat(fieldIndentDepth(f, product.fields) + 1)}${f.label}: ${formatFieldValue(f)}`
+          `${"  ".repeat(fieldIndentDepth(f, product.fields) + 1)}${f.label}: ${formatFieldValue(f, threadColors)}`
       ),
 
     ...(materials.length > 0 && material_required_count > 0
@@ -132,7 +150,10 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
   formData.append("email", order.email);
   formData.append("telefonszam", order.phone);
   for (const [index, product] of order.products.entries()) {
-    formData.append(`termek ${(index + 1).toString()}`, formatProductString(product));
+    formData.append(
+      `termek ${(index + 1).toString()}`,
+      formatProductString(product, order.threadColors)
+    );
   }
   formData.append(
     "szallitasimod",

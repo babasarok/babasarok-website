@@ -423,7 +423,7 @@ export const ProductCollection: Collection = {
             component(props) {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               const type = getValue(props, "type");
-              if (type === "toggle") {
+              if (type === "toggle" || type === "embroidery") {
                 return null;
               }
 
@@ -552,8 +552,14 @@ export const ProductCollection: Collection = {
                   const productFields = getValue(props, "../../../fields") ?? [];
                   const options = [
                     { value: "", label: "— Mindig látszik —" },
-                    ...(productFields as { name?: string | null; label?: string | null }[])
-                      .filter((f) => !!f.name && f.name !== ownName)
+                    ...(
+                      productFields as {
+                        name?: string | null;
+                        label?: string | null;
+                        type?: string | null;
+                      }[]
+                    )
+                      .filter((f) => !!f.name && f.name !== ownName && f.type !== "embroidery")
                       .map((f) => ({ value: f.name ?? "", label: f.label || (f.name ?? "") })),
                   ];
 

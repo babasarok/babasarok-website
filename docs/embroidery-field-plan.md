@@ -83,7 +83,7 @@ separate from the new feature.
 
 ## Phase 3 — Add the `embroidery` field type
 
-### 3a. Thread-color collection (global, MaterialColor-compatible)
+### 3a. Thread-color collection (global, MaterialColor-compatible) ✅ done
 
 - New global Tina collection `tina/collections/embroidery.ts` (like `config`,
   `ui.global = true`, create/delete disabled), backed by a **single JSON file**
@@ -120,6 +120,7 @@ interface EmbroideryValue {
   enabled: boolean;
   text: ValueWithError;        // text + regex + error
   color: EmbroideryColorValue; // single color, no material_id
+  error?: string;
 }
 ```
 
@@ -127,7 +128,7 @@ interface EmbroideryValue {
 `color` populated across `enabled` toggles preserves the editor's input when
 they turn embroidery off and back on.
 
-### 3c. Wiring
+### 3c. Wiring ✅ done
 
 | Module | Change |
 |---|---|
@@ -138,7 +139,7 @@ they turn embroidery off and back on.
 | `validation.ts` | When `enabled`: require `text` (+ regex) and `color`; when disabled: clear sub-errors. |
 | `priceUtils.ts` | Add the flat `field.price` only when `enabled`. |
 | `orderSubmit.ts` | When enabled, render text + color label (respecting indent); when disabled, omit the line entirely. |
-| Tests | `fixtures.ts` (`makeField` embroidery, `makeThreadColors`); unit tests for enabled/disabled pricing, validation, submit text. |
+| Tests | `fixtures.ts` (`makeField` embroidery); unit tests for enabled/disabled pricing, validation, submit text. |
 
 ---
 
@@ -170,8 +171,8 @@ non-obvious rationale:
 
 1. ~~Phase 1 (central type list + `data.ts` reconcile + `npm run check`).~~ ✅ done
 2. ~~Phase 2 (toggle → boolean + form-side union, update touch points + tests).~~ ✅ done
-3. Phase 3a (thread-color collection + loader + plumbing).
-4. Phase 3b/3c (embroidery value, UI, validation, pricing, submit, tests).
+3. ~~Phase 3a (thread-color collection + loader + plumbing).~~ ✅ done
+4. ~~Phase 3b/3c (embroidery value, UI, validation, pricing, submit, tests).~~ ✅ done
 
 ---
 

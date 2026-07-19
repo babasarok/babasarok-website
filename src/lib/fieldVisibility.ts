@@ -1,5 +1,12 @@
 import type { Field } from "./types.svelte";
 
+function dependencyValue(field: Field): string | boolean | undefined {
+  if (field.type === "embroidery") {
+    return undefined;
+  }
+  return field.value?.value;
+}
+
 /**
  * A field configured with `depends_on` is only shown when the referenced field
  * currently holds the required value (or, when no value is given, any value).
@@ -17,7 +24,7 @@ export function isFieldVisible(field: Field, fields: Field[]): boolean {
     return true;
   }
 
-  const targetValue = target.value?.value;
+  const targetValue = dependencyValue(target);
   if (dependsOn.value) {
     // FRAGILE: `depends_on.value` is always a string (schema), but a field's
     // value can be a boolean (toggle) or a string, so we stringify the target

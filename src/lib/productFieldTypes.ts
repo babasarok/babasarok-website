@@ -12,6 +12,7 @@ export const PRODUCT_FIELD_TYPES = [
   { value: "radio", label: "Gombos - egyválasztós" },
   { value: "color", label: "Szín" },
   { value: "toggle", label: "Igen/Nem" },
+  { value: "embroidery", label: "Hímzés" },
 ] as const;
 
 export type ProductFieldType = (typeof PRODUCT_FIELD_TYPES)[number]["value"];
