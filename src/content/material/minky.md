@@ -14,7 +14,7 @@ colors:
     image: /src/assets/IMG_3079.jpeg
   - color_id: '#2'
     label: Pasztellkék
-    image: /src/assets/IMG_4080.jpeg
+    image: /src/assets/IMG_5194.jpeg
   - color_id: '#18'
     label: Mályva
     image: /src/assets/IMG_6644.jpeg
