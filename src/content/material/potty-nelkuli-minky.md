@@ -18,6 +18,9 @@ colors:
   - color_id: '#20'
     label: 'Bézs '
     image: /src/assets/IMG_4084.jpeg
+  - color_id: Caffelatte66
+    label: 'Tejeskávé '
+    image: /src/assets/IMG_5179.jpeg
   - color_id: '#8.1'
     label: Zsálya
     image: /src/assets/IMG_4086.jpeg
@@ -51,8 +54,5 @@ colors:
   - color_id: Sotetkek-15
     label: Sötétkék
     image: /src/assets/IMG_5177.jpeg
-  - color_id: Caffelatte66
-    label: 'Tejeskávé '
-    image: /src/assets/IMG_5179.jpeg
 ---
 
