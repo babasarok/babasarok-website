@@ -99,6 +99,9 @@ colors:
   - color_id: 'Malyva csillagos '
     label: Csillagok sötét púder
     image: /src/assets/IMG_5183.jpeg
+  - color_id: 'Ekru csillagos '
+    label: Csillagok-ekrü
+    image: /src/assets/IMG_5182.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
