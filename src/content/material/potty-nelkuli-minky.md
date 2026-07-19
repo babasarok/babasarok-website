@@ -52,7 +52,7 @@ colors:
     label: Türkizkék
     image: /src/assets/IMG_5176.jpeg
   - color_id: Sotetkek-15
-    label: Sötétkék
+    label: Kék
     image: /src/assets/IMG_5177.jpeg
 ---
 
