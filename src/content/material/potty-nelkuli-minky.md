@@ -12,5 +12,8 @@ colors:
   - color_id: Halvány rózsaszín-53
     label: 'Halvány barackos rózsaszín '
     image: /src/assets/IMG_5143.jpeg
+  - color_id: Babarózsaszín-20
+    label: 'Babarózsaszín '
+    image: /src/assets/IMG_5149.jpeg
 ---
 
