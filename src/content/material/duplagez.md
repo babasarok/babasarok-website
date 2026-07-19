@@ -48,6 +48,15 @@ colors:
   - color_id: Macis
     label: Mackók
     image: /src/assets/IMG_4089.jpeg
+  - color_id: 'Barackos '
+    label: Barack
+    image: /src/assets/IMG_4382.jpeg
+  - color_id: 'Malyva csillagos '
+    label: Csillagok sötét púder
+    image: /src/assets/IMG_5183.jpeg
+  - color_id: 'Ekru csillagos '
+    label: Csillagok-ekrü
+    image: /src/assets/IMG_5182.jpeg
   - color_id: 'Halvány rózsaszín '
     label: Halvány rózsaszín/púder
     image: /src/assets/IMG_4589.jpeg
@@ -93,15 +102,6 @@ colors:
   - color_id: 'Fehér '
     label: 'Fehér '
     image: /src/assets/IMG_4600.jpeg
-  - color_id: 'Barackos '
-    label: Barack
-    image: /src/assets/IMG_4382.jpeg
-  - color_id: 'Malyva csillagos '
-    label: Csillagok sötét púder
-    image: /src/assets/IMG_5183.jpeg
-  - color_id: 'Ekru csillagos '
-    label: Csillagok-ekrü
-    image: /src/assets/IMG_5182.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
 ---
 
