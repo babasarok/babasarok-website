@@ -51,5 +51,8 @@ colors:
     image: /src/assets/IMG_2542.jpeg
 thumbnail: /src/assets/IMG_5186.jpeg
 categories: 'Meleg, puha, bolyhos felületű dizájnos anyag. 100%poliészter'
+shortDescription: |-
+  Kiváló választás babafészkek, takarók egyik oldalára. 
+  Duplagézzel párosítva igazán modern hatást kelt.
 ---
 

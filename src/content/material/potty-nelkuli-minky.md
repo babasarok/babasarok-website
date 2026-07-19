@@ -56,5 +56,8 @@ colors:
     image: /src/assets/IMG_5177.jpeg
 thumbnail: /src/assets/IMG_5188.jpeg
 categories: 'Pihe-puha selymes tapintású, melegebb plüss anyag. 100% poliészter'
+shortDescription: |
+  A pöttyös minkyhez hasonlóan kiváló választás bármilyen babakelengyéhez. 
+  Pöttymentesen a letisztultabb vonalat képviseli.
 ---
 

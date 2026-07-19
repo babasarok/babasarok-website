@@ -76,6 +76,7 @@ colors:
     hex: ''
     image: /src/assets/IMG_6524.jpeg
 thumbnail: /src/assets/IMG_5128.jpeg
-shortDescription: '95% pamut 5%elasztán anyagösszetételű, magas minőségű, rugalmas anyag'
+categories: '95% pamut 5%elasztán anyagösszetételű, magas minőségű, rugalmas anyag'
+shortDescription: ''
 ---
 
