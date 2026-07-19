@@ -24,5 +24,8 @@ colors:
   - color_id: Világos malyva57
     label: Világos mályva
     image: /src/assets/IMG_5163.jpeg
+  - color_id: Pink
+    label: Pink
+    image: /src/assets/IMG_5159.jpeg
 ---
 
