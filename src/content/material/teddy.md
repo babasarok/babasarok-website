@@ -43,5 +43,8 @@ colors:
   - color_id: Világos rózsaszín -53
     label: 'Halvány barackos rózsaszín '
     image: /src/assets/IMG_5144.jpeg
+  - color_id: Halvány rózsaszín-19
+    label: 'Extra halvány rózsaszín '
+    image: /src/assets/IMG_5148.jpeg
 ---
 
