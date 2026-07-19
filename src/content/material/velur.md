@@ -5,38 +5,53 @@ label: Velúr
 colors:
   - color_id: feher
     label: Fehér
-    hex: '#FFFFFF'
-  - color_id: bezs
-    label: Bézs
-    hex: '#F5F5DC'
+    hex: ''
+    image: /src/assets/IMG_5136.jpeg
+  - color_id: Ekru-2
+    label: Ekrü
+    image: /src/assets/IMG_5150.jpeg
+  - color_id: Szurke
+    label: Szürke
+    image: /src/assets/IMG_5139.jpeg
+  - color_id: 'Világos bézs '
+    label: 'Világos bézs '
+    hex: ''
+    image: /src/assets/IMG_5112.jpeg
   - color_id: barna
     label: Barna
     hex: ''
-    image: /src/assets/IMG_4206.jpeg
-  - color_id: mogyoro
-    label: Mogyoró
-    hex: '#D2B48C'
+    image: /src/assets/IMG_5110.jpeg
   - color_id: babakek
-    label: Babakék
-    hex: '#ADD8E6'
-  - color_id: sotetkek
-    label: Sötétkék
-    hex: '#00008B'
+    label: Pasztellkék
+    hex: ''
+    image: /src/assets/IMG_5140.jpeg
+  - color_id: 'Sotetkek '
+    label: 'Sötétkék '
+    image: /src/assets/IMG_5178.jpeg
   - color_id: zsalya
     label: Zsálya
-    hex: '#D3B583'
-  - color_id: sotetzold
+    hex: ''
+    image: /src/assets/IMG_5137.jpeg
+  - color_id: sotetzold kelme
     label: Sötétzöld
-    hex: '#006400'
-  - color_id: vilagosmalyva
+    hex: ''
+    image: /src/assets/IMG_5142.webp
+  - color_id: vilagosmalyva-57
     label: Világos mályva
     hex: ''
-    image: /src/assets/IMG_2447.jpeg
-  - color_id: vilagosrozsaszin
-    label: Világos rózsaszín
-    hex: '#FFB6C1'
+    image: /src/assets/IMG_5111.jpeg
+  - color_id: vilagosrozsaszin-53
+    label: Halvány barackos rózsaszín
+    hex: ''
+    image: /src/assets/IMG_5143.jpeg
+  - color_id: Halvány rózsaszín 19
+    label: 'Extra halvány rózsaszín '
+    image: /src/assets/IMG_5147.jpeg
   - color_id: pink
     label: Pink
-    hex: '#FF69B4'
+    hex: ''
+    image: /src/assets/IMG_5138.jpeg
+thumbnail: /src/assets/IMG_5189.jpeg
+categories: 'Puha, bársonyos tapintású, selymes anyag '
 ---
 

@@ -5,24 +5,51 @@ label: Teddy
 colors:
   - color_id: feher
     label: Fehér
-    hex: "#FFFFFF"
-    image: ""
+    hex: ''
+    image: /src/assets/IMG_3361.jpeg
   - color_id: ekru
     label: Ekrü
-    hex: "#EFEDE4"
-  - color_id: vilagosbarna
-    label: Világos barna
-    hex: "#D2B48C"
-  - color_id: babarozsaszin
+    hex: ''
+    image: /src/assets/IMG_3359.jpeg
+  - color_id: 'Világos bézs '
+    label: 'Világos bézs '
+    image: /src/assets/IMG_3356.jpeg
+  - color_id: Barna
+    label: Barna
+    hex: ''
+    image: /src/assets/IMG_5134.jpeg
+  - color_id: Malyva
+    label: Mályva
+    image: /src/assets/IMG_5132.jpeg
+  - color_id: babarozsaszin-20
     label: Babarózsaszín
-    hex: "#FFC0CB"
+    hex: ''
+    image: /src/assets/IMG_5013.jpeg
   - color_id: puderosrozsaszin
     label: Sötét púderrózsaszín
-    hex: "#FADADD"
-  - color_id: sotetzold
+    hex: ''
+    image: /src/assets/IMG_5012.jpeg
+  - color_id: Világos rózsaszín -53
+    label: 'Halvány barackos rózsaszín '
+    image: /src/assets/IMG_5144.jpeg
+  - color_id: Halvány rózsaszín-19
+    label: 'Extra halvány rózsaszín '
+    image: /src/assets/IMG_5148.jpeg
+  - color_id: Sötétzöld-43
     label: Sötétzöld
-    hex: "#006400"
+    image: /src/assets/IMG_5141.jpeg
+  - color_id: sotetzsalya-77
+    label: Sötétzsálya/khaki
+    hex: ''
+    image: /src/assets/IMG_5135.jpeg
+  - color_id: 'Zsalya '
+    label: Zsálya
+    image: /src/assets/IMG_5131.jpeg
   - color_id: sotetszurke
     label: Sötétszürke
-    hex: "#A9A9A9"
+    hex: ''
+    image: /src/assets/IMG_2542.jpeg
+thumbnail: /src/assets/IMG_5186.jpeg
+categories: 'Meleg, puha, bolyhos felületű dizájnos anyag. 100%poliészter'
 ---
+

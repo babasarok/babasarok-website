@@ -1,6 +1,7 @@
 ---
 product_id: kedvezmenyes-termekek
 title: Kedvezményes termékek
+hidden_in_product_list: true
 date: 2026-07-06T09:46:20.507Z
 thumbnail: /src/assets/IMG_3353.jpg
 table:
@@ -17,6 +18,6 @@ materials:
 
 | ![](/src/assets/IMG_1514.JPG)                                        | ![](/src/assets/IMG_1515.JPG) | ![](/src/assets/IMG_1513.JPG) |
 | -------------------------------------------------------------------- | ----------------------------- | ----------------------------- |
-| ![](/src/assets/IMG_1362.jpg)                                        | ![](/src/assets/IMG_1364.jpg) |                               |
-| ![](/src/assets/att.rd2klWauRZMtMgb23QTiz9Upgx28N-U5BHih3ifXddU.jpg) | ![](/src/assets/IMG_1936.JPG) |                               |
+|                                                                      |                               |                               |
+| ![](/src/assets/att.rd2klWauRZMtMgb23QTiz9Upgx28N-U5BHih3ifXddU.jpg) |                               |                               |
 |                                                                      |                               |                               |

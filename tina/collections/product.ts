@@ -10,7 +10,7 @@ import {
   DateField,
   type Collection,
 } from "tinacms";
-import { getValue, slugify } from "../lib/utils";
+import { getValue, requiredListItemsBeforeSubmit, slugify } from "../lib/utils";
 import { PRODUCT_FIELD_TYPES } from "../../src/lib/productFieldTypes";
 
 /**
@@ -33,6 +33,7 @@ export const ProductCollection: Collection = {
     include: "**/*",
   },
   ui: {
+    beforeSubmit: requiredListItemsBeforeSubmit,
     filename: {
       // optional: stop editors from typing the name freehand
       readonly: true,

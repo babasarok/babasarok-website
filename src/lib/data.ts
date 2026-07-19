@@ -198,8 +198,12 @@ function nodesFrom<TNode>(
  * path when it can't resolve to a local asset (e.g. SVGs the pipeline passes
  * through, or unknown references).
  */
-async function optimizeImage(path: string, width: number): Promise<GetImageResult> {
+async function optimizeImage(path: string, width: number): Promise<GetImageResult | undefined> {
   const optimized = await resolveImage({ src: path, width });
+  if (!optimized) {
+    return undefined;
+  }
+
   return {
     ...optimized,
     rawOptions: {

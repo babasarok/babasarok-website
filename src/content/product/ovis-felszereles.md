@@ -41,11 +41,6 @@ fields:
     label: Pufi párna huzat
     type: toggle
     tooltip: 40x50cm
-  - name: steppelt-takaro-lapos-parna
-    price: 10800
-    label: Steppelt takaró és lapos párna
-    type: toggle
-    tooltip: 'Antiallergén töltettel, huzat nélkül. Takaró: 100x140 cm Párna 40x50 cm'
 ---
 
-![](/src/assets/ovis-felszereles.jpeg)
+![](/src/assets/9A3A9D81-1165-49D9-B5AE-E295E5ACCEF4.png)![](/src/assets/IMG_4568.jpeg)![](/src/assets/IMG_4556.jpeg)![](/src/assets/IMG_4548.jpeg)
