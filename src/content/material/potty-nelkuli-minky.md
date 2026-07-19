@@ -24,5 +24,8 @@ colors:
   - color_id: Babarózsaszín-20
     label: 'Babarózsaszín '
     image: /src/assets/IMG_5149.jpeg
+  - color_id: Extra halvanyrozsaszin-19
+    label: 'Extra halvány rózsaszín '
+    image: /src/assets/IMG_5157.jpeg
 ---
 
