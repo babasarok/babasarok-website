@@ -100,5 +100,6 @@ colors:
     label: 'Fehér '
     image: /src/assets/IMG_4600.jpeg
 thumbnail: /src/assets/IMG_5126.jpeg
+categories: '100% pamut, extravékony, légáteresztő, nyári anyag'
 ---
 
