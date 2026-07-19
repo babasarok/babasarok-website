@@ -50,6 +50,8 @@ colors:
     image: /src/assets/IMG_9823.jpeg
 thumbnail: /src/assets/IMG_5184.jpeg
 categories: 'Puha, vastag, szőrös, meleg téli anyag.  100%poliészter'
-shortDescription: ''
+shortDescription: |
+  Igazi őszi-téli vastag, pihe-puha anyag. 
+  Télen, meleg takarókhoz ideális választás
 ---
 
