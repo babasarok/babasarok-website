@@ -18,5 +18,8 @@ colors:
   - color_id: 'Halvány barackos-53 '
     label: 'Halvány barackos rózsaszín '
     image: /src/assets/IMG_5164.jpeg
+  - color_id: Zsalya70wellsoft
+    label: Zsálya
+    image: /src/assets/IMG_5158.jpeg
 ---
 
