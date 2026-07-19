@@ -33,5 +33,8 @@ colors:
   - color_id: 'Meleg bézs '
     label: 'Meleg bézs '
     image: /src/assets/IMG_5162.jpeg
+  - color_id: 'Sötétzöld '
+    label: 'Sötétzöld '
+    image: /src/assets/IMG_5160.jpeg
 ---
 
