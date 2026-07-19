@@ -31,7 +31,7 @@ colors:
     label: 'Sötétzöld '
     image: /src/assets/IMG_5160.jpeg
   - color_id: Babakek
-    label: Babakek
+    label: Pasztellkék
     image: /src/assets/IMG_5165.jpeg
   - color_id: 'Mogyoro '
     label: Mogyoró
