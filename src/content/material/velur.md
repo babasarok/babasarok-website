@@ -14,7 +14,7 @@ colors:
   - color_id: barna
     label: Barna
     hex: ''
-    image: /src/assets/IMG_4206.jpeg
+    image: /src/assets/IMG_5110.jpeg
   - color_id: babakek
     label: Halvány babakék
     hex: ''
