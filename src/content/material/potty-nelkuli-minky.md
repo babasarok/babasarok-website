@@ -54,5 +54,6 @@ colors:
   - color_id: Sotetkek-15
     label: Kék
     image: /src/assets/IMG_5177.jpeg
+categories: 'Pihe-puha selymes tapintású, melegebb plüss anyag. 100% poliészter'
 ---
 
