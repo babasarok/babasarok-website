@@ -36,5 +36,8 @@ colors:
   - color_id: 'Sötétzöld '
     label: 'Sötétzöld '
     image: /src/assets/IMG_5160.jpeg
+  - color_id: Mustar74
+    label: 'Mustár '
+    image: /src/assets/IMG_5166.jpeg
 ---
 
