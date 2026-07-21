@@ -105,9 +105,6 @@ colors:
   - color_id: Kulucskalo macis
     label: Kukucskáló macik
     image: /src/assets/IMG_4476.jpeg
-  - color_id: Őszi erdolakok
-    label: Őszi erdőlakók
-    image: /src/assets/IMG_4483.jpeg
   - color_id: Meleg szafaris
     label: 'Szafari állatai '
     image: /src/assets/IMG_4736.jpeg
