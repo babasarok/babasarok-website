@@ -5,6 +5,8 @@ hidden_in_product_list: false
 can_be_ordered: true
 date: 2026-07-11T09:26:43.966Z
 thumbnail: /src/assets/ovis-felszereles-header.jpeg
+images:
+  - image: /src/assets/76B92F40-2B82-4FA7-AB83-0F23A81016AE.jpeg
 price: 0
 materials:
   materials:
@@ -14,32 +16,32 @@ materials:
   material_required_count: 1
 fields:
   - name: vizhatlan-lepedo
-    price: 4900
     label: Vízhatlan lepedő (egyrétegű)
     type: toggle
+    price: 4900
   - name: fekteto
-    price: 9500
     label: 'Vízhatlan fektető, derékalj'
     type: toggle
+    price: 9500
     tooltip: 'Egyik oldal vízhatlan, másik oldal színes-mintás, béléssel'
   - name: paplan
-    price: 10500
     label: Paplan és párnahuzat
     type: toggle
+    price: 10500
   - name: takaro-lapos-parna
-    price: 12900
     label: Takaró és lapos párna
     type: toggle
+    price: 12900
     tooltip: 'Egyben mosható. 100x140cm takaró, 40x50cm lapos párna'
   - name: pufi-parna
-    price: 3000
     label: 'Pufi párna, fehér, huzat nélkül'
     type: toggle
+    price: 3000
     tooltip: 40x50 cm
   - name: pufi-parna-huzat
-    price: 3800
     label: Pufi párna huzat
     type: toggle
+    price: 3800
     tooltip: 40x50cm
 ---
 
