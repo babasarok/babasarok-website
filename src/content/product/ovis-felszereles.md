@@ -10,6 +10,8 @@ images:
 table:
   - title: Kétrétegű vizhatlan fektető
     description: 9500Ft
+  - title: Egyrétegű vízhatlan fektető
+    description: 4900Ft
 price: 0
 materials:
   materials:
