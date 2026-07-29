@@ -14,6 +14,8 @@ table:
     description: 4900Ft
   - title: Takaró és párnahuzat
     description: 10500Ft
+  - title: 'Egyben mosható takaró és lapos párna '
+    description: 12900Ft
 price: 0
 materials:
   materials:
