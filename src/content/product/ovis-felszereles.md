@@ -40,7 +40,7 @@ fields:
     type: toggle
     price: 10500
   - name: takaro-lapos-parna
-    label: Takaró és lapos párna
+    label: Egyben mosható takaró és lapos párna
     type: toggle
     price: 12900
     tooltip: 'Egyben mosható. 100x140cm takaró, 40x50cm lapos párna'
