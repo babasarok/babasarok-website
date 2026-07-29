@@ -12,6 +12,8 @@ table:
     description: 9500Ft
   - title: Egyrétegű vízhatlan fektető
     description: 4900Ft
+  - title: Takaró és párnahuzat
+    description: 10500Ft
 price: 0
 materials:
   materials:
