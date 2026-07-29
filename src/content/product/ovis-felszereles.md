@@ -16,6 +16,8 @@ table:
     description: 10500Ft
   - title: 'Egyben mosható takaró és lapos párna '
     description: 12900Ft
+  - title: Sima fehér takaró és lapos párna
+    description: '10800'
 price: 0
 materials:
   materials:
