@@ -7,6 +7,9 @@ date: 2026-07-11T09:26:43.966Z
 thumbnail: /src/assets/ovis-felszereles-header.jpeg
 images:
   - image: /src/assets/76B92F40-2B82-4FA7-AB83-0F23A81016AE.jpeg
+table:
+  - title: Kétrétegű vizhatlan fektető
+    description: 9500Ft
 price: 0
 materials:
   materials:
