@@ -27,7 +27,7 @@ materials:
   material_required_count: 1
 fields:
   - name: vizhatlan-lepedo
-    label: Vízhatlan lepedő (egyrétegű)
+    label: Vízhatlan fektető (egyrétegű)
     type: toggle
     price: 4900
   - name: fekteto
