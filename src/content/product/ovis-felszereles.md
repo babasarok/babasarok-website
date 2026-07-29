@@ -7,17 +7,6 @@ date: 2026-07-11T09:26:43.966Z
 thumbnail: /src/assets/ovis-felszereles-header.jpeg
 images:
   - image: /src/assets/76B92F40-2B82-4FA7-AB83-0F23A81016AE.jpeg
-table:
-  - title: Kétrétegű vizhatlan fektető
-    description: 9500Ft
-  - title: Egyrétegű vízhatlan fektető
-    description: 4900Ft
-  - title: Takaró és párnahuzat
-    description: 10500Ft
-  - title: 'Egyben mosható takaró és lapos párna '
-    description: 12900Ft
-  - title: Sima fehér takaró és lapos párna
-    description: '10800'
 price: 0
 materials:
   materials:
