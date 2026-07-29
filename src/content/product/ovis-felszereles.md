@@ -31,7 +31,7 @@ fields:
     type: toggle
     price: 4900
   - name: fekteto
-    label: 'Vízhatlan fektető, derékalj'
+    label: 'Vízhatlan fektető, derékalj, kétrétegű'
     type: toggle
     price: 9500
     tooltip: 'Egyik oldal vízhatlan, másik oldal színes-mintás, béléssel'
