@@ -44,6 +44,11 @@ fields:
     type: toggle
     price: 12900
     tooltip: 'Egyben mosható. 100x140cm takaró, 40x50cm lapos párna'
+  - name: 'Sima takaró párna '
+    label: 'Sima fehér takaró és lapos párna '
+    type: toggle
+    price: 10800
+    tooltip: 'Akkor kérd, hogyha az ovi/bölcsi nem ad ágyneműt '
   - name: pufi-parna
     label: 'Pufi párna, fehér, huzat nélkül'
     type: toggle
