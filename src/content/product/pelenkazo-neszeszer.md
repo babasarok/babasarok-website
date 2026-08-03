@@ -17,6 +17,6 @@ shortDescription: |-
   Legyen szó rövid vagy hosszú útról, ez egy elengedhetetlen kellék. 
   Kérd névre hímezve, hogy még személyesebb legyen.
 materials:
-  material_required_count: 1
+  material_required_count: 0
 ---
 
