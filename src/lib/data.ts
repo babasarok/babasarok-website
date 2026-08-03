@@ -34,6 +34,7 @@ import {
   type EmbroideryPriceUnit,
   type ProductFieldType,
 } from "./productFieldTypes";
+import type { LengthBasedPricingConfig } from "./types.svelte";
 
 type Image = z.infer<ReturnType<ImageFunction>>;
 
@@ -142,6 +143,7 @@ export interface CmsEnhancedProduct extends Omit<
   | "materials"
   | "fields"
   | "icon"
+  | "priced_by_length"
 > {
   thumbnail?: GetImageResult | undefined | null;
   discount_valid_until?: Date | undefined | null;
@@ -150,6 +152,7 @@ export interface CmsEnhancedProduct extends Omit<
   images?: Array<CmsEnhancedProductImage | undefined | null> | undefined | null;
   materials?: CmsEnhancedProductMaterials | undefined | null;
   fields?: Array<CmsField | undefined | null> | undefined | null;
+  length_based_pricing?: LengthBasedPricingConfig | undefined | null;
 }
 
 type AstroProduct = RecursivelyReplaceKeyType<
@@ -363,7 +366,7 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
       thumbnail: product.thumbnail ? await optimizeImage(product.thumbnail, LOGO_WIDTH) : undefined,
       shortDescription: product.shortDescription ?? undefined,
       icon: product.icon ? await optimizeImage(product.icon, LOGO_WIDTH) : undefined,
-      priced_by_length: product.priced_by_length ?? undefined,
+      length_based_pricing: product.length_based_pricing ?? undefined,
       price: product.price ?? undefined,
       discount: product.discount ?? undefined,
       discount_valid_until: product.discount_valid_until
@@ -419,7 +422,6 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
             const base = {
               allow_custom_value: field.allow_custom_value ?? undefined,
               label: field.label,
-              length_based_pricing_source: field.length_based_pricing_source ?? undefined,
               name: field.name,
               optional: field.optional ?? undefined,
               placeholder: field.placeholder ?? undefined,

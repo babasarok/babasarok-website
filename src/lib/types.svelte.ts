@@ -12,6 +12,14 @@ export interface ToggleValue {
   error?: string | undefined;
 }
 
+/**
+ * Structured configuration for length-based pricing.
+ * Replaces the fragile cross-field string matching with typed references.
+ */
+export interface LengthBasedPricingConfig {
+  sourceField: string;
+}
+
 export interface ProductMaterialValue {
   material_id: string;
   colors: string[];

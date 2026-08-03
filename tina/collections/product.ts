@@ -159,11 +159,21 @@ export const ProductCollection: Collection = {
       label: "Termék ikon",
     },
     {
-      type: "boolean",
-      name: "priced_by_length",
+      type: "object",
+      name: "length_based_pricing",
       label: "Méteráru",
       description:
-        "Jelzi, hogy a termék ára a hossz alapján kerül meghatározásra, nem pedig fix ár alapján. Egy mezőnek méretnek kell lennie",
+        "Beállítások a méteráru termékekhez. Megadja, hogy melyik mező szolgáltatja az ár alapját.",
+      fields: [
+        {
+          type: "string",
+          name: "sourceField",
+          label: "Árforrás mező",
+          description:
+            "Válaszd ki azt a mezőt, amelyik adja a méteráru számítás alapját. A mező értéke cm-ben kell legyen.",
+          required: true,
+        },
+      ],
     },
     {
       type: "number",
@@ -345,13 +355,6 @@ export const ProductCollection: Collection = {
           required: true,
           options: PRODUCT_FIELD_TYPES.map((t) => ({ value: t.value, label: t.label })),
           label: "Mező típus",
-        },
-        {
-          type: "boolean",
-          name: "length_based_pricing_source",
-          description:
-            "Jelzi, hogy ez a mező szolgáltatja-e a méterárú számolás alapját. CM-ben kötelező megadni az értékeket! Csak egy mező jelölhető meg méterárú árforrásként.",
-          label: "Méteráru árforrás",
         },
         {
           type: "number",

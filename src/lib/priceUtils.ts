@@ -30,8 +30,9 @@ function countWords(value: string): number {
   return value.trim().split(/\s+/).filter(Boolean).length;
 }
 
-function getFieldPrice(field: Field): PricePart | null {
-  if (field.length_based_pricing_source) {
+function getFieldPrice(field: Field, product: IProduct): PricePart | null {
+  // Skip pricing for fields that are used as the source of length-based pricing
+  if (product.length_based_pricing && field.name === product.length_based_pricing.sourceField) {
     return null;
   }
 
@@ -104,7 +105,7 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
     if (!isFieldVisible(field, product.fields)) {
       continue;
     }
-    const fieldPrice = getFieldPrice(field);
+    const fieldPrice = getFieldPrice(field, product);
     if (!fieldPrice) {
       continue;
     }
@@ -143,16 +144,30 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
   const totalPrice =
     unitPrice * product.count * (discountMultiplier === undefined ? 1 : discountMultiplier);
 
-  if (product.priced_by_length) {
+  if (product.length_based_pricing) {
     // FRAGILE: the length source field's string value is reinterpreted as a
     // number (cm). Nothing ties the referenced field to a numeric type, so a
     // non-numeric value silently yields an undefined length. See
     // docs/embroidery-field-plan.md “Field value typing” TODO.
-    const lengthSource = stringFieldValue(
-      product.fields.find((x) => x.length_based_pricing_source)
-    );
+    const lengthSource = product.length_based_pricing.sourceField;
+    if (!lengthSource) {
+      return {
+        priced_by_length: true,
+        length: undefined,
+        options: parts,
+        unitPrice: undefined,
+        per_meter_price: unitPrice,
+        totalPrice: undefined,
+        basePrice,
+        indeterminate,
+        discount: discountMultiplier,
+      };
+    }
+
+    const field = product.fields.find((f) => f.name === lengthSource);
+    const lengthSourceValue = stringFieldValue(field);
     let length: number | undefined = Number.parseFloat(
-      typeof lengthSource === "string" ? lengthSource : ""
+      typeof lengthSourceValue === "string" ? lengthSourceValue : ""
     );
 
     length = Number.isNaN(length) ? undefined : length / 100;

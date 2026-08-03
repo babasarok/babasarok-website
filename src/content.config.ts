@@ -176,7 +176,6 @@ const materialValidator = ({ image }: SchemaContext) =>
  */
 const productFieldBaseShape = {
   name: z.string(),
-  length_based_pricing_source: z.boolean().optional().nullable(),
   price: z.number().optional().nullable(),
   price_unit: z.enum(EMBROIDERY_PRICE_UNIT_VALUES).optional().nullable(),
   label: z.string(),
@@ -226,7 +225,12 @@ const product = defineCollection({
       thumbnail: image().optional().nullable(),
       shortDescription: z.string().optional().nullable(),
       icon: image().optional().nullable(),
-      priced_by_length: z.boolean().optional().nullable(),
+      length_based_pricing: z
+        .object({
+          sourceField: z.string(),
+        })
+        .optional()
+        .nullable(),
       price: z.number().optional().nullable(),
       discount: z.number().optional().nullable(),
       discount_valid_until: z.coerce.date().optional().nullable(),

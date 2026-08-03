@@ -232,12 +232,12 @@ describe("product string content", () => {
       title: "Fonott rácsvédő",
       priced_by_length: true,
       price: 0,
+      length_based_pricing: { sourceField: "sizes" },
       fields: [
         makeField({
           name: "sizes",
           label: "Méret",
           type: "radio",
-          length_based_pricing_source: true,
           items: [
             { value: "200", label: "200cm" },
             { value: "300", label: "300cm" },
