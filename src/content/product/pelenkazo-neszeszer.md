@@ -17,10 +17,6 @@ shortDescription: |-
   Legyen szó rövid vagy hosszú útról, ez egy elengedhetetlen kellék. 
   Kérd névre hímezve, hogy még személyesebb legyen.
 materials:
-  materials:
-    - material_path: src/content/material/pamutvaszon.md
-      price: 0
-      color_count: '1'
   material_required_count: 1
 ---
 
