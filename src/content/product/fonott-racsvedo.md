@@ -32,7 +32,8 @@ table:
     description: 25.600Ft
 shortDescription: 'A fonott rácsvédő nemcsak dizájnos kiegészítője a kiságyának, hanem praktikus védelmet is nyújt. Puha, pufi anyaga megóvja a baba fejét a rácsokkal való ütközéstől, különösen, amikor a pici már forogni kezd. '
 icon: /src/assets/product/braids.svg
-priced_by_length: true
+length_based_pricing:
+  sourceField: sizes
 price: 0
 materials:
   materials:
@@ -45,7 +46,6 @@ materials:
   material_required_count: 1
 fields:
   - name: sizes
-    length_based_pricing_source: true
     label: Méret
     type: radio
     items:

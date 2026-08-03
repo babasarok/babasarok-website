@@ -366,7 +366,10 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
       thumbnail: product.thumbnail ? await optimizeImage(product.thumbnail, LOGO_WIDTH) : undefined,
       shortDescription: product.shortDescription ?? undefined,
       icon: product.icon ? await optimizeImage(product.icon, LOGO_WIDTH) : undefined,
-      length_based_pricing: product.length_based_pricing ?? undefined,
+      // An empty `sourceField` (the "— Nem méteráru —" select option) means off.
+      length_based_pricing: product.length_based_pricing?.sourceField
+        ? { sourceField: product.length_based_pricing.sourceField }
+        : undefined,
       price: product.price ?? undefined,
       discount: product.discount ?? undefined,
       discount_valid_until: product.discount_valid_until

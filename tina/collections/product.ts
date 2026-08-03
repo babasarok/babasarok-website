@@ -1,11 +1,7 @@
 import {
   ToggleField,
-  type InputFieldType,
-  type ReferenceField,
-  type NumberProps,
   GroupListField,
   TextField,
-  NumberField,
   SelectField,
   DateField,
   type Collection,
@@ -163,15 +159,54 @@ export const ProductCollection: Collection = {
       name: "length_based_pricing",
       label: "Méteráru",
       description:
-        "Beállítások a méteráru termékekhez. Megadja, hogy melyik mező szolgáltatja az ár alapját.",
+        "Méteráru termékekhez: válaszd ki, melyik mező adja az ár alapját (cm-ben). A kikapcsoláshoz válaszd a „— Nem méteráru —” lehetőséget.",
       fields: [
         {
           type: "string",
           name: "sourceField",
           label: "Árforrás mező",
           description:
-            "Válaszd ki azt a mezőt, amelyik adja a méteráru számítás alapját. A mező értéke cm-ben kell legyen.",
-          required: true,
+            "Az a mező, amelyik a méteráru számítás alapját adja. A mező értéke cm-ben kell legyen.",
+          ui: {
+            component(props) {
+              // Populate from this product's own fields so editors pick an
+              // existing field ID; the empty option turns off méteráru pricing.
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              const productFields = getValue(props, "../fields") ?? [];
+              const options = [
+                { value: "", label: "— Nem méteráru —" },
+                ...(
+                  productFields as {
+                    name?: string | null;
+                    label?: string | null;
+                    type?: string | null;
+                  }[]
+                )
+                  .filter((f) => !!f.name && f.type !== "embroidery" && f.type !== "toggle")
+                  .map((f) => ({ value: f.name ?? "", label: f.label || (f.name ?? "") })),
+              ];
+
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument
+              return SelectField({
+                ...props,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+                field: { ...props.field, options } as any,
+                options,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              } as any);
+            },
+            validate(value, allValues) {
+              if (!value) {
+                return;
+              }
+              const productFields =
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+                ((allValues as any)?.fields ?? []) as { name?: string | null }[];
+              if (!productFields.some((f) => f.name === value)) {
+                return `Nincs ilyen mező: "${value}". Válassz a termék mezői közül.`;
+              }
+            },
+          },
         },
       ],
     },
@@ -363,20 +398,6 @@ export const ProductCollection: Collection = {
           description:
             "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni.",
           ui: {
-            component(props) {
-              const castedProps = props as unknown as InputFieldType<
-                NumberProps,
-                Parameters<typeof ReferenceField>[0]
-              >;
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-              const length_based_pricing_source = getValue(props, "length_based_pricing_source");
-              if (length_based_pricing_source) {
-                return null;
-              }
-
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return NumberField(castedProps as any);
-            },
             parse(value) {
               if (typeof value === "string") {
                 const parsed = Number.parseFloat(value);
@@ -479,19 +500,6 @@ export const ProductCollection: Collection = {
               description:
                 "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni.",
               ui: {
-                component(props) {
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                  const length_based_pricing_source = getValue(
-                    props,
-                    "../../length_based_pricing_source"
-                  );
-                  if (length_based_pricing_source) {
-                    return null;
-                  }
-
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-                  return NumberField(props as any);
-                },
                 parse(value) {
                   if (typeof value === "string") {
                     const parsed = Number.parseFloat(value);

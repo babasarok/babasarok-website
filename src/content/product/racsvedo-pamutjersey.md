@@ -6,7 +6,8 @@ hidden_in_product_list: true
 can_be_ordered: true
 date: 2026-02-09T10:42:21.210Z
 icon: /src/assets/product/braids.svg
-priced_by_length: true
+length_based_pricing:
+  sourceField: sizes
 price: 0
 materials:
   materials:
@@ -16,7 +17,6 @@ materials:
   material_required_count: 1
 fields:
   - name: sizes
-    length_based_pricing_source: true
     label: Méret
     type: radio
     items:

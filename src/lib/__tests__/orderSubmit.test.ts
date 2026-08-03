@@ -230,7 +230,6 @@ describe("product string content", () => {
   it("renders a length-priced (méteráru) product", async () => {
     const product = makeProduct({
       title: "Fonott rácsvédő",
-      priced_by_length: true,
       price: 0,
       length_based_pricing: { sourceField: "sizes" },
       fields: [

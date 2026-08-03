@@ -38,12 +38,8 @@ export interface FieldOpts {
   items?: FieldItem[];
   allow_custom_value?: boolean;
   regex?: string;
-  length_based_pricing_source?: boolean;
   value?: ValueWithError | ToggleValue | EmbroideryValue;
   depends_on?: { field?: string | null; value?: string | null } | null;
-  length_based_pricing?: {
-    sourceField: string;
-  };
 }
 
 /** Build a single product `Field` (the runtime slice the order logic reads). */
@@ -99,7 +95,6 @@ export interface ProductOpts {
   price?: number | null;
   discount?: number | null;
   discount_valid_until?: string | null;
-  priced_by_length?: boolean;
   length_based_pricing?: {
     sourceField: string;
   };
@@ -120,7 +115,6 @@ export function makeProduct(opts: ProductOpts = {}): IProduct {
     price: opts.price ?? null,
     discount: opts.discount ?? null,
     discount_valid_until: opts.discount_valid_until ?? null,
-    priced_by_length: opts.priced_by_length ?? false,
     length_based_pricing: opts.length_based_pricing ?? undefined,
     fields: opts.fields ?? [],
     materials: {

@@ -206,7 +206,6 @@ describe("calculatePriceForItem — length-based pricing", () => {
   it("derives length from the source field (cm → m) and scales the price", () => {
     const price = calculatePriceForItem(
       makeProduct({
-        priced_by_length: true,
         price: 0,
         length_based_pricing: { sourceField: "sizes" },
         fields: [
@@ -237,7 +236,6 @@ describe("calculatePriceForItem — length-based pricing", () => {
   it("leaves price undefined when the length field is empty", () => {
     const price = calculatePriceForItem(
       makeProduct({
-        priced_by_length: true,
         price: 0,
         length_based_pricing: { sourceField: "sizes" },
         fields: [makeField({ name: "sizes", type: "radio" })],
