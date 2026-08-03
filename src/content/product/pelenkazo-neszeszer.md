@@ -7,6 +7,9 @@ thumbnail: /src/assets/IMG_5374.jpeg
 images:
   - image: /src/assets/IMG_5379.jpeg
   - image: /src/assets/IMG_5381.jpeg
+table:
+  - title: Pelenkázó neszeszer
+    description: 7.490Ft
 shortDescription: |-
   A kisbabás szülők tökéletes utazó rendszerezője. 
   Pelenka, popsitörlő, utazó kenőcs? 
