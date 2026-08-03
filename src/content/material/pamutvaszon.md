@@ -83,7 +83,7 @@ colors:
     image: /src/assets/IMG_4934.webp
   - color_id: Sargakatica
     label: Katicák
-    image: /src/assets/IMG_4943.jpeg
+    image: /src/assets/IMG_5125.png
   - color_id: Rózsaszín polip
     label: 'Tengeri világ '
     image: /src/assets/IMG_5115.jpeg
