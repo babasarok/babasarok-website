@@ -12,6 +12,9 @@ colors:
   - color_id: Kosaras maci
     label: 'Kedves macik kosárban '
     image: /src/assets/IMG_4635.jpeg
+  - color_id: Apró erdolakok
+    label: Apró erdőlakók
+    image: /src/assets/IMG_5497.jpeg
   - color_id: Kosaras maci kek
     label: 'Kedves macik, kosárban, kék alapon'
     image: /src/assets/IMG_1373.jpeg
@@ -150,9 +153,6 @@ colors:
   - color_id: Drapp
     label: Drapp
     image: /src/assets/IMG_6716.jpeg
-  - color_id: Apró erdolakok
-    label: Apró erdőlakók
-    image: /src/assets/IMG_5497.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 categories: '100%pamut, mintás vagy egyszínű gyerekbarát anyag. '
 shortDescription: |-
