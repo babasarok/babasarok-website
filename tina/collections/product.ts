@@ -189,7 +189,11 @@ export const ProductCollection: Collection = {
                   }[]
                 )
                   .filter(
-                    (f) => !!f.name && !!f.type && isProductFieldType(f.type) && canSupplyStringValue(f.type)
+                    (f) =>
+                      !!f.name &&
+                      !!f.type &&
+                      isProductFieldType(f.type) &&
+                      canSupplyStringValue(f.type)
                   )
                   .map((f) => ({ value: f.name ?? "", label: f.label || (f.name ?? "") })),
               ];
