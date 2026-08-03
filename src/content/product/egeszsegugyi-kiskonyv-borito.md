@@ -12,7 +12,7 @@ materials:
   materials:
     - material_path: src/content/material/pamutvaszon.md
       price: 0
-      color_count: '1'
+      color_count: '2'
   material_required_count: 1
 fields:
   - name: Himzes
