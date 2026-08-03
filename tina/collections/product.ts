@@ -7,7 +7,13 @@ import {
   type Collection,
 } from "tinacms";
 import { getValue, requiredListItemsBeforeSubmit, slugify } from "../lib/utils";
-import { EMBROIDERY_PRICE_UNITS, PRODUCT_FIELD_TYPES } from "../../src/lib/productFieldTypes";
+import {
+  canSupplyStringValue,
+  EMBROIDERY_PRICE_UNITS,
+  hasResolvableValue,
+  isProductFieldType,
+  PRODUCT_FIELD_TYPES,
+} from "../../src/lib/productFieldTypes";
 
 /**
  * Products ("Termékek") — backs `src/content/product/*.md` and the `/product`
@@ -182,7 +188,9 @@ export const ProductCollection: Collection = {
                     type?: string | null;
                   }[]
                 )
-                  .filter((f) => !!f.name && f.type !== "embroidery" && f.type !== "toggle")
+                  .filter(
+                    (f) => !!f.name && !!f.type && isProductFieldType(f.type) && canSupplyStringValue(f.type)
+                  )
                   .map((f) => ({ value: f.name ?? "", label: f.label || (f.name ?? "") })),
               ];
 
@@ -593,7 +601,14 @@ export const ProductCollection: Collection = {
                         type?: string | null;
                       }[]
                     )
-                      .filter((f) => !!f.name && f.name !== ownName && f.type !== "embroidery")
+                      .filter(
+                        (f) =>
+                          !!f.name &&
+                          f.name !== ownName &&
+                          !!f.type &&
+                          isProductFieldType(f.type) &&
+                          hasResolvableValue(f.type)
+                      )
                       .map((f) => ({ value: f.name ?? "", label: f.label || (f.name ?? "") })),
                   ];
 

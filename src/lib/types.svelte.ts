@@ -1,5 +1,5 @@
 import type { CmsEnhancedProduct } from "./data";
-import type { ProductFieldType } from "./productFieldTypes";
+import type { ProductFieldType, StringValuedFieldType } from "./productFieldTypes";
 export interface ValueWithError {
   value: string;
   is_custom?: boolean;
@@ -67,7 +67,7 @@ type FieldOf<T extends ProductFieldType> = Omit<CmsField, "type"> & {
 export type Field = { [T in ProductFieldType]: FieldOf<T> }[ProductFieldType];
 
 /** Field types with the legacy string-valued `value` shape. */
-export type StringValueField = Exclude<Field, { type: "toggle" | "embroidery" }>;
+export type StringValueField = Extract<Field, { type: StringValuedFieldType }>;
 export type ProductMaterials = Omit<
   CmsProductMaterials,
   "values" | "materials" | "material_required_count"

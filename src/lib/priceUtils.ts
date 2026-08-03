@@ -1,6 +1,7 @@
 import type { IProduct, Field, CmsProductMaterial } from "./types.svelte";
 import type { ProductMaterialValue } from "./types.svelte";
 import { isFieldVisible } from "./fieldVisibility";
+import { findFieldByName, resolveNumericValue } from "./fieldValue";
 
 interface PricePart {
   label: string;
@@ -77,13 +78,6 @@ function getFieldPrice(field: Field, product: IProduct): PricePart | null {
   }
 }
 
-function stringFieldValue(field: Field | undefined): string | undefined {
-  if (!field || field.type === "toggle" || field.type === "embroidery") {
-    return undefined;
-  }
-  return field.value?.value;
-}
-
 function getMaterialPrice(
   value: Pick<ProductMaterialValue, "material_id">,
   productMaterials: CmsProductMaterial[],
@@ -145,10 +139,8 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
     unitPrice * product.count * (discountMultiplier === undefined ? 1 : discountMultiplier);
 
   if (product.length_based_pricing) {
-    // FRAGILE: the length source field's string value is reinterpreted as a
-    // number (cm). Nothing ties the referenced field to a numeric type, so a
-    // non-numeric value silently yields an undefined length. See
-    // docs/embroidery-field-plan.md “Field value typing” TODO.
+    // The source field is validated at build time (data.ts) and resolved to a
+    // number via the typed accessor; a blank/non-numeric value → no length.
     const lengthSource = product.length_based_pricing.sourceField;
     if (!lengthSource) {
       return {
@@ -164,13 +156,9 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
       };
     }
 
-    const field = product.fields.find((f) => f.name === lengthSource);
-    const lengthSourceValue = stringFieldValue(field);
-    let length: number | undefined = Number.parseFloat(
-      typeof lengthSourceValue === "string" ? lengthSourceValue : ""
-    );
-
-    length = Number.isNaN(length) ? undefined : length / 100;
+    const field = findFieldByName(product.fields, lengthSource);
+    const cm = resolveNumericValue(field);
+    const length = cm === undefined ? undefined : cm / 100;
 
     return {
       priced_by_length: true,

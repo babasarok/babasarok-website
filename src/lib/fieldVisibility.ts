@@ -1,11 +1,5 @@
 import type { Field } from "./types.svelte";
-
-function dependencyValue(field: Field): string | boolean | undefined {
-  if (field.type === "embroidery") {
-    return undefined;
-  }
-  return field.value?.value;
-}
+import { findFieldByName, resolveFieldValue } from "./fieldValue";
 
 /**
  * A field configured with `depends_on` is only shown when the referenced field
@@ -19,19 +13,30 @@ export function isFieldVisible(field: Field, fields: Field[]): boolean {
     return true;
   }
 
-  const target = fields.find((f) => f.name === dependsOn.field);
+  const target = findFieldByName(fields, dependsOn.field);
   if (!target) {
     return true;
   }
 
-  const targetValue = dependencyValue(target);
+  const targetValue = resolveFieldValue(target);
   if (dependsOn.value) {
-    // FRAGILE: `depends_on.value` is always a string (schema), but a field's
-    // value can be a boolean (toggle) or a string, so we stringify the target
-    // before comparing. See docs/embroidery-field-plan.md “Field value typing”
-    // TODO for a typed cross-field value model.
-    return targetValue != null && String(targetValue) === dependsOn.value;
+    switch (targetValue.kind) {
+      case "string":
+        return targetValue.value === dependsOn.value;
+      case "boolean":
+        return String(targetValue.value) === dependsOn.value;
+      case "empty":
+        return false;
+    }
   }
 
-  return !!targetValue;
+  // No required value → visible as soon as the target holds any value.
+  switch (targetValue.kind) {
+    case "string":
+      return true;
+    case "boolean":
+      return targetValue.value;
+    case "empty":
+      return false;
+  }
 }
