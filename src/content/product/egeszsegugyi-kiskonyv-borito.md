@@ -7,7 +7,7 @@ thumbnail: /src/assets/att.zqkp6Ozzth5q6TPlE7-T9BT9nAxSx8FyWm_88ZJbkGw.jpeg
 table:
   - title: 'Egészségügyi kiskönyv borító '
     description: 3.490Ft
-shortDescription: 'Egyedi, névre hímzett egészségügyi kiskönyv borító, amely megvédi a kiskönyvet a mindennapi használat során. Igényes, kézzel készített termék, amely praktikus és egyben személyes ajándék is lehet'
+shortDescription: 'Egyedi, névre hímzett egészségügyi kiskönyv borító, amely megvédi a kiskönyvet használat során. '
 materials:
   materials:
     - material_path: src/content/material/pamutvaszon.md
