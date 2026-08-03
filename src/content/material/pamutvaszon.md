@@ -150,6 +150,9 @@ colors:
   - color_id: Drapp
     label: Drapp
     image: /src/assets/IMG_6716.jpeg
+  - color_id: Apró erdolakok
+    label: Apró erdőlakók
+    image: /src/assets/IMG_5497.jpeg
 thumbnail: /src/assets/IMG_5070.jpeg
 categories: '100%pamut, mintás vagy egyszínű gyerekbarát anyag. '
 shortDescription: |-
