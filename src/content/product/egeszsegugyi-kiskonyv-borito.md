@@ -14,5 +14,10 @@ materials:
       price: 0
       color_count: '1'
   material_required_count: 1
+fields:
+  - name: Himzes
+    label: Hímzés
+    type: embroidery
+    price_unit: word
 ---
 
