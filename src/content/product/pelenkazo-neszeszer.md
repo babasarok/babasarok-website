@@ -8,7 +8,7 @@ images:
   - image: /src/assets/IMG_5379.jpeg
   - image: /src/assets/IMG_5381.jpeg
 table:
-  - title: Pelenkázó neszeszer
+  - title: Pelenkázó neszeszer (névhímzés nélkül)
     description: 7.490Ft
 shortDescription: |-
   A kisbabás szülők tökéletes utazó rendszerezője. 
