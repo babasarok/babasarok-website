@@ -139,7 +139,7 @@
         </div>
       </div>
       <dialog
-        class="h-[80%] w-[80%] md:w-fit md:h-fit md:max-h-[80%] m-auto border-0 rounded-2xl shadow-lg overflow-hidden relative open:flex flex-col"
+        class="fixed inset-0 h-[80%] w-[80%] md:w-fit md:h-fit md:max-h-[80%] m-auto border-0 rounded-2xl shadow-lg overflow-hidden open:flex flex-col"
         id="product-dialog"
         popover
       >
