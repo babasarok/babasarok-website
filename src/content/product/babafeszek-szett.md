@@ -14,6 +14,7 @@ table:
 shortDescription: 'A babafészek szűk, ölelő formája anyaméhhez hasonló környezetet teremt, ami megnyugtatja a babát és segíti a pihentető alvást. A szett tartalmazza a babafészket, párnát és takarót – mindent, amire a kényelmes pihenéshez szükség van.'
 materials:
   material_required_count: 1
+price: 0
 ---
 
 Beletartozik a [Babafészek](/product/babafeszek/) és a [Babatakaró szett](/product/babatakaro-szett/).

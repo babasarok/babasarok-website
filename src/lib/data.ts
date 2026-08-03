@@ -434,7 +434,7 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
       length_based_pricing: product.length_based_pricing?.sourceField
         ? { sourceField: product.length_based_pricing.sourceField }
         : undefined,
-      price: product.price ?? undefined,
+      price: product.price,
       discount: product.discount ?? undefined,
       discount_valid_until: product.discount_valid_until
         ? new Date(product.discount_valid_until)

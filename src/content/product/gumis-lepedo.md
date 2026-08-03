@@ -12,5 +12,6 @@ table:
 shortDescription: '100% pamut gumis lepedő a kiságyra. '
 materials:
   material_required_count: 0
+price: 0
 ---
 

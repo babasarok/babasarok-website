@@ -123,7 +123,7 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
     }
   }
 
-  const basePrice: PricePart = { label: "Alapár", price: product.price ?? undefined };
+  const basePrice: PricePart = { label: "Alapár", price: product.price };
   const allParts = [basePrice, ...parts];
   const unitPrice = Math.round(
     allParts.reduce((sum, part) => sum + Math.round(part.price ?? 0), 0)

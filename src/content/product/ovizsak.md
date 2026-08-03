@@ -28,6 +28,7 @@ shortDescription: |-
   (+-3cm eltérés elfogadott)
 materials:
   material_required_count: 0
+price: 0
 fields:
   - name: 'Termék '
     price: 0

@@ -11,14 +11,16 @@ table:
   - title: Pelenkázó neszeszer (névhímzés nélkül)
     description: 7.490Ft
 shortDescription: |
-  A kisbabás szülők tökéletes utazó rendszerezője. 
-  Legyen szó rövid vagy hosszú útról, ez egy elengedhetetlen kellék. 
+  A kisbabás szülők tökéletes utazó rendszerezője.
+  Legyen szó rövid vagy hosszú útról, ez egy elengedhetetlen kellék.
 materials:
   material_required_count: 0
 fields:
   - name: 'Himzes '
     label: 'Hímzés '
     type: embroidery
+    price: 1500
     price_unit: word
+price: 7490
 ---
 

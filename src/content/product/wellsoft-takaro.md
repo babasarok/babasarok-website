@@ -6,6 +6,7 @@ can_be_ordered: true
 date: 2026-02-01T10:42:40.867Z
 materials:
   material_required_count: 0
+price: 0
 fields:
   - name: meret
     label: Méret

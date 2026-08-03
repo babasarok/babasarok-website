@@ -8,6 +8,7 @@ table:
   - title: 'Egészségügyi kiskönyv borító '
     description: 3.490Ft
 shortDescription: 'Egyedi, névre hímzett egészségügyi kiskönyv borító, amely megvédi a kiskönyvet használat során. '
+price: 3490
 materials:
   materials:
     - material_path: src/content/material/pamutvaszon.md
@@ -18,6 +19,7 @@ fields:
   - name: Himzes
     label: Hímzés
     type: embroidery
+    price: 1500
     price_unit: word
 ---
 

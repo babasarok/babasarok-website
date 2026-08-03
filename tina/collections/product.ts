@@ -227,6 +227,7 @@ export const ProductCollection: Collection = {
       name: "price",
       label: "Alap Ár - Forintban",
       description: "Ha üres akkor 0.",
+      required: true,
     },
     {
       type: "number",

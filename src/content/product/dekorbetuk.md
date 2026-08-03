@@ -20,5 +20,6 @@ shortDescription: |-
   Minden betű kb. 15 cm magas, a szélessége igazodik az adott betűhöz.
 materials:
   material_required_count: 0
+price: 0
 ---
 

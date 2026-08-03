@@ -4,6 +4,7 @@ title: Fonott rácsvédő
 categories: 4-es fonat
 date: 2026-07-01T09:23:39.567Z
 thumbnail: /src/assets/IMG_7422 (1).jpg
+price: 0
 images:
   - image: /src/assets/IMG_8843.JPG
   - image: /src/assets/IMG_8842.JPG

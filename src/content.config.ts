@@ -231,7 +231,7 @@ const product = defineCollection({
         })
         .optional()
         .nullable(),
-      price: z.number().optional().nullable(),
+      price: z.number(),
       discount: z.number().optional().nullable(),
       discount_valid_until: z.coerce.date().optional().nullable(),
       images: z
