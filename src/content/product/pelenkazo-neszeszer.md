@@ -18,5 +18,10 @@ shortDescription: |-
   Kérd névre hímezve, hogy még személyesebb legyen.
 materials:
   material_required_count: 0
+fields:
+  - name: 'Himzes '
+    label: 'Hímzés '
+    type: embroidery
+    price_unit: word
 ---
 
