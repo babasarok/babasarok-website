@@ -29,11 +29,13 @@ import type { z } from "astro/zod";
 import type { GetImageResult } from "astro";
 import { resolveImage } from "./assets";
 import {
+  canSupplyStringValue,
   isEmbroideryPriceUnit,
   isProductFieldType,
   type EmbroideryPriceUnit,
   type ProductFieldType,
 } from "./productFieldTypes";
+import type { LengthBasedPricingConfig } from "./types.svelte";
 
 type Image = z.infer<ReturnType<ImageFunction>>;
 
@@ -142,6 +144,7 @@ export interface CmsEnhancedProduct extends Omit<
   | "materials"
   | "fields"
   | "icon"
+  | "priced_by_length"
 > {
   thumbnail?: GetImageResult | undefined | null;
   discount_valid_until?: Date | undefined | null;
@@ -150,6 +153,7 @@ export interface CmsEnhancedProduct extends Omit<
   images?: Array<CmsEnhancedProductImage | undefined | null> | undefined | null;
   materials?: CmsEnhancedProductMaterials | undefined | null;
   fields?: Array<CmsField | undefined | null> | undefined | null;
+  length_based_pricing?: LengthBasedPricingConfig | undefined | null;
 }
 
 type AstroProduct = RecursivelyReplaceKeyType<
@@ -343,6 +347,69 @@ function toProductFieldType(type: string): ProductFieldType {
   throw new Error(`Ismeretlen termék mező típus: ${type}`);
 }
 
+/**
+ * Fail the build when a product's cross-field references point at a missing (or
+ * unusable) field. These references are plain strings in the CMS, so without
+ * this a typo or a renamed field silently degrades to `undefined` at runtime
+ * (see the `FRAGILE` markers in priceUtils/materialUtils/fieldVisibility).
+ */
+function assertValidProductReferences(
+  product: RecursiveRequired<CmsEnhancedProduct, GetImageResult | Date>
+): void {
+  const fields = (product.fields ?? []).filter((f) => f != null);
+  const fieldByName = new Map(fields.map((f) => [f.name, f]));
+  const where = `Termék "${product.product_id}"`;
+
+  const source = product.length_based_pricing?.sourceField;
+  if (source) {
+    const target = fieldByName.get(source);
+    if (!target) {
+      throw new Error(
+        `${where}: a méteráru "sourceField" nem létező mezőre hivatkozik: "${source}".`
+      );
+    }
+    if (!canSupplyStringValue(target.type)) {
+      throw new Error(
+        `${where}: a méteráru forrásmező ("${source}") típusa "${target.type}", ami nem adhat hossz értéket.`
+      );
+    }
+  }
+
+  for (const field of fields) {
+    const dep = field.depends_on?.field;
+    if (!dep) {
+      continue;
+    }
+    if (dep === field.name) {
+      throw new Error(`${where}: a "${field.name}" mező önmagára hivatkozik a "depends_on"-ban.`);
+    }
+    if (!fieldByName.has(dep)) {
+      throw new Error(
+        `${where}: a "${field.name}" mező "depends_on" hivatkozása nem létező mezőre mutat: "${dep}".`
+      );
+    }
+  }
+
+  for (const material of product.materials?.materials ?? []) {
+    const colorCount = material?.color_count;
+    // A numeric literal is a plain count; anything else is a field reference.
+    if (!material || !colorCount || !Number.isNaN(Number.parseFloat(colorCount))) {
+      continue;
+    }
+    const target = fieldByName.get(colorCount);
+    if (!target) {
+      throw new Error(
+        `${where}: a "${material.material_path.material_id}" anyag "color_count" hivatkozása nem létező mezőre mutat: "${colorCount}".`
+      );
+    }
+    if (!canSupplyStringValue(target.type)) {
+      throw new Error(
+        `${where}: a "${material.material_path.material_id}" anyag "color_count" forrásmezője ("${colorCount}") típusa "${target.type}", ami nem adhat számértéket.`
+      );
+    }
+  }
+}
+
 export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
   const response = await client.queries.productConnection();
 
@@ -353,7 +420,7 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
   const result: RecursiveRequired<CmsEnhancedProduct, GetImageResult | Date>[] = [];
 
   for (const product of products) {
-    result.push({
+    const enhanced: RecursiveRequired<CmsEnhancedProduct, GetImageResult | Date> = {
       product_id: product.product_id,
       title: product.title,
       hidden_in_product_list: product.hidden_in_product_list ?? undefined,
@@ -363,7 +430,10 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
       thumbnail: product.thumbnail ? await optimizeImage(product.thumbnail, LOGO_WIDTH) : undefined,
       shortDescription: product.shortDescription ?? undefined,
       icon: product.icon ? await optimizeImage(product.icon, LOGO_WIDTH) : undefined,
-      priced_by_length: product.priced_by_length ?? undefined,
+      // An empty `sourceField` (the "— Nem méteráru —" select option) means off.
+      length_based_pricing: product.length_based_pricing?.sourceField
+        ? { sourceField: product.length_based_pricing.sourceField }
+        : undefined,
       price: product.price ?? undefined,
       discount: product.discount ?? undefined,
       discount_valid_until: product.discount_valid_until
@@ -419,7 +489,6 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
             const base = {
               allow_custom_value: field.allow_custom_value ?? undefined,
               label: field.label,
-              length_based_pricing_source: field.length_based_pricing_source ?? undefined,
               name: field.name,
               optional: field.optional ?? undefined,
               placeholder: field.placeholder ?? undefined,
@@ -451,7 +520,10 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
             // where Tina's loose `type: string` becomes our discriminated union.
             return { ...base, type: toProductFieldType(field.type) };
           }) ?? undefined,
-    });
+    };
+
+    assertValidProductReferences(enhanced);
+    result.push(enhanced);
   }
 
   return result;

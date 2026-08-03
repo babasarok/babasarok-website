@@ -1,17 +1,19 @@
 import {
   ToggleField,
-  type InputFieldType,
-  type ReferenceField,
-  type NumberProps,
   GroupListField,
   TextField,
-  NumberField,
   SelectField,
   DateField,
   type Collection,
 } from "tinacms";
 import { getValue, requiredListItemsBeforeSubmit, slugify } from "../lib/utils";
-import { EMBROIDERY_PRICE_UNITS, PRODUCT_FIELD_TYPES } from "../../src/lib/productFieldTypes";
+import {
+  canSupplyStringValue,
+  EMBROIDERY_PRICE_UNITS,
+  hasResolvableValue,
+  isProductFieldType,
+  PRODUCT_FIELD_TYPES,
+} from "../../src/lib/productFieldTypes";
 
 /**
  * Products ("Termékek") — backs `src/content/product/*.md` and the `/product`
@@ -159,11 +161,66 @@ export const ProductCollection: Collection = {
       label: "Termék ikon",
     },
     {
-      type: "boolean",
-      name: "priced_by_length",
+      type: "object",
+      name: "length_based_pricing",
       label: "Méteráru",
       description:
-        "Jelzi, hogy a termék ára a hossz alapján kerül meghatározásra, nem pedig fix ár alapján. Egy mezőnek méretnek kell lennie",
+        "Méteráru termékekhez: válaszd ki, melyik mező adja az ár alapját (cm-ben). A kikapcsoláshoz válaszd a „— Nem méteráru —” lehetőséget.",
+      fields: [
+        {
+          type: "string",
+          name: "sourceField",
+          label: "Árforrás mező",
+          description:
+            "Az a mező, amelyik a méteráru számítás alapját adja. A mező értéke cm-ben kell legyen.",
+          ui: {
+            component(props) {
+              // Populate from this product's own fields so editors pick an
+              // existing field ID; the empty option turns off méteráru pricing.
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              const productFields = getValue(props, "../fields") ?? [];
+              const options = [
+                { value: "", label: "— Nem méteráru —" },
+                ...(
+                  productFields as {
+                    name?: string | null;
+                    label?: string | null;
+                    type?: string | null;
+                  }[]
+                )
+                  .filter(
+                    (f) =>
+                      !!f.name &&
+                      !!f.type &&
+                      isProductFieldType(f.type) &&
+                      canSupplyStringValue(f.type)
+                  )
+                  .map((f) => ({ value: f.name ?? "", label: f.label || (f.name ?? "") })),
+              ];
+
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument
+              return SelectField({
+                ...props,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+                field: { ...props.field, options } as any,
+                options,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              } as any);
+            },
+            validate(value, allValues) {
+              if (!value) {
+                return;
+              }
+              const productFields =
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+                ((allValues as any)?.fields ?? []) as { name?: string | null }[];
+              if (!productFields.some((f) => f.name === value)) {
+                return `Nincs ilyen mező: "${value}". Válassz a termék mezői közül.`;
+              }
+            },
+          },
+        },
+      ],
     },
     {
       type: "number",
@@ -347,33 +404,12 @@ export const ProductCollection: Collection = {
           label: "Mező típus",
         },
         {
-          type: "boolean",
-          name: "length_based_pricing_source",
-          description:
-            "Jelzi, hogy ez a mező szolgáltatja-e a méterárú számolás alapját. CM-ben kötelező megadni az értékeket! Csak egy mező jelölhető meg méterárú árforrásként.",
-          label: "Méteráru árforrás",
-        },
-        {
           type: "number",
           name: "price",
           label: "Ár",
           description:
             "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni.",
           ui: {
-            component(props) {
-              const castedProps = props as unknown as InputFieldType<
-                NumberProps,
-                Parameters<typeof ReferenceField>[0]
-              >;
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-              const length_based_pricing_source = getValue(props, "length_based_pricing_source");
-              if (length_based_pricing_source) {
-                return null;
-              }
-
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return NumberField(castedProps as any);
-            },
             parse(value) {
               if (typeof value === "string") {
                 const parsed = Number.parseFloat(value);
@@ -476,19 +512,6 @@ export const ProductCollection: Collection = {
               description:
                 "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni.",
               ui: {
-                component(props) {
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                  const length_based_pricing_source = getValue(
-                    props,
-                    "../../length_based_pricing_source"
-                  );
-                  if (length_based_pricing_source) {
-                    return null;
-                  }
-
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-                  return NumberField(props as any);
-                },
                 parse(value) {
                   if (typeof value === "string") {
                     const parsed = Number.parseFloat(value);
@@ -582,7 +605,14 @@ export const ProductCollection: Collection = {
                         type?: string | null;
                       }[]
                     )
-                      .filter((f) => !!f.name && f.name !== ownName && f.type !== "embroidery")
+                      .filter(
+                        (f) =>
+                          !!f.name &&
+                          f.name !== ownName &&
+                          !!f.type &&
+                          isProductFieldType(f.type) &&
+                          hasResolvableValue(f.type)
+                      )
                       .map((f) => ({ value: f.name ?? "", label: f.label || (f.name ?? "") })),
                   ];
 
