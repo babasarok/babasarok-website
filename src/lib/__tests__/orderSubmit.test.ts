@@ -38,11 +38,12 @@ async function captureForm(
   return init.body as FormData;
 }
 
-const baseOrder = (products: OrderDetails["products"]): OrderDetails => ({
+const baseOrder = (products: OrderDetails["products"], address?: string): OrderDetails => ({
   name: "Teszt Elek",
   email: "teszt@example.com",
   phone: "+36301234567",
   deliveryMethod: makeDelivery("Foxpost automata", 990, "foxpost"),
+  address,
   products,
   threadColors: [],
 });
@@ -192,6 +193,28 @@ describe("product string content", () => {
         Egységár: 12000Ft
       Összár: 12000Ft (nem teljes ár)"
     `);
+  });
+
+  it("includes delivery address when needed", async () => {
+    const product = makeProduct({ title: "Pólya", price: 8000 });
+
+    // Test with a delivery method that needs address
+    const orderWithAddress = baseOrder([product], "1234 Budapest, Kossuth Lajos utca 12.");
+    const form = await captureForm(orderWithAddress);
+
+    expect(form.get("szallitasicim")).toBe("1234 Budapest, Kossuth Lajos utca 12.");
+
+    // Test with a delivery method that doesn't need address
+    const deliveryMethodWithoutAddress = makeDelivery("Személyes átvétel", 0, "szemelyes");
+    const orderWithoutAddress = {
+      ...baseOrder([product]),
+      deliveryMethod: deliveryMethodWithoutAddress,
+      address: "1234 Budapest, Kossuth Lajos utca 12.",
+    };
+    const formWithoutAddress = await captureForm(orderWithoutAddress);
+
+    // Should not include szallitasicim when needs_address is false
+    expect(formWithoutAddress.get("szallitasicim")).toBe("");
   });
 
   it("includes filled-in optional fields but still hides empty ones", async () => {
