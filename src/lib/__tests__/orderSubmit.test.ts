@@ -81,9 +81,19 @@ describe("order form envelope", () => {
   });
 
   it("marks the total as indeterminate when any price is unknown", async () => {
+    // An option with no price makes the total partial; the base price is always known.
     const product = makeProduct({
       title: "Ismeretlen árú",
-      price: null,
+      price: 0,
+      fields: [
+        makeField({
+          name: "meret",
+          label: "Méret",
+          type: "radio",
+          items: [{ value: "40x75", label: "Közepes" }],
+          value: { value: "40x75" },
+        }),
+      ],
     });
     const form = await captureForm(baseOrder([product]));
     expect(form.get("ar")).toBe("990 Ft (nem teljes ár)");
@@ -198,23 +208,20 @@ describe("product string content", () => {
   it("includes delivery address when needed", async () => {
     const product = makeProduct({ title: "Pólya", price: 8000 });
 
-    // Test with a delivery method that needs address
-    const orderWithAddress = baseOrder([product], "1234 Budapest, Kossuth Lajos utca 12.");
-    const form = await captureForm(orderWithAddress);
-
+    const form = await captureForm({
+      ...baseOrder([product]),
+      deliveryMethod: makeDelivery("GLS házhozszállítás", 1390, "gls", true),
+      address: "1234 Budapest, Kossuth Lajos utca 12.",
+    });
     expect(form.get("szallitasicim")).toBe("1234 Budapest, Kossuth Lajos utca 12.");
 
-    // Test with a delivery method that doesn't need address
-    const deliveryMethodWithoutAddress = makeDelivery("Személyes átvétel", 0, "szemelyes");
-    const orderWithoutAddress = {
+    // needs_address false → field must be absent
+    const formWithoutAddress = await captureForm({
       ...baseOrder([product]),
-      deliveryMethod: deliveryMethodWithoutAddress,
+      deliveryMethod: makeDelivery("Személyes átvétel", 0, "szemelyes"),
       address: "1234 Budapest, Kossuth Lajos utca 12.",
-    };
-    const formWithoutAddress = await captureForm(orderWithoutAddress);
-
-    // Should not include szallitasicim when needs_address is false
-    expect(formWithoutAddress.get("szallitasicim")).toBe("");
+    });
+    expect(formWithoutAddress.get("szallitasicim")).toBeNull();
   });
 
   it("includes filled-in optional fields but still hides empty ones", async () => {
@@ -477,7 +484,18 @@ describe("dependent fields (depends_on)", () => {
 describe("calculateOrderTotal", () => {
   it("sums product totals plus delivery and flags indeterminate prices", () => {
     const known = makeProduct({ price: 5000 });
-    const unknown = makeProduct({ price: null });
+    // An unpriced selected option leaves this product's total unknown.
+    const unknown = makeProduct({
+      price: 0,
+      fields: [
+        makeField({
+          name: "opt",
+          type: "radio",
+          items: [{ value: "a", label: "A" }],
+          value: { value: "a" },
+        }),
+      ],
+    });
 
     expect(calculateOrderTotal([known], makeDelivery("x", 1000))).toEqual({
       total: 6000,
