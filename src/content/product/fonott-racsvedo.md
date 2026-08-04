@@ -4,11 +4,11 @@ title: Fonott Rácsvédő (Teddy/Velúr)
 can_be_ordered: true
 categories: A baba biztonsága és stílusa egyben
 date: 2025-05-20T12:07:16.000Z
-thumbnail: /src/assets/Noémi-35.jpg
+thumbnail: /src/assets/Noémi-35.webp
 images:
-  - image: /src/assets/Noémi-25.jpg
-  - image: /src/assets/Noémi-18.jpg
-  - image: /src/assets/Noémi-39.jpg
+  - image: /src/assets/Noémi-25.webp
+  - image: /src/assets/Noémi-18.webp
+  - image: /src/assets/Noémi-39.webp
 table:
   - title: 200cm
     description: 12.800Ft

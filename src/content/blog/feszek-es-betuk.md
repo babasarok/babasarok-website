@@ -1,15 +1,15 @@
 ---
 title: Fészek&Betűk
 date: 2025-06-16T22:00:00.000Z
-featureImage: /src/assets/IMG_7064.jpeg
-postImage: /src/assets/IMG_7073.jpeg
+featureImage: /src/assets/IMG_7064.webp
+postImage: /src/assets/IMG_7073.webp
 categories: Referenciamunka
 ---
 
-![](/src/assets/IMG_7064.jpeg)
+![](/src/assets/IMG_7064.webp)
 
-![](/src/assets/IMG_7072.jpg)
+![](/src/assets/IMG_7072.webp)
 
-![](/src/assets/IMG_7066.jpg)
+![](/src/assets/IMG_7066.webp)
 
-![](/src/assets/IMG_7069.JPG)
+![](/src/assets/IMG_7069.webp)

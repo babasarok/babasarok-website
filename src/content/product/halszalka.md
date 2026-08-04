@@ -3,10 +3,10 @@ product_id: halszalka
 title: Fonott rácsvédő-halszálka
 categories: 5-ös fonat
 date: 2026-07-01T09:25:49.625Z
-thumbnail: /src/assets/Noémi-25.jpg
+thumbnail: /src/assets/Noémi-25.webp
 images:
-  - image: /src/assets/IMG_8891.JPG
-  - image: /src/assets/IMG_9137 (1).jpg
+  - image: /src/assets/IMG_8891.webp
+  - image: /src/assets/IMG_9137 (1).webp
 table:
   - title: 200cm
     description: 19.000Ft

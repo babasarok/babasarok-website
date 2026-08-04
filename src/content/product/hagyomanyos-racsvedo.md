@@ -4,7 +4,7 @@ title: Hagyományos Rácsvédő
 can_be_ordered: true
 categories: A biztonságos pihenésért
 date: 2020-08-12T12:07:16.000Z
-thumbnail: /src/assets/IMG_9614.jpg
+thumbnail: /src/assets/IMG_9614.webp
 table:
   - title: 140cm
     description: 8.200Ft
@@ -65,6 +65,6 @@ fields:
     type: embroidery
 ---
 
-![](/src/assets/IMG_7914.JPG)
+![](/src/assets/IMG_7914.webp)
 
-![](/src/assets/IMG_7656.JPG)
+![](/src/assets/IMG_7656.webp)

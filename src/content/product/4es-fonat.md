@@ -3,14 +3,14 @@ product_id: negyes-fonat
 title: Fonott rácsvédő
 categories: 4-es fonat
 date: 2026-07-01T09:23:39.567Z
-thumbnail: /src/assets/IMG_7422 (1).jpg
+thumbnail: /src/assets/IMG_7422 (1).webp
 price: 0
 images:
-  - image: /src/assets/IMG_8843.JPG
-  - image: /src/assets/IMG_8842.JPG
-  - image: /src/assets/IMG_8058.JPG
-  - image: /src/assets/IMG_8382.JPG
-  - image: /src/assets/IMG_9101.JPG
+  - image: /src/assets/IMG_8843.webp
+  - image: /src/assets/IMG_8842.webp
+  - image: /src/assets/IMG_8058.webp
+  - image: /src/assets/IMG_8382.webp
+  - image: /src/assets/IMG_9101.webp
 table:
   - title: 200cm
     description: 16.000Ft

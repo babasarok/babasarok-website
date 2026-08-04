@@ -6,6 +6,6 @@
   "button2Name": "Termékeink",
   "button1Target": "contact",
   "button2Target": "product",
-  "image": "/src/assets/images/about/IMG_5375.jpg",
+  "image": "/src/assets/images/about/IMG_5375.webp",
   "_template": "about_template"
 }

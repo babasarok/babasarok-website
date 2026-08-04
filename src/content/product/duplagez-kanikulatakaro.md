@@ -3,11 +3,11 @@ product_id: kanikulatakaro-all
 title: Duplagéz Kánikulatakaró
 categories: A tökéletes megoldás a forró napokra
 date: 2025-05-01T12:07:16.000Z
-thumbnail: /src/assets/Photo Collage Facebook Post.PNG
+thumbnail: /src/assets/Photo Collage Facebook Post.webp
 images:
-  - image: /src/assets/IMG_8082.jpg
+  - image: /src/assets/IMG_8082.webp
     description: waffle+pamutvászon
-  - image: /src/assets/IMG_8076.jpg
+  - image: /src/assets/IMG_8076.webp
     description: duplagéz+pamutvászon
 table:
   - title: 'Extra vékony, egyrétegű, akár textilpelusnak is'

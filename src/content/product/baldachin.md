@@ -4,7 +4,7 @@ title: Baldachin
 can_be_ordered: true
 categories: A babaszoba stílusos kiegészítője
 date: 2024-02-02T06:49:27.000Z
-thumbnail: /src/assets/Noémi-51.jpg
+thumbnail: /src/assets/Noémi-51.webp
 table:
   - title: 6m sűrűségű
     description: 12000Ft

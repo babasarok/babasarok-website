@@ -3,13 +3,13 @@ product_id: dekorbetuk
 title: Dekorbetűk
 categories: Tedd még különlegesebbé a babaszobát!
 date: 2025-04-28T06:49:27.000Z
-thumbnail: /src/assets/IMG_7073.jpg
+thumbnail: /src/assets/IMG_7073.webp
 images:
-  - image: /src/assets/sophie.jpg
-  - image: /src/assets/IMG_0435.jpg
-  - image: /src/assets/E871C000-8C7F-4662-8288-874788CBA080.PNG
-  - image: /src/assets/IMG_8683.jpg
-  - image: /src/assets/IMG_8684.jpg
+  - image: /src/assets/sophie.webp
+  - image: /src/assets/IMG_0435.webp
+  - image: /src/assets/E871C000-8C7F-4662-8288-874788CBA080.webp
+  - image: /src/assets/IMG_8683.webp
+  - image: /src/assets/IMG_8684.webp
 table:
   - title: Kiegészítő figurák (díszítve)
     description: 700Ft

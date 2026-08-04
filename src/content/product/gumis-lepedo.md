@@ -3,7 +3,7 @@ product_id: gumis-lepedo
 title: Gumis Lepedő
 categories: 100% pamut gumis lepedő
 date: 2020-08-11T12:07:16.000Z
-thumbnail: /src/assets/polish_save.JPG
+thumbnail: /src/assets/polish_save.webp
 table:
   - title: Mintás vagy más színű
     description: '3500'
