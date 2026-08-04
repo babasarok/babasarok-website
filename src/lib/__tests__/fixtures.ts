@@ -92,7 +92,7 @@ export function makeMaterial(opts: MaterialOpts): CmsProductMaterial {
 export interface ProductOpts {
   title?: string;
   count?: number;
-  price?: number | null;
+  price?: number;
   discount?: number | null;
   discount_valid_until?: string | null;
   length_based_pricing?: {
@@ -112,7 +112,7 @@ export function makeProduct(opts: ProductOpts = {}): IProduct {
     uuid: "test-uuid",
     title: opts.title ?? "Termék",
     count: opts.count ?? 1,
-    price: opts.price ?? null,
+    price: opts.price ?? 0,
     discount: opts.discount ?? null,
     discount_valid_until: opts.discount_valid_until ?? null,
     length_based_pricing: opts.length_based_pricing ?? undefined,
@@ -131,11 +131,13 @@ export function makeProduct(opts: ProductOpts = {}): IProduct {
 export function makeDelivery(
   name = "Személyes átvétel",
   price = 0,
-  delivery_name = "szemelyes"
+  delivery_name = "szemelyes",
+  needs_address?: boolean
 ): CmsEnhancedDeliveryMethod {
   return {
     delivery_name,
     name,
     price,
+    needs_address,
   };
 }

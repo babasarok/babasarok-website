@@ -35,6 +35,7 @@
   let email = $state("");
   let phone = $state("");
   let deliveryMethod = $state<string>("");
+  let address = $state<string>("");
   let message = $state("");
   let products = $state<IProduct[]>([]);
 
@@ -75,9 +76,14 @@
       return;
     }
 
+    if (deliveryMethodData.needs_address && address.trim() === "") {
+      error = "Kérem, add meg a szállítási címet a szállítási módhoz.";
+      return;
+    }
+
     sending = true;
     const result = await submitOrder(
-      { name, email, phone, deliveryMethod: deliveryMethodData, products, threadColors },
+      { name, email, phone, deliveryMethod: deliveryMethodData, address, products, threadColors },
       {
         accessKey: params.fabformURL ?? "",
         message,
@@ -239,7 +245,7 @@
     </div>
     <div class="w-full h-0.5 bg-brown-200 mt-4"></div>
     <div class="flex gap-4 flex-wrap mt-6 relative">
-      <OrderDelivery {deliveryMethods} bind:deliveryMethod />
+      <OrderDelivery {deliveryMethods} bind:deliveryMethod bind:address />
       <div class="flex flex-col rounded-xl bg-brown-200 p-4 flex-1">
         <div class="flex items-center gap-2">
           <Icon icon="mdi:message-text" class="shrink-0 text-2xl  text-brown-500" />

@@ -14,6 +14,7 @@ export interface OrderDetails {
   email: string;
   phone: string;
   deliveryMethod: CmsEnhancedDeliveryMethod;
+  address: string | undefined;
   products: IProduct[];
   threadColors: CmsEnhancedEmbroideryColor[];
 }
@@ -159,6 +160,9 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
     "szallitasimod",
     `${order.deliveryMethod.name} (${order.deliveryMethod.price.toString()} Ft)`
   );
+  if (order.deliveryMethod.needs_address) {
+    formData.append("szallitasicim", order.address ?? "");
+  }
   formData.append("uzenet", message);
   formData.append("ar", `${total.toString()} Ft ${indeterminate ? "(nem teljes ár)" : ""}`);
   return formData;

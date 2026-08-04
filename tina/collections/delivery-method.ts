@@ -42,6 +42,12 @@ export const DeliveryMethodCollection: Collection = {
       required: true,
     },
     {
+      type: "boolean",
+      name: "needs_address",
+      description: "Megadja, hogy a szállítási módhoz szükséges-e cím megadása.",
+      label: "Cím szükséges",
+    },
+    {
       type: "number",
       name: "price",
       label: "Ár - Forintban",
