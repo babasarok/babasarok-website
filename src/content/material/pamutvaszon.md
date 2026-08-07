@@ -117,6 +117,9 @@ colors:
   - color_id: Színes pitypang
     label: 'Pitypangos rét '
     image: /src/assets/IMG_4876.webp
+  - color_id: 'Szivecskes '
+    label: Pasztell szívecskék
+    image: /src/assets/IMG_5648.jpeg
   - color_id: Rózsaszín virágmezo
     label: Rózsaszín virágmező
     image: /src/assets/IMG_4875.webp
