@@ -3,6 +3,8 @@
   import Chip from "./common/Chip.svelte";
   import Icon from "@iconify/svelte";
   import Color from "./common/Color.svelte";
+  import IconButton from "./common/IconButton.svelte";
+  import Tooltip from "./common/Tooltip.svelte";
   import TextInput from "./common/TextInput.svelte";
   import { slide } from "svelte/transition";
   import type { IProduct } from "@/lib/types.svelte";
@@ -138,7 +140,25 @@
     <div class="flex flex-col gap-2" transition:slide>
       <div class="flex flex-col">
         <p class="text-sm text-brown-500 flex items-center gap-1 justify-between">
-          <span> Szín </span>
+          <span class="flex items-center gap-1">
+            Szín
+            {#if materialInfo?.material_id && (materialInfo.colors?.length ?? 0) > 0}
+              <Tooltip contentProps={{ class: "inline-flex" }}>
+                {#snippet content()}
+                  Összes szín megtekintése
+                {/snippet}
+                <IconButton
+                  href={`/material/${materialInfo.material_id}/`}
+                  target="_blank"
+                  rel="noopener"
+                  class="text-base"
+                  aria-label="Összes szín megtekintése"
+                >
+                  <Icon icon="mdi:information-outline" class="block" />
+                </IconButton>
+              </Tooltip>
+            {/if}
+          </span>
           <span class="text-xs">
             {#if custom}
               Egyedi szín
