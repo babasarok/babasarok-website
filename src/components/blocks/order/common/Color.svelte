@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { GetImageResult } from "astro";
+  import type { SlimImage } from "@/lib/data";
   import IconButton from "./IconButton.svelte";
   import Tooltip from "./Tooltip.svelte";
 
@@ -8,7 +8,7 @@
       color_id: string;
       hex?: string | undefined | null;
       label?: string | undefined | null;
-      image?: GetImageResult | undefined | null;
+      image?: SlimImage | undefined | null;
     };
     selected?: boolean;
     onclick?: (color_id: string) => void;
