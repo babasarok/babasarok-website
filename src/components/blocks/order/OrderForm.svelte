@@ -3,6 +3,7 @@
   import OrderItem from "./OrderItem.svelte";
   import { fade } from "svelte/transition";
   import { untrack } from "svelte";
+  import { onMount } from "svelte";
   import IconButton from "./common/IconButton.svelte";
   import Button from "./common/Button.svelte";
   import TextInput from "./common/TextInput.svelte";
@@ -70,6 +71,13 @@
   });
 
   let sending = $state(false);
+
+  // svelte-bricks lays out with JS, so it renders empty/janky until the island
+  // hydrates; show a skeleton in its place until then.
+  let mounted = $state(false);
+  onMount(() => {
+    mounted = true;
+  });
 </script>
 
 <form
@@ -205,46 +213,54 @@
           </div>
         </div>
       </dialog>
-      <Masonry
-        items={[...products, { uuid: "placeholder", placeholder: true }]}
-        getId={(item) => item.uuid}
-        gap={16}
-        order="column-sequential"
-        animate={false}
-        columnStyle="grid-template-columns: minmax(0, 1fr)"
-      >
-        {#snippet children({ item })}
-          {#if "placeholder" in item && item.placeholder}
-            <button
-              class="flex flex-col w-full h-full items-center justify-center text-lg min-h-48 p-7 rounded-xl border border-brown-200 text-brown-500 font-semibold hover:bg-brown-100 transition-all cursor-pointer gap-2"
-              type="button"
-              popovertarget="product-dialog"
-            >
-              Kattints ide, és válassz termékeket!
-              <Icon icon="mdi:add" class="shrink-0 text-4xl" />
-            </button>
-          {:else}
-            <div transition:fade={{ duration: 250 }}>
-              <OrderItem
-                product={item as IProduct}
-                {threadColors}
-                onClose={() => {
-                  const index = products.findIndex((p) => p.uuid === item.uuid);
-                  if (index !== -1) {
-                    products.splice(index, 1);
-                  }
-                }}
-                onChange={(updatedProduct) => {
-                  const index = products.findIndex((p) => p.uuid === updatedProduct.uuid);
-                  if (index !== -1) {
-                    products[index] = sanitizeItem(updatedProduct);
-                  }
-                }}
-              />
-            </div>
-          {/if}
-        {/snippet}
-      </Masonry>
+      {#if mounted}
+        <Masonry
+          items={[...products, { uuid: "placeholder", placeholder: true }]}
+          getId={(item) => item.uuid}
+          gap={16}
+          order="column-sequential"
+          animate={false}
+          columnStyle="grid-template-columns: minmax(0, 1fr)"
+        >
+          {#snippet children({ item })}
+            {#if "placeholder" in item && item.placeholder}
+              <button
+                disabled={import.meta.env.SSR}
+                class="flex flex-col w-full h-full items-center justify-center text-lg min-h-48 p-7 rounded-xl border border-brown-200 text-brown-500 font-semibold hover:bg-brown-100 transition-all cursor-pointer gap-2"
+                type="button"
+                popovertarget="product-dialog"
+              >
+                Kattints ide, és válassz termékeket!
+                <Icon icon="mdi:add" class="shrink-0 text-4xl" />
+              </button>
+            {:else}
+              <div transition:fade={{ duration: 250 }}>
+                <OrderItem
+                  product={item as IProduct}
+                  {threadColors}
+                  onClose={() => {
+                    const index = products.findIndex((p) => p.uuid === item.uuid);
+                    if (index !== -1) {
+                      products.splice(index, 1);
+                    }
+                  }}
+                  onChange={(updatedProduct) => {
+                    const index = products.findIndex((p) => p.uuid === updatedProduct.uuid);
+                    if (index !== -1) {
+                      products[index] = sanitizeItem(updatedProduct);
+                    }
+                  }}
+                />
+              </div>
+            {/if}
+          {/snippet}
+        </Masonry>
+      {:else}
+        <div
+          class="min-h-48 mx-auto w-full max-w-125 animate-pulse rounded-xl border border-brown-200 bg-brown-100"
+          aria-hidden="true"
+        ></div>
+      {/if}
     </div>
     <div class="w-full h-0.5 bg-brown-200 mt-4"></div>
     <div class="flex gap-4 flex-wrap mt-6 relative">
