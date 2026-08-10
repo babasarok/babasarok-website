@@ -11,6 +11,7 @@ import {
   getThreadColors,
   type CmsEnhancedProduct,
   type CmsEnhancedDeliveryMethod,
+  getProductGroups,
 } from "../lib/data";
 import locationIcon from "../assets/images/contact/location.svg";
 import phoneIcon from "../assets/images/contact/phone.svg";
@@ -30,6 +31,7 @@ const social = [...(config.social ?? [])]
 const products = await getProducts();
 const deliveryMethods = await getDeliveryMethods();
 const threadColors = await getThreadColors();
+const productGroups = await getProductGroups();
 ---
 
 <Base title={breadcrumb ?? title}>
@@ -38,6 +40,7 @@ const threadColors = await getThreadColors();
   <section class="py-12.5">
     <div class="not-prose container">
       <OrderForm
+        productGroups={productGroups}
         products={products.reduce<Record<string, CmsEnhancedProduct>>((acc, p) => {
           if (!p.can_be_ordered) {
             return acc;

@@ -357,6 +357,13 @@ const embroidery = defineCollection({
     }),
 });
 
+const productGroup = defineCollection({
+  loader: glob({ pattern: "*.md", base: "src/content/product_groups" }),
+  schema: z.object({
+    products: z.array(z.string().optional().nullable()).optional().nullable(),
+  }),
+});
+
 export const collections = {
   config,
   embroidery,
@@ -368,4 +375,5 @@ export const collections = {
   servicesBlock,
   aboutBlock,
   deliveryMethod,
+  productGroup,
 };

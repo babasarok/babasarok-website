@@ -19,6 +19,7 @@
     CmsEnhancedDeliveryMethod,
     CmsEnhancedProduct,
     CmsEnhancedConfig,
+    CmsProductGroup,
   } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
 
@@ -27,9 +28,16 @@
     deliveryMethods: Record<string, CmsEnhancedDeliveryMethod>;
     config: CmsEnhancedConfig;
     threadColors: CmsEnhancedEmbroideryColor[];
+    productGroups: CmsProductGroup[];
   }
 
-  let { products: productInfo, deliveryMethods, config: params, threadColors }: Props = $props();
+  let {
+    products: productInfo,
+    deliveryMethods,
+    config: params,
+    threadColors,
+    productGroups,
+  }: Props = $props();
 
   const savedState = loadOrderState();
 

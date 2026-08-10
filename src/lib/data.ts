@@ -608,3 +608,18 @@ export const getDeliveryMethods = async (): Promise<CmsEnhancedDeliveryMethod[]>
   const nodes = nodesFrom(result.data.delivery_methodsConnection);
   return nodes;
 };
+
+export interface CmsProductGroup {
+  title: string;
+  products: string[];
+}
+
+export const getProductGroups = async (): Promise<RecursiveRequired<CmsProductGroup>[]> => {
+  const result = await client.queries.product_groupsConnection();
+
+  const nodes = nodesFrom(result.data.product_groupsConnection);
+  return nodes.map((group) => ({
+    title: group.title,
+    products: group.products?.map((x) => x?.product.id).filter((x): x is string => x != null) ?? [],
+  }));
+};
