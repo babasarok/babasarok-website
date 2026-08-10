@@ -27,6 +27,7 @@
       type="text"
       value={field.value?.value ?? ""}
       list={field.type === "input" && field.items ? id : undefined}
+      placeholder={field.placeholder ?? undefined}
       oninput={(e) => {
         if (!(e.target instanceof HTMLInputElement)) {
           return;
@@ -129,7 +130,7 @@
                     }
                   }}
                 >
-                  Egyéb
+                  Egyedi
                 </Button>
               </div>
             {/if}
@@ -202,7 +203,7 @@
                       }
                     }}
                   >
-                    Egyéb
+                    Egyedi
                   </Button>
                 </div>
               {/if}

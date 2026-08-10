@@ -235,7 +235,7 @@
             onChange?.(result);
           }}
         >
-          Egyéb
+          Egyedi
         </Button>
       {/if}
       {#if custom}
