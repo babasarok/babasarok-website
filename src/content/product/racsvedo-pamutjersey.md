@@ -34,6 +34,7 @@ fields:
         label: 400cm
     allow_custom_value: true
     regex: ^(\d+)$
+    placeholder: '220'
   - name: fonas
     label: Fonás
     type: radio

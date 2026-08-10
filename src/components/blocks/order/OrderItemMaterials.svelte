@@ -169,15 +169,6 @@
             {/if}
           </span>
         </p>
-        {#if (materialInfo?.colors?.length ?? 0) > 0}
-          <p
-            transition:slide
-            class="mt-1 text-xs text-brown-500 flex items-center gap-1 border border-brown-200 rounded p-1"
-          >
-            <Icon icon="mdi:alert-circle" class="inline-block size-6 text-orange-500" />
-            <span> A színek tájékoztató jellegűek, a pontos árnyalatok eltérhetnek. </span>
-          </p>
-        {/if}
         {#if multiColor}
           <div class="mt-1 flex gap-1 flex-wrap">
             {#each value?.colors as colorId, index (colorId)}
@@ -244,7 +235,7 @@
             onChange?.(result);
           }}
         >
-          Egyéb
+          Egyedi
         </Button>
       {/if}
       {#if custom}

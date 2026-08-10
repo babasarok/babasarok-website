@@ -566,7 +566,13 @@ export const ProductCollection: Collection = {
             component(props) {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               const typeValue = getValue(props, "type");
-              if (typeValue === "select" || typeValue === "radio") {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              const allowCustomValue = getValue(props, "allow_custom_value");
+              if (typeValue === "select" && !allowCustomValue) {
+                return null;
+              }
+
+              if (typeValue === "radio" && !allowCustomValue) {
                 return null;
               }
 

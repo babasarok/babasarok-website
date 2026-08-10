@@ -67,14 +67,14 @@ type CmsMaterial = RecursivelyNullableToUndefined<
 >;
 
 interface CmsEnhancedMaterialColor extends Omit<CmsMaterialColor, "image"> {
-  image?: GetImageResult | undefined | null;
+  image?: SlimImage | undefined | null;
 }
 interface CmsEnhancedMaterial extends Omit<CmsMaterial, "id" | "thumbnail" | "colors" | "content"> {
-  thumbnail?: GetImageResult | undefined | null;
+  thumbnail?: SlimImage | undefined | null;
   colors?: Array<CmsEnhancedMaterialColor> | undefined | null;
 }
 
-type AstroMaterial = RecursivelyReplaceType<InferEntrySchema<"material">, Image, GetImageResult>;
+type AstroMaterial = RecursivelyReplaceType<InferEntrySchema<"material">, Image, SlimImage>;
 type MaterialDiff = RecursiveDiff<CmsEnhancedMaterial, AstroMaterial>;
 AssertTrue<IfEquals<MaterialDiff, never>>();
 
@@ -92,7 +92,7 @@ type CmsProductMaterialsBannedCombination = NonNullable<
 >;
 
 interface CmsEnhancedProductImage extends Omit<CmsProductImage, "image"> {
-  image?: GetImageResult | undefined | null;
+  image?: SlimImage | undefined | null;
 }
 
 interface CmsEnhancedProductMaterial extends Omit<
@@ -146,9 +146,9 @@ export interface CmsEnhancedProduct extends Omit<
   | "icon"
   | "priced_by_length"
 > {
-  thumbnail?: GetImageResult | undefined | null;
+  thumbnail?: SlimImage | undefined | null;
   discount_valid_until?: Date | undefined | null;
-  icon?: GetImageResult | undefined | null;
+  icon?: SlimImage | undefined | null;
   date?: Date | undefined | null;
   images?: Array<CmsEnhancedProductImage | undefined | null> | undefined | null;
   materials?: CmsEnhancedProductMaterials | undefined | null;
@@ -157,7 +157,7 @@ export interface CmsEnhancedProduct extends Omit<
 }
 
 type AstroProduct = RecursivelyReplaceKeyType<
-  RecursivelyReplaceType<InferEntrySchema<"product">, Image, GetImageResult>,
+  RecursivelyReplaceType<InferEntrySchema<"product">, Image, SlimImage>,
   "material_path",
   CmsEnhancedMaterial
 >;
@@ -197,17 +197,13 @@ type CmsEmbroidery = RecursivelyNullableToUndefined<
 type CmsEmbroideryColor = NonNullable<NonNullable<CmsEmbroidery["colors"]>[number]>;
 
 export interface CmsEnhancedEmbroideryColor extends Omit<CmsEmbroideryColor, "image"> {
-  image?: GetImageResult | undefined | null;
+  image?: SlimImage | undefined | null;
 }
 interface CmsEnhancedEmbroidery extends Omit<CmsEmbroidery, "id" | "colors"> {
   colors?: Array<CmsEnhancedEmbroideryColor> | undefined | null;
 }
 
-type AstroEmbroidery = RecursivelyReplaceType<
-  InferEntrySchema<"embroidery">,
-  Image,
-  GetImageResult
->;
+type AstroEmbroidery = RecursivelyReplaceType<InferEntrySchema<"embroidery">, Image, SlimImage>;
 type EmbroideryDiff = RecursiveDiff<CmsEnhancedEmbroidery, AstroEmbroidery>;
 AssertTrue<IfEquals<EmbroideryDiff, never>>();
 
@@ -258,6 +254,39 @@ async function optimizeImage(path: string, width: number): Promise<GetImageResul
           ? optimized.options.src
           : { ...optimized.options.src },
     },
+  };
+}
+
+/**
+ * The subset of a `GetImageResult` the order island actually renders: its plain
+ * `<img>` reads only `src`, the `srcset` string, and the spread `attributes`.
+ * Serializing the full result (its `options` / `rawOptions` and every
+ * `srcSet.values` transform) into the island props ballooned the contact page
+ * to ~6 MB — those images repeat across every product — so island-bound images
+ * keep just these fields (~75% smaller each).
+ */
+export interface SlimImage {
+  src: string;
+  srcSet: { attribute: GetImageResult["srcSet"]["attribute"] };
+  attributes: GetImageResult["attributes"];
+}
+
+/**
+ * Like {@link optimizeImage} but returns only the {@link SlimImage} fields the
+ * order island renders. Use for every image serialized into island props;
+ * reserve {@link optimizeImage} for images handed back to Astro's `<Image>`
+ * (the header/footer logos), which needs the full result to re-optimize.
+ */
+async function optimizeIslandImage(path: string, width: number): Promise<SlimImage | undefined> {
+  const optimized = await resolveImage({ src: path, width });
+  if (!optimized) {
+    return undefined;
+  }
+
+  return {
+    src: optimized.src,
+    srcSet: { attribute: optimized.srcSet.attribute },
+    attributes: optimized.attributes,
   };
 }
 
@@ -334,7 +363,7 @@ export const getThreadColors = async (): Promise<CmsEnhancedEmbroideryColor[]> =
         color_id: color.color_id,
         label: color.label,
         hex: color.hex ?? undefined,
-        image: color.image ? await optimizeImage(color.image, SWATCH_WIDTH) : undefined,
+        image: color.image ? await optimizeIslandImage(color.image, SWATCH_WIDTH) : undefined,
       }))
   );
 };
@@ -354,7 +383,7 @@ function toProductFieldType(type: string): ProductFieldType {
  * (see the `FRAGILE` markers in priceUtils/materialUtils/fieldVisibility).
  */
 function assertValidProductReferences(
-  product: RecursiveRequired<CmsEnhancedProduct, GetImageResult | Date>
+  product: RecursiveRequired<CmsEnhancedProduct, SlimImage | Date>
 ): void {
   const fields = (product.fields ?? []).filter((f) => f != null);
   const fieldByName = new Map(fields.map((f) => [f.name, f]));
@@ -417,19 +446,21 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
     a.title.localeCompare(b.title)
   );
 
-  const result: RecursiveRequired<CmsEnhancedProduct, GetImageResult | Date>[] = [];
+  const result: RecursiveRequired<CmsEnhancedProduct, SlimImage | Date>[] = [];
 
   for (const product of products) {
-    const enhanced: RecursiveRequired<CmsEnhancedProduct, GetImageResult | Date> = {
+    const enhanced: RecursiveRequired<CmsEnhancedProduct, SlimImage | Date> = {
       product_id: product.product_id,
       title: product.title,
       hidden_in_product_list: product.hidden_in_product_list ?? undefined,
       can_be_ordered: product.can_be_ordered ?? undefined,
       categories: product.categories ?? undefined,
       date: product.date ? new Date(product.date) : undefined,
-      thumbnail: product.thumbnail ? await optimizeImage(product.thumbnail, LOGO_WIDTH) : undefined,
+      thumbnail: product.thumbnail
+        ? await optimizeIslandImage(product.thumbnail, LOGO_WIDTH)
+        : undefined,
       shortDescription: product.shortDescription ?? undefined,
-      icon: product.icon ? await optimizeImage(product.icon, LOGO_WIDTH) : undefined,
+      icon: product.icon ? await optimizeIslandImage(product.icon, LOGO_WIDTH) : undefined,
       // An empty `sourceField` (the "— Nem méteráru —" select option) means off.
       length_based_pricing: product.length_based_pricing?.sourceField
         ? { sourceField: product.length_based_pricing.sourceField }
@@ -443,7 +474,7 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
         (product.images ?? [])
           .filter((image) => image != null)
           .map(async (image) => ({
-            image: image.image ? await optimizeImage(image.image, LOGO_WIDTH) : undefined,
+            image: image.image ? await optimizeIslandImage(image.image, LOGO_WIDTH) : undefined,
             description: image.description ?? undefined,
           }))
       ),
@@ -531,13 +562,15 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
 
 const transformMaterial = async (
   material: CmsOriginalMaterial
-): Promise<RecursiveRequired<CmsEnhancedMaterial, GetImageResult>> => {
+): Promise<RecursiveRequired<CmsEnhancedMaterial, SlimImage>> => {
   return {
     material_id: material.material_id,
     label: material.label,
     categories: material.categories ?? undefined,
     shortDescription: material.shortDescription ?? undefined,
-    thumbnail: material.thumbnail ? await optimizeImage(material.thumbnail, LOGO_WIDTH) : undefined,
+    thumbnail: material.thumbnail
+      ? await optimizeIslandImage(material.thumbnail, LOGO_WIDTH)
+      : undefined,
     colors: material.colors
       ? await Promise.all(
           material.colors
@@ -546,7 +579,7 @@ const transformMaterial = async (
               color_id: color.color_id,
               label: color.label,
               hex: color.hex ?? undefined,
-              image: color.image ? await optimizeImage(color.image, SWATCH_WIDTH) : undefined,
+              image: color.image ? await optimizeIslandImage(color.image, SWATCH_WIDTH) : undefined,
             }))
         )
       : undefined,
@@ -560,7 +593,7 @@ export const getMaterials = async (): Promise<CmsEnhancedMaterial[]> => {
     a.label.localeCompare(b.label)
   );
 
-  const result: RecursiveRequired<CmsEnhancedMaterial, GetImageResult>[] = [];
+  const result: RecursiveRequired<CmsEnhancedMaterial, SlimImage>[] = [];
 
   for (const material of materials) {
     result.push(await transformMaterial(material));
