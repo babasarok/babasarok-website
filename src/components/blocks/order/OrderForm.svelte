@@ -2,6 +2,7 @@
   import Icon from "@iconify/svelte";
   import OrderItem from "./OrderItem.svelte";
   import { fade } from "svelte/transition";
+  import { untrack } from "svelte";
   import IconButton from "./common/IconButton.svelte";
   import Button from "./common/Button.svelte";
   import TextInput from "./common/TextInput.svelte";
@@ -9,7 +10,8 @@
   import { sanitizeItem } from "@/lib/validation";
   import Masonry from "svelte-bricks";
   import { submitOrder, calculateOrderTotal } from "@/lib/orderSubmit";
-  import { randomUUID } from "@/lib/uuid";
+  import { loadOrderState, saveOrderState } from "@/lib/orderStorage";
+  import { instantiateProduct, restoreProducts } from "@/lib/orderProduct";
   import OrderDelivery from "./OrderDelivery.svelte";
   import type {
     CmsEnhancedEmbroideryColor,
@@ -18,8 +20,6 @@
     CmsEnhancedConfig,
   } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
-
-  import type { ProductMaterialValue } from "@/lib/types.svelte";
 
   interface Props {
     products: Record<string, CmsEnhancedProduct>;
@@ -30,15 +30,33 @@
 
   let { products: productInfo, deliveryMethods, config: params, threadColors }: Props = $props();
 
+  const savedState = loadOrderState();
+
   let error: string | null = $state(null);
   let success: string | null = $state(null);
-  let name = $state("");
-  let email = $state("");
-  let phone = $state("");
-  let deliveryMethod = $state<string>("");
-  let address = $state<string>("");
-  let message = $state("");
-  let products = $state<IProduct[]>([]);
+  let name = $state(savedState?.name ?? "");
+  let email = $state(savedState?.email ?? "");
+  let phone = $state(savedState?.phone ?? "");
+  let deliveryMethod = $state<string>(savedState?.deliveryMethod ?? "");
+  let address = $state<string>(savedState?.address ?? "");
+  let message = $state(savedState?.message ?? "");
+  let products = $state<IProduct[]>(
+    savedState
+      ? untrack(() => restoreProducts(savedState.products, $state.snapshot(productInfo)))
+      : []
+  );
+
+  $effect(() => {
+    saveOrderState({
+      name,
+      email,
+      phone,
+      deliveryMethod,
+      address,
+      message,
+      products: $state.snapshot(products),
+    });
+  });
 
   let valid = $derived.by(() => {
     if (products.length === 0) {
@@ -175,23 +193,7 @@
                 type="button"
                 class="flex font-normal w-full justify-between items-center gap-4 p-1 px-4 rounded hover:bg-brown-200 transition-all cursor-pointer"
                 onclick={() => {
-                  const clone = $state.snapshot(product);
-                  products.push(
-                    sanitizeItem({
-                      ...clone,
-                      uuid: randomUUID(),
-                      count: 1,
-                      fields: clone.fields?.filter((f) => f != null) ?? [],
-                      materials: {
-                        ...clone.materials,
-                        materials: clone.materials?.materials?.filter((m) => m != null) ?? [],
-                        banned_combinations:
-                          clone.materials?.banned_combinations?.filter((c) => c != null) ?? [],
-                        material_required_count: clone.materials?.material_required_count ?? 1,
-                        values: [] as Array<ProductMaterialValue | undefined>,
-                      },
-                    })
-                  );
+                  products.push(instantiateProduct($state.snapshot(product)));
                 }}
               >
                 <div class="flex flex-col text-start">
