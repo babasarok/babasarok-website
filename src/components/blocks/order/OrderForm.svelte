@@ -9,6 +9,7 @@
   import { sanitizeItem } from "@/lib/validation";
   import Masonry from "svelte-bricks";
   import { submitOrder, calculateOrderTotal } from "@/lib/orderSubmit";
+  import { randomUUID } from "@/lib/uuid";
   import OrderDelivery from "./OrderDelivery.svelte";
   import type {
     CmsEnhancedEmbroideryColor,
@@ -178,7 +179,7 @@
                   products.push(
                     sanitizeItem({
                       ...clone,
-                      uuid: crypto.randomUUID(),
+                      uuid: randomUUID(),
                       count: 1,
                       fields: clone.fields?.filter((f) => f != null) ?? [],
                       materials: {

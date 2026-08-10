@@ -6,6 +6,7 @@
     flip,
     offset,
     shift,
+    useClick,
     useDismiss,
     useFloating,
     useHover,
@@ -54,8 +55,11 @@
   // Interactions
   const role = useRole(floating.context, { role: "tooltip" });
   const hover = useHover(floating.context, { move: false });
+  // Touch devices don't hover: let a tap toggle the tooltip. `ignoreMouse`
+  // keeps mouse users on hover-only so a click doesn't pin it open.
+  const click = useClick(floating.context, { ignoreMouse: true });
   const dismiss = useDismiss(floating.context);
-  const interactions = useInteractions([role, hover, dismiss]);
+  const interactions = useInteractions([role, hover, click, dismiss]);
 </script>
 
 <!-- Reference Element -->

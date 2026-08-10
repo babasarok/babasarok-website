@@ -20,7 +20,22 @@
 
 <Tooltip {disabled}>
   {#snippet content()}
-    {color.label || color.color_id}
+    <div class="flex flex-col items-center gap-1.5">
+      <div class="size-24 overflow-hidden rounded-lg border border-brown-300">
+        {#if color.image}
+          <img
+            src={color.image.src}
+            srcset={color.image.srcSet.attribute || undefined}
+            {...color.image.attributes}
+            alt=""
+            class="block size-full object-cover"
+          />
+        {:else}
+          <div class="size-full" style={`background-color: ${color.hex ?? ""}`}></div>
+        {/if}
+      </div>
+      <span class="text-center">{color.label || color.color_id}</span>
+    </div>
   {/snippet}
   <IconButton
     type="button"
