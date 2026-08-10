@@ -12,7 +12,7 @@
 </script>
 
 <svelte:element
-  this={href != null ? "a" : "button"}
+  this={href == null ? "button" : "a"}
   class={cn(classes, className)}
   {href}
   {...rest}
