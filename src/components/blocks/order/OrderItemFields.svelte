@@ -9,6 +9,7 @@
   import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
   import type { IProduct, StringValueField } from "@/lib/types.svelte";
   import { isFieldVisible } from "@/lib/fieldVisibility";
+  import { randomUUID } from "@/lib/uuid";
 
   interface Props {
     product: IProduct;
@@ -21,7 +22,7 @@
 
 {#snippet Input(field: StringValueField)}
   {#if field.type === "input" || field.value?.is_custom}
-    {@const id = crypto.randomUUID()}
+    {@const id = randomUUID()}
     <TextInput
       type="text"
       value={field.value?.value ?? ""}
