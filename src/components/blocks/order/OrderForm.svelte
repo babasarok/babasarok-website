@@ -12,7 +12,11 @@
   import Masonry from "svelte-bricks";
   import { submitOrder, calculateOrderTotal } from "@/lib/orderSubmit";
   import { loadOrderState, saveOrderState } from "@/lib/orderStorage";
-  import { instantiateProduct, restoreProducts } from "@/lib/orderProduct";
+  import {
+    instantiateProduct,
+    instantiateRelatedProduct,
+    restoreProducts,
+  } from "@/lib/orderProduct";
   import OrderDelivery from "./OrderDelivery.svelte";
   import type {
     CmsEnhancedEmbroideryColor,
@@ -54,6 +58,28 @@
       ? untrack(() => restoreProducts(savedState.products, $state.snapshot(productInfo)))
       : []
   );
+
+  // For each product, the catalog entries of its group siblings (de-duplicated
+  // across all groups it belongs to). Drives the "add related" buttons per card.
+  const relatedByProductId = $derived.by(() => {
+    const map: Record<string, CmsEnhancedProduct[]> = {};
+    for (const group of productGroups) {
+      for (const id of group.products) {
+        const siblings = (map[id] ??= []);
+        for (const otherId of group.products) {
+          if (
+            otherId === id ||
+            !Object.hasOwn(productInfo, otherId) ||
+            siblings.some((p) => p.product_id === otherId)
+          ) {
+            continue;
+          }
+          siblings.push(productInfo[otherId]);
+        }
+      }
+    }
+    return map;
+  });
 
   $effect(() => {
     saveOrderState({
@@ -246,6 +272,15 @@
                 <OrderItem
                   product={item as IProduct}
                   {threadColors}
+                  relatedProducts={relatedByProductId[(item as IProduct).product_id] ?? []}
+                  onAddRelated={(target) => {
+                    products.push(
+                      instantiateRelatedProduct(
+                        $state.snapshot(target),
+                        $state.snapshot(item as IProduct)
+                      )
+                    );
+                  }}
                   onClose={() => {
                     const index = products.findIndex((p) => p.uuid === item.uuid);
                     if (index !== -1) {

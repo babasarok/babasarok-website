@@ -78,3 +78,30 @@ export function restoreProducts(
   }
   return restored;
 }
+
+/** Build a fresh order item for `target`, carrying over the choices the user
+ * already made on `source` where they structurally match: field values with the
+ * same name+type, and material selections whose material still exists on the
+ * target (capped at the target's required count). Both inputs must be plain
+ * objects (e.g. `$state.snapshot(...)`). */
+export function instantiateRelatedProduct(target: CmsEnhancedProduct, source: IProduct): IProduct {
+  const base = instantiateProduct(target);
+
+  for (const field of base.fields) {
+    const sourceField = source.fields.find((f) => f.name === field.name && f.type === field.type);
+    if (sourceField?.value !== undefined) {
+      // name+type match guarantees the value shapes align.
+      Object.assign(field, { value: structuredClone(sourceField.value) });
+    }
+  }
+
+  const availableMaterials = new Set(
+    base.materials.materials.map((m) => m?.material_path.material_id).filter((id) => id != null)
+  );
+  base.materials.values = source.materials.values
+    .filter((v): v is ProductMaterialValue => v != null && availableMaterials.has(v.material_id))
+    .slice(0, base.materials.material_required_count)
+    .map((v) => structuredClone(v));
+
+  return sanitizeItem(base);
+}

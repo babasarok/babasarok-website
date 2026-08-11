@@ -4,7 +4,7 @@
   import type { HTMLAttributes } from "svelte/elements";
   import OrderItemMaterials from "./OrderItemMaterials.svelte";
   import OrderItemFields from "./OrderItemFields.svelte";
-  import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
+  import type { CmsEnhancedEmbroideryColor, CmsEnhancedProduct } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
 
   interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -12,9 +12,20 @@
     product: IProduct;
     threadColors: CmsEnhancedEmbroideryColor[];
     onChange?: (product: IProduct) => void;
+    relatedProducts?: CmsEnhancedProduct[];
+    onAddRelated?: (target: CmsEnhancedProduct) => void;
   }
 
-  let { onClose, product, threadColors, onChange, class: className, ...rest }: Props = $props();
+  let {
+    onClose,
+    product,
+    threadColors,
+    onChange,
+    relatedProducts = [],
+    onAddRelated,
+    class: className,
+    ...rest
+  }: Props = $props();
 </script>
 
 <div
@@ -46,6 +57,24 @@
   {#each Array.from({ length: product.materials.material_required_count }) as _, i (i)}
     <OrderItemMaterials {product} {onChange} material_index={i} />
   {/each}
+  {#if relatedProducts.length > 0 && onAddRelated}
+    <div class="w-full h-0.5 bg-brown-200"></div>
+    <div class="flex flex-col gap-2">
+      <p class="text-sm text-brown-500">Ezt is szeretnéd hozzáadni?</p>
+      <div class="flex flex-wrap gap-2">
+        {#each relatedProducts as related (related.product_id)}
+          <button
+            type="button"
+            class="flex items-center gap-1 rounded-full border border-brown-200 py-1 px-3 text-sm hover:bg-brown-100 transition-all cursor-pointer"
+            onclick={() => onAddRelated(related)}
+          >
+            {related.title}
+            <Icon icon="mdi:add" class="shrink-0" />
+          </button>
+        {/each}
+      </div>
+    </div>
+  {/if}
   <!-- <div class="w-full h-0.5 bg-brown-200"></div>
     <OrderItemPrice {product} {onChange} /> -->
 </div>

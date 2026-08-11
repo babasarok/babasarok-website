@@ -620,6 +620,7 @@ export const getProductGroups = async (): Promise<RecursiveRequired<CmsProductGr
   const nodes = nodesFrom(result.data.product_groupsConnection);
   return nodes.map((group) => ({
     title: group.title,
-    products: group.products?.map((x) => x?.product.id).filter((x): x is string => x != null) ?? [],
+    products:
+      group.products?.map((x) => x?.product.product_id).filter((x): x is string => x != null) ?? [],
   }));
 };
