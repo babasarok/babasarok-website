@@ -78,6 +78,27 @@
   onMount(() => {
     mounted = true;
   });
+
+  // Native modal <dialog> instead of [popover]: iOS Safari mispositions popovers
+  // (renders at document top, outside the viewport) and never scroll-locks the page.
+  let productDialog: HTMLDialogElement;
+  let productDialogOpen = $state(false);
+
+  function openProductDialog(): void {
+    productDialog.showModal();
+    productDialogOpen = true;
+  }
+
+  function closeProductDialog(): void {
+    productDialog.close();
+  }
+
+  $effect(() => {
+    document.body.style.overflow = productDialogOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  });
 </script>
 
 <form
@@ -173,8 +194,8 @@
       </div>
       <dialog
         class="fixed inset-0 h-[80%] w-[80%] md:w-fit md:h-fit md:max-h-[80%] m-auto border-0 rounded-2xl shadow-lg overflow-hidden open:flex flex-col"
-        id="product-dialog"
-        popover
+        bind:this={productDialog}
+        onclose={() => (productDialogOpen = false)}
       >
         <div class="flex flex-col gap-4 min-h-0 flex-1 py-4">
           <div class="flex items-center justify-between gap-2 px-4">
@@ -187,7 +208,7 @@
                 <h4 class="text-xl uppercase">Termékek</h4>
               </div>
             </div>
-            <IconButton type="button" popovertarget="product-dialog" popovertargetaction="hide">
+            <IconButton type="button" onclick={closeProductDialog}>
               <Icon icon="mdi:close" />
             </IconButton>
           </div>
@@ -228,7 +249,7 @@
                 disabled={import.meta.env.SSR}
                 class="flex flex-col w-full h-full items-center justify-center text-lg min-h-48 p-7 rounded-xl border border-brown-200 text-brown-500 font-semibold hover:bg-brown-100 transition-all cursor-pointer gap-2"
                 type="button"
-                popovertarget="product-dialog"
+                onclick={openProductDialog}
               >
                 Kattints ide, és válassz termékeket!
                 <Icon icon="mdi:add" class="shrink-0 text-4xl" />
