@@ -9,7 +9,7 @@ images:
     description: Készleten lévő termék
   - image: /src/assets/4F9DAA80-F79E-491F-9570-37EE56CFFA07.webp
     description: készleten lévő termék
-  - image: /src/assets/IMG_4934.webp
+  - image: /src/assets/IMG_4934-ovizsak.webp
 table:
   - title: Tornazsák
     description: 4000Ft
