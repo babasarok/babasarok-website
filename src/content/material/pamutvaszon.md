@@ -83,7 +83,7 @@ colors:
     image: /src/assets/IMG_6401.webp
   - color_id: Cicas
     label: 'Cicahorgászat '
-    image: /src/assets/IMG_4934.webp
+    image: ''
   - color_id: Sargakatica
     label: Katicák
     image: /src/assets/IMG_5499.webp
