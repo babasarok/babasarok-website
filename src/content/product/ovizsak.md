@@ -11,7 +11,7 @@ images:
   - image: /src/assets/4F9DAA80-F79E-491F-9570-37EE56CFFA07.webp
     description: készleten lévő termék
   - image: /src/assets/8C36BD1F-E70B-4715-8F0B-45B00FA9239C.webp
-    description: Készleten
+    description: ''
   - image: /src/assets/IMG_4934.webp
 table:
   - title: Tornazsák
@@ -26,14 +26,14 @@ shortDescription: |-
   Vállfás zsák mérete: kb. 40x56cm
 
   (+-3cm eltérés elfogadott)
+price: 0
 materials:
   material_required_count: 0
-price: 0
 fields:
   - name: 'Termék '
-    price: 0
     label: 'Termék '
     type: radio
+    price: 0
     items:
       - value: Tornazsák
         label: Tornazsák
@@ -45,13 +45,13 @@ fields:
         label: Mindkettő
         price: 7200
   - name: szin
-    price: 0
     label: Szín-Minta
     type: input
+    price: 0
   - name: himzes
-    price: 1500
-    price_unit: word
     label: Hímzés
     type: embroidery
+    price: 1500
+    price_unit: word
 ---
 
