@@ -11,7 +11,7 @@
   import { sanitizeItem } from "@/lib/validation";
   import Masonry from "svelte-bricks";
   import { submitOrder, calculateOrderTotal } from "@/lib/orderSubmit";
-  import { resolveActiveSetDiscount } from "@/lib/priceUtils";
+  import { resolveActiveSetDiscount, resolveSetDiscount } from "@/lib/priceUtils";
   import { loadOrderState, saveOrderState } from "@/lib/orderStorage";
   import {
     instantiateProduct,
@@ -87,11 +87,10 @@
   // the "add related" chips regardless of what's currently in the basket.
   const discountByProductId = $derived.by(() => {
     const map: Record<string, number> = {};
-    for (const group of productGroups) {
-      for (const { product_id, discount_percent } of group.products) {
-        if (discount_percent != null && discount_percent > (map[product_id] ?? 0)) {
-          map[product_id] = discount_percent;
-        }
+    for (const product of Object.values(productInfo)) {
+      const best = resolveSetDiscount(product.product_id, productGroups);
+      if (best) {
+        map[product.product_id] = best.percent;
       }
     }
     return map;
