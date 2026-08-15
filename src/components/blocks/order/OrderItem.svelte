@@ -7,6 +7,7 @@
   import type { CmsEnhancedEmbroideryColor, CmsEnhancedProduct } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
   import type { SetDiscountStatus } from "@/lib/priceUtils";
+  import { resolveColorCount } from "@/lib/materialUtils";
   import OrderItemPrice from "./OrderItemPrice.svelte";
 
   interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -42,6 +43,34 @@
     class: className,
     ...rest
   }: Props = $props();
+
+  // Whether every required material slot has a material and its colors chosen.
+  // Set siblings carry over the current material + colors, so adding one only
+  // makes sense once the selection is complete.
+  const materialsReady = $derived.by(() => {
+    const { materials, material_required_count, values } = product.materials;
+    if (materials.length === 0 || material_required_count === 0) {
+      return true;
+    }
+    if (values.length < material_required_count) {
+      return false;
+    }
+    for (let i = 0; i < material_required_count; i++) {
+      const value = values[i];
+      if (!value || !value.material_id) {
+        return false;
+      }
+      if (value.custom_color) {
+        continue;
+      }
+      const info = materials.find((m) => m?.material_path.material_id === value.material_id);
+      const count = resolveColorCount(info ?? null, product);
+      if (!count || value.colors.length < count) {
+        return false;
+      }
+    }
+    return true;
+  });
 </script>
 
 <div
@@ -90,8 +119,10 @@
           {@const added = basketCountByProductId[related.product_id] ?? 0}
           <button
             type="button"
+            disabled={!materialsReady}
             class={[
-              "flex items-center gap-1 rounded-full border py-1 px-3 text-sm transition-all cursor-pointer",
+              "flex items-center gap-1 rounded-full border py-1 px-3 text-sm transition-all",
+              materialsReady ? "cursor-pointer" : "cursor-not-allowed opacity-50",
               added > 0
                 ? "border-green-600 bg-green-50 text-green-800 hover:bg-green-100"
                 : "border-brown-200 hover:bg-brown-100",
@@ -114,9 +145,15 @@
           </button>
         {/each}
       </div>
-      <p class="text-xs text-brown-400">
-        A szett kedvezmény akkor jár, ha a darabokhoz ugyanazt az anyagot választod.
-      </p>
+      {#if materialsReady}
+        <p class="text-xs text-brown-400">
+          A szett kedvezmény akkor jár, ha a darabokhoz ugyanazt az anyagot választod.
+        </p>
+      {:else}
+        <p class="text-xs text-brown-400">
+          Előbb válaszd ki az anyagot, hogy a szett darabjait az anyagodhoz igazítva adhasd hozzá.
+        </p>
+      {/if}
     </div>
   {/if}
   {#if setStatus && setStatus.state !== "active"}
