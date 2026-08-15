@@ -12,7 +12,7 @@
     relatedDiscounts?: Record<string, number>;
     basketCountByProductId?: Record<string, number>;
     slugByProductId?: Record<string, string | undefined>;
-    materialsReady: boolean;
+    ready: boolean;
     onAddRelated: (target: CmsEnhancedProduct) => void;
     onSyncToSet?: (() => void) | undefined;
   }
@@ -25,7 +25,7 @@
     relatedDiscounts = {},
     basketCountByProductId = {},
     slugByProductId = {},
-    materialsReady,
+    ready,
     onAddRelated,
     onSyncToSet,
   }: Props = $props();
@@ -80,16 +80,16 @@
         href={slug ? `/product/${slug}/` : undefined}
         discount={relatedDiscounts[related.product_id]}
         added={basketCountByProductId[related.product_id] ?? 0}
-        disabled={!materialsReady}
+        disabled={!ready}
         onAdd={() => onAddRelated(related)}
       />
     {/each}
   </div>
 
-  {#if !materialsReady}
+  {#if !ready}
     <p class="flex items-start gap-1 text-xs text-brown-500">
       <Icon icon="mdi:information-outline" class="mt-0.5 shrink-0" />
-      Előbb válaszd ki az anyagot, a szett csak akkor érvényes ha az anyagok mind egyeznek.
+      Előbb töltsd ki ennek a terméknek az adatait, utána adhatod hozzá a szett darabjait.
     </p>
   {:else if setStatus?.state === "pending-material"}
     <div class="flex flex-wrap items-center gap-2 text-xs text-brown-600">

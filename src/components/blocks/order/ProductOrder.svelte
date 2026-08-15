@@ -14,7 +14,6 @@
   } from "@/lib/orderProduct";
   import { resolveSetDiscount, resolveSetDiscountStatus } from "@/lib/priceUtils";
   import type { SetDiscountStatus } from "@/lib/priceUtils";
-  import { areMaterialsComplete } from "@/lib/materialUtils";
   import { prefillFromParams, buildMaterialParams } from "@/lib/orderQueryParams";
   import { sanitizeItem } from "@/lib/validation";
   import { isItemValid, validateItem } from "@/lib/validation";
@@ -111,7 +110,10 @@
     item ? resolveSetDiscountStatus(item, basket, productGroups) : undefined
   );
 
-  const materialsReady = $derived(item ? areMaterialsComplete(item) : false);
+  // Whether this product is fully configured, so set siblings can be added
+  // without surfacing a validation error. Validated on a snapshot so the live
+  // item doesn't flash field errors before the user submits.
+  const itemReady = $derived(item ? isItemValid(validateItem($state.snapshot(item))) : false);
 
   // Title + potential discount of the set this product belongs to, for the panel
   // header (falls back to the group title when the product itself has no discount).
@@ -265,7 +267,7 @@
           relatedDiscounts={discountByProductId}
           {basketCountByProductId}
           {slugByProductId}
-          {materialsReady}
+          ready={itemReady}
           onAddRelated={addRelated}
           onSyncToSet={syncToSet}
         />
