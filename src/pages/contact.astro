@@ -4,6 +4,7 @@ import { Image } from "astro:assets";
 import { Icon } from "astro-icon/components";
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
+import Button from "../components/ui/Button.astro";
 import { getConfig } from "../lib/data";
 import locationIcon from "../assets/images/contact/location.svg";
 import phoneIcon from "../assets/images/contact/phone.svg";
@@ -27,6 +28,9 @@ const social = [...(config.social ?? [])]
     <div class="container">
       <div class="prose mx-auto max-w-none">
         <Content />
+      </div>
+      <div class="mt-10 flex justify-center">
+        <Button href="/product/" size="lg" variant="primary">Böngészd a termékeket</Button>
       </div>
     </div>
   </section>
@@ -70,7 +74,16 @@ const social = [...(config.social ?? [])]
             </div>
             <h4 class="text-h4 text-headings mb-6">Telefon &amp; Email</h4>
             <p class="mb-0 text-sm">
-              {address?.phone}
+              {
+                address?.phone && (
+                  <a
+                    class="hover:text-sand-300 underline"
+                    href={`tel:${address.phone.replaceAll(/\s+/g, "")}`}
+                  >
+                    {address.phone}
+                  </a>
+                )
+              }
               {address?.email && <br />}
               {
                 address?.email && (
