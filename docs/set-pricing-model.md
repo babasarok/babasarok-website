@@ -43,7 +43,7 @@ Concretely:
   whatever sets they still qualify for. No single "set validity" boolean gates the
   whole basket.
 
-## 3. Data model (proposed, pre-implementation)
+## 3. Data model
 
 The set itself is the `product_groups` collection added in PR #33
 (`tina/collections/product-groups.ts`). The discount belongs **on the membership**,
@@ -109,7 +109,7 @@ For a given basket item `P` and the list of sets:
 2. **UX surfacing** — should the applicable set discount be hinted at during
    material selection, or only revealed in the basket summary?
 3. **Buyer-facing label** — when a set discount wins, do we show _"Szett
-   kedvezmény"_ (distinct from the generic _"Kedvezmény"_) in the price breakdown?
+   kedvezmény"_ (distinct from the generic _"Kedvezmény"_) in the price breakdown? (already implemented)
 
 ## 7. Out of scope for this decision
 
