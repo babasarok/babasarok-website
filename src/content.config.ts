@@ -360,11 +360,13 @@ const embroidery = defineCollection({
 const productGroup = defineCollection({
   loader: glob({ pattern: "*.md", base: "src/content/product_groups" }),
   schema: z.object({
+    title: z.string(),
     products: z
       .array(
         z
           .object({
             product: z.string(),
+            discount_percent: z.number().optional().nullable(),
           })
           .optional()
           .nullable()
