@@ -5,6 +5,8 @@ import { Icon } from "astro-icon/components";
 import Base from "../../layouts/Base.astro";
 import FloatingShapes from "../../components/ui/FloatingShapes.astro";
 import ProductGallery from "../../components/ui/ProductGallery.astro";
+import ProductOrder from "../../components/blocks/order/ProductOrder.svelte";
+import { getProducts, getThreadColors } from "../../lib/data";
 
 type GalleryImage = {
   src: ImageMetadata;
@@ -17,20 +19,27 @@ export const getStaticPaths = (async () => {
     (a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0)
   );
 
+  const enhancedProducts = await getProducts();
+  const enhancedById = new Map(enhancedProducts.map((p) => [p.product_id, p]));
+  const threadColors = await getThreadColors();
+
   return products.map((product, i) => ({
     params: { id: product.id },
     props: {
       product,
+      orderProduct: enhancedById.get(product.data.product_id) ?? null,
+      threadColors,
       prev: products[i - 1] ?? null,
       next: products[i + 1] ?? null,
     },
   }));
 }) satisfies GetStaticPaths;
 
-const { product, prev, next } = Astro.props;
+const { product, prev, next, orderProduct, threadColors } = Astro.props;
 const { Content } = await render(product);
 
-const { title, shortDescription, table = [] } = product.data;
+const { title, shortDescription } = product.data;
+const canOrder = !!orderProduct && !!orderProduct.can_be_ordered;
 
 const gallery: GalleryImage[] = [];
 const thumb = product.data.thumbnail;
@@ -78,16 +87,9 @@ const shareLinks = [
         </div>
 
         {
-          table && table.length > 0 && (
-            <div class="bg-accent mt-12.5 mb-2.5 flex flex-col flex-wrap justify-center rounded-[20px] px-0 py-7.5 text-white sm:mt-17.5 sm:mb-12.5 sm:flex-row sm:px-5">
-              {table
-                .filter((item) => item != null)
-                .map((item) => (
-                  <div class="w-full py-0 not-last:mb-7.5 sm:w-1/2 sm:py-2.5 sm:not-last:mb-0 md:w-1/3">
-                    <h5 class="text-h5 text-light">{item.title}</h5>
-                    <p class="m-0">{item.description}</p>
-                  </div>
-                ))}
+          canOrder && orderProduct && (
+            <div class="mt-10 mb-12.5 sm:mt-12.5">
+              <ProductOrder product={orderProduct} threadColors={threadColors} client:load />
             </div>
           )
         }

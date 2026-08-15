@@ -47,6 +47,7 @@ function restoreProduct(catalog: CmsEnhancedProduct, saved: SavedProduct): IProd
   }
 
   base.count = saved.count;
+  base.uuid = saved.uuid;
   for (const field of base.fields) {
     const savedField = saved.fields.find((f) => f.name === field.name);
     if (savedField?.value !== undefined) {

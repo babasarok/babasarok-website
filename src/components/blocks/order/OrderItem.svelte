@@ -10,7 +10,7 @@
   import OrderItemPrice from "./OrderItemPrice.svelte";
 
   interface Props extends HTMLAttributes<HTMLDivElement> {
-    onClose: () => void;
+    onClose?: (() => void) | undefined;
     product: IProduct;
     threadColors: CmsEnhancedEmbroideryColor[];
     onChange?: (product: IProduct) => void;
@@ -60,9 +60,11 @@
       {/if}
       <p class="whitespace-nowrap overflow-hidden text-ellipsis">{product.title}</p>
     </div>
-    <IconButton class="shrink-0" type="button" onclick={onClose}>
-      <Icon icon="mdi:close" />
-    </IconButton>
+    {#if onClose}
+      <IconButton class="shrink-0" type="button" onclick={onClose}>
+        <Icon icon="mdi:close" />
+      </IconButton>
+    {/if}
   </div>
   <div class="w-full h-0.5 bg-brown-200"></div>
   <OrderItemFields {product} {threadColors} {onChange} />
