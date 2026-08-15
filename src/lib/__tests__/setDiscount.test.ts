@@ -11,11 +11,13 @@ import {
   materialsMatch,
   resolveActiveSetDiscount,
   resolveSetDiscount,
+  resolveSetDiscountStatus,
+  canSyncMaterials,
   calculatePriceForItem,
   type SetDiscountGroup,
 } from "@/lib/priceUtils";
 import type { ProductMaterialValue } from "@/lib/types.svelte";
-import { makeProduct } from "./fixtures";
+import { makeProduct, makeMaterial } from "./fixtures";
 
 const val = (
   material_id: string,
@@ -151,6 +153,89 @@ describe("resolveSetDiscount (potential)", () => {
   it("returns the biggest membership discount regardless of the basket", () => {
     expect(resolveSetDiscount("blanket", groups)?.percent).toBe(15);
     expect(resolveSetDiscount("unknown", groups)).toBeUndefined();
+  });
+});
+
+describe("canSyncMaterials", () => {
+  it("is true when counts match and every partner material is available", () => {
+    const item = makeProduct({
+      materials: [makeMaterial({ material_id: "cotton" })],
+      material_required_count: 1,
+    });
+    const partner = makeProduct({ values: [val("cotton", ["red"])], material_required_count: 1 });
+    expect(canSyncMaterials(item, partner)).toBe(true);
+  });
+
+  it("is false when the item does not offer the partner's material", () => {
+    const item = makeProduct({
+      materials: [makeMaterial({ material_id: "cotton" })],
+      material_required_count: 1,
+    });
+    const partner = makeProduct({ values: [val("wool", ["red"])], material_required_count: 1 });
+    expect(canSyncMaterials(item, partner)).toBe(false);
+  });
+
+  it("is false when the required material counts differ", () => {
+    const item = makeProduct({
+      materials: [makeMaterial({ material_id: "cotton" })],
+      material_required_count: 2,
+    });
+    const partner = makeProduct({ values: [val("cotton", ["red"])], material_required_count: 1 });
+    expect(canSyncMaterials(item, partner)).toBe(false);
+  });
+});
+
+describe("resolveSetDiscountStatus", () => {
+  it("returns undefined when the item earns no set discount", () => {
+    const other = makeProduct({ uuid: "u1", product_id: "unknown" });
+    expect(resolveSetDiscountStatus(other, [other], groups)).toBeUndefined();
+  });
+
+  it("reports pending-partner when no set sibling is in the basket", () => {
+    const nest = makeProduct({ uuid: "u1", product_id: "nest", values: [val("cotton", ["red"])] });
+    expect(resolveSetDiscountStatus(nest, [nest], groups)).toEqual({
+      state: "pending-partner",
+      percent: 10,
+      setTitle: "Babafészek szett",
+    });
+  });
+
+  it("reports active when a matching-material sibling is present", () => {
+    const nest = makeProduct({ uuid: "u1", product_id: "nest", values: [val("cotton", ["red"])] });
+    const blanket = makeProduct({
+      uuid: "u2",
+      product_id: "blanket",
+      values: [val("cotton", ["red"])],
+    });
+    expect(resolveSetDiscountStatus(nest, [nest, blanket], groups)).toEqual({
+      state: "active",
+      percent: 10,
+      setTitle: "Babafészek szett",
+    });
+  });
+
+  it("reports pending-material with a syncable partner when materials differ", () => {
+    const nest = makeProduct({
+      uuid: "u1",
+      product_id: "nest",
+      values: [val("cotton", ["red"])],
+      materials: [makeMaterial({ material_id: "cotton" })],
+      material_required_count: 1,
+    });
+    const blanket = makeProduct({
+      uuid: "u2",
+      product_id: "blanket",
+      values: [val("cotton", ["blue"])],
+      materials: [makeMaterial({ material_id: "cotton" })],
+      material_required_count: 1,
+    });
+    expect(resolveSetDiscountStatus(nest, [nest, blanket], groups)).toEqual({
+      state: "pending-material",
+      percent: 10,
+      setTitle: "Babafészek szett",
+      partnerUuid: "u2",
+      canSync: true,
+    });
   });
 });
 

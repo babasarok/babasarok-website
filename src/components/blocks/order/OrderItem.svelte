@@ -6,6 +6,7 @@
   import OrderItemFields from "./OrderItemFields.svelte";
   import type { CmsEnhancedEmbroideryColor, CmsEnhancedProduct } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
+  import type { SetDiscountStatus } from "@/lib/priceUtils";
   import OrderItemPrice from "./OrderItemPrice.svelte";
 
   interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -17,6 +18,9 @@
     onAddRelated?: (target: CmsEnhancedProduct) => void;
     setDiscountPercent?: number | undefined;
     relatedDiscounts?: Record<string, number>;
+    setStatus?: SetDiscountStatus | undefined;
+    basketCountByProductId?: Record<string, number>;
+    onSyncToSet?: (() => void) | undefined;
   }
 
   let {
@@ -28,6 +32,9 @@
     onAddRelated,
     setDiscountPercent,
     relatedDiscounts = {},
+    setStatus,
+    basketCountByProductId = {},
+    onSyncToSet,
     class: className,
     ...rest
   }: Props = $props();
@@ -68,12 +75,24 @@
       <p class="text-sm text-brown-500">Ezt is szeretnéd hozzáadni?</p>
       <div class="flex flex-wrap gap-2">
         {#each relatedProducts as related (related.product_id)}
+          {@const added = basketCountByProductId[related.product_id] ?? 0}
           <button
             type="button"
-            class="flex items-center gap-1 rounded-full border border-brown-200 py-1 px-3 text-sm hover:bg-brown-100 transition-all cursor-pointer"
+            class={[
+              "flex items-center gap-1 rounded-full border py-1 px-3 text-sm transition-all cursor-pointer",
+              added > 0
+                ? "border-green-600 bg-green-50 text-green-800 hover:bg-green-100"
+                : "border-brown-200 hover:bg-brown-100",
+            ]}
             onclick={() => onAddRelated(related)}
           >
+            {#if added > 0}
+              <Icon icon="mdi:check" class="shrink-0" />
+            {/if}
             {related.title}
+            {#if added > 0}
+              <span class="font-medium">({added})</span>
+            {/if}
             {#if relatedDiscounts[related.product_id]}
               <span class="font-medium text-green-700"
                 >-{relatedDiscounts[related.product_id]}%</span
@@ -82,6 +101,42 @@
             <Icon icon="mdi:add" class="shrink-0" />
           </button>
         {/each}
+      </div>
+      <p class="text-xs text-brown-400">
+        A szett kedvezmény akkor jár, ha a darabokhoz ugyanazt az anyagot választod.
+      </p>
+    </div>
+  {/if}
+  {#if setStatus && setStatus.state !== "active"}
+    <div class="w-full h-0.5 bg-brown-200"></div>
+    <div class="flex items-start gap-2 rounded-lg bg-brown-50 p-2 text-xs">
+      <Icon icon="mdi:tag-outline" class="shrink-0 text-base text-brown-500" />
+      <div class="flex flex-col items-start gap-1.5">
+        {#if setStatus.state === "pending-partner"}
+          <p>
+            Add hozzá a csomaghoz a <span class="font-medium">{setStatus.setTitle}</span> szett egy
+            másik darabját, és
+            <span class="font-medium text-green-700">-{setStatus.percent}%</span> szett kedvezményt kapsz
+            erre.
+          </p>
+        {:else}
+          <p>
+            Válaszd ugyanazt az anyagot a <span class="font-medium">{setStatus.setTitle}</span>
+            szett másik darabjához, és
+            <span class="font-medium text-green-700">-{setStatus.percent}%</span> szett kedvezményt kapsz
+            erre.
+          </p>
+          {#if setStatus.canSync && onSyncToSet}
+            <button
+              type="button"
+              class="flex items-center gap-1 rounded-full border border-brown-300 py-1 px-3 font-medium hover:bg-brown-100 transition-all cursor-pointer"
+              onclick={onSyncToSet}
+            >
+              <Icon icon="mdi:sync" class="shrink-0" />
+              Anyag egyeztetése a szetthez
+            </button>
+          {/if}
+        {/if}
       </div>
     </div>
   {/if}

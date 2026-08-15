@@ -102,6 +102,108 @@ export function resolveActiveSetDiscount(
   return best;
 }
 
+/**
+ * The state of an item's best set discount relative to the current basket, for
+ * surfacing in the UI: `active` when earned, `pending-partner` when no set
+ * sibling is in the basket yet, `pending-material` when a sibling is present but
+ * its materials differ (with `canSync` when a one-click material match is
+ * possible). An active discount always wins; otherwise the biggest potential
+ * discount is reported. `undefined` when the item earns no set discount at all.
+ */
+export type SetDiscountStatus =
+  | { state: "active"; percent: number; setTitle: string }
+  | { state: "pending-partner"; percent: number; setTitle: string }
+  | {
+      state: "pending-material";
+      percent: number;
+      setTitle: string;
+      partnerUuid: string;
+      canSync: boolean;
+    };
+
+/**
+ * Whether copying `partner`'s selected materials onto `item` could produce a
+ * matching selection: the two must need the same number of materials and every
+ * material `partner` picked must be available on `item`. Used to decide whether
+ * to offer a one-click "match materials" action.
+ */
+export function canSyncMaterials(item: IProduct, partner: IProduct): boolean {
+  if (item.materials.material_required_count !== partner.materials.material_required_count) {
+    return false;
+  }
+  const available = new Set(
+    item.materials.materials
+      .map((m) => m?.material_path.material_id)
+      .filter((id): id is string => id != null)
+  );
+  return partner.materials.values.every(
+    (v) => v == null || v.material_id === "" || available.has(v.material_id)
+  );
+}
+
+export function resolveSetDiscountStatus(
+  item: IProduct,
+  basket: IProduct[],
+  groups: SetDiscountGroup[]
+): SetDiscountStatus | undefined {
+  const memberships = groups
+    .map((group) => {
+      const membership = group.products.find(
+        (m) => m.product_id === item.product_id && m.discount_percent != null
+      );
+      return membership?.discount_percent == null
+        ? undefined
+        : {
+            percent: membership.discount_percent,
+            setTitle: group.title,
+            memberIds: new Set(group.products.map((m) => m.product_id)),
+          };
+    })
+    .filter((m): m is NonNullable<typeof m> => m != null);
+
+  if (memberships.length === 0) {
+    return undefined;
+  }
+
+  const partnersIn = (memberIds: Set<string>): IProduct[] =>
+    basket.filter((other) => other.uuid !== item.uuid && memberIds.has(other.product_id));
+
+  let active: { percent: number; setTitle: string } | undefined;
+  for (const m of memberships) {
+    if (
+      partnersIn(m.memberIds).some((other) => materialsMatch(item, other)) &&
+      (!active || m.percent > active.percent)
+    ) {
+      active = { percent: m.percent, setTitle: m.setTitle };
+    }
+  }
+  if (active) {
+    return { state: "active", ...active };
+  }
+
+  let pending: SetDiscountStatus | undefined;
+  for (const m of memberships) {
+    const partners = partnersIn(m.memberIds);
+    let candidate: SetDiscountStatus;
+    if (partners.length > 0) {
+      const partner = partners.find((other) => canSyncMaterials(item, other)) ?? partners[0];
+      candidate = {
+        state: "pending-material",
+        percent: m.percent,
+        setTitle: m.setTitle,
+        partnerUuid: partner.uuid,
+        canSync: canSyncMaterials(item, partner),
+      };
+    } else {
+      candidate = { state: "pending-partner", percent: m.percent, setTitle: m.setTitle };
+    }
+    if (!pending || candidate.percent > pending.percent) {
+      pending = candidate;
+    }
+  }
+  return pending;
+}
+
 export interface Price extends BasePrice {
   priced_by_length: false;
 }

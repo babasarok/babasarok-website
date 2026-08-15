@@ -105,3 +105,19 @@ export function instantiateRelatedProduct(target: CmsEnhancedProduct, source: IP
 
   return sanitizeItem(base);
 }
+
+/** Copy `partner`'s material selections onto `item` so the two match and their
+ * shared set discount activates. Keeps only materials the item supports, capped
+ * at its required count. Both inputs must be plain objects (e.g.
+ * `$state.snapshot(...)`). */
+export function syncMaterialsToPartner(item: IProduct, partner: IProduct): IProduct {
+  const availableMaterials = new Set(
+    item.materials.materials.map((m) => m?.material_path.material_id).filter((id) => id != null)
+  );
+  const values = partner.materials.values
+    .filter((v): v is ProductMaterialValue => v != null && availableMaterials.has(v.material_id))
+    .slice(0, item.materials.material_required_count)
+    .map((v) => structuredClone(v));
+
+  return sanitizeItem({ ...item, materials: { ...item.materials, values } });
+}
