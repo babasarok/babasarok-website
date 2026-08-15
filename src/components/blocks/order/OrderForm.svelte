@@ -11,12 +11,14 @@
   import { sanitizeItem } from "@/lib/validation";
   import Masonry from "svelte-bricks";
   import { submitOrder, calculateOrderTotal } from "@/lib/orderSubmit";
-  import { resolveActiveSetDiscount, resolveSetDiscount } from "@/lib/priceUtils";
+  import { resolveSetDiscount, resolveSetDiscountStatus } from "@/lib/priceUtils";
+  import type { SetDiscountStatus } from "@/lib/priceUtils";
   import { loadOrderState, saveOrderState } from "@/lib/orderStorage";
   import {
     instantiateProduct,
     instantiateRelatedProduct,
     restoreProducts,
+    syncMaterialsToPartner,
   } from "@/lib/orderProduct";
   import OrderDelivery from "./OrderDelivery.svelte";
   import type {
@@ -96,18 +98,30 @@
     return map;
   });
 
-  // The set discount each basket item *actively* earns right now: it needs a
-  // matching-material sibling from the same set to also be in the basket.
-  // Keyed by item uuid, because two rows of the same product can differ in
-  // their material selections. Drives the per-card price and label.
-  const activeDiscountByUuid = $derived.by(() => {
+  // The set-discount state of each basket item relative to the current basket:
+  // active (earned), pending-partner (no set sibling yet) or pending-material (a
+  // sibling is present but its materials differ). Keyed by item uuid, because
+  // two rows of the same product can differ in their material selections. Drives
+  // the per-card price, discount label and set-completion nudge.
+  const setStatusByUuid = $derived.by(() => {
     const basket = products;
-    const map: Record<string, number> = {};
+    const map: Record<string, SetDiscountStatus | undefined> = {};
     for (const item of basket) {
-      const active = resolveActiveSetDiscount(item, basket, productGroups);
-      if (active) {
-        map[item.uuid] = active.percent;
+      const status = resolveSetDiscountStatus(item, basket, productGroups);
+      if (status) {
+        map[item.uuid] = status;
       }
+    }
+    return map;
+  });
+
+  // How many basket items share each product_id, so the "add related" chips can
+  // show that a suggested set piece is already in the basket (while staying
+  // clickable to add more).
+  const basketCountByProductId = $derived.by(() => {
+    const map: Record<string, number> = {};
+    for (const item of products) {
+      map[item.product_id] = (map[item.product_id] ?? 0) + 1;
     }
     return map;
   });
@@ -329,11 +343,14 @@
                 <Icon icon="mdi:add" class="shrink-0 text-4xl" />
               </button>
             {:else}
+              {@const setStatus = setStatusByUuid[(item as IProduct).uuid]}
               <div transition:fade={{ duration: 250 }}>
                 <OrderItem
                   product={item as IProduct}
                   {threadColors}
-                  setDiscountPercent={activeDiscountByUuid[(item as IProduct).uuid]}
+                  {setStatus}
+                  setDiscountPercent={setStatus?.state === "active" ? setStatus.percent : undefined}
+                  {basketCountByProductId}
                   relatedDiscounts={discountByProductId}
                   relatedProducts={relatedByProductId[(item as IProduct).product_id] ?? []}
                   onAddRelated={(target) => {
@@ -342,6 +359,20 @@
                         $state.snapshot(target),
                         $state.snapshot(item as IProduct)
                       )
+                    );
+                  }}
+                  onSyncToSet={() => {
+                    if (setStatus?.state !== "pending-material") {
+                      return;
+                    }
+                    const index = products.findIndex((p) => p.uuid === item.uuid);
+                    const partner = products.find((p) => p.uuid === setStatus.partnerUuid);
+                    if (index === -1 || !partner) {
+                      return;
+                    }
+                    products[index] = syncMaterialsToPartner(
+                      $state.snapshot(products[index]),
+                      $state.snapshot(partner)
                     );
                   }}
                   onClose={() => {
