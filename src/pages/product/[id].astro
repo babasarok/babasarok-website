@@ -3,10 +3,9 @@ import type { GetStaticPaths, ImageMetadata } from "astro";
 import { getCollection, render } from "astro:content";
 import { Icon } from "astro-icon/components";
 import Base from "../../layouts/Base.astro";
-import FloatingShapes from "../../components/ui/FloatingShapes.astro";
 import ProductGallery from "../../components/ui/ProductGallery.astro";
 import ProductOrder from "../../components/blocks/order/ProductOrder.svelte";
-import { getProducts, getThreadColors } from "../../lib/data";
+import { getProducts, getProductGroups, getThreadColors } from "../../lib/data";
 
 type GalleryImage = {
   src: ImageMetadata;
@@ -21,6 +20,8 @@ export const getStaticPaths = (async () => {
 
   const enhancedProducts = await getProducts();
   const enhancedById = new Map(enhancedProducts.map((p) => [p.product_id, p]));
+  const productCatalog = Object.fromEntries(enhancedProducts.map((p) => [p.product_id, p]));
+  const productGroups = await getProductGroups();
   const threadColors = await getThreadColors();
 
   return products.map((product, i) => ({
@@ -28,6 +29,8 @@ export const getStaticPaths = (async () => {
     props: {
       product,
       orderProduct: enhancedById.get(product.data.product_id) ?? null,
+      productCatalog,
+      productGroups,
       threadColors,
       prev: products[i - 1] ?? null,
       next: products[i + 1] ?? null,
@@ -35,7 +38,8 @@ export const getStaticPaths = (async () => {
   }));
 }) satisfies GetStaticPaths;
 
-const { product, prev, next, orderProduct, threadColors } = Astro.props;
+const { product, prev, next, orderProduct, productCatalog, productGroups, threadColors } =
+  Astro.props;
 const { Content } = await render(product);
 
 const { title, shortDescription } = product.data;
@@ -84,7 +88,13 @@ const shareLinks = [
                 <h1 class="text-h2 text-headings">{title}</h1>
                 {shortDescription && <p class="mt-3">{shortDescription}</p>}
                 <div class="mt-6">
-                  <ProductOrder product={orderProduct} threadColors={threadColors} client:load />
+                  <ProductOrder
+                    product={orderProduct}
+                    products={productCatalog}
+                    productGroups={productGroups}
+                    threadColors={threadColors}
+                    client:load
+                  />
                 </div>
               </div>
             </div>

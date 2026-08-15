@@ -4,25 +4,107 @@
   import OrderItem from "./OrderItem.svelte";
   import Button from "./common/Button.svelte";
   import { orderBasket } from "@/lib/orderBasket.svelte";
-  import { instantiateProduct, restoreProducts } from "@/lib/orderProduct";
+  import {
+    instantiateProduct,
+    instantiateRelatedProduct,
+    restoreProducts,
+    syncMaterialsToPartner,
+  } from "@/lib/orderProduct";
+  import { resolveSetDiscount, resolveSetDiscountStatus } from "@/lib/priceUtils";
+  import type { SetDiscountStatus } from "@/lib/priceUtils";
   import { prefillFromParams } from "@/lib/orderQueryParams";
   import { sanitizeItem } from "@/lib/validation";
   import { isItemValid, validateItem } from "@/lib/validation";
-  import type { CmsEnhancedEmbroideryColor, CmsEnhancedProduct } from "@/lib/data";
+  import type { CmsEnhancedEmbroideryColor, CmsEnhancedProduct, CmsProductGroup } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
 
   interface Props {
     product: CmsEnhancedProduct;
+    products: Record<string, CmsEnhancedProduct>;
+    productGroups: CmsProductGroup[];
     threadColors: CmsEnhancedEmbroideryColor[];
     checkoutHref?: string;
   }
 
-  let { product, threadColors, checkoutHref = "/contact" }: Props = $props();
+  let {
+    product,
+    products,
+    productGroups,
+    threadColors,
+    checkoutHref = "/contact",
+  }: Props = $props();
+
+  // Plain (non-proxy) catalog; the props are reactive and structuredClone-hostile.
+  const catalog = $derived($state.snapshot(products));
 
   let item = $state<IProduct | null>(null);
   let editing = $state(false);
   let saved = $state(false);
   let error = $state<string | null>(null);
+
+  // The whole basket as live order items, with the currently configured item's
+  // in-progress edits overlaid, so set status reflects the unsaved selection.
+  // Inputs are snapshotted because restoreProducts structuredClones them.
+  const basket = $derived.by(() => {
+    const restored = restoreProducts($state.snapshot(orderBasket.items), catalog);
+    const current = item;
+    if (!current) {
+      return restored;
+    }
+    const index = restored.findIndex((p) => p.uuid === current.uuid);
+    if (index === -1) {
+      restored.push(current);
+    } else {
+      restored[index] = current;
+    }
+    return restored;
+  });
+
+  // Group siblings of this product that exist in the catalog; drives the
+  // "add to set" chips.
+  const relatedProducts = $derived.by(() => {
+    const id = product.product_id;
+    const out: CmsEnhancedProduct[] = [];
+    for (const group of productGroups) {
+      if (!group.products.some((m) => m.product_id === id)) {
+        continue;
+      }
+      for (const { product_id: otherId } of group.products) {
+        if (otherId === id || !Object.hasOwn(products, otherId)) {
+          continue;
+        }
+        const sibling = products[otherId];
+        if (!out.some((p) => p.product_id === otherId)) {
+          out.push(sibling);
+        }
+      }
+    }
+    return out;
+  });
+
+  // Potential set discount per product, for annotating the "add to set" chips.
+  const discountByProductId = $derived.by(() => {
+    const map: Record<string, number> = {};
+    for (const p of Object.values(products)) {
+      const best = resolveSetDiscount(p.product_id, productGroups);
+      if (best) {
+        map[p.product_id] = best.percent;
+      }
+    }
+    return map;
+  });
+
+  const basketCountByProductId = $derived.by(() => {
+    const map: Record<string, number> = {};
+    for (const it of basket) {
+      map[it.product_id] = (map[it.product_id] ?? 0) + 1;
+    }
+    return map;
+  });
+
+  const setStatus = $derived<SetDiscountStatus | undefined>(
+    item ? resolveSetDiscountStatus(item, basket, productGroups) : undefined
+  );
 
   onMount(() => {
     orderBasket.start();
@@ -76,6 +158,32 @@
       product={item}
       {threadColors}
       bare
+      {setStatus}
+      setDiscountPercent={setStatus?.state === "active" ? setStatus.percent : undefined}
+      {basketCountByProductId}
+      relatedDiscounts={discountByProductId}
+      {relatedProducts}
+      onAddRelated={(target) => {
+        if (!item) {
+          return;
+        }
+        orderBasket.upsert(
+          instantiateRelatedProduct($state.snapshot(target), $state.snapshot(item))
+        );
+      }}
+      onSyncToSet={() => {
+        if (!item || setStatus?.state !== "pending-material") {
+          return;
+        }
+        const partner = basket.find((p) => p.uuid === setStatus.partnerUuid);
+        if (!partner) {
+          return;
+        }
+        item = sanitizeItem(
+          syncMaterialsToPartner($state.snapshot(item), $state.snapshot(partner))
+        );
+        saved = false;
+      }}
       onChange={(updated) => {
         item = sanitizeItem(updated);
         saved = false;
