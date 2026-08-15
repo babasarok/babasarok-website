@@ -1,11 +1,10 @@
 # Decision: set (product-group) pricing model
 
-Status: **decision recorded, not yet implemented** — this unblocks the
-`work out how sets can affect pricing` box in PR #33.
+Status: **implemented** — pricing model plus material-gated set detection.
 
-This documents *how* sets will affect pricing. It is intentionally separate from
-the related (still open) question of **set detection** in the basket — see the
-"Interaction with set detection" section.
+This documents *how* sets affect pricing, including the **set detection** rule
+in the basket (material-gated, non-exhaustive) — see the "Interaction with set
+detection" section.
 
 ## 1. The decision
 
@@ -82,11 +81,13 @@ For a given basket item `P` and the list of sets:
    the set discount *replaces* it for that item (sets are the intended mechanism
    for the bundled deal).
 
-> **Open:** whether a set discount should only apply once the *whole* set is
-> present in the basket ("exhaustive") or as soon as the item is present
-> ("non-exhaustive"). This is the **set-detection** concern, kept out of scope
-> here. The resolver above is written to be agnostic: it takes an `activeSets`
-> list as input, and the detection step decides which sets are active.
+> **Resolved (set detection):** a set is treated as **non-exhaustive** and
+> **material-gated**. An item earns a set's discount as soon as it is in the
+> basket *together with at least one other member of that same set whose
+> selected material values match exactly*. Detection is implemented in
+> `resolveActiveSetDiscount(item, basket, groups)`, which feeds the winning
+> percent into `calculatePriceForItem`. The pure `resolveSetDiscount` remains
+> for surfacing a product's *potential* discount (the "add related" chips).
 
 ## 5. Relationship to existing pricing
 
@@ -100,9 +101,11 @@ For a given basket item `P` and the list of sets:
 
 ## 6. Open questions (do not block the resolver)
 
-1. **Set detection** — "a set only counts as a set if every member's materials
-   match" and the unresolved "different material counts" case (issue #18). This
-   decides *when* a set is active, which feeds step 4 above.
+1. **Different material counts** (issue #18) — the current match is *exact*: two
+   products count towards a set only when their normalised material-value lists
+   are identical. Members with different material counts (or a member with no
+   materials paired with one that has them) therefore never match. Revisit if a
+   set legitimately mixes products with differing material structures.
 2. **UX surfacing** — should the applicable set discount be hinted at during
    material selection, or only revealed in the basket summary?
 3. **Buyer-facing label** — when a set discount wins, do we show *"Szett
@@ -110,6 +113,5 @@ For a given basket item `P` and the list of sets:
 
 ## 7. Out of scope for this decision
 
-- The set-detection / material-matching rules (separate decision needed).
 - Any change to how the order email is formatted (`orderSubmit.ts`), unless we
   decide the email should show the set discount line.

@@ -2,7 +2,8 @@
  * Order submission: format the order directly from the product models and POST
  * it to web3forms. Kept out of the Svelte component so the form stays declarative.
  */
-import { calculatePriceForItem } from "@/lib/priceUtils";
+import { calculatePriceForItem, resolveActiveSetDiscount } from "@/lib/priceUtils";
+import type { SetDiscountGroup } from "@/lib/priceUtils";
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "./types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "./data";
 import { isFieldVisible } from "./fieldVisibility";
@@ -17,14 +18,18 @@ export interface OrderDetails {
   address: string | undefined;
   products: IProduct[];
   threadColors: CmsEnhancedEmbroideryColor[];
+  productGroups: SetDiscountGroup[];
 }
 
 /** Sum of every product's total plus delivery, and whether any price is partial. */
 export function calculateOrderTotal(
   products: IProduct[],
-  deliveryMethod: CmsEnhancedDeliveryMethod
+  deliveryMethod: CmsEnhancedDeliveryMethod,
+  productGroups: SetDiscountGroup[] = []
 ): { total: number; indeterminate: boolean } {
-  const prices = products.map((p) => calculatePriceForItem(p));
+  const prices = products.map((p) =>
+    calculatePriceForItem(p, resolveActiveSetDiscount(p, products, productGroups)?.percent)
+  );
   return {
     total: prices.reduce((sum, p) => sum + (p.totalPrice ?? 0), 0) + deliveryMethod.price,
     indeterminate: prices.some((p) => p.indeterminate),
@@ -102,9 +107,10 @@ function shouldSubmitField(field: Field): boolean {
 
 function formatProductString(
   product: IProduct,
-  threadColors: CmsEnhancedEmbroideryColor[]
+  threadColors: CmsEnhancedEmbroideryColor[],
+  setDiscountPercent?: number
 ): string {
-  const price = calculatePriceForItem(product);
+  const price = calculatePriceForItem(product, setDiscountPercent);
   const { materials, material_required_count, values } = product.materials;
 
   const lines = [
@@ -142,7 +148,11 @@ function formatProductString(
 }
 
 function buildOrderFormData(order: OrderDetails, accessKey: string, message: string): FormData {
-  const { total, indeterminate } = calculateOrderTotal(order.products, order.deliveryMethod);
+  const { total, indeterminate } = calculateOrderTotal(
+    order.products,
+    order.deliveryMethod,
+    order.productGroups
+  );
 
   const formData = new FormData();
   formData.append("access_key", accessKey);
@@ -153,7 +163,11 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
   for (const [index, product] of order.products.entries()) {
     formData.append(
       `termek ${(index + 1).toString()}`,
-      formatProductString(product, order.threadColors)
+      formatProductString(
+        product,
+        order.threadColors,
+        resolveActiveSetDiscount(product, order.products, order.productGroups)?.percent
+      )
     );
   }
   formData.append(

@@ -15,6 +15,91 @@ interface BasePrice {
   totalPrice: number | undefined;
   indeterminate: boolean;
   discount: number | undefined;
+  discountSource: "set" | "standalone" | undefined;
+}
+
+/** Minimal structural shape of a product group, to avoid a data.ts import cycle. */
+export interface SetDiscountGroup {
+  title: string;
+  products: { product_id: string; discount_percent?: number | undefined }[];
+}
+
+/**
+ * The best set discount a product qualifies for: the largest `discount_percent`
+ * across every group membership. When a product is in more than one set, the
+ * biggest discount wins (no stacking). See docs/set-pricing-model.md.
+ */
+export function resolveSetDiscount(
+  productId: string,
+  groups: SetDiscountGroup[]
+): { percent: number; setTitle: string } | undefined {
+  let best: { percent: number; setTitle: string } | undefined;
+  for (const group of groups) {
+    for (const member of group.products) {
+      if (member.product_id !== productId || member.discount_percent == null) {
+        continue;
+      }
+      if (!best || member.discount_percent > best.percent) {
+        best = { percent: member.discount_percent, setTitle: group.title };
+      }
+    }
+  }
+  return best;
+}
+
+/** Normalised, order-independent view of a product's selected material values. */
+function normalizeMaterialValues(product: IProduct): string {
+  const values = product.materials.values
+    .filter((v): v is ProductMaterialValue => v != null && v.material_id !== "")
+    .map((v) => ({
+      material_id: v.material_id,
+      colors: v.colors.toSorted(),
+      custom_color: v.custom_color ?? "",
+    }))
+    .toSorted((a, b) => a.material_id.localeCompare(b.material_id));
+  return JSON.stringify(values);
+}
+
+/**
+ * Two products count towards the same set only when their selected material
+ * values match exactly (same materials, colours and custom colours). The
+ * comparison is order-independent and ignores transient `error` fields. Two
+ * products with no material selections match trivially. See
+ * docs/set-pricing-model.md.
+ */
+export function materialsMatch(a: IProduct, b: IProduct): boolean {
+  return normalizeMaterialValues(a) === normalizeMaterialValues(b);
+}
+
+/**
+ * The set discount an item actively earns given the current basket. An item
+ * only earns a set's discount when at least one *other* basket item is also a
+ * member of that set and has exactly matching material values. When several
+ * sets qualify, the biggest discount wins (no stacking).
+ */
+export function resolveActiveSetDiscount(
+  item: IProduct,
+  basket: IProduct[],
+  groups: SetDiscountGroup[]
+): { percent: number; setTitle: string } | undefined {
+  let best: { percent: number; setTitle: string } | undefined;
+  for (const group of groups) {
+    const membership = group.products.find(
+      (m) => m.product_id === item.product_id && m.discount_percent != null
+    );
+    if (!membership || membership.discount_percent == null) {
+      continue;
+    }
+    const memberIds = new Set(group.products.map((m) => m.product_id));
+    const hasMatchingPartner = basket.some(
+      (other) =>
+        other.uuid !== item.uuid && memberIds.has(other.product_id) && materialsMatch(item, other)
+    );
+    if (hasMatchingPartner && (!best || membership.discount_percent > best.percent)) {
+      best = { percent: membership.discount_percent, setTitle: group.title };
+    }
+  }
+  return best;
 }
 
 export interface Price extends BasePrice {
@@ -93,7 +178,10 @@ function getMaterialPrice(
   };
 }
 
-export function calculatePriceForItem(product: IProduct): Price | LengthBasedPrice {
+export function calculatePriceForItem(
+  product: IProduct,
+  setDiscountPercent?: number
+): Price | LengthBasedPrice {
   const parts: PricePart[] = [];
   for (const field of product.fields) {
     if (!isFieldVisible(field, product.fields)) {
@@ -129,12 +217,25 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
     allParts.reduce((sum, part) => sum + Math.round(part.price ?? 0), 0)
   );
   const indeterminate = allParts.some((part) => part.price === undefined);
-  const discountMultiplier =
+  // A set discount (not date-gated) replaces the standalone, date-gated discount.
+  const standaloneMultiplier =
     product.discount &&
     product.discount_valid_until &&
     new Date() <= new Date(product.discount_valid_until)
       ? 1 - product.discount / 100
       : undefined;
+  const discountSource: "set" | "standalone" | undefined =
+    setDiscountPercent != null && setDiscountPercent > 0
+      ? "set"
+      : standaloneMultiplier === undefined
+        ? undefined
+        : "standalone";
+  const discountMultiplier =
+    discountSource === "set"
+      ? 1 - (setDiscountPercent ?? 0) / 100
+      : discountSource === "standalone"
+        ? standaloneMultiplier
+        : undefined;
   const totalPrice =
     unitPrice * product.count * (discountMultiplier === undefined ? 1 : discountMultiplier);
 
@@ -153,6 +254,7 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
         basePrice,
         indeterminate,
         discount: discountMultiplier,
+        discountSource,
       };
     }
 
@@ -170,6 +272,7 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
       basePrice,
       indeterminate,
       discount: discountMultiplier,
+      discountSource,
     };
   }
 
@@ -181,5 +284,6 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
     basePrice,
     indeterminate,
     discount: discountMultiplier,
+    discountSource,
   };
 }

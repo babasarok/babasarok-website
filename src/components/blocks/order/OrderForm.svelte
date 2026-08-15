@@ -11,6 +11,7 @@
   import { sanitizeItem } from "@/lib/validation";
   import Masonry from "svelte-bricks";
   import { submitOrder, calculateOrderTotal } from "@/lib/orderSubmit";
+  import { resolveActiveSetDiscount } from "@/lib/priceUtils";
   import { loadOrderState, saveOrderState } from "@/lib/orderStorage";
   import {
     instantiateProduct,
@@ -64,9 +65,9 @@
   const relatedByProductId = $derived.by(() => {
     const map: Record<string, CmsEnhancedProduct[]> = {};
     for (const group of productGroups) {
-      for (const id of group.products) {
+      for (const { product_id: id } of group.products) {
         const siblings = (map[id] ??= []);
-        for (const otherId of group.products) {
+        for (const { product_id: otherId } of group.products) {
           if (
             otherId === id ||
             !Object.hasOwn(productInfo, otherId) ||
@@ -76,6 +77,37 @@
           }
           siblings.push(productInfo[otherId]);
         }
+      }
+    }
+    return map;
+  });
+
+  // Best set discount percent per product (biggest wins across all its sets).
+  // This is the *potential* discount a product could unlock, used to annotate
+  // the "add related" chips regardless of what's currently in the basket.
+  const discountByProductId = $derived.by(() => {
+    const map: Record<string, number> = {};
+    for (const group of productGroups) {
+      for (const { product_id, discount_percent } of group.products) {
+        if (discount_percent != null && discount_percent > (map[product_id] ?? 0)) {
+          map[product_id] = discount_percent;
+        }
+      }
+    }
+    return map;
+  });
+
+  // The set discount each basket item *actively* earns right now: it needs a
+  // matching-material sibling from the same set to also be in the basket.
+  // Keyed by item uuid, because two rows of the same product can differ in
+  // their material selections. Drives the per-card price and label.
+  const activeDiscountByUuid = $derived.by(() => {
+    const basket = products;
+    const map: Record<string, number> = {};
+    for (const item of basket) {
+      const active = resolveActiveSetDiscount(item, basket, productGroups);
+      if (active) {
+        map[item.uuid] = active.percent;
       }
     }
     return map;
@@ -165,7 +197,16 @@
 
     sending = true;
     const result = await submitOrder(
-      { name, email, phone, deliveryMethod: deliveryMethodData, address, products, threadColors },
+      {
+        name,
+        email,
+        phone,
+        deliveryMethod: deliveryMethodData,
+        address,
+        products,
+        threadColors,
+        productGroups,
+      },
       {
         accessKey: params.fabformURL ?? "",
         message,
@@ -184,7 +225,7 @@
       try {
         globalThis.window.fbq("track", "Purchase", {
           currency: "HUF",
-          value: calculateOrderTotal(products, deliveryMethodData).total,
+          value: calculateOrderTotal(products, deliveryMethodData, productGroups).total,
           num_items: products.length,
         });
       } catch (e) {
@@ -293,6 +334,8 @@
                 <OrderItem
                   product={item as IProduct}
                   {threadColors}
+                  setDiscountPercent={activeDiscountByUuid[(item as IProduct).uuid]}
+                  relatedDiscounts={discountByProductId}
                   relatedProducts={relatedByProductId[(item as IProduct).product_id] ?? []}
                   onAddRelated={(target) => {
                     products.push(

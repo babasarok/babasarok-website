@@ -6,6 +6,7 @@
   import OrderItemFields from "./OrderItemFields.svelte";
   import type { CmsEnhancedEmbroideryColor, CmsEnhancedProduct } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
+  import OrderItemPrice from "./OrderItemPrice.svelte";
 
   interface Props extends HTMLAttributes<HTMLDivElement> {
     onClose: () => void;
@@ -14,6 +15,8 @@
     onChange?: (product: IProduct) => void;
     relatedProducts?: CmsEnhancedProduct[];
     onAddRelated?: (target: CmsEnhancedProduct) => void;
+    setDiscountPercent?: number | undefined;
+    relatedDiscounts?: Record<string, number>;
   }
 
   let {
@@ -23,6 +26,8 @@
     onChange,
     relatedProducts = [],
     onAddRelated,
+    setDiscountPercent,
+    relatedDiscounts = {},
     class: className,
     ...rest
   }: Props = $props();
@@ -69,12 +74,17 @@
             onclick={() => onAddRelated(related)}
           >
             {related.title}
+            {#if relatedDiscounts[related.product_id]}
+              <span class="font-medium text-green-700"
+                >-{relatedDiscounts[related.product_id]}%</span
+              >
+            {/if}
             <Icon icon="mdi:add" class="shrink-0" />
           </button>
         {/each}
       </div>
     </div>
   {/if}
-  <!-- <div class="w-full h-0.5 bg-brown-200"></div>
-    <OrderItemPrice {product} {onChange} /> -->
+  <div class="w-full h-0.5 bg-brown-200"></div>
+  <OrderItemPrice {product} {setDiscountPercent} {onChange} />
 </div>

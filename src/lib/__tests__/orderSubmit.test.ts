@@ -46,6 +46,7 @@ const baseOrder = (products: OrderDetails["products"], address?: string): OrderD
   address,
   products,
   threadColors: [],
+  productGroups: [],
 });
 
 describe("order form envelope", () => {

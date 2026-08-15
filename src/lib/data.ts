@@ -609,18 +609,36 @@ export const getDeliveryMethods = async (): Promise<CmsEnhancedDeliveryMethod[]>
   return nodes;
 };
 
-export interface CmsProductGroup {
-  title: string;
-  products: string[];
+/** A single membership in a product group ("set"). */
+export interface CmsProductGroupMember {
+  product_id: string;
+  /**
+   * The percent discount this product gets *when ordered in this set* (0–100).
+   * Optional: a set member with no value simply earns no set discount.
+   * See docs/set-pricing-model.md.
+   */
+  discount_percent?: number | undefined;
 }
 
-export const getProductGroups = async (): Promise<RecursiveRequired<CmsProductGroup>[]> => {
+export interface CmsProductGroup {
+  title: string;
+  products: CmsProductGroupMember[];
+}
+
+export const getProductGroups = async (): Promise<CmsProductGroup[]> => {
   const result = await client.queries.product_groupsConnection();
 
   const nodes = nodesFrom(result.data.product_groupsConnection);
-  return nodes.map((group) => ({
-    title: group.title,
-    products:
-      group.products?.map((x) => x?.product.product_id).filter((x): x is string => x != null) ?? [],
-  }));
+  return nodes.map((group) => {
+    const products: RecursiveRequired<CmsProductGroupMember>[] = [];
+    for (const x of group.products ?? []) {
+      if (x?.product) {
+        products.push({
+          product_id: x.product.product_id,
+          discount_percent: x.discount_percent ?? undefined,
+        });
+      }
+    }
+    return { title: group.title, products };
+  });
 };

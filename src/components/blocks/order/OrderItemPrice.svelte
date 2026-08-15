@@ -7,13 +7,14 @@
 
   interface Props {
     product: IProduct;
+    setDiscountPercent?: number | undefined;
     onChange?: ((product: IProduct) => void) | undefined;
   }
 
-  const { product, onChange }: Props = $props();
+  const { product, setDiscountPercent, onChange }: Props = $props();
 
   const price = $derived.by(() => {
-    return calculatePriceForItem(product);
+    return calculatePriceForItem(product, setDiscountPercent);
   });
 
   const priceParts = $derived.by(() => {
@@ -49,7 +50,7 @@
     {/if}
     {#if price.discount !== undefined}
       <div class="flex justify-between">
-        <p class="text-xs">Kedvezmény</p>
+        <p class="text-xs">{price.discountSource === "set" ? "Szett kedvezmény" : "Kedvezmény"}</p>
         <p class="text-xs">
           {(1 - price.discount).toLocaleString(undefined, { style: "percent" })}
         </p>
