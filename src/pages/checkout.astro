@@ -1,0 +1,57 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import PageHeader from "../components/ui/PageHeader.astro";
+import {
+  getConfig,
+  getDeliveryMethods,
+  getProducts,
+  getThreadColors,
+  getProductGroups,
+  type CmsEnhancedProduct,
+  type CmsEnhancedDeliveryMethod,
+} from "../lib/data";
+import CheckoutForm from "@/components/blocks/order/CheckoutForm.svelte";
+
+const config = await getConfig();
+
+const products = await getProducts();
+const deliveryMethods = await getDeliveryMethods();
+const threadColors = await getThreadColors();
+const productGroups = await getProductGroups();
+
+// Slug lookup so the checkout can link each item back to its product page.
+const slugByProductId = Object.fromEntries(
+  (await getCollection("product")).map((p) => [p.data.product_id, p.id])
+);
+---
+
+<Base title="Pénztár">
+  <PageHeader title="Pénztár" breadcrumb="Pénztár" no-shapes />
+
+  <section class="py-12.5">
+    <div class="not-prose container">
+      <CheckoutForm
+        products={products.reduce<Record<string, CmsEnhancedProduct>>((acc, p) => {
+          if (!p.can_be_ordered) {
+            return acc;
+          }
+          acc[p.product_id] = p;
+          return acc;
+        }, {})}
+        deliveryMethods={deliveryMethods.reduce<Record<string, CmsEnhancedDeliveryMethod>>(
+          (acc, d) => {
+            acc[d.delivery_name] = d;
+            return acc;
+          },
+          {}
+        )}
+        config={{ fabformURL: config.fabformURL, address: config.address }}
+        threadColors={threadColors}
+        productGroups={productGroups}
+        slugByProductId={slugByProductId}
+        client:load
+      />
+    </div>
+  </section>
+</Base>

@@ -73,6 +73,13 @@ class OrderBasket {
     this.#notify();
   }
 
+  /** Empty the basket (e.g. after a successful order submission). */
+  clear(): void {
+    const next = updateBasketProducts(() => []);
+    this.items = next.products;
+    this.#notify();
+  }
+
   #notify(): void {
     globalThis.dispatchEvent(new CustomEvent(BASKET_CHANGED_EVENT));
   }

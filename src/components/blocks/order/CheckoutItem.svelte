@@ -1,0 +1,172 @@
+<script lang="ts">
+  import Icon from "@iconify/svelte";
+  import { calculatePriceForItem } from "@/lib/priceUtils";
+  import { isFieldVisible } from "@/lib/fieldVisibility";
+  import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
+  import type { Field, IProduct, ProductMaterialValue } from "@/lib/types.svelte";
+  import type { SetDiscountStatus } from "@/lib/priceUtils";
+
+  interface Props {
+    product: IProduct;
+    threadColors: CmsEnhancedEmbroideryColor[];
+    /** Product page link (with `?uuid=…`) that re-opens this item for editing. */
+    editHref: string | undefined;
+    setStatus?: SetDiscountStatus | undefined;
+    onRemove: () => void;
+  }
+
+  let { product, threadColors, editHref, setStatus, onRemove }: Props = $props();
+
+  const setDiscountPercent = $derived(
+    setStatus?.state === "active" ? setStatus.percent : undefined
+  );
+  const price = $derived(calculatePriceForItem(product, setDiscountPercent));
+
+  /** The selected, human-readable value of a field, or `undefined` to hide it. */
+  function fieldDisplay(field: Field): string | undefined {
+    switch (field.type) {
+      case "toggle": {
+        return field.value?.value ? "Igen" : undefined;
+      }
+      case "embroidery": {
+        if (!field.value?.enabled) {
+          return undefined;
+        }
+        const color = threadColors.find((c) => c.color_id === field.value?.color.color);
+        const colorLabel = field.value.color.custom_color
+          ? `egyedi szín: ${field.value.color.custom_color}`
+          : (color?.label ?? field.value.color.color);
+        const text = field.value.text.value.trim();
+        return colorLabel ? `${text} (${colorLabel})`.trim() : text;
+      }
+      default: {
+        const value = field.value?.value;
+        if (!value) {
+          return undefined;
+        }
+        if (field.value?.is_custom) {
+          return `Egyedi: ${value}`;
+        }
+        const option = "items" in field ? field.items?.find((o) => o?.value === value) : undefined;
+        return option?.label ?? value;
+      }
+    }
+  }
+
+  const fieldRows = $derived(
+    product.fields
+      .filter((f) => isFieldVisible(f, product.fields))
+      .map((f) => ({ label: f.label || f.name, value: fieldDisplay(f) }))
+      .filter((row): row is { label: string; value: string } => row.value != null)
+  );
+
+  /** The chosen material + colours for one material slot, or `undefined`. */
+  function materialDisplay(value: ProductMaterialValue | undefined): string | undefined {
+    if (!value?.material_id) {
+      return undefined;
+    }
+    const material = product.materials.materials.find(
+      (m) => m?.material_path.material_id === value.material_id
+    );
+    const name = material?.material_path.label ?? value.material_id;
+    const colors = value.custom_color
+      ? `egyedi szín: ${value.custom_color}`
+      : value.colors
+          .map((id) => material?.material_path.colors?.find((c) => c.color_id === id)?.label ?? id)
+          .join(", ");
+    return colors ? `${name} (${colors})` : name;
+  }
+
+  const materialRows = $derived(
+    Array.from({ length: product.materials.material_required_count }, (_, i) =>
+      materialDisplay(product.materials.values[i])
+    ).filter((row): row is string => row != null)
+  );
+</script>
+
+<article class="flex flex-col gap-3 rounded-xl border border-brown-200 bg-white p-4 shadow-sm">
+  <div class="flex items-start gap-3">
+    {#if product.thumbnail}
+      <img
+        src={product.thumbnail.src}
+        srcset={product.thumbnail.srcSet.attribute || undefined}
+        {...product.thumbnail.attributes}
+        alt={product.title}
+        class="size-16 shrink-0 rounded-lg object-cover"
+      />
+    {:else if product.icon}
+      <div class="grid size-16 shrink-0 place-items-center rounded-lg bg-brown-50 text-brown-400">
+        <div
+          class="size-8 bg-brown-400"
+          style={`mask-image:url(${product.icon.src});mask-size:contain;mask-position:center;mask-repeat:no-repeat;-webkit-mask-image:url(${product.icon.src});-webkit-mask-size:contain;-webkit-mask-position:center;-webkit-mask-repeat:no-repeat;`}
+        ></div>
+      </div>
+    {:else}
+      <div class="grid size-16 shrink-0 place-items-center rounded-lg bg-brown-50 text-brown-300">
+        <Icon icon="mdi:image-outline" class="text-2xl" />
+      </div>
+    {/if}
+
+    <div class="flex min-w-0 flex-1 flex-col">
+      <div class="flex items-start justify-between gap-2">
+        <h3 class="text-base font-medium leading-tight text-dark">{product.title}</h3>
+        <span class="shrink-0 text-sm text-brown-500">{product.count} db</span>
+      </div>
+
+      {#if setDiscountPercent}
+        <span
+          class="mt-1 flex w-fit items-center gap-1 rounded-full bg-green-600 px-2 py-0.5 text-xs font-semibold text-white"
+        >
+          <Icon icon="mdi:tag-check" class="shrink-0" />
+          Szett kedvezmény −{setDiscountPercent}%
+        </span>
+      {/if}
+    </div>
+  </div>
+
+  {#if fieldRows.length > 0 || materialRows.length > 0}
+    <dl class="flex flex-col gap-1 border-t border-brown-100 pt-3 text-sm">
+      {#each fieldRows as row (row.label)}
+        <div class="flex justify-between gap-4">
+          <dt class="text-brown-500">{row.label}</dt>
+          <dd class="text-right text-dark">{row.value}</dd>
+        </div>
+      {/each}
+      {#each materialRows as row, i (i)}
+        <div class="flex justify-between gap-4">
+          <dt class="text-brown-500">
+            {materialRows.length > 1 ? `Anyag ${i + 1}` : "Anyag"}
+          </dt>
+          <dd class="text-right text-dark">{row}</dd>
+        </div>
+      {/each}
+    </dl>
+  {/if}
+
+  <div class="flex items-center justify-between border-t border-brown-100 pt-3">
+    <div class="flex items-center gap-3 text-sm">
+      {#if editHref}
+        <a
+          href={editHref}
+          class="flex items-center gap-1 font-medium text-brown-600 transition-colors hover:text-brown-700"
+        >
+          <Icon icon="mdi:pencil" class="shrink-0" />
+          Szerkesztés
+        </a>
+      {/if}
+      <button
+        type="button"
+        onclick={onRemove}
+        class="flex cursor-pointer items-center gap-1 text-brown-500 transition-colors hover:text-red-600"
+      >
+        <Icon icon="mdi:delete-outline" class="shrink-0" />
+        Törlés
+      </button>
+    </div>
+    <p class="text-right font-medium text-dark">
+      {price.totalPrice === undefined ? "??" : `${price.totalPrice} Ft`}{price.indeterminate
+        ? " + ??"
+        : ""}
+    </p>
+  </div>
+</article>

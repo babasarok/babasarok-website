@@ -8,10 +8,13 @@ import NavBasket from "@/components/blocks/order/NavBasket.svelte";
 const config = (await getEntry("config", "config")!).data;
 const logo = config.logo;
 const contactLink = config.contactLink ? `/${config.contactLink}` : "/contact";
+const checkoutLink = "/checkout";
 
 const isHome = Astro.url.pathname === "/";
-// The contact page shows the full basket already; skip the nav basket there.
-const showBasket = !Astro.url.pathname.startsWith(contactLink);
+// The contact and checkout pages show the full basket already; skip the nav
+// basket on them.
+const showBasket =
+  !Astro.url.pathname.startsWith(contactLink) && !Astro.url.pathname.startsWith(checkoutLink);
 
 const productMeta = Object.fromEntries(
   (await getCollection("product")).map((product) => [
@@ -49,7 +52,7 @@ const mainMenu = rawMenu
           showBasket && (
             <NavBasket
               productMeta={productMeta}
-              checkoutHref={contactLink}
+              checkoutHref={checkoutLink}
               anchored={false}
               client:load
             />
@@ -91,7 +94,7 @@ const mainMenu = rawMenu
           {
             showBasket && (
               <div class="hidden lg:block">
-                <NavBasket productMeta={productMeta} checkoutHref={contactLink} client:load />
+                <NavBasket productMeta={productMeta} checkoutHref={checkoutLink} client:load />
               </div>
             )
           }

@@ -159,6 +159,21 @@ export function updateBasketProducts(
   return parsed.data;
 }
 
+/**
+ * Update the contact/delivery envelope fields (name, email, delivery, …) while
+ * preserving the persisted basket products. Lets the checkout page save contact
+ * details without touching the basket the {@link updateBasketProducts} flow owns.
+ */
+export function updateOrderEnvelope(fields: Omit<SavedOrderState, "products">): SavedOrderState {
+  const current = loadOrderState() ?? EMPTY_STATE;
+  const parsed = savedStateSchema.safeParse({ ...fields, products: current.products });
+  if (!parsed.success) {
+    return current;
+  }
+  writeEnvelope(parsed.data);
+  return parsed.data;
+}
+
 export function saveOrderState(state: OrderFormState): void {
   // Persist only the user-entered values; zod strips transient `error`s.
   const parsed = savedStateSchema.safeParse({

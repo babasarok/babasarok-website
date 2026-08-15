@@ -35,7 +35,7 @@
     productGroups,
     slugByProductId = {},
     threadColors,
-    checkoutHref = "/contact",
+    checkoutHref = "/checkout",
   }: Props = $props();
 
   // Plain (non-proxy) catalog; the props are reactive and structuredClone-hostile.
