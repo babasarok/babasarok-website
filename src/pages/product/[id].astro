@@ -22,6 +22,7 @@ export const getStaticPaths = (async () => {
   const enhancedById = new Map(enhancedProducts.map((p) => [p.product_id, p]));
   const productCatalog = Object.fromEntries(enhancedProducts.map((p) => [p.product_id, p]));
   const productGroups = await getProductGroups();
+  const slugByProductId = Object.fromEntries(products.map((p) => [p.data.product_id, p.id]));
   const threadColors = await getThreadColors();
 
   return products.map((product, i) => ({
@@ -31,6 +32,7 @@ export const getStaticPaths = (async () => {
       orderProduct: enhancedById.get(product.data.product_id) ?? null,
       productCatalog,
       productGroups,
+      slugByProductId,
       threadColors,
       prev: products[i - 1] ?? null,
       next: products[i + 1] ?? null,
@@ -38,8 +40,16 @@ export const getStaticPaths = (async () => {
   }));
 }) satisfies GetStaticPaths;
 
-const { product, prev, next, orderProduct, productCatalog, productGroups, threadColors } =
-  Astro.props;
+const {
+  product,
+  prev,
+  next,
+  orderProduct,
+  productCatalog,
+  productGroups,
+  slugByProductId,
+  threadColors,
+} = Astro.props;
 const { Content } = await render(product);
 
 const { title, shortDescription } = product.data;
@@ -92,6 +102,7 @@ const shareLinks = [
                     product={orderProduct}
                     products={productCatalog}
                     productGroups={productGroups}
+                    slugByProductId={slugByProductId}
                     threadColors={threadColors}
                     client:load
                   />

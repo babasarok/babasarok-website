@@ -7,7 +7,7 @@
   import type { CmsEnhancedEmbroideryColor, CmsEnhancedProduct } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
   import type { SetDiscountStatus } from "@/lib/priceUtils";
-  import { resolveColorCount } from "@/lib/materialUtils";
+  import { areMaterialsComplete } from "@/lib/materialUtils";
   import OrderItemPrice from "./OrderItemPrice.svelte";
 
   interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -45,32 +45,9 @@
   }: Props = $props();
 
   // Whether every required material slot has a material and its colors chosen.
-  // Set siblings carry over the current material + colors, so adding one only
-  // makes sense once the selection is complete.
-  const materialsReady = $derived.by(() => {
-    const { materials, material_required_count, values } = product.materials;
-    if (materials.length === 0 || material_required_count === 0) {
-      return true;
-    }
-    if (values.length < material_required_count) {
-      return false;
-    }
-    for (let i = 0; i < material_required_count; i++) {
-      const value = values[i];
-      if (!value || !value.material_id) {
-        return false;
-      }
-      if (value.custom_color) {
-        continue;
-      }
-      const info = materials.find((m) => m?.material_path.material_id === value.material_id);
-      const count = resolveColorCount(info ?? null, product);
-      if (!count || value.colors.length < count) {
-        return false;
-      }
-    }
-    return true;
-  });
+  // Set siblings carry over the current selection, so adding one only makes
+  // sense once it is complete.
+  const materialsReady = $derived(areMaterialsComplete(product));
 </script>
 
 <div
@@ -151,7 +128,7 @@
         </p>
       {:else}
         <p class="text-xs text-brown-400">
-          Előbb válaszd ki az anyagot, hogy a szett darabjait az anyagodhoz igazítva adhasd hozzá.
+          Előbb válaszd ki az anyagot, a szett csak akkor érvényes ha az anyagok mind egyeznek.
         </p>
       {/if}
     </div>

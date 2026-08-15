@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import Icon from "@iconify/svelte";
   import OrderItem from "./OrderItem.svelte";
+  import SetPanel from "./SetPanel.svelte";
   import Button from "./common/Button.svelte";
   import { orderBasket } from "@/lib/orderBasket.svelte";
   import {
@@ -12,6 +13,7 @@
   } from "@/lib/orderProduct";
   import { resolveSetDiscount, resolveSetDiscountStatus } from "@/lib/priceUtils";
   import type { SetDiscountStatus } from "@/lib/priceUtils";
+  import { areMaterialsComplete } from "@/lib/materialUtils";
   import { prefillFromParams } from "@/lib/orderQueryParams";
   import { sanitizeItem } from "@/lib/validation";
   import { isItemValid, validateItem } from "@/lib/validation";
@@ -22,6 +24,7 @@
     product: CmsEnhancedProduct;
     products: Record<string, CmsEnhancedProduct>;
     productGroups: CmsProductGroup[];
+    slugByProductId?: Record<string, string | undefined>;
     threadColors: CmsEnhancedEmbroideryColor[];
     checkoutHref?: string;
   }
@@ -30,6 +33,7 @@
     product,
     products,
     productGroups,
+    slugByProductId = {},
     threadColors,
     checkoutHref = "/contact",
   }: Props = $props();
@@ -106,6 +110,40 @@
     item ? resolveSetDiscountStatus(item, basket, productGroups) : undefined
   );
 
+  const materialsReady = $derived(item ? areMaterialsComplete(item) : false);
+
+  // Title + potential discount of the set this product belongs to, for the panel
+  // header (falls back to the group title when the product itself has no discount).
+  const setInfo = $derived.by(() => {
+    const best = resolveSetDiscount(product.product_id, productGroups);
+    if (best) {
+      return best;
+    }
+    const group = productGroups.find((g) =>
+      g.products.some((m) => m.product_id === product.product_id)
+    );
+    return group ? { percent: undefined, setTitle: group.title } : undefined;
+  });
+
+  function addRelated(target: CmsEnhancedProduct): void {
+    if (!item) {
+      return;
+    }
+    orderBasket.upsert(instantiateRelatedProduct($state.snapshot(target), $state.snapshot(item)));
+  }
+
+  function syncToSet(): void {
+    if (!item || setStatus?.state !== "pending-material") {
+      return;
+    }
+    const partner = basket.find((p) => p.uuid === setStatus.partnerUuid);
+    if (!partner) {
+      return;
+    }
+    item = sanitizeItem(syncMaterialsToPartner($state.snapshot(item), $state.snapshot(partner)));
+    saved = false;
+  }
+
   onMount(() => {
     orderBasket.start();
 
@@ -158,32 +196,7 @@
       product={item}
       {threadColors}
       bare
-      {setStatus}
       setDiscountPercent={setStatus?.state === "active" ? setStatus.percent : undefined}
-      {basketCountByProductId}
-      relatedDiscounts={discountByProductId}
-      {relatedProducts}
-      onAddRelated={(target) => {
-        if (!item) {
-          return;
-        }
-        orderBasket.upsert(
-          instantiateRelatedProduct($state.snapshot(target), $state.snapshot(item))
-        );
-      }}
-      onSyncToSet={() => {
-        if (!item || setStatus?.state !== "pending-material") {
-          return;
-        }
-        const partner = basket.find((p) => p.uuid === setStatus.partnerUuid);
-        if (!partner) {
-          return;
-        }
-        item = sanitizeItem(
-          syncMaterialsToPartner($state.snapshot(item), $state.snapshot(partner))
-        );
-        saved = false;
-      }}
       onChange={(updated) => {
         item = sanitizeItem(updated);
         saved = false;
@@ -215,6 +228,23 @@
     <Button class="mt-4 h-11 w-full uppercase" variant="contained" type="button" onclick={save}>
       {editing ? "Kosár frissítése" : "Kosárba"}
     </Button>
+
+    {#if relatedProducts.length > 0 && setInfo}
+      <div class="mt-6">
+        <SetPanel
+          setTitle={setInfo.setTitle}
+          percent={setInfo.percent}
+          {setStatus}
+          {relatedProducts}
+          relatedDiscounts={discountByProductId}
+          {basketCountByProductId}
+          {slugByProductId}
+          {materialsReady}
+          onAddRelated={addRelated}
+          onSyncToSet={syncToSet}
+        />
+      </div>
+    {/if}
   {:else}
     <div
       class="min-h-64 w-full animate-pulse rounded-xl border border-brown-200 bg-brown-100"
