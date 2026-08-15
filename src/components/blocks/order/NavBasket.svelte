@@ -11,14 +11,36 @@
   interface Props {
     productMeta: Record<string, ProductMeta | undefined>;
     checkoutHref?: string;
+    /** Anchor the panel to the button (desktop). When false, pin it to the
+     * viewport as a sheet so it can't overflow on narrow screens. */
+    anchored?: boolean;
   }
 
-  let { productMeta, checkoutHref = "/contact" }: Props = $props();
+  let { productMeta, checkoutHref = "/contact", anchored = true }: Props = $props();
 
   let open = $state(false);
+  let buttonEl: HTMLButtonElement | undefined;
+  let panelTop = $state(0);
+
+  function reposition(): void {
+    if (buttonEl) {
+      panelTop = buttonEl.getBoundingClientRect().bottom + 8;
+    }
+  }
 
   onMount(() => {
     orderBasket.start();
+  });
+
+  // Keep the pinned sheet under the button when the viewport resizes.
+  $effect(() => {
+    if (anchored || !open) {
+      return;
+    }
+    reposition();
+    const onResize = (): void => reposition();
+    globalThis.addEventListener("resize", onResize);
+    return () => globalThis.removeEventListener("resize", onResize);
   });
 
   const items = $derived(orderBasket.items);
@@ -28,10 +50,16 @@
 <div class="relative">
   <button
     type="button"
+    bind:this={buttonEl}
     class="relative flex cursor-pointer items-center gap-1 p-2 text-dark transition-colors hover:text-sand-300"
     aria-label="Kosár"
     aria-expanded={open}
-    onclick={() => (open = !open)}
+    onclick={() => {
+      open = !open;
+      if (open && !anchored) {
+        reposition();
+      }
+    }}
   >
     <Icon icon="mdi:cart-outline" class="text-2xl" />
     {#if count > 0}
@@ -51,12 +79,18 @@
       onkeydown={(e) => e.key === "Escape" && (open = false)}
     ></div>
     <div
-      class="absolute right-0 z-50 mt-2 flex w-80 max-w-[calc(100vw-2rem)] flex-col rounded-xl border border-brown-200 bg-white p-3 text-left shadow-lg"
+      class={[
+        "z-50 flex flex-col rounded-xl border border-brown-200 bg-white p-3 text-left shadow-lg",
+        anchored
+          ? "absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)]"
+          : "fixed right-3 w-80 max-w-[calc(100vw-1.5rem)]",
+      ]}
+      style={anchored ? undefined : `top:${panelTop}px`}
     >
       {#if items.length === 0}
         <p class="py-4 text-center text-sm text-brown-500">A kosár üres.</p>
       {:else}
-        <ul class="flex max-h-80 flex-col gap-2 overflow-auto">
+        <ul class="flex max-h-[50vh] flex-col gap-2 overflow-auto">
           {#each items as basketItem (basketItem.uuid)}
             {@const meta = productMeta[basketItem.product_id]}
             <li class="flex items-center gap-2 rounded-lg border border-brown-100 p-2 text-sm">

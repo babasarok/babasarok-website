@@ -47,7 +47,12 @@ const mainMenu = rawMenu
       <div class="flex items-center gap-2 lg:hidden">
         {
           showBasket && (
-            <NavBasket productMeta={productMeta} checkoutHref={contactLink} client:load />
+            <NavBasket
+              productMeta={productMeta}
+              checkoutHref={contactLink}
+              anchored={false}
+              client:load
+            />
           )
         }
         <button
