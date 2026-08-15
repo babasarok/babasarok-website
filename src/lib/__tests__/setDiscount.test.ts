@@ -17,7 +17,11 @@ import {
 import type { ProductMaterialValue } from "@/lib/types.svelte";
 import { makeProduct } from "./fixtures";
 
-const val = (material_id: string, colors: string[], custom_color?: string): ProductMaterialValue => ({
+const val = (
+  material_id: string,
+  colors: string[],
+  custom_color?: string
+): ProductMaterialValue => ({
   material_id,
   colors,
   ...(custom_color === undefined ? {} : { custom_color }),
