@@ -122,7 +122,7 @@
           >
             {materialInfo.label || materialInfo.material_id}
             {#if material.price}
-              <span class="text-xs font-medium whitespace-nowrap text-green-700"
+              <span class="text-xs font-medium whitespace-nowrap opacity-70"
                 >+{material.price} Ft</span
               >
             {/if}

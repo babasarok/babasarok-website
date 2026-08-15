@@ -57,7 +57,7 @@
 
 {#snippet priceTag(price: number | undefined | null)}
   {#if price}
-    <span class="text-xs font-medium whitespace-nowrap text-green-700">+{price} Ft</span>
+    <span class="text-xs font-medium whitespace-nowrap opacity-70">+{price} Ft</span>
   {/if}
 {/snippet}
 
@@ -266,7 +266,7 @@
                   }}
                 />
                 {#if field.price}
-                  <span class="text-xs font-medium whitespace-nowrap text-green-700">
+                  <span class="text-xs font-medium whitespace-nowrap text-sand-700">
                     +{field.price} Ft{field.price_unit === "word" ? " / szó" : ""}
                   </span>
                 {/if}

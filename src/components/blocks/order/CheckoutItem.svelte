@@ -148,7 +148,7 @@
         <dd class="text-right text-dark">
           {row.value}
           {#if priceByLabel[row.label]}
-            <span class="ml-1 whitespace-nowrap text-xs font-medium text-green-700"
+            <span class="ml-1 whitespace-nowrap text-xs font-medium text-sand-700"
               >+{priceByLabel[row.label]} Ft</span
             >
           {/if}
@@ -161,7 +161,7 @@
         <dd class="text-right text-dark">
           {row.value}
           {#if priceByLabel[row.label]}
-            <span class="ml-1 whitespace-nowrap text-xs font-medium text-green-700"
+            <span class="ml-1 whitespace-nowrap text-xs font-medium text-sand-700"
               >+{priceByLabel[row.label]} Ft</span
             >
           {/if}
