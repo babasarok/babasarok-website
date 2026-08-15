@@ -70,11 +70,12 @@
   }
 </script>
 
-<div class="not-prose mx-auto w-full max-w-140 text-left text-body">
+<div class="not-prose w-full text-left text-body">
   {#if item}
     <OrderItem
       product={item}
       {threadColors}
+      bare
       onChange={(updated) => {
         item = sanitizeItem(updated);
         saved = false;
@@ -108,7 +109,7 @@
     </Button>
   {:else}
     <div
-      class="mx-auto min-h-64 w-full animate-pulse rounded-xl border border-brown-200 bg-brown-100"
+      class="min-h-64 w-full animate-pulse rounded-xl border border-brown-200 bg-brown-100"
       aria-hidden="true"
     ></div>
   {/if}
