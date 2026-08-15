@@ -22,6 +22,15 @@
   );
   const price = $derived(calculatePriceForItem(product, setDiscountPercent));
 
+  /** Per-option price contribution, keyed by the same label as the summary rows. */
+  const priceByLabel = $derived.by(() => {
+    const map: Record<string, number | undefined> = {};
+    for (const part of price.options) {
+      map[part.label] = part.price;
+    }
+    return map;
+  });
+
   /** The selected, human-readable value of a field, or `undefined` to hide it. */
   function fieldDisplay(field: Field): string | undefined {
     switch (field.type) {
@@ -78,9 +87,10 @@
   }
 
   const materialRows = $derived(
-    Array.from({ length: product.materials.material_required_count }, (_, i) =>
-      materialDisplay(product.materials.values[i])
-    ).filter((row): row is string => row != null)
+    Array.from({ length: product.materials.material_required_count }, (_, i) => ({
+      label: product.materials.material_required_count > 1 ? `Anyag ${i + 1}` : "Anyag",
+      value: materialDisplay(product.materials.values[i]),
+    })).filter((row): row is { label: string; value: string } => row.value != null)
   );
 </script>
 
@@ -124,24 +134,51 @@
     </div>
   </div>
 
-  {#if fieldRows.length > 0 || materialRows.length > 0}
-    <dl class="flex flex-col gap-1 border-t border-brown-100 pt-3 text-sm">
-      {#each fieldRows as row (row.label)}
-        <div class="flex justify-between gap-4">
-          <dt class="text-brown-500">{row.label}</dt>
-          <dd class="text-right text-dark">{row.value}</dd>
-        </div>
-      {/each}
-      {#each materialRows as row, i (i)}
-        <div class="flex justify-between gap-4">
-          <dt class="text-brown-500">
-            {materialRows.length > 1 ? `Anyag ${i + 1}` : "Anyag"}
-          </dt>
-          <dd class="text-right text-dark">{row}</dd>
-        </div>
-      {/each}
-    </dl>
-  {/if}
+  <dl class="flex flex-col gap-1 border-t border-brown-100 pt-3 text-sm">
+    <div class="flex justify-between gap-4">
+      <dt class="text-brown-500">Alapár</dt>
+      <dd class="text-right text-dark">
+        {price.basePrice.price === undefined ? "??" : `${price.basePrice.price} Ft`}
+        {#if price.priced_by_length}/m{/if}
+      </dd>
+    </div>
+    {#each fieldRows as row (row.label)}
+      <div class="flex justify-between gap-4">
+        <dt class="text-brown-500">{row.label}</dt>
+        <dd class="text-right text-dark">
+          {row.value}
+          {#if priceByLabel[row.label]}
+            <span class="ml-1 whitespace-nowrap text-xs font-medium text-green-700"
+              >+{priceByLabel[row.label]} Ft</span
+            >
+          {/if}
+        </dd>
+      </div>
+    {/each}
+    {#each materialRows as row (row.label)}
+      <div class="flex justify-between gap-4">
+        <dt class="text-brown-500">{row.label}</dt>
+        <dd class="text-right text-dark">
+          {row.value}
+          {#if priceByLabel[row.label]}
+            <span class="ml-1 whitespace-nowrap text-xs font-medium text-green-700"
+              >+{priceByLabel[row.label]} Ft</span
+            >
+          {/if}
+        </dd>
+      </div>
+    {/each}
+    {#if price.discount !== undefined}
+      <div class="flex justify-between gap-4">
+        <dt class="text-brown-500">
+          {price.discountSource === "set" ? "Szett kedvezmény" : "Kedvezmény"}
+        </dt>
+        <dd class="text-right font-medium text-green-700">
+          −{(1 - price.discount).toLocaleString("hu-HU", { style: "percent" })}
+        </dd>
+      </div>
+    {/if}
+  </dl>
 
   <div class="flex items-center justify-between border-t border-brown-100 pt-3">
     <div class="flex items-center gap-3 text-sm">

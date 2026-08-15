@@ -160,10 +160,11 @@ in cloud builds) while Astro wants `ImageMetadata` objects from `src/assets`.
 
 ### 4.4 The order configurator island (`components/blocks/order/`)
 
-The one substantial piece of client-side state. `contact.astro` renders
-`<OrderForm client:load>`, passing in Tina-derived `products`, `deliveryMethods`,
-and `config` as plain serializable data. Domain logic is extracted into
-`src/lib/`:
+The main pieces of client-side state are the product-page configurator and the
+checkout. Product pages render `<ProductOrder client:load>` to build up a basket
+item, and `checkout.astro` renders `<CheckoutForm client:load>` for the basket
+review + submission, passing in Tina-derived `products`, `deliveryMethods`, and
+`config` as plain serializable data. Domain logic is extracted into `src/lib/`:
 
 - `priceUtils.ts` — price computation
 - `materialUtils.ts` — material/color resolution (`resolveColorCount`)

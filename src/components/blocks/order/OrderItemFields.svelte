@@ -55,6 +55,12 @@
   {/if}
 {/snippet}
 
+{#snippet priceTag(price: number | undefined | null)}
+  {#if price}
+    <span class="text-xs font-medium whitespace-nowrap text-green-700">+{price} Ft</span>
+  {/if}
+{/snippet}
+
 <!-- Generic fields -->
 <div class="flex flex-col">
   {#each product.fields as field (field.name)}
@@ -97,6 +103,7 @@
                   }}
                 >
                   {item.label || item.value}
+                  {@render priceTag(item.price)}
                   {#if hasTooltip}
                     <Icon icon="material-symbols:question-mark-rounded" class="text-xs" />
                   {/if}
@@ -159,7 +166,7 @@
               >
               {#each items as item (item.label)}
                 <option value={item.value}>
-                  {item.label || item.value}
+                  {item.label || item.value}{item.price ? ` (+${item.price} Ft)` : ""}
                 </option>
               {/each}
             </select>
@@ -171,7 +178,13 @@
               {#each items as item (item.label)}
                 {@const selected = field.value?.value === item.value}
                 <Color
-                  color={{ color_id: item.value, hex: item.value, label: item.label ?? undefined }}
+                  color={{
+                    color_id: item.value,
+                    hex: item.value,
+                    label: item.price
+                      ? `${item.label ?? item.value} (+${item.price} Ft)`
+                      : (item.label ?? undefined),
+                  }}
                   {selected}
                   onclick={(color_id) => {
                     const result = product;
@@ -210,7 +223,7 @@
             </div>
             {@render Input(field)}
           {:else if field.type === "toggle"}
-            <div class="flex">
+            <div class="flex items-center gap-2">
               <Switch
                 checked={field.value?.value ?? false}
                 onchange={(e) => {
@@ -228,10 +241,11 @@
                   }
                 }}
               />
+              {@render priceTag(field.price)}
             </div>
           {:else if field.type === "embroidery"}
             <div class="flex flex-col gap-2">
-              <div class="flex">
+              <div class="flex items-center gap-2">
                 <Switch
                   checked={field.value?.enabled ?? false}
                   onchange={(e) => {
@@ -251,6 +265,11 @@
                     }
                   }}
                 />
+                {#if field.price}
+                  <span class="text-xs font-medium whitespace-nowrap text-green-700">
+                    +{field.price} Ft{field.price_unit === "word" ? " / szó" : ""}
+                  </span>
+                {/if}
               </div>
               {#if field.value?.enabled}
                 {@const embroideryValue = field.value}

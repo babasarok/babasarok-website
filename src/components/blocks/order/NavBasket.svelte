@@ -89,6 +89,12 @@
     >
       {#if items.length === 0}
         <p class="py-4 text-center text-sm text-brown-500">A kosár üres.</p>
+        <a
+          href="/product/"
+          class="flex h-10 items-center justify-center rounded-md bg-brown-500 font-medium uppercase text-white transition-colors hover:bg-brown-700"
+        >
+          Termékek böngészése
+        </a>
       {:else}
         <ul class="flex max-h-[50vh] flex-col gap-2 overflow-auto">
           {#each items as basketItem (basketItem.uuid)}

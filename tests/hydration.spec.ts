@@ -1,12 +1,11 @@
 import { test, expect, type ConsoleMessage, type Locator } from "@playwright/test";
 
 /**
- * Routes that mount a Svelte client island (`<astro-island>`). The order form on
- * /contact and the checkout form on /checkout are the current ones — add new
- * island-bearing routes here as they appear so they get the same hydration
- * guarantee.
+ * Routes that mount a Svelte client island (`<astro-island>`). The checkout form
+ * on /checkout is the current one — add new island-bearing routes here as they
+ * appear so they get the same hydration guarantee.
  */
-const ISLAND_ROUTES = ["/contact", "/checkout"];
+const ISLAND_ROUTES = ["/checkout"];
 
 /**
  * Console / page-error text that signals a *hydration* failure specifically, so

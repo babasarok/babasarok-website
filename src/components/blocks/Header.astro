@@ -7,14 +7,11 @@ import NavBasket from "@/components/blocks/order/NavBasket.svelte";
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const config = (await getEntry("config", "config")!).data;
 const logo = config.logo;
-const contactLink = config.contactLink ? `/${config.contactLink}` : "/contact";
 const checkoutLink = "/checkout";
 
 const isHome = Astro.url.pathname === "/";
-// The contact and checkout pages show the full basket already; skip the nav
-// basket on them.
-const showBasket =
-  !Astro.url.pathname.startsWith(contactLink) && !Astro.url.pathname.startsWith(checkoutLink);
+// The checkout page shows the full basket already; skip the nav basket there.
+const showBasket = !Astro.url.pathname.startsWith(checkoutLink);
 
 const productMeta = Object.fromEntries(
   (await getCollection("product")).map((product) => [
@@ -98,7 +95,7 @@ const mainMenu = rawMenu
               </div>
             )
           }
-          <Button href={contactLink} size="lg" variant="primary">Rendelés</Button>
+          <Button href="/product/" size="lg" variant="primary">Rendelés</Button>
         </div>
       </div>
     </div>
