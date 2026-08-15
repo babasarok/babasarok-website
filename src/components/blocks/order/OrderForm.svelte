@@ -33,7 +33,10 @@
   interface Props {
     products: Record<string, CmsEnhancedProduct>;
     deliveryMethods: Record<string, CmsEnhancedDeliveryMethod>;
-    config: CmsEnhancedConfig;
+    // Only the form endpoint and support address are needed; passing the full
+    // config would serialize the heavyweight logo images into the island props
+    // (and breaks hydration).
+    config: Pick<CmsEnhancedConfig, "fabformURL" | "address">;
     threadColors: CmsEnhancedEmbroideryColor[];
     productGroups: CmsProductGroup[];
   }

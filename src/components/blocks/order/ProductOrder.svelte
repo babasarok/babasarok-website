@@ -10,11 +10,12 @@
     instantiateRelatedProduct,
     restoreProducts,
     syncMaterialsToPartner,
+    hasConfigurableOptions,
   } from "@/lib/orderProduct";
   import { resolveSetDiscount, resolveSetDiscountStatus } from "@/lib/priceUtils";
   import type { SetDiscountStatus } from "@/lib/priceUtils";
   import { areMaterialsComplete } from "@/lib/materialUtils";
-  import { prefillFromParams } from "@/lib/orderQueryParams";
+  import { prefillFromParams, buildMaterialParams } from "@/lib/orderQueryParams";
   import { sanitizeItem } from "@/lib/validation";
   import { isItemValid, validateItem } from "@/lib/validation";
   import type { CmsEnhancedEmbroideryColor, CmsEnhancedProduct, CmsProductGroup } from "@/lib/data";
@@ -129,7 +130,26 @@
     if (!item) {
       return;
     }
-    orderBasket.upsert(instantiateRelatedProduct($state.snapshot(target), $state.snapshot(item)));
+    // Ensure the product being configured is in the basket first, so the set
+    // always includes it and its edits aren't lost when we navigate away.
+    if (!persistCurrent()) {
+      return;
+    }
+
+    const targetSnap = $state.snapshot(target);
+    // Siblings with their own options can't be configured from defaults; send
+    // the user to the sibling's page with the current materials preselected.
+    if (hasConfigurableOptions(targetSnap)) {
+      const slug = slugByProductId[target.product_id];
+      if (slug) {
+        const query = buildMaterialParams($state.snapshot(item)).toString();
+        globalThis.location.href = `/product/${slug}/${query ? `?${query}` : ""}`;
+        return;
+      }
+    }
+
+    orderBasket.upsert(instantiateRelatedProduct(targetSnap, $state.snapshot(item)));
+    saved = true;
   }
 
   function syncToSet(): void {
@@ -168,25 +188,31 @@
     item = sanitizeItem(fresh);
   });
 
-  function save(): void {
+  function persistCurrent(): boolean {
     if (!item) {
-      return;
+      return false;
     }
     error = null;
     validateItem(item);
     if (!isItemValid(item)) {
       error = "Kérlek, ellenőrizd a termék adatait, és töltsd ki a hiányzó mezőket.";
-      return;
+      return false;
     }
 
     orderBasket.upsert($state.snapshot(item));
     editing = true;
-    saved = true;
 
     // Keep the URL addressable so a refresh re-opens the same basket item.
     const url = new URL(globalThis.location.href);
     url.searchParams.set("uuid", item.uuid);
     globalThis.history.replaceState(null, "", url);
+    return true;
+  }
+
+  function save(): void {
+    if (persistCurrent()) {
+      saved = true;
+    }
   }
 </script>
 

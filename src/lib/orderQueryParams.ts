@@ -95,6 +95,30 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
   }
 }
 
+/**
+ * Serialise an item's chosen materials into query params using the same scheme
+ * {@link prefillFromParams} reads, so a set sibling's page can be deep-linked
+ * with the current material selection preselected.
+ */
+export function buildMaterialParams(item: Pick<IProduct, "materials">): URLSearchParams {
+  const params = new URLSearchParams();
+  const { values, material_required_count } = item.materials;
+  for (let i = 0; i < material_required_count; i++) {
+    const slot = values[i];
+    if (!slot?.material_id) {
+      continue;
+    }
+    params.set(`m${i}`, slot.material_id);
+    if (slot.colors.length > 0) {
+      params.set(`m${i}_colors`, slot.colors.join(","));
+    }
+    if (slot.custom_color) {
+      params.set(`m${i}_custom`, slot.custom_color);
+    }
+  }
+  return params;
+}
+
 function applyFieldParam(field: Field, raw: string): void {
   switch (field.type) {
     case "toggle": {

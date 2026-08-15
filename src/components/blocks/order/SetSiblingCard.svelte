@@ -1,5 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
+  import { hasConfigurableOptions } from "@/lib/orderProduct";
   import type { CmsEnhancedProduct } from "@/lib/data";
 
   interface Props {
@@ -12,6 +13,8 @@
   }
 
   let { product, href, discount, added = 0, disabled = false, onAdd }: Props = $props();
+
+  const configurable = $derived(hasConfigurableOptions(product));
 </script>
 
 {#snippet thumb()}
@@ -68,6 +71,9 @@
       {#if added > 0}
         <Icon icon="mdi:check" class="shrink-0" />
         Kosárban{#if added > 1}&nbsp;({added}){/if}
+      {:else if configurable}
+        <Icon icon="mdi:cog-outline" class="shrink-0" />
+        Beállítom
       {:else}
         <Icon icon="mdi:plus" class="shrink-0" />
         Hozzáadom

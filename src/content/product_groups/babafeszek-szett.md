@@ -1,5 +1,5 @@
 ---
-title: Babafészek szett
+title: Babafészek
 products:
   - product: src/content/product/babafeszek.md
   - product: src/content/product/babatakaro-szett.md

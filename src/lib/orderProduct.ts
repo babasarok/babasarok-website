@@ -4,6 +4,13 @@ import type { CmsEnhancedProduct } from "./data";
 import type { IProduct, ProductMaterialValue } from "./types.svelte";
 import type { SavedProduct } from "./orderStorage";
 
+/** Whether a product carries its own configurable options (fields such as
+ * size, toggles or embroidery) that don't transfer from a set partner, so it
+ * needs to be configured on its own page rather than added with defaults. */
+export function hasConfigurableOptions(product: Pick<CmsEnhancedProduct, "fields">): boolean {
+  return !!product.fields?.some((f) => f != null);
+}
+
 /** Build a fresh order item from a catalog product (same shape the product
  * picker produces). Input must be a plain object (e.g. `$state.snapshot(...)`). */
 export function instantiateProduct(product: CmsEnhancedProduct): IProduct {
