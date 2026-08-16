@@ -16,7 +16,7 @@ import {
   calculatePriceForItem,
   type SetDiscountGroup,
 } from "@/lib/priceUtils";
-import type { ProductMaterialValue } from "@/lib/types.svelte";
+import type { IProduct, ProductMaterialValue } from "@/lib/types.svelte";
 import { makeProduct, makeMaterial } from "./fixtures";
 
 const val = (
@@ -117,6 +117,13 @@ describe("resolveActiveSetDiscount", () => {
     expect(resolveActiveSetDiscount(blanket, basket, groups)).toBeUndefined();
   });
 
+  it("does not count a second line of the same product as a set partner", () => {
+    const nestA = makeProduct({ uuid: "u1", product_id: "nest", values: [val("cotton", ["red"])] });
+    const nestB = makeProduct({ uuid: "u2", product_id: "nest", values: [val("cotton", ["red"])] });
+    expect(resolveActiveSetDiscount(nestA, [nestA, nestB], groups)).toBeUndefined();
+    expect(resolveSetDiscountStatus(nestA, [nestA, nestB], groups)?.state).toBe("pending-partner");
+  });
+
   it("picks the biggest discount across active sets", () => {
     const multiGroups: SetDiscountGroup[] = [
       {
@@ -154,6 +161,116 @@ describe("resolveSetDiscount (potential)", () => {
     expect(resolveSetDiscount("blanket", groups)?.percent).toBe(15);
     expect(resolveSetDiscount("unknown", groups)).toBeUndefined();
   });
+});
+
+describe("pricing and UI resolvers agree", () => {
+  // `resolveActiveSetDiscount` (actual pricing) and `resolveSetDiscountStatus`
+  // (UI state) must never disagree about the earned discount: both derive from
+  // the same resolution rule, so lock them together against drift.
+  const cases: Array<[string, IProduct, IProduct[]]> = [
+    [
+      "active: one matching sibling",
+      makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
+      [
+        makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
+        makeProduct({ uuid: "b", product_id: "blanket", values: [val("cotton", ["red"])] }),
+      ],
+    ],
+    [
+      "active: count capped by one partner line",
+      makeProduct({
+        uuid: "n",
+        product_id: "nest",
+        count: 3,
+        values: [val("cotton", ["red"])],
+      }),
+      [
+        makeProduct({
+          uuid: "n",
+          product_id: "nest",
+          count: 3,
+          values: [val("cotton", ["red"])],
+        }),
+        makeProduct({
+          uuid: "b",
+          product_id: "blanket",
+          count: 2,
+          values: [val("cotton", ["red"])],
+        }),
+      ],
+    ],
+    [
+      "active: counts summed across partner lines, capped at item count",
+      makeProduct({
+        uuid: "n",
+        product_id: "nest",
+        count: 1,
+        values: [val("cotton", ["red"])],
+      }),
+      [
+        makeProduct({
+          uuid: "n",
+          product_id: "nest",
+          count: 1,
+          values: [val("cotton", ["red"])],
+        }),
+        makeProduct({
+          uuid: "b1",
+          product_id: "blanket",
+          count: 1,
+          values: [val("cotton", ["red"])],
+        }),
+        makeProduct({
+          uuid: "b2",
+          product_id: "blanket",
+          count: 1,
+          values: [val("cotton", ["red"])],
+        }),
+      ],
+    ],
+    [
+      "active: biggest set wins with several sets in play",
+      makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
+      [
+        makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
+        makeProduct({ uuid: "b", product_id: "blanket", values: [val("cotton", ["red"])] }),
+        makeProduct({ uuid: "p", product_id: "pillow", values: [val("cotton", ["red"])] }),
+      ],
+    ],
+    [
+      "inactive: sibling's materials differ",
+      makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
+      [
+        makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
+        makeProduct({ uuid: "b", product_id: "blanket", values: [val("cotton", ["blue"])] }),
+      ],
+    ],
+    [
+      "inactive: item alone in the basket",
+      makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
+      [makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] })],
+    ],
+  ];
+
+  const multiGroups: SetDiscountGroup[] = [
+    groups[0],
+    {
+      title: "Big set",
+      products: [
+        { product_id: "nest", discount_percent: 20 },
+        { product_id: "pillow", discount_percent: 20 },
+      ],
+    },
+  ];
+
+  for (const [name, item, basket] of cases) {
+    it(`${name}: pricing and UI see the same active discount`, () => {
+      const activeGroups = name.includes("biggest set") ? multiGroups : groups;
+      const expected = resolveActiveSetDiscount(item, basket, activeGroups);
+      const status = resolveSetDiscountStatus(item, basket, activeGroups);
+      expect(status?.state === "active" ? status : undefined).toStrictEqual(expected);
+    });
+  }
 });
 
 describe("canSyncMaterials", () => {

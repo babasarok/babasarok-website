@@ -76,52 +76,6 @@ export function materialsMatch(a: IProduct, b: IProduct): boolean {
   return normalizeMaterialValues(a) === normalizeMaterialValues(b);
 }
 
-/**
- * The set discount an item actively earns given the current basket. An item
- * only earns a set's discount when at least one *other* basket item is also a
- * member of that set and has exactly matching material values. When several
- * sets qualify, the biggest discount wins (no stacking).
- */
-export function resolveActiveSetDiscount(
-  item: IProduct,
-  basket: IProduct[],
-  groups: SetDiscountGroup[]
-): ActiveDiscountStatus | undefined {
-  let best: ActiveDiscountStatus | undefined;
-  for (const group of groups) {
-    const membership = group.products.find(
-      (m) => m.product_id === item.product_id && m.discount_percent != null
-    );
-
-    if (!membership || membership.discount_percent == null) {
-      continue;
-    }
-
-    const memberIds = new Set(group.products.map((m) => m.product_id));
-
-    const matchingPartners = basket.filter(
-      (other) =>
-        other.uuid !== item.uuid && memberIds.has(other.product_id) && materialsMatch(item, other)
-    );
-    const hasMatchingPartner = matchingPartners.length > 0;
-
-    if (hasMatchingPartner && (!best || membership.discount_percent > best.percent)) {
-      best = {
-        state: "active",
-        percent: membership.discount_percent,
-        setTitle: group.title,
-        // Sum of all matching partner lines: distinct lines (e.g. different
-        // embroidery) each contribute their units to the set coverage.
-        count: Math.min(
-          matchingPartners.reduce((sum, x) => sum + x.count, 0),
-          item.count
-        ),
-      };
-    }
-  }
-  return best;
-}
-
 export type ActiveDiscountStatus = {
   state: "active";
   percent: number;
@@ -203,14 +157,14 @@ export function resolveSetDiscountStatus(
 
   let active: { percent: number; setTitle: string; count: number } | undefined;
   for (const m of memberships) {
-    // Count the discount only over matching-material partners so it agrees with
-    // `resolveActiveSetDiscount` (the resolver used for actual pricing).
+    // Count the discount only over matching-material partners.
     const matching = partnersIn(m.memberIds).filter((other) => materialsMatch(item, other));
     if (matching.length > 0 && (!active || m.percent > active.percent)) {
       active = {
         percent: m.percent,
         setTitle: m.setTitle,
-        // Keep in sync with `resolveActiveSetDiscount`: sum of matching lines.
+        // Sum of all matching partner lines: distinct lines (e.g. different
+        // embroidery) each contribute their units to the set coverage.
         count: Math.min(
           matching.reduce((sum, x) => sum + x.count, 0),
           item.count
@@ -256,6 +210,20 @@ export function resolveSetDiscountStatus(
     }
   }
   return pending;
+}
+
+/**
+ * The set discount an item actively earns given the current basket: the `active`
+ * case of the single shared rule implemented by `resolveSetDiscountStatus`.
+ * `undefined` when the item earns no set discount yet.
+ */
+export function resolveActiveSetDiscount(
+  item: IProduct,
+  basket: IProduct[],
+  groups: SetDiscountGroup[]
+): ActiveDiscountStatus | undefined {
+  const status = resolveSetDiscountStatus(item, basket, groups);
+  return status?.state === "active" ? status : undefined;
 }
 
 export interface Price extends BasePrice {
