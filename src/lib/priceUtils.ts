@@ -371,7 +371,9 @@ export function calculatePriceForItem(
     };
   }
 
-  const totalPrice = unitPrice * product.count * (discount === undefined ? 1 : discount.discount);
+  const totalPrice = Math.round(
+    unitPrice * product.count * (discount === undefined ? 1 : discount.discount)
+  );
 
   if (product.length_based_pricing) {
     // The source field is validated at build time (data.ts) and resolved to a

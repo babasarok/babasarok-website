@@ -287,7 +287,7 @@ describe("calculatePriceForItem with a set discount", () => {
       count: 1,
     });
     // discount factor = (1 - 10%*1/2) = 0.95 per unit, so total = 20000 * 0.95 = 19000
-    expect(price.totalPrice).toBe(19000);
+    expect(price.totalPrice).toBe(19_000);
     expect(price.discountInfo?.discountAppliedCount).toBe(1);
   });
 
