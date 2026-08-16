@@ -237,6 +237,58 @@ describe("resolveSetDiscountStatus", () => {
     });
   });
 
+  it("sums the counts of multiple matching partner lines", () => {
+    // Two distinct blanket lines (different embroidery, same materials) cover
+    // two nests even though no single line has count 2.
+    const nest = makeProduct({
+      uuid: "u1",
+      product_id: "nest",
+      count: 2,
+      values: [val("cotton", ["red"])],
+    });
+    const blanketA = makeProduct({
+      uuid: "u2",
+      product_id: "blanket",
+      count: 1,
+      values: [val("cotton", ["red"])],
+    });
+    const blanketB = makeProduct({
+      uuid: "u3",
+      product_id: "blanket",
+      count: 1,
+      values: [val("cotton", ["red"])],
+    });
+    expect(resolveSetDiscountStatus(nest, [nest, blanketA, blanketB], groups)).toEqual({
+      state: "active",
+      percent: 10,
+      setTitle: "Babafészek szett",
+      count: 2,
+    });
+    expect(resolveActiveSetDiscount(nest, [nest, blanketA, blanketB], groups)?.count).toBe(2);
+  });
+
+  it("still caps the summed partner count at the item's own count", () => {
+    const nest = makeProduct({
+      uuid: "u1",
+      product_id: "nest",
+      count: 1,
+      values: [val("cotton", ["red"])],
+    });
+    const blanketA = makeProduct({
+      uuid: "u2",
+      product_id: "blanket",
+      count: 1,
+      values: [val("cotton", ["red"])],
+    });
+    const blanketB = makeProduct({
+      uuid: "u3",
+      product_id: "blanket",
+      count: 1,
+      values: [val("cotton", ["red"])],
+    });
+    expect(resolveActiveSetDiscount(nest, [nest, blanketA, blanketB], groups)?.count).toBe(1);
+  });
+
   it("reports pending-material with a syncable partner when materials differ", () => {
     const nest = makeProduct({
       uuid: "u1",

@@ -15,6 +15,7 @@
   import { resolveSetDiscount, resolveSetDiscountStatus } from "@/lib/priceUtils";
   import type { SetDiscountStatus } from "@/lib/priceUtils";
   import { prefillFromParams, buildMaterialParams } from "@/lib/orderQueryParams";
+  import { mapProductToSaved } from "@/lib/orderStorage";
   import { sanitizeItem } from "@/lib/validation";
   import { isItemValid, validateItem } from "@/lib/validation";
   import type { CmsEnhancedEmbroideryColor, CmsEnhancedProduct, CmsProductGroup } from "@/lib/data";
@@ -101,9 +102,27 @@
   const basketCountByProductId = $derived.by(() => {
     const map: Record<string, number> = {};
     for (const it of basket) {
-      map[it.product_id] = (map[it.product_id] ?? 0) + 1;
+      map[it.product_id] = (map[it.product_id] ?? 0) + it.count;
     }
     return map;
+  });
+
+  // True while the local item differs from (or is missing from) the persisted
+  // basket line. Structural comparison on the persisted shape (transient
+  // `error`s stripped by `mapProductToSaved`), so it also catches external
+  // drift from other tabs/islands, not just local edits.
+  const isDirty = $derived.by(() => {
+    if (!item) {
+      return false;
+    }
+    const persisted = orderBasket.get(item.uuid);
+    if (!persisted) {
+      return true;
+    }
+    return (
+      JSON.stringify(mapProductToSaved(sanitizeItem($state.snapshot(item)))) !==
+      JSON.stringify(persisted)
+    );
   });
 
   const setStatus = $derived<SetDiscountStatus | undefined>(
@@ -169,6 +188,17 @@
   onMount(() => {
     orderBasket.start();
 
+    // Warn on refresh/close while a saved item has unsaved changes. (A fresh,
+    // never-saved item is intentionally not guarded: the "Kosárba" button is
+    // the visible state, and warning on every reload would be noise.)
+    const onBeforeUnload = (event: BeforeUnloadEvent): void => {
+      if (editing && isDirty) {
+        event.preventDefault();
+      }
+    };
+
+    globalThis.addEventListener("beforeunload", onBeforeUnload);
+
     const params = new URLSearchParams(globalThis.location.search);
     const uuid = params.get("uuid");
     const snapshot = $state.snapshot(product);
@@ -188,6 +218,10 @@
     const fresh = instantiateProduct(snapshot);
     prefillFromParams(fresh, params);
     item = sanitizeItem(fresh);
+
+    return () => {
+      globalThis.removeEventListener("beforeunload", onBeforeUnload);
+    };
   });
 
   function persistCurrent(): boolean {
@@ -201,7 +235,17 @@
       return false;
     }
 
-    orderBasket.upsert($state.snapshot(item));
+    const survivingUuid = orderBasket.upsert($state.snapshot(item));
+    if (survivingUuid !== item.uuid) {
+      // The item was merged into an identical basket line: re-point the local
+      // item (and the URL below) to the surviving line, adopting its summed
+      // count so the page keeps editing exactly that line.
+      const merged = orderBasket.get(survivingUuid);
+      if (merged) {
+        item.uuid = survivingUuid;
+        item.count = merged.count;
+      }
+    }
     editing = true;
 
     // Keep the URL addressable so a refresh re-opens the same basket item.
@@ -233,6 +277,15 @@
 
     {#if error}
       <p class="mt-3 text-sm text-red-500">{error}</p>
+    {/if}
+
+    {#if editing && isDirty}
+      <div
+        class="mt-3 flex items-center gap-2 rounded-xl border border-amber-400 bg-amber-50 p-3 text-sm text-amber-800"
+      >
+        <Icon icon="mdi:alert-circle" class="shrink-0" />
+        Nincs mentve: a módosítások még nem kerültek a kosárba.
+      </div>
     {/if}
 
     {#if saved}

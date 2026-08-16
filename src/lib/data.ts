@@ -576,7 +576,7 @@ const transformMaterial = async (
           material.colors
             .filter((color) => color != null)
             .map(async (color) => ({
-              color_id: color.color_id,
+              color_id: color.color_id.trim(),
               label: color.label,
               hex: color.hex ?? undefined,
               image: color.image ? await optimizeIslandImage(color.image, SWATCH_WIDTH) : undefined,

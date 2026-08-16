@@ -4,6 +4,8 @@ import { PRODUCT_FIELD_TYPE_VALUES } from "./productFieldTypes";
 
 const STORAGE_KEY = "babasarok-order-state";
 // Bump when the persisted value shapes change (older state is then discarded).
+// Note: dedup is applied on load (see `loadOrderState`), so it does NOT change
+// the persisted shape and does not require a version bump.
 const STORAGE_VERSION = 3;
 
 /** localStorage key the order/basket state is persisted under. */
@@ -92,7 +94,12 @@ export function loadOrderState(): SavedOrderState | null {
 
   try {
     const parsed = envelopeSchema.safeParse(JSON.parse(raw));
-    return parsed.success ? parsed.data.state : null;
+    // `mergeDuplicateBasketItems` is a no-op on already-merged state, so it is
+    // safe to run on every load (it also heals state that accumulated identical
+    // lines before dedup existed).
+    return parsed.success
+      ? { ...parsed.data.state, products: mergeDuplicateBasketItems(parsed.data.state.products) }
+      : null;
   } catch {
     return null;
   }
@@ -134,6 +141,63 @@ const EMPTY_STATE: SavedOrderState = {
   message: "",
   products: [],
 };
+
+/** Normalised view of a persisted item's material selections (order- and
+ * error-field-independent), for the duplicate-line comparison below. */
+function normalizeSavedMaterials(item: SavedProduct): string {
+  return JSON.stringify(
+    item.materials
+      .filter((m) => m.material_id !== "")
+      .map((m) => ({
+        material_id: m.material_id,
+        colors: m.colors.toSorted(),
+        custom_color: m.custom_color ?? "",
+      }))
+      .toSorted((a, b) => a.material_id.localeCompare(b.material_id))
+  );
+}
+
+/** Normalised view of a persisted item's field values (order- and
+ * error-field-independent). */
+function normalizeSavedFields(item: SavedProduct): string {
+  return JSON.stringify(
+    item.fields
+      .map((f) => ({ name: f.name, type: f.type, value: f.value ?? null }))
+      .toSorted((a, b) => a.name.localeCompare(b.name))
+  );
+}
+
+/**
+ * Whether two persisted basket lines are the *same* item: same product, same
+ * material selections and same field values. Count is deliberately excluded —
+ * that is exactly what merging sums. Lines that differ in any user-entered
+ * value (e.g. embroidery text) stay separate.
+ */
+export function isSameBasketItem(a: SavedProduct, b: SavedProduct): boolean {
+  return (
+    a.product_id === b.product_id &&
+    normalizeSavedMaterials(a) === normalizeSavedMaterials(b) &&
+    normalizeSavedFields(a) === normalizeSavedFields(b)
+  );
+}
+
+/**
+ * Merge identical basket lines into one, summing their counts. The first
+ * occurrence keeps its uuid and position (so deep-linked `?uuid=` items survive
+ * the merge); later duplicates are absorbed into it.
+ */
+export function mergeDuplicateBasketItems(products: SavedProduct[]): SavedProduct[] {
+  const merged: SavedProduct[] = [];
+  for (const item of products) {
+    const existing = merged.find((p) => isSameBasketItem(p, item));
+    if (existing) {
+      existing.count += item.count;
+    } else {
+      merged.push({ ...item, materials: [...item.materials], fields: [...item.fields] });
+    }
+  }
+  return merged;
+}
 
 /** The persisted basket items, or an empty array when nothing is stored. */
 export function loadBasketProducts(): SavedProduct[] {

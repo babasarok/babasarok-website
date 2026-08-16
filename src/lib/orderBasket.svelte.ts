@@ -1,5 +1,6 @@
 import {
   ORDER_STORAGE_KEY,
+  isSameBasketItem,
   loadBasketProducts,
   mapProductToSaved,
   updateBasketProducts,
@@ -51,20 +52,38 @@ class OrderBasket {
     return this.items.find((item) => item.uuid === uuid);
   }
 
-  /** Insert a new item or replace the existing one with the same uuid. */
-  upsert(product: IProduct): void {
+  /**
+   * Insert a new item, replace the existing line with the same uuid, or — when
+   * the line is a duplicate of another line (same product, materials and field
+   * values) — merge its count into that line. Returns the uuid of the line that
+   * now holds the item: the item's own uuid when inserted/replaced, the
+   * surviving line's uuid when merged (the merged uuid is then gone from the
+   * basket, so callers must re-point their references to the returned uuid).
+   */
+  upsert(product: IProduct): string {
     const saved = mapProductToSaved(product);
     const next = updateBasketProducts((products) => {
       const index = products.findIndex((p) => p.uuid === saved.uuid);
-      if (index === -1) {
-        return [...products, saved];
+      if (index !== -1) {
+        const copy = [...products];
+        copy[index] = saved;
+        return copy;
       }
-      const copy = [...products];
-      copy[index] = saved;
-      return copy;
+      const duplicate = products.find((p) => isSameBasketItem(p, saved));
+      if (duplicate) {
+        const copy = [...products];
+        const dupIndex = copy.indexOf(duplicate);
+        copy[dupIndex] = { ...duplicate, count: duplicate.count + saved.count };
+        return copy;
+      }
+      return [...products, saved];
     });
     this.items = next.products;
     this.#notify();
+    const surviving = next.products.find((p) => p.uuid === saved.uuid);
+    return (
+      surviving?.uuid ?? next.products.find((p) => isSameBasketItem(p, saved))?.uuid ?? saved.uuid
+    );
   }
 
   remove(uuid: string): void {

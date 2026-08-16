@@ -110,7 +110,12 @@ export function resolveActiveSetDiscount(
         state: "active",
         percent: membership.discount_percent,
         setTitle: group.title,
-        count: Math.min(...matchingPartners.map((x) => x.count), item.count),
+        // Sum of all matching partner lines: distinct lines (e.g. different
+        // embroidery) each contribute their units to the set coverage.
+        count: Math.min(
+          matchingPartners.reduce((sum, x) => sum + x.count, 0),
+          item.count
+        ),
       };
     }
   }
@@ -173,6 +178,7 @@ export function resolveSetDiscountStatus(
       const membership = group.products.find(
         (m) => m.product_id === item.product_id && m.discount_percent != null
       );
+
       return membership?.discount_percent == null
         ? undefined
         : {
@@ -188,7 +194,12 @@ export function resolveSetDiscountStatus(
   }
 
   const partnersIn = (memberIds: Set<string>): IProduct[] =>
-    basket.filter((other) => other.uuid !== item.uuid && memberIds.has(other.product_id));
+    basket.filter(
+      (other) =>
+        other.product_id !== item.product_id &&
+        other.uuid !== item.uuid &&
+        memberIds.has(other.product_id)
+    );
 
   let active: { percent: number; setTitle: string; count: number } | undefined;
   for (const m of memberships) {
@@ -199,10 +210,15 @@ export function resolveSetDiscountStatus(
       active = {
         percent: m.percent,
         setTitle: m.setTitle,
-        count: Math.min(...matching.map((x) => x.count), item.count),
+        // Keep in sync with `resolveActiveSetDiscount`: sum of matching lines.
+        count: Math.min(
+          matching.reduce((sum, x) => sum + x.count, 0),
+          item.count
+        ),
       };
     }
   }
+
   if (active) {
     return { state: "active", ...active };
   }
@@ -219,7 +235,12 @@ export function resolveSetDiscountStatus(
         setTitle: m.setTitle,
         partnerUuid: partner.uuid,
         canSync: canSyncMaterials(item, partner),
-        count: Math.min(...partners.map((x) => x.count), item.count),
+        // Sum of all partner lines (matching or not): what the set could cover
+        // once materials are synced, consistent with the active-count rule.
+        count: Math.min(
+          partners.reduce((sum, x) => sum + x.count, 0),
+          item.count
+        ),
       };
     } else {
       candidate = {
@@ -229,6 +250,7 @@ export function resolveSetDiscountStatus(
         count: item.count,
       };
     }
+
     if (!pending || candidate.percent > pending.percent) {
       pending = candidate;
     }

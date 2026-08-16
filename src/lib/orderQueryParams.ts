@@ -73,15 +73,16 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
       if (!slot) {
         continue;
       }
+
       if (material.groups.kind === "colors") {
-        slot.colors = raw
+        slot.colors = decodeURIComponent(raw)
           .split(",")
           .map((c) => c.trim())
           .filter(Boolean);
       } else if (material.groups.kind === "custom") {
-        slot.custom_color = raw;
+        slot.custom_color = decodeURIComponent(raw);
       } else {
-        slot.material_id = raw;
+        slot.material_id = decodeURIComponent(raw);
       }
     }
   }
@@ -91,6 +92,7 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
     for (const [index, slot] of materialSlots) {
       values[index] = slot;
     }
+
     item.materials.values = values;
   }
 }
@@ -108,12 +110,12 @@ export function buildMaterialParams(item: Pick<IProduct, "materials">): URLSearc
     if (!slot?.material_id) {
       continue;
     }
-    params.set(`m${i}`, slot.material_id);
+    params.set(`m${i}`, encodeURIComponent(slot.material_id));
     if (slot.colors.length > 0) {
-      params.set(`m${i}_colors`, slot.colors.join(","));
+      params.set(`m${i}_colors`, encodeURIComponent(slot.colors.join(",")));
     }
     if (slot.custom_color) {
-      params.set(`m${i}_custom`, slot.custom_color);
+      params.set(`m${i}_custom`, encodeURIComponent(slot.custom_color));
     }
   }
   return params;
