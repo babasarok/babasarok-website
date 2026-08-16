@@ -314,7 +314,7 @@ function getMaterialPrice(
 
 export function calculatePriceForItem(
   product: IProduct,
-  setStatus: ActiveDiscountStatus | undefined
+  setStatus?: ActiveDiscountStatus
 ): Price | LengthBasedPrice {
   const parts: PricePart[] = [];
   for (const field of product.fields) {
