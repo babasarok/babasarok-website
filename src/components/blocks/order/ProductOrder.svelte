@@ -224,7 +224,7 @@
       product={item}
       {threadColors}
       bare
-      setDiscountPercent={setStatus?.state === "active" ? setStatus.percent : undefined}
+      setDiscount={setStatus?.state === "active" ? setStatus : undefined}
       onChange={(updated) => {
         item = sanitizeItem(updated);
         saved = false;

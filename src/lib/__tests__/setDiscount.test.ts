@@ -197,6 +197,7 @@ describe("resolveSetDiscountStatus", () => {
       state: "pending-partner",
       percent: 10,
       setTitle: "Babafészek szett",
+      count: 1,
     });
   });
 
@@ -211,6 +212,28 @@ describe("resolveSetDiscountStatus", () => {
       state: "active",
       percent: 10,
       setTitle: "Babafészek szett",
+      count: 1,
+    });
+  });
+
+  it("caps the active count to the smallest matching partner count", () => {
+    const nest = makeProduct({
+      uuid: "u1",
+      product_id: "nest",
+      count: 2,
+      values: [val("cotton", ["red"])],
+    });
+    const blanket = makeProduct({
+      uuid: "u2",
+      product_id: "blanket",
+      count: 1,
+      values: [val("cotton", ["red"])],
+    });
+    expect(resolveSetDiscountStatus(nest, [nest, blanket], groups)).toEqual({
+      state: "active",
+      percent: 10,
+      setTitle: "Babafészek szett",
+      count: 1,
     });
   });
 
@@ -235,6 +258,7 @@ describe("resolveSetDiscountStatus", () => {
       setTitle: "Babafészek szett",
       partnerUuid: "u2",
       canSync: true,
+      count: 1,
     });
   });
 });
@@ -242,9 +266,29 @@ describe("resolveSetDiscountStatus", () => {
 describe("calculatePriceForItem with a set discount", () => {
   it("applies the set discount and marks the source", () => {
     const product = makeProduct({ price: 10_000, count: 1 });
-    const price = calculatePriceForItem(product, 10);
+    const price = calculatePriceForItem(product, {
+      state: "active",
+      percent: 10,
+      setTitle: "Babafészek szett",
+      count: 1,
+    });
     expect(price.totalPrice).toBe(9000);
-    expect(price.discountSource).toBe("set");
+    expect(price.discountInfo?.discountSource).toBe("set");
+    expect(price.discountInfo?.discountAppliedCount).toBe(1);
+  });
+
+  it("applies the set discount only to the matched count of a larger quantity", () => {
+    // 2 items in the basket, but the set partner only covers 1 → discount on 1 of 2.
+    const product = makeProduct({ price: 10_000, count: 2 });
+    const price = calculatePriceForItem(product, {
+      state: "active",
+      percent: 10,
+      setTitle: "Babafészek szett",
+      count: 1,
+    });
+    // discount factor = (1 - 10%*1/2) = 0.95 per unit, so total = 20000 * 0.95 = 19000
+    expect(price.totalPrice).toBe(19000);
+    expect(price.discountInfo?.discountAppliedCount).toBe(1);
   });
 
   it("lets the set discount replace a standalone discount even when expired", () => {
@@ -254,8 +298,13 @@ describe("calculatePriceForItem with a set discount", () => {
       discount: 50,
       discount_valid_until: "2000-01-01",
     });
-    const price = calculatePriceForItem(product, 10);
+    const price = calculatePriceForItem(product, {
+      state: "active",
+      percent: 10,
+      setTitle: "Babafészek szett",
+      count: 1,
+    });
     expect(price.totalPrice).toBe(9000);
-    expect(price.discountSource).toBe("set");
+    expect(price.discountInfo?.discountSource).toBe("set");
   });
 });

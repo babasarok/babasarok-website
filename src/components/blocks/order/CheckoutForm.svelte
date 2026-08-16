@@ -77,7 +77,7 @@
 
   const itemsTotal = $derived.by(() => {
     const prices = basket.map((p) =>
-      calculatePriceForItem(p, resolveActiveSetDiscount(p, basket, productGroups)?.percent)
+      calculatePriceForItem(p, resolveActiveSetDiscount(p, basket, productGroups))
     );
     return {
       total: prices.reduce((sum, p) => sum + (p.totalPrice ?? 0), 0),

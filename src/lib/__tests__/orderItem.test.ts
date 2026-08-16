@@ -262,7 +262,7 @@ describe("calculatePriceForItem — discount", () => {
       makeProduct({ price: 10_000, count: 1, discount: 25, discount_valid_until: "2000-01-01" })
     );
     expect(price.totalPrice).toBe(10_000);
-    expect(price.discount).toBeUndefined();
+    expect(price.discountInfo).toBeUndefined();
   });
 });
 

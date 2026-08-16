@@ -17,10 +17,17 @@
 
   let { product, threadColors, editHref, setStatus, onRemove }: Props = $props();
 
-  const setDiscountPercent = $derived(
-    setStatus?.state === "active" ? setStatus.percent : undefined
+  const setDiscountPercent = $derived.by(() => {
+    if (setStatus?.state !== "active") {
+      return;
+    }
+
+    return setStatus.percent * (setStatus.count / product.count);
+  });
+
+  const price = $derived(
+    calculatePriceForItem(product, setStatus?.state === "active" ? setStatus : undefined)
   );
-  const price = $derived(calculatePriceForItem(product, setDiscountPercent));
 
   /** Per-option price contribution, keyed by the same label as the summary rows. */
   const priceByLabel = $derived.by(() => {
@@ -83,7 +90,7 @@
       : value.colors
           .map((id) => material?.material_path.colors?.find((c) => c.color_id === id)?.label ?? id)
           .join(", ");
-    return colors ? `${name} (${colors})` : name;
+    return colors ? `${name} (${colors.trim()})` : name;
   }
 
   const materialRows = $derived(
@@ -123,12 +130,15 @@
         <span class="shrink-0 text-sm text-brown-500">{product.count} db</span>
       </div>
 
-      {#if setDiscountPercent}
+      {#if setDiscountPercent && setStatus}
         <span
           class="mt-1 flex w-fit items-center gap-1 rounded-full bg-green-600 px-2 py-0.5 text-xs font-semibold text-white"
         >
           <Icon icon="mdi:tag-check" class="shrink-0" />
-          Szett kedvezmény −{setDiscountPercent}%
+          Szett kedvezmény −{setDiscountPercent / (setStatus.count / product.count)}%
+          {#if setStatus.count < product.count}
+            ({setStatus.count} db)
+          {/if}
         </span>
       {/if}
     </div>
@@ -168,13 +178,21 @@
         </dd>
       </div>
     {/each}
-    {#if price.discount !== undefined}
+    {#if price.discountInfo !== undefined}
       <div class="flex justify-between gap-4">
         <dt class="text-brown-500">
-          {price.discountSource === "set" ? "Szett kedvezmény" : "Kedvezmény"}
+          {price.discountInfo.discountSource === "set" ? "Szett kedvezmény" : "Kedvezmény"}
         </dt>
         <dd class="text-right font-medium text-green-700">
-          −{(1 - price.discount).toLocaleString("hu-HU", { style: "percent" })}
+          −{(
+            (1 - price.discountInfo.discount) /
+            (price.discountInfo.discountAppliedCount / product.count)
+          ).toLocaleString("hu-HU", {
+            style: "percent",
+          })}
+          {#if price.discountInfo.discountAppliedCount < product.count}
+            ({price.discountInfo.discountAppliedCount} db)
+          {/if}
         </dd>
       </div>
     {/if}

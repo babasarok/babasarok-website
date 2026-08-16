@@ -6,7 +6,7 @@
   import OrderItemFields from "./OrderItemFields.svelte";
   import type { CmsEnhancedEmbroideryColor, CmsEnhancedProduct } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
-  import type { SetDiscountStatus } from "@/lib/priceUtils";
+  import type { ActiveDiscountStatus, SetDiscountStatus } from "@/lib/priceUtils";
   import { areMaterialsComplete } from "@/lib/materialUtils";
   import OrderItemPrice from "./OrderItemPrice.svelte";
 
@@ -17,7 +17,7 @@
     onChange?: (product: IProduct) => void;
     relatedProducts?: CmsEnhancedProduct[];
     onAddRelated?: (target: CmsEnhancedProduct) => void;
-    setDiscountPercent?: number | undefined;
+    setDiscount?: ActiveDiscountStatus | undefined;
     relatedDiscounts?: Record<string, number>;
     setStatus?: SetDiscountStatus | undefined;
     basketCountByProductId?: Record<string, number>;
@@ -34,7 +34,7 @@
     onChange,
     relatedProducts = [],
     onAddRelated,
-    setDiscountPercent,
+    setDiscount,
     relatedDiscounts = {},
     setStatus,
     basketCountByProductId = {},
@@ -167,5 +167,5 @@
     </div>
   {/if}
   <div class="w-full h-0.5 bg-brown-200"></div>
-  <OrderItemPrice {product} {setDiscountPercent} {onChange} />
+  <OrderItemPrice {product} {setDiscount} {onChange} />
 </div>

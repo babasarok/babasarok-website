@@ -8,14 +8,19 @@ interface PricePart {
   price: number | undefined;
 }
 
+interface DiscountInfo {
+  discount: number;
+  discountSource: "set" | "standalone";
+  discountAppliedCount: number;
+}
+
 interface BasePrice {
   basePrice: PricePart;
   options: PricePart[];
   unitPrice: number | undefined;
   totalPrice: number | undefined;
   indeterminate: boolean;
-  discount: number | undefined;
-  discountSource: "set" | "standalone" | undefined;
+  discountInfo: DiscountInfo | undefined;
 }
 
 /** Minimal structural shape of a product group, to avoid a data.ts import cycle. */
@@ -81,27 +86,43 @@ export function resolveActiveSetDiscount(
   item: IProduct,
   basket: IProduct[],
   groups: SetDiscountGroup[]
-): { percent: number; setTitle: string } | undefined {
-  let best: { percent: number; setTitle: string } | undefined;
+): ActiveDiscountStatus | undefined {
+  let best: ActiveDiscountStatus | undefined;
   for (const group of groups) {
     const membership = group.products.find(
       (m) => m.product_id === item.product_id && m.discount_percent != null
     );
+
     if (!membership || membership.discount_percent == null) {
       continue;
     }
+
     const memberIds = new Set(group.products.map((m) => m.product_id));
-    const hasMatchingPartner = basket.some(
+
+    const matchingPartners = basket.filter(
       (other) =>
         other.uuid !== item.uuid && memberIds.has(other.product_id) && materialsMatch(item, other)
     );
+    const hasMatchingPartner = matchingPartners.length > 0;
+
     if (hasMatchingPartner && (!best || membership.discount_percent > best.percent)) {
-      best = { percent: membership.discount_percent, setTitle: group.title };
+      best = {
+        state: "active",
+        percent: membership.discount_percent,
+        setTitle: group.title,
+        count: Math.min(...matchingPartners.map((x) => x.count), item.count),
+      };
     }
   }
   return best;
 }
 
+export type ActiveDiscountStatus = {
+  state: "active";
+  percent: number;
+  setTitle: string;
+  count: number;
+};
 /**
  * The state of an item's best set discount relative to the current basket, for
  * surfacing in the UI: `active` when earned, `pending-partner` when no set
@@ -111,14 +132,15 @@ export function resolveActiveSetDiscount(
  * discount is reported. `undefined` when the item earns no set discount at all.
  */
 export type SetDiscountStatus =
-  | { state: "active"; percent: number; setTitle: string }
-  | { state: "pending-partner"; percent: number; setTitle: string }
+  | ActiveDiscountStatus
+  | { state: "pending-partner"; percent: number; setTitle: string; count: number }
   | {
       state: "pending-material";
       percent: number;
       setTitle: string;
       partnerUuid: string;
       canSync: boolean;
+      count: number;
     };
 
 /**
@@ -168,13 +190,17 @@ export function resolveSetDiscountStatus(
   const partnersIn = (memberIds: Set<string>): IProduct[] =>
     basket.filter((other) => other.uuid !== item.uuid && memberIds.has(other.product_id));
 
-  let active: { percent: number; setTitle: string } | undefined;
+  let active: { percent: number; setTitle: string; count: number } | undefined;
   for (const m of memberships) {
-    if (
-      partnersIn(m.memberIds).some((other) => materialsMatch(item, other)) &&
-      (!active || m.percent > active.percent)
-    ) {
-      active = { percent: m.percent, setTitle: m.setTitle };
+    // Count the discount only over matching-material partners so it agrees with
+    // `resolveActiveSetDiscount` (the resolver used for actual pricing).
+    const matching = partnersIn(m.memberIds).filter((other) => materialsMatch(item, other));
+    if (matching.length > 0 && (!active || m.percent > active.percent)) {
+      active = {
+        percent: m.percent,
+        setTitle: m.setTitle,
+        count: Math.min(...matching.map((x) => x.count), item.count),
+      };
     }
   }
   if (active) {
@@ -193,9 +219,15 @@ export function resolveSetDiscountStatus(
         setTitle: m.setTitle,
         partnerUuid: partner.uuid,
         canSync: canSyncMaterials(item, partner),
+        count: Math.min(...partners.map((x) => x.count), item.count),
       };
     } else {
-      candidate = { state: "pending-partner", percent: m.percent, setTitle: m.setTitle };
+      candidate = {
+        state: "pending-partner",
+        percent: m.percent,
+        setTitle: m.setTitle,
+        count: item.count,
+      };
     }
     if (!pending || candidate.percent > pending.percent) {
       pending = candidate;
@@ -282,7 +314,7 @@ function getMaterialPrice(
 
 export function calculatePriceForItem(
   product: IProduct,
-  setDiscountPercent?: number
+  setStatus: ActiveDiscountStatus | undefined
 ): Price | LengthBasedPrice {
   const parts: PricePart[] = [];
   for (const field of product.fields) {
@@ -319,27 +351,27 @@ export function calculatePriceForItem(
     allParts.reduce((sum, part) => sum + Math.round(part.price ?? 0), 0)
   );
   const indeterminate = allParts.some((part) => part.price === undefined);
-  // A set discount (not date-gated) replaces the standalone, date-gated discount.
-  const standaloneMultiplier =
+
+  let discount: DiscountInfo | undefined;
+  if (setStatus?.percent != null && setStatus.percent > 0) {
+    discount = {
+      discount: 1 - (setStatus.percent * (setStatus.count / product.count)) / 100,
+      discountSource: "set",
+      discountAppliedCount: setStatus.count,
+    };
+  } else if (
     product.discount &&
     product.discount_valid_until &&
     new Date() <= new Date(product.discount_valid_until)
-      ? 1 - product.discount / 100
-      : undefined;
-  const discountSource: "set" | "standalone" | undefined =
-    setDiscountPercent != null && setDiscountPercent > 0
-      ? "set"
-      : standaloneMultiplier === undefined
-        ? undefined
-        : "standalone";
-  const discountMultiplier =
-    discountSource === "set"
-      ? 1 - (setDiscountPercent ?? 0) / 100
-      : discountSource === "standalone"
-        ? standaloneMultiplier
-        : undefined;
-  const totalPrice =
-    unitPrice * product.count * (discountMultiplier === undefined ? 1 : discountMultiplier);
+  ) {
+    discount = {
+      discount: 1 - product.discount / 100,
+      discountSource: "standalone",
+      discountAppliedCount: product.count,
+    };
+  }
+
+  const totalPrice = unitPrice * product.count * (discount === undefined ? 1 : discount.discount);
 
   if (product.length_based_pricing) {
     // The source field is validated at build time (data.ts) and resolved to a
@@ -355,8 +387,7 @@ export function calculatePriceForItem(
         totalPrice: undefined,
         basePrice,
         indeterminate,
-        discount: discountMultiplier,
-        discountSource,
+        discountInfo: discount,
       };
     }
 
@@ -373,8 +404,7 @@ export function calculatePriceForItem(
       totalPrice: length === undefined ? undefined : totalPrice * length,
       basePrice,
       indeterminate,
-      discount: discountMultiplier,
-      discountSource,
+      discountInfo: discount,
     };
   }
 
@@ -385,7 +415,6 @@ export function calculatePriceForItem(
     priced_by_length: false,
     basePrice,
     indeterminate,
-    discount: discountMultiplier,
-    discountSource,
+    discountInfo: discount,
   };
 }

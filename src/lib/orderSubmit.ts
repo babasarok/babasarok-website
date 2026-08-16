@@ -3,7 +3,7 @@
  * it to web3forms. Kept out of the Svelte component so the form stays declarative.
  */
 import { calculatePriceForItem, resolveActiveSetDiscount } from "@/lib/priceUtils";
-import type { SetDiscountGroup } from "@/lib/priceUtils";
+import type { ActiveDiscountStatus, SetDiscountGroup } from "@/lib/priceUtils";
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "./types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "./data";
 import { isFieldVisible } from "./fieldVisibility";
@@ -28,7 +28,7 @@ export function calculateOrderTotal(
   productGroups: SetDiscountGroup[] = []
 ): { total: number; indeterminate: boolean } {
   const prices = products.map((p) =>
-    calculatePriceForItem(p, resolveActiveSetDiscount(p, products, productGroups)?.percent)
+    calculatePriceForItem(p, resolveActiveSetDiscount(p, products, productGroups))
   );
   return {
     total: prices.reduce((sum, p) => sum + (p.totalPrice ?? 0), 0) + deliveryMethod.price,
@@ -108,9 +108,9 @@ function shouldSubmitField(field: Field): boolean {
 function formatProductString(
   product: IProduct,
   threadColors: CmsEnhancedEmbroideryColor[],
-  setDiscountPercent?: number
+  setDiscount?: ActiveDiscountStatus
 ): string {
-  const price = calculatePriceForItem(product, setDiscountPercent);
+  const price = calculatePriceForItem(product, setDiscount);
   const { materials, material_required_count, values } = product.materials;
 
   const lines = [
@@ -141,6 +141,16 @@ function formatProductString(
     ...(price.priced_by_length
       ? [`  Méterár: ${price.per_meter_price?.toString() ?? ""}Ft/m`]
       : []),
+    ...(price.discountInfo
+      ? [
+          `Kedvezmény: ${(
+            (1 - price.discountInfo.discount) /
+            (price.discountInfo.discountAppliedCount / product.count)
+          ).toLocaleString("hu-HU", {
+            style: "percent",
+          })} (${price.discountInfo.discountAppliedCount} db)`,
+        ]
+      : []),
     `Összár: ${price.totalPrice?.toString() ?? ""}Ft${price.indeterminate ? " (nem teljes ár)" : ""}`,
   ];
 
@@ -166,7 +176,7 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
       formatProductString(
         product,
         order.threadColors,
-        resolveActiveSetDiscount(product, order.products, order.productGroups)?.percent
+        resolveActiveSetDiscount(product, order.products, order.productGroups)
       )
     );
   }
