@@ -76,6 +76,10 @@ export function materialsMatch(a: IProduct, b: IProduct): boolean {
   return normalizeMaterialValues(a) === normalizeMaterialValues(b);
 }
 
+/**
+ * The set discount an item actively earns given the current basket: its percent,
+ * the winning set's title, and how many of the item's units it covers.
+ */
 export type ActiveDiscountStatus = {
   state: "active";
   percent: number;

@@ -15,6 +15,7 @@ import {
   canSyncMaterials,
   calculatePriceForItem,
   type SetDiscountGroup,
+  type ActiveDiscountStatus,
 } from "@/lib/priceUtils";
 import type { IProduct, ProductMaterialValue } from "@/lib/types.svelte";
 import { makeProduct, makeMaterial } from "./fixtures";
@@ -124,6 +125,76 @@ describe("resolveActiveSetDiscount", () => {
     expect(resolveSetDiscountStatus(nestA, [nestA, nestB], groups)?.state).toBe("pending-partner");
   });
 
+  it("covers two sets when two same-product lines pair with one count-2 partner line", () => {
+    const nestA = makeProduct({ uuid: "u1", product_id: "nest", values: [val("cotton", ["red"])] });
+    const nestB = makeProduct({ uuid: "u2", product_id: "nest", values: [val("cotton", ["red"])] });
+    const blanket = makeProduct({
+      uuid: "u3",
+      product_id: "blanket",
+      count: 2,
+      values: [val("cotton", ["red"])],
+    });
+    const basket = [nestA, nestB, blanket];
+    expect(resolveActiveSetDiscount(nestA, basket, groups)).toEqual({
+      state: "active",
+      percent: 10,
+      setTitle: "Babafészek szett",
+      count: 1,
+    });
+    expect(resolveActiveSetDiscount(nestB, basket, groups)).toEqual({
+      state: "active",
+      percent: 10,
+      setTitle: "Babafészek szett",
+      count: 1,
+    });
+    expect(resolveActiveSetDiscount(blanket, basket, groups)).toEqual({
+      state: "active",
+      percent: 15,
+      setTitle: "Babafészek szett",
+      count: 2,
+    });
+  });
+
+  it("covers two sets when two distinct nest products pair with one count-2 blanket line", () => {
+    const twoNestGroups: SetDiscountGroup[] = [
+      {
+        title: "Babafészek szett",
+        products: [
+          { product_id: "nest", discount_percent: 10 },
+          { product_id: "nest2", discount_percent: 10 },
+          { product_id: "blanket", discount_percent: 15 },
+        ],
+      },
+    ];
+    const nestA = makeProduct({ uuid: "u1", product_id: "nest", values: [val("cotton", ["red"])] });
+    const nestB = makeProduct({ uuid: "u2", product_id: "nest2", values: [val("cotton", ["red"])] });
+    const blanket = makeProduct({
+      uuid: "u3",
+      product_id: "blanket",
+      count: 2,
+      values: [val("cotton", ["red"])],
+    });
+    const basket = [nestA, nestB, blanket];
+    expect(resolveActiveSetDiscount(nestA, basket, twoNestGroups)).toEqual({
+      state: "active",
+      percent: 10,
+      setTitle: "Babafészek szett",
+      count: 1,
+    });
+    expect(resolveActiveSetDiscount(nestB, basket, twoNestGroups)).toEqual({
+      state: "active",
+      percent: 10,
+      setTitle: "Babafészek szett",
+      count: 1,
+    });
+    expect(resolveActiveSetDiscount(blanket, basket, twoNestGroups)).toEqual({
+      state: "active",
+      percent: 15,
+      setTitle: "Babafészek szett",
+      count: 2,
+    });
+  });
+
   it("picks the biggest discount across active sets", () => {
     const multiGroups: SetDiscountGroup[] = [
       {
@@ -166,25 +237,46 @@ describe("resolveSetDiscount (potential)", () => {
 describe("pricing and UI resolvers agree", () => {
   // `resolveActiveSetDiscount` (actual pricing) and `resolveSetDiscountStatus`
   // (UI state) must never disagree about the earned discount: both derive from
-  // the same resolution rule, so lock them together against drift.
-  const cases: Array<[string, IProduct, IProduct[]]> = [
-    [
-      "active: one matching sibling",
-      makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
-      [
+  // the same resolution rule, so pin that rule with concrete expected values
+  // and assert both resolvers return them.
+  const multiGroups: SetDiscountGroup[] = [
+    groups[0],
+    {
+      title: "Big set",
+      products: [
+        { product_id: "nest", discount_percent: 20 },
+        { product_id: "pillow", discount_percent: 20 },
+      ],
+    },
+  ];
+
+  interface Case {
+    name: string;
+    item: IProduct;
+    basket: IProduct[];
+    groups?: SetDiscountGroup[];
+    expected: ActiveDiscountStatus | undefined;
+  }
+
+  const cases: Case[] = [
+    {
+      name: "active: one matching sibling",
+      item: makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
+      basket: [
         makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
         makeProduct({ uuid: "b", product_id: "blanket", values: [val("cotton", ["red"])] }),
       ],
-    ],
-    [
-      "active: count capped by one partner line",
-      makeProduct({
+      expected: { state: "active", percent: 10, setTitle: "Babafészek szett", count: 1 },
+    },
+    {
+      name: "active: count capped by one partner line",
+      item: makeProduct({
         uuid: "n",
         product_id: "nest",
         count: 3,
         values: [val("cotton", ["red"])],
       }),
-      [
+      basket: [
         makeProduct({
           uuid: "n",
           product_id: "nest",
@@ -198,16 +290,17 @@ describe("pricing and UI resolvers agree", () => {
           values: [val("cotton", ["red"])],
         }),
       ],
-    ],
-    [
-      "active: counts summed across partner lines, capped at item count",
-      makeProduct({
+      expected: { state: "active", percent: 10, setTitle: "Babafészek szett", count: 2 },
+    },
+    {
+      name: "active: counts summed across partner lines, capped at item count",
+      item: makeProduct({
         uuid: "n",
         product_id: "nest",
         count: 1,
         values: [val("cotton", ["red"])],
       }),
-      [
+      basket: [
         makeProduct({
           uuid: "n",
           product_id: "nest",
@@ -227,48 +320,42 @@ describe("pricing and UI resolvers agree", () => {
           values: [val("cotton", ["red"])],
         }),
       ],
-    ],
-    [
-      "active: biggest set wins with several sets in play",
-      makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
-      [
+      expected: { state: "active", percent: 10, setTitle: "Babafészek szett", count: 1 },
+    },
+    {
+      name: "active: biggest set wins with several sets in play",
+      item: makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
+      basket: [
         makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
         makeProduct({ uuid: "b", product_id: "blanket", values: [val("cotton", ["red"])] }),
         makeProduct({ uuid: "p", product_id: "pillow", values: [val("cotton", ["red"])] }),
       ],
-    ],
-    [
-      "inactive: sibling's materials differ",
-      makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
-      [
+      groups: multiGroups,
+      expected: { state: "active", percent: 20, setTitle: "Big set", count: 1 },
+    },
+    {
+      name: "inactive: sibling's materials differ",
+      item: makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
+      basket: [
         makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
         makeProduct({ uuid: "b", product_id: "blanket", values: [val("cotton", ["blue"])] }),
       ],
-    ],
-    [
-      "inactive: item alone in the basket",
-      makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
-      [makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] })],
-    ],
-  ];
-
-  const multiGroups: SetDiscountGroup[] = [
-    groups[0],
+      expected: undefined,
+    },
     {
-      title: "Big set",
-      products: [
-        { product_id: "nest", discount_percent: 20 },
-        { product_id: "pillow", discount_percent: 20 },
-      ],
+      name: "inactive: item alone in the basket",
+      item: makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] }),
+      basket: [makeProduct({ uuid: "n", product_id: "nest", values: [val("cotton", ["red"])] })],
+      expected: undefined,
     },
   ];
 
-  for (const [name, item, basket] of cases) {
+  for (const { name, item, basket, groups: caseGroups, expected } of cases) {
     it(`${name}: pricing and UI see the same active discount`, () => {
-      const activeGroups = name.includes("biggest set") ? multiGroups : groups;
-      const expected = resolveActiveSetDiscount(item, basket, activeGroups);
-      const status = resolveSetDiscountStatus(item, basket, activeGroups);
+      const groupList = caseGroups ?? groups;
+      const status = resolveSetDiscountStatus(item, basket, groupList);
       expect(status?.state === "active" ? status : undefined).toStrictEqual(expected);
+      expect(resolveActiveSetDiscount(item, basket, groupList)).toStrictEqual(expected);
     });
   }
 });
