@@ -1,9 +1,10 @@
 /**
  * Set (product-group) discount resolution.
  *
- * Two concerns are covered: exact material matching (`materialsMatch`) and the
- * basket-aware active-discount resolver (`resolveActiveSetDiscount`), which only
- * grants a set's discount when a matching-material sibling is also present.
+ * Covers exact material matching (`materialsMatch`) and basket-aware set
+ * resolution (`allocateSetDiscounts`), which only grants a set's discount when
+ * a matching-material sibling is also present and consumes each basket unit
+ * at most once across the whole basket.
  * See docs/set-pricing-model.md.
  */
 import { describe, expect, it } from "vitest";
@@ -12,6 +13,7 @@ import {
   resolveActiveSetDiscount,
   resolveSetDiscount,
   resolveSetDiscountStatus,
+  allocateSetDiscounts,
   canSyncMaterials,
   calculatePriceForItem,
   type SetDiscountGroup,
@@ -516,6 +518,129 @@ describe("resolveSetDiscountStatus", () => {
       canSync: true,
       count: 1,
     });
+  });
+});
+
+describe("allocateSetDiscounts (global allocation)", () => {
+  const red = [val("cotton", ["red"])];
+  const nest = (uuid: string, count = 1): IProduct =>
+    makeProduct({ uuid, product_id: "nest", count, values: red });
+  const blanket = (uuid: string, count = 1): IProduct =>
+    makeProduct({ uuid, product_id: "blanket", count, values: red });
+
+  it("allocates each partner unit at most once across the basket", () => {
+    // Two nest lines + one blanket line = exactly one set, not two.
+    const basket = [nest("u1"), nest("u2"), blanket("u3")];
+    const statuses = allocateSetDiscounts(basket, groups);
+    expect(statuses.get("u1")).toEqual({
+      state: "active",
+      percent: 10,
+      setTitle: "Babafészek szett",
+      count: 1,
+    });
+    expect(statuses.get("u2")).toEqual({
+      state: "pending-partner",
+      percent: 10,
+      setTitle: "Babafészek szett",
+      count: 1,
+    });
+    expect(statuses.get("u3")).toEqual({
+      state: "active",
+      percent: 15,
+      setTitle: "Babafészek szett",
+      count: 1,
+    });
+  });
+
+  it("covers only as many units of a line as the partner has units", () => {
+    const statuses = allocateSetDiscounts([nest("u1", 2), blanket("u3")], groups);
+    expect(statuses.get("u1")).toEqual({
+      state: "active",
+      percent: 10,
+      setTitle: "Babafészek szett",
+      count: 1,
+    });
+    expect(statuses.get("u3")).toEqual({
+      state: "active",
+      percent: 15,
+      setTitle: "Babafészek szett",
+      count: 1,
+    });
+  });
+
+  it("covers equal lines evenly when the partner is the limiting resource", () => {
+    const statuses = allocateSetDiscounts(
+      [nest("u1", 2), nest("u2", 2), blanket("u3", 2)],
+      groups
+    );
+    expect(statuses.get("u1")).toEqual({
+      state: "active",
+      percent: 10,
+      setTitle: "Babafészek szett",
+      count: 1,
+    });
+    expect(statuses.get("u2")).toEqual({
+      state: "active",
+      percent: 10,
+      setTitle: "Babafészek szett",
+      count: 1,
+    });
+    expect(statuses.get("u3")).toEqual({
+      state: "active",
+      percent: 15,
+      setTitle: "Babafészek szett",
+      count: 2,
+    });
+  });
+
+  it("prefers bigger percents when pairing", () => {
+    const trio: SetDiscountGroup[] = [
+      {
+        title: "Trio",
+        products: [
+          { product_id: "a", discount_percent: 20 },
+          { product_id: "b", discount_percent: 10 },
+          { product_id: "c", discount_percent: 5 },
+        ],
+      },
+    ];
+    const a = makeProduct({ uuid: "u1", product_id: "a", count: 2, values: red });
+    const b = makeProduct({ uuid: "u2", product_id: "b", values: red });
+    const c = makeProduct({ uuid: "u3", product_id: "c", count: 2, values: red });
+    const statuses = allocateSetDiscounts([a, b, c], trio);
+    expect(statuses.get("u1")).toEqual({
+      state: "active",
+      percent: 20,
+      setTitle: "Trio",
+      count: 2,
+    });
+    expect(statuses.get("u2")).toEqual({
+      state: "active",
+      percent: 10,
+      setTitle: "Trio",
+      count: 1,
+    });
+    expect(statuses.get("u3")).toEqual({
+      state: "active",
+      percent: 5,
+      setTitle: "Trio",
+      count: 1,
+    });
+  });
+
+  it("breaks pairing ties by basket order", () => {
+    const a = nest("u1");
+    const b = nest("u2");
+    const c = blanket("u3");
+    expect(allocateSetDiscounts([a, b, c], groups).get("u1")?.state).toBe("active");
+    expect(allocateSetDiscounts([c, b, a], groups).get("u1")?.state).toBe("pending-partner");
+  });
+
+  it("leaves non-member items out of the result", () => {
+    const other = makeProduct({ uuid: "u4", product_id: "unknown", values: red });
+    const statuses = allocateSetDiscounts([nest("u1"), blanket("u3"), other], groups);
+    expect(statuses.has("u4")).toBe(false);
+    expect(statuses.get("u1")?.state).toBe("active");
   });
 });
 

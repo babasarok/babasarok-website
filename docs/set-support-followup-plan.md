@@ -20,10 +20,16 @@ tests. If the rule changes (e.g. the open question about differing material
 counts in `set-pricing-model.md` §6), both must change identically, or the
 displayed discount will disagree with the charged price.
 
-**Fix.** Extract one shared core — e.g. a single `resolveSetDiscountStatus`
-that pricing consumes via its `active` case — so there is exactly one
-implementation of the rule. `resolveActiveSetDiscount` becomes a thin adapter
-(or is removed and callers use the status directly).
+**Fix (done).** `allocateSetDiscounts(basket, groups)` is the single
+implementation: it resolves the whole basket at once and performs **global
+allocation** — one set consumes one unit each of two *different* members with
+matching materials, each basket unit is consumed at most once, so a partner
+line can cover no more sets than it has units (two babafészek lines + one
+babatakaro line form one set, not two). `resolveSetDiscountStatus` and
+`resolveActiveSetDiscount` are per-item lookups into it. Note: this tightens
+pricing — a second basket line of the same product no longer counts as a set
+partner, and an item whose matching partners are all consumed reports
+`pending-partner`.
 
 **Affected:** `src/lib/priceUtils.ts`, `src/lib/orderSubmit.ts`,
 `src/components/blocks/order/CheckoutForm.svelte`,

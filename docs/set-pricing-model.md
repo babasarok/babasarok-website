@@ -1,10 +1,11 @@
 # Decision: set (product-group) pricing model
 
-Status: **implemented** — pricing model plus material-gated set detection.
+Status: **implemented** — pricing model plus material-gated, globally allocated
+set detection.
 
 This documents _how_ sets affect pricing, including the **set detection** rule
-in the basket (material-gated, non-exhaustive) — see the "Interaction with set
-detection" section.
+in the basket (material-gated, globally allocated) — see the "Interaction with
+set detection" section.
 
 ## 1. The decision
 
@@ -81,13 +82,18 @@ For a given basket item `P` and the list of sets:
    the set discount _replaces_ it for that item (sets are the intended mechanism
    for the bundled deal).
 
-> **Resolved (set detection):** a set is treated as **non-exhaustive** and
-> **material-gated**. An item earns a set's discount as soon as it is in the
-> basket _together with at least one other member of that same set whose
-> selected material values match exactly_. Detection is implemented in
-> `resolveActiveSetDiscount(item, basket, groups)`, which feeds the winning
-> percent into `calculatePriceForItem`. The pure `resolveSetDiscount` remains
-> for surfacing a product's _potential_ discount (the "add related" chips).
+> **Resolved (set detection):** a set is **material-gated** and allocated
+> **globally** across the basket. One set consumes one unit each of two
+> *different* members whose selected material values match exactly, and each
+> basket unit is consumed at most once — a partner line can cover no more sets
+> than it has units (two babafészek lines + one babatakaro line form one set,
+> not two). Allocation is implemented in `allocateSetDiscounts(basket, groups)`,
+> the single source of truth; `resolveSetDiscountStatus` /
+> `resolveActiveSetDiscount` are per-item lookups into it, and the winning
+> percent feeds into `calculatePriceForItem`. An item whose matching partners
+> are all consumed by other lines reports `pending-partner`. The pure
+> `resolveSetDiscount` remains for surfacing a product's _potential_ discount
+> (the "add related" chips).
 
 ## 5. Relationship to existing pricing
 
