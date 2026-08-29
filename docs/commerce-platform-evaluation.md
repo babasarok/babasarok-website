@@ -216,3 +216,46 @@ implementation. Behavior-preserving; the Vitest suite is the safety net.
   (country-restricted, autocomplete + format validation) — removes UI.
 - Tier 3: carrier/Google Address Validation API or GLS parcel-shop picker — only
   if misdelivery cost or parcel-shop delivery demands it.
+
+## 11. Decisions (2026-08-29)
+
+- **Storefront/checkout stays ours.** The Astro site + Svelte configurator
+  remain the storefront; the platform is an API-only backend (cart/order/
+  payments/admin). Neither finalist ships a checkout usable for our CPQ
+  configurator anyway (Medusa's is a Next.js starter; Vendure has no official
+  storefront), so adopting one would mean rebuilding the configurator on a
+  foreign stack for no gain. The platform's job is exactly the §4 gap: order
+  ops + payments + admin. Consequence for the spike (§8): we integrate via the
+  platform's Shop API, not a hosted checkout.
+- **Multi-currency: per-market static prices, not FX conversion.** Each market
+  has its own price list; no runtime currency conversion. Consequences:
+  - The pricing core stays the authority (§5), but its price *data* becomes
+    per-market: every additive component (base, per-option, per-material,
+    per-word embroidery, per-meter) needs a price per market, authored in
+    TinaCMS.
+  - `extract-pricing-core` (§9) must account for a market/price-list dimension
+    in its inputs — the core computes from a given market's price list.
+  - Per-market display rounding (e.g. HUF 0-decimal, EUR 2) is part of the
+    core contract.
+  - Per-market margins become possible (the point of this choice).
+
+## 12. Open questions (answer before the full plan)
+
+1. **Per-market price authoring model** (follows from §11): how does TinaCMS
+   store per-market components (per-product price-list fields? a market
+   collection?), how does the core receive "the active market's price list",
+   and what's the fallback when a market lacks a price (hide product? fall back
+   to HUF?).
+2. **Set-group data location** (§6 caveat 4): promotion args vs. DB table vs.
+   product custom fields.
+3. **Hosting target** (§2): Railway/Fly/Render/VPS — none chosen; includes ops
+   cost for a platform we don't get for free like TinaCMS.
+4. **Invoicing vendor** (§7): Számlázz.hu vs. Billingo for NAV Online Számla.
+5. **Tax/OSS registrations** (§7): per-jurisdiction VAT registrations are an
+   operational prerequisite gating each market's go-live, independent of the
+   platform.
+6. **Payments/refunds admin surface** (§4): Stripe Dashboard vs. platform
+   admin.
+7. **Transactional email** provider for automated order ops (§3).
+8. **Address-validation Tier 3 trigger** (§10): what misdelivery cost /
+   parcel-shop demand justifies carrier/Google validation.
