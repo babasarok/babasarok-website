@@ -17,7 +17,7 @@ request, so pricing must be explainable to a buyer, not just computable.
 **Goals:**
 
 - Model a set as content (one `discount_percent` per group, member list).
-- Resolve which items earn a set discount given the *whole* basket, so the
+- Resolve which items earn a set discount given the _whole_ basket, so the
   charged price and the displayed price can never disagree.
 - Let buyers start an order from a product page and complete it at `/checkout`,
   with the basket persisting across pages and tabs.
@@ -51,11 +51,11 @@ rule that is always optimal for that product under an additive percent model.
 
 ### Material-gated, globally allocated detection
 
-Two members count towards a set only when their *normalized* selected material
+Two members count towards a set only when their _normalized_ selected material
 values match exactly (order-independent; products without material selections
 match trivially). Detection is **global**: `allocateSetDiscounts(basket, groups)`
 resolves the whole basket in one pass — one set consumes one unit each of two
-members of *different* products, and each basket unit is consumed at most once,
+members of _different_ products, and each basket unit is consumed at most once,
 so a partner line covers no more sets than it has units. This tightens pricing
 compared to per-item independence: a second line of the same product is not a
 partner, and an item whose partners are all consumed reports `pending-partner`.

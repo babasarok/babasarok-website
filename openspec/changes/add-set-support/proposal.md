@@ -14,8 +14,8 @@ order configurator on product detail pages.
 - New `product_groups` CMS collection: a set is a group of products carrying one
   optional `discount_percent` shared by all members.
 - Set discount resolution: the biggest set percent a product qualifies for wins
-  (no stacking); a set is *material-gated* (members must have exactly matching
-  material selections) and allocated *globally* across the basket (one set
+  (no stacking); a set is _material-gated_ (members must have exactly matching
+  material selections) and allocated _globally_ across the basket (one set
   consumes one unit of two different members; each unit is consumed at most
   once). The set discount replaces the standalone product discount for the
   allocated units.
