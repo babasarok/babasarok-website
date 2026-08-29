@@ -83,10 +83,8 @@ describe("materialsMatch", () => {
 const groups: SetDiscountGroup[] = [
   {
     title: "Babafészek szett",
-    products: [
-      { product_id: "nest", discount_percent: 10 },
-      { product_id: "blanket", discount_percent: 15 },
-    ],
+    discount_percent: 10,
+    products: [{ product_id: "nest" }, { product_id: "blanket" }],
   },
 ];
 
@@ -105,7 +103,7 @@ describe("resolveActiveSetDiscount", () => {
     });
     const basket = [nest, blanket];
     expect(resolveActiveSetDiscount(nest, basket, groups)?.percent).toBe(10);
-    expect(resolveActiveSetDiscount(blanket, basket, groups)?.percent).toBe(15);
+    expect(resolveActiveSetDiscount(blanket, basket, groups)?.percent).toBe(10);
   });
 
   it("does not grant the discount when the sibling's materials differ", () => {
@@ -151,7 +149,7 @@ describe("resolveActiveSetDiscount", () => {
     });
     expect(resolveActiveSetDiscount(blanket, basket, groups)).toEqual({
       state: "active",
-      percent: 15,
+      percent: 10,
       setTitle: "Babafészek szett",
       count: 2,
     });
@@ -161,11 +159,8 @@ describe("resolveActiveSetDiscount", () => {
     const twoNestGroups: SetDiscountGroup[] = [
       {
         title: "Babafészek szett",
-        products: [
-          { product_id: "nest", discount_percent: 10 },
-          { product_id: "nest2", discount_percent: 10 },
-          { product_id: "blanket", discount_percent: 15 },
-        ],
+        discount_percent: 10,
+        products: [{ product_id: "nest" }, { product_id: "nest2" }, { product_id: "blanket" }],
       },
     ];
     const nestA = makeProduct({ uuid: "u1", product_id: "nest", values: [val("cotton", ["red"])] });
@@ -191,7 +186,7 @@ describe("resolveActiveSetDiscount", () => {
     });
     expect(resolveActiveSetDiscount(blanket, basket, twoNestGroups)).toEqual({
       state: "active",
-      percent: 15,
+      percent: 10,
       setTitle: "Babafészek szett",
       count: 2,
     });
@@ -201,17 +196,13 @@ describe("resolveActiveSetDiscount", () => {
     const multiGroups: SetDiscountGroup[] = [
       {
         title: "Small set",
-        products: [
-          { product_id: "nest", discount_percent: 5 },
-          { product_id: "blanket", discount_percent: 5 },
-        ],
+        discount_percent: 5,
+        products: [{ product_id: "nest" }, { product_id: "blanket" }],
       },
       {
         title: "Big set",
-        products: [
-          { product_id: "nest", discount_percent: 20 },
-          { product_id: "pillow", discount_percent: 20 },
-        ],
+        discount_percent: 20,
+        products: [{ product_id: "nest" }, { product_id: "pillow" }],
       },
     ];
     const nest = makeProduct({ uuid: "u1", product_id: "nest", values: [val("cotton", ["red"])] });
@@ -230,8 +221,8 @@ describe("resolveActiveSetDiscount", () => {
 });
 
 describe("resolveSetDiscount (potential)", () => {
-  it("returns the biggest membership discount regardless of the basket", () => {
-    expect(resolveSetDiscount("blanket", groups)?.percent).toBe(15);
+  it("returns the biggest set discount regardless of the basket", () => {
+    expect(resolveSetDiscount("blanket", groups)?.percent).toBe(10);
     expect(resolveSetDiscount("unknown", groups)).toBeUndefined();
   });
 });
@@ -245,10 +236,8 @@ describe("pricing and UI resolvers agree", () => {
     groups[0],
     {
       title: "Big set",
-      products: [
-        { product_id: "nest", discount_percent: 20 },
-        { product_id: "pillow", discount_percent: 20 },
-      ],
+      discount_percent: 20,
+      products: [{ product_id: "nest" }, { product_id: "pillow" }],
     },
   ];
 
@@ -546,7 +535,7 @@ describe("allocateSetDiscounts (global allocation)", () => {
     });
     expect(statuses.get("u3")).toEqual({
       state: "active",
-      percent: 15,
+      percent: 10,
       setTitle: "Babafészek szett",
       count: 1,
     });
@@ -562,7 +551,7 @@ describe("allocateSetDiscounts (global allocation)", () => {
     });
     expect(statuses.get("u3")).toEqual({
       state: "active",
-      percent: 15,
+      percent: 10,
       setTitle: "Babafészek szett",
       count: 1,
     });
@@ -587,21 +576,18 @@ describe("allocateSetDiscounts (global allocation)", () => {
     });
     expect(statuses.get("u3")).toEqual({
       state: "active",
-      percent: 15,
+      percent: 10,
       setTitle: "Babafészek szett",
       count: 2,
     });
   });
 
-  it("prefers bigger percents when pairing", () => {
+  it("pairs across three products up to the maximum feasible pairs", () => {
     const trio: SetDiscountGroup[] = [
       {
         title: "Trio",
-        products: [
-          { product_id: "a", discount_percent: 20 },
-          { product_id: "b", discount_percent: 10 },
-          { product_id: "c", discount_percent: 5 },
-        ],
+        discount_percent: 20,
+        products: [{ product_id: "a" }, { product_id: "b" }, { product_id: "c" }],
       },
     ];
     const a = makeProduct({ uuid: "u1", product_id: "a", count: 2, values: red });
@@ -616,13 +602,13 @@ describe("allocateSetDiscounts (global allocation)", () => {
     });
     expect(statuses.get("u2")).toEqual({
       state: "active",
-      percent: 10,
+      percent: 20,
       setTitle: "Trio",
       count: 1,
     });
     expect(statuses.get("u3")).toEqual({
       state: "active",
-      percent: 5,
+      percent: 20,
       setTitle: "Trio",
       count: 1,
     });

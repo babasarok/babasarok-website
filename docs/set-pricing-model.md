@@ -9,12 +9,11 @@ set detection" section.
 
 ## 1. The decision
 
-> **A set grants a percent discount, assigned per product.**
-> Each product that participates in a set carries its own percent discount for
+> **A set grants a single percent discount to all of its members.**
+> Each set carries one `discount_percent` that every member product earns from
 > that set. When a product in the basket belongs to **more than one** set, the
-> product resolves to the **single set that yields the biggest discount for that
-> product** — and only that set's discount is applied. Discounts never stack
-> across sets.
+> product resolves to the **single set that yields the biggest discount** — and
+> only that set's discount is applied. Discounts never stack across sets.
 
 Concretely:
 
@@ -30,11 +29,11 @@ Concretely:
 
 ## 2. Why this shape
 
-- **Percent, per product** — a set is a bundle of _different_ products at
+- **One percent per set** — a set is a bundle of _different_ products at
   _different_ base prices; a single flat "set price" (as the old Ovis Felszerelés
-  hack tried to do, see issue #18) cannot express that. Percent-per-product keeps
+  hack tried to do, see issue #18) cannot express that. A percent per set keeps
   each item's price independent and composable with the existing field/material
-  price parts.
+  price parts, and content stays simple (one number per set, not per member).
 - **Biggest-discount wins (no stacking)** — a product in two sets must not be
   discounted twice. Picking the max per product is the simplest rule that is
   also always optimal _for that product_ under an additive percent model, and it
@@ -47,25 +46,23 @@ Concretely:
 ## 3. Data model
 
 The set itself is the `product_groups` collection added in PR #33
-(`tina/collections/product-groups.ts`). The discount belongs **on the membership**,
-i.e. on the `{ product, discount_percent }` entry inside a group — _not_ on the
-product and _not_ as a single number on the group.
+(`tina/collections/product-groups.ts`). The discount is **a single
+`discount_percent` on the group**, shared by every member — _not_ on the
+product and _not_ per membership.
 
 ```
 product_groups/*.md (frontmatter)
   title: Babafészek szett
+  discount_percent: 15            # every member's discount *when it is in this set*
   products:
     - product: src/content/product/babafeszek.md
-      discount_percent: 10        # this product's discount *when it is in this set*
     - product: src/content/product/babatakaro-szett.md
-      discount_percent: 15        # this product's discount *when it is in this set*
 ```
 
 This keeps the `product` collection unchanged and makes "which set gives me which
-discount" answerable per membership. (If we instead stored one `discount_percent`
-on the group, every member would share it — a reasonable simplification, but it
-loses the ability to discount the "lead" item of a set differently from its
-accessories. **Decision: store it per membership.**)
+discount" answerable per group. (Per-member percents were tried first, but a set
+discounting its "lead" item differently from its accessories proved unnecessary;
+**decision: one percent per set**.)
 
 ## 4. Resolution algorithm (reference, to be implemented in `priceUtils.ts`)
 
@@ -73,11 +70,10 @@ For a given basket item `P` and the list of sets:
 
 1. Collect the candidate sets = every set whose membership includes `P`.
 2. If `P` is in no set → fall back to the existing standalone `product.discount`.
-3. Otherwise pick the candidate set with the **largest** `discount_percent` for
-   `P`; apply that percent as the multiplier `1 - discount_percent / 100`.
-   - Tie-break on equal percents: pick the set with the **most members** in the
-     basket, then the first in stable order. (Deterministic, cheap, and
-     unobservable to the buyer.)
+3. Otherwise pick the candidate set with the **largest** `discount_percent`;
+   apply that percent as the multiplier `1 - discount_percent / 100`.
+   - Tie-break on equal percents: the first in stable order. (Deterministic,
+     cheap, and unobservable to the buyer.)
 4. Do **not** combine the set discount with the standalone `product.discount`;
    the set discount _replaces_ it for that item (sets are the intended mechanism
    for the bundled deal).

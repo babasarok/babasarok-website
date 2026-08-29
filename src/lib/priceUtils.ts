@@ -26,12 +26,13 @@ interface BasePrice {
 /** Minimal structural shape of a product group, to avoid a data.ts import cycle. */
 export interface SetDiscountGroup {
   title: string;
-  products: { product_id: string; discount_percent?: number | undefined }[];
+  discount_percent?: number | undefined;
+  products: { product_id: string }[];
 }
 
 /**
- * The best set discount a product qualifies for: the largest `discount_percent`
- * across every group membership. When a product is in more than one set, the
+ * The best set discount a product qualifies for: the largest set percent across
+ * every set the product belongs to. When a product is in more than one set, the
  * biggest discount wins (no stacking). See docs/set-pricing-model.md.
  */
 export function resolveSetDiscount(
@@ -40,13 +41,12 @@ export function resolveSetDiscount(
 ): { percent: number; setTitle: string } | undefined {
   let best: { percent: number; setTitle: string } | undefined;
   for (const group of groups) {
-    for (const member of group.products) {
-      if (member.product_id !== productId || member.discount_percent == null) {
-        continue;
-      }
-      if (!best || member.discount_percent > best.percent) {
-        best = { percent: member.discount_percent, setTitle: group.title };
-      }
+    const percent = group.discount_percent;
+    if (percent == null || !group.products.some((m) => m.product_id === productId)) {
+      continue;
+    }
+    if (!best || percent > best.percent) {
+      best = { percent, setTitle: group.title };
     }
   }
   return best;
@@ -131,7 +131,6 @@ export function canSyncMaterials(item: IProduct, partner: IProduct): boolean {
 interface SetLine {
   index: number;
   item: IProduct;
-  percent: number;
   setTitle: string;
   materialKey: string;
 }
@@ -142,9 +141,9 @@ interface SetLine {
  * members of *different* products whose material values match, and each basket
  * unit is consumed at most once, so a partner line can cover no more sets than
  * it has units (two babafészek lines + one babatakaro line form one set, not
- * two). An item earns the percent of the set its units are assigned to (the
- * biggest across its group memberships); an unassigned item reports its
- * pending state instead. See docs/set-pricing-model.md.
+ * two). An item earns its set's percent for the units it is assigned to (the
+ * biggest set percent wins when a product is in several sets); an unassigned
+ * item reports its pending state instead. See docs/set-pricing-model.md.
  */
 export function allocateSetDiscounts(
   basket: IProduct[],
@@ -154,22 +153,23 @@ export function allocateSetDiscounts(
   const pending = new Map<string, SetDiscountStatus>();
 
   for (const group of groups) {
+    const percent = group.discount_percent;
+    if (percent == null) {
+      continue;
+    }
     const memberIds = new Set(group.products.map((m) => m.product_id));
-    const lines = basket.flatMap((item, index): SetLine[] => {
-      const percent = group.products.find((m) => m.product_id === item.product_id)
-        ?.discount_percent;
-      return percent == null
-        ? []
-        : [
+    const lines = basket.flatMap((item, index): SetLine[] =>
+      memberIds.has(item.product_id)
+        ? [
             {
               index,
               item,
-              percent,
               setTitle: group.title,
               materialKey: normalizeMaterialValues(item),
             },
-          ];
-    });
+          ]
+        : []
+    );
     if (lines.length === 0) {
       continue;
     }
@@ -188,10 +188,10 @@ export function allocateSetDiscounts(
     }
 
     for (const line of lines) {
-      const { item, percent, setTitle } = line;
+      const { item, setTitle } = line;
       const pendingBefore = pending.get(item.uuid);
       if (!pendingBefore || percent > pendingBefore.percent) {
-        pending.set(item.uuid, pendingStatus(line, basket, memberIds));
+        pending.set(item.uuid, pendingStatus(line, basket, memberIds, percent));
       }
       const count = allocated.get(item.uuid) ?? 0;
       const activeBefore = active.get(item.uuid);
@@ -221,9 +221,10 @@ export function allocateSetDiscounts(
 function pendingStatus(
   line: SetLine,
   basket: IProduct[],
-  memberIds: Set<string>
+  memberIds: Set<string>,
+  percent: number
 ): SetDiscountStatus {
-  const { item, percent, setTitle } = line;
+  const { item, setTitle } = line;
   const partners = basket.filter(
     (other) =>
       other.product_id !== item.product_id &&
@@ -257,9 +258,9 @@ function pendingStatus(
 /**
  * Assigns set pairs within one material pool. A pair consumes one unit of two
  * lines of different products; per-line and per-product caps keep the result
- * feasible as an actual pairing, and pairs fill in round-robin order of
- * biggest percent (ties: basket order) until no compatible free pair remains,
- * so equally-priced lines are covered evenly.
+ * feasible as an actual pairing, and pairs fill in round-robin basket order
+ * until no compatible free pair remains, so equally-priced lines are covered
+ * evenly.
  */
 function allocatePool(pool: SetLine[], allocated: Map<string, number>): void {
   const total = pool.reduce((sum, line) => sum + line.item.count, 0);
@@ -283,9 +284,11 @@ function allocatePool(pool: SetLine[], allocated: Map<string, number>): void {
     productRemaining.set(product, total - count);
   }
 
+  // Every line in a pool shares the group's percent, so basket order is all
+  // the tie-break the round-robin fill needs.
   const order = pool
     .map((line, i) => ({ line, i }))
-    .toSorted((a, b) => b.line.percent - a.line.percent || a.i - b.i);
+    .toSorted((a, b) => a.i - b.i);
 
   for (;;) {
     let progressed = false;

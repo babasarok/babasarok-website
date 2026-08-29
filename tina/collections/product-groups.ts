@@ -31,6 +31,13 @@ export const ProductGroupCollection: Collection = {
       required: true,
     },
     {
+      type: "number",
+      name: "discount_percent",
+      label: "Szett kedvezmény %",
+      description:
+        "Opcionális kedvezmény százalékban (0–100), amit a szett minden tagja akkor kap, ha ebben a szettben rendelik. Ha egy termék több szettben is szerepel, a legnagyobb kedvezményt adó szett érvényesül.",
+    },
+    {
       type: "object",
       name: "products",
       list: true,
@@ -50,13 +57,6 @@ export const ProductGroupCollection: Collection = {
           label: "Termék",
           description: "A termék, amelyet a csoporthoz adunk.",
           required: true,
-        },
-        {
-          type: "number",
-          name: "discount_percent",
-          label: "Szett kedvezmény %",
-          description:
-            "Opcionális kedvezmény százalékban (0–100), amit ez a termék akkor kap, ha ebben a szettben rendelik. Ha egy termék több szettben is szerepel, a legnagyobb kedvezményt adó szett érvényesül.",
         },
       ],
     },
