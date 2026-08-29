@@ -1,24 +1,12 @@
 # Commerce platform evaluation → shortlist: Vendure vs Medusa
 
 Status: **exploration / narrowing.** Captures the reasoning from the migration
-discussion so it isn't lost. **Shortlist reduced to two self-hosted OSS Node
-backends: Vendure and Medusa — currently leaning Vendure** (see below). The
-SaaS-checkout options (Shopify, Foxy, Snipcart) are parked, mainly because they
-can't cleanly take Barion (§6). Next step: **spike Vendure and Medusa** against
-our configurator (§7). The one committed prep item is the pricing-core refactor
-tracked in `openspec/changes/extract-pricing-core/`.
-
-## Why Vendure over Medusa (current lean)
-
-Both run Node + Postgres (Medusa also wants Redis) off Cloudflare, both give us
-full data ownership and let Barion + Stripe Tax plug in. The tiebreaker is
-**configurator fit**: Vendure exposes a first-class
-`OrderItemPriceCalculationStrategy` hook and custom order-line fields, so a
-configured line's price comes straight from our extracted pricing core — the
-exact CPQ seam we need. Medusa is a flexible toolkit where we wire the same flow
-by hand via custom line items + `metadata`. Vendure = the hook already exists;
-Medusa = we build the hook. Medusa stays as the fallback if Vendure's promotion
-model can't express the material-gated set discount cleanly.
+discussion so it isn't lost. Shortlist: **two self-hosted OSS Node backends —
+Vendure (leaning) and Medusa (fallback)** (§6). The SaaS-checkout options
+(Shopify, Foxy, Snipcart) are parked, mainly because they can't cleanly take
+Barion (§7). Next step: **spike both backends** against our configurator (§8).
+The one committed prep item is the pricing-core refactor
+(`openspec/changes/extract-pricing-core/`, §9).
 
 ## 1. The core constraint: we are CPQ, not a SKU catalog
 
@@ -48,11 +36,11 @@ Catalog size is tiny (~15 orderable products, 9 materials) — scaling is a
   Postgres + Redis + a workflow engine. Host on Railway/Fly/Render/VPS.
 - **Vendure** (Node/GraphQL/Postgres) and **Saleor** (Python/Django) — same:
   not edge/Workers-native.
-- Only a hand-rolled Worker + Stripe + D1 is truly CF-self-hostable — but see
-  §4, that stops being "thin" at international scale.
+- Only a hand-rolled Worker + Stripe + D1 is truly CF-self-hostable — but at
+  international scale (§3) that stops being "thin".
 
 If "self-host on CF Workers" were a hard requirement, no real commerce platform
-qualifies. The international requirements (§4) outweigh that goal.
+qualifies. The international requirements (§3) outweigh that goal.
 
 ## 3. Requirement pivot: domestic vs. international
 
@@ -92,25 +80,45 @@ No mainstream backend markets itself as "CPQ-native," but several expose the one
 capability we need: a first-class hook for _server-authoritative custom
 line-item pricing from arbitrary configuration + validation_. Ranked by CPQ fit:
 
-| Backend                          | CPQ mechanism                                                                                | Self-host? | CF-friendly          | Notes                                                                          |
-| -------------------------------- | -------------------------------------------------------------------------------------------- | ---------- | -------------------- | ------------------------------------------------------------------------------ |
-| **Vendure** (OSS, Node)          | `OrderItemPriceCalculationStrategy` + custom order-line fields; documented configurable-products pattern | Yes (Node+DB) | Backend not on Workers | **Best structural fit** in OSS: config lives on the order line, our engine sets the price. |
-| **Foxy.io** (SaaS checkout)      | Needs **no catalog** — arbitrary products + per-option price modifiers + **HMAC** cart validation | SaaS       | Yes (overlay)        | Closest to "CPQ checkout off the shelf," but can't take Barion.                |
-| **Medusa** (OSS, Node)           | Custom line items with `metadata` + custom `unit_price`; modules/workflows                   | Yes (Node+PG+Redis) | Backend not on Workers | Toolkit, not a hook — we wire the CPQ flow (logic already exists). Max flexibility. |
-| **Snipcart** (SaaS checkout)     | Custom fields per product + **webhook price validation**                                     | SaaS       | Yes                  | Lighter than Foxy, but can't take Barion.                                      |
-| **Shopify + options/perso app**  | Line-item properties + **Shopify Functions** (custom price) via Kickflip / Zakeke / Bold     | SaaS       | Yes                  | Extra SaaS dependency; Barion not an accepted gateway.                         |
-| **commercetools**                | External prices + custom line items                                                          | SaaS (enterprise) | Yes           | Enterprise cost/complexity — overkill.                                         |
+| Backend                         | CPQ mechanism                                                                                            | Self-host?          | CF-friendly            | Notes                                                                                      |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------- | ---------------------- | ------------------------------------------------------------------------------------------ |
+| **Vendure** (OSS, Node)         | `OrderItemPriceCalculationStrategy` + custom order-line fields; documented configurable-products pattern | Yes (Node+DB)       | Backend not on Workers | **Best structural fit** in OSS: config lives on the order line, our engine sets the price. |
+| **Foxy.io** (SaaS checkout)     | Needs **no catalog** — arbitrary products + per-option price modifiers + **HMAC** cart validation        | SaaS                | Yes (overlay)          | Closest to "CPQ checkout off the shelf," but can't take Barion.                            |
+| **Medusa** (OSS, Node)          | Custom line items with `metadata` + custom `unit_price`; modules/workflows                               | Yes (Node+PG+Redis) | Backend not on Workers | Toolkit, not a hook — we wire the CPQ flow (logic already exists). Max flexibility.        |
+| **Snipcart** (SaaS checkout)    | Custom fields per product + **webhook price validation**                                                 | SaaS                | Yes                    | Lighter than Foxy, but can't take Barion.                                                  |
+| **Shopify + options/perso app** | Line-item properties + **Shopify Functions** (custom price) via Kickflip / Zakeke / Bold                 | SaaS                | Yes                    | Extra SaaS dependency; Barion not an accepted gateway.                                     |
+| **commercetools**               | External prices + custom line items                                                                      | SaaS (enterprise)   | Yes                    | Enterprise cost/complexity — overkill.                                                     |
 
 Dedicated B2B CPQ engines (Salesforce CPQ, Tacton, Threekit, Configit) are
 enterprise and not DTC-checkout oriented — out of scope.
 
-The SaaS options (Foxy, Snipcart, Shopify) are parked mainly because they can't
-cleanly take Barion (§6), which leaves the two self-hosted OSS backends,
-**Vendure** and **Medusa** (compared at the top of this doc). In every option
-our **extracted pricing core is the authority** — another reason
-`extract-pricing-core` is the right first move regardless of winner.
+That leaves two finalists:
 
-## 6. Payments and tax: Barion + Stripe Tax
+- **SaaS (Foxy, Snipcart, Shopify): parked** — none can cleanly take Barion,
+  our required domestic payment rail (§7).
+- **OSS (Vendure, Medusa): shortlisted** — self-hosted, full data ownership,
+  and both can plug in Barion + Stripe Tax (§7).
+
+In every option our **extracted pricing core is the authority** — another
+reason `extract-pricing-core` is the right first move regardless of winner.
+
+## 6. Why Vendure is the front-runner (current lean)
+
+Both finalists run Node + Postgres off Cloudflare (Medusa also wants Redis),
+give us full data ownership, and let Barion + Stripe Tax plug in. The
+tiebreaker is **configurator fit**:
+
+- **Vendure** exposes a first-class `OrderItemPriceCalculationStrategy` hook and
+  custom order-line fields, so a configured line's price comes straight from our
+  extracted pricing core — the exact CPQ seam we need.
+- **Medusa** is a flexible toolkit where we wire the same flow by hand via
+  custom line items + `metadata`.
+
+Vendure = the hook already exists; Medusa = we build the hook. **Medusa is the
+fallback** if Vendure's promotion model can't express the material-gated set
+discount cleanly.
+
+## 7. Payments and tax: Barion + Stripe Tax
 
 **Payment and tax are independent — don't conflate them.** Barion only _charges
 the total our backend computed_; it is not a tax engine. So we mix **Barion for
@@ -134,40 +142,34 @@ Caveats:
   Vertex, Avalara, or hard-coded EU rates for a small country set.
 
 **Barion itself** is a Hungarian, EU-licensed (PSD2) institution (cards +
-wallet, SCA/3DS, multi-currency) with a REST API + PHP/iOS/Android libs; it drops
-into Vendure/Medusa as a custom payment provider (Barion ships an official
+wallet, SCA/3DS, multi-currency) with a REST API + PHP/iOS/Android libs; it
+drops into Vendure/Medusa as a custom payment provider (Barion ships an official
 WooCommerce plugin as precedent). It is **not** on Shopify's approved gateways
 (no Shopify Payments in HU) nor Foxy/Snipcart's fixed lists — which is why those
 were parked.
 
-## 7. Spike plan (do this before committing)
+## 8. Spike plan (do this before committing)
 
 The whole risk is **configurator ↔ platform fit** (and, given Barion,
-**payment-provider fit**). Prove it on the two shortlisted backends,
-**Vendure and Medusa**:
+**payment-provider fit**). Prove it on the two shortlisted backends by adding a
+fully-configured `babafeszek` (2 materials + colors + per-word embroidery, with
+an active **set discount**) to a cart as a **correctly-priced, correctly-taxed
+line item**:
 
-Add a fully-configured `babafeszek` (2 materials + colors + per-word embroidery
-
-- an active **set discount**) to a cart as a **correctly-priced, correctly-taxed
-  line item**, on each candidate:
-
-- **Vendure spike:** custom order-line fields for the config +
-  `OrderItemPriceCalculationStrategy` computing price from our core; set discount
-  via promotion/custom logic; Stripe Standalone Tax API for VAT; confirm Barion
+- **Vendure:** config in custom order-line fields; price via
+  `OrderItemPriceCalculationStrategy` from our core; set discount via
+  promotion/custom logic; Stripe Standalone Tax API for VAT; confirm Barion
   integration via its API.
-- **Medusa spike:** custom line item with our computed `unit_price` + config in
+- **Medusa:** custom line item with our computed `unit_price` + config in
   `metadata`; set discount via a promotion or custom module; Barion payment
   module; Stripe Standalone Tax API for VAT.
 
 Success = the charged total, the VAT, the human-readable order lines, **and a
 completed Barion payment** match what `src/lib/priceUtils.ts` + `orderSubmit.ts`
-produce today. Whichever spike is less painful wins; that single experiment
-beats more planning. Vendure is the front-runner — if its
-`OrderItemPriceCalculationStrategy` + promotion model handle the configured
-price and the material-gated set discount cleanly, it wins; fall back to Medusa
-if they don't.
+produce today. Whichever spike is less painful wins — that single experiment
+beats more planning (win criterion per §6).
 
-## 8. Dependency: pricing-core refactor (committed)
+## 9. Dependency: pricing-core refactor (committed)
 
 Both spikes need our pricing/validation logic runnable **outside the browser**.
 Tracked separately as `openspec/changes/extract-pricing-core/`: extract
@@ -176,7 +178,7 @@ pure, dependency-free, tested core (no Svelte runes / DOM / Astro imports) so th
 browser (display) and the platform (authoritative price + VAT base) share one
 implementation. Behavior-preserving; the Vitest suite is the safety net.
 
-## 9. Address validation (tiered, platform-agnostic)
+## 10. Address validation (tiered, platform-agnostic)
 
 - Gate on the delivery method's `needs_address` flag (pickup collects nothing).
 - Tier 1: free-text + required + HU postcode `^\d{4}$` in the pure core (runs
