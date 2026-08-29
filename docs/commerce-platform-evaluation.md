@@ -114,9 +114,37 @@ tiebreaker is **configurator fit**:
 - **Medusa** is a flexible toolkit where we wire the same flow by hand via
   custom line items + `metadata`.
 
-Vendure = the hook already exists; Medusa = we build the hook. **Medusa is the
-fallback** if Vendure's promotion model can't express the material-gated set
-discount cleanly.
+Vendure = the hook already exists; Medusa = we build the hook.
+
+**Set-discount fit (verified against Vendure sources):** the material-gated,
+globally-allocated set discount (§1) is **expressible in Vendure's promotion
+model**, but not with built-in conditions/actions — it needs a small custom
+promotion plugin, which is a first-class documented extension point (no fork):
+
+- A custom `PromotionCondition` (`check(ctx, order, args)`) reads the config
+  from `orderLine.customFields`, runs the extracted pricing core over all lines,
+  and returns a **state object** `{ [lineId]: { count, percent, setTitle } }`
+  (the documented condition→action "state" pattern, used by built-in buy-X-get-Y).
+- A custom `PromotionLineAction` (`execute(ctx, orderLine, args, state)`) reads
+  that state and returns an arbitrary **line-total** discount
+  (`-unitPrice × covered × percent / 100`), which collapses to our exact formula
+  (`src/lib/priceUtils.ts`).
+- **Must use `PromotionLineAction`, not `PromotionItemAction`:** the latter's
+  return is a _per-unit_ amount the core multiplies by `orderLine.quantity`, so
+  it can only discount a whole line uniformly — wrong for partial per-unit
+  coverage (2 of 3 units). The line action takes the raw line-total.
+
+Caveats to prove in the spike (§8): (1) money totals are exact, but a partially
+covered line shows a prorated per-unit discount price — the "2 of 3 in set"
+messaging must come from the line's customFields, not Vendure; (2) we round the
+final total vs. Vendure rounding the discount via `roundMoney` — verify against
+the Vitest suite; (3) `OrderCalculator` applies promotions before tax and
+re-runs the tax strategy on change, so VAT lands on the discounted amount (good);
+(4) the condition needs the set-group definitions (TinaCMS groups) — via
+promotion args, a DB table, or product custom fields.
+
+**Medusa is the fallback** if, in the spike, this condition + line-action
+implementation proves less clean than Medusa's equivalent wiring.
 
 ## 7. Payments and tax: Barion + Stripe Tax
 
@@ -157,9 +185,10 @@ an active **set discount**) to a cart as a **correctly-priced, correctly-taxed
 line item**:
 
 - **Vendure:** config in custom order-line fields; price via
-  `OrderItemPriceCalculationStrategy` from our core; set discount via
-  promotion/custom logic; Stripe Standalone Tax API for VAT; confirm Barion
-  integration via its API.
+  `OrderItemPriceCalculationStrategy` from our core; set discount via a custom
+  `PromotionCondition` (core over all lines → state) + `PromotionLineAction`
+  (line-total discount) per §6; Stripe Standalone Tax API for VAT; confirm
+  Barion integration via its API.
 - **Medusa:** custom line item with our computed `unit_price` + config in
   `metadata`; set discount via a promotion or custom module; Barion payment
   module; Stripe Standalone Tax API for VAT.
