@@ -1,0 +1,37 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Astro 6 (static output) + Svelte 5 islands, Tailwind CSS 4,
+  TinaCMS (Git-backed content in src/content), Zod, Vitest, Playwright.
+  Conventions: see AGENTS.md (build-time & no-JS first, standardised over
+  bespoke, no global CSS) and docs/ARCHITECTURE.md (data flow, the dual
+  Tina-client / Astro-collection content paths).
+  Domain: Hungarian e-commerce site for handmade baby products. Ordering is a
+  quote request (email via Web3Forms), not a card checkout. Prices in HUF (Ft).
+  Ordering domain logic lives in src/lib (priceUtils, orderStorage,
+  orderSubmit, validation); the order form island lives in
+  src/components/blocks/order/.
+  Tests: unit specs in src/lib/__tests__/ (vitest run), hydration tests in
+  tests/ (playwright). A spec scenario maps to a test case where practical.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
