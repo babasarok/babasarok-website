@@ -2,11 +2,10 @@
 
 ## Context
 
-See proposal.md for motivation. The pricing model and its rationale are
-documented in [docs/set-pricing-model.md](../../docs/set-pricing-model.md);
-this design records the technical decisions behind the implementation.
-Open/cleanup items found in review are tracked in
-[docs/set-support-followup-plan.md](../../docs/set-support-followup-plan.md).
+See proposal.md for motivation. This design records the pricing model, its
+rationale, and the technical decisions behind the implementation.
+Follow-up cleanups found in review are tracked in the `set-support-cleanup`
+change (`openspec/changes/set-support-cleanup/`).
 
 Constraints: the site is static and build-time-first; client JS is limited to
 Svelte islands; content is TinaCMS-managed (one number per set, nothing richer
@@ -29,7 +28,8 @@ request, so pricing must be explainable to a buyer, not just computable.
 - Per-set `valid_until` / date-gating of set discounts (a set is on/off by
   existence in `product_groups`).
 - Sets whose members have different material structures (exact-match gating is
-  the model; see set-pricing-model.md §6).
+  the model; members with differing material counts never match — revisit if a
+  set legitimately mixes such products).
 - Any change to how the order email is formatted beyond adding the discount
   source line.
 
@@ -102,12 +102,12 @@ deep-link with preselected options.
 - [Rule drift between pricing and UI] → mitigated: both read one allocation
   (`allocateSetDiscounts`); `setDiscount.test.ts` pins the behavior.
 - [Tightened global pricing can surprise] (same-product line no longer a
-  partner) → intended per set-pricing-model.md; surfaced via `pending-partner`
-  status instead of a silently missing discount.
+  partner) → intended by the material-gated global model; surfaced via
+  `pending-partner` status instead of a silently missing discount.
 - [`prefillFromParams` suffix regexes] could misread a field literally named
-  `*_color`/`*_custom_color` → follow-up: resolve by known embroidery field
-  names or document reserved suffixes (followup plan §6).
+  `*_color`/`*_custom_color` → follow-up: `set-support-cleanup` (deep-link
+  embroidery param robustness).
 - [Re-deriving the percent from the multiplier] in email/price display →
-  follow-up: store the raw percent in `DiscountInfo` (followup plan §3).
-- [Hardcoded Tailwind palette colors] in the new set UI → follow-up: replace
-  with `@theme` tokens (followup plan §8).
+  follow-up: `set-support-cleanup` (raw percent in `DiscountInfo`).
+- [Hardcoded Tailwind palette colors] in the new set UI → follow-up:
+  `set-support-cleanup` (`@theme` tokens for price colors).

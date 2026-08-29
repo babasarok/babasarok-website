@@ -33,7 +33,8 @@ export interface SetDiscountGroup {
 /**
  * The best set discount a product qualifies for: the largest set percent across
  * every set the product belongs to. When a product is in more than one set, the
- * biggest discount wins (no stacking). See docs/set-pricing-model.md.
+ * biggest discount wins (no stacking). See the `product-sets` spec in
+ * `openspec/`.
  */
 export function resolveSetDiscount(
   productId: string,
@@ -69,8 +70,8 @@ function normalizeMaterialValues(product: IProduct): string {
  * Two products count towards the same set only when their selected material
  * values match exactly (same materials, colours and custom colours). The
  * comparison is order-independent and ignores transient `error` fields. Two
- * products with no material selections match trivially. See
- * docs/set-pricing-model.md.
+ * products with no material selections match trivially. See the `product-sets`
+ * spec in `openspec/`.
  */
 export function materialsMatch(a: IProduct, b: IProduct): boolean {
   return normalizeMaterialValues(a) === normalizeMaterialValues(b);
@@ -143,7 +144,8 @@ interface SetLine {
  * it has units (two babafészek lines + one babatakaro line form one set, not
  * two). An item earns its set's percent for the units it is assigned to (the
  * biggest set percent wins when a product is in several sets); an unassigned
- * item reports its pending state instead. See docs/set-pricing-model.md.
+ * item reports its pending state instead. See the `product-sets` spec in
+ * `openspec/`.
  */
 export function allocateSetDiscounts(
   basket: IProduct[],
@@ -251,7 +253,10 @@ function pendingStatus(
     canSync: canSyncMaterials(item, partner),
     // Sum of all partner lines (matching or not): what the set could cover
     // once materials are synced, consistent with the active-count rule.
-    count: Math.min(partners.reduce((sum, x) => sum + x.count, 0), item.count),
+    count: Math.min(
+      partners.reduce((sum, x) => sum + x.count, 0),
+      item.count
+    ),
   };
 }
 
@@ -266,7 +271,10 @@ function allocatePool(pool: SetLine[], allocated: Map<string, number>): void {
   const total = pool.reduce((sum, line) => sum + line.item.count, 0);
   const byProduct = new Map<string, number>();
   for (const line of pool) {
-    byProduct.set(line.item.product_id, (byProduct.get(line.item.product_id) ?? 0) + line.item.count);
+    byProduct.set(
+      line.item.product_id,
+      (byProduct.get(line.item.product_id) ?? 0) + line.item.count
+    );
   }
 
   // Max pairs: each needs two units, and at most `total - dominant` pairs can
@@ -286,9 +294,7 @@ function allocatePool(pool: SetLine[], allocated: Map<string, number>): void {
 
   // Every line in a pool shares the group's percent, so basket order is all
   // the tie-break the round-robin fill needs.
-  const order = pool
-    .map((line, i) => ({ line, i }))
-    .toSorted((a, b) => a.i - b.i);
+  const order = pool.map((line, i) => ({ line, i })).toSorted((a, b) => a.i - b.i);
 
   for (;;) {
     let progressed = false;

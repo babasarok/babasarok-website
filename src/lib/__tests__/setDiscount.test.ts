@@ -5,7 +5,7 @@
  * resolution (`allocateSetDiscounts`), which only grants a set's discount when
  * a matching-material sibling is also present and consumes each basket unit
  * at most once across the whole basket.
- * See docs/set-pricing-model.md.
+ * See the `product-sets` spec in `openspec/`.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -164,7 +164,11 @@ describe("resolveActiveSetDiscount", () => {
       },
     ];
     const nestA = makeProduct({ uuid: "u1", product_id: "nest", values: [val("cotton", ["red"])] });
-    const nestB = makeProduct({ uuid: "u2", product_id: "nest2", values: [val("cotton", ["red"])] });
+    const nestB = makeProduct({
+      uuid: "u2",
+      product_id: "nest2",
+      values: [val("cotton", ["red"])],
+    });
     const blanket = makeProduct({
       uuid: "u3",
       product_id: "blanket",
@@ -558,10 +562,7 @@ describe("allocateSetDiscounts (global allocation)", () => {
   });
 
   it("covers equal lines evenly when the partner is the limiting resource", () => {
-    const statuses = allocateSetDiscounts(
-      [nest("u1", 2), nest("u2", 2), blanket("u3", 2)],
-      groups
-    );
+    const statuses = allocateSetDiscounts([nest("u1", 2), nest("u2", 2), blanket("u3", 2)], groups);
     expect(statuses.get("u1")).toEqual({
       state: "active",
       percent: 10,

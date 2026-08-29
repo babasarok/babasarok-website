@@ -619,7 +619,7 @@ export interface CmsProductGroup {
   /**
    * The percent discount (0–100) every member of the set earns when it is
    * ordered in this set. Optional: a set with no value earns no discount.
-   * See docs/set-pricing-model.md.
+   * See the `product-sets` spec in `openspec/`.
    */
   discount_percent?: number | undefined;
   products: CmsProductGroupMember[];
