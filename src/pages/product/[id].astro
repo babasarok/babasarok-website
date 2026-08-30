@@ -5,7 +5,7 @@ import { Icon } from "astro-icon/components";
 import Base from "../../layouts/Base.astro";
 import ProductGallery from "../../components/ui/ProductGallery.astro";
 import ProductOrder from "../../components/blocks/order/ProductOrder.svelte";
-import { getProducts, getProductGroups, getThreadColors } from "../../lib/data";
+import { getProducts, getProductGroups, getProductSlugs, getThreadColors } from "../../lib/data";
 
 type GalleryImage = {
   src: ImageMetadata;
@@ -22,7 +22,7 @@ export const getStaticPaths = (async () => {
   const enhancedById = new Map(enhancedProducts.map((p) => [p.product_id, p]));
   const productCatalog = Object.fromEntries(enhancedProducts.map((p) => [p.product_id, p]));
   const productGroups = await getProductGroups();
-  const slugByProductId = Object.fromEntries(products.map((p) => [p.data.product_id, p.id]));
+  const slugByProductId = await getProductSlugs();
   const threadColors = await getThreadColors();
 
   return products.map((product, i) => ({

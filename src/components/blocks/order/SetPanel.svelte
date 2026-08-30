@@ -36,13 +36,13 @@
 <section
   class={[
     "flex flex-col gap-3 rounded-2xl border p-4",
-    active ? "border-green-600 bg-green-50" : "border-brown-200 bg-brown-50",
+    active ? "border-success-600 bg-success-50" : "border-brown-200 bg-brown-50",
   ]}
 >
   <div class="flex items-start gap-2">
     <Icon
       icon="mdi:tag-multiple-outline"
-      class={["mt-0.5 shrink-0 text-xl", active ? "text-green-700" : "text-brown-500"]}
+      class={["mt-0.5 shrink-0 text-xl", active ? "text-success-700" : "text-brown-500"]}
     />
     <div class="flex flex-col gap-0.5">
       <div class="flex flex-wrap items-center gap-2">
@@ -53,7 +53,7 @@
           <span
             class={[
               "rounded-full px-2 py-0.5 text-xs font-semibold",
-              active ? "bg-green-600 text-white" : "bg-green-100 text-green-800",
+              active ? "bg-success-600 text-white" : "bg-success-100 text-success-800",
             ]}
           >
             -{percent}%

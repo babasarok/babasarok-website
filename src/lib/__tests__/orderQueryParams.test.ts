@@ -61,6 +61,30 @@ describe("prefillFromParams", () => {
     });
   });
 
+  it("treats a field literally named `*_color` as a plain field, not an embroidery colour param", () => {
+    const item = makeProduct({
+      fields: [
+        makeField({ name: "himzes", type: "embroidery" }),
+        makeField({ name: "himzes_color", type: "color", items: [{ value: "piros" }] }),
+      ],
+    });
+    prefillFromParams(item, new URLSearchParams("himzes_color=piros"));
+    expect(item.fields[1].value).toEqual({ value: "piros" });
+    expect(item.fields[0].value).toBeUndefined();
+  });
+
+  it("treats a field literally named `*_custom_color` as a plain field", () => {
+    const item = makeProduct({
+      fields: [
+        makeField({ name: "himzes", type: "embroidery" }),
+        makeField({ name: "himzes_custom_color", type: "color", items: [{ value: "piros" }] }),
+      ],
+    });
+    prefillFromParams(item, new URLSearchParams("himzes_custom_color=piros"));
+    expect(item.fields[1].value).toEqual({ value: "piros" });
+    expect(item.fields[0].value).toBeUndefined();
+  });
+
   it("prefills a material slot with colours within the required count", () => {
     const item = makeProduct({
       materials: [makeMaterial({ material_id: "cotton" })],

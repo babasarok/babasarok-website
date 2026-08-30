@@ -133,7 +133,7 @@
       <div class="flex flex-wrap gap-2">
         {#each activeDeals as deal (deal.setTitle)}
           <span
-            class="flex items-center gap-1 rounded-full bg-green-600 px-3 py-1 text-sm font-semibold text-white"
+            class="flex items-center gap-1 rounded-full bg-success-600 px-3 py-1 text-sm font-semibold text-white"
           >
             <Icon icon="mdi:check-circle" class="shrink-0" />
             {deal.setTitle} szett −{deal.percent}% aktív
@@ -145,7 +145,7 @@
     {#each partnerOpportunities as op (op.setTitle)}
       <div class="flex flex-col gap-3 rounded-xl border border-brown-200 bg-white p-4">
         <p class="text-sm text-brown-600">
-          Szerezd meg a <span class="font-semibold text-green-700">−{op.percent}%</span>
+          Szerezd meg a <span class="font-semibold text-success-700">−{op.percent}%</span>
           <span class="font-medium">{op.setTitle}</span> szett kedvezményt! Add hozzá a hiányzó darabokat
           ugyanazzal az anyaggal:
         </p>
@@ -171,7 +171,7 @@
                 {/if}
                 {#if sibling.percent}
                   <span
-                    class="absolute left-2 top-2 rounded-full bg-green-600 px-2 py-0.5 text-xs font-semibold text-white"
+                    class="absolute left-2 top-2 rounded-full bg-success-600 px-2 py-0.5 text-xs font-semibold text-white"
                   >
                     −{sibling.percent}%
                   </span>
@@ -201,7 +201,7 @@
       >
         <p class="text-sm text-brown-600">
           Válaszd ugyanazt az anyagot a <span class="font-medium">{op.title}</span> darabhoz, és
-          megkapod a <span class="font-semibold text-green-700">−{op.percent}%</span>
+          megkapod a <span class="font-semibold text-success-700">−{op.percent}%</span>
           <span class="font-medium">{op.setTitle}</span> szett kedvezményt.
         </p>
         {#if op.editHref}

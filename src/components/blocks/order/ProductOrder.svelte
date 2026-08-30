@@ -276,12 +276,12 @@
     />
 
     {#if error}
-      <p class="mt-3 text-sm text-red-500">{error}</p>
+      <p class="mt-3 text-sm text-danger-500">{error}</p>
     {/if}
 
     {#if editing && isDirty}
       <div
-        class="mt-3 flex items-center gap-2 rounded-xl border border-amber-400 bg-amber-50 p-3 text-sm text-amber-800"
+        class="mt-3 flex items-center gap-2 rounded-xl border border-warning-400 bg-warning-50 p-3 text-sm text-warning-800"
       >
         <Icon icon="mdi:alert-circle" class="shrink-0" />
         Nincs mentve: a módosítások még nem kerültek a kosárba.
@@ -290,7 +290,7 @@
 
     {#if saved}
       <div
-        class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-green-600 bg-green-50 p-3 text-sm text-green-800"
+        class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-success-600 bg-success-50 p-3 text-sm text-success-800"
       >
         <span class="flex items-center gap-1">
           <Icon icon="mdi:check-circle" class="shrink-0" />
@@ -298,7 +298,7 @@
         </span>
         <a
           href={checkoutHref}
-          class="flex items-center gap-1 font-medium underline hover:text-green-900"
+          class="flex items-center gap-1 font-medium underline hover:text-success-900"
         >
           Tovább a pénztárhoz
           <Icon icon="mdi:arrow-right" class="shrink-0" />

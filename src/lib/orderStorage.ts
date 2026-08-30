@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { IProduct } from "./types.svelte";
+import type { Field, IProduct, ProductMaterialValue } from "./types.svelte";
 import { PRODUCT_FIELD_TYPE_VALUES } from "./productFieldTypes";
 
 const STORAGE_KEY = "babasarok-order-state";
@@ -105,19 +105,75 @@ export function loadOrderState(): SavedOrderState | null {
   }
 }
 
-/** Map a live order item down to the persisted, user-entered-values-only shape. */
+/**
+ * The user-entered value of one field, dropped of its transient `error` (the
+ * only live-only key). Built explicitly per field type instead of cast, so the
+ * live→persisted mapping is checked by the type system.
+ */
+function toSavedField(field: Field): SavedProduct["fields"][number] {
+  const { name, type } = field;
+  switch (type) {
+    case "toggle": {
+      return field.value ? { name, type, value: { value: field.value.value } } : { name, type };
+    }
+    case "embroidery": {
+      return field.value
+        ? {
+            name,
+            type,
+            value: {
+              enabled: field.value.enabled,
+              text: { value: field.value.text.value },
+              color: {
+                color: field.value.color.color,
+                ...(field.value.color.custom_color == null
+                  ? {}
+                  : { custom_color: field.value.color.custom_color }),
+              },
+            },
+          }
+        : { name, type };
+    }
+    default: {
+      return field.value
+        ? {
+            name,
+            type,
+            value: {
+              value: field.value.value,
+              ...(field.value.is_custom == null ? {} : { is_custom: field.value.is_custom }),
+            },
+          }
+        : { name, type };
+    }
+  }
+}
+
+/** The user-entered value of one material slot, dropped of its transient `error`. */
+function toSavedMaterial(value: ProductMaterialValue): SavedProduct["materials"][number] {
+  return {
+    material_id: value.material_id,
+    colors: value.colors,
+    ...(value.custom_color == null ? {} : { custom_color: value.custom_color }),
+  };
+}
+
+/**
+ * Map a live order item down to the persisted, user-entered-values-only shape.
+ * Undefined material slots are dropped: they can only appear on an unsaved,
+ * never-validated item (a validated save has every slot filled by
+ * `validateItem`), and a `SavedProduct` never carries them.
+ */
 export function mapProductToSaved(product: IProduct): SavedProduct {
   return {
     uuid: product.uuid,
     product_id: product.product_id,
     count: product.count,
-    fields: product.fields.map((field) => ({
-      name: field.name,
-      type: field.type,
-      value: field.value,
-    })),
-    materials: product.materials.values,
-  } as SavedProduct;
+    fields: product.fields.map(toSavedField),
+    materials: product.materials.values
+      .filter((value): value is ProductMaterialValue => value != null)
+      .map(toSavedMaterial),
+  };
 }
 
 function writeEnvelope(state: SavedOrderState): void {

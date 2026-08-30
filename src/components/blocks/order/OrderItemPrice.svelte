@@ -97,7 +97,7 @@
             {#snippet content()}
               Az ár tájékoztató jellegű, a végleges árajánlatot a visszajelzéskor kapod meg.
             {/snippet}
-            <Icon icon="mdi:alert-circle" class="inline-block text-sm text-orange-500" />
+            <Icon icon="mdi:alert-circle" class="inline-block text-sm text-warning-500" />
           </Tooltip>
         </p>
       </div>

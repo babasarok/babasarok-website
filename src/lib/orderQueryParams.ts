@@ -12,7 +12,11 @@ import type { Field, IProduct, ProductMaterialValue } from "./types.svelte";
  * - `<fieldName>=<value>` — a product field, keyed by its frontmatter `name`.
  *   Toggles accept `true`/`1`; embroidery enables the field and sets its text.
  * - `<embroideryField>_color=<colorId>` / `<embroideryField>_custom_color=<hex>`
- *   — the thread colour for an embroidery field.
+ *   — the thread colour for an embroidery field. Field names win over this
+ *   pattern: a product field literally named `<name>_color` /
+ *   `<name>_custom_color` consumes the param as a plain field value (field
+ *   lookup happens first), so content authors should avoid naming fields with
+ *   those reserved suffixes.
  * - `m<i>=<materialId>` — the material chosen for slot `i` (0-based).
  * - `m<i>_colors=<c1,c2,…>` — comma-separated colour ids for slot `i`.
  * - `m<i>_custom=<hex>` — a custom colour for slot `i`.

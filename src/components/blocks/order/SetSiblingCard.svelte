@@ -44,7 +44,7 @@
     {/if}
     {#if discount}
       <span
-        class="absolute left-2 top-2 rounded-full bg-green-600 px-2 py-0.5 text-xs font-semibold text-white"
+        class="absolute left-2 top-2 rounded-full bg-success-600 px-2 py-0.5 text-xs font-semibold text-white"
       >
         -{discount}%
       </span>
@@ -64,7 +64,7 @@
         "mt-auto flex items-center justify-center gap-1 rounded-full border px-2 py-1 text-xs font-medium transition-all",
         disabled ? "cursor-not-allowed border-brown-200 opacity-50" : "cursor-pointer",
         added > 0
-          ? "border-green-600 bg-green-50 text-green-800 hover:bg-green-100"
+          ? "border-success-600 bg-success-50 text-success-800 hover:bg-success-100"
           : "border-brown-300 hover:bg-brown-100",
       ]}
     >

@@ -1,7 +1,8 @@
 ---
 import Button from "@/components/ui/Button.astro";
 import { Image } from "astro:assets";
-import { getCollection, getEntry } from "astro:content";
+import { getEntry } from "astro:content";
+import { getProductMeta } from "@/lib/data";
 import NavBasket from "@/components/blocks/order/NavBasket.svelte";
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -14,12 +15,7 @@ const isHome = Astro.url.pathname === "/";
 // The checkout page shows the full basket already; skip the nav basket there.
 const showBasket = !Astro.url.pathname.startsWith(checkoutLink);
 
-const productMeta = Object.fromEntries(
-  (await getCollection("product")).map((product) => [
-    product.data.product_id,
-    { title: product.data.title, slug: product.id },
-  ])
-);
+const productMeta = await getProductMeta();
 
 const rawMenu = config.mainMenu ?? [];
 const mainMenu = rawMenu

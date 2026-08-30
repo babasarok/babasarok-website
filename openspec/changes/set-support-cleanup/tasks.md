@@ -31,24 +31,24 @@ All items are behavior-preserving; each ends with the usual verification
 
 ## 4. Consolidate product lookup maps
 
-- [ ] 4.1 Add a shared product id → {title, slug} helper (e.g. in
+- [x] 4.1 Add a shared product id → {title, slug} helper (e.g. in
       `src/lib/data.ts`)
-- [ ] 4.2 Use it in `product/[id].astro`, `checkout.astro`, and
+- [x] 4.2 Use it in `product/[id].astro`, `checkout.astro`, and
       `Header.astro`; verify pages build and the nav basket still resolves
       titles
 
 ## 5. Deep-link embroidery param robustness
 
-- [ ] 5.2 Add a regression test for a field literally named `*_color` in
+- [x] 5.2 Add a regression test for a field literally named `*_color` in
       `src/lib/__tests__/orderQueryParams.test.ts`
 
 ## 6. Type-safe saved-product mapping
 
-- [ ] 6.1 Type `mapProductToSaved`'s return explicitly (or add a test that its
+- [x] 6.1 Type `mapProductToSaved`'s return explicitly (or add a test that its
       output parses against `savedProductSchema`)
 
 ## 7. `@theme` tokens for price colors
 
-- [ ] 7.1 Replace ad-hoc Tailwind palette classes in the order-block UI with
+- [x] 7.1 Replace ad-hoc Tailwind palette classes in the order-block UI with
       `--color-*` tokens, adding tokens to `src/styles/global.css` where
       needed; verify with `npm run lint:style`

@@ -1,5 +1,4 @@
 ---
-import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
 import {
@@ -8,6 +7,7 @@ import {
   getProducts,
   getThreadColors,
   getProductGroups,
+  getProductSlugs,
   type CmsEnhancedProduct,
   type CmsEnhancedDeliveryMethod,
 } from "../lib/data";
@@ -21,9 +21,7 @@ const threadColors = await getThreadColors();
 const productGroups = await getProductGroups();
 
 // Slug lookup so the checkout can link each item back to its product page.
-const slugByProductId = Object.fromEntries(
-  (await getCollection("product")).map((p) => [p.data.product_id, p.id])
-);
+const slugByProductId = await getProductSlugs();
 ---
 
 <Base title="Pénztár">
