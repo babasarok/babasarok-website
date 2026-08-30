@@ -348,6 +348,25 @@ export function resolveActiveSetDiscount(
   return status?.state === "active" ? status : undefined;
 }
 
+/**
+ * The active set discount of every basket item in one global pass: a map of
+ * item uuid → status, holding only the items that earn a set discount. Price
+ * each item from this map so the allocation runs exactly once per basket
+ * rather than once per item.
+ */
+export function resolveActiveSetDiscounts(
+  basket: IProduct[],
+  groups: SetDiscountGroup[]
+): Map<string, ActiveDiscountStatus> {
+  const active = new Map<string, ActiveDiscountStatus>();
+  for (const [uuid, status] of allocateSetDiscounts(basket, groups)) {
+    if (status.state === "active") {
+      active.set(uuid, status);
+    }
+  }
+  return active;
+}
+
 export interface Price extends BasePrice {
   priced_by_length: false;
 }

@@ -2,7 +2,7 @@
  * Order submission: format the order directly from the product models and POST
  * it to web3forms. Kept out of the Svelte component so the form stays declarative.
  */
-import { calculatePriceForItem, resolveActiveSetDiscount } from "@/lib/priceUtils";
+import { calculatePriceForItem, resolveActiveSetDiscounts } from "@/lib/priceUtils";
 import type { ActiveDiscountStatus, SetDiscountGroup } from "@/lib/priceUtils";
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "./types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "./data";
@@ -25,11 +25,9 @@ export interface OrderDetails {
 export function calculateOrderTotal(
   products: IProduct[],
   deliveryMethod: CmsEnhancedDeliveryMethod,
-  productGroups: SetDiscountGroup[] = []
+  activeStatuses: Map<string, ActiveDiscountStatus>
 ): { total: number; indeterminate: boolean } {
-  const prices = products.map((p) =>
-    calculatePriceForItem(p, resolveActiveSetDiscount(p, products, productGroups))
-  );
+  const prices = products.map((p) => calculatePriceForItem(p, activeStatuses.get(p.uuid)));
   return {
     total: prices.reduce((sum, p) => sum + (p.totalPrice ?? 0), 0) + deliveryMethod.price,
     indeterminate: prices.some((p) => p.indeterminate),
@@ -156,10 +154,13 @@ function formatProductString(
 }
 
 function buildOrderFormData(order: OrderDetails, accessKey: string, message: string): FormData {
+  // Resolve the basket allocation once; both the total and each item's email
+  // block price from it so the set status can't be dropped by a single caller.
+  const activeStatuses = resolveActiveSetDiscounts(order.products, order.productGroups);
   const { total, indeterminate } = calculateOrderTotal(
     order.products,
     order.deliveryMethod,
-    order.productGroups
+    activeStatuses
   );
 
   const formData = new FormData();
@@ -171,11 +172,7 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
   for (const [index, product] of order.products.entries()) {
     formData.append(
       `termek ${(index + 1).toString()}`,
-      formatProductString(
-        product,
-        order.threadColors,
-        resolveActiveSetDiscount(product, order.products, order.productGroups)
-      )
+      formatProductString(product, order.threadColors, activeStatuses.get(product.uuid))
     );
   }
   formData.append(

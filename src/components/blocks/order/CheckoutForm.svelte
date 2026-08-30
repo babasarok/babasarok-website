@@ -15,6 +15,7 @@
   import {
     calculatePriceForItem,
     resolveActiveSetDiscount,
+    resolveActiveSetDiscounts,
     resolveSetDiscountStatus,
   } from "@/lib/priceUtils";
   import type { SetDiscountStatus } from "@/lib/priceUtils";
@@ -161,7 +162,11 @@
       try {
         globalThis.window.fbq("track", "Purchase", {
           currency: "HUF",
-          value: calculateOrderTotal(items, deliveryMethodData, productGroups).total,
+          value: calculateOrderTotal(
+            items,
+            deliveryMethodData,
+            resolveActiveSetDiscounts(items, productGroups)
+          ).total,
           num_items: items.length,
         });
       } catch (e) {

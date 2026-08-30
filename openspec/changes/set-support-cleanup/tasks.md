@@ -21,9 +21,11 @@ All items are behavior-preserving; each ends with the usual verification
 
 ## 3. Explicit set-discount resolution in the pricing path
 
-- [ ] 3.1 Thread the basket allocation (or a pre-resolved status map) into
-      `calculatePriceForItem` so callers cannot omit it
-- [ ] 3.2 Remove the duplicate `resolveActiveSetDiscount` calls in
+- [x] 3.1 Thread the basket allocation (or a pre-resolved status map) into
+      `calculatePriceForItem` so callers cannot omit it (added
+      `resolveActiveSetDiscounts(basket, groups)` helper; threaded the
+      pre-resolved map through `calculateOrderTotal`/`buildOrderFormData`)
+- [x] 3.2 Remove the duplicate `resolveActiveSetDiscount` calls in
       `orderSubmit.ts` (`calculateOrderTotal` + `formatProductString`); verify
       totals and email strings are unchanged via unit tests
 

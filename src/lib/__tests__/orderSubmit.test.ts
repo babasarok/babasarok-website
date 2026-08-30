@@ -498,11 +498,11 @@ describe("calculateOrderTotal", () => {
       ],
     });
 
-    expect(calculateOrderTotal([known], makeDelivery("x", 1000))).toEqual({
+    expect(calculateOrderTotal([known], makeDelivery("x", 1000), new Map())).toEqual({
       total: 6000,
       indeterminate: false,
     });
-    expect(calculateOrderTotal([known, unknown], makeDelivery("x", 1000))).toEqual({
+    expect(calculateOrderTotal([known, unknown], makeDelivery("x", 1000), new Map())).toEqual({
       total: 6000,
       indeterminate: true,
     });
