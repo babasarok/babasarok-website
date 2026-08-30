@@ -36,9 +36,6 @@ All items are behavior-preserving; each ends with the usual verification
 
 ## 5. Deep-link embroidery param robustness
 
-- [ ] 5.1 Resolve embroidery params by known embroidery field names in
-      `orderQueryParams.ts` (or document the reserved `_color`/`_custom_color`
-      suffixes in the scheme comment)
 - [ ] 5.2 Add a regression test for a field literally named `*_color` in
       `src/lib/__tests__/orderQueryParams.test.ts`
 
