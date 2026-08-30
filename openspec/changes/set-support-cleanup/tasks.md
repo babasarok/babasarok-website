@@ -5,7 +5,7 @@ All items are behavior-preserving; each ends with the usual verification
 
 ## 1. Single home for the set UI
 
-- [ ] 1.1 Delete the dead set-UI block (chips, pending-discount banner,
+- [x] 1.1 Delete the dead set-UI block (chips, pending-discount banner,
       `onSyncToSet`) and its props from `OrderItem.svelte`; verify
       `ProductOrder`/`SetPanel`/`SetSiblingCard` still render the set UI and
       the check passes
