@@ -12,6 +12,8 @@ interface DiscountInfo {
   discount: number;
   discountSource: "set" | "standalone";
   discountAppliedCount: number;
+  /** Raw discount percent (e.g. 15 for 15%), independent of the applied count. */
+  percent: number;
 }
 
 interface BasePrice {
@@ -468,6 +470,7 @@ export function calculatePriceForItem(
       discount: 1 - (setStatus.percent * (setStatus.count / product.count)) / 100,
       discountSource: "set",
       discountAppliedCount: setStatus.count,
+      percent: setStatus.percent,
     };
   } else if (
     product.discount &&
@@ -478,6 +481,7 @@ export function calculatePriceForItem(
       discount: 1 - product.discount / 100,
       discountSource: "standalone",
       discountAppliedCount: product.count,
+      percent: product.discount,
     };
   }
 

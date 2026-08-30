@@ -12,11 +12,12 @@ All items are behavior-preserving; each ends with the usual verification
 
 ## 2. Raw percent in `DiscountInfo`
 
-- [ ] 2.1 Add `percent` to `DiscountInfo` (set and standalone) and set it at
+- [x] 2.1 Add `percent` to `DiscountInfo` (set and standalone) and set it at
       every construction site
-- [ ] 2.2 Display `percent` directly in `OrderItemPrice.svelte` and use it in
+- [x] 2.2 Display `percent` directly in `OrderItemPrice.svelte` and use it in
       `orderSubmit.ts` instead of inverting the multiplier; verify with the
-      existing price/email unit tests
+      existing price/email unit tests (also fixed the same inversion in
+      `CheckoutItem.svelte`)
 
 ## 3. Explicit set-discount resolution in the pricing path
 

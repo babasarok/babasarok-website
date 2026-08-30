@@ -143,12 +143,10 @@ function formatProductString(
       : []),
     ...(price.discountInfo
       ? [
-          `Kedvezmény: ${(
-            (1 - price.discountInfo.discount) /
-            (price.discountInfo.discountAppliedCount / product.count)
-          ).toLocaleString("hu-HU", {
-            style: "percent",
-          })} (${price.discountInfo.discountAppliedCount} db)`,
+          `Kedvezmény: ${(price.discountInfo.percent / 100).toLocaleString(
+            "hu-HU",
+            { style: "percent" }
+          )} (${price.discountInfo.discountAppliedCount} db)`,
         ]
       : []),
     `Összár: ${price.totalPrice?.toString() ?? ""}Ft${price.indeterminate ? " (nem teljes ár)" : ""}`,

@@ -184,10 +184,7 @@
           {price.discountInfo.discountSource === "set" ? "Szett kedvezmény" : "Kedvezmény"}
         </dt>
         <dd class="text-right font-medium text-green-700">
-          −{(
-            (1 - price.discountInfo.discount) /
-            (price.discountInfo.discountAppliedCount / product.count)
-          ).toLocaleString("hu-HU", {
+          −{(price.discountInfo.percent / 100).toLocaleString("hu-HU", {
             style: "percent",
           })}
           {#if price.discountInfo.discountAppliedCount < product.count}
