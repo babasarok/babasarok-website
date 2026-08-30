@@ -229,7 +229,7 @@ implementation. Behavior-preserving; the Vitest suite is the safety net.
   platform's Shop API, not a hosted checkout.
 - **Multi-currency: per-market static prices, not FX conversion.** Each market
   has its own price list; no runtime currency conversion. Consequences:
-  - The pricing core stays the authority (§5), but its price *data* becomes
+  - The pricing core stays the authority (§5), but its price _data_ becomes
     per-market: every additive component (base, per-option, per-material,
     per-word embroidery, per-meter) needs a price per market, authored in
     TinaCMS.
