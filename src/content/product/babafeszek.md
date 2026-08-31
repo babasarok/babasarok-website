@@ -56,10 +56,6 @@ fields:
         label: XXL
         price: 5000
         tooltip: 50x90cm
-  - name: takaro_szett
-    price: 6500
-    label: Babatakaró és párna
-    type: toggle
   - name: betet
     price: 3700
     label: Betét
