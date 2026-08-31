@@ -27,29 +27,30 @@ other core modules, standard TS/JS, and Zod (already a runtime-agnostic dep). It
 must NOT import `svelte`, `svelte/*`, `astro:*`, `$app/*`, or touch DOM globals
 (`window`, `document`, `localStorage`).
 
-Core members (moved or re-homed):
+Core members (moved or re-homed). Names marked ✓ already landed via the lib
+reorganization; the rest is the remaining purity work:
 
 ```
 src/lib/pricing/
   types.ts            <- pure interfaces from types.svelte.ts (IProduct, Field, ...)
-  fieldTypes.ts       <- productFieldTypes.ts
-  fieldVisibility.ts  <- fieldVisibility.ts
-  fieldValue.ts       <- fieldValue.ts
-  materials.ts        <- materialUtils.ts
-  price.ts            <- priceUtils.ts (calculatePriceForItem, length-based, ...)
-  discounts.ts        <- set-discount fns (allocateSetDiscounts, materialsMatch,
-                         canSyncMaterials, resolveSetDiscountStatus, ...)
-  validation.ts       <- validation.ts (sanitizeItem, validateItem, isItemValid)
-  format.ts           <- price-string helpers lifted from orderSubmit.ts
+  fieldTypes.ts       <- productFieldTypes.ts                             ✓
+  fieldVisibility.ts  <- fieldVisibility.ts                              ✓
+  fieldValue.ts       <- fieldValue.ts                                   ✓
+  materials.ts        <- materialUtils.ts                                ✓
+  price.ts            <- priceUtils.ts (calculatePriceForItem, length-based)  ✓
+  setDiscount.ts      <- set-discount fns (allocateSetDiscounts, materialsMatch,
+                         canSyncMaterials, resolveSetDiscountStatus, ...)   ✓
+  validation.ts       <- validation.ts (sanitizeItem, validateItem, isItemValid)  ✓
+  format.ts           <- price-string helpers lifted from order/submit.ts
   index.ts            <- barrel re-export
 ```
 
 (Exact filenames/splits are a detail; the invariant is the import boundary, not
 the tree shape.)
 
-**Stays out of core (browser/reactive/IO):** `orderBasket.svelte.ts` (runes +
-`localStorage` + custom events), `orderStorage.ts` (localStorage envelope),
-`data.ts` (Tina client / build-time loaders), `orderSubmit.ts` (the `fetch` to
+**Stays out of core (browser/reactive/IO):** `order/basket.svelte.ts` (runes +
+`localStorage` + custom events), `order/storage.ts` (localStorage envelope),
+`data.ts` (Tina client / build-time loaders), `order/submit.ts` (the `fetch` to
 Web3Forms and `FormData` assembly — but its pure formatting moves into
 `format.ts`), all `*.svelte` components, and the Astro pages.
 

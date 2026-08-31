@@ -9,8 +9,8 @@
  * path, or `undefined` when `url` is not a Tina Cloud asset URL.
  *
  * Kept free of side effects (no image glob) so it can be shared by the remark
- * pipeline (src/lib/remark-asset-images.ts) and `resolveImage`
- * (src/lib/assets.ts). Callers decode the result themselves.
+ * pipeline (src/lib/assets/remarkAssetImages.ts) and `resolveImage`
+ * (src/lib/assets/index.ts). Callers decode the result themselves.
  */
 const TINA_CLOUD_FILE = /\/__file\/(.+)$/;
 const TINA_CLOUD_ASSET = /^https?:\/\/assets\.tina\.io\/[^/]+\/(.+)$/i;

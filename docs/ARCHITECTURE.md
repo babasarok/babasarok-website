@@ -87,10 +87,10 @@ src/
     MetaPixel.astro         # Meta Pixel snippet
   lib/                      # Framework-agnostic logic + data loaders
     data.ts                 # Tina loaders + image-ref resolution
-    assets.ts               # resolveImage() — maps Tina refs -> src/assets ImageMetadata
-    remark-asset-images.ts  # Rewrites md image refs to src/assets
-    priceUtils.ts / materialUtils.ts / validation.ts / orderSubmit.ts  # Order domain logic
-    types.svelte.ts / typeUtils.ts / cn.ts
+    types.svelte.ts / typeHelpers.ts / cn.ts / uuid.ts / scrollSnapper.ts
+    assets/                 # resolveImage() (index.ts), tinaImageUrl, remarkAssetImages
+    pricing/                # price, setDiscount, materials, field{Value,Visibility,Types}, validation
+    order/                  # basket.svelte, product, queryParams, storage, submit
     __tests__/              # Vitest specs + fixtures
   styles/                   # global.css (@theme tokens), base.css, prose.css, theme.css
   content/                  # Tina-managed md/json (the data)
@@ -125,13 +125,13 @@ fonts, wires favicons through the Vite asset pipeline, and includes
   type per collection from the generated Tina client, and asserts it is
   structurally identical to the Astro `InferEntrySchema<...>` via
   `RecursiveDiff` + `AssertTrue<IfEquals<XDiff, never>>()` (see
-  `src/lib/typeUtils.ts`). If the two drift, the build fails at type-check —
+  `src/lib/typeHelpers.ts`). If the two drift, the build fails at type-check —
   hover the `XDiff` alias to see the mismatch. Loaders (`getProducts`, etc.)
   hand-map the raw Tina result into the enhanced shape, which is the one place
   nullable→undefined normalization and image optimization happen.
 - **Shared value lists live in one module.** Where the same enumerated values are
   needed by the Tina schema, the Zod schema, and runtime code, they are defined
-  once and imported by all three (e.g. `src/lib/productFieldTypes.ts` feeds the
+  once and imported by all three (e.g. `src/lib/pricing/fieldTypes.ts` feeds the
   Tina `type` select options, a Zod `z.enum`, and `data.ts`'s discriminant).
   Tina config imports these with a **relative** path — its esbuild bundling
   ignores the `@/` tsconfig alias.
@@ -147,13 +147,13 @@ Images are the most intricate part of the system because Tina stores references
 as **paths** (`/src/assets/...` locally, or `https://assets.tina.io/.../__file/...`
 in cloud builds) while Astro wants `ImageMetadata` objects from `src/assets`.
 
-- `src/lib/assets.ts` `resolveImage()` normalizes both forms to a hashed
+- `src/lib/assets/index.ts` `resolveImage()` normalizes both forms to a hashed
   `/_astro/...` asset.
 - `src/lib/data.ts` `resolveTinaImageRefs()` deep-walks every loaded Tina entity
   and rewrites any image-looking string to the optimized local `src`. This is a
   **backstop** that prevents Tina Cloud URLs leaking into client-island props
   (rich-text `content` ASTs are the main offender).
-- `src/lib/remark-asset-images.ts` does the equivalent rewrite inside the
+- `src/lib/assets/remarkAssetImages.ts` does the equivalent rewrite inside the
   Markdown `<Content/>` pipeline.
 - `scripts/test/no-tina-cloud-urls.ts` is a CI guard that fails the build if any
   `assets.tina.io` URL survives into `dist/`.

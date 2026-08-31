@@ -16,27 +16,43 @@ price + validation) can share one implementation. It is the single
 highest-leverage, platform-agnostic prep step for the e-commerce migration and
 is valuable even if that migration is deferred.
 
-## What Changes
+## Status update (directory reorganization landed)
 
-- Introduce a pure core module boundary (proposed `src/lib/pricing/`) that
-  contains the pricing engine, set-discount resolution, field visibility/value
-  helpers, material helpers, field-type metadata, the order-domain **data
-  types**, and the plain-text order formatter's price section — with **zero**
-  imports of Svelte runes, DOM/`window`, Astro, or any browser-only API.
+A behavior-preserving lib reorganization has already created the
+`src/lib/pricing/` module home and moved the members into it:
+`priceUtils.ts` was split into `pricing/price.ts` + `pricing/setDiscount.ts`,
+and `validation`, `fieldVisibility`, `fieldValue`, `materialUtils` →
+`pricing/materials.ts`, `productFieldTypes` → `pricing/fieldTypes.ts` moved in
+alongside them. Every consumer (islands, pages, tests, `tina/`, `data.ts`) was
+re-pointed. `npm run check`, `npm test` (130 passing) and `npm run lint` are
+green with no expected-value changes.
+
+That closes the mechanical *move + re-point* portion of this change. What
+remains is the part that actually makes the folder a **pure, runtime-agnostic
+core**: the modules still import `../types.svelte` (a `.svelte.ts` file that in
+turn imports `astro:content` via `data.ts`), so the boundary is not yet
+enforceable off the browser.
+
+## What Changes (remaining)
+
+- Make `src/lib/pricing/` a **pure core boundary** with **zero** imports of
+  Svelte runes, DOM/`window`, Astro, or any browser-only API. Today this fails
+  only through the `types.svelte.ts` → `data.ts` (`astro:content`) chain.
 - Split `types.svelte.ts`: move the pure interfaces / discriminated unions
   (e.g. `IProduct`, `Field`, material and price types) into a plain `types.ts`
-  in the core; keep only genuinely reactive (`$state`) wrappers in `.svelte.ts`,
-  which re-export the pure types.
-- Re-point `orderBasket.svelte.ts`, the `src/components/blocks/order/*` islands,
-  `orderSubmit.ts`, `orderStorage.ts`, `orderQueryParams.ts`, `data.ts`, the
-  Astro order/checkout pages, and the unit tests at the new core module paths.
+  in the core and decouple them from the Tina/`data.ts`-derived types so the
+  core no longer pulls in `astro:content`; keep any genuinely reactive
+  (`$state`) wrapper in a `.svelte.ts` that re-exports the pure types.
+- Lift the pure price/field/material formatters out of `order/submit.ts` into
+  `pricing/format.ts`, leaving only the `fetch` + `FormData` transport behind.
+- Add a `pricing/index.ts` barrel for the public API (optional `@pricing/*`
+  path alias in place of the current `@/lib/pricing/*` imports).
 - Add a guard (lint rule or a small test) that fails if the core imports any
   forbidden runtime (`svelte`, `svelte/*`, `astro:*`, DOM globals), keeping the
   boundary intact.
 - **No behavior change:** the charged price, the displayed price, the persisted
   basket shape, the deep-link scheme, and the order email stay byte-for-byte
-  identical. The existing Vitest suite is the safety net and must pass with only
-  import-path edits.
+  identical. The existing Vitest suite is the safety net.
 
 ## Capabilities
 
@@ -45,17 +61,19 @@ no specified behavior changes. Declares `skip_specs: true`.
 
 ## Impact
 
-- Core (new home): `src/lib/priceUtils.ts`, `src/lib/validation.ts`,
-  `src/lib/fieldVisibility.ts`, `src/lib/fieldValue.ts`,
-  `src/lib/materialUtils.ts`, `src/lib/productFieldTypes.ts`,
-  `src/lib/types.svelte.ts` (type portion), price-formatting helpers from
-  `src/lib/orderSubmit.ts`.
-- Consumers re-pointed: `src/lib/orderBasket.svelte.ts`,
-  `src/lib/orderStorage.ts`, `src/lib/orderSubmit.ts`,
-  `src/lib/orderQueryParams.ts`, `src/lib/orderProduct.ts`, `src/lib/data.ts`,
+- Core (already relocated): `src/lib/pricing/price.ts`,
+  `src/lib/pricing/setDiscount.ts`, `src/lib/pricing/validation.ts`,
+  `src/lib/pricing/fieldVisibility.ts`, `src/lib/pricing/fieldValue.ts`,
+  `src/lib/pricing/materials.ts`, `src/lib/pricing/fieldTypes.ts`.
+- Remaining core work: split `src/lib/types.svelte.ts` into a pure
+  `src/lib/pricing/types.ts` decoupled from `data.ts`; lift price-formatting
+  helpers from `src/lib/order/submit.ts` into `src/lib/pricing/format.ts`; add
+  `src/lib/pricing/index.ts`.
+- Consumers (already re-pointed): `src/lib/order/*`, `src/lib/data.ts`,
   `src/components/blocks/order/*`, `src/pages/product/[id].astro`,
-  `src/pages/checkout.astro`, `src/pages/contact.astro`.
-- Tests: `src/lib/__tests__/*` import paths; add the boundary guard.
-- Tooling: `eslint.config.ts` (optional import-restriction rule),
+  `src/pages/checkout.astro`, `src/pages/contact.astro`, `src/lib/__tests__/*`,
+  `tina/collections/product.ts`, `src/content.config.ts`, `astro.config.ts`.
+- Tests: add the boundary guard.
+- Tooling: `eslint.config.ts` (import-restriction rule),
   `tsconfig.json` path alias if one is introduced.
 - No change to Tina schema, content, styles, or runtime output.
