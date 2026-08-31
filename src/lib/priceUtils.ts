@@ -188,17 +188,20 @@ interface SetAllocation {
  * Allocates set discounts across the whole basket per unit in one pass. Sets are
  * processed by descending discount percent (biggest wins per unit); within each
  * set the allocator repeatedly forms one *maximal* instance — one unit each of
- * every distinct, mutually material-compatible member that still has units — and
- * repeats while at least two distinct members remain, consuming each basket unit
- * at most once. Leftover units earn no set discount. Returns the per-item status
- * (pending/active hints), the ordered list of formed instances, and each line's
- * per-set unit coverage (for pricing and the basket-level display). See the
- * `product-sets` spec in `openspec/`.
+ * every distinct, mutually material-compatible member that still has units,
+ * preferring the most valuable line when a member has interchangeable units —
+ * and repeats while at least two distinct members remain, consuming each basket
+ * unit at most once. Leftover units earn no set discount. Returns the per-item
+ * status (pending/active hints), the ordered list of formed instances, and each
+ * line's per-set unit coverage (for pricing and the basket-level display). See
+ * the `product-sets` spec in `openspec/`.
  */
 function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): SetAllocation {
   const materials = new Map<string, Map<string, string>>();
+  const unitPrices = new Map<string, number>();
   for (const item of basket) {
     materials.set(item.uuid, materialEntries(item));
+    unitPrices.set(item.uuid, calculatePriceForItem(item).unitPrice ?? 0);
   }
   const consumed = new Map<string, number>();
   const remaining = (item: IProduct): number => item.count - (consumed.get(item.uuid) ?? 0);
@@ -233,9 +236,29 @@ function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): S
         ) {
           continue;
         }
-        if (chosen.every((uuid) => compatible(uuid, item.uuid))) {
-          chosen.push(item.uuid);
-          usedProducts.add(item.product_id);
+        // Among interchangeable units of this member still available and
+        // compatible with the units already chosen, take the most valuable so
+        // the discount lands on the priciest qualifying line (ties keep basket
+        // order for determinism).
+        let candidate: IProduct | undefined;
+        for (const other of basket) {
+          if (
+            other.product_id !== item.product_id ||
+            remaining(other) <= 0 ||
+            !chosen.every((uuid) => compatible(uuid, other.uuid))
+          ) {
+            continue;
+          }
+          if (
+            candidate === undefined ||
+            (unitPrices.get(other.uuid) ?? 0) > (unitPrices.get(candidate.uuid) ?? 0)
+          ) {
+            candidate = other;
+          }
+        }
+        if (candidate) {
+          chosen.push(candidate.uuid);
+          usedProducts.add(candidate.product_id);
         }
       }
       if (chosen.length < 2) {

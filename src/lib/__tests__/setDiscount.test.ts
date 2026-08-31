@@ -23,7 +23,7 @@ import {
   type SetDiscountGroup,
 } from "@/lib/priceUtils";
 import type { IProduct, ProductMaterialValue } from "@/lib/types.svelte";
-import { makeProduct, makeMaterial } from "./fixtures";
+import { makeProduct, makeMaterial, makeField } from "./fixtures";
 
 const val = (
   material_id: string,
@@ -169,6 +169,32 @@ describe("resolveSetInstances", () => {
     const blanketC = makeProduct({ uuid: "u3", product_id: "blanket", count: 2, values: red });
     expect(resolveSetInstances([nestA, nestB, blanketC], trioGroups)).toEqual([
       { setTitle: "Babafészek szett", percent: 10, members: ["u1", "u2", "u3"] },
+    ]);
+  });
+
+  it("discounts the most valuable line when a member has interchangeable units", () => {
+    // One nest, two blanket lines that both match the nest but differ in price
+    // (the pricier carries an add-on). Only one instance can form, so it must
+    // fall on the more expensive blanket to maximise the discount, regardless of
+    // basket order.
+    const cheap = makeProduct({ uuid: "cheap", product_id: "blanket", price: 7500, values: red });
+    const pricey = makeProduct({
+      uuid: "pricey",
+      product_id: "blanket",
+      price: 7500,
+      values: red,
+      fields: [
+        makeField({
+          name: "himzes",
+          type: "embroidery",
+          price: 1500,
+          value: { enabled: true, text: { value: "hello" }, color: { color: "babakek" } },
+        }),
+      ],
+    });
+    const onlyNest = makeProduct({ uuid: "nest", product_id: "nest", price: 15000, values: red });
+    expect(resolveSetInstances([cheap, pricey, onlyNest], groups)).toEqual([
+      { setTitle: "Babafészek szett", percent: 10, members: ["pricey", "nest"] },
     ]);
   });
 });
