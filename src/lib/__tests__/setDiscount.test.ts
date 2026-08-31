@@ -192,7 +192,7 @@ describe("resolveSetInstances", () => {
         }),
       ],
     });
-    const onlyNest = makeProduct({ uuid: "nest", product_id: "nest", price: 15000, values: red });
+    const onlyNest = makeProduct({ uuid: "nest", product_id: "nest", price: 15_000, values: red });
     expect(resolveSetInstances([cheap, pricey, onlyNest], groups)).toEqual([
       { setTitle: "Babafészek szett", percent: 10, members: ["pricey", "nest"] },
     ]);
