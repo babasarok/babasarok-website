@@ -56,32 +56,46 @@ export function resolveSetDiscount(
 }
 
 /**
- * A product's selected material values as a `material_id → canonical value`
- * map, order-independent and ignoring transient `error` fields. The canonical
- * value encodes the sorted colours and custom colour so two selections of the
- * same material compare equal iff they picked the same colours.
+ * A product's selected material values as a counted multiset of canonical
+ * tuples, order-independent and ignoring transient `error` fields. Each tuple
+ * encodes the material id, its sorted colours and custom colour; the map value
+ * counts how many times that exact selection was picked, so the same fabric
+ * picked twice (or in two different colours) is preserved rather than collapsed.
  */
-function materialEntries(product: IProduct): Map<string, string> {
-  const map = new Map<string, string>();
+function materialEntries(product: IProduct): Map<string, number> {
+  const counts = new Map<string, number>();
   for (const v of product.materials.values) {
     if (v == null || v.material_id === "") {
       continue;
     }
-    map.set(
-      v.material_id,
-      JSON.stringify({ colors: v.colors.toSorted(), custom_color: v.custom_color ?? "" })
-    );
+    const key = JSON.stringify({
+      material_id: v.material_id,
+      colors: v.colors.toSorted(),
+      custom_color: v.custom_color ?? "",
+    });
+    counts.set(key, (counts.get(key) ?? 0) + 1);
   }
-  return map;
+  return counts;
 }
 
-/** Whether every entry of `small` appears identically in `large`. */
-function isMaterialSubset(small: Map<string, string>, large: Map<string, string>): boolean {
-  if (small.size > large.size) {
-    return false;
+/** Total number of material selections in a multiset (counting duplicates). */
+function materialCount(entries: Map<string, number>): number {
+  let total = 0;
+  for (const count of entries.values()) {
+    total += count;
   }
-  for (const [id, value] of small) {
-    if (large.get(id) !== value) {
+  return total;
+}
+
+/**
+ * Whether `small` is a multiset-subset of `large`: every selection appears in
+ * `large` at least as many times. When both have the same total count this
+ * reduces to exact equality, so equal-count selections only match when
+ * identical; a subset match is possible only when the counts differ.
+ */
+function isMaterialSubset(small: Map<string, number>, large: Map<string, number>): boolean {
+  for (const [value, count] of small) {
+    if ((large.get(value) ?? 0) < count) {
       return false;
     }
   }
@@ -91,16 +105,19 @@ function isMaterialSubset(small: Map<string, string>, large: Map<string, string>
 /**
  * Two products count towards the same set when the smaller material selection is
  * a subset of the larger: every material it picked (id, colours and custom
- * colour, compared order-independently) appears identically on the other.
- * Material *counts* need not be equal, so a one-fabric blanket matches a
- * two-fabric nest that shares that fabric. Equal-size selections reduce to exact
- * equality. Products with no material selections match trivially. See the
- * `product-sets` spec in `openspec/`.
+ * colour, compared order-independently) appears identically — and at least as
+ * often — on the other. Material *counts* need not be equal, so a one-fabric
+ * blanket matches a two-fabric nest that shares that fabric; but when both pick
+ * the same number of materials they must match exactly. Products with no
+ * material selections match trivially. See the `product-sets` spec in
+ * `openspec/`.
  */
 export function materialsMatch(a: IProduct, b: IProduct): boolean {
   const ma = materialEntries(a);
   const mb = materialEntries(b);
-  return ma.size <= mb.size ? isMaterialSubset(ma, mb) : isMaterialSubset(mb, ma);
+  return materialCount(ma) <= materialCount(mb)
+    ? isMaterialSubset(ma, mb)
+    : isMaterialSubset(mb, ma);
 }
 
 /**
@@ -197,7 +214,7 @@ interface SetAllocation {
  * the `product-sets` spec in `openspec/`.
  */
 function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): SetAllocation {
-  const materials = new Map<string, Map<string, string>>();
+  const materials = new Map<string, Map<string, number>>();
   const unitPrices = new Map<string, number>();
   for (const item of basket) {
     materials.set(item.uuid, materialEntries(item));
@@ -206,9 +223,11 @@ function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): S
   const consumed = new Map<string, number>();
   const remaining = (item: IProduct): number => item.count - (consumed.get(item.uuid) ?? 0);
   const compatible = (a: string, b: string): boolean => {
-    const ma = materials.get(a) ?? new Map<string, string>();
-    const mb = materials.get(b) ?? new Map<string, string>();
-    return ma.size <= mb.size ? isMaterialSubset(ma, mb) : isMaterialSubset(mb, ma);
+    const ma = materials.get(a) ?? new Map<string, number>();
+    const mb = materials.get(b) ?? new Map<string, number>();
+    return materialCount(ma) <= materialCount(mb)
+      ? isMaterialSubset(ma, mb)
+      : isMaterialSubset(mb, ma);
   };
 
   const instances: SetDiscountInstance[] = [];
@@ -236,11 +255,28 @@ function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): S
         ) {
           continue;
         }
+        // The members still to be added after this one; a candidate that stays
+        // compatible with more of them keeps the set formable.
+        const pendingMembers = [...memberIds].filter(
+          (id) => id !== item.product_id && !usedProducts.has(id)
+        );
+        const joinableCount = (unit: IProduct): number =>
+          pendingMembers.filter((id) =>
+            basket.some(
+              (v) =>
+                v.product_id === id &&
+                remaining(v) > 0 &&
+                compatible(unit.uuid, v.uuid) &&
+                chosen.every((c) => compatible(c, v.uuid))
+            )
+          ).length;
         // Among interchangeable units of this member still available and
-        // compatible with the units already chosen, take the most valuable so
-        // the discount lands on the priciest qualifying line (ties keep basket
+        // compatible with the units already chosen, prefer the one that keeps
+        // the most remaining members joinable, then the most valuable so the
+        // discount lands on the priciest qualifying line (ties keep basket
         // order for determinism).
         let candidate: IProduct | undefined;
+        let candidateJoinable = -1;
         for (const other of basket) {
           if (
             other.product_id !== item.product_id ||
@@ -249,11 +285,15 @@ function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): S
           ) {
             continue;
           }
+          const otherJoinable = joinableCount(other);
           if (
             candidate === undefined ||
-            (unitPrices.get(other.uuid) ?? 0) > (unitPrices.get(candidate.uuid) ?? 0)
+            otherJoinable > candidateJoinable ||
+            (otherJoinable === candidateJoinable &&
+              (unitPrices.get(other.uuid) ?? 0) > (unitPrices.get(candidate.uuid) ?? 0))
           ) {
             candidate = other;
+            candidateJoinable = otherJoinable;
           }
         }
         if (candidate) {

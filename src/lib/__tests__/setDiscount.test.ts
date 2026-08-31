@@ -80,6 +80,25 @@ describe("materialsMatch", () => {
     expect(materialsMatch(nest, blanket)).toBe(false);
   });
 
+  it("keeps the same fabric in two colours as distinct selections", () => {
+    // A nest using one fabric in two colours must not collapse to a single
+    // entry: a blanket that shares one of those colours is still a subset.
+    const nest = makeProduct({ values: [val("teddy", ["feher"]), val("teddy", ["ekru"])] });
+    const blanket = makeProduct({ values: [val("teddy", ["feher"])] });
+    expect(materialsMatch(nest, blanket)).toBe(true);
+    expect(materialsMatch(blanket, nest)).toBe(true);
+  });
+
+  it("requires an exact match when material counts are equal", () => {
+    // Both pick two fabrics: subset matching is not allowed, so a feher+ekru
+    // nest does not match a feher+feher blanket, but feher+feher does.
+    const nestMixed = makeProduct({ values: [val("teddy", ["feher"]), val("teddy", ["ekru"])] });
+    const nestFeher = makeProduct({ values: [val("teddy", ["feher"]), val("teddy", ["feher"])] });
+    const blanket = makeProduct({ values: [val("teddy", ["feher"]), val("teddy", ["feher"])] });
+    expect(materialsMatch(nestMixed, blanket)).toBe(false);
+    expect(materialsMatch(nestFeher, blanket)).toBe(true);
+  });
+
   it("distinguishes custom colours", () => {
     const a = makeProduct({ values: [val("cotton", [], "#abc")] });
     const b = makeProduct({ values: [val("cotton", [], "#def")] });
@@ -195,6 +214,35 @@ describe("resolveSetInstances", () => {
     const onlyNest = makeProduct({ uuid: "nest", product_id: "nest", price: 15_000, values: red });
     expect(resolveSetInstances([cheap, pricey, onlyNest], groups)).toEqual([
       { setTitle: "Babafészek szett", percent: 10, members: ["pricey", "nest"] },
+    ]);
+  });
+
+  it("prefers a material-matching partner over a pricier incompatible one", () => {
+    // Two nests match a blanket only when materials pair exactly: the pricier
+    // nest (feher+ekru) does not match the feher+feher blanket, so the set must
+    // form with the cheaper feher+feher nest rather than fail to form.
+    const feher = [val("teddy", ["feher"]), val("teddy", ["feher"])];
+    const mixed = [val("teddy", ["feher"]), val("teddy", ["ekru"])];
+    const nestPricey = makeProduct({
+      uuid: "nestPricey",
+      product_id: "nest",
+      price: 20_000,
+      values: mixed,
+    });
+    const nestMatch = makeProduct({
+      uuid: "nestMatch",
+      product_id: "nest",
+      price: 15_000,
+      values: feher,
+    });
+    const blanketLine = makeProduct({
+      uuid: "blanket",
+      product_id: "blanket",
+      price: 8000,
+      values: feher,
+    });
+    expect(resolveSetInstances([nestPricey, nestMatch, blanketLine], groups)).toEqual([
+      { setTitle: "Babafészek szett", percent: 10, members: ["nestMatch", "blanket"] },
     ]);
   });
 });
