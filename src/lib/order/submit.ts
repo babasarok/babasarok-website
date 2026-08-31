@@ -2,16 +2,20 @@
  * Order submission: format the order directly from the product models and POST
  * it to web3forms. Kept out of the Svelte component so the form stays declarative.
  */
+import { calculatePriceForItem } from "@/lib/pricing/price";
 import {
-  calculatePriceForItem,
   resolveSetCoverage,
   resolveSetInstances,
   setInstanceAmount,
-} from "@/lib/priceUtils";
-import type { SetCoverageEntry, SetDiscountGroup, SetDiscountInstance } from "@/lib/priceUtils";
-import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "./types.svelte";
-import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "./data";
-import { isFieldVisible } from "./fieldVisibility";
+} from "@/lib/pricing/setDiscount";
+import type {
+  SetCoverageEntry,
+  SetDiscountGroup,
+  SetDiscountInstance,
+} from "@/lib/pricing/setDiscount";
+import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "../types.svelte";
+import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "../data";
+import { isFieldVisible } from "../pricing/fieldVisibility";
 
 const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
 

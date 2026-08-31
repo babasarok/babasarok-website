@@ -1,10 +1,10 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { calculatePriceForItem } from "@/lib/priceUtils";
-  import { isFieldVisible } from "@/lib/fieldVisibility";
+  import { calculatePriceForItem } from "@/lib/pricing/price";
+  import { isFieldVisible } from "@/lib/pricing/fieldVisibility";
   import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
   import type { Field, IProduct, ProductMaterialValue } from "@/lib/types.svelte";
-  import type { SetCoverageEntry } from "@/lib/priceUtils";
+  import type { SetCoverageEntry } from "@/lib/pricing/setDiscount";
 
   interface Props {
     product: IProduct;

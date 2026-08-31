@@ -1,8 +1,8 @@
-import { sanitizeItem } from "./validation";
-import { randomUUID } from "./uuid";
-import type { CmsEnhancedProduct } from "./data";
-import type { IProduct, ProductMaterialValue } from "./types.svelte";
-import type { SavedProduct } from "./orderStorage";
+import { sanitizeItem } from "../pricing/validation";
+import { randomUUID } from "../uuid";
+import type { CmsEnhancedProduct } from "../data";
+import type { IProduct, ProductMaterialValue } from "../types.svelte";
+import type { SavedProduct } from "./storage";
 
 /** Whether a product carries its own configurable options (fields such as
  * size, toggles or embroidery) that don't transfer from a set partner, so it

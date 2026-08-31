@@ -1,4 +1,4 @@
-import type { Field, IProduct, ProductMaterialValue } from "./types.svelte";
+import type { Field, IProduct, ProductMaterialValue } from "../types.svelte";
 
 /**
  * Prefill an order item from URL query parameters, so product pages can be

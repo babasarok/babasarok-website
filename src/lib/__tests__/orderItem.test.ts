@@ -9,9 +9,9 @@
  * materials, discounts) so a change in any of them surfaces here.
  */
 import { describe, expect, it } from "vitest";
-import { calculatePriceForItem } from "@/lib/priceUtils";
-import { isItemValid, sanitizeItem, validateItem } from "@/lib/validation";
-import { resolveColorCount } from "@/lib/materialUtils";
+import { calculatePriceForItem } from "@/lib/pricing/price";
+import { isItemValid, sanitizeItem, validateItem } from "@/lib/pricing/validation";
+import { resolveColorCount } from "@/lib/pricing/materials";
 import { fieldError, makeField, makeMaterial, makeProduct } from "./fixtures";
 
 describe("calculatePriceForItem — field combinations", () => {

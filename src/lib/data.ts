@@ -22,7 +22,7 @@ import {
   type RecursivelyReplaceKeyType,
   type RecursivelyReplaceType,
   type RecursiveRequired,
-} from "./typeUtils";
+} from "./typeHelpers";
 import { getCollection, type InferEntrySchema } from "astro:content";
 import type { ImageFunction } from "astro/content/config";
 import type { z } from "astro/zod";
@@ -34,7 +34,7 @@ import {
   isProductFieldType,
   type EmbroideryPriceUnit,
   type ProductFieldType,
-} from "./productFieldTypes";
+} from "./pricing/fieldTypes";
 import type { LengthBasedPricingConfig } from "./types.svelte";
 
 type Image = z.infer<ReturnType<ImageFunction>>;

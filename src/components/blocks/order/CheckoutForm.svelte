@@ -7,12 +7,13 @@
   import OrderDelivery from "./OrderDelivery.svelte";
   import Button from "./common/Button.svelte";
   import TextInput from "./common/TextInput.svelte";
-  import { orderBasket } from "@/lib/orderBasket.svelte";
-  import { restoreProducts } from "@/lib/orderProduct";
-  import { loadOrderState, updateOrderEnvelope } from "@/lib/orderStorage";
-  import { isItemValid, validateItem } from "@/lib/validation";
-  import { submitOrder, calculateOrderTotal } from "@/lib/orderSubmit";
-  import { calculatePriceForItem, resolveSetCoverage } from "@/lib/priceUtils";
+  import { orderBasket } from "@/lib/order/basket.svelte";
+  import { restoreProducts } from "@/lib/order/product";
+  import { loadOrderState, updateOrderEnvelope } from "@/lib/order/storage";
+  import { isItemValid, validateItem } from "@/lib/pricing/validation";
+  import { submitOrder, calculateOrderTotal } from "@/lib/order/submit";
+  import { calculatePriceForItem } from "@/lib/pricing/price";
+  import { resolveSetCoverage } from "@/lib/pricing/setDiscount";
   import type {
     CmsEnhancedConfig,
     CmsEnhancedDeliveryMethod,

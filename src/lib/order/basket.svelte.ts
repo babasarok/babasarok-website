@@ -5,10 +5,10 @@ import {
   mapProductToSaved,
   updateBasketProducts,
   type SavedProduct,
-} from "./orderStorage";
-import { restoreProducts } from "./orderProduct";
-import type { CmsEnhancedProduct } from "./data";
-import type { IProduct } from "./types.svelte";
+} from "./storage";
+import { restoreProducts } from "./product";
+import type { CmsEnhancedProduct } from "../data";
+import type { IProduct } from "../types.svelte";
 
 /** Fired on the window whenever the basket changes, so islands that don't share
  * a module instance (separate Astro hydration roots) still stay in sync. */

@@ -9,9 +9,9 @@
  * never block submission.
  */
 import { describe, expect, it } from "vitest";
-import { isFieldVisible } from "@/lib/fieldVisibility";
-import { calculatePriceForItem } from "@/lib/priceUtils";
-import { isItemValid, validateItem } from "@/lib/validation";
+import { isFieldVisible } from "@/lib/pricing/fieldVisibility";
+import { calculatePriceForItem } from "@/lib/pricing/price";
+import { isItemValid, validateItem } from "@/lib/pricing/validation";
 import type { Field } from "@/lib/types.svelte";
 import { fieldError, makeField, makeProduct } from "./fixtures";
 

@@ -1,4 +1,4 @@
-import type { Field } from "./types.svelte";
+import type { Field } from "../types.svelte";
 import { findFieldByName, resolveFieldValue } from "./fieldValue";
 
 /**

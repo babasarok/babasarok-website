@@ -1,8 +1,8 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import Tooltip from "./common/Tooltip.svelte";
-  import { calculatePriceForItem } from "@/lib/priceUtils";
-  import type { SetCoverageEntry } from "@/lib/priceUtils";
+  import { calculatePriceForItem } from "@/lib/pricing/price";
+  import type { SetCoverageEntry } from "@/lib/pricing/setDiscount";
   import type { IProduct } from "@/lib/types.svelte";
   import IconButton from "./common/IconButton.svelte";
 

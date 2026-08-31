@@ -5,8 +5,8 @@
     resolveSetDiscountStatus,
     resolveSetInstances,
     setInstanceAmount,
-  } from "@/lib/priceUtils";
-  import { buildMaterialParams } from "@/lib/orderQueryParams";
+  } from "@/lib/pricing/setDiscount";
+  import { buildMaterialParams } from "@/lib/order/queryParams";
   import type { CmsEnhancedProduct, CmsProductGroup } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
 

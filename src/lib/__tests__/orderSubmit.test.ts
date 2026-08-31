@@ -11,7 +11,7 @@
  * delivery, total, …), not just one helper.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { calculateOrderTotal, submitOrder, type OrderDetails } from "@/lib/orderSubmit";
+import { calculateOrderTotal, submitOrder, type OrderDetails } from "@/lib/order/submit";
 import { makeDelivery, makeField, makeMaterial, makeProduct } from "./fixtures";
 
 afterEach(() => {

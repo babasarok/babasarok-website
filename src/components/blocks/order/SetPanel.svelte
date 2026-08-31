@@ -2,7 +2,7 @@
   import Icon from "@iconify/svelte";
   import SetSiblingCard from "./SetSiblingCard.svelte";
   import type { CmsEnhancedProduct } from "@/lib/data";
-  import type { SetDiscountStatus } from "@/lib/priceUtils";
+  import type { SetDiscountStatus } from "@/lib/pricing/setDiscount";
 
   interface Props {
     setTitle: string;

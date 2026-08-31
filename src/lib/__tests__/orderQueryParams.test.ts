@@ -4,7 +4,7 @@
  * materials by `m<index>`.
  */
 import { describe, expect, it } from "vitest";
-import { prefillFromParams } from "@/lib/orderQueryParams";
+import { prefillFromParams } from "@/lib/order/queryParams";
 import { makeProduct, makeField, makeMaterial } from "./fixtures";
 
 describe("prefillFromParams", () => {

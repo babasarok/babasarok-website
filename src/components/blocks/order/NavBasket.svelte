@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Icon from "@iconify/svelte";
-  import { orderBasket } from "@/lib/orderBasket.svelte";
+  import { orderBasket } from "@/lib/order/basket.svelte";
 
   interface ProductMeta {
     title: string;

@@ -1,4 +1,4 @@
-import type { IProduct, CmsProductMaterial } from "./types.svelte";
+import type { IProduct, CmsProductMaterial } from "../types.svelte";
 import { findFieldByName, resolveNumericValue } from "./fieldValue";
 
 export function resolveColorCount(

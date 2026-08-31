@@ -4,24 +4,24 @@
   import OrderItem from "./OrderItem.svelte";
   import SetPanel from "./SetPanel.svelte";
   import Button from "./common/Button.svelte";
-  import { orderBasket } from "@/lib/orderBasket.svelte";
+  import { orderBasket } from "@/lib/order/basket.svelte";
   import {
     instantiateProduct,
     instantiateRelatedProduct,
     restoreProducts,
     syncMaterialsToPartner,
     hasConfigurableOptions,
-  } from "@/lib/orderProduct";
+  } from "@/lib/order/product";
   import {
     resolveSetDiscount,
     resolveSetDiscountStatus,
     resolveSetCoverage,
-  } from "@/lib/priceUtils";
-  import type { SetDiscountStatus } from "@/lib/priceUtils";
-  import { prefillFromParams, buildMaterialParams } from "@/lib/orderQueryParams";
-  import { mapProductToSaved } from "@/lib/orderStorage";
-  import { sanitizeItem } from "@/lib/validation";
-  import { isItemValid, validateItem } from "@/lib/validation";
+  } from "@/lib/pricing/setDiscount";
+  import type { SetDiscountStatus } from "@/lib/pricing/setDiscount";
+  import { prefillFromParams, buildMaterialParams } from "@/lib/order/queryParams";
+  import { mapProductToSaved } from "@/lib/order/storage";
+  import { sanitizeItem } from "@/lib/pricing/validation";
+  import { isItemValid, validateItem } from "@/lib/pricing/validation";
   import type { CmsEnhancedEmbroideryColor, CmsEnhancedProduct, CmsProductGroup } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
 

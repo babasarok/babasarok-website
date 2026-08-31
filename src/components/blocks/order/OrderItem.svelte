@@ -6,7 +6,7 @@
   import OrderItemFields from "./OrderItemFields.svelte";
   import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
-  import type { SetCoverageEntry } from "@/lib/priceUtils";
+  import type { SetCoverageEntry } from "@/lib/pricing/setDiscount";
   import OrderItemPrice from "./OrderItemPrice.svelte";
 
   interface Props extends HTMLAttributes<HTMLDivElement> {

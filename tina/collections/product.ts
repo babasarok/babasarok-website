@@ -13,7 +13,7 @@ import {
   hasResolvableValue,
   isProductFieldType,
   PRODUCT_FIELD_TYPES,
-} from "../../src/lib/productFieldTypes";
+} from "../../src/lib/pricing/fieldTypes";
 
 /**
  * Products ("Termékek") — backs `src/content/product/*.md` and the `/product`

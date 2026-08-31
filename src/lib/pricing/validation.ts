@@ -1,6 +1,6 @@
-import { resolveColorCount } from "./materialUtils";
-import type { CmsProductMaterial, Field, IProduct } from "./types.svelte";
-import type { ProductMaterialValue } from "./types.svelte";
+import { resolveColorCount } from "./materials";
+import type { CmsProductMaterial, Field, IProduct } from "../types.svelte";
+import type { ProductMaterialValue } from "../types.svelte";
 import { isFieldVisible } from "./fieldVisibility";
 
 const emptyEmbroideryValue = {

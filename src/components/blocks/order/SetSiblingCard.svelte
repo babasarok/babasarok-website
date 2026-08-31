@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { hasConfigurableOptions } from "@/lib/orderProduct";
+  import { hasConfigurableOptions } from "@/lib/order/product";
   import type { CmsEnhancedProduct } from "@/lib/data";
 
   interface Props {

@@ -1,4 +1,4 @@
-import type { Field } from "./types.svelte";
+import type { Field } from "../types.svelte";
 
 /**
  * The value a product field currently holds, tagged by `kind` so consumers

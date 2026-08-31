@@ -19,9 +19,9 @@ import {
   resolveSetCoverage,
   allocateSetDiscounts,
   canSyncMaterials,
-  calculatePriceForItem,
   type SetDiscountGroup,
-} from "@/lib/priceUtils";
+} from "@/lib/pricing/setDiscount";
+import { calculatePriceForItem } from "@/lib/pricing/price";
 import type { IProduct, ProductMaterialValue } from "@/lib/types.svelte";
 import { makeProduct, makeMaterial, makeField } from "./fixtures";
 
