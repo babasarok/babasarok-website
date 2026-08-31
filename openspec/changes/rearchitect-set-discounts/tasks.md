@@ -7,8 +7,8 @@ verification (`npm run check`, `npm test`, `npm run lint`).
 ## 1. Material matching (subset rule)
 
 - [x] 1.1 Rewrite `normalizeMaterialValues` to expose a `Map<material_id,
-    {colors, custom_color}>` (or equivalent) and add a `materialsSubset(small,
-    large)` helper; verify with new unit tests for containment
+{colors, custom_color}>` (or equivalent) and add a `materialsSubset(small,
+large)` helper; verify with new unit tests for containment
 - [x] 1.2 Redefine `materialsMatch(a, b)` as `subset(a,b) || subset(b,a)`;
       update `materialsMatch` tests: subset matches, equal-count still exact,
       non-subset (blanket fabric absent from nest) does not match — verify
@@ -17,7 +17,7 @@ verification (`npm run check`, `npm test`, `npm run lint`).
 ## 2. Per-unit allocation engine
 
 - [x] 2.1 Introduce the instance type (`{ setTitle, percent, members: { uuid,
-    count }[] }`) and change `allocateSetDiscounts` to return both the per-item
+count }[] }`) and change `allocateSetDiscounts` to return both the per-item
       `SetDiscountStatus` map and the ordered instance list
 - [x] 2.2 Implement per-unit, biggest-percent-first allocation: sort sets by
       percent desc; for each set repeatedly build a maximal, pairwise-compatible

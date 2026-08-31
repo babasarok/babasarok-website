@@ -2,7 +2,12 @@
  * Order submission: format the order directly from the product models and POST
  * it to web3forms. Kept out of the Svelte component so the form stays declarative.
  */
-import { calculatePriceForItem, resolveSetCoverage, resolveSetInstances } from "@/lib/priceUtils";
+import {
+  calculatePriceForItem,
+  resolveSetCoverage,
+  resolveSetInstances,
+  setInstanceAmount,
+} from "@/lib/priceUtils";
 import type { SetCoverageEntry, SetDiscountGroup, SetDiscountInstance } from "@/lib/priceUtils";
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "./types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "./data";
@@ -111,6 +116,17 @@ function formatProductString(
   const price = calculatePriceForItem(product, setCoverage);
   const { materials, material_required_count, values } = product.materials;
 
+  // Per-set discount lines so each product block is self-explanatory; the forint
+  // amount uses the undiscounted unit price so the total is verifiable.
+  const unitPrice = price.unitPrice;
+  const setLines =
+    unitPrice === undefined
+      ? []
+      : (setCoverage ?? []).map((entry) => {
+          const money = Math.round((unitPrice * entry.percent * entry.count) / 100);
+          return `Szett kedvezmény (${entry.setTitle} −${entry.percent.toString()}%): -${money.toString()} Ft (${entry.count.toString()} db)`;
+        });
+
   const lines = [
     `${product.title} (${product.count.toString()}db)`,
 
@@ -146,6 +162,9 @@ function formatProductString(
           })} (${price.discountInfo.discountAppliedCount} db)`,
         ]
       : []),
+    // Per-set discount lines so each product block is self-explanatory; the
+    // forint amount uses the undiscounted unit price so the total is verifiable.
+    ...setLines,
     `Összár: ${price.totalPrice?.toString() ?? ""}Ft${price.indeterminate ? " (nem teljes ár)" : ""}`,
   ];
 
@@ -153,18 +172,26 @@ function formatProductString(
 }
 
 /**
- * Basket-level set-discount summary: one line per formed instance listing the
- * set, its percent, and the member products it groups. Replaces the old
- * per-item discount-source line so set discounts are described once, together.
+ * Basket-level set-discount summary folded into the `ar` field: one line per
+ * formed instance listing the set, its percent, the forint amount it removes,
+ * and the member products (each prefixed with its order number, matching the
+ * `termek N` blocks) so a discount maps unambiguously to specific items even
+ * when titles repeat. Empty when no set discount is earned.
  */
 function formatSetDiscounts(instances: SetDiscountInstance[], products: IProduct[]): string {
-  const titleByUuid = new Map(products.map((p) => [p.uuid, p.title]));
-  return instances
-    .map((instance) => {
-      const members = instance.members.map((uuid) => titleByUuid.get(uuid) ?? uuid).join(" + ");
-      return `${instance.setTitle} szett (−${instance.percent.toString()}%): ${members}`;
-    })
-    .join("\n");
+  if (instances.length === 0) {
+    return "";
+  }
+  const labelByUuid = new Map(
+    products.map((p, i) => [p.uuid, `${(i + 1).toString()}. termék: ${p.title}`])
+  );
+  const lines = instances.map((instance) => {
+    const members = instance.members.map((uuid) => labelByUuid.get(uuid) ?? uuid).join(" + ");
+    const { amount, indeterminate } = setInstanceAmount(instance, products);
+    const suffix = indeterminate ? " (nem teljes ár)" : "";
+    return `  ${instance.setTitle} szett (−${instance.percent.toString()}%): -${amount.toString()} Ft${suffix} [${members}]`;
+  });
+  return ["Szett kedvezmények:", ...lines].join("\n");
 }
 
 function buildOrderFormData(order: OrderDetails, accessKey: string, message: string): FormData {
@@ -190,9 +217,6 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
       formatProductString(product, order.threadColors, setCoverage.get(product.uuid))
     );
   }
-  if (setInstances.length > 0) {
-    formData.append("szett kedvezmenyek", formatSetDiscounts(setInstances, order.products));
-  }
   formData.append(
     "szallitasimod",
     `${order.deliveryMethod.name} (${order.deliveryMethod.price.toString()} Ft)`
@@ -201,7 +225,14 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
     formData.append("szallitasicim", order.address ?? "");
   }
   formData.append("uzenet", message);
-  formData.append("ar", `${total.toString()} Ft ${indeterminate ? "(nem teljes ár)" : ""}`);
+  // Set discounts live inside `ar` (not a separate field) so the submitted
+  // price and its breakdown stay together and trackable.
+  const setSummary = formatSetDiscounts(setInstances, order.products);
+  const arLines = [
+    `${total.toString()} Ft ${indeterminate ? "(nem teljes ár)" : ""}`.trimEnd(),
+    ...(setSummary ? ["", setSummary] : []),
+  ];
+  formData.append("ar", arLines.join("\n"));
   return formData;
 }
 

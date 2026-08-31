@@ -57,6 +57,10 @@
   let error = $state<string | null>(null);
   let success = $state<string | null>(null);
 
+  // Basket lines to highlight while a set discount is hovered/pinned in the deals
+  // panel, so the user sees which items earn it.
+  let highlightedUuids = $state<string[]>([]);
+
   // The persisted basket as live order items against the current catalog.
   const basket = $derived(
     mounted ? restoreProducts($state.snapshot(orderBasket.items), catalog) : []
@@ -228,13 +232,20 @@
               {threadColors}
               editHref={editHref(item)}
               setCoverage={setCoverageByUuid.get(item.uuid)}
+              highlighted={highlightedUuids.includes(item.uuid)}
               onRemove={() => orderBasket.remove(item.uuid)}
             />
           </div>
         {/each}
       </section>
 
-      <CheckoutDeals {basket} products={productInfo} {productGroups} {slugByProductId} />
+      <CheckoutDeals
+        {basket}
+        products={productInfo}
+        {productGroups}
+        {slugByProductId}
+        onHighlight={(uuids) => (highlightedUuids = uuids)}
+      />
 
       <OrderDelivery {deliveryMethods} bind:deliveryMethod bind:address />
 

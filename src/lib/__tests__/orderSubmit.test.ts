@@ -64,7 +64,7 @@ describe("order form envelope", () => {
     expect(form.get("telefonszam")).toBe("+36301234567");
     expect(form.get("szallitasimod")).toBe("Foxpost automata (990 Ft)");
     expect(form.get("uzenet")).toBe("Kérlek hímezzétek rá: Anna");
-    expect(form.get("ar")).toBe("8990 Ft ");
+    expect(form.get("ar")).toBe("8990 Ft");
   });
 
   it("emits one `termek N` entry per product, in order", async () => {
@@ -78,7 +78,7 @@ describe("order form envelope", () => {
     expect(form.getAll("termek 1")).toHaveLength(1);
     expect(form.get("termek 1")).toContain("Első");
     expect(form.get("termek 2")).toContain("Második");
-    expect(form.get("ar")).toBe("3990 Ft ");
+    expect(form.get("ar")).toBe("3990 Ft");
   });
 
   it("marks the total as indeterminate when any price is unknown", async () => {
@@ -479,6 +479,51 @@ describe("dependent fields (depends_on)", () => {
     // not even its filled-in value.
     expect(text).not.toContain("Hímzés szövege");
     expect(text).not.toContain("Anna");
+  });
+});
+
+describe("set-discount summary", () => {
+  const setGroups = [
+    {
+      title: "Babafészek",
+      discount_percent: 10,
+      products: [{ product_id: "nest" }, { product_id: "blanket" }],
+    },
+  ];
+  const withMaterial = (
+    uuid: string,
+    product_id: string,
+    title: string
+  ): ReturnType<typeof makeProduct> =>
+    makeProduct({
+      uuid,
+      product_id,
+      title,
+      price: 10_000,
+      values: [{ material_id: "cotton", colors: ["red"] }],
+    });
+
+  it("identifies each set member by its order number inside the ar field", async () => {
+    const order = baseOrder([
+      withMaterial("u1", "nest", "Babafészek"),
+      withMaterial("u2", "blanket", "Takaró"),
+    ]);
+    order.productGroups = setGroups;
+    const form = await captureForm(order);
+    const ar = form.get("ar");
+    expect(ar).toContain("Szett kedvezmények:");
+    expect(ar).toContain(
+      "Babafészek szett (−10%): -2000 Ft [1. termék: Babafészek + 2. termék: Takaró]"
+    );
+  });
+
+  it("omits the set section from ar when no set discount is earned", async () => {
+    const order = baseOrder([withMaterial("u1", "nest", "Babafészek")]);
+    order.productGroups = setGroups;
+    const form = await captureForm(order);
+    const ar = form.get("ar");
+    expect(ar).not.toContain("Szett kedvezmények:");
+    expect(form.get("szett kedvezmenyek")).toBeNull();
   });
 });
 

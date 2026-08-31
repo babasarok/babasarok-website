@@ -378,6 +378,31 @@ export function resolveSetCoverage(
 }
 
 /**
+ * The forint amount a formed set instance takes off the order: one unit of each
+ * member at the set percent. `indeterminate` when any member's unit price is
+ * unknown (a partial configuration). Shared by the checkout display and the
+ * submitted order text so both report the same number.
+ */
+export function setInstanceAmount(
+  instance: SetDiscountInstance,
+  basket: IProduct[]
+): { amount: number; indeterminate: boolean } {
+  const byUuid = new Map(basket.map((p) => [p.uuid, p]));
+  let amount = 0;
+  let indeterminate = false;
+  for (const uuid of instance.members) {
+    const item = byUuid.get(uuid);
+    const unitPrice = item ? calculatePriceForItem(item).unitPrice : undefined;
+    if (unitPrice === undefined) {
+      indeterminate = true;
+    } else {
+      amount += Math.round((unitPrice * instance.percent) / 100);
+    }
+  }
+  return { amount, indeterminate };
+}
+
+/**
  * The state of an item's best set discount relative to the current basket, for
  * surfacing in the UI. Per-item convenience lookup into `allocateSetDiscounts`,
  * which resolves the whole basket at once.

@@ -18,6 +18,20 @@
     return calculatePriceForItem(product, setCoverage);
   });
 
+  // Per-set money this line saves, one row per covering set.
+  const setDiscountRows = $derived.by(() => {
+    const unitPrice = price.unitPrice;
+    if (!setCoverage || unitPrice === undefined) {
+      return [];
+    }
+    return setCoverage.map((entry) => ({
+      setTitle: entry.setTitle,
+      percent: entry.percent,
+      count: entry.count,
+      money: Math.round((unitPrice * entry.percent * entry.count) / 100),
+    }));
+  });
+
   const priceParts = $derived.by(() => {
     return [price.basePrice, ...price.options].filter(
       (part) => part.price !== undefined && part.price > 0
@@ -62,6 +76,17 @@
         </p>
       </div>
     {/if}
+    {#each setDiscountRows as row (row.setTitle)}
+      <div class="flex justify-between">
+        <p class="text-xs">Szett kedvezmény ({row.setTitle} −{row.percent}%)</p>
+        <p class="text-xs text-green-700">
+          −{row.money.toLocaleString("hu-HU")} Ft
+          {#if row.count < product.count}
+            ({row.count} db)
+          {/if}
+        </p>
+      </div>
+    {/each}
     <svelte:boundary>
       <div class="flex justify-between font-medium">
         <div class="flex items-center gap-1">

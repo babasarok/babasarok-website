@@ -4,6 +4,7 @@
     resolveSetDiscount,
     resolveSetDiscountStatus,
     resolveSetInstances,
+    setInstanceAmount,
   } from "@/lib/priceUtils";
   import { buildMaterialParams } from "@/lib/orderQueryParams";
   import type { CmsEnhancedProduct, CmsProductGroup } from "@/lib/data";
@@ -14,9 +15,11 @@
     products: Record<string, CmsEnhancedProduct>;
     productGroups: CmsProductGroup[];
     slugByProductId: Record<string, string | undefined>;
+    /** Highlight the given basket lines (a set's members) elsewhere in the form. */
+    onHighlight?: (uuids: string[]) => void;
   }
 
-  let { basket, products, productGroups, slugByProductId }: Props = $props();
+  let { basket, products, productGroups, slugByProductId, onHighlight }: Props = $props();
 
   interface Sibling {
     product: CmsEnhancedProduct;
@@ -44,16 +47,44 @@
     }))
   );
 
-  // Formed set-discount instances, resolved once for the whole basket, each
-  // shown with the member lines it groups.
+  // Formed set-discount instances, resolved once for the whole basket. Each
+  // carries its member lines (uuid + title, to drive cross-highlighting) and
+  // the forint amount it takes off.
   const activeInstances = $derived.by(() => {
-    const titleByUuid = new Map(basket.map((p) => [p.uuid, p.title]));
-    return resolveSetInstances(basket, productGroups).map((instance) => ({
-      setTitle: instance.setTitle,
-      percent: instance.percent,
-      members: instance.members.map((uuid) => titleByUuid.get(uuid) ?? uuid),
-    }));
+    const byUuid = new Map(basket.map((p) => [p.uuid, p]));
+    return resolveSetInstances(basket, productGroups).map((instance) => {
+      const { amount, indeterminate } = setInstanceAmount(instance, basket);
+      const members = instance.members.map((uuid) => ({
+        uuid,
+        title: byUuid.get(uuid)?.title ?? uuid,
+      }));
+      return {
+        setTitle: instance.setTitle,
+        percent: instance.percent,
+        members,
+        amount,
+        indeterminate,
+      };
+    });
   });
+
+  // A pinned instance keeps its members highlighted after the pointer leaves
+  // (and drives touch/keyboard, which have no hover).
+  let pinned = $state<number | undefined>();
+
+  function memberUuids(index: number): string[] {
+    return activeInstances[index]?.members.map((m) => m.uuid) ?? [];
+  }
+  function hover(index: number): void {
+    onHighlight?.(memberUuids(index));
+  }
+  function leave(): void {
+    onHighlight?.(pinned === undefined ? [] : memberUuids(pinned));
+  }
+  function togglePin(index: number): void {
+    pinned = pinned === index ? undefined : index;
+    onHighlight?.(pinned === undefined ? [] : memberUuids(index));
+  }
 
   // The set members still missing from the basket, keyed link-outs to add them
   // with the current item's materials preselected (so the discount lands).
@@ -136,8 +167,20 @@
     {#if activeInstances.length > 0}
       <div class="flex flex-col gap-2">
         {#each activeInstances as instance, i (`${instance.setTitle}-${i}`)}
-          <div
-            class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-success-600 bg-success-50 px-3 py-2"
+          <button
+            type="button"
+            aria-pressed={pinned === i}
+            onmouseenter={() => hover(i)}
+            onmouseleave={leave}
+            onfocus={() => hover(i)}
+            onblur={leave}
+            onclick={() => togglePin(i)}
+            class={[
+              "flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border bg-success-50 px-3 py-2 text-left transition-shadow",
+              pinned === i
+                ? "border-success-600 ring-2 ring-success-500"
+                : "border-success-600 hover:shadow-md",
+            ]}
           >
             <span class="flex items-center gap-1 text-sm font-semibold text-success-800">
               <Icon icon="mdi:check-circle" class="shrink-0 text-success-700" />
@@ -146,8 +189,13 @@
             <span class="rounded-full bg-success-600 px-2 py-0.5 text-xs font-semibold text-white">
               −{instance.percent}%
             </span>
-            <span class="text-sm text-brown-600">{instance.members.join(" + ")}</span>
-          </div>
+            <span class="text-sm text-brown-600">
+              {instance.members.map((m) => m.title).join(" + ")}
+            </span>
+            <span class="ml-auto text-sm font-semibold text-success-800">
+              −{instance.amount.toLocaleString("hu-HU")}{instance.indeterminate ? "+?" : ""} Ft
+            </span>
+          </button>
         {/each}
       </div>
     {/if}
