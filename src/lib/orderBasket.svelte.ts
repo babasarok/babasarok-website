@@ -6,6 +6,8 @@ import {
   updateBasketProducts,
   type SavedProduct,
 } from "./orderStorage";
+import { restoreProducts } from "./orderProduct";
+import type { CmsEnhancedProduct } from "./data";
 import type { IProduct } from "./types.svelte";
 
 /** Fired on the window whenever the basket changes, so islands that don't share
@@ -42,6 +44,18 @@ class OrderBasket {
 
   #refresh(): void {
     this.items = loadBasketProducts();
+  }
+
+  /** Drop the whole basket when it can no longer be cleanly restored against the
+   * current catalog (any line missing or structurally changed). Partial restore
+   * would silently lose items and confuse the user, so it's all-or-nothing. */
+  pruneAgainstCatalog(catalog: Record<string, CmsEnhancedProduct>): void {
+    if (
+      this.items.length > 0 &&
+      restoreProducts($state.snapshot(this.items), catalog).length === 0
+    ) {
+      this.clear();
+    }
   }
 
   get count(): number {

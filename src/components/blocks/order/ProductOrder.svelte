@@ -204,6 +204,7 @@
 
   onMount(() => {
     orderBasket.start();
+    orderBasket.pruneAgainstCatalog(catalog);
 
     // Warn on refresh/close while a saved item has unsaved changes. (A fresh,
     // never-saved item is intentionally not guarded: the "Kosárba" button is

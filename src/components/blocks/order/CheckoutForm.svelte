@@ -86,6 +86,7 @@
 
   onMount(() => {
     orderBasket.start();
+    orderBasket.pruneAgainstCatalog(catalog);
     mounted = true;
   });
 

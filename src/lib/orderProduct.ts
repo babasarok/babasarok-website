@@ -67,8 +67,10 @@ function restoreProduct(catalog: CmsEnhancedProduct, saved: SavedProduct): IProd
   return sanitizeItem(base);
 }
 
-/** Rebuild the order items from saved values against the current catalog,
- * dropping any product that no longer exists or whose structure differs. */
+/** Rebuild the order items from saved values against the current catalog.
+ * All-or-nothing: if any product no longer exists or its structure differs from
+ * the catalog, the whole basket is discarded (returns `[]`). A partially
+ * restored basket would silently drop items and confuse the user. */
 export function restoreProducts(
   saved: SavedProduct[],
   catalog: Record<string, CmsEnhancedProduct>
@@ -77,12 +79,13 @@ export function restoreProducts(
   for (const savedProduct of saved) {
     const catalogProduct = catalog[savedProduct.product_id] as CmsEnhancedProduct | undefined;
     if (!catalogProduct) {
-      continue;
+      return [];
     }
     const product = restoreProduct(catalogProduct, savedProduct);
-    if (product) {
-      restored.push(product);
+    if (!product) {
+      return [];
     }
+    restored.push(product);
   }
   return restored;
 }
