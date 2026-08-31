@@ -169,14 +169,14 @@
   }
 </script>
 
-<div class="mx-auto flex w-full max-w-160 flex-col gap-6 text-body">
+<div class="mx-auto flex w-full max-w-160 flex-col gap-6 text-body lg:max-w-5xl">
   {#if !mounted}
     <div
-      class="min-h-64 w-full animate-pulse rounded-xl border border-brown-200 bg-brown-100"
+      class="min-h-64 w-full animate-pulse rounded-xl border border-brown-200 bg-brown-100 lg:mx-auto lg:max-w-160"
     ></div>
   {:else if success}
     <div
-      class="flex flex-col items-center gap-3 rounded-2xl border border-green-600 bg-green-50 p-8 text-center"
+      class="flex flex-col items-center gap-3 rounded-2xl border border-green-600 bg-green-50 p-8 text-center lg:mx-auto lg:max-w-160"
     >
       <Icon icon="mdi:check-circle" class="text-4xl text-green-600" />
       <p class="text-green-800">{success}</p>
@@ -189,7 +189,7 @@
     </div>
   {:else if basket.length === 0}
     <div
-      class="flex flex-col items-center gap-3 rounded-2xl border border-brown-200 bg-brown-50 p-8 text-center"
+      class="flex flex-col items-center gap-3 rounded-2xl border border-brown-200 bg-brown-50 p-8 text-center lg:mx-auto lg:max-w-160"
     >
       <Icon icon="mdi:cart-outline" class="text-4xl text-brown-400" />
       <p class="text-brown-600">A kosarad üres.</p>
@@ -201,8 +201,8 @@
       </a>
     </div>
   {:else}
-    <form class="flex flex-col gap-6" onsubmit={onSubmit}>
-      <section class="flex flex-col gap-3">
+    <form class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2" onsubmit={onSubmit}>
+      <section class="flex flex-col gap-3 lg:col-span-2">
         <div class="flex items-center gap-2">
           <Icon
             icon="mdi:account"
@@ -239,54 +239,61 @@
         {/each}
       </section>
 
-      <CheckoutDeals
-        {basket}
-        products={productInfo}
-        {productGroups}
-        {slugByProductId}
-        onHighlight={(uuids) => (highlightedUuids = uuids)}
-      />
+      <div class="flex flex-col gap-6">
+        <CheckoutDeals
+          {basket}
+          products={productInfo}
+          {productGroups}
+          {slugByProductId}
+          onHighlight={(uuids) => (highlightedUuids = uuids)}
+        />
 
-      <OrderDelivery {deliveryMethods} bind:deliveryMethod bind:address />
+        <OrderDelivery {deliveryMethods} bind:deliveryMethod bind:address />
 
-      <div class="flex flex-col rounded-xl bg-brown-200 p-4">
-        <div class="flex items-center gap-2">
-          <Icon icon="mdi:message-text" class="shrink-0 text-2xl text-brown-500" />
-          <h2 class="text-lg uppercase">Van valami különleges kérésed?</h2>
+        <div class="flex flex-col rounded-xl bg-brown-200 p-4">
+          <div class="flex items-center gap-2">
+            <Icon icon="mdi:message-text" class="shrink-0 text-2xl text-brown-500" />
+            <h2 class="text-lg uppercase">Van valami különleges kérésed?</h2>
+          </div>
+          <textarea
+            bind:value={message}
+            placeholder="Írd meg ide, milyen egyedi színekre, mintákra gondoltál, vagy ha van bármilyen egyedi kérésed (pl. név hímzése)!"
+            class="mt-4 min-h-22 rounded border border-brown-200 bg-white p-2 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-sand-300/40"
+          ></textarea>
         </div>
-        <textarea
-          bind:value={message}
-          placeholder="Írd meg ide, milyen egyedi színekre, mintákra gondoltál, vagy ha van bármilyen egyedi kérésed (pl. név hímzése)!"
-          class="mt-4 min-h-22 rounded border border-brown-200 bg-white p-2 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-sand-300/40"
-        ></textarea>
+
+        <div class="flex items-center justify-between rounded-xl bg-brown-50 p-4">
+          <span class="text-lg font-medium uppercase">Végösszeg</span>
+          <span class="text-lg font-semibold text-dark">
+            {grandTotal} Ft{itemsTotal.indeterminate ? " + ??" : ""}
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2 rounded border border-gray-300 bg-brown-100 p-2">
+          <Icon icon="mdi:info" class="shrink-0 text-2xl text-yellow-500" />
+          <p class="text-xs text-yellow-700">
+            Jelenleg a rendelési folyamat tesztelés alatt áll. Ha bármilyen problémát tapasztalsz,
+            kérlek, jelezd nekünk a <a
+              class="text-yellow-700 underline hover:text-yellow-900"
+              href={`mailto:${params.address?.email ?? ""}?subject=Babasarok rendelési probléma&body=Kérlek, írd le a problémát, ha lehet screenshot-tal együtt.&cc=attilagreguss@protonmail.com`}
+              >email címünkön</a
+            >.
+          </p>
+        </div>
+
+        {#if error}
+          <p class="text-sm text-red-500">{error}</p>
+        {/if}
+
+        <Button
+          class="h-11 uppercase"
+          variant="contained"
+          type="submit"
+          disabled={!valid || sending}
+        >
+          Kérem az ingyenes ajánlatot!
+        </Button>
       </div>
-
-      <div class="flex items-center justify-between rounded-xl bg-brown-50 p-4">
-        <span class="text-lg font-medium uppercase">Végösszeg</span>
-        <span class="text-lg font-semibold text-dark">
-          {grandTotal} Ft{itemsTotal.indeterminate ? " + ??" : ""}
-        </span>
-      </div>
-
-      <div class="flex items-center gap-2 rounded border border-gray-300 bg-brown-100 p-2">
-        <Icon icon="mdi:info" class="shrink-0 text-2xl text-yellow-500" />
-        <p class="text-xs text-yellow-700">
-          Jelenleg a rendelési folyamat tesztelés alatt áll. Ha bármilyen problémát tapasztalsz,
-          kérlek, jelezd nekünk a <a
-            class="text-yellow-700 underline hover:text-yellow-900"
-            href={`mailto:${params.address?.email ?? ""}?subject=Babasarok rendelési probléma&body=Kérlek, írd le a problémát, ha lehet screenshot-tal együtt.&cc=attilagreguss@protonmail.com`}
-            >email címünkön</a
-          >.
-        </p>
-      </div>
-
-      {#if error}
-        <p class="text-sm text-red-500">{error}</p>
-      {/if}
-
-      <Button class="h-11 uppercase" variant="contained" type="submit" disabled={!valid || sending}>
-        Kérem az ingyenes ajánlatot!
-      </Button>
     </form>
   {/if}
 </div>
