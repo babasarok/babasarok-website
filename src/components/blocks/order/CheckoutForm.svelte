@@ -12,13 +12,7 @@
   import { loadOrderState, updateOrderEnvelope } from "@/lib/orderStorage";
   import { isItemValid, validateItem } from "@/lib/validation";
   import { submitOrder, calculateOrderTotal } from "@/lib/orderSubmit";
-  import {
-    calculatePriceForItem,
-    resolveActiveSetDiscount,
-    resolveActiveSetDiscounts,
-    resolveSetDiscountStatus,
-  } from "@/lib/priceUtils";
-  import type { SetDiscountStatus } from "@/lib/priceUtils";
+  import { calculatePriceForItem, resolveSetCoverage } from "@/lib/priceUtils";
   import type {
     CmsEnhancedConfig,
     CmsEnhancedDeliveryMethod,
@@ -68,18 +62,10 @@
     mounted ? restoreProducts($state.snapshot(orderBasket.items), catalog) : []
   );
 
-  const setStatusByUuid = $derived.by(() => {
-    const map: Record<string, SetDiscountStatus | undefined> = {};
-    for (const item of basket) {
-      map[item.uuid] = resolveSetDiscountStatus(item, basket, productGroups);
-    }
-    return map;
-  });
+  const setCoverageByUuid = $derived(resolveSetCoverage(basket, productGroups));
 
   const itemsTotal = $derived.by(() => {
-    const prices = basket.map((p) =>
-      calculatePriceForItem(p, resolveActiveSetDiscount(p, basket, productGroups))
-    );
+    const prices = basket.map((p) => calculatePriceForItem(p, setCoverageByUuid.get(p.uuid)));
     return {
       total: prices.reduce((sum, p) => sum + (p.totalPrice ?? 0), 0),
       indeterminate: prices.some((p) => p.indeterminate),
@@ -165,7 +151,7 @@
           value: calculateOrderTotal(
             items,
             deliveryMethodData,
-            resolveActiveSetDiscounts(items, productGroups)
+            resolveSetCoverage(items, productGroups)
           ).total,
           num_items: items.length,
         });
@@ -241,7 +227,7 @@
               product={item}
               {threadColors}
               editHref={editHref(item)}
-              setStatus={setStatusByUuid[item.uuid]}
+              setCoverage={setCoverageByUuid.get(item.uuid)}
               onRemove={() => orderBasket.remove(item.uuid)}
             />
           </div>

@@ -1,6 +1,10 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { resolveSetDiscount, resolveSetDiscountStatus } from "@/lib/priceUtils";
+  import {
+    resolveSetDiscount,
+    resolveSetDiscountStatus,
+    resolveSetInstances,
+  } from "@/lib/priceUtils";
   import { buildMaterialParams } from "@/lib/orderQueryParams";
   import type { CmsEnhancedProduct, CmsProductGroup } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
@@ -40,15 +44,15 @@
     }))
   );
 
-  // Sets already earning a discount somewhere in the basket, shown as a badge.
-  const activeDeals = $derived.by(() => {
-    const byTitle: Record<string, number> = {};
-    for (const { status } of statuses) {
-      if (status?.state === "active") {
-        byTitle[status.setTitle] = Math.max(byTitle[status.setTitle] ?? 0, status.percent);
-      }
-    }
-    return Object.entries(byTitle).map(([setTitle, percent]) => ({ setTitle, percent }));
+  // Formed set-discount instances, resolved once for the whole basket, each
+  // shown with the member lines it groups.
+  const activeInstances = $derived.by(() => {
+    const titleByUuid = new Map(basket.map((p) => [p.uuid, p.title]));
+    return resolveSetInstances(basket, productGroups).map((instance) => ({
+      setTitle: instance.setTitle,
+      percent: instance.percent,
+      members: instance.members.map((uuid) => titleByUuid.get(uuid) ?? uuid),
+    }));
   });
 
   // The set members still missing from the basket, keyed link-outs to add them
@@ -122,22 +126,28 @@
   );
 </script>
 
-{#if activeDeals.length > 0 || hasOpportunities}
+{#if activeInstances.length > 0 || hasOpportunities}
   <section class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-brown-50 p-5">
     <div class="flex items-center gap-2">
       <Icon icon="mdi:tag-multiple" class="shrink-0 text-2xl text-brown-500" />
       <h2 class="text-lg font-semibold text-headings">Szett kedvezmények</h2>
     </div>
 
-    {#if activeDeals.length > 0}
-      <div class="flex flex-wrap gap-2">
-        {#each activeDeals as deal (deal.setTitle)}
-          <span
-            class="flex items-center gap-1 rounded-full bg-success-600 px-3 py-1 text-sm font-semibold text-white"
+    {#if activeInstances.length > 0}
+      <div class="flex flex-col gap-2">
+        {#each activeInstances as instance, i (`${instance.setTitle}-${i}`)}
+          <div
+            class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-success-600 bg-success-50 px-3 py-2"
           >
-            <Icon icon="mdi:check-circle" class="shrink-0" />
-            {deal.setTitle} szett −{deal.percent}% aktív
-          </span>
+            <span class="flex items-center gap-1 text-sm font-semibold text-success-800">
+              <Icon icon="mdi:check-circle" class="shrink-0 text-success-700" />
+              {instance.setTitle} szett
+            </span>
+            <span class="rounded-full bg-success-600 px-2 py-0.5 text-xs font-semibold text-white">
+              −{instance.percent}%
+            </span>
+            <span class="text-sm text-brown-600">{instance.members.join(" + ")}</span>
+          </div>
         {/each}
       </div>
     {/if}

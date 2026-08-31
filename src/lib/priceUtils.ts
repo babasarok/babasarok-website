@@ -55,28 +55,52 @@ export function resolveSetDiscount(
   return best;
 }
 
-/** Normalised, order-independent view of a product's selected material values. */
-function normalizeMaterialValues(product: IProduct): string {
-  const values = product.materials.values
-    .filter((v): v is ProductMaterialValue => v != null && v.material_id !== "")
-    .map((v) => ({
-      material_id: v.material_id,
-      colors: v.colors.toSorted(),
-      custom_color: v.custom_color ?? "",
-    }))
-    .toSorted((a, b) => a.material_id.localeCompare(b.material_id));
-  return JSON.stringify(values);
+/**
+ * A product's selected material values as a `material_id → canonical value`
+ * map, order-independent and ignoring transient `error` fields. The canonical
+ * value encodes the sorted colours and custom colour so two selections of the
+ * same material compare equal iff they picked the same colours.
+ */
+function materialEntries(product: IProduct): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const v of product.materials.values) {
+    if (v == null || v.material_id === "") {
+      continue;
+    }
+    map.set(
+      v.material_id,
+      JSON.stringify({ colors: v.colors.toSorted(), custom_color: v.custom_color ?? "" })
+    );
+  }
+  return map;
+}
+
+/** Whether every entry of `small` appears identically in `large`. */
+function isMaterialSubset(small: Map<string, string>, large: Map<string, string>): boolean {
+  if (small.size > large.size) {
+    return false;
+  }
+  for (const [id, value] of small) {
+    if (large.get(id) !== value) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
- * Two products count towards the same set only when their selected material
- * values match exactly (same materials, colours and custom colours). The
- * comparison is order-independent and ignores transient `error` fields. Two
- * products with no material selections match trivially. See the `product-sets`
- * spec in `openspec/`.
+ * Two products count towards the same set when the smaller material selection is
+ * a subset of the larger: every material it picked (id, colours and custom
+ * colour, compared order-independently) appears identically on the other.
+ * Material *counts* need not be equal, so a one-fabric blanket matches a
+ * two-fabric nest that shares that fabric. Equal-size selections reduce to exact
+ * equality. Products with no material selections match trivially. See the
+ * `product-sets` spec in `openspec/`.
  */
 export function materialsMatch(a: IProduct, b: IProduct): boolean {
-  return normalizeMaterialValues(a) === normalizeMaterialValues(b);
+  const ma = materialEntries(a);
+  const mb = materialEntries(b);
+  return ma.size <= mb.size ? isMaterialSubset(ma, mb) : isMaterialSubset(mb, ma);
 }
 
 /**
@@ -131,104 +155,167 @@ export function canSyncMaterials(item: IProduct, partner: IProduct): boolean {
   );
 }
 
-interface SetLine {
-  index: number;
-  item: IProduct;
+/**
+ * A formed set-discount instance: one unit each of two or more distinct set
+ * members whose materials are mutually compatible. `members` lists the basket
+ * line uuids (one per member product) that each contribute one unit, all
+ * earning `percent`. See the `product-sets` spec in `openspec/`.
+ */
+export interface SetDiscountInstance {
   setTitle: string;
-  materialKey: string;
+  percent: number;
+  members: string[];
 }
 
 /**
- * Resolves the set discount of every basket item in one global pass. Set units
- * are allocated across the whole basket: one set consumes one unit of two
- * members of *different* products whose material values match, and each basket
- * unit is consumed at most once, so a partner line can cover no more sets than
- * it has units (two babafészek lines + one babatakaro line form one set, not
- * two). An item earns its set's percent for the units it is assigned to (the
- * biggest set percent wins when a product is in several sets); an unassigned
- * item reports its pending state instead. See the `product-sets` spec in
- * `openspec/`.
+ * The units of one basket line covered by set discounts, grouped by set. Every
+ * entry's `count` units earn its `percent`; one line's units MAY span several
+ * entries (different sets, including different percents).
  */
-export function allocateSetDiscounts(
-  basket: IProduct[],
-  groups: SetDiscountGroup[]
-): Map<string, SetDiscountStatus> {
-  const active = new Map<string, { percent: number; setTitle: string; count: number }>();
-  const pending = new Map<string, SetDiscountStatus>();
+export interface SetCoverageEntry {
+  setTitle: string;
+  percent: number;
+  count: number;
+}
 
-  for (const group of groups) {
-    const percent = group.discount_percent;
-    if (percent == null) {
-      continue;
-    }
-    const memberIds = new Set(group.products.map((m) => m.product_id));
-    const lines = basket.flatMap((item, index): SetLine[] =>
-      memberIds.has(item.product_id)
-        ? [
-            {
-              index,
-              item,
-              setTitle: group.title,
-              materialKey: normalizeMaterialValues(item),
-            },
-          ]
-        : []
+interface SetAllocation {
+  statuses: Map<string, SetDiscountStatus>;
+  instances: SetDiscountInstance[];
+  coverage: Map<string, SetCoverageEntry[]>;
+}
+
+/**
+ * Allocates set discounts across the whole basket per unit in one pass. Sets are
+ * processed by descending discount percent (biggest wins per unit); within each
+ * set the allocator repeatedly forms one *maximal* instance — one unit each of
+ * every distinct, mutually material-compatible member that still has units — and
+ * repeats while at least two distinct members remain, consuming each basket unit
+ * at most once. Leftover units earn no set discount. Returns the per-item status
+ * (pending/active hints), the ordered list of formed instances, and each line's
+ * per-set unit coverage (for pricing and the basket-level display). See the
+ * `product-sets` spec in `openspec/`.
+ */
+function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): SetAllocation {
+  const materials = new Map<string, Map<string, string>>();
+  for (const item of basket) {
+    materials.set(item.uuid, materialEntries(item));
+  }
+  const consumed = new Map<string, number>();
+  const remaining = (item: IProduct): number => item.count - (consumed.get(item.uuid) ?? 0);
+  const compatible = (a: string, b: string): boolean => {
+    const ma = materials.get(a) ?? new Map<string, string>();
+    const mb = materials.get(b) ?? new Map<string, string>();
+    return ma.size <= mb.size ? isMaterialSubset(ma, mb) : isMaterialSubset(mb, ma);
+  };
+
+  const instances: SetDiscountInstance[] = [];
+  // Biggest percent first so each unit lands in its most valuable set; ties keep
+  // the group's original order for determinism.
+  const ordered = groups
+    .map((group, index) => ({ group, index }))
+    .filter(({ group }) => group.discount_percent != null && group.discount_percent > 0)
+    .toSorted(
+      (a, b) =>
+        (b.group.discount_percent ?? 0) - (a.group.discount_percent ?? 0) || a.index - b.index
     );
-    if (lines.length === 0) {
-      continue;
-    }
 
-    // Lines only pair with lines of identical material values.
-    const pools = new Map<string, SetLine[]>();
-    for (const line of lines) {
-      const pool = pools.get(line.materialKey) ?? [];
-      pool.push(line);
-      pools.set(line.materialKey, pool);
-    }
-
-    const allocated = new Map<string, number>();
-    for (const pool of pools.values()) {
-      allocatePool(pool, allocated);
-    }
-
-    for (const line of lines) {
-      const { item, setTitle } = line;
-      const pendingBefore = pending.get(item.uuid);
-      if (!pendingBefore || percent > pendingBefore.percent) {
-        pending.set(item.uuid, pendingStatus(line, basket, memberIds, percent));
+  for (const { group } of ordered) {
+    const percent = group.discount_percent ?? 0;
+    const memberIds = new Set(group.products.map((m) => m.product_id));
+    for (;;) {
+      const chosen: string[] = [];
+      const usedProducts = new Set<string>();
+      for (const item of basket) {
+        if (
+          !memberIds.has(item.product_id) ||
+          usedProducts.has(item.product_id) ||
+          remaining(item) <= 0
+        ) {
+          continue;
+        }
+        if (chosen.every((uuid) => compatible(uuid, item.uuid))) {
+          chosen.push(item.uuid);
+          usedProducts.add(item.product_id);
+        }
       }
-      const count = allocated.get(item.uuid) ?? 0;
-      const activeBefore = active.get(item.uuid);
-      if (count > 0 && (!activeBefore || percent > activeBefore.percent)) {
-        active.set(item.uuid, { percent, setTitle, count });
+      if (chosen.length < 2) {
+        break;
       }
+      for (const uuid of chosen) {
+        consumed.set(uuid, (consumed.get(uuid) ?? 0) + 1);
+      }
+      instances.push({ setTitle: group.title, percent, members: chosen });
+    }
+  }
+
+  const coverage = new Map<string, SetCoverageEntry[]>();
+  for (const instance of instances) {
+    for (const uuid of instance.members) {
+      const entries = coverage.get(uuid) ?? [];
+      const existing = entries.find(
+        (e) => e.setTitle === instance.setTitle && e.percent === instance.percent
+      );
+      if (existing) {
+        existing.count += 1;
+      } else {
+        entries.push({ setTitle: instance.setTitle, percent: instance.percent, count: 1 });
+      }
+      coverage.set(uuid, entries);
     }
   }
 
   const statuses = new Map<string, SetDiscountStatus>();
   for (const item of basket) {
-    const earned = active.get(item.uuid);
-    const status = earned ? { state: "active" as const, ...earned } : pending.get(item.uuid);
-    if (status) {
-      statuses.set(item.uuid, status);
+    const entries = coverage.get(item.uuid);
+    if (entries && entries.length > 0) {
+      const best = entries.reduce((a, b) => (b.percent > a.percent ? b : a));
+      const count = entries.reduce((sum, e) => sum + e.count, 0);
+      statuses.set(item.uuid, {
+        state: "active",
+        percent: best.percent,
+        setTitle: best.setTitle,
+        count,
+      });
+      continue;
+    }
+    const pending = pendingStatus(item, basket, groups);
+    if (pending) {
+      statuses.set(item.uuid, pending);
     }
   }
-  return statuses;
+
+  return { statuses, instances, coverage };
 }
 
 /**
- * The pending state an item reports in a group it earns no discount from:
- * `pending-partner` when no sibling with matching materials is in the basket
- * (including when all matching units are already allocated to other lines, in
- * which case adding more of the set is the fix), `pending-material` otherwise.
+ * The pending state an item reports when it earns no set discount: resolved
+ * against the biggest-percent set it belongs to. `pending-partner` when no
+ * sibling with compatible materials is in the basket (including when every
+ * matching unit is already allocated to other lines, in which case adding more
+ * of the set is the fix), `pending-material` when a sibling is present but its
+ * materials are incompatible. `undefined` when the item is in no discounted set.
  */
 function pendingStatus(
-  line: SetLine,
+  item: IProduct,
   basket: IProduct[],
-  memberIds: Set<string>,
-  percent: number
-): SetDiscountStatus {
-  const { item, setTitle } = line;
+  groups: SetDiscountGroup[]
+): SetDiscountStatus | undefined {
+  const candidates = groups
+    .filter(
+      (group) =>
+        group.discount_percent != null &&
+        group.discount_percent > 0 &&
+        group.products.some((m) => m.product_id === item.product_id)
+    )
+    .toSorted((a, b) => (b.discount_percent ?? 0) - (a.discount_percent ?? 0));
+
+  const group = candidates.at(0);
+  if (!group) {
+    return undefined;
+  }
+  const percent = group.discount_percent ?? 0;
+  const setTitle = group.title;
+  const memberIds = new Set(group.products.map((m) => m.product_id));
   const partners = basket.filter(
     (other) =>
       other.product_id !== item.product_id &&
@@ -236,13 +323,9 @@ function pendingStatus(
       memberIds.has(other.product_id)
   );
 
-  if (partners.length === 0) {
-    return { state: "pending-partner", percent, setTitle, count: item.count };
-  }
-
-  if (partners.some((other) => materialsMatch(item, other))) {
-    // Every matching unit is already covered by another line, so the only way
-    // to earn the discount is to add more of the set.
+  if (partners.length === 0 || partners.some((other) => materialsMatch(item, other))) {
+    // No partner in the basket, or every compatible unit is already allocated
+    // elsewhere — either way, adding more of the set is the fix.
     return { state: "pending-partner", percent, setTitle, count: item.count };
   }
 
@@ -253,8 +336,6 @@ function pendingStatus(
     setTitle,
     partnerUuid: partner.uuid,
     canSync: canSyncMaterials(item, partner),
-    // Sum of all partner lines (matching or not): what the set could cover
-    // once materials are synced, consistent with the active-count rule.
     count: Math.min(
       partners.reduce((sum, x) => sum + x.count, 0),
       item.count
@@ -263,62 +344,37 @@ function pendingStatus(
 }
 
 /**
- * Assigns set pairs within one material pool. A pair consumes one unit of two
- * lines of different products; per-line and per-product caps keep the result
- * feasible as an actual pairing, and pairs fill in round-robin basket order
- * until no compatible free pair remains, so equally-priced lines are covered
- * evenly.
+ * Per-item set status of every basket item in one global pass. A per-item
+ * lookup into the shared allocation; use `resolveSetInstances` /
+ * `resolveSetCoverage` for the basket-level display and pricing.
  */
-function allocatePool(pool: SetLine[], allocated: Map<string, number>): void {
-  const total = pool.reduce((sum, line) => sum + line.item.count, 0);
-  const byProduct = new Map<string, number>();
-  for (const line of pool) {
-    byProduct.set(
-      line.item.product_id,
-      (byProduct.get(line.item.product_id) ?? 0) + line.item.count
-    );
-  }
+export function allocateSetDiscounts(
+  basket: IProduct[],
+  groups: SetDiscountGroup[]
+): Map<string, SetDiscountStatus> {
+  return computeSetAllocation(basket, groups).statuses;
+}
 
-  // Max pairs: each needs two units, and at most `total - dominant` pairs can
-  // avoid pairing a dominant product's units with itself.
-  const dominant = Math.max(...byProduct.values());
-  const maxPairs = Math.min(Math.floor(total / 2), total - dominant);
-  if (maxPairs <= 0) {
-    return;
-  }
+/**
+ * The set-discount instances formed by the current basket, in allocation order,
+ * for the basket-level "set discounts" display.
+ */
+export function resolveSetInstances(
+  basket: IProduct[],
+  groups: SetDiscountGroup[]
+): SetDiscountInstance[] {
+  return computeSetAllocation(basket, groups).instances;
+}
 
-  let budget = maxPairs * 2; // one slot per pair end
-  const remaining = pool.map((line) => line.item.count);
-  const productRemaining = new Map<string, number>();
-  for (const [product, count] of byProduct) {
-    productRemaining.set(product, total - count);
-  }
-
-  // Every line in a pool shares the group's percent, so basket order is all
-  // the tie-break the round-robin fill needs.
-  const order = pool.map((line, i) => ({ line, i })).toSorted((a, b) => a.i - b.i);
-
-  for (;;) {
-    let progressed = false;
-    for (const { line, i } of order) {
-      if (budget <= 0 || remaining[i] <= 0) {
-        continue;
-      }
-      const product = line.item.product_id;
-      const productRemainingCount = productRemaining.get(product) ?? 0;
-      if (productRemainingCount <= 0) {
-        continue;
-      }
-      remaining[i] -= 1;
-      productRemaining.set(product, productRemainingCount - 1);
-      budget -= 1;
-      allocated.set(line.item.uuid, (allocated.get(line.item.uuid) ?? 0) + 1);
-      progressed = true;
-    }
-    if (budget <= 0 || !progressed) {
-      return;
-    }
-  }
+/**
+ * Each basket line's per-set unit coverage, keyed by line uuid, for pricing via
+ * `calculatePriceForItem`. Lines with no set coverage are absent from the map.
+ */
+export function resolveSetCoverage(
+  basket: IProduct[],
+  groups: SetDiscountGroup[]
+): Map<string, SetCoverageEntry[]> {
+  return computeSetAllocation(basket, groups).coverage;
 }
 
 /**
@@ -332,39 +388,6 @@ export function resolveSetDiscountStatus(
   groups: SetDiscountGroup[]
 ): SetDiscountStatus | undefined {
   return allocateSetDiscounts(basket, groups).get(item.uuid);
-}
-
-/**
- * The set discount an item actively earns given the current basket: the `active`
- * case of the single shared rule implemented by `resolveSetDiscountStatus`.
- * `undefined` when the item earns no set discount yet.
- */
-export function resolveActiveSetDiscount(
-  item: IProduct,
-  basket: IProduct[],
-  groups: SetDiscountGroup[]
-): ActiveDiscountStatus | undefined {
-  const status = resolveSetDiscountStatus(item, basket, groups);
-  return status?.state === "active" ? status : undefined;
-}
-
-/**
- * The active set discount of every basket item in one global pass: a map of
- * item uuid → status, holding only the items that earn a set discount. Price
- * each item from this map so the allocation runs exactly once per basket
- * rather than once per item.
- */
-export function resolveActiveSetDiscounts(
-  basket: IProduct[],
-  groups: SetDiscountGroup[]
-): Map<string, ActiveDiscountStatus> {
-  const active = new Map<string, ActiveDiscountStatus>();
-  for (const [uuid, status] of allocateSetDiscounts(basket, groups)) {
-    if (status.state === "active") {
-      active.set(uuid, status);
-    }
-  }
-  return active;
 }
 
 export interface Price extends BasePrice {
@@ -445,7 +468,7 @@ function getMaterialPrice(
 
 export function calculatePriceForItem(
   product: IProduct,
-  setStatus?: ActiveDiscountStatus
+  setCoverage?: SetCoverageEntry[]
 ): Price | LengthBasedPrice {
   const parts: PricePart[] = [];
   for (const field of product.fields) {
@@ -484,12 +507,18 @@ export function calculatePriceForItem(
   const indeterminate = allParts.some((part) => part.price === undefined);
 
   let discount: DiscountInfo | undefined;
-  if (setStatus?.percent != null && setStatus.percent > 0) {
+  const coveredCount = setCoverage?.reduce((sum, e) => sum + e.count, 0) ?? 0;
+  if (setCoverage && coveredCount > 0) {
+    // Effective per-line factor: every covered unit gets its set's percent, the
+    // rest pay full price. Averaged over the line so length-based pricing and
+    // the total both apply one multiplier. Generalises to units split across
+    // sets at different percents.
+    const percentUnits = setCoverage.reduce((sum, e) => sum + e.percent * e.count, 0);
     discount = {
-      discount: 1 - (setStatus.percent * (setStatus.count / product.count)) / 100,
+      discount: 1 - percentUnits / 100 / product.count,
       discountSource: "set",
-      discountAppliedCount: setStatus.count,
-      percent: setStatus.percent,
+      discountAppliedCount: coveredCount,
+      percent: Math.max(...setCoverage.map((e) => e.percent)),
     };
   } else if (
     product.discount &&

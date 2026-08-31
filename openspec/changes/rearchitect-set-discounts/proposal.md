@@ -2,7 +2,7 @@
 
 The current set-discount model allocates discounts **pairwise** (one instance =
 one unit of member A + one unit of member B) and gates matching on an **exact**
-material equality that also requires the same *number* of materials. This
+material equality that also requires the same _number_ of materials. This
 mis-models real sets: a set can have 3+ members that should all share one
 discount, members legitimately differ in how many fabrics they use (a blanket
 uses one fabric, a nest uses two), and the discount is fundamentally a
@@ -14,7 +14,7 @@ The rules and the code have drifted from what the shop actually needs.
 - **BREAKING (matching rule):** Two products count towards a set when the
   smaller material selection is a **subset** of the larger (every selected
   `material_id` + colors + custom color appears identically on the other).
-  Material *count* no longer has to be equal. (Was: exact equality incl. count.)
+  Material _count_ no longer has to be equal. (Was: exact equality incl. count.)
 - **BREAKING (grouping):** A set discount is modeled as a **set-discount
   instance** — one unit each of **2 or more distinct** set members whose
   materials mutually match — instead of a fixed pair. Within a material-matching

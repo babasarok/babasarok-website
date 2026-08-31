@@ -2,20 +2,20 @@
   import Icon from "@iconify/svelte";
   import Tooltip from "./common/Tooltip.svelte";
   import { calculatePriceForItem } from "@/lib/priceUtils";
-  import type { ActiveDiscountStatus } from "@/lib/priceUtils";
+  import type { SetCoverageEntry } from "@/lib/priceUtils";
   import type { IProduct } from "@/lib/types.svelte";
   import IconButton from "./common/IconButton.svelte";
 
   interface Props {
     product: IProduct;
-    setDiscount?: ActiveDiscountStatus | undefined;
+    setCoverage?: SetCoverageEntry[] | undefined;
     onChange?: ((product: IProduct) => void) | undefined;
   }
 
-  const { product, setDiscount, onChange }: Props = $props();
+  const { product, setCoverage, onChange }: Props = $props();
 
   const price = $derived.by(() => {
-    return calculatePriceForItem(product, setDiscount);
+    return calculatePriceForItem(product, setCoverage);
   });
 
   const priceParts = $derived.by(() => {
@@ -49,11 +49,9 @@
         </p>
       </div>
     {/if}
-    {#if price.discountInfo !== undefined}
+    {#if price.discountInfo !== undefined && price.discountInfo.discountSource === "standalone"}
       <div class="flex justify-between">
-        <p class="text-xs">
-          {price.discountInfo.discountSource === "set" ? "Szett kedvezmény" : "Kedvezmény"}
-        </p>
+        <p class="text-xs">Kedvezmény</p>
         <p class="text-xs">
           −{(price.discountInfo.percent / 100).toLocaleString(undefined, {
             style: "percent",

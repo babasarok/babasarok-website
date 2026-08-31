@@ -4,30 +4,21 @@
   import { isFieldVisible } from "@/lib/fieldVisibility";
   import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
   import type { Field, IProduct, ProductMaterialValue } from "@/lib/types.svelte";
-  import type { SetDiscountStatus } from "@/lib/priceUtils";
+  import type { SetCoverageEntry } from "@/lib/priceUtils";
 
   interface Props {
     product: IProduct;
     threadColors: CmsEnhancedEmbroideryColor[];
     /** Product page link (with `?uuid=…`) that re-opens this item for editing. */
     editHref: string | undefined;
-    setStatus?: SetDiscountStatus | undefined;
+    /** Set-discount coverage for this line; drives the discounted price. */
+    setCoverage?: SetCoverageEntry[] | undefined;
     onRemove: () => void;
   }
 
-  let { product, threadColors, editHref, setStatus, onRemove }: Props = $props();
+  let { product, threadColors, editHref, setCoverage, onRemove }: Props = $props();
 
-  const setDiscountPercent = $derived.by(() => {
-    if (setStatus?.state !== "active") {
-      return;
-    }
-
-    return setStatus.percent * (setStatus.count / product.count);
-  });
-
-  const price = $derived(
-    calculatePriceForItem(product, setStatus?.state === "active" ? setStatus : undefined)
-  );
+  const price = $derived(calculatePriceForItem(product, setCoverage));
 
   /** Per-option price contribution, keyed by the same label as the summary rows. */
   const priceByLabel = $derived.by(() => {
@@ -129,18 +120,6 @@
         <h3 class="text-base font-medium leading-tight text-dark">{product.title}</h3>
         <span class="shrink-0 text-sm text-brown-500">{product.count} db</span>
       </div>
-
-      {#if setDiscountPercent && setStatus}
-        <span
-          class="mt-1 flex w-fit items-center gap-1 rounded-full bg-green-600 px-2 py-0.5 text-xs font-semibold text-white"
-        >
-          <Icon icon="mdi:tag-check" class="shrink-0" />
-          Szett kedvezmény −{setDiscountPercent / (setStatus.count / product.count)}%
-          {#if setStatus.count < product.count}
-            ({setStatus.count} db)
-          {/if}
-        </span>
-      {/if}
     </div>
   </div>
 
@@ -178,11 +157,9 @@
         </dd>
       </div>
     {/each}
-    {#if price.discountInfo !== undefined}
+    {#if price.discountInfo !== undefined && price.discountInfo.discountSource === "standalone"}
       <div class="flex justify-between gap-4">
-        <dt class="text-brown-500">
-          {price.discountInfo.discountSource === "set" ? "Szett kedvezmény" : "Kedvezmény"}
-        </dt>
+        <dt class="text-brown-500">Kedvezmény</dt>
         <dd class="text-right font-medium text-green-700">
           −{(price.discountInfo.percent / 100).toLocaleString("hu-HU", {
             style: "percent",

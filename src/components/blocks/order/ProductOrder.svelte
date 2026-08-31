@@ -12,7 +12,11 @@
     syncMaterialsToPartner,
     hasConfigurableOptions,
   } from "@/lib/orderProduct";
-  import { resolveSetDiscount, resolveSetDiscountStatus } from "@/lib/priceUtils";
+  import {
+    resolveSetDiscount,
+    resolveSetDiscountStatus,
+    resolveSetCoverage,
+  } from "@/lib/priceUtils";
   import type { SetDiscountStatus } from "@/lib/priceUtils";
   import { prefillFromParams, buildMaterialParams } from "@/lib/orderQueryParams";
   import { mapProductToSaved } from "@/lib/orderStorage";
@@ -128,6 +132,19 @@
   const setStatus = $derived<SetDiscountStatus | undefined>(
     item ? resolveSetDiscountStatus(item, basket, productGroups) : undefined
   );
+
+  // Set-discount coverage for the item being configured, resolved against the
+  // basket (including this item when it isn't persisted yet) so its price
+  // reflects any set it participates in.
+  const setCoverage = $derived.by(() => {
+    const current = item;
+    if (!current) {
+      return;
+    }
+    const inBasket = basket.some((p) => p.uuid === current.uuid);
+    const effectiveBasket = inBasket ? basket : [...basket, current];
+    return resolveSetCoverage(effectiveBasket, productGroups).get(current.uuid);
+  });
 
   // Whether this product is fully configured, so set siblings can be added
   // without surfacing a validation error. Validated on a snapshot so the live
@@ -268,7 +285,7 @@
       product={item}
       {threadColors}
       bare
-      setDiscount={setStatus?.state === "active" ? setStatus : undefined}
+      {setCoverage}
       onChange={(updated) => {
         item = sanitizeItem(updated);
         saved = false;

@@ -2,8 +2,8 @@
  * Order submission: format the order directly from the product models and POST
  * it to web3forms. Kept out of the Svelte component so the form stays declarative.
  */
-import { calculatePriceForItem, resolveActiveSetDiscounts } from "@/lib/priceUtils";
-import type { ActiveDiscountStatus, SetDiscountGroup } from "@/lib/priceUtils";
+import { calculatePriceForItem, resolveSetCoverage, resolveSetInstances } from "@/lib/priceUtils";
+import type { SetCoverageEntry, SetDiscountGroup, SetDiscountInstance } from "@/lib/priceUtils";
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "./types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "./data";
 import { isFieldVisible } from "./fieldVisibility";
@@ -25,9 +25,9 @@ export interface OrderDetails {
 export function calculateOrderTotal(
   products: IProduct[],
   deliveryMethod: CmsEnhancedDeliveryMethod,
-  activeStatuses: Map<string, ActiveDiscountStatus>
+  setCoverage: Map<string, SetCoverageEntry[]>
 ): { total: number; indeterminate: boolean } {
-  const prices = products.map((p) => calculatePriceForItem(p, activeStatuses.get(p.uuid)));
+  const prices = products.map((p) => calculatePriceForItem(p, setCoverage.get(p.uuid)));
   return {
     total: prices.reduce((sum, p) => sum + (p.totalPrice ?? 0), 0) + deliveryMethod.price,
     indeterminate: prices.some((p) => p.indeterminate),
@@ -106,9 +106,9 @@ function shouldSubmitField(field: Field): boolean {
 function formatProductString(
   product: IProduct,
   threadColors: CmsEnhancedEmbroideryColor[],
-  setDiscount?: ActiveDiscountStatus
+  setCoverage?: SetCoverageEntry[]
 ): string {
-  const price = calculatePriceForItem(product, setDiscount);
+  const price = calculatePriceForItem(product, setCoverage);
   const { materials, material_required_count, values } = product.materials;
 
   const lines = [
@@ -139,7 +139,7 @@ function formatProductString(
     ...(price.priced_by_length
       ? [`  Méterár: ${price.per_meter_price?.toString() ?? ""}Ft/m`]
       : []),
-    ...(price.discountInfo
+    ...(price.discountInfo && price.discountInfo.discountSource === "standalone"
       ? [
           `Kedvezmény: ${(price.discountInfo.percent / 100).toLocaleString("hu-HU", {
             style: "percent",
@@ -152,14 +152,30 @@ function formatProductString(
   return lines.join("\n");
 }
 
+/**
+ * Basket-level set-discount summary: one line per formed instance listing the
+ * set, its percent, and the member products it groups. Replaces the old
+ * per-item discount-source line so set discounts are described once, together.
+ */
+function formatSetDiscounts(instances: SetDiscountInstance[], products: IProduct[]): string {
+  const titleByUuid = new Map(products.map((p) => [p.uuid, p.title]));
+  return instances
+    .map((instance) => {
+      const members = instance.members.map((uuid) => titleByUuid.get(uuid) ?? uuid).join(" + ");
+      return `${instance.setTitle} szett (−${instance.percent.toString()}%): ${members}`;
+    })
+    .join("\n");
+}
+
 function buildOrderFormData(order: OrderDetails, accessKey: string, message: string): FormData {
   // Resolve the basket allocation once; both the total and each item's email
   // block price from it so the set status can't be dropped by a single caller.
-  const activeStatuses = resolveActiveSetDiscounts(order.products, order.productGroups);
+  const setCoverage = resolveSetCoverage(order.products, order.productGroups);
+  const setInstances = resolveSetInstances(order.products, order.productGroups);
   const { total, indeterminate } = calculateOrderTotal(
     order.products,
     order.deliveryMethod,
-    activeStatuses
+    setCoverage
   );
 
   const formData = new FormData();
@@ -171,8 +187,11 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
   for (const [index, product] of order.products.entries()) {
     formData.append(
       `termek ${(index + 1).toString()}`,
-      formatProductString(product, order.threadColors, activeStatuses.get(product.uuid))
+      formatProductString(product, order.threadColors, setCoverage.get(product.uuid))
     );
+  }
+  if (setInstances.length > 0) {
+    formData.append("szett kedvezmenyek", formatSetDiscounts(setInstances, order.products));
   }
   formData.append(
     "szallitasimod",
