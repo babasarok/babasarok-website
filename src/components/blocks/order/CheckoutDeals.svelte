@@ -48,8 +48,9 @@
   );
 
   // Formed set-discount instances, resolved once for the whole basket. Each
-  // carries its member lines (uuid + title, to drive cross-highlighting) and
-  // the forint amount it takes off.
+  // carries its member lines (uuid + title, to drive cross-highlighting), the
+  // set's other products that this instance didn't include, and the forint
+  // amount it takes off.
   const activeInstances = $derived.by(() => {
     const byUuid = new Map(basket.map((p) => [p.uuid, p]));
     return resolveSetInstances(basket, productGroups).map((instance) => {
@@ -58,10 +59,20 @@
         uuid,
         title: byUuid.get(uuid)?.title ?? uuid,
       }));
+      const includedIds = new Set(
+        instance.members
+          .map((uuid) => byUuid.get(uuid)?.product_id)
+          .filter((id) => id !== undefined)
+      );
+      const group = productGroups.find((g) => g.title === instance.setTitle);
+      const excluded = (group?.products ?? [])
+        .filter((m) => !includedIds.has(m.product_id) && Object.hasOwn(products, m.product_id))
+        .map((m) => products[m.product_id].title);
       return {
         setTitle: instance.setTitle,
         percent: instance.percent,
         members,
+        excluded,
         amount,
         indeterminate,
       };
@@ -182,19 +193,30 @@
                 : "border-success-600 hover:shadow-md",
             ]}
           >
-            <span class="flex items-center gap-1 text-sm font-semibold text-success-800">
-              <Icon icon="mdi:check-circle" class="shrink-0 text-success-700" />
-              {instance.setTitle} szett
+            <span class="flex w-full items-center gap-2">
+              <span class="flex items-center gap-1 text-sm font-semibold text-success-800">
+                <Icon icon="mdi:check-circle" class="shrink-0 text-success-700" />
+                {instance.setTitle} szett
+              </span>
+              <span
+                class="rounded-full bg-success-600 px-2 py-0.5 text-xs font-semibold text-white"
+              >
+                −{instance.percent}%
+              </span>
+              <span class="ml-auto text-sm font-semibold text-success-800">
+                −{instance.amount.toLocaleString("hu-HU")}{instance.indeterminate ? "+?" : ""} Ft
+              </span>
             </span>
-            <span class="rounded-full bg-success-600 px-2 py-0.5 text-xs font-semibold text-white">
-              −{instance.percent}%
-            </span>
-            <span class="text-sm text-brown-600">
-              {instance.members.map((m) => m.title).join(" + ")}
-            </span>
-            <span class="ml-auto text-sm font-semibold text-success-800">
-              −{instance.amount.toLocaleString("hu-HU")}{instance.indeterminate ? "+?" : ""} Ft
-            </span>
+            <ul class="w-full list-disc pl-5 text-sm text-brown-600">
+              {#each instance.members as member (member.uuid)}
+                <li>{member.title}</li>
+              {/each}
+            </ul>
+            {#if instance.excluded.length > 0}
+              <span class="w-full text-xs text-brown-400">
+                Nem része ennek a szettnek: {instance.excluded.join(", ")}
+              </span>
+            {/if}
           </button>
         {/each}
       </div>
