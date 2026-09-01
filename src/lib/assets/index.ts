@@ -17,7 +17,7 @@ import { tinaCloudMediaPath } from "./tinaImageUrl";
 import { getImage } from "astro:assets";
 
 const images = import.meta.glob<ImageMetadata>(
-  "../assets/**/*.{jpg,jpeg,png,gif,svg,webp,avif,JPG,JPEG,PNG}",
+  "../../assets/**/*.{jpg,jpeg,png,gif,svg,webp,avif,JPG,JPEG,PNG}",
   { eager: true, import: "default" }
 );
 
@@ -51,10 +51,10 @@ export async function resolveImage(
   clean = clean.replace(/^\/?(src\/assets\/)?/, "");
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (!images[`../assets/${clean}`]) {
+  if (!images[`../../assets/${clean}`]) {
     console.warn(`resolveImage: could not resolve "${clean}"`);
     return undefined;
   }
 
-  return getImage({ ...options, src: images[`../assets/${clean}`] });
+  return getImage({ ...options, src: images[`../../assets/${clean}`] });
 }
