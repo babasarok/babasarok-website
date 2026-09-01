@@ -34,9 +34,3 @@ fields:
 
 Elérhető fehér, illetve mintás vagy más színű kivitelben.
 
-| Kivitel | Ár |
-| --- | --- |
-| Fehér | 3000Ft |
-| Mintás vagy más színű | 3500Ft |
-
-

@@ -71,33 +71,3 @@ fejét a rácsokhoz való ütközéstől. Az ötös (halszálka) fonat kb. 20–
 dizájnos, rendkívül különleges fonat, ami igazán feldobja a kiságyat és a
 babaszobát.
 
-### Négyes fonat árak
-
-| Méret | Ár |
-| --- | --- |
-| 200cm | 16.000Ft |
-| 220cm | 17.600Ft |
-| 240cm | 19.200Ft |
-| 260cm | 20.800Ft |
-| 280cm | 22.400Ft |
-| 300cm | 24.000Ft |
-| 340cm | 27.200Ft |
-| 360cm | 28.800Ft |
-| 380cm | 30.400Ft |
-| 400cm | 32.000Ft |
-
-### Ötös fonat (halszálka) árak
-
-| Méret | Ár |
-| --- | --- |
-| 200cm | 19.000Ft |
-| 220cm | 20.900Ft |
-| 240cm | 22.800Ft |
-| 260cm | 24.700Ft |
-| 280cm | 26.600Ft |
-| 300cm | 28.500Ft |
-| 340cm | 32.300Ft |
-| 360cm | 34.200Ft |
-| 380cm | 36.100Ft |
-| 400cm | 38.000Ft |
-

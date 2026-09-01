@@ -9,27 +9,6 @@ images:
   - image: /src/assets/Noémi-25.webp
   - image: /src/assets/Noémi-18.webp
   - image: /src/assets/Noémi-39.webp
-table:
-  - title: 200cm
-    description: 12.800Ft
-  - title: 220cm
-    description: 14.000Ft
-  - title: 240cm
-    description: 15.300Ft
-  - title: 260cm
-    description: 16.600Ft
-  - title: 280cm
-    description: 17.900Ft
-  - title: 300cm
-    description: 19.200Ft
-  - title: 340cm
-    description: 21.700Ft
-  - title: 360cm
-    description: 23.000Ft
-  - title: 380cm
-    description: 24.300Ft
-  - title: 400cm
-    description: 25.600Ft
 shortDescription: 'A fonott rácsvédő nemcsak dizájnos kiegészítője a kiságyának, hanem praktikus védelmet is nyújt. Puha, pufi anyaga megóvja a baba fejét a rácsokkal való ütközéstől, különösen, amikor a pici már forogni kezd. '
 icon: /src/assets/product/braids.svg
 length_based_pricing:
