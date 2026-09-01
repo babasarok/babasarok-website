@@ -60,5 +60,13 @@ export const ProductGroupCollection: Collection = {
         },
       ],
     },
+    {
+      type: "rich-text",
+      name: "body",
+      label: "Leírás",
+      description:
+        "Opcionális leírás/tartalom a szetthez. Jelenleg nem jelenik meg, de megőrizzük későbbi megjelenítéshez.",
+      isBody: true,
+    },
   ],
 };
