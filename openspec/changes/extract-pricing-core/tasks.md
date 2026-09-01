@@ -17,8 +17,8 @@ pass with only import-path edits — no expected-value changes.
       moved in). Consumers use `@/lib/pricing/*` imports — a dedicated
       `@pricing/*` alias is still optional/pending.
 - [ ] 1.2 Audit the core modules (`pricing/price`, `pricing/setDiscount`,
-      `pricing/validation`, `pricing/fieldVisibility`, `pricing/fieldValue`,
-      `pricing/materials`, `pricing/fieldTypes`, plus the types they import) for
+      `product/validation`, `product/fieldVisibility`, `product/fieldValue`,
+      `product/materials`, `product/fieldTypes`, plus the types they import) for
       any `svelte`/`svelte/*`, `astro:*`, `$app/*`, or DOM
       (`window`/`document`/`localStorage`) usage; the known offender is the
       `../types.svelte` → `data.ts` (`astro:content`) chain
@@ -36,8 +36,9 @@ pass with only import-path edits — no expected-value changes.
 - [x] 3.1 `priceUtils.ts` split into `pricing/price.ts` (price calc +
       length-based) and `pricing/setDiscount.ts` (set-discount resolution)
 - [x] 3.2 `validation.ts`, `fieldVisibility.ts`, `fieldValue.ts`,
-      `materialUtils.ts` (→ `pricing/materials.ts`), `productFieldTypes.ts`
-      (→ `pricing/fieldTypes.ts`) moved into the core with core-relative imports
+      `materialUtils.ts` (→ `product/materials.ts`), `productFieldTypes.ts`
+      (→ `product/fieldTypes.ts`) moved into `src/lib/product/` (the
+      product-config domain that `pricing/` imports) with core-relative imports
 - [ ] 3.3 Lift the pure price/field/material formatters out of `order/submit.ts`
       into `pricing/format.ts`; leave `buildOrderFormData`/`submitOrder`
       (the `fetch` + `FormData`) in `order/submit.ts`, importing from core
@@ -56,8 +57,8 @@ pass with only import-path edits — no expected-value changes.
 ## 5. Enforce the boundary
 
 - [ ] 5.1 Add an ESLint `no-restricted-imports` rule scoped to
-      `src/lib/pricing/**` forbidding `svelte`, `svelte/*`, `astro:*`, `$app/*`
-      and DOM globals
+      `src/lib/pricing/**` and `src/lib/product/**` forbidding `svelte`,
+      `svelte/*`, `astro:*`, `$app/*` and DOM globals
 - [ ] 5.2 (Optional) Add a Vitest smoke test that imports the core barrel under
       the plain Node environment and asserts it evaluates without a Svelte
       runtime

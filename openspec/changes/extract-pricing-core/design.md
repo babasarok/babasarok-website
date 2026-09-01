@@ -22,27 +22,32 @@ the Svelte toolchain (runes such as `$state`). Importing them from plain Node or
 a Worker bundle pulls in the Svelte runtime, which breaks the build off the
 browser.
 
-**Fix.** Define a folder (proposed `src/lib/pricing/`) whose modules import only:
-other core modules, standard TS/JS, and Zod (already a runtime-agnostic dep). It
-must NOT import `svelte`, `svelte/*`, `astro:*`, `$app/*`, or touch DOM globals
-(`window`, `document`, `localStorage`).
+**Fix.** Define the pure-core boundary spanning two sibling folders —
+`src/lib/product/` (field model, materials, validation) and `src/lib/pricing/`
+(price, set discounts, which imports `product/`) — whose modules import only:
+other core modules, standard TS/JS, and Zod (already a runtime-agnostic dep).
+They must NOT import `svelte`, `svelte/*`, `astro:*`, `$app/*`, or touch DOM
+globals (`window`, `document`, `localStorage`).
 
 Core members (moved or re-homed). Names marked ✓ already landed via the lib
 reorganization; the rest is the remaining purity work:
 
 ```
-src/lib/pricing/
-  types.ts            <- pure interfaces from types.svelte.ts (IProduct, Field, ...)
+src/lib/product/            <- product-configuration domain (pure)
   fieldTypes.ts       <- productFieldTypes.ts                             ✓
   fieldVisibility.ts  <- fieldVisibility.ts                              ✓
   fieldValue.ts       <- fieldValue.ts                                   ✓
   materials.ts        <- materialUtils.ts                                ✓
+  validation.ts       <- validation.ts (sanitizeItem, validateItem, isItemValid)  ✓
+
+src/lib/pricing/            <- pricing domain (pure); imports product/
   price.ts            <- priceUtils.ts (calculatePriceForItem, length-based)  ✓
   setDiscount.ts      <- set-discount fns (allocateSetDiscounts, materialsMatch,
                          canSyncMaterials, resolveSetDiscountStatus, ...)   ✓
-  validation.ts       <- validation.ts (sanitizeItem, validateItem, isItemValid)  ✓
   format.ts           <- price-string helpers lifted from order/submit.ts
   index.ts            <- barrel re-export
+
+src/lib/types.ts            <- pure interfaces from types.svelte.ts (IProduct, Field, ...)
 ```
 
 (Exact filenames/splits are a detail; the invariant is the import boundary, not

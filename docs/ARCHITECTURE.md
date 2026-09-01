@@ -89,7 +89,8 @@ src/
     data.ts                 # Tina loaders + image-ref resolution
     types.svelte.ts / typeHelpers.ts / cn.ts / uuid.ts / scrollSnapper.ts
     assets/                 # resolveImage() (index.ts), tinaImageUrl, remarkAssetImages
-    pricing/                # price, setDiscount, materials, field{Value,Visibility,Types}, validation
+    product/                # field{Types,Value,Visibility}, materials, validation (product-config domain)
+    pricing/                # price, setDiscount (imports product/)
     order/                  # basket.svelte, product, queryParams, storage, submit
     __tests__/              # Vitest specs + fixtures
   styles/                   # global.css (@theme tokens), base.css, prose.css, theme.css
@@ -131,7 +132,7 @@ fonts, wires favicons through the Vite asset pipeline, and includes
   nullable→undefined normalization and image optimization happen.
 - **Shared value lists live in one module.** Where the same enumerated values are
   needed by the Tina schema, the Zod schema, and runtime code, they are defined
-  once and imported by all three (e.g. `src/lib/pricing/fieldTypes.ts` feeds the
+  once and imported by all three (e.g. `src/lib/product/fieldTypes.ts` feeds the
   Tina `type` select options, a Zod `z.enum`, and `data.ts`'s discriminant).
   Tina config imports these with a **relative** path — its esbuild bundling
   ignores the `@/` tsconfig alias.

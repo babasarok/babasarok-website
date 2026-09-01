@@ -20,24 +20,25 @@ is valuable even if that migration is deferred.
 
 A behavior-preserving lib reorganization has already created the
 `src/lib/pricing/` module home and moved the members into it:
-`priceUtils.ts` was split into `pricing/price.ts` + `pricing/setDiscount.ts`,
-and `validation`, `fieldVisibility`, `fieldValue`, `materialUtils` →
-`pricing/materials.ts`, `productFieldTypes` → `pricing/fieldTypes.ts` moved in
-alongside them. Every consumer (islands, pages, tests, `tina/`, `data.ts`) was
-re-pointed. `npm run check`, `npm test` (130 passing) and `npm run lint` are
-green with no expected-value changes.
+`priceUtils.ts` was split into `pricing/price.ts` + `pricing/setDiscount.ts`;
+the product-configuration domain (`validation`, `fieldVisibility`, `fieldValue`,
+`materialUtils` → `materials`, `productFieldTypes` → `fieldTypes`) moved into a
+sibling `product/` folder that `pricing/` imports. Every consumer (islands,
+pages, tests, `tina/`, `data.ts`) was re-pointed. `npm run check`, `npm test`
+(130 passing) and `svelte-check` are green with no expected-value changes.
 
 That closes the mechanical *move + re-point* portion of this change. What
-remains is the part that actually makes the folder a **pure, runtime-agnostic
-core**: the modules still import `../types.svelte` (a `.svelte.ts` file that in
-turn imports `astro:content` via `data.ts`), so the boundary is not yet
-enforceable off the browser.
+remains is the part that actually makes the core **pure and runtime-agnostic**:
+the `product/` (and thus `pricing/`) modules still import `../types.svelte` (a
+`.svelte.ts` file that in turn imports `astro:content` via `data.ts`), so the
+boundary is not yet enforceable off the browser.
 
 ## What Changes (remaining)
 
-- Make `src/lib/pricing/` a **pure core boundary** with **zero** imports of
-  Svelte runes, DOM/`window`, Astro, or any browser-only API. Today this fails
-  only through the `types.svelte.ts` → `data.ts` (`astro:content`) chain.
+- Make the `src/lib/product/` + `src/lib/pricing/` core a **pure boundary** with
+  **zero** imports of Svelte runes, DOM/`window`, Astro, or any browser-only
+  API. Today this fails only through the `types.svelte.ts` → `data.ts`
+  (`astro:content`) chain.
 - Split `types.svelte.ts`: move the pure interfaces / discriminated unions
   (e.g. `IProduct`, `Field`, material and price types) into a plain `types.ts`
   in the core and decouple them from the Tina/`data.ts`-derived types so the
@@ -62,9 +63,9 @@ no specified behavior changes. Declares `skip_specs: true`.
 ## Impact
 
 - Core (already relocated): `src/lib/pricing/price.ts`,
-  `src/lib/pricing/setDiscount.ts`, `src/lib/pricing/validation.ts`,
-  `src/lib/pricing/fieldVisibility.ts`, `src/lib/pricing/fieldValue.ts`,
-  `src/lib/pricing/materials.ts`, `src/lib/pricing/fieldTypes.ts`.
+  `src/lib/pricing/setDiscount.ts`, and the product-config domain in
+  `src/lib/product/` (`validation.ts`, `fieldVisibility.ts`, `fieldValue.ts`,
+  `materials.ts`, `fieldTypes.ts`).
 - Remaining core work: split `src/lib/types.svelte.ts` into a pure
   `src/lib/pricing/types.ts` decoupled from `data.ts`; lift price-formatting
   helpers from `src/lib/order/submit.ts` into `src/lib/pricing/format.ts`; add
