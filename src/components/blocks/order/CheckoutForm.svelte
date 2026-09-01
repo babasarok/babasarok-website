@@ -292,7 +292,7 @@
           type="submit"
           disabled={!valid || sending}
         >
-          Kérem az ingyenes ajánlatot!
+          Leadom a rendelést!
         </Button>
       </div>
     </form>
