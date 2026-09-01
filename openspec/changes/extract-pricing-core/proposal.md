@@ -27,7 +27,7 @@ sibling `product/` folder that `pricing/` imports. Every consumer (islands,
 pages, tests, `tina/`, `data.ts`) was re-pointed. `npm run check`, `npm test`
 (130 passing) and `svelte-check` are green with no expected-value changes.
 
-That closes the mechanical *move + re-point* portion of this change. What
+That closes the mechanical _move + re-point_ portion of this change. What
 remains is the part that actually makes the core **pure and runtime-agnostic**:
 the `product/` (and thus `pricing/`) modules still import `../types.svelte` (a
 `.svelte.ts` file that in turn imports `astro:content` via `data.ts`), so the
