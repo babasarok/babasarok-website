@@ -229,9 +229,7 @@
       </button>
     </div>
     <p class="text-right font-medium text-dark">
-      {price.totalPrice === undefined ? "??" : `${price.totalPrice} Ft`}{price.indeterminate
-        ? " + ??"
-        : ""}
+      {price.totalPrice === undefined ? "--" : `${price.totalPrice} Ft`}
     </p>
   </div>
 </article>

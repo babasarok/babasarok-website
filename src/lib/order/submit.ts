@@ -35,11 +35,10 @@ export function calculateOrderTotal(
   products: IProduct[],
   deliveryMethod: CmsEnhancedDeliveryMethod,
   setCoverage: Map<string, SetCoverageEntry[]>
-): { total: number; indeterminate: boolean } {
+): { total: number } {
   const prices = products.map((p) => calculatePriceForItem(p, setCoverage.get(p.uuid)));
   return {
     total: prices.reduce((sum, p) => sum + (p.totalPrice ?? 0), 0) + deliveryMethod.price,
-    indeterminate: prices.some((p) => p.indeterminate),
   };
 }
 
@@ -169,7 +168,7 @@ function formatProductString(
     // Per-set discount lines so each product block is self-explanatory; the
     // forint amount uses the undiscounted unit price so the total is verifiable.
     ...setLines,
-    `Összár: ${price.totalPrice?.toString() ?? ""}Ft${price.indeterminate ? " (nem teljes ár)" : ""}`,
+    `Összár: ${price.totalPrice?.toString() ?? ""}Ft`,
   ];
 
   return lines.join("\n");
@@ -191,9 +190,8 @@ function formatSetDiscounts(instances: SetDiscountInstance[], products: IProduct
   );
   const lines = instances.map((instance) => {
     const members = instance.members.map((uuid) => labelByUuid.get(uuid) ?? uuid).join(" + ");
-    const { amount, indeterminate } = setInstanceAmount(instance, products);
-    const suffix = indeterminate ? " (nem teljes ár)" : "";
-    return `  ${instance.setTitle} szett (−${instance.percent.toString()}%): -${amount.toString()} Ft${suffix} [${members}]`;
+    const { amount } = setInstanceAmount(instance, products);
+    return `  ${instance.setTitle} szett (−${instance.percent.toString()}%): -${amount.toString()} Ft [${members}]`;
   });
   return ["Szett kedvezmények:", ...lines].join("\n");
 }
@@ -203,11 +201,7 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
   // block price from it so the set status can't be dropped by a single caller.
   const setCoverage = resolveSetCoverage(order.products, order.productGroups);
   const setInstances = resolveSetInstances(order.products, order.productGroups);
-  const { total, indeterminate } = calculateOrderTotal(
-    order.products,
-    order.deliveryMethod,
-    setCoverage
-  );
+  const { total } = calculateOrderTotal(order.products, order.deliveryMethod, setCoverage);
 
   const formData = new FormData();
   formData.append("access_key", accessKey);
@@ -232,10 +226,7 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
   // Set discounts live inside `ar` (not a separate field) so the submitted
   // price and its breakdown stay together and trackable.
   const setSummary = formatSetDiscounts(setInstances, order.products);
-  const arLines = [
-    `${total.toString()} Ft ${indeterminate ? "(nem teljes ár)" : ""}`.trimEnd(),
-    ...(setSummary ? ["", setSummary] : []),
-  ];
+  const arLines = [`${total.toString()} Ft`, ...(setSummary ? ["", setSummary] : [])];
   formData.append("ar", arLines.join("\n"));
   return formData;
 }

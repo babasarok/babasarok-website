@@ -114,14 +114,7 @@
           </IconButton>
         </div>
         <p class="flex gap-0.5 text-xs">
-          {price.totalPrice === undefined ? "??" : `${price.totalPrice} Ft`}
-          {price.indeterminate ? " + ??" : ""}
-          <Tooltip>
-            {#snippet content()}
-              Az ár tájékoztató jellegű, a végleges árajánlatot a visszajelzéskor kapod meg.
-            {/snippet}
-            <Icon icon="mdi:alert-circle" class="inline-block text-sm text-warning-500" />
-          </Tooltip>
+          {price.totalPrice === undefined ? "--" : `${price.totalPrice} Ft`}
         </p>
       </div>
     </svelte:boundary>

@@ -21,7 +21,6 @@ interface BasePrice {
   options: PricePart[];
   unitPrice: number | undefined;
   totalPrice: number | undefined;
-  indeterminate: boolean;
   discountInfo: DiscountInfo | undefined;
 }
 
@@ -139,7 +138,6 @@ export function calculatePriceForItem(
   const unitPrice = Math.round(
     allParts.reduce((sum, part) => sum + Math.round(part.price ?? 0), 0)
   );
-  const indeterminate = allParts.some((part) => part.price === undefined);
 
   let discount: DiscountInfo | undefined;
   const coveredCount = setCoverage?.reduce((sum, e) => sum + e.count, 0) ?? 0;
@@ -185,7 +183,6 @@ export function calculatePriceForItem(
         per_meter_price: unitPrice,
         totalPrice: undefined,
         basePrice,
-        indeterminate,
         discountInfo: discount,
       };
     }
@@ -202,7 +199,6 @@ export function calculatePriceForItem(
       per_meter_price: unitPrice,
       totalPrice: length === undefined ? undefined : totalPrice * length,
       basePrice,
-      indeterminate,
       discountInfo: discount,
     };
   }
@@ -213,7 +209,6 @@ export function calculatePriceForItem(
     totalPrice,
     priced_by_length: false,
     basePrice,
-    indeterminate,
     discountInfo: discount,
   };
 }

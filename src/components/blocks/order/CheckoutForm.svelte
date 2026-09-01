@@ -73,7 +73,6 @@
     const prices = basket.map((p) => calculatePriceForItem(p, setCoverageByUuid.get(p.uuid)));
     return {
       total: prices.reduce((sum, p) => sum + (p.totalPrice ?? 0), 0),
-      indeterminate: prices.some((p) => p.indeterminate),
     };
   });
 
@@ -267,7 +266,7 @@
         <div class="flex items-center justify-between rounded-xl bg-brown-50 p-4">
           <span class="text-lg font-medium uppercase">Végösszeg</span>
           <span class="text-lg font-semibold text-dark">
-            {grandTotal} Ft{itemsTotal.indeterminate ? " + ??" : ""}
+            {grandTotal} Ft
           </span>
         </div>
 
