@@ -8,7 +8,7 @@
   import Switch from "./common/Switch.svelte";
   import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
   import type { IProduct, StringValueField } from "@/lib/types.svelte";
-  import { isFieldVisible } from "@/lib/pricing/fieldVisibility";
+  import { isFieldVisible } from "@/lib/product/fieldVisibility";
   import { randomUUID } from "@/lib/uuid";
 
   interface Props {

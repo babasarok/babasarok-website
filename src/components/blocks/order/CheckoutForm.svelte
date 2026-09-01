@@ -10,7 +10,7 @@
   import { orderBasket } from "@/lib/order/basket.svelte";
   import { restoreProducts } from "@/lib/order/product";
   import { loadOrderState, updateOrderEnvelope } from "@/lib/order/storage";
-  import { isItemValid, validateItem } from "@/lib/pricing/validation";
+  import { isItemValid, validateItem } from "@/lib/product/validation";
   import { submitOrder, calculateOrderTotal } from "@/lib/order/submit";
   import { calculatePriceForItem } from "@/lib/pricing/price";
   import { resolveSetCoverage } from "@/lib/pricing/setDiscount";

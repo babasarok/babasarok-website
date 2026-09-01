@@ -1,6 +1,6 @@
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "../types.svelte";
-import { isFieldVisible } from "./fieldVisibility";
-import { findFieldByName, resolveNumericValue } from "./fieldValue";
+import { isFieldVisible } from "../product/fieldVisibility";
+import { findFieldByName, resolveNumericValue } from "../product/fieldValue";
 import type { SetCoverageEntry } from "./setDiscount";
 
 interface PricePart {

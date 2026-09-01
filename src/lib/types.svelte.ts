@@ -1,5 +1,5 @@
 import type { CmsEnhancedProduct } from "./data";
-import type { ProductFieldType, StringValuedFieldType } from "./pricing/fieldTypes";
+import type { ProductFieldType, StringValuedFieldType } from "./product/fieldTypes";
 export interface ValueWithError {
   value: string;
   is_custom?: boolean;

@@ -1,4 +1,4 @@
-import { sanitizeItem } from "../pricing/validation";
+import { sanitizeItem } from "../product/validation";
 import { randomUUID } from "../uuid";
 import type { CmsEnhancedProduct } from "../data";
 import type { IProduct, ProductMaterialValue } from "../types.svelte";

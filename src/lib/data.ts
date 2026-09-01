@@ -34,7 +34,7 @@ import {
   isProductFieldType,
   type EmbroideryPriceUnit,
   type ProductFieldType,
-} from "./pricing/fieldTypes";
+} from "./product/fieldTypes";
 import type { LengthBasedPricingConfig } from "./types.svelte";
 
 type Image = z.infer<ReturnType<ImageFunction>>;

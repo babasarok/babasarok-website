@@ -21,7 +21,7 @@ import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import z from "astro/zod";
 import type { SchemaContext } from "astro/content/config";
-import { EMBROIDERY_PRICE_UNIT_VALUES, PRODUCT_FIELD_TYPE_VALUES } from "./lib/pricing/fieldTypes";
+import { EMBROIDERY_PRICE_UNIT_VALUES, PRODUCT_FIELD_TYPE_VALUES } from "./lib/product/fieldTypes";
 
 const heroBlock = defineCollection({
   loader: glob({ pattern: "hero.md", base: "src/content/sections" }),

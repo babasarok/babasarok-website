@@ -15,7 +15,7 @@ import type {
 } from "@/lib/pricing/setDiscount";
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "../types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "../data";
-import { isFieldVisible } from "../pricing/fieldVisibility";
+import { isFieldVisible } from "../product/fieldVisibility";
 
 const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
 

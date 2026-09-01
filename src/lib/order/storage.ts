@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Field, IProduct, ProductMaterialValue } from "../types.svelte";
-import { PRODUCT_FIELD_TYPE_VALUES } from "../pricing/fieldTypes";
+import { PRODUCT_FIELD_TYPE_VALUES } from "../product/fieldTypes";
 
 const STORAGE_KEY = "babasarok-order-state";
 // Bump when the persisted value shapes change (older state is then discarded).

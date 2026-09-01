@@ -10,8 +10,8 @@
  */
 import { describe, expect, it } from "vitest";
 import { calculatePriceForItem } from "@/lib/pricing/price";
-import { isItemValid, sanitizeItem, validateItem } from "@/lib/pricing/validation";
-import { resolveColorCount } from "@/lib/pricing/materials";
+import { isItemValid, sanitizeItem, validateItem } from "@/lib/product/validation";
+import { resolveColorCount } from "@/lib/product/materials";
 import { fieldError, makeField, makeMaterial, makeProduct } from "./fixtures";
 
 describe("calculatePriceForItem — field combinations", () => {

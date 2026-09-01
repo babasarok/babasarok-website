@@ -20,8 +20,8 @@
   import type { SetDiscountStatus } from "@/lib/pricing/setDiscount";
   import { prefillFromParams, buildMaterialParams } from "@/lib/order/queryParams";
   import { mapProductToSaved } from "@/lib/order/storage";
-  import { sanitizeItem } from "@/lib/pricing/validation";
-  import { isItemValid, validateItem } from "@/lib/pricing/validation";
+  import { sanitizeItem } from "@/lib/product/validation";
+  import { isItemValid, validateItem } from "@/lib/product/validation";
   import type { CmsEnhancedEmbroideryColor, CmsEnhancedProduct, CmsProductGroup } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
 

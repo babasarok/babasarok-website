@@ -8,7 +8,7 @@
   import TextInput from "./common/TextInput.svelte";
   import { slide } from "svelte/transition";
   import type { IProduct } from "@/lib/types.svelte";
-  import { resolveColorCount } from "@/lib/pricing/materials";
+  import { resolveColorCount } from "@/lib/product/materials";
   import type { ProductMaterialValue } from "@/lib/types.svelte";
 
   interface Props {
