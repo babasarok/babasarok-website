@@ -317,7 +317,7 @@ function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): S
       });
       continue;
     }
-    const pending = pendingStatus(item, basket, groups);
+    const pending = pendingStatus(item, basket, groups, consumed);
     if (pending) {
       statuses.set(item.uuid, pending);
     }
@@ -329,15 +329,19 @@ function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): S
 /**
  * The pending state an item reports when it earns no set discount: resolved
  * against the biggest-percent set it belongs to. `pending-partner` when no
- * sibling with compatible materials is in the basket (including when every
- * matching unit is already allocated to other lines, in which case adding more
- * of the set is the fix), `pending-material` when a sibling is present but its
- * materials are incompatible. `undefined` when the item is in no discounted set.
+ * sibling with compatible materials has unallocated units left in the basket
+ * (none present, or every matching unit is already consumed by a formed set, in
+ * which case adding more of the set is the fix), `pending-material` when a
+ * sibling with free units is present but its materials are incompatible.
+ * `undefined` when the item is in no discounted set. `consumed` counts the units
+ * of each line already spent on formed instances, so a fully-consumed partner is
+ * not offered as a material-sync target.
  */
 function pendingStatus(
   item: IProduct,
   basket: IProduct[],
-  groups: SetDiscountGroup[]
+  groups: SetDiscountGroup[],
+  consumed: Map<string, number>
 ): SetDiscountStatus | undefined {
   const candidates = groups
     .filter(
@@ -359,7 +363,8 @@ function pendingStatus(
     (other) =>
       other.product_id !== item.product_id &&
       other.uuid !== item.uuid &&
-      memberIds.has(other.product_id)
+      memberIds.has(other.product_id) &&
+      other.count - (consumed.get(other.uuid) ?? 0) > 0
   );
 
   if (partners.length === 0 || partners.some((other) => materialsMatch(item, other))) {
@@ -376,7 +381,7 @@ function pendingStatus(
     partnerUuid: partner.uuid,
     canSync: canSyncMaterials(item, partner),
     count: Math.min(
-      partners.reduce((sum, x) => sum + x.count, 0),
+      partners.reduce((sum, x) => sum + (x.count - (consumed.get(x.uuid) ?? 0)), 0),
       item.count
     ),
   };

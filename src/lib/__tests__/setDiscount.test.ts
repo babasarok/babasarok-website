@@ -499,6 +499,35 @@ describe("resolveSetDiscountStatus", () => {
       count: 1,
     });
   });
+
+  it("does not offer a material sync against a partner already consumed by a set", () => {
+    // A feher blanket forms a set with a feher nest, consuming the only blanket.
+    // A second feher+ekru nest must not be nudged to sync its materials to that
+    // blanket — there are no free blanket units left to form another set.
+    const nestFeher = makeProduct({
+      uuid: "u1",
+      product_id: "nest",
+      values: [val("teddy", ["feher"]), val("teddy", ["feher"])],
+    });
+    const nestMixed = makeProduct({
+      uuid: "u2",
+      product_id: "nest",
+      values: [val("teddy", ["feher"]), val("teddy", ["ekru"])],
+    });
+    const blanketFeher = makeProduct({
+      uuid: "u3",
+      product_id: "blanket",
+      values: [val("teddy", ["feher"]), val("teddy", ["feher"])],
+    });
+    const basket = [nestFeher, nestMixed, blanketFeher];
+    expect(resolveSetDiscountStatus(nestFeher, basket, groups)?.state).toBe("active");
+    expect(resolveSetDiscountStatus(nestMixed, basket, groups)).toEqual({
+      state: "pending-partner",
+      percent: 10,
+      setTitle: "Babafészek szett",
+      count: 1,
+    });
+  });
 });
 
 describe("canSyncMaterials", () => {
