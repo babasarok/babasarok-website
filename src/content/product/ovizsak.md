@@ -25,7 +25,11 @@ shortDescription: |-
   (+-3cm eltérés elfogadott)
 price: 0
 materials:
-  material_required_count: 0
+  materials:
+    - material_path: src/content/material/pamutvaszon.md
+      price: 0
+      color_count: '1'
+  material_required_count: 1
 fields:
   - name: 'Termék '
     label: 'Termék '
@@ -41,10 +45,6 @@ fields:
       - value: Mindkettő
         label: Mindkettő
         price: 7200
-  - name: szin
-    label: Szín-Minta
-    type: input
-    price: 0
   - name: himzes
     label: Hímzés
     type: embroidery

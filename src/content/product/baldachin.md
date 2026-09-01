@@ -17,18 +17,19 @@ table:
 shortDescription: 'A finom, puha tüllből készült baldachin eleganciát és modern vonalat csempész a babaszobába.'
 price: 12000
 materials:
-  material_required_count: 0
+  materials:
+    - material_path: src/content/material/tull.md
+      price: 0
+      color_count: '1'
+  material_required_count: 1
 fields:
-  - name: szin
-    label: Szín
-    type: color
-    allow_custom_value: true
   - name: suruseg
     label: Sűrűség
     type: radio
     items:
       - value: '6'
         label: 6m
+        price: 0
       - value: '9'
         label: 9m
         price: 2000
