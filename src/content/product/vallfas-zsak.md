@@ -1,7 +1,6 @@
 ---
 product_id: vallfas-zsak
 title: Vállfás zsák
-hidden_in_product_list: true
 can_be_ordered: true
 date: 2026-07-08T09:40:59.374Z
 thumbnail: /src/assets/IMG_4447.webp

@@ -1,9 +1,20 @@
 ---
 product_id: kanikula-takaro
-title: Kánikulatakaró
-hidden_in_product_list: true
+title: Kánikulatakaró (kétrétegű)
+categories: A tökéletes megoldás a forró napokra
 can_be_ordered: true
 date: 2026-06-28T09:45:13.551Z
+thumbnail: /src/assets/Photo Collage Facebook Post.webp
+images:
+  - image: /src/assets/IMG_8082.webp
+    description: waffle+pamutvászon
+  - image: /src/assets/IMG_8076.webp
+    description: duplagéz+pamutvászon
+shortDescription: |-
+  Duplagéz kánikulatakaró, a nyár slágere!
+  - Két rétegben takaróként, egy rétegben pedig textilpelusként használható, sőt, sok baba imádja "nyunyókaként" is.
+   -100% pamut anyaga rendkívül légáteresztő, vékony és könnyed, így ideális választás a forró napokra, amikor fontos a baba komfortja, ugyanakkor nem szeretnénk túlfűteni.
+  Kényelmes, praktikus és sokoldalú!
 price: 0
 materials:
   materials:
@@ -48,4 +59,6 @@ fields:
     label: Hímzés
     type: embroidery
 ---
+
+Kánikulatakaróinkat akár waffle anyag kombinációval is kérhetitek, már felnőtt (140x200cm) méretben is.
 
