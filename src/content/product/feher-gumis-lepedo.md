@@ -33,4 +33,3 @@ fields:
 ---
 
 Elérhető fehér, illetve mintás vagy más színű kivitelben.
-

@@ -61,4 +61,3 @@ fields:
 ---
 
 Kánikulatakaróinkat akár waffle anyag kombinációval is kérhetitek, már felnőtt (140x200cm) méretben is.
-

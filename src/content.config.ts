@@ -7,7 +7,7 @@
  *
  * `product` is a real Astro content collection: the landing product grid
  * queries it with `getCollection('product')`. Its schema validates the fields
- * the site renders (including the per-product `table` and gallery `images`);
+ * the site renders (including gallery `images`);
  * unused product-configurator frontmatter (materials, fields, pricing) is
  * stripped by Zod.
  *
@@ -239,18 +239,6 @@ const product = defineCollection({
           z
             .object({
               image: image().optional().nullable(),
-              description: z.string().optional().nullable(),
-            })
-            .optional()
-            .nullable()
-        )
-        .optional()
-        .nullable(),
-      table: z
-        .array(
-          z
-            .object({
-              title: z.string().optional().nullable(),
               description: z.string().optional().nullable(),
             })
             .optional()

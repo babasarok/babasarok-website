@@ -506,13 +506,6 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
         ),
         material_required_count: product.materials?.material_required_count ?? 0,
       },
-      table:
-        product.table
-          ?.filter((row) => row != null)
-          .map((row) => ({
-            description: row.description ?? undefined,
-            title: row.title ?? undefined,
-          })) ?? undefined,
       fields:
         product.fields
           ?.filter((field) => field != null)

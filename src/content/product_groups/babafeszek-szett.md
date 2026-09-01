@@ -8,7 +8,7 @@ products:
 
 ## Babafészek szett
 
-*Kuckós biztonság az első pillanattól*
+_Kuckós biztonság az első pillanattól_
 
 A babafészek szűk, ölelő formája anyaméhhez hasonló környezetet teremt, ami
 megnyugtatja a babát és segíti a pihentető alvást. A szett tartalmazza a

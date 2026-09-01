@@ -70,4 +70,3 @@ A négyes fonat magassága kb. 21 cm, a hármas fonathoz hasonlóan védi a baba
 fejét a rácsokhoz való ütközéstől. Az ötös (halszálka) fonat kb. 20–21 cm magas,
 dizájnos, rendkívül különleges fonat, ami igazán feldobja a kiságyat és a
 babaszobát.
-
