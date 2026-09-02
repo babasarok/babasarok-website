@@ -2,5 +2,8 @@
 title: Tüll
 material_id: tull
 label: Tüll
-colors: []
+colors:
+  - color_id: feher
+    label: Fehér
+    hex: '#fff'
 ---
