@@ -3,7 +3,7 @@ product_id: tornazsak
 title: Tornazsák
 can_be_ordered: true
 date: 2026-07-08T09:40:59.374Z
-thumbnail: /src/assets/IMG_4447.webp
+thumbnail: /src/assets/IMG_4934-ovizsak.webp
 shortDescription: |-
   Bölcsőde és óvodakezdésre alkalmas tornazsák.
   Mérete: kb. 28x35cm (+-3cm eltérés elfogadott)
