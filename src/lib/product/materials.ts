@@ -28,17 +28,18 @@ export function areMaterialsComplete(item: Pick<IProduct, "fields" | "materials"
   if (materials.length === 0 || material_required_count === 0) {
     return true;
   }
+
   if (values.length < material_required_count) {
     return false;
   }
+
   for (let i = 0; i < material_required_count; i++) {
     const value = values[i];
+
     if (!value || !value.material_id) {
       return false;
     }
-    if (value.custom_color) {
-      continue;
-    }
+
     const info = materials.find((m) => m?.material_path.material_id === value.material_id);
     const count = resolveColorCount(info ?? null, item);
     if (!count || value.colors.length < count) {

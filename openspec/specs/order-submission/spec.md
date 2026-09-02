@@ -52,19 +52,13 @@ provided.
 ### Requirement: Order total
 
 The system SHALL compute the order total as the sum of all line total prices
-plus the selected delivery method's price, and flag the total as non-final
-when any line is indeterminate.
+plus the selected delivery method's price.
 
 #### Scenario: Total with delivery
 
 - **WHEN** a basket has lines and a delivery method is selected
 - **THEN** the order total equals the sum of the line totals plus the delivery
   price
-
-#### Scenario: Indeterminate total
-
-- **WHEN** any line's price is indeterminate
-- **THEN** the order total is marked as a non-final price
 
 ### Requirement: Order submission
 

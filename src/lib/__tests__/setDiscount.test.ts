@@ -25,14 +25,9 @@ import { calculatePriceForItem } from "@/lib/pricing/price";
 import type { IProduct, ProductMaterialValue } from "@/lib/types.svelte";
 import { makeProduct, makeMaterial, makeField } from "./fixtures";
 
-const val = (
-  material_id: string,
-  colors: string[],
-  custom_color?: string
-): ProductMaterialValue => ({
+const val = (material_id: string, colors: string[]): ProductMaterialValue => ({
   material_id,
   colors,
-  ...(custom_color === undefined ? {} : { custom_color }),
 });
 
 describe("materialsMatch", () => {
@@ -97,12 +92,6 @@ describe("materialsMatch", () => {
     const blanket = makeProduct({ values: [val("teddy", ["feher"]), val("teddy", ["feher"])] });
     expect(materialsMatch(nestMixed, blanket)).toBe(false);
     expect(materialsMatch(nestFeher, blanket)).toBe(true);
-  });
-
-  it("distinguishes custom colours", () => {
-    const a = makeProduct({ values: [val("cotton", [], "#abc")] });
-    const b = makeProduct({ values: [val("cotton", [], "#def")] });
-    expect(materialsMatch(a, b)).toBe(false);
   });
 
   it("matches two products with no material selections", () => {

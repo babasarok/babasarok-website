@@ -115,7 +115,7 @@ pending material with one-click sync) per the product-sets capability.
 
 The product page configurator SHALL support prefilling a new line from URL
 query parameters: quantity (`count`), field values keyed by field name
-(including embroidery enablement, thread color, and custom color), and
+(including embroidery enablement and thread color), and
 material selections per slot. Prefilled values SHALL be validated against the
 product's options like normal selections.
 

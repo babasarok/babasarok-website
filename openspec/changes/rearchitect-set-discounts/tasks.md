@@ -7,7 +7,7 @@ verification (`npm run check`, `npm test`, `npm run lint`).
 ## 1. Material matching (subset rule)
 
 - [x] 1.1 Rewrite `normalizeMaterialValues` to expose a `Map<material_id,
-{colors, custom_color}>` (or equivalent) and add a `materialsSubset(small,
+{colors}>` (or equivalent) and add a `materialsSubset(small,
 large)` helper; verify with new unit tests for containment
 - [x] 1.2 Redefine `materialsMatch(a, b)` as `subset(a,b) || subset(b,a)`;
       update `materialsMatch` tests: subset matches, equal-count still exact,

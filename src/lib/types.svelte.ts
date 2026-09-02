@@ -23,13 +23,11 @@ export interface LengthBasedPricingConfig {
 export interface ProductMaterialValue {
   material_id: string;
   colors: string[];
-  custom_color?: string | undefined;
   error?: string | undefined;
 }
 
 export interface EmbroideryColorValue {
   color: string;
-  custom_color?: string | undefined;
   error?: string | undefined;
 }
 

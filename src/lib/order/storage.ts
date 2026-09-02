@@ -20,7 +20,7 @@ const stringValue = z.object({ value: z.string(), is_custom: z.boolean().optiona
 const embroideryValue = z.object({
   enabled: z.boolean(),
   text: z.object({ value: z.string() }),
-  color: z.object({ color: z.string(), custom_color: z.string().optional() }),
+  color: z.object({ color: z.string() }),
 });
 
 // Only the user-entered field value, validated against its type. Unknown keys
@@ -38,7 +38,6 @@ const savedField = z.discriminatedUnion("type", [
 const savedMaterial = z.object({
   material_id: z.string(),
   colors: z.array(z.string()),
-  custom_color: z.string().optional(),
 });
 
 const savedProductSchema = z.object({
@@ -126,9 +125,6 @@ function toSavedField(field: Field): SavedProduct["fields"][number] {
               text: { value: field.value.text.value },
               color: {
                 color: field.value.color.color,
-                ...(field.value.color.custom_color == null
-                  ? {}
-                  : { custom_color: field.value.color.custom_color }),
               },
             },
           }
@@ -154,7 +150,6 @@ function toSavedMaterial(value: ProductMaterialValue): SavedProduct["materials"]
   return {
     material_id: value.material_id,
     colors: value.colors,
-    ...(value.custom_color == null ? {} : { custom_color: value.custom_color }),
   };
 }
 
@@ -207,7 +202,6 @@ function normalizeSavedMaterials(item: SavedProduct): string {
       .map((m) => ({
         material_id: m.material_id,
         colors: m.colors.toSorted(),
-        custom_color: m.custom_color ?? "",
       }))
       .toSorted((a, b) => a.material_id.localeCompare(b.material_id))
   );

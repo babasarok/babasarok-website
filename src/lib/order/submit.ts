@@ -30,7 +30,7 @@ export interface OrderDetails {
   productGroups: SetDiscountGroup[];
 }
 
-/** Sum of every product's total plus delivery, and whether any price is partial. */
+/** Sum of every product's total plus the selected delivery method's price. */
 export function calculateOrderTotal(
   products: IProduct[],
   deliveryMethod: CmsEnhancedDeliveryMethod,
@@ -49,9 +49,7 @@ function formatFieldValue(field: Field, threadColors: CmsEnhancedEmbroideryColor
   }
   if (field.type === "embroidery") {
     const color = threadColors.find((c) => c.color_id === field.value?.color.color);
-    const colorLabel = field.value?.color.custom_color
-      ? `Egyedi szín: ${field.value.color.custom_color}`
-      : (color?.label ?? field.value?.color.color ?? "");
+    const colorLabel = color?.label ?? field.value?.color.color ?? "";
     return `${field.value?.text.value ?? ""} (${colorLabel})`;
   }
   if (field.value?.is_custom) {
@@ -95,11 +93,10 @@ function formatMaterialLine(
 ): string {
   const material = materials.find((m) => m?.material_path.material_id === mv?.material_id);
   const név = material?.material_path.label ?? mv?.material_id ?? "Ismeretlen anyag";
-  const color = mv?.custom_color
-    ? `Egyedi szín: ${mv.custom_color}`
-    : (mv?.colors
-        .map((x) => material?.material_path.colors?.find((c) => c.color_id === x)?.label ?? x)
-        .join(", ") ?? "");
+  const color =
+    mv?.colors
+      .map((x) => material?.material_path.colors?.find((c) => c.color_id === x)?.label ?? x)
+      .join(", ") ?? "";
   return `    ${i + 1}. ${név} (${color})`;
 }
 

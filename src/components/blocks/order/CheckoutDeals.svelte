@@ -54,7 +54,7 @@
   const activeInstances = $derived.by(() => {
     const byUuid = new Map(basket.map((p) => [p.uuid, p]));
     return resolveSetInstances(basket, productGroups).map((instance) => {
-      const { amount, indeterminate } = setInstanceAmount(instance, basket);
+      const { amount } = setInstanceAmount(instance, basket);
       const members = instance.members.map((uuid) => ({
         uuid,
         title: byUuid.get(uuid)?.title ?? uuid,
@@ -74,7 +74,6 @@
         members,
         excluded,
         amount,
-        indeterminate,
       };
     });
   });
@@ -204,7 +203,7 @@
                 −{instance.percent}%
               </span>
               <span class="ml-auto text-sm font-semibold text-success-800">
-                −{instance.amount.toLocaleString("hu-HU")}{instance.indeterminate ? "+?" : ""} Ft
+                −{instance.amount.toLocaleString("hu-HU")} Ft
               </span>
             </span>
             <ul class="w-full list-disc pl-5 text-sm text-brown-600">

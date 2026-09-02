@@ -44,8 +44,8 @@ export function sanitizeItem(item: IProduct): IProduct {
     }
 
     const count = resolveColorCount(materialInfo, item);
-    // Resolving failed, bail, or we are using custom color, in which case we don't know if we need a limit.
-    if (count == null || material.custom_color) {
+    // Resolving failed, bail.
+    if (count == null) {
       continue;
     }
 
@@ -83,7 +83,7 @@ function updateFieldWithErrors(item: Field): void {
       }
     }
 
-    if (!item.value.color.color && !item.value.color.custom_color) {
+    if (!item.value.color.color) {
       item.value.color.error = "Kötelező mező";
     }
     return;
@@ -178,10 +178,6 @@ function updateMaterialWithErrors(
 
   if (!value.material_id) {
     value.error = "Kötelező mező";
-    return;
-  }
-
-  if (value.custom_color) {
     return;
   }
 

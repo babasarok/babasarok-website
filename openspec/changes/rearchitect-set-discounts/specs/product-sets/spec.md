@@ -32,7 +32,7 @@ back to the product's standalone discount behavior.
 Two basket units count towards the same set instance only when they are
 different set-member products whose selected material values are **compatible**:
 the unit with fewer selected materials MUST be a subset of the other — every
-material it selected (id, colors and custom color, compared order-independently)
+material it selected (id and colors, compared order-independently)
 appears identically on the other unit. Material _counts_ need not be equal. All
 units within a single instance MUST be pairwise compatible. Units without
 material selections match trivially.

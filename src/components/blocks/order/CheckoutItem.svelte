@@ -58,9 +58,7 @@
           return undefined;
         }
         const color = threadColors.find((c) => c.color_id === field.value?.color.color);
-        const colorLabel = field.value.color.custom_color
-          ? `egyedi szín: ${field.value.color.custom_color}`
-          : (color?.label ?? field.value.color.color);
+        const colorLabel = color?.label ?? field.value.color.color;
         const text = field.value.text.value.trim();
         return colorLabel ? `${text} (${colorLabel})`.trim() : text;
       }
@@ -94,11 +92,9 @@
       (m) => m?.material_path.material_id === value.material_id
     );
     const name = material?.material_path.label ?? value.material_id;
-    const colors = value.custom_color
-      ? `egyedi szín: ${value.custom_color}`
-      : value.colors
-          .map((id) => material?.material_path.colors?.find((c) => c.color_id === id)?.label ?? id)
-          .join(", ");
+    const colors = value.colors
+      .map((id) => material?.material_path.colors?.find((c) => c.color_id === id)?.label ?? id)
+      .join(", ");
     return colors ? `${name} (${colors.trim()})` : name;
   }
 

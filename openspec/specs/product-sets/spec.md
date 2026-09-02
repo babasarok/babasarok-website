@@ -46,8 +46,8 @@ of no discounted set earns no set discount.
 ### Requirement: Material-gated set detection
 
 Two basket lines count towards the same set only when they are different
-products whose selected material values match exactly (same materials, colors
-and custom colors, compared order-independently). Lines without material
+products whose selected material values match exactly (same materials and
+colors, compared order-independently). Lines without material
 selections match trivially.
 
 #### Scenario: Matching materials

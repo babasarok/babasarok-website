@@ -3,8 +3,9 @@
 ## Purpose
 
 Computes the price of an order item from its base price, selected configurable
-field options, selected materials, quantity, and any applicable discount, and
-flags prices that are only partial because some selections are unpriced.
+field options, selected materials, quantity, and any applicable discount. A
+price is only surfaced once it can be fully computed; an unpriced part is
+treated as contributing nothing rather than producing a partial price.
 
 ## Requirements
 
@@ -81,20 +82,8 @@ when the length is known, and leave them undefined when it is not.
 #### Scenario: Missing length
 
 - **WHEN** a length-priced product's source field has no valid length value
-- **THEN** the unit price and total price are not determined and the item is
-  flagged as indeterminate
-
-### Requirement: Indeterminate prices
-
-The system SHALL flag an item as indeterminate when any price part has no
-price (an unselected priced option or an unchosen material), so totals can be
-presented as partial rather than final.
-
-#### Scenario: Unpriced selection
-
-- **WHEN** an item's selected option has no price defined
-- **THEN** the item is indeterminate and its contribution to the order total is
-  marked as a non-final price
+- **THEN** the unit price and total price are not determined and no price is
+  shown until a length is entered
 
 ### Requirement: Set discount application
 

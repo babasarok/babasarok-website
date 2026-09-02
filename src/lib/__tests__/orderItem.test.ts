@@ -400,18 +400,6 @@ describe("validateItem / isItemValid", () => {
     expect(isItemValid(item)).toBe(false);
   });
 
-  it("accepts a custom material color regardless of count", () => {
-    const item = validateItem(
-      makeProduct({
-        materials: [makeMaterial({ material_id: "m", color_count: "2" })],
-        material_required_count: 1,
-        values: [{ material_id: "m", colors: [], custom_color: "egyedi" }],
-      })
-    );
-    expect(item.materials.values[0]?.error).toBeUndefined();
-    expect(isItemValid(item)).toBe(true);
-  });
-
   it("fills missing material slots with required-but-empty errors", () => {
     const item = validateItem(
       makeProduct({
@@ -457,16 +445,5 @@ describe("sanitizeItem", () => {
       })
     );
     expect(item.materials.values[0]?.colors).toEqual(["a", "b"]);
-  });
-
-  it("leaves custom-color selections untouched", () => {
-    const item = sanitizeItem(
-      makeProduct({
-        materials: [makeMaterial({ material_id: "m", color_count: "1" })],
-        material_required_count: 1,
-        values: [{ material_id: "m", colors: [], custom_color: "egyedi" }],
-      })
-    );
-    expect(item.materials.values[0]?.custom_color).toBe("egyedi");
   });
 });

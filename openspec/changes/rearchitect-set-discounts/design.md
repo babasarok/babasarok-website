@@ -42,9 +42,9 @@ dependency-free and browser/server-shareable.
 
 `materialsMatch(a, b)` becomes directional-agnostic subset containment: normalize
 each product's selected material values (drop empty/`error`, sort colors, sort by
-`material_id`) into a `Map<material_id, {colors, custom_color}>`, then the pair
+`material_id`) into a `Map<material_id, {colors}>`, then the pair
 is compatible when the smaller map is contained in the larger (every entry
-present with identical colors + custom color). Equal-size maps reduce to the old
+present with identical colors). Equal-size maps reduce to the old
 exact match, so existing equal-count cases are preserved. A helper
 `materialsSubset(small, large)` expresses containment; `materialsMatch` is
 `subset(a,b) || subset(b,a)`.

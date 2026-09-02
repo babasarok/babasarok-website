@@ -47,7 +47,6 @@ function materialEntries(product: IProduct): Map<string, number> {
     const key = JSON.stringify({
       material_id: v.material_id,
       colors: v.colors.toSorted(),
-      custom_color: v.custom_color ?? "",
     });
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
@@ -423,27 +422,24 @@ export function resolveSetCoverage(
 
 /**
  * The forint amount a formed set instance takes off the order: one unit of each
- * member at the set percent. `indeterminate` when any member's unit price is
- * unknown (a partial configuration). Shared by the checkout display and the
- * submitted order text so both report the same number.
+ * member at the set percent. Members whose unit price is unknown contribute
+ * nothing. Shared by the checkout display and the submitted order text so both
+ * report the same number.
  */
 export function setInstanceAmount(
   instance: SetDiscountInstance,
   basket: IProduct[]
-): { amount: number; indeterminate: boolean } {
+): { amount: number } {
   const byUuid = new Map(basket.map((p) => [p.uuid, p]));
   let amount = 0;
-  let indeterminate = false;
   for (const uuid of instance.members) {
     const item = byUuid.get(uuid);
     const unitPrice = item ? calculatePriceForItem(item).unitPrice : undefined;
-    if (unitPrice === undefined) {
-      indeterminate = true;
-    } else {
+    if (unitPrice !== undefined) {
       amount += Math.round((unitPrice * instance.percent) / 100);
     }
   }
-  return { amount, indeterminate };
+  return { amount };
 }
 
 /**

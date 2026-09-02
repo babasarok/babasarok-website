@@ -11,12 +11,9 @@ import type { Field, IProduct, ProductMaterialValue } from "../types.svelte";
  * - `count=<n>` — item quantity (integer ≥ 1).
  * - `<fieldName>=<value>` — a product field, keyed by its frontmatter `name`.
  *   Toggles accept `true`/`1`; embroidery enables the field and sets its text.
- * - `<embroideryField>_color=<colorId>` / `<embroideryField>_custom_color=<hex>`
+ * - `<embroideryField>_color=<colorId>`
  *   — the thread colour for an embroidery field. Field names win over this
  *   pattern: a product field literally named `<name>_color` /
- *   `<name>_custom_color` consumes the param as a plain field value (field
- *   lookup happens first), so content authors should avoid naming fields with
- *   those reserved suffixes.
  * - `m<i>=<materialId>` — the material chosen for slot `i` (0-based).
  * - `m<i>_colors=<c1,c2,…>` — comma-separated colour ids for slot `i`.
  * - `m<i>_custom=<hex>` — a custom colour for slot `i`.
@@ -54,7 +51,7 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
       continue;
     }
 
-    const embroideryColor = /^(?<name>.+?)_(?<kind>custom_color|color)$/.exec(key);
+    const embroideryColor = /^(?<name>.+?)_color$/.exec(key);
     if (embroideryColor?.groups) {
       const target = item.fields.find(
         (f) => f.type === "embroidery" && f.name === embroideryColor.groups?.name
@@ -62,16 +59,12 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
       if (target?.type === "embroidery") {
         target.value ??= { enabled: true, text: { value: "" }, color: { color: "" } };
         target.value.enabled = true;
-        if (embroideryColor.groups.kind === "custom_color") {
-          target.value.color.custom_color = raw;
-        } else {
-          target.value.color.color = raw;
-        }
+        target.value.color.color = raw;
         continue;
       }
     }
 
-    const material = /^m(?<index>\d+)(?:_(?<kind>colors|custom))?$/.exec(key);
+    const material = /^m(?<index>\d+)(?:_(?<kind>colors))?$/.exec(key);
     if (material?.groups) {
       const slot = ensureSlot(Number.parseInt(material.groups.index, 10));
       if (!slot) {
@@ -83,8 +76,6 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
           .split(",")
           .map((c) => c.trim())
           .filter(Boolean);
-      } else if (material.groups.kind === "custom") {
-        slot.custom_color = decodeURIComponent(raw);
       } else {
         slot.material_id = decodeURIComponent(raw);
       }
@@ -117,9 +108,6 @@ export function buildMaterialParams(item: Pick<IProduct, "materials">): URLSearc
     params.set(`m${i}`, encodeURIComponent(slot.material_id));
     if (slot.colors.length > 0) {
       params.set(`m${i}_colors`, encodeURIComponent(slot.colors.join(",")));
-    }
-    if (slot.custom_color) {
-      params.set(`m${i}_custom`, encodeURIComponent(slot.custom_color));
     }
   }
   return params;

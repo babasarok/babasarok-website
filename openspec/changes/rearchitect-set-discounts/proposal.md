@@ -13,7 +13,7 @@ The rules and the code have drifted from what the shop actually needs.
 
 - **BREAKING (matching rule):** Two products count towards a set when the
   smaller material selection is a **subset** of the larger (every selected
-  `material_id` + colors + custom color appears identically on the other).
+  `material_id` + colors appears identically on the other).
   Material _count_ no longer has to be equal. (Was: exact equality incl. count.)
 - **BREAKING (grouping):** A set discount is modeled as a **set-discount
   instance** — one unit each of **2 or more distinct** set members whose
