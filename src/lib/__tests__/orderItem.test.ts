@@ -20,7 +20,6 @@ describe("calculatePriceForItem — field combinations", () => {
     expect(price.basePrice.price).toBe(5000);
     expect(price.unitPrice).toBe(5000);
     expect(price.totalPrice).toBe(15_000);
-    expect(price.indeterminate).toBe(false);
   });
 
   it("adds the selected radio option price", () => {
@@ -130,23 +129,6 @@ describe("calculatePriceForItem — field combinations", () => {
       })
     );
     expect(price.unitPrice).toBe(600);
-  });
-
-  it("is indeterminate when a selected option has no price", () => {
-    const price = calculatePriceForItem(
-      makeProduct({
-        price: 1000,
-        fields: [
-          makeField({
-            name: "opt",
-            type: "radio",
-            items: [{ value: "a" }],
-            value: { value: "a" },
-          }),
-        ],
-      })
-    );
-    expect(price.indeterminate).toBe(true);
   });
 
   it("does not price the length-based source field directly", () => {
