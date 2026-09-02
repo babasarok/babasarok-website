@@ -1,19 +1,35 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import Tooltip from "./common/Tooltip.svelte";
-  import { calculatePriceForItem } from "@/lib/priceUtils";
+  import { calculatePriceForItem } from "@/lib/pricing/price";
+  import type { SetCoverageEntry } from "@/lib/pricing/setDiscount";
   import type { IProduct } from "@/lib/types.svelte";
   import IconButton from "./common/IconButton.svelte";
 
   interface Props {
     product: IProduct;
+    setCoverage?: SetCoverageEntry[] | undefined;
     onChange?: ((product: IProduct) => void) | undefined;
   }
 
-  const { product, onChange }: Props = $props();
+  const { product, setCoverage, onChange }: Props = $props();
 
   const price = $derived.by(() => {
-    return calculatePriceForItem(product);
+    return calculatePriceForItem(product, setCoverage);
+  });
+
+  // Per-set money this line saves, one row per covering set.
+  const setDiscountRows = $derived.by(() => {
+    const unitPrice = price.unitPrice;
+    if (!setCoverage || unitPrice === undefined) {
+      return [];
+    }
+    return setCoverage.map((entry) => ({
+      setTitle: entry.setTitle,
+      percent: entry.percent,
+      count: entry.count,
+      money: Math.round((unitPrice * entry.percent * entry.count) / 100),
+    }));
   });
 
   const priceParts = $derived.by(() => {
@@ -47,14 +63,30 @@
         </p>
       </div>
     {/if}
-    {#if price.discount !== undefined}
+    {#if price.discountInfo !== undefined && price.discountInfo.discountSource === "standalone"}
       <div class="flex justify-between">
         <p class="text-xs">Kedvezmény</p>
         <p class="text-xs">
-          {(1 - price.discount).toLocaleString(undefined, { style: "percent" })}
+          −{(price.discountInfo.percent / 100).toLocaleString(undefined, {
+            style: "percent",
+          })}
+          {#if price.discountInfo.discountAppliedCount < product.count}
+            ({price.discountInfo.discountAppliedCount} db)
+          {/if}
         </p>
       </div>
     {/if}
+    {#each setDiscountRows as row (row.setTitle)}
+      <div class="flex justify-between">
+        <p class="text-xs">Szett kedvezmény ({row.setTitle} −{row.percent}%)</p>
+        <p class="text-xs text-green-700">
+          −{row.money.toLocaleString("hu-HU")} Ft
+          {#if row.count < product.count}
+            ({row.count} db)
+          {/if}
+        </p>
+      </div>
+    {/each}
     <svelte:boundary>
       <div class="flex justify-between font-medium">
         <div class="flex items-center gap-1">
@@ -82,14 +114,7 @@
           </IconButton>
         </div>
         <p class="flex gap-0.5 text-xs">
-          {price.totalPrice === undefined ? "??" : `${price.totalPrice} Ft`}
-          {price.indeterminate ? " + ??" : ""}
-          <Tooltip>
-            {#snippet content()}
-              Az ár tájékoztató jellegű, a végleges árajánlatot a visszajelzéskor kapod meg.
-            {/snippet}
-            <Icon icon="mdi:alert-circle" class="inline-block text-sm text-orange-500" />
-          </Tooltip>
+          {price.totalPrice === undefined ? "--" : `${price.totalPrice} Ft`}
         </p>
       </div>
     </svelte:boundary>

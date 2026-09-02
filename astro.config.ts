@@ -7,7 +7,7 @@ import tina from "@tinacms/astro/integration";
 import { tinaAdminDevRedirect } from "@tinacms/astro/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { unified } from "@astrojs/markdown-remark";
-import { remarkAssetImages } from "./src/lib/remark-asset-images";
+import { remarkAssetImages } from "./src/lib/assets/remarkAssetImages";
 
 // https://astro.build/config
 export default defineConfig({

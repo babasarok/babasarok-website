@@ -4,7 +4,7 @@
  * In cloud builds Tina rewrites image fields to an absolute CDN URL of the form
  * `https://assets.tina.io/<id>/__staging/<branch>/__file/<path>`. Those should
  * be reduced back to a local `src/assets` module by `resolveImage` (see
- * src/lib/assets.ts) and optimized by Astro. A surviving `assets.tina.io`
+ * src/lib/assets/index.ts) and optimized by Astro. A surviving `assets.tina.io`
  * reference in the output means an image field was never resolved and the page
  * ships a hot-link to Tina Cloud instead of a hashed local asset.
  *
@@ -130,7 +130,7 @@ function main(): void {
       }
     }
     console.error(
-      "\nFix: resolve these to local assets (src/lib/assets.ts resolveImage / " +
+      "\nFix: resolve these to local assets (src/lib/assets/index.ts resolveImage / " +
         "src/lib/data.ts resolveTinaImageRefs)."
     );
     process.exit(1);

@@ -5,7 +5,7 @@
  * coercing a raw string. These tests lock that contract in one place.
  */
 import { describe, expect, it } from "vitest";
-import { findFieldByName, resolveFieldValue, resolveNumericValue } from "@/lib/fieldValue";
+import { findFieldByName, resolveFieldValue, resolveNumericValue } from "@/lib/product/fieldValue";
 import { makeField } from "./fixtures";
 
 describe("resolveFieldValue", () => {

@@ -11,7 +11,7 @@
  * delivery, total, …), not just one helper.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { calculateOrderTotal, submitOrder, type OrderDetails } from "@/lib/orderSubmit";
+import { calculateOrderTotal, submitOrder, type OrderDetails } from "@/lib/order/submit";
 import { makeDelivery, makeField, makeMaterial, makeProduct } from "./fixtures";
 
 afterEach(() => {
@@ -46,6 +46,7 @@ const baseOrder = (products: OrderDetails["products"], address?: string): OrderD
   address,
   products,
   threadColors: [],
+  productGroups: [],
 });
 
 describe("order form envelope", () => {
@@ -63,7 +64,7 @@ describe("order form envelope", () => {
     expect(form.get("telefonszam")).toBe("+36301234567");
     expect(form.get("szallitasimod")).toBe("Foxpost automata (990 Ft)");
     expect(form.get("uzenet")).toBe("Kérlek hímezzétek rá: Anna");
-    expect(form.get("ar")).toBe("8990 Ft ");
+    expect(form.get("ar")).toBe("8990 Ft");
   });
 
   it("emits one `termek N` entry per product, in order", async () => {
@@ -77,26 +78,7 @@ describe("order form envelope", () => {
     expect(form.getAll("termek 1")).toHaveLength(1);
     expect(form.get("termek 1")).toContain("Első");
     expect(form.get("termek 2")).toContain("Második");
-    expect(form.get("ar")).toBe("3990 Ft ");
-  });
-
-  it("marks the total as indeterminate when any price is unknown", async () => {
-    // An option with no price makes the total partial; the base price is always known.
-    const product = makeProduct({
-      title: "Ismeretlen árú",
-      price: 0,
-      fields: [
-        makeField({
-          name: "meret",
-          label: "Méret",
-          type: "radio",
-          items: [{ value: "40x75", label: "Közepes" }],
-          value: { value: "40x75" },
-        }),
-      ],
-    });
-    const form = await captureForm(baseOrder([product]));
-    expect(form.get("ar")).toBe("990 Ft (nem teljes ár)");
+    expect(form.get("ar")).toBe("3990 Ft");
   });
 });
 
@@ -201,7 +183,7 @@ describe("product string content", () => {
       Szín: ??Ft
 
         Egységár: 12000Ft
-      Összár: 12000Ft (nem teljes ár)"
+      Összár: 12000Ft"
     `);
   });
 
@@ -316,29 +298,6 @@ describe("product string content", () => {
         Egységár: 24000Ft
         Méterár: 8000Ft/m
       Összár: 24000Ft"
-    `);
-  });
-
-  it("renders a custom material colour as 'Egyedi szín'", async () => {
-    const product = makeProduct({
-      title: "Babafészek",
-      price: 15_000,
-      fields: [],
-      materials: [makeMaterial({ material_id: "teddy", label: "Teddy", price: 2000 })],
-      material_required_count: 1,
-      values: [{ material_id: "teddy", colors: [], custom_color: "Mályva pöttyös" }],
-    });
-
-    expect(form_text(await captureForm(baseOrder([product])))).toMatchInlineSnapshot(`
-      "Babafészek (1db)
-        Anyagok:
-          1. Teddy (Egyedi szín: Mályva pöttyös)
-
-      Alapár: 15000 Ft
-      Anyag: 2000Ft
-
-        Egységár: 17000Ft
-      Összár: 17000Ft"
     `);
   });
 
@@ -481,10 +440,55 @@ describe("dependent fields (depends_on)", () => {
   });
 });
 
+describe("set-discount summary", () => {
+  const setGroups = [
+    {
+      title: "Babafészek",
+      discount_percent: 10,
+      products: [{ product_id: "nest" }, { product_id: "blanket" }],
+    },
+  ];
+  const withMaterial = (
+    uuid: string,
+    product_id: string,
+    title: string
+  ): ReturnType<typeof makeProduct> =>
+    makeProduct({
+      uuid,
+      product_id,
+      title,
+      price: 10_000,
+      values: [{ material_id: "cotton", colors: ["red"] }],
+    });
+
+  it("identifies each set member by its order number inside the ar field", async () => {
+    const order = baseOrder([
+      withMaterial("u1", "nest", "Babafészek"),
+      withMaterial("u2", "blanket", "Takaró"),
+    ]);
+    order.productGroups = setGroups;
+    const form = await captureForm(order);
+    const ar = form.get("ar");
+    expect(ar).toContain("Szett kedvezmények:");
+    expect(ar).toContain(
+      "Babafészek szett (−10%): -2000 Ft [1. termék: Babafészek + 2. termék: Takaró]"
+    );
+  });
+
+  it("omits the set section from ar when no set discount is earned", async () => {
+    const order = baseOrder([withMaterial("u1", "nest", "Babafészek")]);
+    order.productGroups = setGroups;
+    const form = await captureForm(order);
+    const ar = form.get("ar");
+    expect(ar).not.toContain("Szett kedvezmények:");
+    expect(form.get("szett kedvezmenyek")).toBeNull();
+  });
+});
+
 describe("calculateOrderTotal", () => {
-  it("sums product totals plus delivery and flags indeterminate prices", () => {
+  it("sums product totals plus delivery, treating unpriced parts as zero", () => {
     const known = makeProduct({ price: 5000 });
-    // An unpriced selected option leaves this product's total unknown.
+    // An unpriced selected option contributes nothing to this product's total.
     const unknown = makeProduct({
       price: 0,
       fields: [
@@ -497,13 +501,11 @@ describe("calculateOrderTotal", () => {
       ],
     });
 
-    expect(calculateOrderTotal([known], makeDelivery("x", 1000))).toEqual({
+    expect(calculateOrderTotal([known], makeDelivery("x", 1000), new Map())).toEqual({
       total: 6000,
-      indeterminate: false,
     });
-    expect(calculateOrderTotal([known, unknown], makeDelivery("x", 1000))).toEqual({
+    expect(calculateOrderTotal([known, unknown], makeDelivery("x", 1000), new Map())).toEqual({
       total: 6000,
-      indeterminate: true,
     });
   });
 });

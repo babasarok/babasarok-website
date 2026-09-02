@@ -13,13 +13,13 @@ import {
   hasResolvableValue,
   isProductFieldType,
   PRODUCT_FIELD_TYPES,
-} from "../../src/lib/productFieldTypes";
+} from "../../src/lib/product/fieldTypes";
 
 /**
  * Products ("Termékek") — backs `src/content/product/*.md` and the `/product`
  * list + single pages. Ported from the old Hugo project's product configurator
  * so the full ordering schema (materials, fields, pricing) keeps working in
- * Tina. The Astro site only renders a subset (title, thumbnail, images, table,
+ * Tina. The Astro site only renders a subset (title, thumbnail, images,
  * shortDescription, body); the rest drives the order form.
  *
  * `materials`/`banned_combinations` reference the `product_materials`
@@ -111,31 +111,6 @@ export const ProductCollection: Collection = {
           type: "string",
           name: "description",
           label: "Leírás",
-        },
-      ],
-    },
-    {
-      type: "object",
-      name: "table",
-      label: "Ár táblázat",
-      description: "Ártáblázat, ami megjelenik a termék saját oldalán.",
-      list: true,
-      ui: {
-        itemProps: (item) => {
-          // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-          return { label: `${item.title} - ${item.description}` };
-        },
-      },
-      fields: [
-        {
-          type: "string",
-          name: "title",
-          label: "Ár címe",
-        },
-        {
-          type: "string",
-          name: "description",
-          label: "Ár",
         },
       ],
     },

@@ -2,13 +2,20 @@
 import Button from "@/components/ui/Button.astro";
 import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
+import { getProductMeta } from "@/lib/data";
+import NavBasket from "@/components/blocks/order/NavBasket.svelte";
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const config = (await getEntry("config", "config")!).data;
 const logo = config.logo;
 const contactLink = config.contactLink ? `/${config.contactLink}` : "/contact";
+const checkoutLink = "/checkout";
 
 const isHome = Astro.url.pathname === "/";
+// The checkout page shows the full basket already; skip the nav basket there.
+const showBasket = !Astro.url.pathname.startsWith(checkoutLink);
+
+const productMeta = await getProductMeta();
 
 const rawMenu = config.mainMenu ?? [];
 const mainMenu = rawMenu
@@ -34,18 +41,30 @@ const mainMenu = rawMenu
         }
       </a>
 
-      <button
-        id="navbar-toggler"
-        type="button"
-        aria-label="Menü"
-        aria-controls="navbar-collapse"
-        aria-expanded="false"
-        class="flex cursor-pointer flex-col gap-1.25 border-0 bg-transparent p-0 lg:hidden"
-      >
-        <span class="toggler-bar"></span>
-        <span class="toggler-bar"></span>
-        <span class="toggler-bar"></span>
-      </button>
+      <div class="flex items-center gap-2 lg:hidden">
+        {
+          showBasket && (
+            <NavBasket
+              productMeta={productMeta}
+              checkoutHref={checkoutLink}
+              anchored={false}
+              client:load
+            />
+          )
+        }
+        <button
+          id="navbar-toggler"
+          type="button"
+          aria-label="Menü"
+          aria-controls="navbar-collapse"
+          aria-expanded="false"
+          class="flex cursor-pointer flex-col gap-1.25 border-0 bg-transparent p-0"
+        >
+          <span class="toggler-bar"></span>
+          <span class="toggler-bar"></span>
+          <span class="toggler-bar"></span>
+        </button>
+      </div>
 
       <div id="navbar-collapse" class="w-full">
         <ul class="mx-auto my-0 flex flex-col items-center gap-2 py-4 lg:flex-row lg:py-0">
@@ -65,8 +84,15 @@ const mainMenu = rawMenu
             ))
           }
         </ul>
-        <div class="flex justify-center pb-4 lg:pb-0">
-          <Button href={contactLink} size="lg" variant="primary">Rendelés</Button>
+        <div class="flex items-center justify-center gap-2 pb-4 lg:pb-0">
+          {
+            showBasket && (
+              <div class="hidden lg:block">
+                <NavBasket productMeta={productMeta} checkoutHref={checkoutLink} client:load />
+              </div>
+            )
+          }
+          <Button href={contactLink} size="lg" variant="primary">Kapcsolat</Button>
         </div>
       </div>
     </div>

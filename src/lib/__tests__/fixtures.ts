@@ -91,6 +91,8 @@ export function makeMaterial(opts: MaterialOpts): CmsProductMaterial {
 
 export interface ProductOpts {
   title?: string;
+  uuid?: string;
+  product_id?: string;
   count?: number;
   price?: number;
   discount?: number | null;
@@ -109,7 +111,8 @@ export interface ProductOpts {
 export function makeProduct(opts: ProductOpts = {}): IProduct {
   return {
     __typename: "Product",
-    uuid: "test-uuid",
+    uuid: opts.uuid ?? "test-uuid",
+    product_id: opts.product_id ?? "test-product",
     title: opts.title ?? "Termék",
     count: opts.count ?? 1,
     price: opts.price ?? 0,

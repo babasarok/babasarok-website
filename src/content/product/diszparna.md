@@ -1,7 +1,6 @@
 ---
 product_id: diszparna
 title: Díszpárna
-hidden_in_product_list: true
 can_be_ordered: true
 date: 2026-07-01T09:37:02.428Z
 price: 3500

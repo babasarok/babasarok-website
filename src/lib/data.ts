@@ -22,8 +22,8 @@ import {
   type RecursivelyReplaceKeyType,
   type RecursivelyReplaceType,
   type RecursiveRequired,
-} from "./typeUtils";
-import type { InferEntrySchema } from "astro:content";
+} from "./typeHelpers";
+import { getCollection, type InferEntrySchema } from "astro:content";
 import type { ImageFunction } from "astro/content/config";
 import type { z } from "astro/zod";
 import type { GetImageResult } from "astro";
@@ -34,7 +34,7 @@ import {
   isProductFieldType,
   type EmbroideryPriceUnit,
   type ProductFieldType,
-} from "./productFieldTypes";
+} from "./product/fieldTypes";
 import type { LengthBasedPricingConfig } from "./types.svelte";
 
 type Image = z.infer<ReturnType<ImageFunction>>;
@@ -506,13 +506,6 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
         ),
         material_required_count: product.materials?.material_required_count ?? 0,
       },
-      table:
-        product.table
-          ?.filter((row) => row != null)
-          .map((row) => ({
-            description: row.description ?? undefined,
-            title: row.title ?? undefined,
-          })) ?? undefined,
       fields:
         product.fields
           ?.filter((field) => field != null)
@@ -560,6 +553,33 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
   return result;
 };
 
+/** One product's page metadata, keyed off the CMS `product_id`. */
+export interface ProductMeta {
+  title: string;
+  slug: string;
+}
+
+/**
+ * The shared product id → {title, slug} map, from the Astro content collection
+ * (the slugs are the entry ids). Single source for the pages and the nav that
+ * resolve persisted product ids into titles and product-page links.
+ */
+export const getProductMeta = async (): Promise<Record<string, ProductMeta>> => {
+  const products = await getCollection("product");
+  return Object.fromEntries(
+    products.map((product) => [
+      product.data.product_id,
+      { title: product.data.title, slug: product.id },
+    ])
+  );
+};
+
+/** The product id → slug view of {@link getProductMeta}, for link building. */
+export const getProductSlugs = async (): Promise<Record<string, string>> => {
+  const meta = await getProductMeta();
+  return Object.fromEntries(Object.entries(meta).map(([id, { slug }]) => [id, slug]));
+};
+
 const transformMaterial = async (
   material: CmsOriginalMaterial
 ): Promise<RecursiveRequired<CmsEnhancedMaterial, SlimImage>> => {
@@ -576,7 +596,7 @@ const transformMaterial = async (
           material.colors
             .filter((color) => color != null)
             .map(async (color) => ({
-              color_id: color.color_id,
+              color_id: color.color_id.trim(),
               label: color.label,
               hex: color.hex ?? undefined,
               image: color.image ? await optimizeIslandImage(color.image, SWATCH_WIDTH) : undefined,
@@ -607,4 +627,39 @@ export const getDeliveryMethods = async (): Promise<CmsEnhancedDeliveryMethod[]>
 
   const nodes = nodesFrom(result.data.delivery_methodsConnection);
   return nodes;
+};
+
+/** A single member of a product group ("set"). */
+export interface CmsProductGroupMember {
+  product_id: string;
+}
+
+export interface CmsProductGroup {
+  title: string;
+  /**
+   * The percent discount (0–100) every member of the set earns when it is
+   * ordered in this set. Optional: a set with no value earns no discount.
+   * See the `product-sets` spec in `openspec/`.
+   */
+  discount_percent?: number | undefined;
+  products: CmsProductGroupMember[];
+}
+
+export const getProductGroups = async (): Promise<CmsProductGroup[]> => {
+  const result = await client.queries.product_groupsConnection();
+
+  const nodes = nodesFrom(result.data.product_groupsConnection);
+  return nodes.map((group) => {
+    const products: RecursiveRequired<CmsProductGroupMember>[] = [];
+    for (const x of group.products ?? []) {
+      if (x?.product) {
+        products.push({ product_id: x.product.product_id });
+      }
+    }
+    return {
+      title: group.title,
+      discount_percent: group.discount_percent ?? undefined,
+      products,
+    };
+  });
 };

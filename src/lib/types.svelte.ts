@@ -1,5 +1,5 @@
 import type { CmsEnhancedProduct } from "./data";
-import type { ProductFieldType, StringValuedFieldType } from "./productFieldTypes";
+import type { ProductFieldType, StringValuedFieldType } from "./product/fieldTypes";
 export interface ValueWithError {
   value: string;
   is_custom?: boolean;
@@ -23,13 +23,11 @@ export interface LengthBasedPricingConfig {
 export interface ProductMaterialValue {
   material_id: string;
   colors: string[];
-  custom_color?: string | undefined;
   error?: string | undefined;
 }
 
 export interface EmbroideryColorValue {
   color: string;
-  custom_color?: string | undefined;
   error?: string | undefined;
 }
 
