@@ -6,7 +6,8 @@ Vendure (leaning) and Medusa (fallback)** (§6). The SaaS-checkout options
 (Shopify, Foxy, Snipcart) are parked, mainly because they can't cleanly take
 Barion (§7). Next step: **spike both backends** against our configurator (§8).
 The one committed prep item is the pricing-core refactor
-(`openspec/changes/extract-pricing-core/`, §9).
+(ADR: `docs/adr/0002-pure-pricing-core.md`, remaining work in
+[babasarok/babasarok-website#35](https://github.com/babasarok/babasarok-website/issues/35), §9).
 
 ## 1. The core constraint: we are CPQ, not a SKU catalog
 
@@ -201,7 +202,8 @@ beats more planning (win criterion per §6).
 ## 9. Dependency: pricing-core refactor (committed)
 
 Both spikes need our pricing/validation logic runnable **outside the browser**.
-Tracked separately as `openspec/changes/extract-pricing-core/`: extract
+Tracked in ADR `docs/adr/0002-pure-pricing-core.md` (remaining work:
+babasarok/babasarok-website#35): extract
 `priceUtils` / `validation` / field & material helpers / domain types into a
 pure, dependency-free, tested core (no Svelte runes / DOM / Astro imports) so the
 browser (display) and the platform (authoritative price + VAT base) share one

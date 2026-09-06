@@ -8,7 +8,7 @@
  * basket unit at most once. `resolveSetInstances` exposes the formed instances,
  * `resolveSetCoverage` each line's per-set unit coverage (for pricing), and
  * `allocateSetDiscounts` / `resolveSetDiscountStatus` the per-item UI status.
- * See the `product-sets` spec in `openspec/`.
+ * See the `product-sets` spec in `docs/specs/product-sets.md`.
  */
 import { describe, expect, it } from "vitest";
 import {

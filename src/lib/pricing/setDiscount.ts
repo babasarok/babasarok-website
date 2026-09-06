@@ -11,8 +11,7 @@ export interface SetDiscountGroup {
 /**
  * The best set discount a product qualifies for: the largest set percent across
  * every set the product belongs to. When a product is in more than one set, the
- * biggest discount wins (no stacking). See the `product-sets` spec in
- * `openspec/`.
+ * biggest discount wins (no stacking). See the `product-sets` spec in `docs/specs/product-sets.md`.
  */
 export function resolveSetDiscount(
   productId: string,
@@ -84,8 +83,7 @@ function isMaterialSubset(small: Map<string, number>, large: Map<string, number>
  * often — on the other. Material *counts* need not be equal, so a one-fabric
  * blanket matches a two-fabric nest that shares that fabric; but when both pick
  * the same number of materials they must match exactly. Products with no
- * material selections match trivially. See the `product-sets` spec in
- * `openspec/`.
+ * material selections match trivially. See the `product-sets` spec in `docs/specs/product-sets.md`.
  */
 export function materialsMatch(a: IProduct, b: IProduct): boolean {
   const ma = materialEntries(a);
@@ -151,7 +149,7 @@ export function canSyncMaterials(item: IProduct, partner: IProduct): boolean {
  * A formed set-discount instance: one unit each of two or more distinct set
  * members whose materials are mutually compatible. `members` lists the basket
  * line uuids (one per member product) that each contribute one unit, all
- * earning `percent`. See the `product-sets` spec in `openspec/`.
+ * earning `percent`. See the `product-sets` spec in `docs/specs/product-sets.md`.
  */
 export interface SetDiscountInstance {
   setTitle: string;
@@ -186,7 +184,7 @@ interface SetAllocation {
  * unit at most once. Leftover units earn no set discount. Returns the per-item
  * status (pending/active hints), the ordered list of formed instances, and each
  * line's per-set unit coverage (for pricing and the basket-level display). See
- * the `product-sets` spec in `openspec/`.
+ * the `product-sets` spec in `docs/specs/product-sets.md`.
  */
 function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): SetAllocation {
   const materials = new Map<string, Map<string, number>>();

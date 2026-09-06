@@ -102,5 +102,6 @@ Tina admin at `/admin`. Two access paths read this content at build time:
   and AI agents.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — architecture deep-dive and
   improvement backlog.
-- [openspec/](openspec/) — baseline specs and in-flight changes (proposals,
-  designs, task lists) under the OpenSpec workflow.
+- [docs/specs/](docs/specs/) — normative behavior specs, one file per
+  capability.
+- [docs/adr/](docs/adr/) — architectural decision records.

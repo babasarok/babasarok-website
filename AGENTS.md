@@ -52,13 +52,12 @@ These are listed in priority order. When values conflict, prefer the one higher 
   Specs live in `src/**/*.test.ts` (e.g. the order-form logic in
   [src/lib/**tests**/](src/lib/__tests__/)); fast pure-function tests, no build needed.
 - **Hydration tests:** `npm run test:hydration` (Playwright; needs a `dist/` build).
-- **Specs (OpenSpec):** spec-driven development lives in [openspec/](openspec/).
-  Baseline behavior is in [openspec/specs/](openspec/specs/) (one capability
-  folder per spec: `product-catalog`, `order-pricing`, `order-basket`,
-  `order-submission`); in-flight work is in
-  [openspec/changes/](openspec/changes/). Read the relevant spec before
-  touching its behavior. Propose changes with `/opsx-propose` (opencode) or the
-  CLI (`npx openspec ...`); validate with `npx openspec validate --all`.
+- **Behavior specs:** normative specs live in [docs/specs/](docs/specs/) (one
+  file per capability: `product-catalog`, `order-pricing`, `order-basket`,
+  `order-submission`, `product-sets`). Read the relevant spec before touching
+  its behavior and keep it in sync when behavior changes.
+- **ADRs:** architectural decisions live in [docs/adr/](docs/adr/); read the
+  ones touching your area and surface conflicts rather than overriding them.
 
 ## Gotchas
 
