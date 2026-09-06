@@ -66,3 +66,17 @@ These are listed in priority order. When values conflict, prefer the one higher 
   Plain `npm ci` aborts on `sharp`'s install script (it falls through to a
   from-source build that fails with `Please add node-addon-api`).
 - **This repo is npm-managed.** Do not use pnpm/yarn.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues for `Gr3q/babasarok-website` (`gh` CLI). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five canonical labels, 1:1 with their names. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
