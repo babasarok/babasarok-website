@@ -22,7 +22,7 @@ lives only in the buyer's browser.
 
 ## Consequences
 
-- Pricing and validation run only in the browser and are *display*-trusted —
+- Pricing and validation run only in the browser and are _display_-trusted —
   which is why any future backend must recompute price and validation from a
   shared, pure implementation (see ADR 0002).
 - There is no order history, no automated fulfillment, and no refunds path in
