@@ -1,118 +1,98 @@
 <script lang="ts">
-import { onMount, type Snippet } from "svelte";
-import {
-  applyListState,
-  DEFAULT_LIST_STATE,
-  parseListState,
-  serializeListState,
-  type ListProduct,
-  type ProductListViewState,
-} from "../../../lib/product-list/query";
-import { PRODUCT_TYPES, type ProductType } from "../../../lib/product/productTypes";
+  import { onMount } from "svelte";
+  import type { SlimImage } from "@/lib/data";
+  import {
+    applyListState,
+    DEFAULT_LIST_STATE,
+    parseListState,
+    serializeListState,
+    type ListProduct,
+    type ProductListViewState,
+  } from "../../../lib/product-list/query";
+  import { PRODUCT_TYPES, type ProductType } from "../../../lib/product/productTypes";
+  import ProductCard from "./ProductCard.svelte";
 
-interface SetOption {
-  id: string;
-  title: string;
-}
-
-interface Props {
-  children?: Snippet;
-  /**
-   * Minimal list data; `date` is an ISO string (island props are JSON-
-   * serialized). `id` is the product's content entry id (matching each
-   * card's `data-product-id`), not the CMS `product_id`.
-   */
-  items: {
+  interface SetOption {
     id: string;
     title: string;
-    shortDescription?: string | undefined;
-    type: ProductType;
+  }
+
+  /**
+   * A list item as handed over the island boundary. `date` is an ISO string
+   * (island props are JSON-serialized); `id` is the product's content entry id.
+   */
+  interface ListItem extends Omit<ListProduct, "date"> {
     date?: string | undefined;
-    sets?: string[];
-  }[];
-  /** The catalogue's product sets, as filter options. */
-  sets: SetOption[];
-}
-
-let { items, sets, children }: Props = $props();
-
-const products: ListProduct[] = $derived(
-  items.map((item) => ({
-    id: item.id,
-    title: item.title,
-    shortDescription: item.shortDescription,
-    type: item.type,
-    date: item.date ? new Date(item.date) : undefined,
-    sets: item.sets ?? [],
-  }))
-);
-
-let view: ProductListViewState = $state({ ...DEFAULT_LIST_STATE });
-let gridEl: HTMLDivElement | undefined = $state();
-let empty = $state(false);
-// eslint-disable-next-line svelte/prefer-svelte-reactivity -- static server-rendered cards, never re-created
-const cards = new Map<string, HTMLElement>();
-
-function applyView(): void {
-  if (!gridEl) {
-    return;
+    href: string;
+    category?: string | undefined;
+    image?: SlimImage | undefined;
   }
-  const visible = applyListState(products, view);
-  const visibleIds = new Set(visible.map((p) => p.id));
-  for (const [id, card] of cards) {
-    card.style.display = visibleIds.has(id) ? "" : "none";
+
+  interface ProductView extends ListProduct {
+    href: string;
+    category?: string | undefined;
+    image?: SlimImage | undefined;
   }
-  for (const product of visible) {
-    const card = cards.get(product.id);
-    if (card) {
-      // eslint-disable-next-line svelte/no-dom-manipulating -- reorders the server-rendered grid
-      gridEl.append(card);
-    }
+
+  interface Props {
+    items: ListItem[];
+    /** The catalogue's product sets, as filter options. */
+    sets: SetOption[];
   }
-  empty = visible.length === 0;
-}
 
-function syncUrl(): void {
-  const search = serializeListState(view);
-  globalThis.history.replaceState(null, "", globalThis.location.pathname + search);
-}
+  let { items, sets }: Props = $props();
 
-function setView(next: ProductListViewState): void {
-  view = next;
-  applyView();
-  syncUrl();
-}
+  const products: ProductView[] = $derived(
+    items.map((item) => ({
+      id: item.id,
+      title: item.title,
+      shortDescription: item.shortDescription,
+      type: item.type,
+      date: item.date ? new Date(item.date) : undefined,
+      sets: item.sets,
+      href: item.href,
+      category: item.category,
+      image: item.image,
+    }))
+  );
 
-function toggleType(value: ProductType): void {
-  setView({
-    ...view,
-    types: view.types.includes(value)
-      ? view.types.filter((t) => t !== value)
-      : [...view.types, value],
+  let view: ProductListViewState = $state({ ...DEFAULT_LIST_STATE });
+
+  const visible = $derived(applyListState(products, view));
+
+  function syncUrl(): void {
+    const search = serializeListState(view);
+    globalThis.history.replaceState(null, "", globalThis.location.pathname + search);
+  }
+
+  function setView(next: ProductListViewState): void {
+    view = next;
+    syncUrl();
+  }
+
+  function toggleType(value: ProductType): void {
+    setView({
+      ...view,
+      types: view.types.includes(value)
+        ? view.types.filter((t) => t !== value)
+        : [...view.types, value],
+    });
+  }
+
+  function toggleSet(id: string): void {
+    setView({
+      ...view,
+      sets: view.sets.includes(id) ? view.sets.filter((s) => s !== id) : [...view.sets, id],
+    });
+  }
+
+  function clearView(): void {
+    setView({ ...DEFAULT_LIST_STATE });
+  }
+
+  onMount(() => {
+    view = parseListState(globalThis.location.search);
   });
-}
-
-function toggleSet(id: string): void {
-  setView({
-    ...view,
-    sets: view.sets.includes(id) ? view.sets.filter((s) => s !== id) : [...view.sets, id],
-  });
-}
-
-function clearView(): void {
-  setView({ ...DEFAULT_LIST_STATE });
-}
-
-onMount(() => {
-  for (const card of gridEl?.querySelectorAll<HTMLElement>("[data-product-id]") ?? []) {
-    const id = card.dataset.productId;
-    if (id) {
-      cards.set(id, card);
-    }
-  }
-  view = parseListState(globalThis.location.search);
-  applyView();
-});
 </script>
 
 <div class="flex flex-col gap-10 lg:flex-row lg:gap-12">
@@ -179,13 +159,17 @@ onMount(() => {
         <option value="name">Név szerint</option>
       </select>
     </div>
-    <div
-      bind:this={gridEl}
-      class="flex flex-wrap justify-center gap-8 gap-y-12 sm:gap-y-8"
-    >
-      {@render children?.()}
+    <div class="flex flex-wrap justify-center gap-8 gap-y-12 sm:gap-y-8">
+      {#each visible as product (product.id)}
+        <ProductCard
+          href={product.href}
+          title={product.title}
+          category={product.category}
+          image={product.image}
+        />
+      {/each}
     </div>
-    {#if empty}
+    {#if visible.length === 0}
       <div class="text-body py-20 text-center">
         <p class="text-headings mb-5 text-h4">Nincs találat</p>
         <button

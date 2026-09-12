@@ -9,15 +9,13 @@ interface Props {
   category?: string | undefined;
   /** Square, uniform-height variant used by the landing product grid. */
   square?: boolean;
-  [key: string]: unknown;
 }
 
-const { href, title, image, category, square = false, ...rest } = Astro.props;
+const { href, title, image, category, square = false } = Astro.props;
 ---
 
 <div
   class="group flex w-full max-w-62.5 flex-col items-center p-0 sm:items-stretch lg:w-1/2 lg:p-7.5"
-  {...rest}
 >
   {
     image && (

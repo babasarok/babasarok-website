@@ -68,10 +68,10 @@ export interface ListProduct {
  * ("newest": date descending, missing dates last, stable; "name": title
  * ascending, Hungarian locale). The input is not mutated.
  */
-export function applyListState(
-  products: readonly ListProduct[],
+export function applyListState<TProduct extends ListProduct>(
+  products: readonly TProduct[],
   state: ProductListViewState
-): ListProduct[] {
+): TProduct[] {
   const query = state.q.trim().toLowerCase();
 
   const matches = products.filter((product) => {

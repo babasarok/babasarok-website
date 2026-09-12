@@ -40,6 +40,11 @@ These are listed in priority order. When values conflict, prefer the one higher 
   global utilities.
 - **Rendering:** prefer Astro components and build-time rendering; only add a Svelte
   island / client hydration when interactivity actually requires it.
+- **No sidestepping type-checking:** no type casts, non-null assertions, or
+  index-signature prop bags (`[key: string]: unknown`) that silence the compiler.
+  When a component should accept HTML element attributes, extend its props
+  interface with the element's attribute types instead of an open index
+  signature.
 
 ## Tooling
 

@@ -2,8 +2,12 @@
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import PageHeader from "../../components/ui/PageHeader.astro";
-import ProductCard from "../../components/ui/ProductCard.astro";
 import ProductList from "../../components/blocks/product/ProductList.svelte";
+import {
+  optimizeContentImage,
+  PRODUCT_CARD_IMAGE_WIDTH,
+  PRODUCT_CARD_IMAGE_SIZES,
+} from "../../lib/data";
 
 const products = (await getCollection("product"))
   .filter((p) => p.data.hidden_in_product_list !== true)
@@ -25,34 +29,32 @@ const sets = groups.map((group) => {
   return { id: group.id, title: group.data.title };
 });
 
-const items = products.map((product) => ({
-  id: product.id,
-  title: product.data.title,
-  shortDescription: product.data.shortDescription ?? undefined,
-  type: product.data.type,
-  date: product.data.date?.toISOString(),
-  sets: setMembership[product.id] ?? [],
-}));
+const items = await Promise.all(
+  products.map(async (product) => ({
+    id: product.id,
+    title: product.data.title,
+    shortDescription: product.data.shortDescription ?? undefined,
+    type: product.data.type,
+    date: product.data.date?.toISOString(),
+    sets: setMembership[product.id] ?? [],
+    href: `/product/${product.id}/`,
+    category: product.data.categories ?? undefined,
+    image: product.data.thumbnail
+      ? await optimizeContentImage(
+          product.data.thumbnail,
+          PRODUCT_CARD_IMAGE_WIDTH,
+          PRODUCT_CARD_IMAGE_SIZES
+        )
+      : undefined,
+  }))
+);
 ---
 
 <Base title="Termékek">
   <PageHeader title="Termékek" no-shapes />
   <section class="py-25">
     <div class="container">
-      <ProductList client:load items={items} sets={sets}>
-        {
-          products.map((product) => (
-            <ProductCard
-              data-product-id={product.id}
-              href={`/product/${product.id}/`}
-              title={product.data.title}
-              image={product.data.thumbnail ?? undefined}
-              category={product.data.categories ?? undefined}
-              square
-            />
-          ))
-        }
-      </ProductList>
+      <ProductList client:load items={items} sets={sets} />
     </div>
   </section>
 </Base>
