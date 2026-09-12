@@ -39,21 +39,22 @@ item's total price.
 A product MAY carry a discount percentage and a `discount_valid_until` date.
 The system SHALL apply the discount as a multiplier (`1 - percent/100`) on the
 item's total price only while the current date is on or before
-`discount_valid_until`, and only when the item earns no active set discount;
-otherwise no standalone discount applies.
+`discount_valid_until`; otherwise no standalone discount applies. A standalone
+discount applies to every unit of the line, including units that also belong to
+a set instance (set and standalone discounts stack).
 
 - **Scenario: Discount within validity**
-  - WHEN a product has a discount, its `discount_valid_until` is in the
-    future, and the item earns no active set discount
+  - WHEN a product has a discount and its `discount_valid_until` is in the
+    future
   - THEN the item total is reduced by the discount percentage and the
     discount is surfaced in the price breakdown
 - **Scenario: Expired discount**
   - WHEN a product's `discount_valid_until` date has passed
   - THEN no standalone discount is applied to the item
-- **Scenario: Superseded by set discount**
-  - WHEN the item earns an active set discount and also has a valid standalone
-    discount
-  - THEN only the set discount applies to the item
+- **Scenario: Stacks with a set discount**
+  - WHEN a set-covered item also has a valid standalone discount
+  - THEN the standalone discount reduces the whole line and the set discount
+    is deducted from the already-discounted subtotal on top of it
 
 ### Length-based pricing
 
@@ -74,20 +75,23 @@ when the length is known, and leave them undefined when it is not.
 
 ### Set discount application
 
-An item earns at most one discount. When an item's set discount is active for
-`n` of its `c` units, the system SHALL reduce the item total by the set
-percentage applied to the fraction `n/c` of the total, rounded to whole
-currency units. The discount source ("set" or "standalone") MUST be recorded
-with its raw percent so the order email can describe it without re-deriving
-the multiplier. Set discounts are surfaced at basket level (the "set
-discounts" section listing the formed set instances, per the product-sets
-capability), not as per-line labels.
+Set discounts are flat forint deductions applied at basket level, not per line.
+Each formed set instance (see the product-sets capability) removes its set's
+flat amount once from the order total, clamped so it never exceeds the covered
+units' charged subtotal (after any standalone discount on those units). Line
+prices themselves reflect only the standalone discount; the set deductions are
+summed and subtracted from the order total. Set discounts are surfaced at basket
+level (the "set discounts" section listing each formed instance and the forint
+it removes), not as per-line labels. The order email records each line's
+standalone discount and, per formed instance, the set title, its members, and
+both the nominal and the actually applied (clamped) forint amount.
 
-- **Scenario: Full allocation**
-  - WHEN every unit of an item is allocated to a set
-  - THEN the item total is reduced by the set percentage, and the formed set
-    instance is listed in the basket-level set discounts section
-- **Scenario: Partial allocation**
-  - WHEN only some of an item's units are allocated to a set
-  - THEN the reduction equals the set percentage times the allocated fraction
-    of the total
+- **Scenario: Flat deduction**
+  - WHEN a set instance forms in the basket
+  - THEN the order total is reduced by the set's flat amount and the instance
+    is listed in the basket-level set discounts section
+- **Scenario: Clamped deduction**
+  - WHEN a set instance's flat amount exceeds its covered units' charged
+    subtotal
+  - THEN only that subtotal is removed, and the email shows both the nominal
+    and the applied amount

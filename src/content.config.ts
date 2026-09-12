@@ -351,7 +351,7 @@ const productGroup = defineCollection({
   loader: glob({ pattern: "*.md", base: "src/content/product_groups" }),
   schema: z.object({
     title: z.string(),
-    discount_percent: z.number().optional().nullable(),
+    discount_amount: z.number().int().min(0).optional().nullable(),
     products: z
       .array(z.object({ product: z.string() }).optional().nullable())
       .optional()

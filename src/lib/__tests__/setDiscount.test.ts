@@ -5,8 +5,9 @@
  * allocation: `computeSetAllocation` forms one *maximal* instance per matching
  * group (one unit each of every mutually compatible distinct member), repeats
  * while at least two distinct members still have units, and consumes each
- * basket unit at most once. `resolveSetInstances` exposes the formed instances,
- * `resolveSetCoverage` each line's per-set unit coverage (for pricing), and
+ * basket unit at most once. `resolveSetInstances` exposes the formed instances
+ * (each carrying its flat forint discount), `setInstanceAmount` the forint a
+ * formed instance actually removes (clamped to the covered subtotal), and
  * `allocateSetDiscounts` / `resolveSetDiscountStatus` the per-item UI status.
  * See the `product-sets` spec in `docs/specs/product-sets.md`.
  */
@@ -16,12 +17,12 @@ import {
   resolveSetDiscount,
   resolveSetDiscountStatus,
   resolveSetInstances,
-  resolveSetCoverage,
   allocateSetDiscounts,
+  setInstanceAmount,
   canSyncMaterials,
   type SetDiscountGroup,
+  type SetDiscountInstance,
 } from "@/lib/pricing/setDiscount";
-import { calculatePriceForItem } from "@/lib/pricing/price";
 import type { IProduct, ProductMaterialValue } from "@/lib/types.svelte";
 import { makeProduct, makeMaterial, makeField } from "./fixtures";
 
@@ -102,7 +103,7 @@ describe("materialsMatch", () => {
 const groups: SetDiscountGroup[] = [
   {
     title: "Babafészek szett",
-    discount_percent: 10,
+    discount_amount: 1000,
     products: [{ product_id: "nest" }, { product_id: "blanket" }],
   },
 ];
@@ -115,16 +116,24 @@ const blanket = (uuid: string, count = 1): IProduct =>
 
 describe("resolveSetDiscount (potential)", () => {
   it("returns the biggest set discount regardless of the basket", () => {
-    expect(resolveSetDiscount("blanket", groups)?.percent).toBe(10);
+    expect(resolveSetDiscount("blanket", groups)?.amount).toBe(1000);
     expect(resolveSetDiscount("unknown", groups)).toBeUndefined();
   });
 
-  it("picks the biggest set when a product is in several", () => {
+  it("picks the biggest-amount set when a product is in several", () => {
     const multi: SetDiscountGroup[] = [
-      { title: "Small", discount_percent: 5, products: [{ product_id: "nest" }] },
-      { title: "Big", discount_percent: 20, products: [{ product_id: "nest" }] },
+      { title: "Small", discount_amount: 500, products: [{ product_id: "nest" }] },
+      { title: "Big", discount_amount: 2000, products: [{ product_id: "nest" }] },
     ];
-    expect(resolveSetDiscount("nest", multi)).toEqual({ percent: 20, setTitle: "Big" });
+    expect(resolveSetDiscount("nest", multi)).toEqual({ amount: 2000, setTitle: "Big" });
+  });
+
+  it("ignores a group with a zero or absent discount", () => {
+    const noDiscount: SetDiscountGroup[] = [
+      { title: "Related", discount_amount: 0, products: [{ product_id: "nest" }] },
+      { title: "Related2", products: [{ product_id: "nest" }] },
+    ];
+    expect(resolveSetDiscount("nest", noDiscount)).toBeUndefined();
   });
 });
 
@@ -133,10 +142,21 @@ describe("resolveSetInstances", () => {
     expect(resolveSetInstances([nest("u1")], groups)).toEqual([]);
   });
 
-  it("forms one instance per matching pair", () => {
+  it("forms one instance per matching pair, carrying the set's flat amount", () => {
     expect(resolveSetInstances([nest("u1"), blanket("u3")], groups)).toEqual([
-      { setTitle: "Babafészek szett", percent: 10, members: ["u1", "u3"] },
+      { setTitle: "Babafészek szett", amount: 1000, members: ["u1", "u3"] },
     ]);
+  });
+
+  it("forms nothing for a zero-discount group", () => {
+    const related: SetDiscountGroup[] = [
+      {
+        title: "Kapcsolódó",
+        discount_amount: 0,
+        products: [{ product_id: "nest" }, { product_id: "blanket" }],
+      },
+    ];
+    expect(resolveSetInstances([nest("u1"), blanket("u3")], related)).toEqual([]);
   });
 
   it("does not form an instance when materials differ", () => {
@@ -149,7 +169,7 @@ describe("resolveSetInstances", () => {
     const trio: SetDiscountGroup[] = [
       {
         title: "Trio",
-        discount_percent: 20,
+        discount_amount: 2000,
         products: [{ product_id: "a" }, { product_id: "b" }, { product_id: "c" }],
       },
     ];
@@ -157,26 +177,29 @@ describe("resolveSetInstances", () => {
     const b = makeProduct({ uuid: "u2", product_id: "b", values: red });
     const c = makeProduct({ uuid: "u3", product_id: "c", count: 2, values: red });
     expect(resolveSetInstances([a, b, c], trio)).toEqual([
-      { setTitle: "Trio", percent: 20, members: ["u1", "u2", "u3"] },
-      { setTitle: "Trio", percent: 20, members: ["u1", "u3"] },
+      { setTitle: "Trio", amount: 2000, members: ["u1", "u2", "u3"] },
+      { setTitle: "Trio", amount: 2000, members: ["u1", "u3"] },
     ]);
   });
 
-  it("groups three distinct members into a single instance (leftover units unused)", () => {
-    // nest + nest2 + blanket-with-2-units: one maximal instance of three; the
-    // second blanket unit has no remaining partners, so it earns nothing.
-    const trioGroups: SetDiscountGroup[] = [
+  it("allocates the biggest-amount set first per unit", () => {
+    // A nest belongs to a 2000 Ft set (with pillow) and a 1000 Ft set (with
+    // blanket). With one pillow and one blanket present, its two units land in
+    // both, biggest amount first.
+    const mixed: SetDiscountGroup[] = [
       {
-        title: "Babafészek szett",
-        discount_percent: 10,
-        products: [{ product_id: "nest" }, { product_id: "nest2" }, { product_id: "blanket" }],
+        title: "Big set",
+        discount_amount: 2000,
+        products: [{ product_id: "nest" }, { product_id: "pillow" }],
       },
+      groups[0],
     ];
-    const nestA = makeProduct({ uuid: "u1", product_id: "nest", values: red });
-    const nestB = makeProduct({ uuid: "u2", product_id: "nest2", values: red });
-    const blanketC = makeProduct({ uuid: "u3", product_id: "blanket", count: 2, values: red });
-    expect(resolveSetInstances([nestA, nestB, blanketC], trioGroups)).toEqual([
-      { setTitle: "Babafészek szett", percent: 10, members: ["u1", "u2", "u3"] },
+    const nestLine = makeProduct({ uuid: "u1", product_id: "nest", count: 2, values: red });
+    const pillow = makeProduct({ uuid: "u2", product_id: "pillow", values: red });
+    const blanketLine = makeProduct({ uuid: "u3", product_id: "blanket", values: red });
+    expect(resolveSetInstances([nestLine, pillow, blanketLine], mixed)).toEqual([
+      { setTitle: "Big set", amount: 2000, members: ["u1", "u2"] },
+      { setTitle: "Babafészek szett", amount: 1000, members: ["u1", "u3"] },
     ]);
   });
 
@@ -202,7 +225,7 @@ describe("resolveSetInstances", () => {
     });
     const onlyNest = makeProduct({ uuid: "nest", product_id: "nest", price: 15_000, values: red });
     expect(resolveSetInstances([cheap, pricey, onlyNest], groups)).toEqual([
-      { setTitle: "Babafészek szett", percent: 10, members: ["pricey", "nest"] },
+      { setTitle: "Babafészek szett", amount: 1000, members: ["pricey", "nest"] },
     ]);
   });
 
@@ -231,43 +254,73 @@ describe("resolveSetInstances", () => {
       values: feher,
     });
     expect(resolveSetInstances([nestPricey, nestMatch, blanketLine], groups)).toEqual([
-      { setTitle: "Babafészek szett", percent: 10, members: ["nestMatch", "blanket"] },
+      { setTitle: "Babafészek szett", amount: 1000, members: ["nestMatch", "blanket"] },
     ]);
   });
 });
 
-describe("resolveSetCoverage", () => {
-  it("has no entry for lines earning no set discount", () => {
-    expect(resolveSetCoverage([nest("u1")], groups).get("u1")).toBeUndefined();
+describe("setInstanceAmount", () => {
+  const instance = (amount: number, members: string[]): SetDiscountInstance => ({
+    setTitle: "Babafészek szett",
+    amount,
+    members,
   });
 
-  it("reports covered units per line", () => {
-    const coverage = resolveSetCoverage([nest("u1", 2), blanket("u3", 2)], groups);
-    expect(coverage.get("u1")).toEqual([{ setTitle: "Babafészek szett", percent: 10, count: 2 }]);
-    expect(coverage.get("u3")).toEqual([{ setTitle: "Babafészek szett", percent: 10, count: 2 }]);
-  });
-
-  it("splits a line's units across sets at different percents", () => {
-    // A nest belongs to a 20% set (with pillow) and a 10% set (with blanket).
-    // With one pillow and one blanket present, its two units land in both.
-    const mixed: SetDiscountGroup[] = [
-      {
-        title: "Big set",
-        discount_percent: 20,
-        products: [{ product_id: "nest" }, { product_id: "pillow" }],
-      },
-      groups[0],
+  it("removes the flat set amount when the covered subtotal exceeds it", () => {
+    const basket = [
+      makeProduct({ uuid: "u1", price: 10_000 }),
+      makeProduct({ uuid: "u2", price: 10_000 }),
     ];
-    const nestLine = makeProduct({ uuid: "u1", product_id: "nest", count: 2, values: red });
-    const pillow = makeProduct({ uuid: "u2", product_id: "pillow", values: red });
-    const blanketLine = makeProduct({ uuid: "u3", product_id: "blanket", values: red });
-    const coverage = resolveSetCoverage([nestLine, pillow, blanketLine], mixed);
-    expect(coverage.get("u1")).toEqual([
-      { setTitle: "Big set", percent: 20, count: 1 },
-      { setTitle: "Babafészek szett", percent: 10, count: 1 },
-    ]);
-    expect(coverage.get("u2")).toEqual([{ setTitle: "Big set", percent: 20, count: 1 }]);
-    expect(coverage.get("u3")).toEqual([{ setTitle: "Babafészek szett", percent: 10, count: 1 }]);
+    expect(setInstanceAmount(instance(1000, ["u1", "u2"]), basket)).toEqual({
+      amount: 1000,
+      nominal: 1000,
+    });
+  });
+
+  it("clamps the deduction to the covered units' subtotal", () => {
+    // Two cheap members total 500 Ft; a 1000 Ft set can only take 500 off.
+    const basket = [
+      makeProduct({ uuid: "u1", price: 300 }),
+      makeProduct({ uuid: "u2", price: 200 }),
+    ];
+    expect(setInstanceAmount(instance(1000, ["u1", "u2"]), basket)).toEqual({
+      amount: 500,
+      nominal: 1000,
+    });
+  });
+
+  it("clamps against the subtotal after standalone discounts", () => {
+    // One member is half price via a valid standalone discount, so the covered
+    // subtotal is 5000 + 10000 = 15000; a 20000 Ft set is clamped to that.
+    const basket = [
+      makeProduct({
+        uuid: "u1",
+        price: 10_000,
+        discount: 50,
+        discount_valid_until: "2999-01-01",
+      }),
+      makeProduct({ uuid: "u2", price: 10_000 }),
+    ];
+    expect(setInstanceAmount(instance(20_000, ["u1", "u2"]), basket)).toEqual({
+      amount: 15_000,
+      nominal: 20_000,
+    });
+  });
+
+  it("takes the flat amount off the discounted subtotal when it still fits", () => {
+    const basket = [
+      makeProduct({
+        uuid: "u1",
+        price: 10_000,
+        discount: 50,
+        discount_valid_until: "2999-01-01",
+      }),
+      makeProduct({ uuid: "u2", price: 10_000 }),
+    ];
+    expect(setInstanceAmount(instance(1000, ["u1", "u2"]), basket)).toEqual({
+      amount: 1000,
+      nominal: 1000,
+    });
   });
 });
 
@@ -277,19 +330,16 @@ describe("allocateSetDiscounts (per-item status)", () => {
     const statuses = allocateSetDiscounts([nest("u1"), nest("u2"), blanket("u3")], groups);
     expect(statuses.get("u1")).toEqual({
       state: "active",
-      percent: 10,
       setTitle: "Babafészek szett",
       count: 1,
     });
     expect(statuses.get("u2")).toEqual({
       state: "pending-partner",
-      percent: 10,
       setTitle: "Babafészek szett",
       count: 1,
     });
     expect(statuses.get("u3")).toEqual({
       state: "active",
-      percent: 10,
       setTitle: "Babafészek szett",
       count: 1,
     });
@@ -299,13 +349,11 @@ describe("allocateSetDiscounts (per-item status)", () => {
     const statuses = allocateSetDiscounts([nest("u1", 2), blanket("u3")], groups);
     expect(statuses.get("u1")).toEqual({
       state: "active",
-      percent: 10,
       setTitle: "Babafészek szett",
       count: 1,
     });
     expect(statuses.get("u3")).toEqual({
       state: "active",
-      percent: 10,
       setTitle: "Babafészek szett",
       count: 1,
     });
@@ -315,19 +363,16 @@ describe("allocateSetDiscounts (per-item status)", () => {
     const statuses = allocateSetDiscounts([nest("u1", 2), nest("u2", 2), blanket("u3", 2)], groups);
     expect(statuses.get("u1")).toEqual({
       state: "active",
-      percent: 10,
       setTitle: "Babafészek szett",
       count: 2,
     });
     expect(statuses.get("u2")).toEqual({
       state: "pending-partner",
-      percent: 10,
       setTitle: "Babafészek szett",
       count: 2,
     });
     expect(statuses.get("u3")).toEqual({
       state: "active",
-      percent: 10,
       setTitle: "Babafészek szett",
       count: 2,
     });
@@ -337,7 +382,7 @@ describe("allocateSetDiscounts (per-item status)", () => {
     const trio: SetDiscountGroup[] = [
       {
         title: "Trio",
-        discount_percent: 20,
+        discount_amount: 2000,
         products: [{ product_id: "a" }, { product_id: "b" }, { product_id: "c" }],
       },
     ];
@@ -345,24 +390,9 @@ describe("allocateSetDiscounts (per-item status)", () => {
     const b = makeProduct({ uuid: "u2", product_id: "b", values: red });
     const c = makeProduct({ uuid: "u3", product_id: "c", count: 2, values: red });
     const statuses = allocateSetDiscounts([a, b, c], trio);
-    expect(statuses.get("u1")).toEqual({
-      state: "active",
-      percent: 20,
-      setTitle: "Trio",
-      count: 2,
-    });
-    expect(statuses.get("u2")).toEqual({
-      state: "active",
-      percent: 20,
-      setTitle: "Trio",
-      count: 1,
-    });
-    expect(statuses.get("u3")).toEqual({
-      state: "active",
-      percent: 20,
-      setTitle: "Trio",
-      count: 2,
-    });
+    expect(statuses.get("u1")).toEqual({ state: "active", setTitle: "Trio", count: 2 });
+    expect(statuses.get("u2")).toEqual({ state: "active", setTitle: "Trio", count: 1 });
+    expect(statuses.get("u3")).toEqual({ state: "active", setTitle: "Trio", count: 2 });
   });
 
   it("breaks pairing ties by basket order", () => {
@@ -381,22 +411,22 @@ describe("allocateSetDiscounts (per-item status)", () => {
     expect(statuses.get("u1")?.state).toBe("active");
   });
 
-  it("picks the biggest discount across active sets", () => {
+  it("reports the biggest-amount set across active sets", () => {
     const multiGroups: SetDiscountGroup[] = [
       {
         title: "Small set",
-        discount_percent: 5,
+        discount_amount: 500,
         products: [{ product_id: "nest" }, { product_id: "blanket" }],
       },
       {
         title: "Big set",
-        discount_percent: 20,
+        discount_amount: 2000,
         products: [{ product_id: "nest" }, { product_id: "pillow" }],
       },
     ];
     const pillow = makeProduct({ uuid: "u3", product_id: "pillow", values: red });
     const statuses = allocateSetDiscounts([nest("u1"), blanket("u2"), pillow], multiGroups);
-    expect(statuses.get("u1")?.percent).toBe(20);
+    expect(statuses.get("u1")?.setTitle).toBe("Big set");
   });
 });
 
@@ -409,7 +439,6 @@ describe("resolveSetDiscountStatus", () => {
   it("reports pending-partner when no set sibling is in the basket", () => {
     expect(resolveSetDiscountStatus(nest("u1"), [nest("u1")], groups)).toEqual({
       state: "pending-partner",
-      percent: 10,
       setTitle: "Babafészek szett",
       count: 1,
     });
@@ -426,7 +455,6 @@ describe("resolveSetDiscountStatus", () => {
     const blanketB = blanket("u2");
     expect(resolveSetDiscountStatus(nestA, [nestA, blanketB], groups)).toEqual({
       state: "active",
-      percent: 10,
       setTitle: "Babafészek szett",
       count: 1,
     });
@@ -437,7 +465,6 @@ describe("resolveSetDiscountStatus", () => {
     const blanketB = blanket("u2", 1);
     expect(resolveSetDiscountStatus(nestA, [nestA, blanketB], groups)).toEqual({
       state: "active",
-      percent: 10,
       setTitle: "Babafészek szett",
       count: 1,
     });
@@ -451,7 +478,6 @@ describe("resolveSetDiscountStatus", () => {
     const blanketB = blanket("u3", 1);
     expect(resolveSetDiscountStatus(nestA, [nestA, blanketA, blanketB], groups)).toEqual({
       state: "active",
-      percent: 10,
       setTitle: "Babafészek szett",
       count: 2,
     });
@@ -481,7 +507,6 @@ describe("resolveSetDiscountStatus", () => {
     });
     expect(resolveSetDiscountStatus(nestA, [nestA, blanketB], groups)).toEqual({
       state: "pending-material",
-      percent: 10,
       setTitle: "Babafészek szett",
       partnerUuid: "u2",
       canSync: true,
@@ -512,7 +537,6 @@ describe("resolveSetDiscountStatus", () => {
     expect(resolveSetDiscountStatus(nestFeher, basket, groups)?.state).toBe("active");
     expect(resolveSetDiscountStatus(nestMixed, basket, groups)).toEqual({
       state: "pending-partner",
-      percent: 10,
       setTitle: "Babafészek szett",
       count: 1,
     });
@@ -545,59 +569,5 @@ describe("canSyncMaterials", () => {
     });
     const partner = makeProduct({ values: [val("cotton", ["red"])], material_required_count: 1 });
     expect(canSyncMaterials(item, partner)).toBe(false);
-  });
-});
-
-describe("calculatePriceForItem with set coverage", () => {
-  it("applies the set discount and marks the source", () => {
-    const product = makeProduct({ price: 10_000, count: 1 });
-    const price = calculatePriceForItem(product, [
-      { setTitle: "Babafészek szett", percent: 10, count: 1 },
-    ]);
-    expect(price.totalPrice).toBe(9000);
-    expect(price.discountInfo?.discountSource).toBe("set");
-    expect(price.discountInfo?.discountAppliedCount).toBe(1);
-  });
-
-  it("applies the set discount only to the covered units of a larger quantity", () => {
-    // 2 units in the line, but coverage is 1 → discount on 1 of 2.
-    const product = makeProduct({ price: 10_000, count: 2 });
-    const price = calculatePriceForItem(product, [
-      { setTitle: "Babafészek szett", percent: 10, count: 1 },
-    ]);
-    // per-line factor = 1 - 10%*1/2 = 0.95, so total = 20000 * 0.95 = 19000
-    expect(price.totalPrice).toBe(19_000);
-    expect(price.discountInfo?.discountAppliedCount).toBe(1);
-  });
-
-  it("blends units covered by different sets at different percents", () => {
-    const product = makeProduct({ price: 10_000, count: 2 });
-    const price = calculatePriceForItem(product, [
-      { setTitle: "Big set", percent: 20, count: 1 },
-      { setTitle: "Babafészek szett", percent: 10, count: 1 },
-    ]);
-    // percentUnits = 20 + 10 = 30 → factor = 1 - 30/100/2 = 0.85
-    expect(price.totalPrice).toBe(17_000);
-    expect(price.discountInfo?.discountAppliedCount).toBe(2);
-    expect(price.discountInfo?.percent).toBe(20);
-  });
-
-  it("lets set coverage replace a standalone discount even when expired", () => {
-    const product = makeProduct({
-      price: 10_000,
-      count: 1,
-      discount: 50,
-      discount_valid_until: "2000-01-01",
-    });
-    const price = calculatePriceForItem(product, [
-      { setTitle: "Babafészek szett", percent: 10, count: 1 },
-    ]);
-    expect(price.totalPrice).toBe(9000);
-    expect(price.discountInfo?.discountSource).toBe("set");
-  });
-
-  it("falls back to no discount without coverage", () => {
-    const product = makeProduct({ price: 10_000, count: 1 });
-    expect(calculatePriceForItem(product).discountInfo).toBeUndefined();
   });
 });

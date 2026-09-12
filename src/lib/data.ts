@@ -674,11 +674,12 @@ export interface CmsProductGroupMember {
 export interface CmsProductGroup {
   title: string;
   /**
-   * The percent discount (0–100) every member of the set earns when it is
-   * ordered in this set. Optional: a set with no value earns no discount.
+   * The flat forint discount every formed instance of the set earns when its
+   * members are ordered together. Optional: a group with a zero or absent value
+   * grants no discount and is shown as related items instead.
    * See the `product-sets` spec in `docs/specs/product-sets.md`.
    */
-  discount_percent?: number | undefined;
+  discount_amount?: number | undefined;
   products: CmsProductGroupMember[];
 }
 
@@ -695,7 +696,7 @@ export const getProductGroups = async (): Promise<CmsProductGroup[]> => {
     }
     return {
       title: group.title,
-      discount_percent: group.discount_percent ?? undefined,
+      discount_amount: group.discount_amount ?? undefined,
       products,
     };
   });

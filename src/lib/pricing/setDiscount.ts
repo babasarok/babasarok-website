@@ -4,27 +4,30 @@ import { calculatePriceForItem } from "./price";
 /** Minimal structural shape of a product group, to avoid a data.ts import cycle. */
 export interface SetDiscountGroup {
   title: string;
-  discount_percent?: number | undefined;
+  /** Flat forint discount removed once per formed set instance. */
+  discount_amount?: number | undefined;
   products: { product_id: string }[];
 }
 
 /**
- * The best set discount a product qualifies for: the largest set percent across
- * every set the product belongs to. When a product is in more than one set, the
- * biggest discount wins (no stacking). See the `product-sets` spec in `docs/specs/product-sets.md`.
+ * The best set discount a product qualifies for: the largest flat set amount
+ * across every set the product belongs to. When a product is in more than one
+ * set, the biggest discount wins (no stacking). Groups with a zero or absent
+ * amount are not sets and are ignored. See the `product-sets` spec in
+ * `docs/specs/product-sets.md`.
  */
 export function resolveSetDiscount(
   productId: string,
   groups: SetDiscountGroup[]
-): { percent: number; setTitle: string } | undefined {
-  let best: { percent: number; setTitle: string } | undefined;
+): { amount: number; setTitle: string } | undefined {
+  let best: { amount: number; setTitle: string } | undefined;
   for (const group of groups) {
-    const percent = group.discount_percent;
-    if (percent == null || !group.products.some((m) => m.product_id === productId)) {
+    const amount = group.discount_amount;
+    if (amount == null || amount <= 0 || !group.products.some((m) => m.product_id === productId)) {
       continue;
     }
-    if (!best || percent > best.percent) {
-      best = { percent, setTitle: group.title };
+    if (!best || amount > best.amount) {
+      best = { amount, setTitle: group.title };
     }
   }
   return best;
@@ -94,12 +97,13 @@ export function materialsMatch(a: IProduct, b: IProduct): boolean {
 }
 
 /**
- * The set discount an item actively earns given the current basket: its percent,
- * the winning set's title, and how many of the item's units it covers.
+ * The set discount an item actively earns given the current basket: the
+ * winning set's title and how many of the item's units it covers. The flat
+ * forint figure is a property of the formed instance (see `setInstanceAmount`)
+ * and is surfaced at basket level, not per line.
  */
 export type ActiveDiscountStatus = {
   state: "active";
-  percent: number;
   setTitle: string;
   count: number;
 };
@@ -115,10 +119,9 @@ export type ActiveDiscountStatus = {
  */
 export type SetDiscountStatus =
   | ActiveDiscountStatus
-  | { state: "pending-partner"; percent: number; setTitle: string; count: number }
+  | { state: "pending-partner"; setTitle: string; count: number }
   | {
       state: "pending-material";
-      percent: number;
       setTitle: string;
       partnerUuid: string;
       canSync: boolean;
@@ -148,23 +151,26 @@ export function canSyncMaterials(item: IProduct, partner: IProduct): boolean {
 /**
  * A formed set-discount instance: one unit each of two or more distinct set
  * members whose materials are mutually compatible. `members` lists the basket
- * line uuids (one per member product) that each contribute one unit, all
- * earning `percent`. See the `product-sets` spec in `docs/specs/product-sets.md`.
+ * line uuids (one per member product) that each contribute one unit. `amount`
+ * is the set's nominal flat forint discount for this instance; the amount it
+ * actually removes is clamped by `setInstanceAmount`. See the `product-sets`
+ * spec in `docs/specs/product-sets.md`.
  */
 export interface SetDiscountInstance {
   setTitle: string;
-  percent: number;
+  amount: number;
   members: string[];
 }
 
 /**
- * The units of one basket line covered by set discounts, grouped by set. Every
- * entry's `count` units earn its `percent`; one line's units MAY span several
- * entries (different sets, including different percents).
+ * The units of one basket line covered by set instances, grouped by set. Every
+ * entry's `count` units belong to a formed instance of its set; one line's
+ * units MAY span several entries (different sets). Used internally to derive
+ * each line's active status.
  */
-export interface SetCoverageEntry {
+interface SetCoverageEntry {
   setTitle: string;
-  percent: number;
+  amount: number;
   count: number;
 }
 
@@ -176,15 +182,14 @@ interface SetAllocation {
 
 /**
  * Allocates set discounts across the whole basket per unit in one pass. Sets are
- * processed by descending discount percent (biggest wins per unit); within each
- * set the allocator repeatedly forms one *maximal* instance — one unit each of
- * every distinct, mutually material-compatible member that still has units,
+ * processed by descending flat discount amount (biggest wins per unit); within
+ * each set the allocator repeatedly forms one *maximal* instance — one unit each
+ * of every distinct, mutually material-compatible member that still has units,
  * preferring the most valuable line when a member has interchangeable units —
  * and repeats while at least two distinct members remain, consuming each basket
  * unit at most once. Leftover units earn no set discount. Returns the per-item
  * status (pending/active hints), the ordered list of formed instances, and each
- * line's per-set unit coverage (for pricing and the basket-level display). See
- * the `product-sets` spec in `docs/specs/product-sets.md`.
+ * line's per-set unit coverage. See the `product-sets` spec in `docs/specs/product-sets.md`.
  */
 function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): SetAllocation {
   const materials = new Map<string, Map<string, number>>();
@@ -204,18 +209,18 @@ function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): S
   };
 
   const instances: SetDiscountInstance[] = [];
-  // Biggest percent first so each unit lands in its most valuable set; ties keep
-  // the group's original order for determinism.
+  // Biggest flat amount first so each unit lands in its most valuable set; ties
+  // keep the group's original order for determinism.
   const ordered = groups
     .map((group, index) => ({ group, index }))
-    .filter(({ group }) => group.discount_percent != null && group.discount_percent > 0)
+    .filter(({ group }) => group.discount_amount != null && group.discount_amount > 0)
     .toSorted(
       (a, b) =>
-        (b.group.discount_percent ?? 0) - (a.group.discount_percent ?? 0) || a.index - b.index
+        (b.group.discount_amount ?? 0) - (a.group.discount_amount ?? 0) || a.index - b.index
     );
 
   for (const { group } of ordered) {
-    const percent = group.discount_percent ?? 0;
+    const amount = group.discount_amount ?? 0;
     const memberIds = new Set(group.products.map((m) => m.product_id));
     for (;;) {
       const chosen: string[] = [];
@@ -280,7 +285,7 @@ function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): S
       for (const uuid of chosen) {
         consumed.set(uuid, (consumed.get(uuid) ?? 0) + 1);
       }
-      instances.push({ setTitle: group.title, percent, members: chosen });
+      instances.push({ setTitle: group.title, amount, members: chosen });
     }
   }
 
@@ -289,12 +294,12 @@ function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): S
     for (const uuid of instance.members) {
       const entries = coverage.get(uuid) ?? [];
       const existing = entries.find(
-        (e) => e.setTitle === instance.setTitle && e.percent === instance.percent
+        (e) => e.setTitle === instance.setTitle && e.amount === instance.amount
       );
       if (existing) {
         existing.count += 1;
       } else {
-        entries.push({ setTitle: instance.setTitle, percent: instance.percent, count: 1 });
+        entries.push({ setTitle: instance.setTitle, amount: instance.amount, count: 1 });
       }
       coverage.set(uuid, entries);
     }
@@ -304,11 +309,10 @@ function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): S
   for (const item of basket) {
     const entries = coverage.get(item.uuid);
     if (entries && entries.length > 0) {
-      const best = entries.reduce((a, b) => (b.percent > a.percent ? b : a));
+      const best = entries.reduce((a, b) => (b.amount > a.amount ? b : a));
       const count = entries.reduce((sum, e) => sum + e.count, 0);
       statuses.set(item.uuid, {
         state: "active",
-        percent: best.percent,
         setTitle: best.setTitle,
         count,
       });
@@ -325,7 +329,7 @@ function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): S
 
 /**
  * The pending state an item reports when it earns no set discount: resolved
- * against the biggest-percent set it belongs to. `pending-partner` when no
+ * against the biggest-amount set it belongs to. `pending-partner` when no
  * sibling with compatible materials has unallocated units left in the basket
  * (none present, or every matching unit is already consumed by a formed set, in
  * which case adding more of the set is the fix), `pending-material` when a
@@ -343,17 +347,16 @@ function pendingStatus(
   const candidates = groups
     .filter(
       (group) =>
-        group.discount_percent != null &&
-        group.discount_percent > 0 &&
+        group.discount_amount != null &&
+        group.discount_amount > 0 &&
         group.products.some((m) => m.product_id === item.product_id)
     )
-    .toSorted((a, b) => (b.discount_percent ?? 0) - (a.discount_percent ?? 0));
+    .toSorted((a, b) => (b.discount_amount ?? 0) - (a.discount_amount ?? 0));
 
   const group = candidates.at(0);
   if (!group) {
     return undefined;
   }
-  const percent = group.discount_percent ?? 0;
   const setTitle = group.title;
   const memberIds = new Set(group.products.map((m) => m.product_id));
   const partners = basket.filter(
@@ -367,13 +370,12 @@ function pendingStatus(
   if (partners.length === 0 || partners.some((other) => materialsMatch(item, other))) {
     // No partner in the basket, or every compatible unit is already allocated
     // elsewhere — either way, adding more of the set is the fix.
-    return { state: "pending-partner", percent, setTitle, count: item.count };
+    return { state: "pending-partner", setTitle, count: item.count };
   }
 
   const partner = partners.find((other) => canSyncMaterials(item, other)) ?? partners[0];
   return {
     state: "pending-material",
-    percent,
     setTitle,
     partnerUuid: partner.uuid,
     canSync: canSyncMaterials(item, partner),
@@ -386,8 +388,8 @@ function pendingStatus(
 
 /**
  * Per-item set status of every basket item in one global pass. A per-item
- * lookup into the shared allocation; use `resolveSetInstances` /
- * `resolveSetCoverage` for the basket-level display and pricing.
+ * lookup into the shared allocation; use `resolveSetInstances` for the
+ * basket-level display and pricing.
  */
 export function allocateSetDiscounts(
   basket: IProduct[],
@@ -398,7 +400,7 @@ export function allocateSetDiscounts(
 
 /**
  * The set-discount instances formed by the current basket, in allocation order,
- * for the basket-level "set discounts" display.
+ * for the basket-level "set discounts" display and the order total.
  */
 export function resolveSetInstances(
   basket: IProduct[],
@@ -408,36 +410,34 @@ export function resolveSetInstances(
 }
 
 /**
- * Each basket line's per-set unit coverage, keyed by line uuid, for pricing via
- * `calculatePriceForItem`. Lines with no set coverage are absent from the map.
- */
-export function resolveSetCoverage(
-  basket: IProduct[],
-  groups: SetDiscountGroup[]
-): Map<string, SetCoverageEntry[]> {
-  return computeSetAllocation(basket, groups).coverage;
-}
-
-/**
- * The forint amount a formed set instance takes off the order: one unit of each
- * member at the set percent. Members whose unit price is unknown contribute
- * nothing. Shared by the checkout display and the submitted order text so both
- * report the same number.
+ * The forint amount a formed set instance actually removes from the order: the
+ * set's flat `amount`, clamped so it never exceeds the covered units' charged
+ * subtotal (one unit of each member, each after its own standalone discount).
+ * `nominal` is the set's unclamped flat amount, kept so the order email can show
+ * both. Members whose price is unknown contribute nothing to the subtotal.
+ * Shared by the checkout display and the submitted order text so both report the
+ * same numbers.
  */
 export function setInstanceAmount(
   instance: SetDiscountInstance,
   basket: IProduct[]
-): { amount: number } {
+): { amount: number; nominal: number } {
   const byUuid = new Map(basket.map((p) => [p.uuid, p]));
-  let amount = 0;
+  let subtotal = 0;
   for (const uuid of instance.members) {
     const item = byUuid.get(uuid);
-    const unitPrice = item ? calculatePriceForItem(item).unitPrice : undefined;
-    if (unitPrice !== undefined) {
-      amount += Math.round((unitPrice * instance.percent) / 100);
+    if (!item) {
+      continue;
     }
+    const price = calculatePriceForItem(item);
+    const unitPrice = price.unitPrice;
+    if (unitPrice === undefined) {
+      continue;
+    }
+    const factor = price.discountInfo?.discount ?? 1;
+    subtotal += Math.round(unitPrice * factor);
   }
-  return { amount };
+  return { amount: Math.min(instance.amount, subtotal), nominal: instance.amount };
 }
 
 /**

@@ -1,35 +1,18 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import Tooltip from "./common/Tooltip.svelte";
   import { calculatePriceForItem } from "@/lib/pricing/price";
-  import type { SetCoverageEntry } from "@/lib/pricing/setDiscount";
   import type { IProduct } from "@/lib/types.svelte";
   import IconButton from "./common/IconButton.svelte";
 
   interface Props {
     product: IProduct;
-    setCoverage?: SetCoverageEntry[] | undefined;
     onChange?: ((product: IProduct) => void) | undefined;
   }
 
-  const { product, setCoverage, onChange }: Props = $props();
+  const { product, onChange }: Props = $props();
 
   const price = $derived.by(() => {
-    return calculatePriceForItem(product, setCoverage);
-  });
-
-  // Per-set money this line saves, one row per covering set.
-  const setDiscountRows = $derived.by(() => {
-    const unitPrice = price.unitPrice;
-    if (!setCoverage || unitPrice === undefined) {
-      return [];
-    }
-    return setCoverage.map((entry) => ({
-      setTitle: entry.setTitle,
-      percent: entry.percent,
-      count: entry.count,
-      money: Math.round((unitPrice * entry.percent * entry.count) / 100),
-    }));
+    return calculatePriceForItem(product);
   });
 
   const priceParts = $derived.by(() => {
@@ -63,7 +46,7 @@
         </p>
       </div>
     {/if}
-    {#if price.discountInfo !== undefined && price.discountInfo.discountSource === "standalone"}
+    {#if price.discountInfo !== undefined}
       <div class="flex justify-between">
         <p class="text-xs">Kedvezmény</p>
         <p class="text-xs">
@@ -76,17 +59,6 @@
         </p>
       </div>
     {/if}
-    {#each setDiscountRows as row (row.setTitle)}
-      <div class="flex justify-between">
-        <p class="text-xs">Szett kedvezmény ({row.setTitle} −{row.percent}%)</p>
-        <p class="text-xs text-green-700">
-          −{row.money.toLocaleString("hu-HU")} Ft
-          {#if row.count < product.count}
-            ({row.count} db)
-          {/if}
-        </p>
-      </div>
-    {/each}
     <svelte:boundary>
       <div class="flex justify-between font-medium">
         <div class="flex items-center gap-1">

@@ -6,13 +6,12 @@
   interface Props {
     product: CmsEnhancedProduct;
     href?: string | undefined;
-    discount?: number | undefined;
     added?: number;
     disabled?: boolean;
     onAdd: () => void;
   }
 
-  let { product, href, discount, added = 0, disabled = false, onAdd }: Props = $props();
+  let { product, href, added = 0, disabled = false, onAdd }: Props = $props();
 
   const configurable = $derived(hasConfigurableOptions(product));
 </script>
@@ -41,13 +40,6 @@
       <a {href} class="block size-full">{@render thumb()}</a>
     {:else}
       {@render thumb()}
-    {/if}
-    {#if discount}
-      <span
-        class="absolute left-2 top-2 rounded-full bg-success-600 px-2 py-0.5 text-xs font-semibold text-white"
-      >
-        -{discount}%
-      </span>
     {/if}
   </div>
 

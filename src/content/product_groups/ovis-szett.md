@@ -1,6 +1,6 @@
 ---
 title: Ovis szett
-discount_percent: 15
+discount_amount: 1300
 products:
   - product: src/content/product/tornazsak.md
   - product: src/content/product/vallfas-zsak.md

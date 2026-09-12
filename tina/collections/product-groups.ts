@@ -32,10 +32,17 @@ export const ProductGroupCollection: Collection = {
     },
     {
       type: "number",
-      name: "discount_percent",
-      label: "Szett kedvezmény %",
+      name: "discount_amount",
+      label: "Szett kedvezmény (Ft)",
       description:
-        "Opcionális kedvezmény százalékban (0–100), amit a szett minden tagja akkor kap, ha ebben a szettben rendelik. Ha egy termék több szettben is szerepel, a legnagyobb kedvezményt adó szett érvényesül.",
+        "Opcionális fix forint kedvezmény, amit a szett minden összeálló példánya egyszer kap, ha a tagjait együtt rendelik. 0 vagy üres érték esetén a csoport nem ad kedvezményt (kapcsolódó termékként jelenik meg). Ha egy termék több szettben is szerepel, a legnagyobb kedvezményt adó szett érvényesül.",
+      ui: {
+        validate: (value?: number) => {
+          if (value != null && (value < 0 || !Number.isInteger(value))) {
+            return "A kedvezménynek 0 vagy annál nagyobb egész számnak kell lennie.";
+          }
+        },
+      },
     },
     {
       type: "object",

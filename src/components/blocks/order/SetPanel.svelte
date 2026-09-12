@@ -6,10 +6,8 @@
 
   interface Props {
     setTitle: string;
-    percent?: number | undefined;
     setStatus?: SetDiscountStatus | undefined;
     relatedProducts: CmsEnhancedProduct[];
-    relatedDiscounts?: Record<string, number>;
     basketCountByProductId?: Record<string, number>;
     slugByProductId?: Record<string, string | undefined>;
     ready: boolean;
@@ -19,10 +17,8 @@
 
   let {
     setTitle,
-    percent,
     setStatus,
     relatedProducts,
-    relatedDiscounts = {},
     basketCountByProductId = {},
     slugByProductId = {},
     ready,
@@ -49,24 +45,13 @@
         <span class="text-xs font-semibold uppercase tracking-wide text-brown-500">
           {setTitle} szett
         </span>
-        {#if percent}
-          <span
-            class={[
-              "rounded-full px-2 py-0.5 text-xs font-semibold",
-              active ? "bg-success-600 text-white" : "bg-success-100 text-success-800",
-            ]}
-          >
-            -{percent}%
-          </span>
-        {/if}
       </div>
       <p class="text-sm text-brown-600">
         {#if active}
           A szett kedvezmény aktív ezen a darabon.
-        {:else if percent}
-          Vedd meg együtt a szett darabjaival, és {percent}% kedvezményt kapsz mindegyikre.
         {:else}
-          Ezek a darabok együtt alkotják a szettet.
+          Vedd meg együtt a szett darabjaival, és kedvezményt kapsz. A kedvezmény a kosárban jelenik
+          meg.
         {/if}
       </p>
     </div>
@@ -78,7 +63,6 @@
       <SetSiblingCard
         product={related}
         href={slug ? `/product/${slug}/` : undefined}
-        discount={relatedDiscounts[related.product_id]}
         added={basketCountByProductId[related.product_id] ?? 0}
         disabled={!ready}
         onAdd={() => onAddRelated(related)}

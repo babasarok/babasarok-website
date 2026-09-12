@@ -1,7 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import {
-    resolveSetDiscount,
     resolveSetDiscountStatus,
     resolveSetInstances,
     setInstanceAmount,
@@ -24,18 +23,15 @@
   interface Sibling {
     product: CmsEnhancedProduct;
     href: string | undefined;
-    percent: number | undefined;
   }
   interface PartnerOpportunity {
     kind: "partner";
     setTitle: string;
-    percent: number;
     siblings: Sibling[];
   }
   interface MaterialOpportunity {
     kind: "material";
     setTitle: string;
-    percent: number;
     title: string;
     editHref: string | undefined;
   }
@@ -50,7 +46,7 @@
   // Formed set-discount instances, resolved once for the whole basket. Each
   // carries its member lines (uuid + title, to drive cross-highlighting), the
   // set's other products that this instance didn't include, and the forint
-  // amount it takes off.
+  // amount it takes off (clamped to the covered subtotal).
   const activeInstances = $derived.by(() => {
     const byUuid = new Map(basket.map((p) => [p.uuid, p]));
     return resolveSetInstances(basket, productGroups).map((instance) => {
@@ -70,7 +66,6 @@
         .map((m) => products[m.product_id].title);
       return {
         setTitle: instance.setTitle,
-        percent: instance.percent,
         members,
         excluded,
         amount,
@@ -130,14 +125,13 @@
           return {
             product,
             href: slug ? `/product/${slug}/${query ? `?${query}` : ""}` : undefined,
-            percent: resolveSetDiscount(product.product_id, productGroups)?.percent,
           };
         });
       if (siblings.length === 0) {
         continue;
       }
       seen.push(status.setTitle);
-      out.push({ kind: "partner", setTitle: status.setTitle, percent: status.percent, siblings });
+      out.push({ kind: "partner", setTitle: status.setTitle, siblings });
     }
     return out;
   });
@@ -154,7 +148,6 @@
       out.push({
         kind: "material",
         setTitle: status.setTitle,
-        percent: status.percent,
         title: item.title,
         editHref: slug ? `/product/${slug}/?uuid=${item.uuid}` : undefined,
       });
@@ -197,11 +190,6 @@
                 <Icon icon="mdi:check-circle" class="shrink-0 text-success-700" />
                 {instance.setTitle} szett
               </span>
-              <span
-                class="rounded-full bg-success-600 px-2 py-0.5 text-xs font-semibold text-white"
-              >
-                −{instance.percent}%
-              </span>
               <span class="ml-auto text-sm font-semibold text-success-800">
                 −{instance.amount.toLocaleString("hu-HU")} Ft
               </span>
@@ -224,9 +212,8 @@
     {#each partnerOpportunities as op (op.setTitle)}
       <div class="flex flex-col gap-3 rounded-xl border border-brown-200 bg-white p-4">
         <p class="text-sm text-brown-600">
-          Szerezd meg a <span class="font-semibold text-success-700">−{op.percent}%</span>
-          <span class="font-medium">{op.setTitle}</span> szett kedvezményt! Add hozzá a hiányzó darabokat
-          ugyanazzal az anyaggal:
+          Szerezd meg a <span class="font-medium">{op.setTitle}</span> szett kedvezményt! Add hozzá a
+          hiányzó darabokat ugyanazzal az anyaggal:
         </p>
         <div class="flex flex-wrap gap-3">
           {#each op.siblings as sibling (sibling.product.product_id)}
@@ -247,13 +234,6 @@
                   <div class="grid size-full place-items-center text-brown-300">
                     <Icon icon="mdi:image-outline" class="text-3xl" />
                   </div>
-                {/if}
-                {#if sibling.percent}
-                  <span
-                    class="absolute left-2 top-2 rounded-full bg-success-600 px-2 py-0.5 text-xs font-semibold text-white"
-                  >
-                    −{sibling.percent}%
-                  </span>
                 {/if}
               </div>
               <div class="flex flex-1 flex-col gap-1 p-2">
@@ -280,8 +260,7 @@
       >
         <p class="text-sm text-brown-600">
           Válaszd ugyanazt az anyagot a <span class="font-medium">{op.title}</span> darabhoz, és
-          megkapod a <span class="font-semibold text-success-700">−{op.percent}%</span>
-          <span class="font-medium">{op.setTitle}</span> szett kedvezményt.
+          megkapod a <span class="font-medium">{op.setTitle}</span> szett kedvezményt.
         </p>
         {#if op.editHref}
           <a

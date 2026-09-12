@@ -3,6 +3,7 @@
   import Icon from "@iconify/svelte";
   import OrderItem from "./OrderItem.svelte";
   import SetPanel from "./SetPanel.svelte";
+  import RelatedItems from "./RelatedItems.svelte";
   import Button from "./common/Button.svelte";
   import { orderBasket } from "@/lib/order/basket.svelte";
   import {
@@ -12,11 +13,7 @@
     syncMaterialsToPartner,
     hasConfigurableOptions,
   } from "@/lib/order/product";
-  import {
-    resolveSetDiscount,
-    resolveSetDiscountStatus,
-    resolveSetCoverage,
-  } from "@/lib/pricing/setDiscount";
+  import { resolveSetDiscount, resolveSetDiscountStatus } from "@/lib/pricing/setDiscount";
   import type { SetDiscountStatus } from "@/lib/pricing/setDiscount";
   import { prefillFromParams, buildMaterialParams } from "@/lib/order/queryParams";
   import { mapProductToSaved } from "@/lib/order/storage";
@@ -69,21 +66,39 @@
     return restored;
   });
 
-  // Group siblings of this product that exist in the catalog; drives the
-  // "add to set" chips.
-  const relatedProducts = $derived.by(() => {
+  // Whether a group grants a set discount; groups with a zero/absent amount are
+  // "related items" (cross-sell only), not sets.
+  const isDiscountSet = (group: CmsProductGroup): boolean => (group.discount_amount ?? 0) > 0;
+
+  // The other members of a group that this product belongs to, deduplicated and
+  // limited to products present in the catalog.
+  function siblingsOf(group: CmsProductGroup): CmsEnhancedProduct[] {
     const id = product.product_id;
-    const out: CmsEnhancedProduct[] = [];
-    for (const group of productGroups) {
-      if (!group.products.some((m) => m.product_id === id)) {
+    const members: CmsEnhancedProduct[] = [];
+    for (const { product_id: otherId } of group.products) {
+      if (otherId === id || !Object.hasOwn(products, otherId)) {
         continue;
       }
-      for (const { product_id: otherId } of group.products) {
-        if (otherId === id || !Object.hasOwn(products, otherId)) {
-          continue;
-        }
-        const sibling = products[otherId];
-        if (!out.some((p) => p.product_id === otherId)) {
+      if (!members.some((p) => p.product_id === otherId)) {
+        members.push(products[otherId]);
+      }
+    }
+    return members;
+  }
+
+  const belongsToGroup = (group: CmsProductGroup): boolean =>
+    group.products.some((m) => m.product_id === product.product_id);
+
+  // Set siblings of this product from the discount-granting sets it belongs to,
+  // merged across sets; drives the "add to set" chips in the set panel.
+  const relatedProducts = $derived.by(() => {
+    const out: CmsEnhancedProduct[] = [];
+    for (const group of productGroups) {
+      if (!isDiscountSet(group) || !belongsToGroup(group)) {
+        continue;
+      }
+      for (const sibling of siblingsOf(group)) {
+        if (!out.some((p) => p.product_id === sibling.product_id)) {
           out.push(sibling);
         }
       }
@@ -91,16 +106,20 @@
     return out;
   });
 
-  // Potential set discount per product, for annotating the "add to set" chips.
-  const discountByProductId = $derived.by(() => {
-    const map: Record<string, number> = {};
-    for (const p of Object.values(products)) {
-      const best = resolveSetDiscount(p.product_id, productGroups);
-      if (best) {
-        map[p.product_id] = best.percent;
+  // No-discount groups this product belongs to, each surfaced as its own
+  // separate "related items" list of the group's other members.
+  const relatedGroups = $derived.by(() => {
+    const out: { title: string; products: CmsEnhancedProduct[] }[] = [];
+    for (const group of productGroups) {
+      if (isDiscountSet(group) || !belongsToGroup(group)) {
+        continue;
+      }
+      const members = siblingsOf(group);
+      if (members.length > 0) {
+        out.push({ title: group.title, products: members });
       }
     }
-    return map;
+    return out;
   });
 
   const basketCountByProductId = $derived.by(() => {
@@ -133,36 +152,14 @@
     item ? resolveSetDiscountStatus(item, basket, productGroups) : undefined
   );
 
-  // Set-discount coverage for the item being configured, resolved against the
-  // basket (including this item when it isn't persisted yet) so its price
-  // reflects any set it participates in.
-  const setCoverage = $derived.by(() => {
-    const current = item;
-    if (!current) {
-      return;
-    }
-    const inBasket = basket.some((p) => p.uuid === current.uuid);
-    const effectiveBasket = inBasket ? basket : [...basket, current];
-    return resolveSetCoverage(effectiveBasket, productGroups).get(current.uuid);
-  });
-
   // Whether this product is fully configured, so set siblings can be added
   // without surfacing a validation error. Validated on a snapshot so the live
   // item doesn't flash field errors before the user submits.
   const itemReady = $derived(item ? isItemValid(validateItem($state.snapshot(item))) : false);
 
-  // Title + potential discount of the set this product belongs to, for the panel
-  // header (falls back to the group title when the product itself has no discount).
-  const setInfo = $derived.by(() => {
-    const best = resolveSetDiscount(product.product_id, productGroups);
-    if (best) {
-      return best;
-    }
-    const group = productGroups.find((g) =>
-      g.products.some((m) => m.product_id === product.product_id)
-    );
-    return group ? { percent: undefined, setTitle: group.title } : undefined;
-  });
+  // The discount set this product belongs to (biggest amount wins), for the set
+  // panel header. Absent when the product is in no discount-granting set.
+  const setInfo = $derived(resolveSetDiscount(product.product_id, productGroups));
 
   function addRelated(target: CmsEnhancedProduct): void {
     if (!item) {
@@ -286,7 +283,6 @@
       product={item}
       {threadColors}
       bare
-      {setCoverage}
       onChange={(updated) => {
         item = sanitizeItem(updated);
         saved = false;
@@ -332,16 +328,20 @@
       <div class="mt-6">
         <SetPanel
           setTitle={setInfo.setTitle}
-          percent={setInfo.percent}
           {setStatus}
           {relatedProducts}
-          relatedDiscounts={discountByProductId}
           {basketCountByProductId}
           {slugByProductId}
           ready={itemReady}
           onAddRelated={addRelated}
           onSyncToSet={syncToSet}
         />
+      </div>
+    {/if}
+
+    {#if relatedGroups.length > 0}
+      <div class="mt-6">
+        <RelatedItems groups={relatedGroups} {slugByProductId} />
       </div>
     {/if}
   {:else}

@@ -6,7 +6,6 @@
   import OrderItemFields from "./OrderItemFields.svelte";
   import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
-  import type { SetCoverageEntry } from "@/lib/pricing/setDiscount";
   import OrderItemPrice from "./OrderItemPrice.svelte";
 
   interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -14,7 +13,6 @@
     product: IProduct;
     threadColors: CmsEnhancedEmbroideryColor[];
     onChange?: (product: IProduct) => void;
-    setCoverage?: SetCoverageEntry[] | undefined;
     /** Drop the card chrome and title header so it reads as part of the page
      * (used on the product page, where the page already shows the title). */
     bare?: boolean;
@@ -25,7 +23,6 @@
     product,
     threadColors,
     onChange,
-    setCoverage,
     bare = false,
     class: className,
     ...rest
@@ -70,5 +67,5 @@
     <OrderItemMaterials {product} {onChange} material_index={i} />
   {/each}
   <div class="w-full h-0.5 bg-brown-200"></div>
-  <OrderItemPrice {product} {setCoverage} {onChange} />
+  <OrderItemPrice {product} {onChange} />
 </div>

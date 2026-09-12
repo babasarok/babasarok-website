@@ -3,16 +3,8 @@
  * it to web3forms. Kept out of the Svelte component so the form stays declarative.
  */
 import { calculatePriceForItem } from "@/lib/pricing/price";
-import {
-  resolveSetCoverage,
-  resolveSetInstances,
-  setInstanceAmount,
-} from "@/lib/pricing/setDiscount";
-import type {
-  SetCoverageEntry,
-  SetDiscountGroup,
-  SetDiscountInstance,
-} from "@/lib/pricing/setDiscount";
+import { resolveSetInstances, setInstanceAmount } from "@/lib/pricing/setDiscount";
+import type { SetDiscountGroup, SetDiscountInstance } from "@/lib/pricing/setDiscount";
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "../types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "../data";
 import { isFieldVisible } from "../product/fieldVisibility";
@@ -30,16 +22,24 @@ export interface OrderDetails {
   productGroups: SetDiscountGroup[];
 }
 
-/** Sum of every product's total plus the selected delivery method's price. */
+/**
+ * Sum of every product's total (standalone discounts already applied) plus the
+ * delivery price, minus every formed set instance's clamped flat deduction.
+ */
 export function calculateOrderTotal(
   products: IProduct[],
   deliveryMethod: CmsEnhancedDeliveryMethod,
-  setCoverage: Map<string, SetCoverageEntry[]>
+  instances: SetDiscountInstance[]
 ): { total: number } {
-  const prices = products.map((p) => calculatePriceForItem(p, setCoverage.get(p.uuid)));
-  return {
-    total: prices.reduce((sum, p) => sum + (p.totalPrice ?? 0), 0) + deliveryMethod.price,
-  };
+  const itemsTotal = products.reduce(
+    (sum, p) => sum + (calculatePriceForItem(p).totalPrice ?? 0),
+    0
+  );
+  const setDiscount = instances.reduce(
+    (sum, instance) => sum + setInstanceAmount(instance, products).amount,
+    0
+  );
+  return { total: itemsTotal + deliveryMethod.price - setDiscount };
 }
 
 /** The selected option label/value pair for a field, as shown in the email. */
@@ -110,22 +110,19 @@ function shouldSubmitField(field: Field): boolean {
 
 function formatProductString(
   product: IProduct,
-  threadColors: CmsEnhancedEmbroideryColor[],
-  setCoverage?: SetCoverageEntry[]
+  threadColors: CmsEnhancedEmbroideryColor[]
 ): string {
-  const price = calculatePriceForItem(product, setCoverage);
+  const price = calculatePriceForItem(product);
   const { materials, material_required_count, values } = product.materials;
 
-  // Per-set discount lines so each product block is self-explanatory; the forint
-  // amount uses the undiscounted unit price so the total is verifiable.
-  const unitPrice = price.unitPrice;
-  const setLines =
-    unitPrice === undefined
-      ? []
-      : (setCoverage ?? []).map((entry) => {
-          const money = Math.round((unitPrice * entry.percent * entry.count) / 100);
-          return `Szett kedvezmény (${entry.setTitle} −${entry.percent.toString()}%): -${money.toString()} Ft (${entry.count.toString()} db)`;
-        });
+  // The forint a valid standalone discount removes from the line, so the email
+  // records both the percent and the resulting amount without recomputation.
+  const undiscounted =
+    price.unitPrice === undefined ? undefined : Math.round(price.unitPrice * product.count);
+  const standaloneMoney =
+    price.discountInfo && undiscounted !== undefined && price.totalPrice !== undefined
+      ? undiscounted - price.totalPrice
+      : undefined;
 
   const lines = [
     `${product.title} (${product.count.toString()}db)`,
@@ -155,16 +152,13 @@ function formatProductString(
     ...(price.priced_by_length
       ? [`  Méterár: ${price.per_meter_price?.toString() ?? ""}Ft/m`]
       : []),
-    ...(price.discountInfo && price.discountInfo.discountSource === "standalone"
+    ...(price.discountInfo
       ? [
           `Kedvezmény: ${(price.discountInfo.percent / 100).toLocaleString("hu-HU", {
             style: "percent",
-          })} (${price.discountInfo.discountAppliedCount} db)`,
+          })}${standaloneMoney === undefined ? "" : ` (-${standaloneMoney.toString()} Ft)`} (${price.discountInfo.discountAppliedCount} db)`,
         ]
       : []),
-    // Per-set discount lines so each product block is self-explanatory; the
-    // forint amount uses the undiscounted unit price so the total is verifiable.
-    ...setLines,
     `Összár: ${price.totalPrice?.toString() ?? ""}Ft`,
   ];
 
@@ -173,10 +167,11 @@ function formatProductString(
 
 /**
  * Basket-level set-discount summary folded into the `ar` field: one line per
- * formed instance listing the set, its percent, the forint amount it removes,
- * and the member products (each prefixed with its order number, matching the
- * `termek N` blocks) so a discount maps unambiguously to specific items even
- * when titles repeat. Empty when no set discount is earned.
+ * formed instance listing the set, the forint amount it removes, and the member
+ * products (each prefixed with its order number, matching the `termek N` blocks)
+ * so a discount maps unambiguously to specific items even when titles repeat.
+ * When the flat set amount is clamped to the covered subtotal, the set's nominal
+ * amount is shown alongside the applied one. Empty when no set discount is earned.
  */
 function formatSetDiscounts(instances: SetDiscountInstance[], products: IProduct[]): string {
   if (instances.length === 0) {
@@ -187,18 +182,18 @@ function formatSetDiscounts(instances: SetDiscountInstance[], products: IProduct
   );
   const lines = instances.map((instance) => {
     const members = instance.members.map((uuid) => labelByUuid.get(uuid) ?? uuid).join(" + ");
-    const { amount } = setInstanceAmount(instance, products);
-    return `  ${instance.setTitle} szett (−${instance.percent.toString()}%): -${amount.toString()} Ft [${members}]`;
+    const { amount, nominal } = setInstanceAmount(instance, products);
+    const clamp = amount < nominal ? ` (szett kedvezmény: ${nominal.toString()} Ft)` : "";
+    return `  ${instance.setTitle} szett: -${amount.toString()} Ft${clamp} [${members}]`;
   });
   return ["Szett kedvezmények:", ...lines].join("\n");
 }
 
 function buildOrderFormData(order: OrderDetails, accessKey: string, message: string): FormData {
-  // Resolve the basket allocation once; both the total and each item's email
-  // block price from it so the set status can't be dropped by a single caller.
-  const setCoverage = resolveSetCoverage(order.products, order.productGroups);
+  // Resolve the basket allocation once; both the total and the summary price
+  // from it so the set status can't be dropped by a single caller.
   const setInstances = resolveSetInstances(order.products, order.productGroups);
-  const { total } = calculateOrderTotal(order.products, order.deliveryMethod, setCoverage);
+  const { total } = calculateOrderTotal(order.products, order.deliveryMethod, setInstances);
 
   const formData = new FormData();
   formData.append("access_key", accessKey);
@@ -209,7 +204,7 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
   for (const [index, product] of order.products.entries()) {
     formData.append(
       `termek ${(index + 1).toString()}`,
-      formatProductString(product, order.threadColors, setCoverage.get(product.uuid))
+      formatProductString(product, order.threadColors)
     );
   }
   formData.append(

@@ -1,6 +1,6 @@
 ---
 title: Ovis Felszerelés
-discount_percent: 10
+discount_amount: 0
 products:
   - product: src/content/product/vizhatlan-lepedo.md
   - product: src/content/product/vizhatlan-lepedo-ketretegu.md

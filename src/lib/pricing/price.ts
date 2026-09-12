@@ -1,16 +1,20 @@
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "../types.svelte";
 import { isFieldVisible } from "../product/fieldVisibility";
 import { findFieldByName, resolveNumericValue } from "../product/fieldValue";
-import type { SetCoverageEntry } from "./setDiscount";
 
 interface PricePart {
   label: string;
   price: number | undefined;
 }
 
+/**
+ * A line's standalone product discount: the per-line multiplier, how many units
+ * it applies to, and the raw percent. Set discounts are no longer folded into
+ * the line; they are flat, basket-level deductions (see `setInstanceAmount`) and
+ * stack on top of this standalone discount.
+ */
 interface DiscountInfo {
   discount: number;
-  discountSource: "set" | "standalone";
   discountAppliedCount: number;
   /** Raw discount percent (e.g. 15 for 15%), independent of the applied count. */
   percent: number;
@@ -100,10 +104,7 @@ function getMaterialPrice(
   };
 }
 
-export function calculatePriceForItem(
-  product: IProduct,
-  setCoverage?: SetCoverageEntry[]
-): Price | LengthBasedPrice {
+export function calculatePriceForItem(product: IProduct): Price | LengthBasedPrice {
   const parts: PricePart[] = [];
   for (const field of product.fields) {
     if (!isFieldVisible(field, product.fields)) {
@@ -140,27 +141,13 @@ export function calculatePriceForItem(
   );
 
   let discount: DiscountInfo | undefined;
-  const coveredCount = setCoverage?.reduce((sum, e) => sum + e.count, 0) ?? 0;
-  if (setCoverage && coveredCount > 0) {
-    // Effective per-line factor: every covered unit gets its set's percent, the
-    // rest pay full price. Averaged over the line so length-based pricing and
-    // the total both apply one multiplier. Generalises to units split across
-    // sets at different percents.
-    const percentUnits = setCoverage.reduce((sum, e) => sum + e.percent * e.count, 0);
-    discount = {
-      discount: 1 - percentUnits / 100 / product.count,
-      discountSource: "set",
-      discountAppliedCount: coveredCount,
-      percent: Math.max(...setCoverage.map((e) => e.percent)),
-    };
-  } else if (
+  if (
     product.discount &&
     product.discount_valid_until &&
     new Date() <= new Date(product.discount_valid_until)
   ) {
     discount = {
       discount: 1 - product.discount / 100,
-      discountSource: "standalone",
       discountAppliedCount: product.count,
       percent: product.discount,
     };

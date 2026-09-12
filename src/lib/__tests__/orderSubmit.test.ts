@@ -348,6 +348,8 @@ describe("product string content", () => {
 
     const text = form_text(await captureForm(baseOrder([product])));
     expect(text).toContain("Alapár: 10000 Ft");
+    // 20% off 20000 = 4000 Ft, recorded as both percent and forint.
+    expect(text).toContain("Kedvezmény: 20% (-4000 Ft) (2 db)");
     // 10000 * 2 * 0.8 = 16000
     expect(text).toContain("Összár: 16000Ft");
   });
@@ -444,7 +446,7 @@ describe("set-discount summary", () => {
   const setGroups = [
     {
       title: "Babafészek",
-      discount_percent: 10,
+      discount_amount: 2000,
       products: [{ product_id: "nest" }, { product_id: "blanket" }],
     },
   ];
@@ -471,7 +473,32 @@ describe("set-discount summary", () => {
     const ar = form.get("ar");
     expect(ar).toContain("Szett kedvezmények:");
     expect(ar).toContain(
-      "Babafészek szett (−10%): -2000 Ft [1. termék: Babafészek + 2. termék: Takaró]"
+      "Babafészek szett: -2000 Ft [1. termék: Babafészek + 2. termék: Takaró]"
+    );
+  });
+
+  it("shows the nominal set amount when clamped to the covered subtotal", async () => {
+    // Two 300 Ft members can only absorb 600 Ft of a 2000 Ft set discount.
+    const cheapNest = makeProduct({
+      uuid: "u1",
+      product_id: "nest",
+      title: "Babafészek",
+      price: 300,
+      values: [{ material_id: "cotton", colors: ["red"] }],
+    });
+    const cheapBlanket = makeProduct({
+      uuid: "u2",
+      product_id: "blanket",
+      title: "Takaró",
+      price: 300,
+      values: [{ material_id: "cotton", colors: ["red"] }],
+    });
+    const order = baseOrder([cheapNest, cheapBlanket]);
+    order.productGroups = setGroups;
+    const form = await captureForm(order);
+    const ar = form.get("ar");
+    expect(ar).toContain(
+      "Babafészek szett: -600 Ft (szett kedvezmény: 2000 Ft) [1. termék: Babafészek + 2. termék: Takaró]"
     );
   });
 
@@ -501,11 +528,21 @@ describe("calculateOrderTotal", () => {
       ],
     });
 
-    expect(calculateOrderTotal([known], makeDelivery("x", 1000), new Map())).toEqual({
+    expect(calculateOrderTotal([known], makeDelivery("x", 1000), [])).toEqual({
       total: 6000,
     });
-    expect(calculateOrderTotal([known, unknown], makeDelivery("x", 1000), new Map())).toEqual({
+    expect(calculateOrderTotal([known, unknown], makeDelivery("x", 1000), [])).toEqual({
       total: 6000,
+    });
+  });
+
+  it("subtracts each formed set instance's flat discount from the total", () => {
+    const nest = makeProduct({ uuid: "u1", price: 10_000 });
+    const blanket = makeProduct({ uuid: "u2", price: 10_000 });
+    const instances = [{ setTitle: "Szett", amount: 1500, members: ["u1", "u2"] }];
+    // 20000 items + 1000 delivery - 1500 set discount
+    expect(calculateOrderTotal([nest, blanket], makeDelivery("x", 1000), instances)).toEqual({
+      total: 19_500,
     });
   });
 });

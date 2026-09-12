@@ -4,39 +4,20 @@
   import { isFieldVisible } from "@/lib/product/fieldVisibility";
   import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
   import type { Field, IProduct, ProductMaterialValue } from "@/lib/types.svelte";
-  import type { SetCoverageEntry } from "@/lib/pricing/setDiscount";
 
   interface Props {
     product: IProduct;
     threadColors: CmsEnhancedEmbroideryColor[];
     /** Product page link (with `?uuid=…`) that re-opens this item for editing. */
     editHref: string | undefined;
-    /** Set-discount coverage for this line; drives the discounted price. */
-    setCoverage?: SetCoverageEntry[] | undefined;
     /** Emphasise this line while its set discount is hovered in the deals panel. */
     highlighted?: boolean;
     onRemove: () => void;
   }
 
-  let { product, threadColors, editHref, setCoverage, highlighted, onRemove }: Props = $props();
+  let { product, threadColors, editHref, highlighted, onRemove }: Props = $props();
 
-  const price = $derived(calculatePriceForItem(product, setCoverage));
-
-  // Per-set money this line saves, one row per covering set. The undiscounted
-  // unit price times the set's percent and covered units (matches the total's
-  // averaged factor, so the rows sum to the line's whole set discount).
-  const setDiscountRows = $derived.by(() => {
-    const unitPrice = price.unitPrice;
-    if (!setCoverage || unitPrice === undefined) {
-      return [];
-    }
-    return setCoverage.map((entry) => ({
-      setTitle: entry.setTitle,
-      percent: entry.percent,
-      count: entry.count,
-      money: Math.round((unitPrice * entry.percent * entry.count) / 100),
-    }));
-  });
+  const price = $derived(calculatePriceForItem(product));
 
   /** Per-option price contribution, keyed by the same label as the summary rows. */
   const priceByLabel = $derived.by(() => {
@@ -176,7 +157,7 @@
         </dd>
       </div>
     {/each}
-    {#if price.discountInfo !== undefined && price.discountInfo.discountSource === "standalone"}
+    {#if price.discountInfo !== undefined}
       <div class="flex justify-between gap-4">
         <dt class="text-brown-500">Kedvezmény</dt>
         <dd class="text-right font-medium text-green-700">
@@ -189,19 +170,6 @@
         </dd>
       </div>
     {/if}
-    {#each setDiscountRows as row (row.setTitle)}
-      <div class="flex justify-between gap-4">
-        <dt class="text-brown-500">
-          Szett kedvezmény <span class="text-brown-400">({row.setTitle} −{row.percent}%)</span>
-        </dt>
-        <dd class="text-right font-medium text-green-700">
-          −{row.money.toLocaleString("hu-HU")} Ft
-          {#if row.count < product.count}
-            ({row.count} db)
-          {/if}
-        </dd>
-      </div>
-    {/each}
   </dl>
 
   <div class="flex items-center justify-between border-t border-brown-100 pt-3">
