@@ -472,9 +472,7 @@ describe("set-discount summary", () => {
     const form = await captureForm(order);
     const ar = form.get("ar");
     expect(ar).toContain("Szett kedvezmények:");
-    expect(ar).toContain(
-      "Babafészek szett: -2000 Ft [1. termék: Babafészek + 2. termék: Takaró]"
-    );
+    expect(ar).toContain("Babafészek szett: -2000 Ft [1. termék: Babafészek + 2. termék: Takaró]");
   });
 
   it("shows the nominal set amount when clamped to the covered subtotal", async () => {

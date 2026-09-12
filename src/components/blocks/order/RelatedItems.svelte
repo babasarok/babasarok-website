@@ -23,7 +23,9 @@
 <section class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-brown-50 p-4">
   <div class="flex items-center gap-2">
     <Icon icon="mdi:link-variant" class="shrink-0 text-xl text-brown-500" />
-    <h2 class="text-sm font-semibold uppercase tracking-wide text-brown-500">Kapcsolódó termékek</h2>
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-brown-500">
+      Kapcsolódó termékek
+    </h2>
   </div>
 
   {#each groups as group (group.title)}

@@ -84,9 +84,7 @@
     deliveryMethods[deliveryMethod]
   );
 
-  const grandTotal = $derived(
-    itemsTotal.total - setDiscountTotal + (deliveryData?.price ?? 0)
-  );
+  const grandTotal = $derived(itemsTotal.total - setDiscountTotal + (deliveryData?.price ?? 0));
 
   const valid = $derived(basket.length > 0 && name.trim() !== "" && email.trim() !== "");
 

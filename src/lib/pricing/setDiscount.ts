@@ -215,8 +215,7 @@ function computeSetAllocation(basket: IProduct[], groups: SetDiscountGroup[]): S
     .map((group, index) => ({ group, index }))
     .filter(({ group }) => group.discount_amount != null && group.discount_amount > 0)
     .toSorted(
-      (a, b) =>
-        (b.group.discount_amount ?? 0) - (a.group.discount_amount ?? 0) || a.index - b.index
+      (a, b) => (b.group.discount_amount ?? 0) - (a.group.discount_amount ?? 0) || a.index - b.index
     );
 
   for (const { group } of ordered) {
