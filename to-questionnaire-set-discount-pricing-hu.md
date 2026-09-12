@@ -28,7 +28,7 @@ Példa: „10% kedvezmény” vs. „fix 20 leírás” (mindig 20 le, bármenny
 
 >
 
-### K3. Különböző *szettek* különböző százalékokat kaphatnak?
+### K3. Különböző _szettek_ különböző százalékokat kaphatnak?
 
 Ma minden szettnek már van saját százaléka (pl. A szett 10%, B szett 15%), és ha egy termék két szettben is benne van, csak a nagyobb érvényes. Ez a kérdés azt erősíti meg, hogy ezt akarod.
 
@@ -36,7 +36,7 @@ Ma minden szettnek már van saját százaléka (pl. A szett 10%, B szett 15%), �
 
 ## Mire vonatkozik a kedvezmény
 
-### K4. A kedvezmény az *egész* végtermék árára vonatkozzon, vagy csak egyes részeire?
+### K4. A kedvezmény az _egész_ végtermék árára vonatkozzon, vagy csak egyes részeire?
 
 Példa: takaró 100-as alapárral, 10-es értékű méret-opcióval és 50-es értékű anyaggal → összesen 160.
 
@@ -46,7 +46,7 @@ Példa: takaró 100-as alapárral, 10-es értékű méret-opcióval és 50-es é
 
 >
 
-### K5. Ha a fenti B vagy C opciót választod: termékenként választanád ki, *milyen opciók* számítanak be?
+### K5. Ha a fenti B vagy C opciót választod: termékenként választanád ki, _milyen opciók_ számítanak be?
 
 Példa: egy termék jelölhető „a kedvezmény az alapárra és a méretre vonatkozik, de nem az anyagra” minősítéssel. Ez azt jelentené, hogy minden konfigurálható opció (anyag, méret, extra funkció) kapna egy be/ki jelzőt a kedvezmény szempontjából.
 
@@ -54,7 +54,7 @@ Példa: egy termék jelölhető „a kedvezmény az alapárra és a méretre von
 
 ## Termékek be- és kizárása
 
-### K6. Lehet a termékeknek teljesen *kirekeszteniük magukat* a kedvezményekből?
+### K6. Lehet a termékeknek teljesen _kirekeszteniük magukat_ a kedvezményekből?
 
 Példa: egy zászlóshajó-termék, amit soha nem szeretnél kedvezményezni, még akkor is, ha kedvezményes szettben van. Ma erre nincs mód. Opciók:
 
@@ -85,4 +85,4 @@ Példa: A szettben (10%) és B szettben (15%) → csak 15%.
 
 ## Egyéb?
 
-Van-e bármi a kedvezmények *kívánt* működéséről, amit nem kérdeztünk — pl. időkorlátos akciók, mennyiségi kedvezmények, vagy a kedvezmények vevőknek történő megjelenítése?
+Van-e bármi a kedvezmények _kívánt_ működéséről, amit nem kérdeztünk — pl. időkorlátos akciók, mennyiségi kedvezmények, vagy a kedvezmények vevőknek történő megjelenítése?

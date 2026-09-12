@@ -2,17 +2,19 @@
 
 Catalogue of handmade baby products that buyers can browse. Products are managed
 as CMS content, each optionally carrying configurable fields (options,
-embroidery) and material slots, and are listed on paginated catalog pages with a
-detail page per product.
+embroidery) and material slots, and are listed on a single searchable,
+filterable product list with a detail page per product.
 
 ## Requirements
 
 ### Product content model
 
 The system SHALL model each product as CMS content carrying at least: an
-identifier (`product_id`), title, short description, body content, images
-(thumbnail plus optional gallery entries with descriptions), a base price, a
-`can_be_ordered` flag, and optional pricing/discount data.
+identifier (`product_id`), title, a single product type drawn from a fixed
+set of classification values, a tagline (free-text subtitle), short
+description, body content, images (thumbnail plus optional gallery entries
+with descriptions), a base price, a `can_be_ordered` flag, and optional
+pricing/discount data.
 
 - **Scenario: Product with configurable options**
   - WHEN a product defines configurable fields (radios, selects, toggles,
@@ -25,15 +27,56 @@ identifier (`product_id`), title, short description, body content, images
     available material choices so the order form can collect one material (and
     colors) per required slot
 
-### Product catalog list
+### Product list: search, filtering, and sorting
 
-The system SHALL provide a paginated catalog list of products, newest first,
-each entry linking to the product detail page.
+The system SHALL provide a single product list page showing all non-hidden
+products (no pagination), each entry linking to the product detail page, with:
+
+- **Text search** over product title and short description.
+- **Filtering by product type**: multiple selections within the type
+  dimension are OR-combined.
+- **Filtering by product set**: a product matches the set filter when it is
+  a member of a selected set; multiple set selections are OR-combined.
+- **Sorting**: newest first (default) or by name (title, ascending).
+
+The active search text, selected types, selected sets, and sort order SHALL
+be expressed in URL query parameters; the page SHALL apply them on load and
+update them as the visitor changes the view, so any filtered view is
+shareable. Dimensions are AND-combined with each other and with the search
+text. When no product matches, the list SHALL show an empty state with a way
+to clear the filters. When JavaScript is unavailable, the page SHALL render
+the full product list (newest first) with search, filtering, and sorting
+inert.
 
 - **Scenario: Browsing the catalogue**
   - WHEN a visitor opens the product list
-  - THEN they see the most recently added products first, with pagination
-    available beyond the first page
+  - THEN they see all non-hidden products, most recently added first, without
+    pagination
+- **Scenario: Text search**
+  - WHEN a visitor types a search term
+  - THEN the list narrows to products whose title or short description
+    matches, without a page reload
+- **Scenario: Filtering by type**
+  - WHEN a visitor selects one or more product types
+  - THEN the list shows only products of the selected types, combined with
+    any other active dimension
+- **Scenario: Filtering by set**
+  - WHEN a visitor selects a product set
+  - THEN the list shows only the member products of the selected sets
+- **Scenario: Sorting by name**
+  - WHEN a visitor selects name sorting
+  - THEN the list is ordered alphabetically by title, ascending
+- **Scenario: Deep link to a filtered view**
+  - WHEN a visitor opens a product list URL carrying search, filter, or sort
+    parameters
+  - THEN the list is displayed with those already applied
+- **Scenario: No matching products**
+  - WHEN no product matches the active search and filters
+  - THEN an empty state is shown with an affordance to clear the filters
+- **Scenario: No JavaScript**
+  - WHEN the product list is rendered without JavaScript
+  - THEN the full product list is shown and search, filtering, and sorting
+    are inert
 
 ### Product detail page
 
