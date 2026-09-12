@@ -27,7 +27,6 @@ import { getCollection, type InferEntrySchema } from "astro:content";
 import type { ImageFunction } from "astro/content/config";
 import type { z } from "astro/zod";
 import type { GetImageResult, ImageMetadata } from "astro";
-import { getImage } from "astro:assets";
 import { resolveImage } from "./assets";
 import {
   canSupplyStringValue,
@@ -274,26 +273,37 @@ export interface SlimImage {
   attributes: GetImageResult["attributes"];
 }
 
-/**
- * Like {@link optimizeImage} but returns only the {@link SlimImage} fields the
- * order island renders. Use for every image serialized into island props;
- * reserve {@link optimizeImage} for images handed back to Astro's `<Image>`
- * (the header/footer logos), which needs the full result to re-optimize.
- */
-export async function optimizeIslandImage(
-  src: string | ImageMetadata,
-  width: number
-): Promise<SlimImage | undefined> {
-  const optimized = await resolveImage({ src, width });
-  if (!optimized) {
-    return undefined;
-  }
-
+/** Project a full `GetImageResult` down to the {@link SlimImage} fields. */
+function toSlimImage(optimized: GetImageResult): SlimImage {
   return {
     src: optimized.src,
     srcSet: { attribute: optimized.srcSet.attribute },
     attributes: optimized.attributes,
   };
+}
+
+/**
+ * Like {@link optimizeImage} but returns only the {@link SlimImage} fields the
+ * order island renders. Use for every image serialized into island props;
+ * reserve {@link optimizeImage} for images handed back to Astro's `<Image>`
+ * (the header/footer logos), which needs the full result to re-optimize.
+ *
+ * Accepts both CMS/config path strings (resolved against the `src/assets` glob)
+ * and already-resolved content-collection `ImageMetadata`. Pass `sizes` for
+ * images rendered at variable widths (e.g. product-card thumbnails) so the
+ * browser gets a meaningful responsive `srcset`.
+ */
+export async function optimizeIslandImage(
+  src: string | ImageMetadata,
+  width: number,
+  sizes?: string
+): Promise<SlimImage | undefined> {
+  const optimized = await resolveImage({ src, width, sizes });
+  if (!optimized) {
+    return undefined;
+  }
+
+  return toSlimImage(optimized);
 }
 
 // Render widths (2x for retina) for images consumed outside `<Image>`.
@@ -302,26 +312,6 @@ const LOGO_WIDTH = 400; // ~100–200px header logo
 const FOOTER_LOGO_WIDTH = 510; // ~255px footer logo
 export const PRODUCT_CARD_IMAGE_WIDTH = 600; // ~300px product-card thumbnail
 export const PRODUCT_CARD_IMAGE_SIZES = "(min-width: 1024px) 300px, 250px";
-
-/**
- * Island-ready image for an Astro content collection image (`image()` schema
- * field). Unlike {@link optimizeIslandImage} — which resolves CMS media paths
- * into the `src/assets` glob — content-layer images go straight through the
- * image pipeline, as Astro's `<Image>` does.
- */
-export async function optimizeContentImage(
-  image: ImageMetadata,
-  width: number,
-  sizes: string
-): Promise<SlimImage | undefined> {
-  const optimized = await getImage({ src: image, width, sizes });
-
-  return {
-    src: optimized.src,
-    srcSet: { attribute: optimized.srcSet.attribute },
-    attributes: optimized.attributes,
-  };
-}
 
 export const getConfig = async (): Promise<
   RecursiveRequired<CmsEnhancedConfig, GetImageResult>
