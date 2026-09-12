@@ -22,9 +22,27 @@ classification.
 _Avoid_: category, subtitle-as-taxonomy
 
 **Product set**:
-A named collection of products that earns a set discount when bought together.
-Membership is declared on the set, not on the products.
+A named collection of products that earns a **fixed-forint set discount** when
+bought together as a set instance. The discount is a flat amount per formed
+instance, not a percentage. Membership is declared on the set, not on the
+products. A collection whose discount is `0` or absent is not a set — it is
+_Related items_ (see below).
 _Avoid_: group, bundle
+
+**Set instance**:
+One unit each of two or more distinct members of the same product set whose
+selected materials are pairwise compatible. The flat set discount applies once
+per formed instance (clamped so it never exceeds that instance's charged
+subtotal).
+_Avoid_: bundle, pair
+
+**Related items**:
+A product group that grants no discount (`discount_amount` of `0` or absent).
+It is a cross-sell only: the members are shown together on the product page as
+"Kapcsolódó termékek", never as a set deal and never in the basket's set
+discounts section. A product in several such groups shows each group as its own
+separate list.
+_Avoid_: set, szett, bundle
 
 **Material**:
 A fabric a product can be made from (e.g. duplagéz, minky, pamut). Materials

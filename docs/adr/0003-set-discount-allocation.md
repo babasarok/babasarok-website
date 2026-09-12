@@ -1,6 +1,10 @@
 # ADR 0003: Set-discount model — percent per set, material-gated, per-unit greedy allocation
 
-- **Status:** accepted (v2 — supersedes the pairwise/exact-match model of 2026-08-29)
+- **Status:** superseded by ADR 0005 (fixed-forint set discount). The
+  material-gated matching and per-unit greedy allocation (decisions 3–5) still
+  stand; the percent model, "biggest percent wins / no stacking with
+  standalone" (decisions 1, 2), and percent-based display (decision 6) are
+  replaced by ADR 0005.
 - **Date:** 2026-09
 
 ## Context
