@@ -5,7 +5,7 @@ import { test, expect, type ConsoleMessage, type Locator } from "@playwright/tes
  * on /checkout is the current one — add new island-bearing routes here as they
  * appear so they get the same hydration guarantee.
  */
-const ISLAND_ROUTES = ["/checkout"];
+const ISLAND_ROUTES = ["/checkout", "/product/"];
 
 /**
  * Console / page-error text that signals a *hydration* failure specifically, so
