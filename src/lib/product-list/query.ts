@@ -94,9 +94,7 @@ export function applyListState<TProduct extends ListProduct>(
   const sorted =
     state.sort === "name"
       ? matches.toSorted((a, b) => a.title.localeCompare(b.title, "hu"))
-      : matches.toSorted(
-          (a, b) => (b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0)
-        );
+      : matches.toSorted((a, b) => (b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0));
 
   return sorted;
 }

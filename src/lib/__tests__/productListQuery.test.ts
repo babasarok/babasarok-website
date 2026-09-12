@@ -184,13 +184,7 @@ describe("applyListState", () => {
       product({ title: "New", date: day("2026-01-01") }),
     ];
     const result = applyListState(products, defaultState);
-    expect(result.map((p) => p.title)).toEqual([
-      "New",
-      "Same",
-      "Same2",
-      "Old",
-      "No date",
-    ]);
+    expect(result.map((p) => p.title)).toEqual(["New", "Same", "Same2", "Old", "No date"]);
   });
 
   it("sorts by name ascending using the Hungarian locale", () => {

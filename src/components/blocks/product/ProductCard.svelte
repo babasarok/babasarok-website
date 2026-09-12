@@ -11,10 +11,7 @@
   let { href, title, category, image }: Props = $props();
 </script>
 
-<a
-  {href}
-  class="group flex h-full w-62.5 flex-col items-center sm:items-start lg:w-75"
->
+<a {href} class="group flex h-full w-62.5 flex-col items-center sm:items-start lg:w-75">
   {#if image}
     <img
       src={image.src}
@@ -28,7 +25,7 @@
     <span class="text-body mt-3.5 block text-sm leading-none">{category}</span>
   {/if}
   <h3
-    class="text-h5 text-headings text-dark mt-1.5 text-center leading-tight group-hover:text-sand-300 sm:text-start"
+    class="text-h5 text-dark mt-1.5 text-center leading-tight group-hover:text-sand-300 sm:text-start"
   >
     {title}
   </h3>
