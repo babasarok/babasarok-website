@@ -1,6 +1,7 @@
 ---
 product_id: Pelenkazoneszeszer
 title: 'Pelenkázó neszeszer '
+type: zsak
 can_be_ordered: true
 date: 2026-08-03T17:14:31.004Z
 thumbnail: /src/assets/IMG_5374.webp

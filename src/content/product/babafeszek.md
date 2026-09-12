@@ -1,6 +1,7 @@
 ---
 product_id: babafeszek
 title: Babafészek
+type: babafeszek
 can_be_ordered: true
 categories: A nyugodt alvás titka
 date: 2024-02-02T06:49:27.000Z

@@ -1,6 +1,7 @@
 ---
 product_id: Eu borito
 title: 'Egészségügyi kiskönyv borító '
+type: kiegeszito
 can_be_ordered: true
 date: 2026-08-03T17:28:21.357Z
 thumbnail: /src/assets/att.zqkp6Ozzth5q6TPlE7-T9BT9nAxSx8FyWm_88ZJbkGw.webp

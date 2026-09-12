@@ -1,6 +1,7 @@
 ---
 product_id: hagyomanyos-racsvedo
 title: Hagyományos Rácsvédő
+type: racsvedo
 can_be_ordered: true
 categories: A biztonságos pihenésért
 date: 2020-08-12T12:07:16.000Z

@@ -1,6 +1,7 @@
 ---
 product_id: diszparna
 title: Díszpárna
+type: parna
 can_be_ordered: true
 date: 2026-07-01T09:37:02.428Z
 price: 3500

@@ -1,6 +1,7 @@
 ---
 product_id: wellsoft-takaro-egyreteg
 title: Meleg Wellsoft Takaró (egyrétegű)
+type: takaro
 can_be_ordered: true
 date: 2026-02-01T10:42:40.867Z
 price: 5000

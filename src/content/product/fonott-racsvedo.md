@@ -1,6 +1,7 @@
 ---
 product_id: racsvedo
 title: Fonott Rácsvédő (Teddy/Velúr)
+type: racsvedo
 can_be_ordered: true
 categories: A baba biztonsága és stílusa egyben
 date: 2025-05-20T12:07:16.000Z

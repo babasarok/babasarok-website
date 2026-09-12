@@ -1,6 +1,7 @@
 ---
 product_id: gezpelenka-szett
 title: Gézpelenka szett
+type: kiegeszito
 can_be_ordered: true
 categories: ''
 date: 2020-08-11T12:07:16.000Z

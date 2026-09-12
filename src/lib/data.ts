@@ -35,6 +35,7 @@ import {
   type EmbroideryPriceUnit,
   type ProductFieldType,
 } from "./product/fieldTypes";
+import { isProductType, type ProductType } from "./product/productTypes";
 import type { LengthBasedPricingConfig } from "./types.svelte";
 
 type Image = z.infer<ReturnType<ImageFunction>>;
@@ -154,6 +155,7 @@ export interface CmsEnhancedProduct extends Omit<
   materials?: CmsEnhancedProductMaterials | undefined | null;
   fields?: Array<CmsField | undefined | null> | undefined | null;
   length_based_pricing?: LengthBasedPricingConfig | undefined | null;
+  type: ProductType;
 }
 
 type AstroProduct = RecursivelyReplaceKeyType<
@@ -376,6 +378,14 @@ function toProductFieldType(type: string): ProductFieldType {
   throw new Error(`Ismeretlen termék mező típus: ${type}`);
 }
 
+/** Narrow Tina's loose `type: string` to the product type discriminant. */
+function toProductType(type: string): ProductType {
+  if (isProductType(type)) {
+    return type;
+  }
+  throw new Error(`Ismeretlen termék típus: ${type}`);
+}
+
 /**
  * Fail the build when a product's cross-field references point at a missing (or
  * unusable) field. These references are plain strings in the CMS, so without
@@ -455,6 +465,7 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
       hidden_in_product_list: product.hidden_in_product_list ?? undefined,
       can_be_ordered: product.can_be_ordered ?? undefined,
       categories: product.categories ?? undefined,
+      type: toProductType(product.type),
       date: product.date ? new Date(product.date) : undefined,
       thumbnail: product.thumbnail
         ? await optimizeIslandImage(product.thumbnail, LOGO_WIDTH)

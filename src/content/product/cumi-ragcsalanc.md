@@ -1,6 +1,7 @@
 ---
 product_id: cumilanc
 title: Cumi- és rágcsalánc
+type: kiegeszito
 can_be_ordered: true
 categories: Egyedi és praktikus segítők a fogzás idejére
 date: 2025-04-27T06:49:27.000Z

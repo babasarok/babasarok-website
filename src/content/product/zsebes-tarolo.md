@@ -1,6 +1,7 @@
 ---
 product_id: zsebes-tarolo
 title: Zsebes tároló kiságyra
+type: zsak
 can_be_ordered: true
 categories: Rendszerezz könnyebben
 date: 2020-08-11T12:07:16.000Z

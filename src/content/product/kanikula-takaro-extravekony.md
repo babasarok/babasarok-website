@@ -1,6 +1,7 @@
 ---
 product_id: kanikula-takaro-extravekony
 title: Kánikulatakaró (extravékony, egyrétegű)
+type: takaro
 categories: A tökéletes megoldás a forró napokra
 can_be_ordered: true
 date: 2026-07-08T09:40:01.621Z

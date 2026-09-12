@@ -14,6 +14,7 @@ import {
   isProductFieldType,
   PRODUCT_FIELD_TYPES,
 } from "../../src/lib/product/fieldTypes";
+import { PRODUCT_TYPES } from "../../src/lib/product/productTypes";
 
 /**
  * Products ("Termékek") — backs `src/content/product/*.md` and the `/product`
@@ -77,6 +78,13 @@ export const ProductCollection: Collection = {
       type: "string",
       name: "categories",
       label: "Alcím",
+    },
+    {
+      type: "string",
+      name: "type",
+      label: "Típus",
+      required: true,
+      options: PRODUCT_TYPES.map((t) => ({ value: t.value, label: t.label })),
     },
     {
       type: "datetime",

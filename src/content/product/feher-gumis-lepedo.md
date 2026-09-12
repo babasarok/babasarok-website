@@ -1,6 +1,7 @@
 ---
 product_id: feher-gumis-lepedo
 title: Gumis Lepedő
+type: lepedo
 categories: 100% pamut gumis lepedő
 date: 2026-07-01T09:37:50.600Z
 thumbnail: /src/assets/polish_save.webp

@@ -1,6 +1,7 @@
 ---
 product_id: kanikula-takaro
 title: Kánikulatakaró (kétrétegű)
+type: takaro
 categories: A tökéletes megoldás a forró napokra
 can_be_ordered: true
 date: 2026-06-28T09:45:13.551Z

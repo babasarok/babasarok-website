@@ -1,6 +1,7 @@
 ---
 product_id: polya
 title: Pólya
+type: kiegeszito
 can_be_ordered: true
 date: 2020-08-11T12:07:16.000Z
 thumbnail: /src/assets/Noémi-19.webp

@@ -1,6 +1,7 @@
 ---
 product_id: racsvedo-pamutjersey
 title: Fonott rácsvédő (Pamutjersey)
+type: racsvedo
 categories: Pamutjersey fonott rácsvédő
 can_be_ordered: true
 date: 2026-02-09T10:42:21.210Z

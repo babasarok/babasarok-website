@@ -1,6 +1,7 @@
 ---
 product_id: baldachin
 title: Baldachin
+type: kiegeszito
 can_be_ordered: true
 categories: A babaszoba stílusos kiegészítője
 date: 2024-02-02T06:49:27.000Z
