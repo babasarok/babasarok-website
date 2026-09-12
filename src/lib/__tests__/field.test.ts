@@ -1,19 +1,86 @@
 /**
- * Conditional field visibility (`depends_on`).
+ * The product field module (`product/field`): typed value access (issue #15)
+ * and conditional visibility (`depends_on`).
  *
- * A field configured with `depends_on` is only active when the referenced field
- * currently holds the required value (or, when no value is given, any value).
- * `isFieldVisible` is the single source of truth the order form, pricing and
- * validation all consult, so these tests cover the helper directly plus its two
- * integrations that matter to the user: hidden fields drop out of the price and
- * never block submission.
+ * Field references resolve to their value through here, narrowing on `kind`
+ * instead of coercing a raw string; `isFieldVisible` is the single source of
+ * truth the order form, pricing and validation all consult. These tests cover
+ * the helpers directly plus the two integrations that matter to the user:
+ * hidden fields drop out of the price and never block submission.
  */
 import { describe, expect, it } from "vitest";
-import { isFieldVisible } from "@/lib/product/fieldVisibility";
+import {
+  findFieldByName,
+  resolveFieldValue,
+  resolveNumericValue,
+  isFieldVisible,
+} from "@/lib/product/field";
 import { calculatePriceForItem } from "@/lib/pricing/price";
 import { isItemValid, validateItem } from "@/lib/product/validation";
 import type { Field } from "@/lib/types.svelte";
 import { fieldError, makeField, makeProduct } from "./fixtures";
+
+describe("resolveFieldValue", () => {
+  it("is empty for a missing field", () => {
+    // eslint-disable-next-line unicorn/no-useless-undefined
+    expect(resolveFieldValue(undefined)).toEqual({ kind: "empty" });
+  });
+
+  it("is empty for an embroidery field (no scalar to reference)", () => {
+    const field = makeField({ name: "himzes", type: "embroidery" });
+    expect(resolveFieldValue(field)).toEqual({ kind: "empty" });
+  });
+
+  it("resolves a toggle to a boolean", () => {
+    const field = makeField({ name: "csomag", type: "toggle", value: { value: true } });
+    expect(resolveFieldValue(field)).toEqual({ kind: "boolean", value: true });
+  });
+
+  it("resolves a filled string field to a string", () => {
+    const field = makeField({ name: "nev", type: "input", value: { value: "Anna" } });
+    expect(resolveFieldValue(field)).toEqual({ kind: "string", value: "Anna" });
+  });
+
+  it("collapses a blank string value to empty", () => {
+    const field = makeField({ name: "nev", type: "input", value: { value: "" } });
+    expect(resolveFieldValue(field)).toEqual({ kind: "empty" });
+  });
+});
+
+describe("resolveNumericValue", () => {
+  it("parses a numeric string value", () => {
+    const field = makeField({ name: "meret", type: "radio", value: { value: "300" } });
+    expect(resolveNumericValue(field)).toBe(300);
+  });
+
+  it("is undefined for a non-numeric string", () => {
+    const field = makeField({ name: "meret", type: "radio", value: { value: "nagy" } });
+    expect(resolveNumericValue(field)).toBeUndefined();
+  });
+
+  it("is undefined for a toggle (non-string value)", () => {
+    const field = makeField({ name: "csomag", type: "toggle", value: { value: true } });
+    expect(resolveNumericValue(field)).toBeUndefined();
+  });
+
+  it("is undefined for a missing field", () => {
+    // eslint-disable-next-line unicorn/no-useless-undefined
+    expect(resolveNumericValue(undefined)).toBeUndefined();
+  });
+});
+
+describe("findFieldByName", () => {
+  it("finds a field by its name", () => {
+    const a = makeField({ name: "a", type: "input" });
+    const b = makeField({ name: "b", type: "input" });
+    expect(findFieldByName([a, b], "b")).toBe(b);
+  });
+
+  it("returns undefined when no field matches", () => {
+    const a = makeField({ name: "a", type: "input" });
+    expect(findFieldByName([a], "nincs")).toBeUndefined();
+  });
+});
 
 describe("isFieldVisible", () => {
   it("shows a field with no dependency", () => {

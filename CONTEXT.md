@@ -36,6 +36,14 @@ per formed instance (clamped so it never exceeds that instance's charged
 subtotal).
 _Avoid_: bundle, pair
 
+**Basket pricing**:
+The resolved pricing of the current basket in one pass: each item's set-discount
+status, the formed set instances with their clamped discount amounts, the items
+subtotal, and the total set discount. Computed once and read by the checkout
+display, the deals panel, and order submission so the price shown always equals
+the price charged.
+_Avoid_: cart total, price summary
+
 **Related items**:
 A product group that grants no discount (`discount_amount` of `0` or absent).
 It is a cross-sell only: the members are shown together on the product page as

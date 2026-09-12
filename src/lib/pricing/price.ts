@@ -1,6 +1,5 @@
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "../types.svelte";
-import { isFieldVisible } from "../product/fieldVisibility";
-import { findFieldByName, resolveNumericValue } from "../product/fieldValue";
+import { isFieldVisible, findFieldByName, resolveNumericValue } from "../product/field";
 
 interface PricePart {
   label: string;

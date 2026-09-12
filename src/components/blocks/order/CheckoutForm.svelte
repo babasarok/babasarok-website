@@ -11,9 +11,9 @@
   import { restoreProducts } from "@/lib/order/product";
   import { loadOrderState, updateOrderEnvelope } from "@/lib/order/storage";
   import { isItemValid, validateItem } from "@/lib/product/validation";
-  import { submitOrder, calculateOrderTotal } from "@/lib/order/submit";
-  import { calculatePriceForItem } from "@/lib/pricing/price";
-  import { resolveSetInstances, setInstanceAmount } from "@/lib/pricing/setDiscount";
+  import { submitOrder } from "@/lib/order/submit";
+  import { orderTotal } from "@/lib/order/total";
+  import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
   import type {
     CmsEnhancedConfig,
     CmsEnhancedDeliveryMethod,
@@ -67,24 +67,15 @@
     mounted ? restoreProducts($state.snapshot(orderBasket.items), catalog) : []
   );
 
-  // Formed set instances and the flat forint they remove from the basket total.
-  const setInstances = $derived(resolveSetInstances(basket, productGroups));
-  const setDiscountTotal = $derived(
-    setInstances.reduce((sum, instance) => sum + setInstanceAmount(instance, basket).amount, 0)
-  );
-
-  const itemsTotal = $derived.by(() => {
-    const prices = basket.map((p) => calculatePriceForItem(p));
-    return {
-      total: prices.reduce((sum, p) => sum + (p.totalPrice ?? 0), 0),
-    };
-  });
+  // The whole basket's set pricing, resolved once: statuses, formed instances
+  // with their clamped amounts, and the totals. Shared with CheckoutDeals.
+  const pricing = $derived(resolveBasketPricing(basket, productGroups));
 
   const deliveryData = $derived<CmsEnhancedDeliveryMethod | undefined>(
     deliveryMethods[deliveryMethod]
   );
 
-  const grandTotal = $derived(itemsTotal.total - setDiscountTotal + (deliveryData?.price ?? 0));
+  const grandTotal = $derived(orderTotal(pricing, deliveryData?.price ?? 0));
 
   const valid = $derived(basket.length > 0 && name.trim() !== "" && email.trim() !== "");
 
@@ -157,11 +148,7 @@
       try {
         globalThis.window.fbq("track", "Purchase", {
           currency: "HUF",
-          value: calculateOrderTotal(
-            items,
-            deliveryMethodData,
-            resolveSetInstances(items, productGroups)
-          ).total,
+          value: orderTotal(resolveBasketPricing(items, productGroups), deliveryMethodData.price),
           num_items: items.length,
         });
       } catch (e) {
@@ -246,6 +233,7 @@
       <div class="flex flex-col gap-6">
         <CheckoutDeals
           {basket}
+          {pricing}
           products={productInfo}
           {productGroups}
           {slugByProductId}

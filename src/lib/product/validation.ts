@@ -1,7 +1,7 @@
 import { resolveColorCount } from "./materials";
 import type { CmsProductMaterial, Field, IProduct } from "../types.svelte";
 import type { ProductMaterialValue } from "../types.svelte";
-import { isFieldVisible } from "./fieldVisibility";
+import { isFieldVisible } from "./field";
 
 const emptyEmbroideryValue = {
   enabled: false,

@@ -10,6 +10,62 @@ export interface SetDiscountGroup {
 }
 
 /**
+ * Whether a product group grants a set discount (a positive flat amount). A
+ * group with a zero or absent amount is "related items" (cross-sell only), not
+ * a set. The one home for the set-vs-related rule. See `CONTEXT.md`.
+ */
+export function isSet(group: SetDiscountGroup): boolean {
+  return (group.discount_amount ?? 0) > 0;
+}
+
+/**
+ * The product ids of the other members of every discount-granting set the
+ * product belongs to, merged across sets and de-duplicated (the product itself
+ * excluded). Callers resolve the ids against the catalog. Related-items groups
+ * contribute nothing.
+ */
+export function siblingsFor(productId: string, groups: SetDiscountGroup[]): string[] {
+  const out: string[] = [];
+  for (const group of groups) {
+    if (!isSet(group) || !group.products.some((m) => m.product_id === productId)) {
+      continue;
+    }
+    for (const { product_id } of group.products) {
+      if (product_id !== productId && !out.includes(product_id)) {
+        out.push(product_id);
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * The no-discount "related items" groups the product belongs to, in group order,
+ * each with its other members' product ids (de-duplicated, the product itself
+ * excluded). Discount-granting sets are ignored. Callers resolve the ids against
+ * the catalog and drop empty groups.
+ */
+export function relatedGroupsFor(
+  productId: string,
+  groups: SetDiscountGroup[]
+): { title: string; members: string[] }[] {
+  const out: { title: string; members: string[] }[] = [];
+  for (const group of groups) {
+    if (isSet(group) || !group.products.some((m) => m.product_id === productId)) {
+      continue;
+    }
+    const members: string[] = [];
+    for (const { product_id } of group.products) {
+      if (product_id !== productId && !members.includes(product_id)) {
+        members.push(product_id);
+      }
+    }
+    out.push({ title: group.title, members });
+  }
+  return out;
+}
+
+/**
  * The best set discount a product qualifies for: the largest flat set amount
  * across every set the product belongs to. When a product is in more than one
  * set, the biggest discount wins (no stacking). Groups with a zero or absent
@@ -22,10 +78,10 @@ export function resolveSetDiscount(
 ): { amount: number; setTitle: string } | undefined {
   let best: { amount: number; setTitle: string } | undefined;
   for (const group of groups) {
-    const amount = group.discount_amount;
-    if (amount == null || amount <= 0 || !group.products.some((m) => m.product_id === productId)) {
+    if (!isSet(group) || !group.products.some((m) => m.product_id === productId)) {
       continue;
     }
+    const amount = group.discount_amount ?? 0;
     if (!best || amount > best.amount) {
       best = { amount, setTitle: group.title };
     }
@@ -99,7 +155,7 @@ export function materialsMatch(a: IProduct, b: IProduct): boolean {
 /**
  * The set discount an item actively earns given the current basket: the
  * winning set's title and how many of the item's units it covers. The flat
- * forint figure is a property of the formed instance (see `setInstanceAmount`)
+ * forint figure is a property of the formed instance (see `ResolvedSetInstance`)
  * and is surfaced at basket level, not per line.
  */
 export type ActiveDiscountStatus = {
@@ -153,10 +209,10 @@ export function canSyncMaterials(item: IProduct, partner: IProduct): boolean {
  * members whose materials are mutually compatible. `members` lists the basket
  * line uuids (one per member product) that each contribute one unit. `amount`
  * is the set's nominal flat forint discount for this instance; the amount it
- * actually removes is clamped by `setInstanceAmount`. See the `product-sets`
+ * actually removes is clamped by `clampInstanceAmount`. See the `product-sets`
  * spec in `docs/specs/product-sets.md`.
  */
-export interface SetDiscountInstance {
+interface SetDiscountInstance {
   setTitle: string;
   amount: number;
   members: string[];
@@ -386,38 +442,13 @@ function pendingStatus(
 }
 
 /**
- * Per-item set status of every basket item in one global pass. A per-item
- * lookup into the shared allocation; use `resolveSetInstances` for the
- * basket-level display and pricing.
- */
-export function allocateSetDiscounts(
-  basket: IProduct[],
-  groups: SetDiscountGroup[]
-): Map<string, SetDiscountStatus> {
-  return computeSetAllocation(basket, groups).statuses;
-}
-
-/**
- * The set-discount instances formed by the current basket, in allocation order,
- * for the basket-level "set discounts" display and the order total.
- */
-export function resolveSetInstances(
-  basket: IProduct[],
-  groups: SetDiscountGroup[]
-): SetDiscountInstance[] {
-  return computeSetAllocation(basket, groups).instances;
-}
-
-/**
  * The forint amount a formed set instance actually removes from the order: the
  * set's flat `amount`, clamped so it never exceeds the covered units' charged
  * subtotal (one unit of each member, each after its own standalone discount).
  * `nominal` is the set's unclamped flat amount, kept so the order email can show
  * both. Members whose price is unknown contribute nothing to the subtotal.
- * Shared by the checkout display and the submitted order text so both report the
- * same numbers.
  */
-export function setInstanceAmount(
+function clampInstanceAmount(
   instance: SetDiscountInstance,
   basket: IProduct[]
 ): { amount: number; nominal: number } {
@@ -440,14 +471,43 @@ export function setInstanceAmount(
 }
 
 /**
- * The state of an item's best set discount relative to the current basket, for
- * surfacing in the UI. Per-item convenience lookup into `allocateSetDiscounts`,
- * which resolves the whole basket at once.
+ * A formed set instance as surfaced to the UI and order: its member basket
+ * lines, the set's nominal flat discount, and the `amount` it actually removes
+ * (clamped to the covered subtotal by {@link clampInstanceAmount}).
  */
-export function resolveSetDiscountStatus(
-  item: IProduct,
+export interface ResolvedSetInstance {
+  setTitle: string;
+  members: string[];
+  nominal: number;
+  amount: number;
+}
+
+/**
+ * The current basket's set pricing, resolved in one allocation pass: each item's
+ * set-discount `status`, the formed `instances` (each with its clamped amount),
+ * the `itemsTotal` subtotal (standalone discounts already applied), and the
+ * `setDiscountTotal` those instances remove. Read by the checkout display, the
+ * deals panel, and order submission so the price shown always equals the price
+ * charged. See the `product-sets` spec in `docs/specs/product-sets.md`.
+ */
+export interface BasketPricing {
+  statuses: Map<string, SetDiscountStatus>;
+  instances: ResolvedSetInstance[];
+  itemsTotal: number;
+  setDiscountTotal: number;
+}
+
+/** Resolve the whole basket's set pricing in a single allocation pass. */
+export function resolveBasketPricing(
   basket: IProduct[],
   groups: SetDiscountGroup[]
-): SetDiscountStatus | undefined {
-  return allocateSetDiscounts(basket, groups).get(item.uuid);
+): BasketPricing {
+  const allocation = computeSetAllocation(basket, groups);
+  const instances = allocation.instances.map((instance): ResolvedSetInstance => {
+    const { amount, nominal } = clampInstanceAmount(instance, basket);
+    return { setTitle: instance.setTitle, members: instance.members, nominal, amount };
+  });
+  const itemsTotal = basket.reduce((sum, p) => sum + (calculatePriceForItem(p).totalPrice ?? 0), 0);
+  const setDiscountTotal = instances.reduce((sum, instance) => sum + instance.amount, 0);
+  return { statuses: allocation.statuses, instances, itemsTotal, setDiscountTotal };
 }

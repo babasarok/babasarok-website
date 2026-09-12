@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { calculatePriceForItem } from "@/lib/pricing/price";
-  import { isFieldVisible } from "@/lib/product/fieldVisibility";
+  import { isFieldVisible } from "@/lib/product/field";
   import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
   import type { Field, IProduct, ProductMaterialValue } from "@/lib/types.svelte";
 

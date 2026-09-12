@@ -11,7 +11,9 @@
  * delivery, total, …), not just one helper.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { calculateOrderTotal, submitOrder, type OrderDetails } from "@/lib/order/submit";
+import { submitOrder, type OrderDetails } from "@/lib/order/submit";
+import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
+import { orderTotal } from "@/lib/order/total";
 import { makeDelivery, makeField, makeMaterial, makeProduct } from "./fixtures";
 
 afterEach(() => {
@@ -510,38 +512,57 @@ describe("set-discount summary", () => {
   });
 });
 
-describe("calculateOrderTotal", () => {
-  it("sums product totals plus delivery, treating unpriced parts as zero", () => {
-    const known = makeProduct({ price: 5000 });
-    // An unpriced selected option contributes nothing to this product's total.
-    const unknown = makeProduct({
-      price: 0,
-      fields: [
-        makeField({
-          name: "opt",
-          type: "radio",
-          items: [{ value: "a", label: "A" }],
-          value: { value: "a" },
-        }),
-      ],
+describe("submitted total equals the shared order total (visible == charged)", () => {
+  const setGroups = [
+    {
+      title: "Babafészek",
+      discount_amount: 2000,
+      products: [{ product_id: "nest" }, { product_id: "blanket" }],
+    },
+  ];
+  const member = (
+    uuid: string,
+    product_id: string,
+    price: number
+  ): ReturnType<typeof makeProduct> =>
+    makeProduct({
+      uuid,
+      product_id,
+      title: product_id,
+      price,
+      values: [{ material_id: "cotton", colors: ["red"] }],
     });
 
-    expect(calculateOrderTotal([known], makeDelivery("x", 1000), [])).toEqual({
-      total: 6000,
-    });
-    expect(calculateOrderTotal([known, unknown], makeDelivery("x", 1000), [])).toEqual({
-      total: 6000,
-    });
+  it("puts the same figure in `ar` as orderTotal over the resolved basket pricing", async () => {
+    const products = [member("u1", "nest", 10_000), member("u2", "blanket", 10_000)];
+    const delivery = makeDelivery("Foxpost automata", 990, "foxpost");
+    const order: OrderDetails = { ...baseOrder(products), deliveryMethod: delivery };
+    order.productGroups = setGroups;
+
+    // The number the checkout display path computes for the same basket.
+    const expected = orderTotal(resolveBasketPricing(products, setGroups), delivery.price);
+    // 20000 items - 2000 set discount + 990 delivery
+    expect(expected).toBe(18_990);
+
+    const form = await captureForm(order);
+    const arFirstLine = (form.get("ar") as string).split("\n")[0];
+    expect(arFirstLine).toBe(`${expected.toString()} Ft`);
   });
 
-  it("subtracts each formed set instance's flat discount from the total", () => {
-    const nest = makeProduct({ uuid: "u1", price: 10_000 });
-    const blanket = makeProduct({ uuid: "u2", price: 10_000 });
-    const instances = [{ setTitle: "Szett", amount: 1500, members: ["u1", "u2"] }];
-    // 20000 items + 1000 delivery - 1500 set discount
-    expect(calculateOrderTotal([nest, blanket], makeDelivery("x", 1000), instances)).toEqual({
-      total: 19_500,
-    });
+  it("matches when the set discount is clamped to the covered subtotal", async () => {
+    // Two 300 Ft members absorb only 600 Ft of the 2000 Ft set discount.
+    const products = [member("u1", "nest", 300), member("u2", "blanket", 300)];
+    const delivery = makeDelivery("Személyes átvétel", 0, "szemelyes");
+    const order: OrderDetails = { ...baseOrder(products), deliveryMethod: delivery };
+    order.productGroups = setGroups;
+
+    const expected = orderTotal(resolveBasketPricing(products, setGroups), delivery.price);
+    // 600 items - 600 set discount + 0 delivery
+    expect(expected).toBe(0);
+
+    const form = await captureForm(order);
+    const arFirstLine = (form.get("ar") as string).split("\n")[0];
+    expect(arFirstLine).toBe(`${expected.toString()} Ft`);
   });
 });
 

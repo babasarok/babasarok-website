@@ -3,11 +3,12 @@
  * it to web3forms. Kept out of the Svelte component so the form stays declarative.
  */
 import { calculatePriceForItem } from "@/lib/pricing/price";
-import { resolveSetInstances, setInstanceAmount } from "@/lib/pricing/setDiscount";
-import type { SetDiscountGroup, SetDiscountInstance } from "@/lib/pricing/setDiscount";
+import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
+import type { SetDiscountGroup, ResolvedSetInstance } from "@/lib/pricing/setDiscount";
+import { orderTotal } from "@/lib/order/total";
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "../types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "../data";
-import { isFieldVisible } from "../product/fieldVisibility";
+import { isFieldVisible } from "../product/field";
 
 const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
 
@@ -20,26 +21,6 @@ export interface OrderDetails {
   products: IProduct[];
   threadColors: CmsEnhancedEmbroideryColor[];
   productGroups: SetDiscountGroup[];
-}
-
-/**
- * Sum of every product's total (standalone discounts already applied) plus the
- * delivery price, minus every formed set instance's clamped flat deduction.
- */
-export function calculateOrderTotal(
-  products: IProduct[],
-  deliveryMethod: CmsEnhancedDeliveryMethod,
-  instances: SetDiscountInstance[]
-): { total: number } {
-  const itemsTotal = products.reduce(
-    (sum, p) => sum + (calculatePriceForItem(p).totalPrice ?? 0),
-    0
-  );
-  const setDiscount = instances.reduce(
-    (sum, instance) => sum + setInstanceAmount(instance, products).amount,
-    0
-  );
-  return { total: itemsTotal + deliveryMethod.price - setDiscount };
 }
 
 /** The selected option label/value pair for a field, as shown in the email. */
@@ -173,7 +154,7 @@ function formatProductString(
  * When the flat set amount is clamped to the covered subtotal, the set's nominal
  * amount is shown alongside the applied one. Empty when no set discount is earned.
  */
-function formatSetDiscounts(instances: SetDiscountInstance[], products: IProduct[]): string {
+function formatSetDiscounts(instances: ResolvedSetInstance[], products: IProduct[]): string {
   if (instances.length === 0) {
     return "";
   }
@@ -182,7 +163,7 @@ function formatSetDiscounts(instances: SetDiscountInstance[], products: IProduct
   );
   const lines = instances.map((instance) => {
     const members = instance.members.map((uuid) => labelByUuid.get(uuid) ?? uuid).join(" + ");
-    const { amount, nominal } = setInstanceAmount(instance, products);
+    const { amount, nominal } = instance;
     const clamp = amount < nominal ? ` (szett kedvezmény: ${nominal.toString()} Ft)` : "";
     return `  ${instance.setTitle} szett: -${amount.toString()} Ft${clamp} [${members}]`;
   });
@@ -192,8 +173,8 @@ function formatSetDiscounts(instances: SetDiscountInstance[], products: IProduct
 function buildOrderFormData(order: OrderDetails, accessKey: string, message: string): FormData {
   // Resolve the basket allocation once; both the total and the summary price
   // from it so the set status can't be dropped by a single caller.
-  const setInstances = resolveSetInstances(order.products, order.productGroups);
-  const { total } = calculateOrderTotal(order.products, order.deliveryMethod, setInstances);
+  const pricing = resolveBasketPricing(order.products, order.productGroups);
+  const total = orderTotal(pricing, order.deliveryMethod.price);
 
   const formData = new FormData();
   formData.append("access_key", accessKey);
@@ -217,7 +198,7 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
   formData.append("uzenet", message);
   // Set discounts live inside `ar` (not a separate field) so the submitted
   // price and its breakdown stay together and trackable.
-  const setSummary = formatSetDiscounts(setInstances, order.products);
+  const setSummary = formatSetDiscounts(pricing.instances, order.products);
   const arLines = [`${total.toString()} Ft`, ...(setSummary ? ["", setSummary] : [])];
   formData.append("ar", arLines.join("\n"));
   return formData;

@@ -13,7 +13,12 @@
     syncMaterialsToPartner,
     hasConfigurableOptions,
   } from "@/lib/order/product";
-  import { resolveSetDiscount, resolveSetDiscountStatus } from "@/lib/pricing/setDiscount";
+  import {
+    resolveSetDiscount,
+    resolveBasketPricing,
+    siblingsFor,
+    relatedGroupsFor,
+  } from "@/lib/pricing/setDiscount";
   import type { SetDiscountStatus } from "@/lib/pricing/setDiscount";
   import { prefillFromParams, buildMaterialParams } from "@/lib/order/queryParams";
   import { mapProductToSaved } from "@/lib/order/storage";
@@ -66,61 +71,22 @@
     return restored;
   });
 
-  // Whether a group grants a set discount; groups with a zero/absent amount are
-  // "related items" (cross-sell only), not sets.
-  const isDiscountSet = (group: CmsProductGroup): boolean => (group.discount_amount ?? 0) > 0;
-
-  // The other members of a group that this product belongs to, deduplicated and
-  // limited to products present in the catalog.
-  function siblingsOf(group: CmsProductGroup): CmsEnhancedProduct[] {
-    const id = product.product_id;
-    const members: CmsEnhancedProduct[] = [];
-    for (const { product_id: otherId } of group.products) {
-      if (otherId === id || !Object.hasOwn(products, otherId)) {
-        continue;
-      }
-      if (!members.some((p) => p.product_id === otherId)) {
-        members.push(products[otherId]);
-      }
-    }
-    return members;
-  }
-
-  const belongsToGroup = (group: CmsProductGroup): boolean =>
-    group.products.some((m) => m.product_id === product.product_id);
+  // Resolve set-member product ids (from the pure set module) to catalog
+  // products, dropping any not in the catalog while preserving order.
+  const toCatalog = (ids: string[]): CmsEnhancedProduct[] =>
+    ids.filter((id) => Object.hasOwn(products, id)).map((id) => products[id]);
 
   // Set siblings of this product from the discount-granting sets it belongs to,
   // merged across sets; drives the "add to set" chips in the set panel.
-  const relatedProducts = $derived.by(() => {
-    const out: CmsEnhancedProduct[] = [];
-    for (const group of productGroups) {
-      if (!isDiscountSet(group) || !belongsToGroup(group)) {
-        continue;
-      }
-      for (const sibling of siblingsOf(group)) {
-        if (!out.some((p) => p.product_id === sibling.product_id)) {
-          out.push(sibling);
-        }
-      }
-    }
-    return out;
-  });
+  const relatedProducts = $derived(toCatalog(siblingsFor(product.product_id, productGroups)));
 
   // No-discount groups this product belongs to, each surfaced as its own
   // separate "related items" list of the group's other members.
-  const relatedGroups = $derived.by(() => {
-    const out: { title: string; products: CmsEnhancedProduct[] }[] = [];
-    for (const group of productGroups) {
-      if (isDiscountSet(group) || !belongsToGroup(group)) {
-        continue;
-      }
-      const members = siblingsOf(group);
-      if (members.length > 0) {
-        out.push({ title: group.title, products: members });
-      }
-    }
-    return out;
-  });
+  const relatedGroups = $derived.by(() =>
+    relatedGroupsFor(product.product_id, productGroups)
+      .map((group) => ({ title: group.title, products: toCatalog(group.members) }))
+      .filter((group) => group.products.length > 0)
+  );
 
   const basketCountByProductId = $derived.by(() => {
     const map: Record<string, number> = {};
@@ -149,7 +115,7 @@
   });
 
   const setStatus = $derived<SetDiscountStatus | undefined>(
-    item ? resolveSetDiscountStatus(item, basket, productGroups) : undefined
+    item ? resolveBasketPricing(basket, productGroups).statuses.get(item.uuid) : undefined
   );
 
   // Whether this product is fully configured, so set siblings can be added

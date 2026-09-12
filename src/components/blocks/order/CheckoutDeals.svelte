@@ -1,16 +1,14 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import {
-    resolveSetDiscountStatus,
-    resolveSetInstances,
-    setInstanceAmount,
-  } from "@/lib/pricing/setDiscount";
+  import type { BasketPricing } from "@/lib/pricing/setDiscount";
   import { buildMaterialParams } from "@/lib/order/queryParams";
   import type { CmsEnhancedProduct, CmsProductGroup } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
 
   interface Props {
     basket: IProduct[];
+    /** The basket's set pricing, resolved once by the checkout form. */
+    pricing: BasketPricing;
     products: Record<string, CmsEnhancedProduct>;
     productGroups: CmsProductGroup[];
     slugByProductId: Record<string, string | undefined>;
@@ -18,7 +16,7 @@
     onHighlight?: (uuids: string[]) => void;
   }
 
-  let { basket, products, productGroups, slugByProductId, onHighlight }: Props = $props();
+  let { basket, pricing, products, productGroups, slugByProductId, onHighlight }: Props = $props();
 
   interface Sibling {
     product: CmsEnhancedProduct;
@@ -39,7 +37,7 @@
   const statuses = $derived(
     basket.map((item) => ({
       item,
-      status: resolveSetDiscountStatus(item, basket, productGroups),
+      status: pricing.statuses.get(item.uuid),
     }))
   );
 
@@ -49,8 +47,7 @@
   // amount it takes off (clamped to the covered subtotal).
   const activeInstances = $derived.by(() => {
     const byUuid = new Map(basket.map((p) => [p.uuid, p]));
-    return resolveSetInstances(basket, productGroups).map((instance) => {
-      const { amount } = setInstanceAmount(instance, basket);
+    return pricing.instances.map((instance) => {
       const members = instance.members.map((uuid) => ({
         uuid,
         title: byUuid.get(uuid)?.title ?? uuid,
@@ -68,7 +65,7 @@
         setTitle: instance.setTitle,
         members,
         excluded,
-        amount,
+        amount: instance.amount,
       };
     });
   });
