@@ -159,7 +159,7 @@
         <option value="name">Név szerint</option>
       </select>
     </div>
-    <div class="flex flex-wrap justify-center gap-8 gap-y-12 sm:gap-y-8">
+    <div class="flex flex-wrap gap-8 gap-y-12 sm:gap-y-8">
       {#each visible as product (product.id)}
         <ProductCard
           href={product.href}
