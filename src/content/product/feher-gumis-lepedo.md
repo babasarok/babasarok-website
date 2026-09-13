@@ -1,20 +1,25 @@
 ---
 product_id: feher-gumis-lepedo
 title: Gumis Lepedő
-type: lepedo
+can_be_ordered: true
 categories: 100% pamut gumis lepedő
+type: lepedo
 date: 2026-07-01T09:37:50.600Z
 thumbnail: /src/assets/polish_save.webp
-shortDescription: '100% pamut gumis lepedő a kiságyra. '
-can_be_ordered: true
+shortDescription: |-
+  100% pamut, gumis lepedő a kiságyra. 
+  (Körbegumis)
+
+  Választható vízhatlan opció is, aminek az egyik oldala frottír (pamut) másik oldala vízhatlan anyag. 
+  (4 sarkán gumis) 
 price: 3000
 materials:
   material_required_count: 0
 fields:
   - name: kivitel
-    price: 0
     label: Kivitel
     type: radio
+    price: 0
     items:
       - value: feher
         label: Fehér
@@ -23,14 +28,14 @@ fields:
         label: Mintás vagy más színű
         price: 500
   - name: meret
-    price: 0
     label: Méret
     type: input
+    price: 0
   - name: himzes
-    price: 1500
-    price_unit: word
     label: Hímzés
     type: embroidery
+    price: 1500
+    price_unit: word
 ---
 
 Elérhető fehér, illetve mintás vagy más színű kivitelben.
