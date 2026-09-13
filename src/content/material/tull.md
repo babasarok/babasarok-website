@@ -12,5 +12,6 @@ colors:
     image: /src/assets/IMG_6917.jpeg
   - color_id: 'Szürke '
     label: 'Szürke '
+    image: /src/assets/IMG_9598.jpeg
 ---
 
