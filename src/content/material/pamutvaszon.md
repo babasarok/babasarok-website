@@ -15,9 +15,6 @@ colors:
   - color_id: Apró erdolakok
     label: Apró erdőlakók
     image: /src/assets/IMG_5497.webp
-  - color_id: Kosaras maci kek
-    label: 'Kedves macik, kosárban, kék alapon'
-    image: /src/assets/IMG_1373.webp
   - color_id: 'Felhon alvo, feher'
     label: 'Aranyos állatkölykök, fehér alapon'
     image: /src/assets/IMG_0467.webp
