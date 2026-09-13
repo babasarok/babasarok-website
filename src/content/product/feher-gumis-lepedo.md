@@ -38,5 +38,8 @@ fields:
       - value: 70x120
         label: 70x120cm
         price: 3500
+      - value: 70x140
+        label: 70x140cm
+        price: 4200
 ---
 
