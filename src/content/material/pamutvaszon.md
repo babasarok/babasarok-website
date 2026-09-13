@@ -153,6 +153,9 @@ colors:
   - color_id: Drapp
     label: Drapp
     image: /src/assets/IMG_6716.webp
+  - color_id: 'Kalóz '
+    label: Kalózkaland
+    image: /src/assets/IMG_5720.jpeg
 thumbnail: /src/assets/IMG_5070.webp
 categories: '100%pamut, mintás vagy egyszínű gyerekbarát anyag. '
 shortDescription: |-
