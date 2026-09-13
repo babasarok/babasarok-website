@@ -25,5 +25,8 @@ colors:
   - color_id: Kek
     label: Kék
     image: /src/assets/IMG_3208.jpeg
+  - color_id: Malyva
+    label: Mályva
+    image: /src/assets/IMG_8432.jpeg
 ---
 
