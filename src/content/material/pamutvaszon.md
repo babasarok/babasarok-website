@@ -77,7 +77,7 @@ colors:
     image: /src/assets/IMG_9641.webp
   - color_id: Erdőben lakó szurke
     label: 'Erdei barátok '
-    image: /src/assets/images/IMG_9651.jpeg
+    image: /src/assets/images/IMG_6401.jpeg
   - color_id: Cicas
     label: 'Cicahorgászat '
     image: /src/assets/IMG_4934.webp
