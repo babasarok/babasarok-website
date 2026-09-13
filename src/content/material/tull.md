@@ -10,5 +10,7 @@ colors:
   - color_id: 'Rózsaszín '
     label: 'Rózsaszín '
     image: /src/assets/IMG_6917.jpeg
+  - color_id: 'Szürke '
+    label: 'Szürke '
 ---
 
