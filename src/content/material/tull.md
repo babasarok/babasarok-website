@@ -34,5 +34,8 @@ colors:
   - color_id: 'Világos bézs '
     label: 'Világos bézs '
     image: /src/assets/IMG_5228.jpeg
+  - color_id: 'Világos barna '
+    label: 'Világos barna '
+    image: /src/assets/IMG_9812.jpeg
 ---
 
