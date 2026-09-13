@@ -16,5 +16,8 @@ colors:
   - color_id: Barack
     label: Barack
     image: /src/assets/IMG_7894.jpeg
+  - color_id: Puder
+    label: Púder
+    image: /src/assets/IMG_3432.jpeg
 ---
 
