@@ -13,5 +13,8 @@ colors:
   - color_id: 'Szürke '
     label: 'Szürke '
     image: /src/assets/IMG_9598.jpeg
+  - color_id: Barack
+    label: Barack
+    image: /src/assets/IMG_7894.jpeg
 ---
 
