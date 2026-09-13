@@ -38,4 +38,3 @@ fields:
     price_unit: word
 ---
 
-Elérhető fehér, illetve mintás vagy más színű kivitelben.
