@@ -22,5 +22,8 @@ colors:
   - color_id: Zsálya
     label: Zsálya
     image: /src/assets/IMG_3231.jpeg
+  - color_id: Kek
+    label: Kék
+    image: /src/assets/IMG_3208.jpeg
 ---
 
