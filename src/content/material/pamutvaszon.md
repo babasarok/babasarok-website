@@ -59,7 +59,7 @@ colors:
     image: /src/assets/IMG_3297.webp
   - color_id: Unikornisos
     label: Unikornis
-    image: /src/assets/IMG_4638.webp
+    image: /src/assets/IMG_6219.png
   - color_id: Cirkuszos
     label: 'Cirkuszi mulatság '
     image: /src/assets/IMG_9069.webp
