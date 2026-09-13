@@ -55,14 +55,31 @@ These are listed in priority order. When values conflict, prefer the one higher 
 ## UI development
 
 - **Verify every UI change in a live browser before calling it done.** Confirm
-  with screenshots and measured geometry (`getBoundingClientRect`,
-  `getComputedStyle` via `browser_eval`) — never trust assumed CSS behavior.
+  with measured geometry (`getBoundingClientRect`,
+  `getComputedStyle` via `browser_eval`) — never trust assumed CSS behavior. use screenshots as a last resort.
 - **Browser:** the `opencode-chrome-devtools` plugin drives Chromium over CDP.
-  Start it detached: `chromium --remote-debugging-port=9222
---user-data-dir=/tmp/chrome-cdp` (add `--window-size=390,844` for a mobile
-  viewport), then `browser_navigate` to a `dev`/`preview` URL. Note the tools
+  Start it detached with devtools open: `chromium --remote-debugging-port=9222
+--user-data-dir=/tmp/chrome-cdp --auto-open-devtools-for-tabs`, then
+  `browser_navigate` to a `dev`/`preview` URL. Note the tools
   have no key-press — real-key behaviors (e.g. Escape on `<dialog>`) verify
   the handler side (e.g. the `close` event) instead.
+- **Viewport sizing:** set the view with DevTools' responsive design mode —
+  programmatically that's `Emulation.setDeviceMetricsOverride` over CDP,
+  which Node can send with its built-in `WebSocket` (no `ws` module needed):
+
+  ```bash
+  node -e '
+  const ws = new WebSocket("http://127.0.0.1:9222/devtools/page/<targetId>");
+  ws.onopen = () => ws.send(JSON.stringify({id: 1, method:
+    "Emulation.setDeviceMetricsOverride",
+    params: {width: 1440, height: 900, deviceScaleFactor: 0, mobile: false}}));
+  ws.onmessage = (m) => { console.log(m.data); ws.close(); };'
+  ```
+
+  Get `<targetId>` from `browser_list`. `--window-size` alone is unreliable
+  (the window manager may resize it), so always verify `innerWidth` with
+  `browser_eval` after setting the viewport.
+
 - **Browser defaults bite:** the UA stylesheet caps `<dialog>` at
   `max-width/max-height: calc(100% - 42px)` (override with `max-w-none
 max-h-none`); `width: 100%` on a `position: fixed` element stops short of

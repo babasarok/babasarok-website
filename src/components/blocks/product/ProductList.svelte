@@ -160,7 +160,9 @@
     <div class="mb-8 hidden justify-end sm:flex">
       {@render sortSelect("lg")}
     </div>
-    <div class="flex flex-wrap gap-8 gap-y-12 px-4 sm:gap-y-8 sm:px-0">
+    <div
+      class="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-8 gap-y-12 px-4 sm:gap-y-8 sm:px-0"
+    >
       {#each visible as product (product.id)}
         <ProductCard
           href={product.href}

@@ -11,7 +11,7 @@
   let { href, title, category, image }: Props = $props();
 </script>
 
-<a {href} class="group flex h-full w-full sm:w-32 flex-col items-center sm:items-start lg:w-50">
+<a {href} class="group flex h-full w-full flex-col items-center sm:items-start">
   {#if image}
     <img
       src={image.src}
