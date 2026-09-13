@@ -110,7 +110,7 @@ colors:
     image: /src/assets/IMG_4736.webp
   - color_id: 'Erdei kék ozike '
     label: 'Erdei őzike '
-    image: /src/assets/IMG_4754.webp
+    image: /src/assets/IMG_4734.jpeg
   - color_id: Színes pitypang
     label: 'Pitypangos rét '
     image: /src/assets/IMG_4876.webp
