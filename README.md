@@ -12,7 +12,7 @@ configurator on the contact page).
 
 | Concern         | Technology                                                  |
 | --------------- | ----------------------------------------------------------- |
-| Framework       | Astro 6 (`output: "static"`)                                |
+| Framework       | Astro 7 (`output: "static"`)                                |
 | Interactivity   | Svelte 5 islands (runes), hydrated only where needed        |
 | Styling         | Tailwind CSS 4 (`@theme` tokens in `src/styles/global.css`) |
 | Content / CMS   | TinaCMS (Tina Cloud in prod, `--local` in dev/CI)           |

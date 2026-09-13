@@ -11,7 +11,7 @@ opportunities for improvement are.
 
 | Concern             | Technology                                                        |
 | ------------------- | ----------------------------------------------------------------- |
-| Site framework      | **Astro 6** (`output: "static"`)                                  |
+| Site framework      | **Astro 7** (`output: "static"`)                                  |
 | Interactive islands | **Svelte 5** (runes), hydrated only where needed                  |
 | Styling             | **Tailwind CSS 4** (`@theme` tokens in `src/styles/global.css`)   |
 | CMS / content       | **TinaCMS** (Git-backed, Tina Cloud in prod, `--local` in dev/CI) |

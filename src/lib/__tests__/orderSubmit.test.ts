@@ -367,8 +367,8 @@ describe("product string content", () => {
     const form = await captureForm({
       ...baseOrder([product]),
       threadColors: [
-        { color_id: "ekru", label: "Ekrü" },
-        { color_id: "fekete", label: "Fekete" },
+        { color_id: "ekru", label: "Ekrü", hex: undefined, image: undefined },
+        { color_id: "fekete", label: "Fekete", hex: undefined, image: undefined },
       ],
     });
     const text = form_text(form);

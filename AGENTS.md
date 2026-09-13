@@ -43,7 +43,7 @@ These are listed in priority order. When values conflict, prefer the one higher 
 
 ## Tooling
 
-- **Framework:** Astro 6 + Svelte islands, Tailwind CSS 4, TinaCMS.
+- **Framework:** Astro 7 + Svelte islands, Tailwind CSS 4, TinaCMS.
 - **Dev:** `npm run dev`
 - **Type/check:** `npm run check` (`astro check` + `sv check`)
 - **Lint:** `npm run lint` · **Styles:** `npm run lint:style`
