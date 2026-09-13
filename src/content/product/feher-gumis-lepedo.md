@@ -31,10 +31,5 @@ fields:
     label: Méret
     type: input
     price: 0
-  - name: himzes
-    label: Hímzés
-    type: embroidery
-    price: 1500
-    price_unit: word
 ---
 
