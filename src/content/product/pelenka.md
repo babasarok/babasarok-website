@@ -10,7 +10,7 @@ shortDescription: |-
 
   Szettben kérhető, egyszínű anyagból. 
   1 szett, azonos színekből áll 
-price: 2800
+price: 3000
 materials:
   materials:
     - material_path: src/content/material/duplagez.md
