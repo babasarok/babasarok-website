@@ -17,7 +17,9 @@ These are listed in priority order. When values conflict, prefer the one higher 
 
 3. **Standardised over bespoke** — Reach for standard tooling and well-supported
    libraries before writing custom code. This includes preferring **Tailwind
-   utilities over hand-written CSS**. Less bespoke code, more conventions.
+   utilities over hand-written CSS**, and **native HTML elements and native JS
+   features/APIs** wherever possible — e.g. a `<dialog>` for an overlay, not a
+   hand-rolled div. Less bespoke code, more conventions. Look them up on MDN if needed.
 
 4. **Build-time & no-JS first** — Prefer solutions that run at build time and ship
    no client-side JavaScript. Reach for runtime JS / client hydration only when a
@@ -45,18 +47,54 @@ These are listed in priority order. When values conflict, prefer the one higher 
   When a component should accept HTML element attributes, extend its props
   interface with the element's attribute types instead of an open index
   signature.
+- **No silencing lint/check warnings:** fix eslint and svelte-check warnings
+  (including a11y ones) properly. `eslint-disable` / `svelte-ignore` comments
+  are a last resort and must carry a concrete justification for why the rule
+  cannot be met.
+
+## UI development
+
+- **Verify every UI change in a live browser before calling it done.** Confirm
+  with screenshots and measured geometry (`getBoundingClientRect`,
+  `getComputedStyle` via `browser_eval`) — never trust assumed CSS behavior.
+- **Browser:** the `opencode-chrome-devtools` plugin drives Chromium over CDP.
+  Start it detached: `chromium --remote-debugging-port=9222
+  --user-data-dir=/tmp/chrome-cdp` (add `--window-size=390,844` for a mobile
+  viewport), then `browser_navigate` to a `dev`/`preview` URL. Note the tools
+  have no key-press — real-key behaviors (e.g. Escape on `<dialog>`) verify
+  the handler side (e.g. the `close` event) instead.
+- **Browser defaults bite:** the UA stylesheet caps `<dialog>` at
+  `max-width/max-height: calc(100% - 42px)` (override with `max-w-none
+  max-h-none`); `width: 100%` on a `position: fixed` element stops short of
+  the scrollbar (use `w-screen`); any transformed ancestor becomes the
+  containing block for fixed descendants.
+- **Animate visible elements only.** Svelte transitions start at mount; a
+  transition on an element inside a `display:none` ancestor (e.g. a closed
+  `<dialog>`) measures wrong and fires twice. Open the dialog with
+  `showModal()` in a `$effect.pre` so content mounts after it is visible.
+- **Verifying animations:** patch `Element.prototype.animate` in the page to
+  record keyframes/durations while driving the UI, and screenshot mid-flight.
 
 ## Tooling
 
 - **Framework:** Astro 6 + Svelte islands, Tailwind CSS 4, TinaCMS.
 - **Dev:** `npm run dev`
+- **Build:** `npm run build:local` (skips the TinaCMS cloud schema check). Plain
+  `npm run build` fails whenever the local CMS schema is ahead of the pushed
+  GitHub schema, so use `build:local` for local verification. It fails while a
+  `tinacms dev` server is running (datalayer port 9000); pass
+  `--datalayer-port <other>` to the `tinacms build` invocation in that case.
 - **Type/check:** `npm run check` (`astro check` + `sv check`)
 - **Lint:** `npm run lint` · **Styles:** `npm run lint:style`
 - **Format:** `npm run format` (Prettier)
 - **Unit tests:** `npm test` (Vitest, `vitest run`) · watch with `npm run test:watch`.
   Specs live in `src/**/*.test.ts` (e.g. the order-form logic in
   [src/lib/**tests**/](src/lib/__tests__/)); fast pure-function tests, no build needed.
-- **Hydration tests:** `npm run test:hydration` (Playwright; needs a `dist/` build).
+- **Hydration tests:** `npm run test:hydration` (Playwright; needs a `dist/` build
+  via `npm run build:local`). Its webServer reuses an already-running server on
+  port 4321, so a running `astro dev` is tested instead of the dist — a stale-HMR
+  dev server yields spurious island failures, so rule out the server before
+  debugging the test.
 - **Behavior specs:** normative specs live in [docs/specs/](docs/specs/) (one
   file per capability: `product-catalog`, `order-pricing`, `order-basket`,
   `order-submission`, `product-sets`). Read the relevant spec before touching
@@ -72,6 +110,8 @@ These are listed in priority order. When values conflict, prefer the one higher 
 - **This repo is npm-managed.** Do not use pnpm/yarn.
 
 ## Agent skills
+
+Prioritize using free subagent(s) whenever possible.
 
 ### Issue tracker
 

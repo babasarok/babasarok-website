@@ -51,8 +51,8 @@ const items = await Promise.all(
 ---
 
 <Base title="Termékek">
-  <PageHeader title="Termékek" no-shapes />
-  <section class="py-25">
+  <PageHeader title="Termékek" no-shapes compact />
+  <section class="py-12 lg:py-25">
     <div class="container">
       <ProductList client:load items={items} sets={sets} />
     </div>
