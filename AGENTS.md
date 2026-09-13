@@ -59,13 +59,13 @@ These are listed in priority order. When values conflict, prefer the one higher 
   `getComputedStyle` via `browser_eval`) — never trust assumed CSS behavior.
 - **Browser:** the `opencode-chrome-devtools` plugin drives Chromium over CDP.
   Start it detached: `chromium --remote-debugging-port=9222
-  --user-data-dir=/tmp/chrome-cdp` (add `--window-size=390,844` for a mobile
+--user-data-dir=/tmp/chrome-cdp` (add `--window-size=390,844` for a mobile
   viewport), then `browser_navigate` to a `dev`/`preview` URL. Note the tools
   have no key-press — real-key behaviors (e.g. Escape on `<dialog>`) verify
   the handler side (e.g. the `close` event) instead.
 - **Browser defaults bite:** the UA stylesheet caps `<dialog>` at
   `max-width/max-height: calc(100% - 42px)` (override with `max-w-none
-  max-h-none`); `width: 100%` on a `position: fixed` element stops short of
+max-h-none`); `width: 100%` on a `position: fixed` element stops short of
   the scrollbar (use `w-screen`); any transformed ancestor becomes the
   containing block for fixed descendants.
 - **Animate visible elements only.** Svelte transitions start at mount; a
