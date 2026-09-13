@@ -94,7 +94,7 @@ max-h-none`); `width: 100%` on a `position: fixed` element stops short of
 
 ## Tooling
 
-- **Framework:** Astro 6 + Svelte islands, Tailwind CSS 4, TinaCMS.
+- **Framework:** Astro 7 + Svelte islands, Tailwind CSS 4, TinaCMS.
 - **Dev:** `npm run dev`
 - **Build:** `npm run build:local` (skips the TinaCMS cloud schema check). Plain
   `npm run build` fails whenever the local CMS schema is ahead of the pushed

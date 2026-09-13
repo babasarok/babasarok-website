@@ -55,7 +55,7 @@ type CmsDeliveryMethod = RecursivelyNullableToUndefined<
 >;
 export interface CmsEnhancedDeliveryMethod extends Omit<CmsDeliveryMethod, "id"> {}
 
-type AstroDeliveryMethod = InferEntrySchema<"deliveryMethod">;
+type AstroDeliveryMethod = RecursiveRequired<InferEntrySchema<"deliveryMethod">>;
 AssertTrue<IfEquals<CmsEnhancedDeliveryMethod, AstroDeliveryMethod>>();
 
 // #endregion
@@ -68,14 +68,18 @@ type CmsMaterial = RecursivelyNullableToUndefined<
 >;
 
 interface CmsEnhancedMaterialColor extends Omit<CmsMaterialColor, "image"> {
-  image?: SlimImage | undefined | null;
+  image: SlimImage | undefined | null;
 }
 interface CmsEnhancedMaterial extends Omit<CmsMaterial, "id" | "thumbnail" | "colors" | "content"> {
-  thumbnail?: SlimImage | undefined | null;
-  colors?: Array<CmsEnhancedMaterialColor> | undefined | null;
+  thumbnail: SlimImage | undefined | null;
+  colors: Array<CmsEnhancedMaterialColor> | undefined | null;
 }
 
-type AstroMaterial = RecursivelyReplaceType<InferEntrySchema<"material">, Image, SlimImage>;
+type AstroMaterial = RecursivelyReplaceType<
+  RecursiveRequired<InferEntrySchema<"material">>,
+  Image,
+  SlimImage
+>;
 type MaterialDiff = RecursiveDiff<CmsEnhancedMaterial, AstroMaterial>;
 AssertTrue<IfEquals<MaterialDiff, never>>();
 
@@ -93,7 +97,7 @@ type CmsProductMaterialsBannedCombination = NonNullable<
 >;
 
 interface CmsEnhancedProductImage extends Omit<CmsProductImage, "image"> {
-  image?: SlimImage | undefined | null;
+  image: SlimImage | undefined | null;
 }
 
 interface CmsEnhancedProductMaterial extends Omit<
@@ -107,8 +111,8 @@ interface CmsEnhancedProductMaterialsBannedCombination extends Omit<
   NonNullable<CmsProductMaterialsBannedCombination>,
   "materials"
 > {
-  materials?:
-    | Array<{ material_path?: CmsEnhancedMaterial | undefined | null } | undefined | null>
+  materials:
+    | Array<{ material_path: CmsEnhancedMaterial | undefined | null } | undefined | null>
     | undefined
     | null;
 }
@@ -117,8 +121,8 @@ interface CmsEnhancedProductMaterials extends Omit<
   CmsProductMaterials,
   "materials" | "banned_combinations"
 > {
-  materials?: Array<CmsEnhancedProductMaterial | undefined | null> | undefined | null;
-  banned_combinations?:
+  materials: Array<CmsEnhancedProductMaterial | undefined | null> | undefined | null;
+  banned_combinations:
     Array<CmsEnhancedProductMaterialsBannedCombination | undefined | null> | undefined | null;
 }
 
@@ -131,7 +135,7 @@ type CmsFlatField = NonNullable<NonNullable<CmsProduct["fields"]>[number]>;
 type CmsField = {
   [K in keyof CmsFlatField]: K extends "type" ? ProductFieldType : CmsFlatField[K];
 } & {
-  price_unit?: EmbroideryPriceUnit | undefined | null;
+  price_unit: EmbroideryPriceUnit | undefined | null;
 };
 
 export interface CmsEnhancedProduct extends Omit<
@@ -147,19 +151,19 @@ export interface CmsEnhancedProduct extends Omit<
   | "icon"
   | "priced_by_length"
 > {
-  thumbnail?: SlimImage | undefined | null;
-  discount_valid_until?: Date | undefined | null;
-  icon?: SlimImage | undefined | null;
-  date?: Date | undefined | null;
-  images?: Array<CmsEnhancedProductImage | undefined | null> | undefined | null;
-  materials?: CmsEnhancedProductMaterials | undefined | null;
-  fields?: Array<CmsField | undefined | null> | undefined | null;
-  length_based_pricing?: LengthBasedPricingConfig | undefined | null;
+  thumbnail: SlimImage | undefined | null;
+  discount_valid_until: Date | undefined | null;
+  icon: SlimImage | undefined | null;
+  date: Date | undefined | null;
+  images: Array<CmsEnhancedProductImage | undefined | null> | undefined | null;
+  materials: CmsEnhancedProductMaterials | undefined | null;
+  fields: Array<CmsField | undefined | null> | undefined | null;
+  length_based_pricing: LengthBasedPricingConfig | undefined | null;
   type: ProductType;
 }
 
 type AstroProduct = RecursivelyReplaceKeyType<
-  RecursivelyReplaceType<InferEntrySchema<"product">, Image, SlimImage>,
+  RecursivelyReplaceType<RecursiveRequired<InferEntrySchema<"product">>, Image, SlimImage>,
   "material_path",
   CmsEnhancedMaterial
 >;
@@ -178,11 +182,15 @@ type CmsConfig = RecursivelyNullableToUndefined<
 >;
 
 export interface CmsEnhancedConfig extends Omit<CmsConfig, "logo" | "footerLogo" | "id"> {
-  logo?: GetImageResult | undefined | null;
-  footerLogo?: GetImageResult | undefined | null;
+  logo: GetImageResult | undefined | null;
+  footerLogo: GetImageResult | undefined | null;
 }
 
-type AstroConfig = RecursivelyReplaceType<InferEntrySchema<"config">, Image, GetImageResult>;
+type AstroConfig = RecursivelyReplaceType<
+  RecursiveRequired<InferEntrySchema<"config">>,
+  Image,
+  GetImageResult
+>;
 type ConfigDiff = RecursiveDiff<CmsEnhancedConfig, AstroConfig>;
 AssertTrue<IfEquals<ConfigDiff, never>>();
 
@@ -199,13 +207,17 @@ type CmsEmbroidery = RecursivelyNullableToUndefined<
 type CmsEmbroideryColor = NonNullable<NonNullable<CmsEmbroidery["colors"]>[number]>;
 
 export interface CmsEnhancedEmbroideryColor extends Omit<CmsEmbroideryColor, "image"> {
-  image?: SlimImage | undefined | null;
+  image: SlimImage | undefined | null;
 }
 interface CmsEnhancedEmbroidery extends Omit<CmsEmbroidery, "id" | "colors"> {
-  colors?: Array<CmsEnhancedEmbroideryColor> | undefined | null;
+  colors: Array<CmsEnhancedEmbroideryColor> | undefined | null;
 }
 
-type AstroEmbroidery = RecursivelyReplaceType<InferEntrySchema<"embroidery">, Image, SlimImage>;
+type AstroEmbroidery = RecursivelyReplaceType<
+  RecursiveRequired<InferEntrySchema<"embroidery">>,
+  Image,
+  SlimImage
+>;
 type EmbroideryDiff = RecursiveDiff<CmsEnhancedEmbroidery, AstroEmbroidery>;
 AssertTrue<IfEquals<EmbroideryDiff, never>>();
 

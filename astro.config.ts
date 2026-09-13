@@ -1,5 +1,4 @@
 import { defineConfig, fontProviders } from "astro/config";
-import mdx from "@astrojs/mdx";
 import svelte from "@astrojs/svelte";
 import sitemap from "@astrojs/sitemap";
 import icon from "astro-icon";
@@ -15,7 +14,7 @@ export default defineConfig({
   output: "static",
   redirects: { "/home": "/" },
   prefetch: true,
-  integrations: [mdx(), sitemap(), icon(), tina(), svelte()],
+  integrations: [sitemap(), icon(), tina(), svelte()],
   markdown: {
     processor: unified({
       // Rewrite Tina's root-absolute image refs so Astro optimizes them from
@@ -32,7 +31,7 @@ export default defineConfig({
   // Tina Cloud rewrites CMS image src to assets.tina.io; let Astro
   // fetch those URLs at build time so <Image> can transcode + resize them.
   image: {
-    // Astro 6 responsive images: auto-emit srcset so the browser picks a
+    // Responsive images: auto-emit srcset so the browser picks a
     // variant matched to the rendered box + DPR, not the full intrinsic size.
     layout: "constrained",
     remotePatterns: [{ protocol: "https", hostname: "assets.tina.io" }],
