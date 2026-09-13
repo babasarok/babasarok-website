@@ -6,4 +6,8 @@ colors:
   - color_id: feher
     label: Fehér
     hex: '#fff'
+  - color_id: 'Rózsaszín '
+    label: 'Rózsaszín '
+    image: /src/assets/IMG_6917.jpeg
 ---
+
