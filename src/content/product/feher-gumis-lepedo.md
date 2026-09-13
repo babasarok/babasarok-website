@@ -29,7 +29,11 @@ fields:
         price: 500
   - name: meret
     label: Méret
-    type: input
+    type: select
     price: 0
+    items:
+      - value: 60x120
+        label: 60x120cm
+        price: 3500
 ---
 
