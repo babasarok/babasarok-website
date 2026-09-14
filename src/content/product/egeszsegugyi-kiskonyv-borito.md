@@ -1,12 +1,11 @@
 ---
 product_id: Eu borito
 title: 'Egészségügyi kiskönyv borító '
-can_be_ordered: true
+hidden_in_product_list: true
+can_be_ordered: false
+type: kiegeszito
 date: 2026-08-03T17:28:21.357Z
 thumbnail: /src/assets/att.zqkp6Ozzth5q6TPlE7-T9BT9nAxSx8FyWm_88ZJbkGw.webp
-table:
-  - title: 'Egészségügyi kiskönyv borító '
-    description: 3.490Ft
 shortDescription: 'Egyedi, névre hímzett egészségügyi kiskönyv borító, amely megvédi a kiskönyvet használat során. '
 price: 3490
 materials:

@@ -1,7 +1,7 @@
 ---
 product_id: kismama-parna
 title: Kismamapárna
-hidden_in_product_list: true
+type: parna
 can_be_ordered: true
 date: 2026-04-07T09:40:26.389Z
 price: 9500
