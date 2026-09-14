@@ -37,5 +37,8 @@ colors:
   - color_id: 'Világos barna '
     label: 'Világos barna '
     image: /src/assets/IMG_9812.jpeg
+  - color_id: 'Halvány barack '
+    label: 'Halvány barack '
+    image: /src/assets/IMG_7836.jpeg
 ---
 
