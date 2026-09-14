@@ -161,7 +161,7 @@
       {@render sortSelect("lg")}
     </div>
     <div
-      class="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-8 gap-y-12 px-4 sm:gap-y-8 sm:px-0"
+      class="grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-8 gap-y-12 px-4 sm:gap-y-8 sm:px-0"
     >
       {#each visible as product (product.id)}
         <ProductCard
