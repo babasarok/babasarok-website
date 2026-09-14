@@ -16,7 +16,7 @@ export const DEFAULT_LIST_STATE: ProductListViewState = {
   q: "",
   types: [],
   sets: [],
-  sort: "newest",
+  sort: "name",
 };
 
 /**
@@ -40,7 +40,7 @@ export function parseListState(search: string): ProductListViewState {
     .map((value) => value.trim())
     .filter((value) => value !== "");
 
-  const sort = (params.get("sort") ?? "newest") === "name" ? "name" : "newest";
+  const sort = (params.get("sort") ?? DEFAULT_LIST_STATE.sort) === "name" ? "name" : "newest";
 
   return { q, types, sets, sort };
 }
@@ -91,10 +91,19 @@ export function applyListState<TProduct extends ListProduct>(
     return true;
   });
 
-  const sorted =
-    state.sort === "name"
-      ? matches.toSorted((a, b) => a.title.localeCompare(b.title, "hu"))
-      : matches.toSorted((a, b) => (b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0));
+  let sorted: TProduct[];
+  switch (state.sort) {
+    case "newest":
+      // Newest first: date descending, missing dates last
+      sorted = matches.toSorted((a, b) => (b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0));
+      break;
+    // eslint-disable-next-line unicorn/no-useless-switch-case
+    case "name":
+    default:
+      // Name ascending, Hungarian locale
+      sorted = matches.toSorted((a, b) => a.title.localeCompare(b.title, "hu"));
+      break;
+  }
 
   return sorted;
 }
@@ -114,9 +123,8 @@ export function serializeListState(state: ProductListViewState): string {
   for (const set of state.sets) {
     params.append("set", set);
   }
-  if (state.sort !== "newest") {
-    params.set("sort", state.sort);
-  }
+
+  params.set("sort", state.sort);
 
   const query = params.toString();
   return query === "" ? "" : `?${query}`;
