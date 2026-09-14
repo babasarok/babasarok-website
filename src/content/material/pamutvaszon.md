@@ -15,9 +15,6 @@ colors:
   - color_id: Apró erdolakok
     label: Apró erdőlakók
     image: /src/assets/IMG_5497.webp
-  - color_id: Kosaras maci kek
-    label: 'Kedves macik, kosárban, kék alapon'
-    image: /src/assets/IMG_1373.webp
   - color_id: 'Felhon alvo, feher'
     label: 'Aranyos állatkölykök, fehér alapon'
     image: /src/assets/IMG_0467.webp
@@ -62,7 +59,7 @@ colors:
     image: /src/assets/IMG_3297.webp
   - color_id: Unikornisos
     label: Unikornis
-    image: /src/assets/IMG_4638.webp
+    image: /src/assets/IMG_6219.png
   - color_id: Cirkuszos
     label: 'Cirkuszi mulatság '
     image: /src/assets/IMG_9069.webp
@@ -80,7 +77,7 @@ colors:
     image: /src/assets/IMG_9641.webp
   - color_id: Erdőben lakó szurke
     label: 'Erdei barátok '
-    image: /src/assets/IMG_6401.webp
+    image: /src/assets/images/IMG_6401.jpeg
   - color_id: Cicas
     label: 'Cicahorgászat '
     image: /src/assets/IMG_4934.webp
@@ -93,6 +90,9 @@ colors:
   - color_id: Tuzoltos
     label: Tűzoltóság
     image: /src/assets/IMG_5079.webp
+  - color_id: 'Kalóz '
+    label: Kalózkaland
+    image: /src/assets/IMG_5720.jpeg
   - color_id: hintazo nyuszik
     label: Hintázó balerina nyuszik
     image: /src/assets/IMG_5033.webp
@@ -113,7 +113,7 @@ colors:
     image: /src/assets/IMG_4736.webp
   - color_id: 'Erdei kék ozike '
     label: 'Erdei őzike '
-    image: /src/assets/IMG_4754.webp
+    image: /src/assets/IMG_4734.jpeg
   - color_id: Színes pitypang
     label: 'Pitypangos rét '
     image: /src/assets/IMG_4876.webp
