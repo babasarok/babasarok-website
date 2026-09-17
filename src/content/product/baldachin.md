@@ -7,7 +7,7 @@ date: 2024-02-02T06:49:27.000Z
 thumbnail: /src/assets/Noémi-51.webp
 table:
   - title: 9m sűrűségű
-    description: 14000Ft
+    description: 17.000Ft
   - title: 12m sűrűségű
     description: 18000Ft
 shortDescription: 'A finom, puha tüllből készült baldachin eleganciát és modern vonalat csempész a babaszobába.'
