@@ -35,6 +35,12 @@ fields:
     label: Ajándék masni
     type: toggle
     price: 0
+  - name: Ajandek
+    label: Ajándék pompom
+    type: toggle
+    price: 0
+    depends_on:
+      field: 'Ajandek '
 ---
 
 Ajándék pompommal, vagy masnival
