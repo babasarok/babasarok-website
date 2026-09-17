@@ -7,6 +7,7 @@ date: 2025-04-27T06:49:27.000Z
 thumbnail: /src/assets/IMG_9796.jpeg
 images:
   - image: /src/assets/IMG_4241.jpeg
+  - image: /src/assets/IMG_9795.jpeg
 table:
   - title: 2 ágú cumi és rágcsalánc egyben
     description: 8500Ft
