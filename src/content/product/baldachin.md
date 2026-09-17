@@ -9,6 +9,7 @@ images:
   - image: /src/assets/IMG_6918.jpeg
   - image: /src/assets/IMG_7836.jpeg
   - image: /src/assets/IMG_3228.jpeg
+  - image: /src/assets/IMG_7894.jpeg
 table:
   - title: 9m sűrűségű
     description: 17000Ft
