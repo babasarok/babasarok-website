@@ -10,6 +10,7 @@ images:
   - image: /src/assets/1FA2B919-1E05-48BD-8192-C3787E87CD18.webp
   - image: /src/assets/IMG_5430.jpeg
   - image: /src/assets/IMG_5637.jpeg
+  - image: /src/assets/IMG_5526.jpeg
 price: 0
 materials:
   materials:
