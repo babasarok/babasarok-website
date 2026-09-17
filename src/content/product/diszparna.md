@@ -7,6 +7,7 @@ date: 2026-07-01T09:37:02.428Z
 thumbnail: /src/assets/IMG_6955.jpeg
 images:
   - image: /src/assets/IMG_6601.jpeg
+  - image: /src/assets/IMG_6602.jpeg
 price: 3500
 materials:
   materials:
