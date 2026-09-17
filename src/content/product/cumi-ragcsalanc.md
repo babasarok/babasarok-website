@@ -5,6 +5,8 @@ can_be_ordered: true
 categories: Egyedi és praktikus segítők a fogzás idejére
 date: 2025-04-27T06:49:27.000Z
 thumbnail: /src/assets/IMG_9796.jpeg
+images:
+  - {}
 table:
   - title: 2 ágú cumi és rágcsalánc egyben
     description: 8500Ft
