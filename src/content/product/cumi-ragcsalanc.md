@@ -7,7 +7,7 @@ date: 2025-04-27T06:49:27.000Z
 thumbnail: /src/assets/polish_save (1).webp
 table:
   - title: 2 ágú cumi és rágcsalánc egyben
-    description: '8500'
+    description: 8500Ft
   - title: Rágcsalánc
     description: 6500Ft
   - title: Cumilánc névvel
