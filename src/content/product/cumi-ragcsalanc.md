@@ -27,7 +27,7 @@ fields:
         price: 0
       - value: ragokalanc
         label: Rágókalánc
-        price: 0
+        price: 6800
       - value: makrokragcsa
         label: Marokrágcsa
         price: 0
