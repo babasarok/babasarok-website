@@ -7,8 +7,8 @@ thumbnail: /src/assets/5B89E89A-48CC-40FB-89CF-7154D5B14A48.png
 images:
   - image: /src/assets/F7B81905-DD23-41C1-B6DF-DC3EFF0E1CC8.webp
     description: Készleten lévő termék
-  - image: /src/assets/4F9DAA80-F79E-491F-9570-37EE56CFFA07.webp
-    description: készleten lévő termék
+  - image: /src/assets/IMG_5520.jpeg
+    description: ''
   - image: /src/assets/IMG_4934-ovizsak.webp
 table:
   - title: Tornazsák
