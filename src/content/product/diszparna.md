@@ -8,6 +8,7 @@ thumbnail: /src/assets/IMG_6955.jpeg
 images:
   - image: /src/assets/IMG_6601.jpeg
   - image: /src/assets/IMG_6602.jpeg
+  - image: /src/assets/IMG_0001.jpeg
 price: 3500
 materials:
   materials:
