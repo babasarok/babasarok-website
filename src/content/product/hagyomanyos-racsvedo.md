@@ -68,6 +68,3 @@ fields:
     price_unit: word
 ---
 
-![](/src/assets/IMG_7914.webp)
-
-![](/src/assets/IMG_7656.webp)
