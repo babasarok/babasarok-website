@@ -13,6 +13,7 @@ images:
   - image: /src/assets/IMG_5526.jpeg
   - image: /src/assets/787A2DE7-34BE-4E25-A732-770D70E721A1.png
   - image: /src/assets/D9E963FF-ED04-4D16-B7CA-D3244E5168E5.png
+  - image: /src/assets/27B4B1C7-ADD2-4654-A6DF-21AA519EB6F2.png
 price: 0
 materials:
   materials:
