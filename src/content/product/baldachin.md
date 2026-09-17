@@ -8,6 +8,7 @@ thumbnail: /src/assets/Noémi-51.webp
 images:
   - image: /src/assets/IMG_6918.jpeg
   - image: /src/assets/IMG_7836.jpeg
+  - image: /src/assets/IMG_3228.jpeg
 table:
   - title: 9m sűrűségű
     description: 17000Ft
