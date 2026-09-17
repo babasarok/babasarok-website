@@ -31,6 +31,9 @@ fields:
       - value: makrokragcsa
         label: Marokrágcsa
         price: 9500
+      - value: Cumi es ragcsa
+        label: 2 ágú cumi és rágcsalánc
+        price: 6500
   - name: nev
     label: Név
     type: input
