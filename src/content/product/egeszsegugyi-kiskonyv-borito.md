@@ -7,6 +7,7 @@ thumbnail: /src/assets/att.zqkp6Ozzth5q6TPlE7-T9BT9nAxSx8FyWm_88ZJbkGw.webp
 images:
   - image: /src/assets/IMG_6283.jpeg
   - image: /src/assets/IMG_6281.jpeg
+  - image: /src/assets/IMG_6279.jpeg
 table:
   - title: 'Egészségügyi kiskönyv borító '
     description: 3.490Ft
