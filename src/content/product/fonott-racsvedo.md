@@ -12,6 +12,7 @@ images:
   - image: /src/assets/IMG_2923.jpeg
   - image: /src/assets/IMG_2539.jpeg
   - image: /src/assets/IMG_2908.jpeg
+  - image: /src/assets/IMG_3414.jpeg
 table:
   - title: 200cm
     description: 12.800Ft
