@@ -5,6 +5,8 @@ can_be_ordered: true
 categories: A biztonságos pihenésért
 date: 2020-08-12T12:07:16.000Z
 thumbnail: /src/assets/IMG_9614.webp
+images:
+  - image: /src/assets/28ba3ec2e4b435bd2a8acb4026499664.jpeg
 table:
   - title: 140cm
     description: 8.200Ft
@@ -59,10 +61,10 @@ fields:
         label: 140cm
     regex: ^(\d+)$
   - name: himzes
-    price: 1500
-    price_unit: word
     label: Hímzés
     type: embroidery
+    price: 1500
+    price_unit: word
 ---
 
 ![](/src/assets/IMG_7914.webp)
