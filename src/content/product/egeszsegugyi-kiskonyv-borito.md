@@ -11,7 +11,7 @@ images:
   - image: /src/assets/IMG_6280.jpeg
   - image: /src/assets/IMG_6282.jpeg
 table:
-  - title: 'Egészségügyi kiskönyv borító '
+  - title: Egészségügyi kiskönyv borító (név nélkül)
     description: 3.490Ft
 shortDescription: 'Egyedi, névre hímzett egészségügyi kiskönyv borító, amely megvédi a kiskönyvet használat során. '
 price: 3490
