@@ -35,6 +35,8 @@ fields:
     label: Ajándék masni
     type: toggle
     price: 0
+    depends_on:
+      field: Ajandek
   - name: Ajandek
     label: Ajándék pompom
     type: toggle
