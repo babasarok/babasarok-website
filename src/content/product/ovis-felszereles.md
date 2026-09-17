@@ -4,7 +4,7 @@ title: Ovis Felszerelés
 hidden_in_product_list: false
 can_be_ordered: true
 date: 2026-07-11T09:26:43.966Z
-thumbnail: /src/assets/IMG_5721.jpeg
+thumbnail: /src/assets/IMG_5637.jpeg
 images:
   - image: /src/assets/76B92F40-2B82-4FA7-AB83-0F23A81016AE.webp
   - image: /src/assets/1FA2B919-1E05-48BD-8192-C3787E87CD18.webp
