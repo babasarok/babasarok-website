@@ -11,7 +11,7 @@ table:
   - title: 12m sűrűségű
     description: 21000Ft
 shortDescription: 'A finom, puha tüllből készült baldachin eleganciát és modern vonalat csempész a babaszobába.'
-price: 12000
+price: 17000
 materials:
   material_required_count: 0
 fields:
@@ -31,9 +31,6 @@ fields:
       - value: '12'
         label: 12m
         price: 6000
-  - name: pompom
-    label: Pompom
-    type: toggle
-    price: 3000
 ---
 
+Ajándék pompommal, vagy masnival
