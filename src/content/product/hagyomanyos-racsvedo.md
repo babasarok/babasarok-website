@@ -7,6 +7,7 @@ date: 2020-08-12T12:07:16.000Z
 thumbnail: /src/assets/IMG_9614.webp
 images:
   - image: /src/assets/28ba3ec2e4b435bd2a8acb4026499664.jpeg
+  - image: /src/assets/IMG_7914.jpeg
 table:
   - title: 140cm
     description: 8.200Ft
