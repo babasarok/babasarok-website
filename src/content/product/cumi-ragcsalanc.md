@@ -30,7 +30,7 @@ fields:
         price: 6800
       - value: makrokragcsa
         label: Marokrágcsa
-        price: 0
+        price: 9500
   - name: nev
     label: Név
     type: input
