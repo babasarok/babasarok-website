@@ -9,7 +9,7 @@ table:
   - title: 9m sűrűségű
     description: 17000Ft
   - title: 12m sűrűségű
-    description: 18000Ft
+    description: 21000Ft
 shortDescription: 'A finom, puha tüllből készült baldachin eleganciát és modern vonalat csempész a babaszobába.'
 price: 12000
 materials:
