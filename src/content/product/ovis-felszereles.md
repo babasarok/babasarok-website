@@ -8,6 +8,7 @@ thumbnail: /src/assets/IMG_5721.jpeg
 images:
   - image: /src/assets/76B92F40-2B82-4FA7-AB83-0F23A81016AE.webp
   - image: /src/assets/1FA2B919-1E05-48BD-8192-C3787E87CD18.webp
+  - image: /src/assets/IMG_5430.jpeg
 price: 0
 materials:
   materials:
