@@ -4,6 +4,7 @@ title: Díszpárna
 hidden_in_product_list: true
 can_be_ordered: true
 date: 2026-07-01T09:37:02.428Z
+thumbnail: /src/assets/IMG_6955.jpeg
 price: 3500
 materials:
   materials:
@@ -22,9 +23,9 @@ materials:
   material_required_count: 1
 fields:
   - name: fajta
-    price: 0
     label: Fajta
     type: radio
+    price: 0
     items:
       - value: csillag
         label: Csillag
@@ -36,9 +37,9 @@ fields:
         label: Korona
         price: 0
   - name: himzes
-    price: 1500
-    price_unit: word
     label: Hímzés
     type: embroidery
+    price: 1500
+    price_unit: word
 ---
 
