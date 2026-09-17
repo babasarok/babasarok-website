@@ -31,6 +31,10 @@ fields:
       - value: '12'
         label: 12m
         price: 6000
+  - name: 'Ajandek '
+    label: Ajándék masni
+    type: toggle
+    price: 0
 ---
 
 Ajándék pompommal, vagy masnival
