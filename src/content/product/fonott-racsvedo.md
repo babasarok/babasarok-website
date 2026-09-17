@@ -6,7 +6,7 @@ categories: A baba biztonsága és stílusa egyben
 date: 2025-05-20T12:07:16.000Z
 thumbnail: /src/assets/Noémi-35.webp
 images:
-  - image: /src/assets/Noémi-25.webp
+  - image: /src/assets/IMG_4229.jpeg
   - image: /src/assets/Noémi-18.webp
   - image: /src/assets/Noémi-39.webp
 table:
