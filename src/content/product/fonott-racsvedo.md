@@ -10,6 +10,7 @@ images:
   - image: /src/assets/Noémi-18.webp
   - image: /src/assets/Noémi-39.webp
   - image: /src/assets/IMG_2923.jpeg
+  - image: /src/assets/IMG_2539.jpeg
 table:
   - title: 200cm
     description: 12.800Ft
