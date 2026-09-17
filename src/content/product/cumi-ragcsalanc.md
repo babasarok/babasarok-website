@@ -13,7 +13,7 @@ table:
   - title: Cumilánc névvel
     description: 3500Ft
   - title: Marokrágcsa
-    description: '9500'
+    description: 9500Ft
 shortDescription: 'A szilikon cumi- és rágcsáláncok tökéletesek arra, hogy a baba mindig kéznél találja a cumit, így nem kell aggódni, ha lepottyan, ezek mellett pedig segítenek enyhíteni a fogzás okozta kellemetlenségeket is.  Stílusos és praktikus!'
 price: 3800
 materials:
