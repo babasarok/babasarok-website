@@ -35,7 +35,7 @@ colors:
     image: /src/assets/IMG_8361.webp
   - color_id: Pillangos
     label: Pillangók
-    image: /src/assets/IMG_8516.webp
+    image: /src/assets/IMG_6239.webp
   - color_id: Kek Mancs orjarat
     label: 'Mancs őrjárat, kék'
     image: /src/assets/IMG_4616.webp

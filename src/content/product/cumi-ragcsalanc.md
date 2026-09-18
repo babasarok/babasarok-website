@@ -5,30 +5,39 @@ type: kiegeszito
 can_be_ordered: true
 categories: Egyedi és praktikus segítők a fogzás idejére
 date: 2025-04-27T06:49:27.000Z
-thumbnail: /src/assets/polish_save (1).webp
+thumbnail: /src/assets/IMG_9796.jpeg
+images:
+  - image: /src/assets/IMG_4241.jpeg
+  - image: /src/assets/IMG_9795.jpeg
+  - image: /src/assets/IMG_0062.jpeg
+  - image: /src/assets/IMG_6394.jpeg
+  - image: /src/assets/images/product/cumi-ragcsalanc.webp
 shortDescription: 'A szilikon cumi- és rágcsáláncok tökéletesek arra, hogy a baba mindig kéznél találja a cumit, így nem kell aggódni, ha lepottyan, ezek mellett pedig segítenek enyhíteni a fogzás okozta kellemetlenségeket is.  Stílusos és praktikus!'
-price: 3500
+price: 3800
 materials:
   material_required_count: 0
 fields:
   - name: fajta
-    price: 0
     label: Fajta
     type: radio
+    price: 0
     items:
       - value: cumilanc
         label: Cumilánc
         price: 0
       - value: ragokalanc
         label: Rágókalánc
-        price: 0
+        price: 6800
       - value: makrokragcsa
         label: Marokrágcsa
-        price: 0
+        price: 9500
+      - value: Cumi es ragcsa
+        label: 2 ágú cumi és rágcsalánc
+        price: 6500
   - name: nev
-    price: 0
     label: Név
     type: input
+    price: 0
   - name: szin
     label: Színvilág
     type: input

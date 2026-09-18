@@ -6,6 +6,12 @@ can_be_ordered: false
 type: kiegeszito
 date: 2026-08-03T17:28:21.357Z
 thumbnail: /src/assets/att.zqkp6Ozzth5q6TPlE7-T9BT9nAxSx8FyWm_88ZJbkGw.webp
+images:
+  - image: /src/assets/IMG_6283.jpeg
+  - image: /src/assets/IMG_6281.jpeg
+  - image: /src/assets/IMG_6279.jpeg
+  - image: /src/assets/IMG_6280.jpeg
+  - image: /src/assets/IMG_6282.jpeg
 shortDescription: 'Egyedi, névre hímzett egészségügyi kiskönyv borító, amely megvédi a kiskönyvet használat során. '
 price: 3490
 materials:

@@ -7,9 +7,14 @@ categories: A baba biztonsága és stílusa egyben
 date: 2025-05-20T12:07:16.000Z
 thumbnail: /src/assets/Noémi-35.webp
 images:
-  - image: /src/assets/Noémi-25.webp
+  - image: /src/assets/IMG_4229.jpeg
   - image: /src/assets/Noémi-18.webp
   - image: /src/assets/Noémi-39.webp
+  - image: /src/assets/IMG_2923.jpeg
+  - image: /src/assets/IMG_2539.jpeg
+  - image: /src/assets/IMG_2908.jpeg
+  - image: /src/assets/IMG_3414.jpeg
+  - image: /src/assets/IMG_2449.jpeg
 shortDescription: 'A fonott rácsvédő nemcsak dizájnos kiegészítője a kiságyának, hanem praktikus védelmet is nyújt. Puha, pufi anyaga megóvja a baba fejét a rácsokkal való ütközéstől, különösen, amikor a pici már forogni kezd. '
 icon: /src/assets/product/braids.svg
 length_based_pricing:

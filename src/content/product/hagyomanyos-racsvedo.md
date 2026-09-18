@@ -6,6 +6,9 @@ can_be_ordered: true
 categories: A biztonságos pihenésért
 date: 2020-08-12T12:07:16.000Z
 thumbnail: /src/assets/IMG_9614.webp
+images:
+  - image: /src/assets/28ba3ec2e4b435bd2a8acb4026499664.jpeg
+  - image: /src/assets/IMG_7914.jpeg
 shortDescription: 'A hagyományos rácsvédő 2 cm vastag habszivacsból készült, így hatékony védelmet nyújt a baba fejének a kiságy rácsai ellen. Tökéletes választás azoknak, akik kényelmesen szeretnék elhelyezni a babafészket is a kiságyban, miközben megőrzik a baba biztonságát és komfortját. A praktikus kialakítás mellett a rácsvédő könnyen kezelhető, cipzárral ellátott, így a szivacsbetét kivételével könnyedén tisztítható és garantáltan megóvja a kicsit az esetleges ütközésektől. '
 length_based_pricing:
   sourceField: meret
@@ -49,12 +52,9 @@ fields:
         label: 140cm
     regex: ^(\d+)$
   - name: himzes
-    price: 1500
-    price_unit: word
     label: Hímzés
     type: embroidery
+    price: 1500
+    price_unit: word
 ---
 
-![](/src/assets/IMG_7914.webp)
-
-![](/src/assets/IMG_7656.webp)

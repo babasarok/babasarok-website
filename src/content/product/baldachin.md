@@ -6,6 +6,11 @@ categories: A babaszoba stílusos kiegészítője
 type: kiegeszito
 date: 2024-02-02T06:49:27.000Z
 thumbnail: /src/assets/Noémi-51.webp
+images:
+  - image: /src/assets/IMG_6918.jpeg
+  - image: /src/assets/IMG_7836.jpeg
+  - image: /src/assets/IMG_3228.jpeg
+  - image: /src/assets/IMG_7894.jpeg
 shortDescription: 'A finom, puha tüllből készült baldachin eleganciát és modern vonalat csempész a babaszobába.'
 price: 17000
 materials:
@@ -38,3 +43,4 @@ fields:
     price: 0
 ---
 
+Ajándék pompommal, vagy masnival
