@@ -22,11 +22,11 @@ import {
   type RecursivelyReplaceKeyType,
   type RecursivelyReplaceType,
   type RecursiveRequired,
-} from "./typeUtils";
-import type { InferEntrySchema } from "astro:content";
+} from "./typeHelpers";
+import { getCollection, type InferEntrySchema } from "astro:content";
 import type { ImageFunction } from "astro/content/config";
 import type { z } from "astro/zod";
-import type { GetImageResult } from "astro";
+import type { GetImageResult, ImageMetadata } from "astro";
 import { resolveImage } from "./assets";
 import {
   canSupplyStringValue,
@@ -34,7 +34,8 @@ import {
   isProductFieldType,
   type EmbroideryPriceUnit,
   type ProductFieldType,
-} from "./productFieldTypes";
+} from "./product/fieldTypes";
+import { isProductType, type ProductType } from "./product/productTypes";
 import type { LengthBasedPricingConfig } from "./types.svelte";
 
 type Image = z.infer<ReturnType<ImageFunction>>;
@@ -158,6 +159,7 @@ export interface CmsEnhancedProduct extends Omit<
   materials: CmsEnhancedProductMaterials | undefined | null;
   fields: Array<CmsField | undefined | null> | undefined | null;
   length_based_pricing: LengthBasedPricingConfig | undefined | null;
+  type: ProductType;
 }
 
 type AstroProduct = RecursivelyReplaceKeyType<
@@ -283,18 +285,8 @@ export interface SlimImage {
   attributes: GetImageResult["attributes"];
 }
 
-/**
- * Like {@link optimizeImage} but returns only the {@link SlimImage} fields the
- * order island renders. Use for every image serialized into island props;
- * reserve {@link optimizeImage} for images handed back to Astro's `<Image>`
- * (the header/footer logos), which needs the full result to re-optimize.
- */
-async function optimizeIslandImage(path: string, width: number): Promise<SlimImage | undefined> {
-  const optimized = await resolveImage({ src: path, width });
-  if (!optimized) {
-    return undefined;
-  }
-
+/** Project a full `GetImageResult` down to the {@link SlimImage} fields. */
+function toSlimImage(optimized: GetImageResult): SlimImage {
   return {
     src: optimized.src,
     srcSet: { attribute: optimized.srcSet.attribute },
@@ -302,10 +294,36 @@ async function optimizeIslandImage(path: string, width: number): Promise<SlimIma
   };
 }
 
+/**
+ * Like {@link optimizeImage} but returns only the {@link SlimImage} fields the
+ * order island renders. Use for every image serialized into island props;
+ * reserve {@link optimizeImage} for images handed back to Astro's `<Image>`
+ * (the header/footer logos), which needs the full result to re-optimize.
+ *
+ * Accepts both CMS/config path strings (resolved against the `src/assets` glob)
+ * and already-resolved content-collection `ImageMetadata`. Pass `sizes` for
+ * images rendered at variable widths (e.g. product-card thumbnails) so the
+ * browser gets a meaningful responsive `srcset`.
+ */
+export async function optimizeIslandImage(
+  src: string | ImageMetadata,
+  width: number,
+  sizes?: string
+): Promise<SlimImage | undefined> {
+  const optimized = await resolveImage({ src, width, sizes });
+  if (!optimized) {
+    return undefined;
+  }
+
+  return toSlimImage(optimized);
+}
+
 // Render widths (2x for retina) for images consumed outside `<Image>`.
 const SWATCH_WIDTH = 200; // ~24px swatch (`size-6`) in the order island
 const LOGO_WIDTH = 400; // ~100–200px header logo
 const FOOTER_LOGO_WIDTH = 510; // ~255px footer logo
+export const PRODUCT_CARD_IMAGE_WIDTH = 600; // ~300px product-card thumbnail
+export const PRODUCT_CARD_IMAGE_SIZES = "(min-width: 1024px) 300px, 250px";
 
 export const getConfig = async (): Promise<
   RecursiveRequired<CmsEnhancedConfig, GetImageResult>
@@ -388,6 +406,14 @@ function toProductFieldType(type: string): ProductFieldType {
   throw new Error(`Ismeretlen termék mező típus: ${type}`);
 }
 
+/** Narrow Tina's loose `type: string` to the product type discriminant. */
+function toProductType(type: string): ProductType {
+  if (isProductType(type)) {
+    return type;
+  }
+  throw new Error(`Ismeretlen termék típus: ${type}`);
+}
+
 /**
  * Fail the build when a product's cross-field references point at a missing (or
  * unusable) field. These references are plain strings in the CMS, so without
@@ -467,6 +493,7 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
       hidden_in_product_list: product.hidden_in_product_list ?? undefined,
       can_be_ordered: product.can_be_ordered ?? undefined,
       categories: product.categories ?? undefined,
+      type: toProductType(product.type),
       date: product.date ? new Date(product.date) : undefined,
       thumbnail: product.thumbnail
         ? await optimizeIslandImage(product.thumbnail, LOGO_WIDTH)
@@ -518,13 +545,6 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
         ),
         material_required_count: product.materials?.material_required_count ?? 0,
       },
-      table:
-        product.table
-          ?.filter((row) => row != null)
-          .map((row) => ({
-            description: row.description ?? undefined,
-            title: row.title ?? undefined,
-          })) ?? undefined,
       fields:
         product.fields
           ?.filter((field) => field != null)
@@ -572,6 +592,33 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
   return result;
 };
 
+/** One product's page metadata, keyed off the CMS `product_id`. */
+export interface ProductMeta {
+  title: string;
+  slug: string;
+}
+
+/**
+ * The shared product id → {title, slug} map, from the Astro content collection
+ * (the slugs are the entry ids). Single source for the pages and the nav that
+ * resolve persisted product ids into titles and product-page links.
+ */
+export const getProductMeta = async (): Promise<Record<string, ProductMeta>> => {
+  const products = await getCollection("product");
+  return Object.fromEntries(
+    products.map((product) => [
+      product.data.product_id,
+      { title: product.data.title, slug: product.id },
+    ])
+  );
+};
+
+/** The product id → slug view of {@link getProductMeta}, for link building. */
+export const getProductSlugs = async (): Promise<Record<string, string>> => {
+  const meta = await getProductMeta();
+  return Object.fromEntries(Object.entries(meta).map(([id, { slug }]) => [id, slug]));
+};
+
 const transformMaterial = async (
   material: CmsOriginalMaterial
 ): Promise<RecursiveRequired<CmsEnhancedMaterial, SlimImage>> => {
@@ -588,7 +635,7 @@ const transformMaterial = async (
           material.colors
             .filter((color) => color != null)
             .map(async (color) => ({
-              color_id: color.color_id,
+              color_id: color.color_id.trim(),
               label: color.label,
               hex: color.hex ?? undefined,
               image: color.image ? await optimizeIslandImage(color.image, SWATCH_WIDTH) : undefined,
@@ -619,4 +666,40 @@ export const getDeliveryMethods = async (): Promise<CmsEnhancedDeliveryMethod[]>
 
   const nodes = nodesFrom(result.data.delivery_methodsConnection);
   return nodes;
+};
+
+/** A single member of a product group ("set"). */
+export interface CmsProductGroupMember {
+  product_id: string;
+}
+
+export interface CmsProductGroup {
+  title: string;
+  /**
+   * The flat forint discount every formed instance of the set earns when its
+   * members are ordered together. Optional: a group with a zero or absent value
+   * grants no discount and is shown as related items instead.
+   * See the `product-sets` spec in `docs/specs/product-sets.md`.
+   */
+  discount_amount?: number | undefined;
+  products: CmsProductGroupMember[];
+}
+
+export const getProductGroups = async (): Promise<CmsProductGroup[]> => {
+  const result = await client.queries.product_groupsConnection();
+
+  const nodes = nodesFrom(result.data.product_groupsConnection);
+  return nodes.map((group) => {
+    const products: RecursiveRequired<CmsProductGroupMember>[] = [];
+    for (const x of group.products ?? []) {
+      if (x?.product) {
+        products.push({ product_id: x.product.product_id });
+      }
+    }
+    return {
+      title: group.title,
+      discount_amount: group.discount_amount ?? undefined,
+      products,
+    };
+  });
 };

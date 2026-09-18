@@ -3,6 +3,7 @@ product_id: diszparna
 title: Díszpárna
 hidden_in_product_list: false
 can_be_ordered: true
+type: parna
 date: 2026-07-01T09:37:02.428Z
 thumbnail: /src/assets/IMG_6955.jpeg
 images:

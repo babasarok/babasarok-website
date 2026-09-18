@@ -1,12 +1,10 @@
 ---
 product_id: babatakaro-szett
 title: Babatakaró szett
+type: takaro
 can_be_ordered: true
 date: 2025-04-20T12:07:16.000Z
 thumbnail: /src/assets/Noémi-41.webp
-table:
-  - title: Takaró és Párna
-    description: 7500Ft
 shortDescription: 'Univerzális takaró és párna minden évszakra '
 price: 7500
 materials:

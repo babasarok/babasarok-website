@@ -5,10 +5,9 @@
   import Color from "./common/Color.svelte";
   import IconButton from "./common/IconButton.svelte";
   import Tooltip from "./common/Tooltip.svelte";
-  import TextInput from "./common/TextInput.svelte";
   import { slide } from "svelte/transition";
   import type { IProduct } from "@/lib/types.svelte";
-  import { resolveColorCount } from "@/lib/materialUtils";
+  import { resolveColorCount } from "@/lib/product/materials";
   import type { ProductMaterialValue } from "@/lib/types.svelte";
 
   interface Props {
@@ -121,6 +120,11 @@
             }}
           >
             {materialInfo.label || materialInfo.material_id}
+            {#if material.price}
+              <span class="text-xs font-medium whitespace-nowrap opacity-70"
+                >+{material.price} Ft</span
+              >
+            {/if}
           </Button>
         {/if}
       {/each}
@@ -132,7 +136,6 @@
       (m) => !!m && m.material_path.material_id === value?.material_id
     )}
     {@const materialInfo = productMaterial?.material_path}
-    {@const custom = value?.custom_color != undefined || (materialInfo?.colors?.length ?? 0) === 0}
     {@const colorCount = resolveColorCount(productMaterial ?? null, product)}
     {@const multiColor = (colorCount ?? 0) > 1}
     {@const disabled =
@@ -160,9 +163,7 @@
             {/if}
           </span>
           <span class="text-xs">
-            {#if custom}
-              Egyedi szín
-            {:else if colorCount === undefined}
+            {#if colorCount === undefined}
               <span class="text-red-600">Válaszz először opciót</span>
             {:else}
               {`${value?.colors.length ?? 0} / ${colorCount}`}
@@ -213,7 +214,6 @@
                   } else {
                     result.materials.values[material_index].colors = [color.color_id];
                   }
-                  result.materials.values[material_index].custom_color = undefined;
                   onChange?.(result);
                 }}
               />
@@ -221,38 +221,6 @@
           </div>
         {/if}
       </div>
-      {#if (materialInfo?.colors?.length ?? 0) > 0}
-        <Button
-          {disabled}
-          type="button"
-          onclick={() => {
-            const result = product;
-            if (!result.materials.values[material_index]) {
-              return;
-            }
-            result.materials.values[material_index].colors = [];
-            result.materials.values[material_index].custom_color = "";
-            onChange?.(result);
-          }}
-        >
-          Egyedi
-        </Button>
-      {/if}
-      {#if custom}
-        <TextInput
-          value={value?.custom_color}
-          oninput={(e) => {
-            const result = product;
-            if (!result.materials.values[material_index]) {
-              return;
-            }
-            result.materials.values[material_index].custom_color = (
-              e.target as HTMLInputElement
-            ).value;
-            onChange?.(result);
-          }}
-        />
-      {/if}
     </div>
   {/if}
   {#if product.materials.values[material_index]?.error}
