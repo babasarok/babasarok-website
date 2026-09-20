@@ -40,7 +40,7 @@ export function parseListState(search: string): ProductListViewState {
     .map((value) => value.trim())
     .filter((value) => value !== "");
 
-  const sort = (params.get("sort") ?? DEFAULT_LIST_STATE.sort) === "name" ? "name" : "newest";
+  const sort = (params.get("sort") ?? DEFAULT_LIST_STATE.sort) === "newest" ? "newest" : "name";
 
   return { q, types, sets, sort };
 }
@@ -115,6 +115,7 @@ export function serializeListState(state: ProductListViewState): string {
   if (state.q !== "") {
     params.set("q", state.q);
   }
+
   for (const type of state.types) {
     if (PRODUCT_TYPE_VALUES.includes(type)) {
       params.append("type", type);

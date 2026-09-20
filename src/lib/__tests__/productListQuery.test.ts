@@ -21,7 +21,7 @@ describe("parseListState", () => {
       q: "",
       types: [],
       sets: [],
-      sort: "newest",
+      sort: "name",
     });
   });
 
@@ -41,7 +41,7 @@ describe("parseListState", () => {
       q: "x",
       types: ["takaro"],
       sets: [],
-      sort: "newest",
+      sort: "name",
     });
   });
 
@@ -50,7 +50,7 @@ describe("parseListState", () => {
       q: "",
       types: [],
       sets: ["real-set", "ghost"],
-      sort: "newest",
+      sort: "name",
     });
   });
 
@@ -59,7 +59,7 @@ describe("parseListState", () => {
       q: "óvoda zsák",
       types: [],
       sets: [],
-      sort: "newest",
+      sort: "name",
     });
   });
 });
@@ -73,7 +73,7 @@ describe("serializeListState", () => {
   };
 
   it("serializes the default state to an empty string", () => {
-    expect(serializeListState({ q: "", types: [], sets: [], sort: "newest" })).toBe("");
+    expect(serializeListState({ q: "", types: [], sets: [], sort: "name" })).toBe("?sort=name");
   });
 
   it("serializes all state (repeated keys for multi-values)", () => {
@@ -183,7 +183,7 @@ describe("applyListState", () => {
       product({ title: "Same2", date: day("2025-06-01") }),
       product({ title: "New", date: day("2026-01-01") }),
     ];
-    const result = applyListState(products, defaultState);
+    const result = applyListState(products, { ...defaultState, sort: "newest" });
     expect(result.map((p) => p.title)).toEqual(["New", "Same", "Same2", "Old", "No date"]);
   });
 
