@@ -1,6 +1,6 @@
 ---
 product_id: vizhatlan-lepedo-ketretegu
-title: Vízhatlan fektető, derékalj, kétrétegű
+title: Vízhatlan fektető (kétrétegű)
 type: lepedo
 hidden_in_product_list: false
 can_be_ordered: true
