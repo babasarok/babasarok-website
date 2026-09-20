@@ -11,8 +11,8 @@ products:
   - product: src/content/product/pufi-parna-huzat.md
 ---
 
-
 <!-- szett -->
+
 /src/assets/IMG_5626.jpeg - lepedo, takaro
 /src/assets/IMG_5637.jpeg - vallfas, ovizsak, takaro
 
