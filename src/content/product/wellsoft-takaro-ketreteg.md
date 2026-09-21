@@ -1,10 +1,10 @@
 ---
 product_id: wellsoft-takaro-ketreteg
 title: Meleg Wellsoft Takaró (kétrétegű)
-type: takaro
 can_be_ordered: true
+type: takaro
 date: 2026-02-01T10:42:40.867Z
-price: 7000
+price: 6000
 materials:
   materials:
     - material_path: src/content/material/wellsoft.md
@@ -23,8 +23,9 @@ fields:
         label: 50x80cm
         price: 0
   - name: himzes
-    price: 1500
-    price_unit: word
     label: Hímzés
     type: embroidery
+    price: 1500
+    price_unit: word
 ---
+
