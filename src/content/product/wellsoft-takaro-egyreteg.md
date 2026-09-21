@@ -21,7 +21,7 @@ fields:
         price: 4000
       - value: 50x80
         label: 50x80cm
-        price: 0
+        price: 3000
   - name: himzes
     label: Hímzés
     type: embroidery
