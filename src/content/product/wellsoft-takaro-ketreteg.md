@@ -18,7 +18,7 @@ fields:
     items:
       - value: 70x100
         label: 70x100cm
-        price: 2000
+        price: 1000
       - value: 50x80
         label: 50x80cm
         price: 0
