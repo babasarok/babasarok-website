@@ -1,4 +1,4 @@
-import { defineConfig, fontProviders } from "astro/config";
+import { defineConfig, envField, fontProviders } from "astro/config";
 import svelte from "@astrojs/svelte";
 import sitemap from "@astrojs/sitemap";
 import icon from "astro-icon";
@@ -74,6 +74,15 @@ export default defineConfig({
           warn(warning);
         },
       },
+    },
+  },
+  env: {
+    schema: {
+      GTM_ID: envField.string({
+        context: "client",
+        access: "public",
+        optional: false,
+      }),
     },
   },
 });
