@@ -4,7 +4,7 @@ title: Meleg Wellsoft Takaró (egyrétegű)
 can_be_ordered: true
 type: takaro
 date: 2026-02-01T10:42:40.867Z
-price: 5000
+price: 0
 materials:
   materials:
     - material_path: src/content/material/wellsoft.md
