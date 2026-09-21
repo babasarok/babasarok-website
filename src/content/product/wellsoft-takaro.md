@@ -17,6 +17,7 @@ fields:
         price: 1000
       - value: 50x80
         label: 50x80cm
+        price: 0
   - name: szin
     label: Szín
     type: color
