@@ -5,6 +5,9 @@ can_be_ordered: true
 type: parna
 date: 2026-04-07T09:40:26.389Z
 thumbnail: /src/assets/IMG_8048.jpeg
+images:
+  - image: /src/assets/IMG_8446.jpeg
+    description: 'Iker kismamapárna '
 price: 9500
 materials:
   materials:
