@@ -1,9 +1,9 @@
 ---
 product_id: kanikula-takaro-extravekony
-title: Kánikulatakaró (extravékony, egyrétegű)
-type: takaro
-categories: A tökéletes megoldás a forró napokra
+title: 'Kánikulatakaró (extravékony, egyrétegű)'
 can_be_ordered: true
+categories: A tökéletes megoldás a forró napokra
+type: takaro
 date: 2026-07-08T09:40:01.621Z
 thumbnail: /src/assets/Photo Collage Facebook Post.webp
 shortDescription: |-
@@ -18,9 +18,12 @@ materials:
   material_required_count: 1
 fields:
   - name: himzes
-    price: 1500
-    price_unit: word
     label: Hímzés
     type: embroidery
+    price: 1500
+    price_unit: word
 ---
 
+A takaró mérete kb 70x100cm 
+
+(±3cm eltérés elfogadott) 
