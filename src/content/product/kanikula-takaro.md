@@ -13,9 +13,12 @@ images:
     description: duplagéz+pamutvászon
 shortDescription: |-
   Duplagéz kánikulatakaró, a nyár slágere!
-  - Két rétegben takaróként, egy rétegben pedig textilpelusként használható, sőt, sok baba imádja "nyunyókaként" is.
-   -100% pamut anyaga rendkívül légáteresztő, vékony és könnyed, így ideális választás a forró napokra, amikor fontos a baba komfortja, ugyanakkor nem szeretnénk túlfűteni.
-  Kényelmes, praktikus és sokoldalú!
+
+  ✔️Két rétegben takaróként
+  ✔️ egy rétegben textilpelusként is használható, 
+  ✔️sok baba pedig nyunyókaként is imádja.
+
+  100% pamut, légáteresztő és könnyed anyaga tökéletes választás a meleg napokra. Praktikus és sokoldalú!
 price: 0
 materials:
   materials:
