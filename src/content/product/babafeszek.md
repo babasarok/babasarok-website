@@ -6,6 +6,8 @@ categories: A nyugodt alvás titka
 type: babafeszek
 date: 2024-02-02T06:49:27.000Z
 thumbnail: /src/assets/Noémi-04.webp
+images:
+  - image: /src/assets/IMG_0209.jpeg
 shortDescription: |-
   A babafészek biztonságos, kényelmes pihenést biztosít a legkisebbeknek. 
   A szűk, anyaméhhez hasonló környezet elősegíti a békés alvást, miközben a fészek alján lévő szalaggal könnyedén szabályozható a tér.
