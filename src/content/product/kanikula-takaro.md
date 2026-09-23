@@ -11,6 +11,8 @@ images:
     description: waffle+pamutvászon
   - image: /src/assets/IMG_8076.webp
     description: duplagéz+pamutvászon
+  - image: /src/assets/IMG_3985.jpeg
+    description: 'Kétrétegű duplagéz '
 shortDescription: |-
   Duplagéz kánikulatakaró, a nyár slágere!
 
