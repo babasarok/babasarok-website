@@ -26,3 +26,9 @@ fields:
     price: 10000
 ---
 
+Kinyitott állapotban kb. 150cm hosszú. \
+magassága kb 20cm. 
+
+A párna töltete prémium antiallergén poliésztergolyó. 
+
+Választható iker szopipárna kivitelben is. 
