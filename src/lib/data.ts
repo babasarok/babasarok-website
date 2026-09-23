@@ -28,6 +28,13 @@ import type { ImageFunction } from "astro/content/config";
 import type { z } from "astro/zod";
 import type { GetImageResult, ImageMetadata } from "astro";
 import { resolveImage } from "./assets";
+import { instantiateProduct } from "./order/product";
+import {
+  findZeroPriceCombinations,
+  type PricedCombination,
+} from "./pricing/validCombinations";
+import { isFieldVisible } from "./product/field";
+import type { Field, IProduct } from "./types.svelte";
 import {
   canSupplyStringValue,
   isEmbroideryPriceUnit,
@@ -415,6 +422,82 @@ function toProductType(type: string): ProductType {
 }
 
 /**
+ * Fail the build when an orderable product can be submitted at 0 Ft.
+ *
+ * Enumerates every combination the order form actually lets a buyer complete
+ * (visible fields with a selection, all required material slots, `depends_on`
+ * and `banned_combinations` respected) and rejects the product if any of them
+ * prices at 0 Ft — for length-priced products, when the per-meter price is 0,
+ * since any length then sells for free. Non-orderable (browse-only) products
+ * are exempt: they can never be submitted for 0 Ft.
+ */
+function assertNoZeroPriceProduct(product: RecursiveRequired<CmsEnhancedProduct, SlimImage | Date>): void {
+  if (product.can_be_ordered !== true) {
+    return;
+  }
+
+  const item = instantiateProduct(product);
+  const zero = findZeroPriceCombinations(item);
+  if (zero.length > 0) {
+    throw new Error(
+      [
+        `Termék "${product.product_id}" (${product.title}) 0 Ft-ért adható el.`,
+        `Ez a kombináció 0 Ft-os:`,
+        ...zero.slice(0, 10).map((combo) => describeZeroCombo(combo, item)),
+        zero.length > 10 ? `…és még ${zero.length - 10} másik` : "",
+      ]
+        .filter((line) => line !== "")
+        .join("\n")
+    );
+  }
+}
+
+/** A one-line description of a zero-price combination, for the build error. */
+function describeZeroCombo(combo: PricedCombination, item: IProduct): string {
+  const fieldDescriptions = combo.product.fields
+    .filter((field) => isFieldVisible(field, item.fields))
+    .map((field) => describeFieldChoice(field));
+
+  const materialDescriptions = combo.product.materials.values
+    .filter((value) => value != null && value.material_id !== "")
+    .map((value) => {
+      const material = item.materials.materials.find(
+        (m) => m?.material_path.material_id === value?.material_id
+      );
+      return material?.material_path.label ?? value?.material_id ?? "?";
+    });
+
+  const parts = [
+    ...fieldDescriptions,
+    ...(materialDescriptions.length > 0
+      ? [
+          `${materialDescriptions.length === 1 ? "Anyag: " : "Anyagok: "}${materialDescriptions.join(", ")}`,
+        ]
+      : []),
+  ];
+
+  const price = combo.perMeterPrice === undefined ? "0 Ft" : "0 Ft/m";
+  return `  - ${parts.join(", ") || "nincs opció"} → ${price}`;
+}
+
+function describeFieldChoice(field: Field): string {
+  switch (field.type) {
+    case "radio":
+    case "select":
+    case "color": {
+      const selected = (field.items ?? []).find((i) => i != null && i.value === field.value?.value);
+      return selected ? `${field.label}: ${selected.label}` : "";
+    }
+    case "toggle": {
+      return field.value?.value ? `${field.label}: igen` : "";
+    }
+    default: {
+      return "";
+    }
+  }
+}
+
+/**
  * Fail the build when a product's cross-field references point at a missing (or
  * unusable) field. These references are plain strings in the CMS, so without
  * this a typo or a renamed field silently degrades to `undefined` at runtime
@@ -586,6 +669,7 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
     };
 
     assertValidProductReferences(enhanced);
+    assertNoZeroPriceProduct(enhanced);
     result.push(enhanced);
   }
 

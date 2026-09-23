@@ -73,6 +73,31 @@ when the length is known, and leave them undefined when it is not.
   - THEN the unit price and total price are not determined and no price is
     shown until a length is entered
 
+### No product may be sold for 0 Ft
+
+The build SHALL fail when an orderable product has any form-reachable
+configuration that prices at 0 Ft — i.e. the product could be submitted for
+free. The enumeration mirrors the order form's reachability rules: only
+visible fields (`depends_on`) count, radio/select/color selections are
+required (a custom value where `allow_custom_value` is set counts as a 0-Ft
+selection), every required material slot must be filled subject to
+`banned_combinations`, embroidery is optional, and the length source field of
+a length-priced product is judged by its per-meter price (any length would
+then sell for 0 Ft). Non-orderable (browse-only) products are exempt.
+
+- **Scenario: Free combination exists**
+  - WHEN an orderable product's base price plus every reachable selection
+    yields 0 Ft for at least one complete configuration
+  - THEN the build fails, naming the product and the offending combination(s)
+- **Scenario: Length-priced product with 0 per-meter price**
+  - WHEN a length-priced product's per-meter price is 0 Ft for some reachable
+    option combination
+  - THEN the build fails, since any length would sell for 0 Ft
+- **Scenario: No free combination**
+  - WHEN every form-reachable configuration of every orderable product prices
+    above 0 Ft
+  - THEN the build succeeds
+
 ### Set discount application
 
 Set discounts are flat forint deductions applied at basket level, not per line.
