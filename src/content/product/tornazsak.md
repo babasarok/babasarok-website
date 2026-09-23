@@ -1,10 +1,10 @@
 ---
 product_id: tornazsak
 title: Tornazsák
-type: zsak
 can_be_ordered: true
+type: zsak
 date: 2026-07-08T09:40:59.374Z
-thumbnail: /src/assets/5B89E89A-48CC-40FB-89CF-7154D5B14A48.png
+thumbnail: /src/assets/IMG_5520.jpeg
 images:
   - image: /src/assets/F7B81905-DD23-41C1-B6DF-DC3EFF0E1CC8.webp
     description: Készleten lévő termék
@@ -31,3 +31,4 @@ fields:
     price: 1500
     price_unit: word
 ---
+
