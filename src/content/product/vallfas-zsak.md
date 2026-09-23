@@ -1,8 +1,8 @@
 ---
 product_id: vallfas-zsak
 title: Vállfás zsák
-type: zsak
 can_be_ordered: true
+type: zsak
 date: 2026-07-08T09:40:59.374Z
 thumbnail: /src/assets/5B89E89A-48CC-40FB-89CF-7154D5B14A48.png
 images:
@@ -16,7 +16,7 @@ images:
   - image: /src/assets/IMG_5515.jpeg
 shortDescription: |-
   Bölcsőde és óvodakezdésre alkalmas, pakolható vállfás zsák.
-  Mérete: kb. 40x56cm (+-3cm eltérés elfogadott)
+  Mérete: kb. 40x60cm (+-3cm eltérés elfogadott)
 price: 4500
 materials:
   materials:
@@ -31,3 +31,4 @@ fields:
     price: 1500
     price_unit: word
 ---
+
