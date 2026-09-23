@@ -68,5 +68,10 @@ fields:
     type: embroidery
     price: 1500
     price_unit: word
+  - name: Fodor
+    label: 'Fodorral kérem '
+    type: toggle
+    price: 4000
+    tooltip: A termékhez színben és anyagban illő fodor
 ---
 
