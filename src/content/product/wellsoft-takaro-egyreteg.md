@@ -4,7 +4,7 @@ title: Meleg Wellsoft Takaró (egyrétegű)
 can_be_ordered: true
 type: takaro
 date: 2026-02-01T10:42:40.867Z
-price: 0
+price: 3000
 materials:
   materials:
     - material_path: src/content/material/wellsoft.md
@@ -18,10 +18,10 @@ fields:
     items:
       - value: 70x100
         label: 70x100cm
-        price: 4000
+        price: 1000
       - value: 50x80
         label: 50x80cm
-        price: 3000
+        price: 0
   - name: himzes
     label: Hímzés
     type: embroidery

@@ -30,6 +30,7 @@
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.4",
     "@astrojs/svelte": "^9.0.1",
+    "@digi4care/astro-google-tagmanager": "^2.0.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@iconify-json/tabler": "^1.2.35",
     "@iconify/svelte": "^5.2.2",
@@ -90,6 +91,9 @@
     "vite": "^8.0.13",
     "@tinacms/cli": {
       "vite": "^6.4.3"
+    },
+    "@digi4care/astro-google-tagmanager": {
+      "astro": "$astro"
     }
   },
   "allowScripts": {

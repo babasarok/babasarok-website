@@ -76,6 +76,7 @@ jobs:
         env:
           TINA_CMS_CLIENT_ID: ${{ vars.TINA_CMS_CLIENT_ID }}
           TINA_CMS_CLIENT_TOKEN: ${{ secrets.TINA_CMS_CLIENT_TOKEN }}
+          GTM_ID: ${{ vars.GTM_ID }}
       - name: Upload dist
         uses: actions/upload-artifact@v4
         with:
