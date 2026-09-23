@@ -12,6 +12,10 @@ materials:
       price: 0
       color_count: '1'
   material_required_count: 1
-fields: []
+fields:
+  - name: Iker
+    label: Iker kismamapárnát kérek
+    type: toggle
+    price: 10000
 ---
 
