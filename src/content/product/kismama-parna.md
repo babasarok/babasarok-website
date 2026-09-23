@@ -4,6 +4,7 @@ title: Kismamapárna
 can_be_ordered: true
 type: parna
 date: 2026-04-07T09:40:26.389Z
+thumbnail: /src/assets/IMG_8048.jpeg
 price: 9500
 materials:
   materials:
