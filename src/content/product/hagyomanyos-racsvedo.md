@@ -55,5 +55,9 @@ fields:
       - value: '140'
         label: 140cm
     regex: ^(\d+)$
+  - name: Fodor
+    label: 'Fodorral kérem '
+    type: toggle
+    price: 1800
 ---
 
