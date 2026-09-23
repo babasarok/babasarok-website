@@ -55,10 +55,5 @@ fields:
       - value: '140'
         label: 140cm
     regex: ^(\d+)$
-  - name: himzes
-    label: Hímzés
-    type: embroidery
-    price: 1500
-    price_unit: word
 ---
 
