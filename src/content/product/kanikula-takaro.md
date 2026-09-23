@@ -1,11 +1,11 @@
 ---
 product_id: kanikula-takaro
 title: Kánikulatakaró (kétrétegű)
-type: takaro
-categories: A tökéletes megoldás a forró napokra
 can_be_ordered: true
+categories: A tökéletes megoldás a forró napokra
+type: takaro
 date: 2026-06-28T09:45:13.551Z
-thumbnail: /src/assets/Photo Collage Facebook Post.webp
+thumbnail: /src/assets/IMG_4929.jpeg
 images:
   - image: /src/assets/IMG_8082.webp
     description: waffle+pamutvászon
@@ -38,9 +38,9 @@ materials:
         - material_path: src/content/material/waffle.md
 fields:
   - name: meret
-    price: 0
     label: Méret
     type: radio
+    price: 0
     items:
       - value: 70x100cm
         label: Gyerek
@@ -55,10 +55,10 @@ fields:
         price: 8000
         tooltip: 140x200cm
   - name: himzes
-    price: 1500
-    price_unit: word
     label: Hímzés
     type: embroidery
+    price: 1500
+    price_unit: word
 ---
 
 Kánikulatakaróinkat akár waffle anyag kombinációval is kérhetitek, már felnőtt (140x200cm) méretben is.
