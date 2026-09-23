@@ -29,10 +29,7 @@ import type { z } from "astro/zod";
 import type { GetImageResult, ImageMetadata } from "astro";
 import { resolveImage } from "./assets";
 import { instantiateProduct } from "./order/product";
-import {
-  findZeroPriceCombinations,
-  type PricedCombination,
-} from "./pricing/validCombinations";
+import { findZeroPriceCombinations, type PricedCombination } from "./pricing/validCombinations";
 import { isFieldVisible } from "./product/field";
 import type { Field, IProduct } from "./types.svelte";
 import {
@@ -431,7 +428,9 @@ function toProductType(type: string): ProductType {
  * since any length then sells for free. Non-orderable (browse-only) products
  * are exempt: they can never be submitted for 0 Ft.
  */
-function assertNoZeroPriceProduct(product: RecursiveRequired<CmsEnhancedProduct, SlimImage | Date>): void {
+function assertNoZeroPriceProduct(
+  product: RecursiveRequired<CmsEnhancedProduct, SlimImage | Date>
+): void {
   if (product.can_be_ordered !== true) {
     return;
   }

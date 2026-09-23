@@ -110,15 +110,12 @@ export function fieldCombinations(fields: Field[], lengthSourceName?: string): F
     fields: Field[];
   }
 
-  let branches: Branch[] = [
-    { values: {}, fields: fields.map((f) => ({ ...f })) },
-  ];
+  let branches: Branch[] = [{ values: {}, fields: fields.map((f) => ({ ...f })) }];
 
   for (const field of order) {
     const next: Branch[] = [];
     for (const branch of branches) {
-      const visible =
-        !cyclic.has(field.name) && isFieldVisible(field, branch.fields);
+      const visible = !cyclic.has(field.name) && isFieldVisible(field, branch.fields);
       if (!visible) {
         next.push(branch);
         continue;
@@ -156,9 +153,7 @@ export function fieldCombinations(fields: Field[], lengthSourceName?: string): F
         }
       }
       for (const choice of choices) {
-        const updatedFields = branch.fields.map((f) =>
-          f.name === field.name ? choice : f
-        );
+        const updatedFields = branch.fields.map((f) => (f.name === field.name ? choice : f));
         next.push({
           values: { ...branch.values, [field.name]: choice },
           fields: updatedFields,
@@ -173,7 +168,9 @@ export function fieldCombinations(fields: Field[], lengthSourceName?: string): F
 
 function matchesBanned(
   selectedIds: string[],
-  combination: Array<{ material_path: { material_id: string } | null | undefined } | null | undefined>
+  combination: Array<
+    { material_path: { material_id: string } | null | undefined } | null | undefined
+  >
 ): boolean {
   const wanted: string[] = [];
   for (const material of combination) {
@@ -331,7 +328,9 @@ function fieldPrice(field: Field, product: IProduct): number | undefined {
     case "radio":
     case "color":
     case "select": {
-      const selectedItem = (field.items ?? []).find((item) => !!item && item.value === field.value?.value);
+      const selectedItem = (field.items ?? []).find(
+        (item) => !!item && item.value === field.value?.value
+      );
       return selectedItem?.price ?? undefined;
     }
     case "toggle": {
