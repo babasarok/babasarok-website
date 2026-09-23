@@ -9,6 +9,9 @@ images:
   - image: /src/assets/IMG_8446.jpeg
     description: 'Iker kismamapárna '
   - image: /src/assets/IMG_7144.jpeg
+shortDescription: |-
+  Kényelmes segítség szoptatáskor, ami a terhesség alatt kismamapárnaként is tökéletes.
+  Cipzáras huzattal, a könnyű tisztíthatóság érdekében.
 price: 9500
 materials:
   materials:
