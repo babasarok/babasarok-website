@@ -1,9 +1,9 @@
 ---
 product_id: hagyomanyos-racsvedo
 title: Hagyományos Rácsvédő
-type: racsvedo
 can_be_ordered: true
 categories: A biztonságos pihenésért
+type: racsvedo
 date: 2020-08-12T12:07:16.000Z
 thumbnail: /src/assets/IMG_9614.webp
 images:
@@ -31,6 +31,9 @@ materials:
       price: 0
       color_count: '1'
   material_required_count: 2
+  banned_combinations:
+    - materials:
+        - material_path: src/content/material/wellsoft.md
 fields:
   - name: meret
     label: Méret
