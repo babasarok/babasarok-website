@@ -12,7 +12,7 @@ images:
 shortDescription: 'A hagyományos rácsvédő 2 cm vastag habszivacsból készült, így hatékony védelmet nyújt a baba fejének a kiságy rácsai ellen. Tökéletes választás azoknak, akik kényelmesen szeretnék elhelyezni a babafészket is a kiságyban, miközben megőrzik a baba biztonságát és komfortját. A praktikus kialakítás mellett a rácsvédő könnyen kezelhető, cipzárral ellátott, így a szivacsbetét kivételével könnyedén tisztítható és garantáltan megóvja a kicsit az esetleges ütközésektől. '
 length_based_pricing:
   sourceField: meret
-price: 6500
+price: 7000
 materials:
   materials:
     - material_path: src/content/material/minky.md
