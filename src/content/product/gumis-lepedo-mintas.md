@@ -5,13 +5,11 @@ can_be_ordered: true
 categories: 100% pamut gumis lepedő
 type: lepedo
 date: 2026-07-01T09:37:50.600Z
-thumbnail: /src/assets/polish_save.webp
-shortDescription: |-
+thumbnail: /src/assets/01873C2F-870F-44B9-8569-3E3E8BF9B1BC.png
+shortDescription: |+
   100% pamut, gumis lepedő a kiságyra.
   (Körbegumis)
 
-  Választható vízhatlan opció is, aminek az egyik oldala frottír (pamut) másik oldala vízhatlan anyag.
-  (4 sarkán gumis)
 price: 0
 materials:
   materials:
