@@ -5,7 +5,7 @@ can_be_ordered: true
 categories: A tökéletes megoldás a forró napokra
 type: takaro
 date: 2026-07-08T09:40:01.621Z
-thumbnail: /src/assets/Photo Collage Facebook Post.webp
+thumbnail: /src/assets/IMG_4655.jpeg
 shortDescription: |-
   Extra vékony, egyrétegű duplagéz kánikulatakaró, akár textilpelusnak is.
   100% pamut, rendkívül légáteresztő és könnyed.
