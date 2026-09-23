@@ -8,6 +8,7 @@ thumbnail: /src/assets/IMG_8048.jpeg
 images:
   - image: /src/assets/IMG_8446.jpeg
     description: 'Iker kismamapárna '
+  - image: /src/assets/IMG_7144.jpeg
 price: 9500
 materials:
   materials:
