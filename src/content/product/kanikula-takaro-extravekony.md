@@ -16,12 +16,7 @@ materials:
       price: 0
       color_count: '1'
   material_required_count: 1
-fields:
-  - name: himzes
-    label: Hímzés
-    type: embroidery
-    price: 1500
-    price_unit: word
+fields: []
 ---
 
 A takaró mérete kb 70x100cm 
