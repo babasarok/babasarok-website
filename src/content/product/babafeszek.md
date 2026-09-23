@@ -35,6 +35,7 @@ materials:
   banned_combinations:
     - materials:
         - material_path: src/content/material/wellsoft.md
+        - material_path: src/content/material/wellsoft.md
 fields:
   - name: meret
     label: Méret
