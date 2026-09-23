@@ -5,6 +5,7 @@ can_be_ordered: true
 categories: ''
 type: kiegeszito
 date: 2020-08-11T12:07:16.000Z
+thumbnail: /src/assets/IMG_4175.jpeg
 shortDescription: |-
   Puha duplagéz anyagból készült textilpelus, 65x65cm-es méretben. Az első hónapok egyik legfontosabb kelléke.
 
