@@ -21,6 +21,7 @@ images:
     description: 'Kétrétegű duplagéz '
   - image: /src/assets/IMG_4892.jpeg
     description: 'Duplagéz+pamutvászon '
+  - image: /src/assets/IMG_4687.jpeg
 shortDescription: |-
   Duplagéz kánikulatakaró, a nyár slágere!
 
