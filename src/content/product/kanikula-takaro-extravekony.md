@@ -9,7 +9,7 @@ thumbnail: /src/assets/Photo Collage Facebook Post.webp
 shortDescription: |-
   Extra vékony, egyrétegű duplagéz kánikulatakaró, akár textilpelusnak is.
   100% pamut, rendkívül légáteresztő és könnyed.
-price: 3000
+price: 4000
 materials:
   materials:
     - material_path: src/content/material/duplagez.md
