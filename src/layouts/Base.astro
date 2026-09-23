@@ -14,7 +14,7 @@ import safariPinnedTab from "../assets/favicons/safari-pinned-tab.svg?url";
 import MetaPixel from "../components/MetaPixel.astro";
 import { ClientRouter } from "astro:transitions";
 import { GTM_ID } from "astro:env/client";
-import { GoogleTagmanager } from "@digi4care/astro-google-tagmanager";
+import { GoogleTagmanager, GoogleTagmanagerNoscript } from "@digi4care/astro-google-tagmanager";
 
 interface Props {
   title: string;
@@ -82,6 +82,7 @@ const themeColor = config.themeColor ?? "#F1D3B2";
     <ClientRouter />
   </head>
   <body>
+    <GoogleTagmanagerNoscript id={GTM_ID} />
     <Header />
     <div id="content" role="document">
       <slot />
