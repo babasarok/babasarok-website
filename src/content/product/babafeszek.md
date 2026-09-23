@@ -1,9 +1,9 @@
 ---
 product_id: babafeszek
 title: Babafészek
-type: babafeszek
 can_be_ordered: true
 categories: A nyugodt alvás titka
+type: babafeszek
 date: 2024-02-02T06:49:27.000Z
 thumbnail: /src/assets/Noémi-04.webp
 shortDescription: 'A babafészek biztonságos, kényelmes pihenést biztosít a legkisebbeknek. A szűk, anyaméhhez hasonló környezet elősegíti a békés alvást, miközben a fészek alján lévő szalaggal könnyedén szabályozható a tér. Ideális választás a nyugodt, pihentető éjszakákért!'
@@ -32,11 +32,14 @@ materials:
       price: 0
       color_count: '1'
   material_required_count: 2
+  banned_combinations:
+    - materials:
+        - material_path: src/content/material/wellsoft.md
 fields:
   - name: meret
-    price: 0
     label: Méret
     type: radio
+    price: 0
     items:
       - value: 35x65
         label: Normál
@@ -51,13 +54,13 @@ fields:
         price: 5000
         tooltip: 50x90cm
   - name: betet
-    price: 3700
     label: Betét
     type: toggle
+    price: 3700
   - name: himzes
-    price: 1500
-    price_unit: word
     label: Hímzés
     type: embroidery
+    price: 1500
+    price_unit: word
 ---
 
