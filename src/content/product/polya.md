@@ -1,8 +1,8 @@
 ---
 product_id: polya
 title: Pólya
-type: kiegeszito
 can_be_ordered: true
+type: kiegeszito
 date: 2020-08-11T12:07:16.000Z
 thumbnail: /src/assets/Noémi-19.webp
 shortDescription: |
@@ -32,15 +32,18 @@ materials:
       price: 0
       color_count: '1'
   material_required_count: 2
+  banned_combinations:
+    - materials:
+        - material_path: src/content/material/wellsoft.md
 fields:
   - name: kokuszbetet
-    price: 1200
     label: Kókuszbetéttel
     type: toggle
+    price: 1200
   - name: himzes
-    price: 1500
-    price_unit: word
     label: Hímzés
     type: embroidery
+    price: 1500
+    price_unit: word
 ---
 
