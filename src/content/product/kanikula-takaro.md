@@ -1,9 +1,35 @@
 ---
 product_id: kanikula-takaro
-title: Kánikulatakaró
-hidden_in_product_list: true
+title: Kánikulatakaró (kétrétegű)
 can_be_ordered: true
+categories: A tökéletes megoldás a forró napokra
+type: takaro
 date: 2026-06-28T09:45:13.551Z
+thumbnail: /src/assets/IMG_4929.jpeg
+images:
+  - image: /src/assets/IMG_8082.webp
+    description: waffle+pamutvászon
+  - image: /src/assets/IMG_8076.webp
+    description: duplagéz+pamutvászon
+  - image: /src/assets/IMG_3985.jpeg
+    description: 'Kétrétegű duplagéz '
+  - image: /src/assets/IMG_4638.jpeg
+    description: Duplagéz+pamutvászon
+  - image: /src/assets/IMG_4153.jpeg
+    description: 'Waffle+pamutvászon '
+  - image: /src/assets/IMG_4914.jpeg
+    description: 'Kétrétegű duplagéz '
+  - image: /src/assets/IMG_4892.jpeg
+    description: 'Duplagéz+pamutvászon '
+  - image: /src/assets/IMG_4687.jpeg
+shortDescription: |-
+  Duplagéz kánikulatakaró, a nyár slágere!
+
+  ✔️Két rétegben takaróként
+  ✔️ egy rétegben textilpelusként is használható, 
+  ✔️sok baba pedig nyunyókaként is imádja.
+
+  100% pamut, légáteresztő és könnyed anyaga tökéletes választás a meleg napokra. Praktikus és sokoldalú!
 price: 0
 materials:
   materials:
@@ -26,9 +52,9 @@ materials:
         - material_path: src/content/material/waffle.md
 fields:
   - name: meret
-    price: 0
     label: Méret
     type: radio
+    price: 0
     items:
       - value: 70x100cm
         label: Gyerek
@@ -43,9 +69,10 @@ fields:
         price: 8000
         tooltip: 140x200cm
   - name: himzes
-    price: 1500
-    price_unit: word
     label: Hímzés
     type: embroidery
+    price: 1500
+    price_unit: word
 ---
 
+Kánikulatakaróinkat akár waffle anyag kombinációval is kérhetitek, már felnőtt (140x200cm) méretben is.

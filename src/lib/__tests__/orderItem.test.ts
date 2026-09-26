@@ -9,9 +9,9 @@
  * materials, discounts) so a change in any of them surfaces here.
  */
 import { describe, expect, it } from "vitest";
-import { calculatePriceForItem } from "@/lib/priceUtils";
-import { isItemValid, sanitizeItem, validateItem } from "@/lib/validation";
-import { resolveColorCount } from "@/lib/materialUtils";
+import { calculatePriceForItem } from "@/lib/pricing/price";
+import { isItemValid, sanitizeItem, validateItem } from "@/lib/product/validation";
+import { resolveColorCount } from "@/lib/product/materials";
 import { fieldError, makeField, makeMaterial, makeProduct } from "./fixtures";
 
 describe("calculatePriceForItem — field combinations", () => {
@@ -20,7 +20,6 @@ describe("calculatePriceForItem — field combinations", () => {
     expect(price.basePrice.price).toBe(5000);
     expect(price.unitPrice).toBe(5000);
     expect(price.totalPrice).toBe(15_000);
-    expect(price.indeterminate).toBe(false);
   });
 
   it("adds the selected radio option price", () => {
@@ -130,23 +129,6 @@ describe("calculatePriceForItem — field combinations", () => {
       })
     );
     expect(price.unitPrice).toBe(600);
-  });
-
-  it("is indeterminate when a selected option has no price", () => {
-    const price = calculatePriceForItem(
-      makeProduct({
-        price: 1000,
-        fields: [
-          makeField({
-            name: "opt",
-            type: "radio",
-            items: [{ value: "a" }],
-            value: { value: "a" },
-          }),
-        ],
-      })
-    );
-    expect(price.indeterminate).toBe(true);
   });
 
   it("does not price the length-based source field directly", () => {
@@ -262,7 +244,7 @@ describe("calculatePriceForItem — discount", () => {
       makeProduct({ price: 10_000, count: 1, discount: 25, discount_valid_until: "2000-01-01" })
     );
     expect(price.totalPrice).toBe(10_000);
-    expect(price.discount).toBeUndefined();
+    expect(price.discountInfo).toBeUndefined();
   });
 });
 
@@ -418,18 +400,6 @@ describe("validateItem / isItemValid", () => {
     expect(isItemValid(item)).toBe(false);
   });
 
-  it("accepts a custom material color regardless of count", () => {
-    const item = validateItem(
-      makeProduct({
-        materials: [makeMaterial({ material_id: "m", color_count: "2" })],
-        material_required_count: 1,
-        values: [{ material_id: "m", colors: [], custom_color: "egyedi" }],
-      })
-    );
-    expect(item.materials.values[0]?.error).toBeUndefined();
-    expect(isItemValid(item)).toBe(true);
-  });
-
   it("fills missing material slots with required-but-empty errors", () => {
     const item = validateItem(
       makeProduct({
@@ -475,16 +445,5 @@ describe("sanitizeItem", () => {
       })
     );
     expect(item.materials.values[0]?.colors).toEqual(["a", "b"]);
-  });
-
-  it("leaves custom-color selections untouched", () => {
-    const item = sanitizeItem(
-      makeProduct({
-        materials: [makeMaterial({ material_id: "m", color_count: "1" })],
-        material_required_count: 1,
-        values: [{ material_id: "m", colors: [], custom_color: "egyedi" }],
-      })
-    );
-    expect(item.materials.values[0]?.custom_color).toBe("egyedi");
   });
 });

@@ -11,6 +11,7 @@ import { ProductCollection } from "./collections/product";
 import { MaterialCollection } from "./collections/material";
 import { DeliveryMethodCollection } from "./collections/delivery-method";
 import { ContactCollection } from "./collections/contact";
+import { ProductGroupCollection } from "./collections/product-groups";
 
 const branch =
   process.env.CF_PAGES_BRANCH ||
@@ -52,6 +53,7 @@ export default defineConfig({
       MaterialCollection,
       DeliveryMethodCollection,
       ContactCollection,
+      ProductGroupCollection,
     ],
   },
 });

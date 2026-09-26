@@ -1,7 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import Tooltip from "./common/Tooltip.svelte";
-  import { calculatePriceForItem } from "@/lib/priceUtils";
+  import { calculatePriceForItem } from "@/lib/pricing/price";
   import type { IProduct } from "@/lib/types.svelte";
   import IconButton from "./common/IconButton.svelte";
 
@@ -47,11 +46,16 @@
         </p>
       </div>
     {/if}
-    {#if price.discount !== undefined}
+    {#if price.discountInfo !== undefined}
       <div class="flex justify-between">
         <p class="text-xs">Kedvezmény</p>
         <p class="text-xs">
-          {(1 - price.discount).toLocaleString(undefined, { style: "percent" })}
+          −{(price.discountInfo.percent / 100).toLocaleString(undefined, {
+            style: "percent",
+          })}
+          {#if price.discountInfo.discountAppliedCount < product.count}
+            ({price.discountInfo.discountAppliedCount} db)
+          {/if}
         </p>
       </div>
     {/if}
@@ -82,14 +86,7 @@
           </IconButton>
         </div>
         <p class="flex gap-0.5 text-xs">
-          {price.totalPrice === undefined ? "??" : `${price.totalPrice} Ft`}
-          {price.indeterminate ? " + ??" : ""}
-          <Tooltip>
-            {#snippet content()}
-              Az ár tájékoztató jellegű, a végleges árajánlatot a visszajelzéskor kapod meg.
-            {/snippet}
-            <Icon icon="mdi:alert-circle" class="inline-block text-sm text-orange-500" />
-          </Tooltip>
+          {price.totalPrice === undefined ? "--" : `${price.totalPrice} Ft`}
         </p>
       </div>
     </svelte:boundary>
