@@ -19,5 +19,11 @@ shortDescription: |-
   Mosható 30fokon és 800-as centifugán 
   A mindennapok hasznos kiegészítője ✨
 price: 4900
+fields:
+  - name: Bajos magnolia
+    label: Bájos magnólia
+    type: radio
+    price: 0
+    items: []
 ---
 
