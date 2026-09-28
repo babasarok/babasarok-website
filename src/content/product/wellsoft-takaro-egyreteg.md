@@ -4,6 +4,11 @@ title: Meleg Wellsoft Takaró (egyrétegű)
 can_be_ordered: true
 type: takaro
 date: 2026-02-01T10:42:40.867Z
+thumbnail: /src/assets/F55749CB-728D-4348-B841-3E15B87319DE.png
+shortDescription: |
+  Egyrétegű, pihepuha takaró.
+  Az oldalai, körben beszegve
+  Kétféle méretben kapható 
 price: 3000
 materials:
   materials:
