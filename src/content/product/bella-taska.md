@@ -21,11 +21,13 @@ shortDescription: |-
   A mindennapok hasznos kiegészítője ✨
 price: 4900
 fields:
-  - name: Bajos magnolia
-    label: Bájos magnólia
-    type: input
+  - name: Fajta
+    label: Válassz típust
+    type: select
     price: 0
-    items: []
+    items:
+      - value: Bajos-magnolia
+        label: Bájos Magnólia
   - name: 'Hamvas rozsa '
     label: Hamvas rózsa
     type: color
