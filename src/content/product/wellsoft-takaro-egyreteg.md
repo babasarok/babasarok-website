@@ -27,10 +27,5 @@ fields:
       - value: 50x80
         label: 50x80cm
         price: 0
-  - name: himzes
-    label: Hímzés
-    type: embroidery
-    price: 1500
-    price_unit: word
 ---
 
