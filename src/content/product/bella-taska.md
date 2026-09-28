@@ -6,7 +6,9 @@ categories: Praktikus és stílus a mindennapokhoz
 type: kiegeszito
 date: 2026-09-28T10:13:25.483Z
 thumbnail: /src/assets/IMG_6499.jpeg
-images: []
+images:
+  - image: /src/assets/IMG_6490.jpeg
+    description: 'Hamvas rózsa '
 shortDescription: |-
   Vastag vászonból készült, strapabíró táska. 
   Béléssel, és cipzárral ellátott, hátsó oldalán plusz cipzáros zsebbel, hogy az apróságok se kallódjanak el. 
