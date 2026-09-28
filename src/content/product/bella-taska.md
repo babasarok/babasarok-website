@@ -1,0 +1,19 @@
+---
+product_id: Oko-taska
+title: Bella táska
+can_be_ordered: true
+categories: Praktikus és stílus a mindennapokhoz
+type: kiegeszito
+date: 2026-09-28T10:13:25.483Z
+thumbnail: /src/assets/IMG_6499.jpeg
+images: []
+shortDescription: |-
+  Vastag vászonból készült, strapabíró táska. 
+  Béléssel, és cipzárral ellátott, hátsó oldalán plusz cipzáros zsebbel, hogy az apróságok se kallódjanak el. 
+
+  A táska mérete 34x37cm
+  Mosható 30fokon és 800-as centifugán 
+  A mindennapok hasznos kiegészítője ✨
+price: 4900
+---
+
