@@ -1,6 +1,6 @@
 ---
 product_id: pufi-parna-huzat
-title: Pufi párna huzat
+title: Kispárna huzat
 hidden_in_product_list: false
 can_be_ordered: true
 type: parna
@@ -11,7 +11,7 @@ shortDescription: |
   Cipzárral ellátott. 
   Mérete kb 40x50cm 
   30fokon, alacsony fordulatszámon (800) tisztítható! 
-price: 3800
+price: 3000
 materials:
   materials:
     - material_path: src/content/material/pamutvaszon.md
