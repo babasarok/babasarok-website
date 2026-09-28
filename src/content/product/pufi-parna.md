@@ -11,6 +11,6 @@ shortDescription: |-
   Sima fehér 100%pamutvászon anyag. 
   Töltete oeko-tex minősítésű, antiallergén, szilikonizált poliésztergolyó. 
   40fokon és , 800-1000 furdulatszámú centrifugán tisztítható! 
-price: 3000
+price: 3500
 ---
 
