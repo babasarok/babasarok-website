@@ -11,6 +11,7 @@ images:
     description: 'Hamvas rózsa '
   - image: /src/assets/IMG_6487.jpeg
     description: Bájos magnólia
+  - image: /src/assets/IMG_6495.jpeg
 shortDescription: |-
   Vastag vászonból készült, strapabíró táska. 
   Béléssel, és cipzárral ellátott, hátsó oldalán plusz cipzáros zsebbel, hogy az apróságok se kallódjanak el. 
