@@ -30,9 +30,5 @@ fields:
         label: Bájos Magnólia
       - value: Hamvas-rozsa
         label: Hamvas rózsa
-  - name: 'Hamvas rozsa '
-    label: Hamvas rózsa
-    type: color
-    price: 0
 ---
 
