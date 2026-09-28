@@ -23,7 +23,7 @@ price: 4900
 fields:
   - name: Bajos magnolia
     label: Bájos magnólia
-    type: select
+    type: input
     price: 0
     items: []
   - name: 'Hamvas rozsa '
