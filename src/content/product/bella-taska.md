@@ -25,5 +25,9 @@ fields:
     type: radio
     price: 0
     items: []
+  - name: 'Hamvas rozsa '
+    label: Hamvas rózsa
+    type: radio
+    price: 0
 ---
 
