@@ -9,7 +9,7 @@ import type { Collection } from "tinacms";
  */
 export const ContactCollection: Collection = {
   name: "contact",
-  label: "Rendelés (Kapcsolat)",
+  label: "Kapcsolat",
   path: "src/content/contact",
   format: "md",
   frontmatterFormat: "yaml",

@@ -12,6 +12,7 @@ import {
   type CmsEnhancedDeliveryMethod,
 } from "../lib/data";
 import CheckoutForm from "@/components/blocks/order/CheckoutForm.svelte";
+import { getEntry } from "astro:content";
 
 const config = await getConfig();
 
@@ -22,6 +23,7 @@ const productGroups = await getProductGroups();
 
 // Slug lookup so the checkout can link each item back to its product page.
 const slugByProductId = await getProductSlugs();
+const checkout = await getEntry("checkout", "index");
 ---
 
 <Base title="Pénztár">
@@ -30,6 +32,7 @@ const slugByProductId = await getProductSlugs();
   <section class="py-12.5">
     <div class="not-prose container">
       <CheckoutForm
+        basketInfo={checkout?.data.basket_note}
         products={products.reduce<Record<string, CmsEnhancedProduct>>((acc, p) => {
           if (!p.can_be_ordered) {
             return acc;
