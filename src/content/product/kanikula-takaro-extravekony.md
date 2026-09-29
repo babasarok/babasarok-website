@@ -1,22 +1,24 @@
 ---
 product_id: kanikula-takaro-extravekony
-title: Kánikulatakaró (extravékony)
-hidden_in_product_list: true
+title: 'Kánikulatakaró (extravékony, egyrétegű)'
 can_be_ordered: true
+categories: A tökéletes megoldás a forró napokra
+type: takaro
 date: 2026-07-08T09:40:01.621Z
-price: 3000
+thumbnail: /src/assets/IMG_4655.jpeg
+shortDescription: |-
+  Extra vékony, egyrétegű duplagéz kánikulatakaró, akár textilpelusnak is.
+  100% pamut, rendkívül légáteresztő és könnyed.
+price: 4000
 materials:
-  material_required_count: 0
-fields:
-  - name: szin
-    price: 0
-    label: Szín
-    type: color
-    allow_custom_value: true
-  - name: himzes
-    price: 1500
-    price_unit: word
-    label: Hímzés
-    type: embroidery
+  materials:
+    - material_path: src/content/material/duplagez.md
+      price: 0
+      color_count: '1'
+  material_required_count: 1
+fields: []
 ---
 
+A takaró mérete kb 70x100cm 
+
+(±3cm eltérés elfogadott) 

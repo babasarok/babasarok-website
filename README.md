@@ -102,4 +102,6 @@ Tina admin at `/admin`. Two access paths read this content at build time:
   and AI agents.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — architecture deep-dive and
   improvement backlog.
-- [docs/](docs/) — planning documents (e.g. Tina visual editing / Cloudflare).
+- [docs/specs/](docs/specs/) — normative behavior specs, one file per
+  capability.
+- [docs/adr/](docs/adr/) — architectural decision records.

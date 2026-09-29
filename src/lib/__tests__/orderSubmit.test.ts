@@ -11,7 +11,9 @@
  * delivery, total, …), not just one helper.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { calculateOrderTotal, submitOrder, type OrderDetails } from "@/lib/orderSubmit";
+import { submitOrder, type OrderDetails } from "@/lib/order/submit";
+import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
+import { orderTotal } from "@/lib/order/total";
 import { makeDelivery, makeField, makeMaterial, makeProduct } from "./fixtures";
 
 afterEach(() => {
@@ -46,6 +48,7 @@ const baseOrder = (products: OrderDetails["products"], address?: string): OrderD
   address,
   products,
   threadColors: [],
+  productGroups: [],
 });
 
 describe("order form envelope", () => {
@@ -63,7 +66,7 @@ describe("order form envelope", () => {
     expect(form.get("telefonszam")).toBe("+36301234567");
     expect(form.get("szallitasimod")).toBe("Foxpost automata (990 Ft)");
     expect(form.get("uzenet")).toBe("Kérlek hímezzétek rá: Anna");
-    expect(form.get("ar")).toBe("8990 Ft ");
+    expect(form.get("ar")).toBe("8990 Ft");
   });
 
   it("emits one `termek N` entry per product, in order", async () => {
@@ -77,26 +80,7 @@ describe("order form envelope", () => {
     expect(form.getAll("termek 1")).toHaveLength(1);
     expect(form.get("termek 1")).toContain("Első");
     expect(form.get("termek 2")).toContain("Második");
-    expect(form.get("ar")).toBe("3990 Ft ");
-  });
-
-  it("marks the total as indeterminate when any price is unknown", async () => {
-    // An option with no price makes the total partial; the base price is always known.
-    const product = makeProduct({
-      title: "Ismeretlen árú",
-      price: 0,
-      fields: [
-        makeField({
-          name: "meret",
-          label: "Méret",
-          type: "radio",
-          items: [{ value: "40x75", label: "Közepes" }],
-          value: { value: "40x75" },
-        }),
-      ],
-    });
-    const form = await captureForm(baseOrder([product]));
-    expect(form.get("ar")).toBe("990 Ft (nem teljes ár)");
+    expect(form.get("ar")).toBe("3990 Ft");
   });
 });
 
@@ -201,7 +185,7 @@ describe("product string content", () => {
       Szín: ??Ft
 
         Egységár: 12000Ft
-      Összár: 12000Ft (nem teljes ár)"
+      Összár: 12000Ft"
     `);
   });
 
@@ -319,29 +303,6 @@ describe("product string content", () => {
     `);
   });
 
-  it("renders a custom material colour as 'Egyedi szín'", async () => {
-    const product = makeProduct({
-      title: "Babafészek",
-      price: 15_000,
-      fields: [],
-      materials: [makeMaterial({ material_id: "teddy", label: "Teddy", price: 2000 })],
-      material_required_count: 1,
-      values: [{ material_id: "teddy", colors: [], custom_color: "Mályva pöttyös" }],
-    });
-
-    expect(form_text(await captureForm(baseOrder([product])))).toMatchInlineSnapshot(`
-      "Babafészek (1db)
-        Anyagok:
-          1. Teddy (Egyedi szín: Mályva pöttyös)
-
-      Alapár: 15000 Ft
-      Anyag: 2000Ft
-
-        Egységár: 17000Ft
-      Összár: 17000Ft"
-    `);
-  });
-
   it("renders enabled embroidery with thread color label and omits disabled embroidery", async () => {
     const product = makeProduct({
       title: "Pólya",
@@ -389,6 +350,8 @@ describe("product string content", () => {
 
     const text = form_text(await captureForm(baseOrder([product])));
     expect(text).toContain("Alapár: 10000 Ft");
+    // 20% off 20000 = 4000 Ft, recorded as both percent and forint.
+    expect(text).toContain("Kedvezmény: 20% (-4000 Ft) (2 db)");
     // 10000 * 2 * 0.8 = 16000
     expect(text).toContain("Összár: 16000Ft");
   });
@@ -481,30 +444,125 @@ describe("dependent fields (depends_on)", () => {
   });
 });
 
-describe("calculateOrderTotal", () => {
-  it("sums product totals plus delivery and flags indeterminate prices", () => {
-    const known = makeProduct({ price: 5000 });
-    // An unpriced selected option leaves this product's total unknown.
-    const unknown = makeProduct({
-      price: 0,
-      fields: [
-        makeField({
-          name: "opt",
-          type: "radio",
-          items: [{ value: "a", label: "A" }],
-          value: { value: "a" },
-        }),
-      ],
+describe("set-discount summary", () => {
+  const setGroups = [
+    {
+      title: "Babafészek",
+      discount_amount: 2000,
+      products: [{ product_id: "nest" }, { product_id: "blanket" }],
+    },
+  ];
+  const withMaterial = (
+    uuid: string,
+    product_id: string,
+    title: string
+  ): ReturnType<typeof makeProduct> =>
+    makeProduct({
+      uuid,
+      product_id,
+      title,
+      price: 10_000,
+      values: [{ material_id: "cotton", colors: ["red"] }],
     });
 
-    expect(calculateOrderTotal([known], makeDelivery("x", 1000))).toEqual({
-      total: 6000,
-      indeterminate: false,
+  it("identifies each set member by its order number inside the ar field", async () => {
+    const order = baseOrder([
+      withMaterial("u1", "nest", "Babafészek"),
+      withMaterial("u2", "blanket", "Takaró"),
+    ]);
+    order.productGroups = setGroups;
+    const form = await captureForm(order);
+    const ar = form.get("ar");
+    expect(ar).toContain("Szett kedvezmények:");
+    expect(ar).toContain("Babafészek szett: -2000 Ft [1. termék: Babafészek + 2. termék: Takaró]");
+  });
+
+  it("shows the nominal set amount when clamped to the covered subtotal", async () => {
+    // Two 300 Ft members can only absorb 600 Ft of a 2000 Ft set discount.
+    const cheapNest = makeProduct({
+      uuid: "u1",
+      product_id: "nest",
+      title: "Babafészek",
+      price: 300,
+      values: [{ material_id: "cotton", colors: ["red"] }],
     });
-    expect(calculateOrderTotal([known, unknown], makeDelivery("x", 1000))).toEqual({
-      total: 6000,
-      indeterminate: true,
+    const cheapBlanket = makeProduct({
+      uuid: "u2",
+      product_id: "blanket",
+      title: "Takaró",
+      price: 300,
+      values: [{ material_id: "cotton", colors: ["red"] }],
     });
+    const order = baseOrder([cheapNest, cheapBlanket]);
+    order.productGroups = setGroups;
+    const form = await captureForm(order);
+    const ar = form.get("ar");
+    expect(ar).toContain(
+      "Babafészek szett: -600 Ft (szett kedvezmény: 2000 Ft) [1. termék: Babafészek + 2. termék: Takaró]"
+    );
+  });
+
+  it("omits the set section from ar when no set discount is earned", async () => {
+    const order = baseOrder([withMaterial("u1", "nest", "Babafészek")]);
+    order.productGroups = setGroups;
+    const form = await captureForm(order);
+    const ar = form.get("ar");
+    expect(ar).not.toContain("Szett kedvezmények:");
+    expect(form.get("szett kedvezmenyek")).toBeNull();
+  });
+});
+
+describe("submitted total equals the shared order total (visible == charged)", () => {
+  const setGroups = [
+    {
+      title: "Babafészek",
+      discount_amount: 2000,
+      products: [{ product_id: "nest" }, { product_id: "blanket" }],
+    },
+  ];
+  const member = (
+    uuid: string,
+    product_id: string,
+    price: number
+  ): ReturnType<typeof makeProduct> =>
+    makeProduct({
+      uuid,
+      product_id,
+      title: product_id,
+      price,
+      values: [{ material_id: "cotton", colors: ["red"] }],
+    });
+
+  it("puts the same figure in `ar` as orderTotal over the resolved basket pricing", async () => {
+    const products = [member("u1", "nest", 10_000), member("u2", "blanket", 10_000)];
+    const delivery = makeDelivery("Foxpost automata", 990, "foxpost");
+    const order: OrderDetails = { ...baseOrder(products), deliveryMethod: delivery };
+    order.productGroups = setGroups;
+
+    // The number the checkout display path computes for the same basket.
+    const expected = orderTotal(resolveBasketPricing(products, setGroups), delivery.price);
+    // 20000 items - 2000 set discount + 990 delivery
+    expect(expected).toBe(18_990);
+
+    const form = await captureForm(order);
+    const arFirstLine = (form.get("ar") as string).split("\n")[0];
+    expect(arFirstLine).toBe(`${expected.toString()} Ft`);
+  });
+
+  it("matches when the set discount is clamped to the covered subtotal", async () => {
+    // Two 300 Ft members absorb only 600 Ft of the 2000 Ft set discount.
+    const products = [member("u1", "nest", 300), member("u2", "blanket", 300)];
+    const delivery = makeDelivery("Személyes átvétel", 0, "szemelyes");
+    const order: OrderDetails = { ...baseOrder(products), deliveryMethod: delivery };
+    order.productGroups = setGroups;
+
+    const expected = orderTotal(resolveBasketPricing(products, setGroups), delivery.price);
+    // 600 items - 600 set discount + 0 delivery
+    expect(expected).toBe(0);
+
+    const form = await captureForm(order);
+    const arFirstLine = (form.get("ar") as string).split("\n")[0];
+    expect(arFirstLine).toBe(`${expected.toString()} Ft`);
   });
 });
 

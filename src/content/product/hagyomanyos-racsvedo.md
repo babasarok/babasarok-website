@@ -3,26 +3,16 @@ product_id: hagyomanyos-racsvedo
 title: Hagyományos Rácsvédő
 can_be_ordered: true
 categories: A biztonságos pihenésért
+type: racsvedo
 date: 2020-08-12T12:07:16.000Z
 thumbnail: /src/assets/IMG_9614.webp
 images:
   - image: /src/assets/28ba3ec2e4b435bd2a8acb4026499664.jpeg
   - image: /src/assets/IMG_7914.jpeg
-table:
-  - title: 140cm
-    description: 8.200Ft
-  - title: 120cm
-    description: 7.800Ft
-  - title: 70cm
-    description: 4.100Ft
-  - title: 60cm
-    description: 3.900Ft
-  - title: Teljesen körbeérő rácsvédők
-    description: 21.500Ft
 shortDescription: 'A hagyományos rácsvédő 2 cm vastag habszivacsból készült, így hatékony védelmet nyújt a baba fejének a kiságy rácsai ellen. Tökéletes választás azoknak, akik kényelmesen szeretnék elhelyezni a babafészket is a kiságyban, miközben megőrzik a baba biztonságát és komfortját. A praktikus kialakítás mellett a rácsvédő könnyen kezelhető, cipzárral ellátott, így a szivacsbetét kivételével könnyedén tisztítható és garantáltan megóvja a kicsit az esetleges ütközésektől. '
 length_based_pricing:
   sourceField: meret
-price: 6500
+price: 7500
 materials:
   materials:
     - material_path: src/content/material/minky.md
@@ -41,6 +31,10 @@ materials:
       price: 0
       color_count: '1'
   material_required_count: 2
+  banned_combinations:
+    - materials:
+        - material_path: src/content/material/wellsoft.md
+        - material_path: src/content/material/wellsoft.md
 fields:
   - name: meret
     label: Méret
@@ -61,10 +55,9 @@ fields:
       - value: '140'
         label: 140cm
     regex: ^(\d+)$
-  - name: himzes
-    label: Hímzés
-    type: embroidery
-    price: 1500
-    price_unit: word
+  - name: Fodor
+    label: 'Fodorral kérem '
+    type: toggle
+    price: 1800
 ---
 

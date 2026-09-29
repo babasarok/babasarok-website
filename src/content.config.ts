@@ -7,7 +7,7 @@
  *
  * `product` is a real Astro content collection: the landing product grid
  * queries it with `getCollection('product')`. Its schema validates the fields
- * the site renders (including the per-product `table` and gallery `images`);
+ * the site renders (including gallery `images`);
  * unused product-configurator frontmatter (materials, fields, pricing) is
  * stripped by Zod.
  *
@@ -21,7 +21,8 @@ import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import z from "astro/zod";
 import type { SchemaContext } from "astro/content/config";
-import { EMBROIDERY_PRICE_UNIT_VALUES, PRODUCT_FIELD_TYPE_VALUES } from "./lib/productFieldTypes";
+import { EMBROIDERY_PRICE_UNIT_VALUES, PRODUCT_FIELD_TYPE_VALUES } from "./lib/product/fieldTypes";
+import { PRODUCT_TYPE_VALUES } from "./lib/product/productTypes";
 
 const heroBlock = defineCollection({
   loader: glob({ pattern: "hero.md", base: "src/content/sections" }),
@@ -221,6 +222,7 @@ const product = defineCollection({
       hidden_in_product_list: z.boolean().optional().nullable(),
       can_be_ordered: z.boolean().optional().nullable(),
       categories: z.string().optional().nullable(),
+      type: z.enum(PRODUCT_TYPE_VALUES),
       date: z.coerce.date().optional().nullable(),
       thumbnail: image().optional().nullable(),
       shortDescription: z.string().optional().nullable(),
@@ -239,18 +241,6 @@ const product = defineCollection({
           z
             .object({
               image: image().optional().nullable(),
-              description: z.string().optional().nullable(),
-            })
-            .optional()
-            .nullable()
-        )
-        .optional()
-        .nullable(),
-      table: z
-        .array(
-          z
-            .object({
-              title: z.string().optional().nullable(),
               description: z.string().optional().nullable(),
             })
             .optional()
@@ -357,6 +347,18 @@ const embroidery = defineCollection({
     }),
 });
 
+const productGroup = defineCollection({
+  loader: glob({ pattern: "*.md", base: "src/content/product_groups" }),
+  schema: z.object({
+    title: z.string(),
+    discount_amount: z.number().int().min(0).optional().nullable(),
+    products: z
+      .array(z.object({ product: z.string() }).optional().nullable())
+      .optional()
+      .nullable(),
+  }),
+});
+
 export const collections = {
   config,
   embroidery,
@@ -368,4 +370,5 @@ export const collections = {
   servicesBlock,
   aboutBlock,
   deliveryMethod,
+  productGroup,
 };

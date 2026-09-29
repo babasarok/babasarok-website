@@ -2,11 +2,9 @@
 product_id: babatakaro-szett
 title: Babatakaró szett
 can_be_ordered: true
+type: takaro
 date: 2025-04-20T12:07:16.000Z
 thumbnail: /src/assets/Noémi-41.webp
-table:
-  - title: Takaró és Párna
-    description: 7500Ft
 shortDescription: 'Univerzális takaró és párna minden évszakra '
 price: 7500
 materials:
@@ -33,11 +31,20 @@ materials:
       price: 0
       color_count: '1'
   material_required_count: 2
+  banned_combinations:
+    - materials:
+        - material_path: src/content/material/wellsoft.md
+        - material_path: src/content/material/wellsoft.md
 fields:
   - name: himzes
-    price: 1500
-    price_unit: word
     label: Hímzés
     type: embroidery
+    price: 1500
+    price_unit: word
+  - name: Fodor
+    label: Fodorral kérem
+    type: toggle
+    price: 4000
+    tooltip: A termék színével és anyagával egyező fodor
 ---
 

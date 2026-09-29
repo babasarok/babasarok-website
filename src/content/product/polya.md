@@ -2,13 +2,9 @@
 product_id: polya
 title: Pólya
 can_be_ordered: true
+type: kiegeszito
 date: 2020-08-11T12:07:16.000Z
 thumbnail: /src/assets/Noémi-19.webp
-table:
-  - title: Pólya kókuszbetéttel
-    description: 7.700Ft
-  - title: Pólya
-    description: 6500Ft
 shortDescription: |
   A puha, kókuszbetét nélküli pólya tökéletes a legelső hónapokra: biztonságérzetet ad a babának, könnyű vele ölelni, tartani. Igény szerint kókuszbetéttel is kérhető, ha egy kis extra tartást szeretnél hozzá.
 price: 6500
@@ -36,15 +32,19 @@ materials:
       price: 0
       color_count: '1'
   material_required_count: 2
+  banned_combinations:
+    - materials:
+        - material_path: src/content/material/wellsoft.md
+        - material_path: src/content/material/wellsoft.md
 fields:
   - name: kokuszbetet
-    price: 1200
     label: Kókuszbetéttel
     type: toggle
+    price: 1200
   - name: himzes
-    price: 1500
-    price_unit: word
     label: Hímzés
     type: embroidery
+    price: 1500
+    price_unit: word
 ---
 

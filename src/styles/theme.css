@@ -35,6 +35,22 @@
   --color-muted: #e2e6ea; /* subtle hover / border grey */
   --color-indicator: #c2c8cc; /* inactive slider dots */
 
+  /* ── Feedback ────────────────────────────────────────────────────
+     Status colours for the order block's price/discount UI: success
+     (discounts, saved/added state), warning (unsaved/indicative price) and
+     danger (form errors). Values mirror the Tailwind palette they replace. */
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-800: #166534;
+  --color-success-900: #14532d;
+  --color-warning-400: #fbbf24;
+  --color-warning-50: #fffbeb;
+  --color-warning-500: #f97316;
+  --color-warning-800: #92400e;
+  --color-danger-500: #ef4444;
+
   /* ── Typography ── */
   --font-base: "Poppins", sans-serif;
   --font-heading: "Yeseva One", cursive;

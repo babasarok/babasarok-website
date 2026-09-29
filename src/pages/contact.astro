@@ -4,18 +4,11 @@ import { Image } from "astro:assets";
 import { Icon } from "astro-icon/components";
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
-import {
-  getConfig,
-  getDeliveryMethods,
-  getProducts,
-  getThreadColors,
-  type CmsEnhancedProduct,
-  type CmsEnhancedDeliveryMethod,
-} from "../lib/data";
+import Button from "../components/ui/Button.astro";
+import { getConfig } from "../lib/data";
 import locationIcon from "../assets/images/contact/location.svg";
 import phoneIcon from "../assets/images/contact/phone.svg";
 import socialIcon from "../assets/images/contact/social-media.svg";
-import OrderForm from "@/components/blocks/order/OrderForm.svelte";
 
 const [entry] = await getCollection("contact");
 const { Content } = await render(entry);
@@ -26,145 +19,124 @@ const address = config.address ?? null;
 const social = [...(config.social ?? [])]
   .filter((s): s is NonNullable<typeof s> => !!s && !!s.icon)
   .toSorted((a, b) => (a.weight ?? 99) - (b.weight ?? 99));
-
-const products = await getProducts();
-const deliveryMethods = await getDeliveryMethods();
-const threadColors = await getThreadColors();
 ---
 
 <Base title={breadcrumb ?? title}>
   <PageHeader title={title} breadcrumb={breadcrumb ?? title} no-shapes />
 
   <section class="py-12.5">
-    <div class="not-prose container">
-      <OrderForm
-        products={products.reduce<Record<string, CmsEnhancedProduct>>((acc, p) => {
-          if (!p.can_be_ordered) {
-            return acc;
-          }
-
-          acc[p.product_id] = p;
-          return acc;
-        }, {})}
-        deliveryMethods={deliveryMethods.reduce<Record<string, CmsEnhancedDeliveryMethod>>(
-          (acc, d) => {
-            acc[d.delivery_name] = d;
-            return acc;
-          },
-          {}
-        )}
-        config={config}
-        threadColors={threadColors}
-        client:load
-      />
+    <div class="container">
+      <div class="prose mx-auto max-w-none">
+        <Content />
+      </div>
+      <div class="mt-10 flex justify-center">
+        <Button href="/product/" size="lg" variant="primary">Böngészd a termékeket</Button>
+      </div>
     </div>
+  </section>
 
-    <section class="py-12.5">
-      <div class="container">
-        <div class="prose mx-auto max-w-none">
-          <Content />
-        </div>
-      </div>
-    </section>
-
-    <section class="py-12.5 sm:py-25">
-      <div class="container">
-        <h3 class="text-h3 text-headings mb-10">Elérhetőségek</h3>
-        <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
-          <div class="h-full w-full flex-1 lg:w-auto">
-            <div
-              class="h-full rounded-[20px] px-6.25 py-6.25 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] sm:px-10 sm:py-12.5"
-            >
-              <div class="relative mb-8.75 h-17.5 w-18.75 sm:h-27.5 sm:w-31.25">
-                <Image
-                  src={locationIcon}
-                  alt="location"
-                  class="absolute bottom-0 left-0 z-1 h-3/5 w-3/5"
-                />
-              </div>
-              <h4 class="text-h4 text-headings mb-6">Cím</h4>
-              <p class="mb-0 text-sm">{address?.address}</p>
+  <section class="py-12.5 sm:py-25">
+    <div class="container">
+      <h3 class="text-h3 text-headings mb-10">Elérhetőségek</h3>
+      <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div class="h-full w-full flex-1 lg:w-auto">
+          <div
+            class="h-full rounded-[20px] px-6.25 py-6.25 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] sm:px-10 sm:py-12.5"
+          >
+            <div class="relative mb-8.75 h-17.5 w-18.75 sm:h-27.5 sm:w-31.25">
+              <Image
+                src={locationIcon}
+                alt="location"
+                class="absolute bottom-0 left-0 z-1 h-3/5 w-3/5"
+              />
             </div>
+            <h4 class="text-h4 text-headings mb-6">Cím</h4>
+            <p class="mb-0 text-sm">{address?.address}</p>
           </div>
+        </div>
 
-          <div class="w-full flex-1 lg:w-auto">
-            <div
-              class="h-full rounded-[20px] px-6.25 py-6.25 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] sm:px-10 sm:py-12.5"
-            >
-              <div class="relative mb-8.75 h-17.5 w-18.75 sm:h-27.5 sm:w-31.25">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="absolute top-0 right-0 h-full w-full"
-                  viewBox="0 0 122.457 109.702"
-                >
-                  <path
-                    class="fill-sand-100"
-                    d="M49.855527 9.984102c-4.337424-.815024-8.766002-1.633779-13.152776-1.113889-8.196034.975107-15.344329 6.696991-19.41555 13.879649s-5.363288 15.655094-5.187042 23.907191c.156996 7.385448 1.479849 14.875357 4.972905 21.38465s9.337384 11.961229 16.458344 13.922244c4.833752 1.331211 10.056683 1.044827 14.74081 2.829827 7.560693 2.881382 12.209757 10.489626 19.01235 14.870016a25.650039 25.650039 0 0024.16316 1.698928c8.342551-3.846451 14.03857-12.107291 16.641338-20.918947s2.471077-18.187687 1.756125-27.346305c-.843101-10.912846-3.01686-22.783019-11.354287-29.869462-6.037066-5.130853-14.208558-6.772976-21.995428-8.235353z"
-                  ></path>
-                </svg>
-                <Image
-                  src={phoneIcon}
-                  alt="phone"
-                  class="absolute bottom-0 left-0 z-1 h-3/5 w-3/5"
-                />
-              </div>
-              <h4 class="text-h4 text-headings mb-6">Telefon &amp; Email</h4>
-              <p class="mb-0 text-sm">
-                {address?.phone}
-                {address?.email && <br />}
-                {
-                  address?.email && (
-                    <a class="hover:text-sand-300 underline" href={`mailto:${address.email}`}>
-                      {address.email}
+        <div class="w-full flex-1 lg:w-auto">
+          <div
+            class="h-full rounded-[20px] px-6.25 py-6.25 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] sm:px-10 sm:py-12.5"
+          >
+            <div class="relative mb-8.75 h-17.5 w-18.75 sm:h-27.5 sm:w-31.25">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="absolute top-0 right-0 h-full w-full"
+                viewBox="0 0 122.457 109.702"
+              >
+                <path
+                  class="fill-sand-100"
+                  d="M49.855527 9.984102c-4.337424-.815024-8.766002-1.633779-13.152776-1.113889-8.196034.975107-15.344329 6.696991-19.41555 13.879649s-5.363288 15.655094-5.187042 23.907191c.156996 7.385448 1.479849 14.875357 4.972905 21.38465s9.337384 11.961229 16.458344 13.922244c4.833752 1.331211 10.056683 1.044827 14.74081 2.829827 7.560693 2.881382 12.209757 10.489626 19.01235 14.870016a25.650039 25.650039 0 0024.16316 1.698928c8.342551-3.846451 14.03857-12.107291 16.641338-20.918947s2.471077-18.187687 1.756125-27.346305c-.843101-10.912846-3.01686-22.783019-11.354287-29.869462-6.037066-5.130853-14.208558-6.772976-21.995428-8.235353z"
+                ></path>
+              </svg>
+              <Image src={phoneIcon} alt="phone" class="absolute bottom-0 left-0 z-1 h-3/5 w-3/5" />
+            </div>
+            <h4 class="text-h4 text-headings mb-6">Telefon &amp; Email</h4>
+            <p class="mb-0 text-sm">
+              {
+                address?.phone && (
+                  <a
+                    class="hover:text-sand-300 underline"
+                    href={`tel:${address.phone.replaceAll(/\s+/g, "")}`}
+                  >
+                    {address.phone}
+                  </a>
+                )
+              }
+              {address?.email && <br />}
+              {
+                address?.email && (
+                  <a class="hover:text-sand-300 underline" href={`mailto:${address.email}`}>
+                    {address.email}
+                  </a>
+                )
+              }
+            </p>
+          </div>
+        </div>
+
+        <div class="w-full flex-1 lg:w-auto">
+          <div
+            class="h-full rounded-[20px] px-6.25 py-6.25 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] sm:px-10 sm:py-12.5"
+          >
+            <div class="relative mb-8.75 h-17.5 w-18.75 sm:h-27.5 sm:w-31.25">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="absolute top-0 right-0 h-full w-full"
+                viewBox="0 0 122.457 109.702"
+              >
+                <path
+                  class="fill-sand-100"
+                  d="M49.855527 9.984102c-4.337424-.815024-8.766002-1.633779-13.152776-1.113889-8.196034.975107-15.344329 6.696991-19.41555 13.879649s-5.363288 15.655094-5.187042 23.907191c.156996 7.385448 1.479849 14.875357 4.972905 21.38465s9.337384 11.961229 16.458344 13.922244c4.833752 1.331211 10.056683 1.044827 14.74081 2.829827 7.560693 2.881382 12.209757 10.489626 19.01235 14.870016a25.650039 25.650039 0 0024.16316 1.698928c8.342551-3.846451 14.03857-12.107291 16.641338-20.918947s2.471077-18.187687 1.756125-27.346305c-.843101-10.912846-3.01686-22.783019-11.354287-29.869462-6.037066-5.130853-14.208558-6.772976-21.995428-8.235353z"
+                ></path>
+              </svg>
+              <Image
+                src={socialIcon}
+                alt="social media"
+                class="absolute bottom-0 left-0 z-1 h-3/5 w-3/5"
+              />
+            </div>
+            <h4 class="text-h4 text-headings mb-6">Közösségi Média</h4>
+            <ul class="m-0 flex list-none gap-4 p-0 text-sm">
+              {
+                social.map((s) => (
+                  <li>
+                    <a
+                      class="text-accent hover:text-sand-300"
+                      href={s.url ?? "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Icon name={s.icon} />
                     </a>
-                  )
-                }
-              </p>
-            </div>
-          </div>
-
-          <div class="w-full flex-1 lg:w-auto">
-            <div
-              class="h-full rounded-[20px] px-6.25 py-6.25 shadow-[0_20px_40px_0_rgba(50,65,141,0.12)] sm:px-10 sm:py-12.5"
-            >
-              <div class="relative mb-8.75 h-17.5 w-18.75 sm:h-27.5 sm:w-31.25">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="absolute top-0 right-0 h-full w-full"
-                  viewBox="0 0 122.457 109.702"
-                >
-                  <path
-                    class="fill-sand-100"
-                    d="M49.855527 9.984102c-4.337424-.815024-8.766002-1.633779-13.152776-1.113889-8.196034.975107-15.344329 6.696991-19.41555 13.879649s-5.363288 15.655094-5.187042 23.907191c.156996 7.385448 1.479849 14.875357 4.972905 21.38465s9.337384 11.961229 16.458344 13.922244c4.833752 1.331211 10.056683 1.044827 14.74081 2.829827 7.560693 2.881382 12.209757 10.489626 19.01235 14.870016a25.650039 25.650039 0 0024.16316 1.698928c8.342551-3.846451 14.03857-12.107291 16.641338-20.918947s2.471077-18.187687 1.756125-27.346305c-.843101-10.912846-3.01686-22.783019-11.354287-29.869462-6.037066-5.130853-14.208558-6.772976-21.995428-8.235353z"
-                  ></path>
-                </svg>
-                <Image
-                  src={socialIcon}
-                  alt="social media"
-                  class="absolute bottom-0 left-0 z-1 h-3/5 w-3/5"
-                />
-              </div>
-              <h4 class="text-h4 text-headings mb-6">Közösségi Média</h4>
-              <ul class="m-0 flex list-none gap-4 p-0 text-sm">
-                {
-                  social.map((s) => (
-                    <li>
-                      <a
-                        class="text-accent hover:text-sand-300"
-                        href={s.url ?? "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Icon name={s.icon} />
-                      </a>
-                    </li>
-                  ))
-                }
-              </ul>
-            </div>
+                  </li>
+                ))
+              }
+            </ul>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   </section>
 </Base>

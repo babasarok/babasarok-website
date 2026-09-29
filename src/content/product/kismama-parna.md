@@ -1,9 +1,17 @@
 ---
 product_id: kismama-parna
 title: Kismamapárna
-hidden_in_product_list: true
 can_be_ordered: true
+type: parna
 date: 2026-04-07T09:40:26.389Z
+thumbnail: /src/assets/IMG_8048.jpeg
+images:
+  - image: /src/assets/IMG_8446.jpeg
+    description: 'Iker kismamapárna '
+  - image: /src/assets/IMG_7144.jpeg
+shortDescription: |-
+  Kényelmes segítség szoptatáskor, ami a terhesség alatt kismamapárnaként is tökéletes.
+  Cipzáras huzattal, a könnyű tisztíthatóság érdekében.
 price: 9500
 materials:
   materials:
@@ -12,10 +20,15 @@ materials:
       color_count: '1'
   material_required_count: 1
 fields:
-  - name: himzes
-    price: 1500
-    price_unit: word
-    label: Hímzés
-    type: embroidery
+  - name: Iker
+    label: Iker kismamapárnát kérek
+    type: toggle
+    price: 10000
 ---
 
+Kinyitott állapotban kb. 150cm hosszú. \
+magassága kb 20cm. 
+
+A párna töltete prémium antiallergén poliésztergolyó. 
+
+Választható iker szopipárna kivitelben is. 
