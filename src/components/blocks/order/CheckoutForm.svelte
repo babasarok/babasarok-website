@@ -32,6 +32,7 @@
     threadColors: CmsEnhancedEmbroideryColor[];
     productGroups: CmsProductGroup[];
     slugByProductId: Record<string, string | undefined>;
+    basketInfo?: string | undefined;
   }
 
   let {
@@ -41,6 +42,7 @@
     threadColors,
     productGroups,
     slugByProductId,
+    basketInfo,
   }: Props = $props();
 
   const catalog = $derived($state.snapshot(productInfo));
@@ -217,6 +219,12 @@
           />
           <h2 class="text-lg uppercase">A kosarad</h2>
         </div>
+        {#if basketInfo}
+          <div class="flex items-start gap-2 rounded-lg bg-brown-100 p-2 text-xs text-brown-600">
+            <Icon icon="mdi:information-outline" class="mt-0.5 shrink-0" />
+            <span>{basketInfo}</span>
+          </div>
+        {/if}
         {#each basket as item (item.uuid)}
           <div transition:fade={{ duration: 200 }}>
             <CheckoutItem

@@ -359,6 +359,13 @@ const productGroup = defineCollection({
   }),
 });
 
+const checkout = defineCollection({
+  loader: glob({ pattern: "index.md", base: "src/content/checkout" }),
+  schema: z.object({
+    basket_note: z.string().optional(),
+  }),
+});
+
 export const collections = {
   config,
   embroidery,
@@ -371,4 +378,5 @@ export const collections = {
   aboutBlock,
   deliveryMethod,
   productGroup,
+  checkout,
 };
