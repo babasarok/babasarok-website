@@ -1,7 +1,8 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { marked } from "marked";
-  import { chargedDeliveryPrice } from "@/lib/order/total";
+  import { chargedDeliveryPrice, isDeliveryFree } from "@/lib/order/total";
+  import type { BasketPricing } from "@/lib/pricing/setDiscount";
   import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
   import TextInput from "./common/TextInput.svelte";
   import { slide } from "svelte/transition";
@@ -10,18 +11,15 @@
     deliveryMethods: Record<string, CmsEnhancedDeliveryMethod> | null;
     deliveryMethod: string;
     address: string;
-    /**
-     * The basket's products subtotal (after discounts, before delivery): the
-     * figure each method's `free_above` threshold is judged on.
-     */
-    productsSubtotal: number;
+    /** The basket's resolved pricing; each method's `free_above` threshold is judged on its `productsSubtotal`. */
+    pricing: BasketPricing;
   }
 
   let {
     deliveryMethods,
     deliveryMethod = $bindable(),
     address = $bindable(),
-    productsSubtotal,
+    pricing,
   }: Props = $props();
 </script>
 
@@ -32,7 +30,7 @@
   </div>
   <div class="flex flex-col gap-2 mt-4">
     {#each Object.values(deliveryMethods || {}) as method (method.delivery_name)}
-      {@const charged = chargedDeliveryPrice(method, productsSubtotal)}
+      {@const charged = chargedDeliveryPrice(method, pricing)}
       <label class="flex items-center gap-2">
         <input
           class="w-auto"
@@ -45,7 +43,7 @@
           <!-- eslint-disable-next-line svelte/no-at-html-tags -->
           <span class="text-sm">{@html marked(method.name)}</span>
           <span class="flex items-center gap-1.5 text-xs text-body">
-            {#if method.free_above != null && charged === 0 && method.price > 0}
+            {#if isDeliveryFree(method, charged)}
               <span class="line-through opacity-60">{method.price} Ft</span>
               <span class="font-semibold text-success-700">Ingyenes</span>
             {:else}

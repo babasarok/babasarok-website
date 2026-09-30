@@ -5,7 +5,7 @@
 import { calculatePriceForItem } from "@/lib/pricing/price";
 import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
 import type { SetDiscountGroup, ResolvedSetInstance } from "@/lib/pricing/setDiscount";
-import { chargedDeliveryPrice, orderTotal } from "@/lib/order/total";
+import { chargedDeliveryPrice, isDeliveryFree, orderTotal } from "@/lib/order/total";
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "../types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "../data";
 import { isFieldVisible } from "../product/field";
@@ -177,10 +177,7 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
   // The delivery charged: the method's price, or 0 when the products subtotal
   // (items minus set discounts) is above its free threshold. Judged after the
   // products and set discounts, never on the raw items subtotal.
-  const deliveryPrice = chargedDeliveryPrice(
-    order.deliveryMethod,
-    pricing.itemsTotal - pricing.setDiscountTotal
-  );
+  const deliveryPrice = chargedDeliveryPrice(order.deliveryMethod, pricing);
   const total = orderTotal(pricing, deliveryPrice);
 
   const formData = new FormData();
@@ -197,7 +194,7 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
   }
   formData.append(
     "szallitasimod",
-    deliveryPrice === 0 && order.deliveryMethod.price > 0
+    isDeliveryFree(order.deliveryMethod, deliveryPrice)
       ? `${order.deliveryMethod.name} (ingyenes)`
       : `${order.deliveryMethod.name} (${deliveryPrice.toString()} Ft)`
   );

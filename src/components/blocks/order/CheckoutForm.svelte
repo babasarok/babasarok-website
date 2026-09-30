@@ -12,7 +12,7 @@
   import { loadOrderState, updateOrderEnvelope } from "@/lib/order/storage";
   import { isItemValid, validateItem } from "@/lib/product/validation";
   import { submitOrder } from "@/lib/order/submit";
-  import { chargedDeliveryPrice, orderTotal } from "@/lib/order/total";
+  import { chargedDeliveryPrice, isDeliveryFree, orderTotal } from "@/lib/order/total";
   import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
   import type {
     CmsEnhancedConfig,
@@ -77,16 +77,9 @@
     deliveryMethods[deliveryMethod]
   );
 
-  // The basket's products subtotal (after standalone and set discounts, before
-  // delivery) — the figure a delivery method's `free_above` threshold is judged
-  // on, so set discounts count towards free delivery.
-  const productsSubtotal = $derived(pricing.itemsTotal - pricing.setDiscountTotal);
-
   // The delivery price actually charged: the selected method's price, or 0 when
-  // the products subtotal is above its free threshold.
-  const deliveryCharged = $derived(
-    deliveryData ? chargedDeliveryPrice(deliveryData, productsSubtotal) : 0
-  );
+  // the basket's products subtotal is above its free threshold.
+  const deliveryCharged = $derived(deliveryData ? chargedDeliveryPrice(deliveryData, pricing) : 0);
 
   const grandTotal = $derived(orderTotal(pricing, deliveryCharged));
 
@@ -261,7 +254,7 @@
           onHighlight={(uuids) => (highlightedUuids = uuids)}
         />
 
-        <OrderDelivery {deliveryMethods} bind:deliveryMethod bind:address {productsSubtotal} />
+        <OrderDelivery {deliveryMethods} bind:deliveryMethod bind:address {pricing} />
 
         <div class="flex flex-col rounded-xl bg-brown-200 p-4">
           <div class="flex items-center gap-2">
@@ -279,7 +272,7 @@
           <div class="flex items-center justify-between text-sm text-body">
             <span>Szállítás</span>
             <span>
-              {#if deliveryData && deliveryCharged === 0 && deliveryData.price > 0}
+              {#if deliveryData && isDeliveryFree(deliveryData, deliveryCharged)}
                 <span class="mr-1 line-through opacity-60">
                   {deliveryData.price} Ft
                 </span>

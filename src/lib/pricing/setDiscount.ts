@@ -486,15 +486,18 @@ export interface ResolvedSetInstance {
  * The current basket's set pricing, resolved in one allocation pass: each item's
  * set-discount `status`, the formed `instances` (each with its clamped amount),
  * the `itemsTotal` subtotal (standalone discounts already applied), and the
- * `setDiscountTotal` those instances remove. Read by the checkout display, the
- * deals panel, and order submission so the price shown always equals the price
- * charged. See the `product-sets` spec in `docs/specs/product-sets.md`.
+ * `setDiscountTotal` those instances remove — whose difference,
+ * `productsSubtotal`, is the order total before delivery and the figure a
+ * delivery method's `free_above` threshold is judged on. Read by the checkout
+ * display, the deals panel, and order submission so the price shown always
+ * equals the price charged. See the `product-sets` spec in `docs/specs/product-sets.md`.
  */
 export interface BasketPricing {
   statuses: Map<string, SetDiscountStatus>;
   instances: ResolvedSetInstance[];
   itemsTotal: number;
   setDiscountTotal: number;
+  productsSubtotal: number;
 }
 
 /** Resolve the whole basket's set pricing in a single allocation pass. */
@@ -509,5 +512,11 @@ export function resolveBasketPricing(
   });
   const itemsTotal = basket.reduce((sum, p) => sum + (calculatePriceForItem(p).totalPrice ?? 0), 0);
   const setDiscountTotal = instances.reduce((sum, instance) => sum + instance.amount, 0);
-  return { statuses: allocation.statuses, instances, itemsTotal, setDiscountTotal };
+  return {
+    statuses: allocation.statuses,
+    instances,
+    itemsTotal,
+    setDiscountTotal,
+    productsSubtotal: itemsTotal - setDiscountTotal,
+  };
 }

@@ -9,8 +9,12 @@
  * See the `product-sets` and `order-pricing` specs in `docs/specs/`.
  */
 import { describe, expect, it } from "vitest";
-import { resolveBasketPricing, type SetDiscountGroup } from "@/lib/pricing/setDiscount";
-import { chargedDeliveryPrice, orderTotal } from "@/lib/order/total";
+import {
+  resolveBasketPricing,
+  type BasketPricing,
+  type SetDiscountGroup,
+} from "@/lib/pricing/setDiscount";
+import { chargedDeliveryPrice, isDeliveryFree, orderTotal } from "@/lib/order/total";
 import type { IProduct, ProductMaterialValue } from "@/lib/types.svelte";
 import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
 import { makeDelivery, makeProduct } from "./fixtures";
@@ -65,6 +69,13 @@ describe("resolveBasketPricing", () => {
       amount: 600,
     });
     expect(pricing.setDiscountTotal).toBe(600);
+    expect(pricing.productsSubtotal).toBe(0);
+  });
+
+  it("derives the products subtotal: items minus set discounts", () => {
+    const pricing = resolveBasketPricing([nest("u1", 10_000), blanket("u2", 10_000)], setGroups);
+    expect(pricing.itemsTotal).toBe(20_000);
+    expect(pricing.productsSubtotal).toBe(18_500);
   });
 
   it("exposes the per-item set status in one pass", () => {
@@ -94,42 +105,67 @@ describe("chargedDeliveryPrice", () => {
   // Build a delivery method with a given price and optional free threshold.
   const method = (free_above?: number, price = 990): CmsEnhancedDeliveryMethod =>
     makeDelivery("GLS házhozszállítás", price, "gls", true, free_above);
+  // A resolved basket pricing whose products subtotal is the given forint
+  // (a single undiscounted product of that price).
+  const pricingOf = (productsSubtotal: number): BasketPricing =>
+    resolveBasketPricing([makeProduct({ price: productsSubtotal })], []);
 
   it("charges the price when there is no threshold", () => {
     // `makeDelivery` without a threshold stores `free_above: null`.
-    expect(chargedDeliveryPrice(method(), 1_000_000)).toBe(990);
-    expect(chargedDeliveryPrice(method(), 0)).toBe(990);
+    expect(chargedDeliveryPrice(method(), pricingOf(1_000_000))).toBe(990);
+    expect(chargedDeliveryPrice(method(), pricingOf(0))).toBe(990);
   });
 
   it("is free when the products subtotal is strictly above the threshold", () => {
-    expect(chargedDeliveryPrice(method(60_000), 60_001)).toBe(0);
-    expect(chargedDeliveryPrice(method(60_000), 999_999)).toBe(0);
+    expect(chargedDeliveryPrice(method(60_000), pricingOf(60_001))).toBe(0);
+    expect(chargedDeliveryPrice(method(60_000), pricingOf(999_999))).toBe(0);
   });
 
   it("is NOT free at exactly the threshold (strictly above required)", () => {
-    expect(chargedDeliveryPrice(method(60_000), 60_000)).toBe(990);
-    expect(chargedDeliveryPrice(method(60_000), 59_999)).toBe(990);
+    expect(chargedDeliveryPrice(method(60_000), pricingOf(60_000))).toBe(990);
+    expect(chargedDeliveryPrice(method(60_000), pricingOf(59_999))).toBe(990);
   });
 
   it("charges the price below the threshold", () => {
-    expect(chargedDeliveryPrice(method(60_000), 0)).toBe(990);
+    expect(chargedDeliveryPrice(method(60_000), pricingOf(0))).toBe(990);
   });
 
   it("is free with a threshold of 0 for any positive subtotal", () => {
-    expect(chargedDeliveryPrice(method(0), 1)).toBe(0);
-    expect(chargedDeliveryPrice(method(0), 0)).toBe(990);
+    expect(chargedDeliveryPrice(method(0), pricingOf(1))).toBe(0);
+    expect(chargedDeliveryPrice(method(0), pricingOf(0))).toBe(990);
   });
 
-  it("is judged on the discounted subtotal, not the raw items total", () => {
+  it("is judged on the discounted products subtotal, not the raw items total", () => {
     // Two 10k items with a 5000 set discount -> itemsTotal 20000, subtotal 15000.
     const pricing = resolveBasketPricing([nest("u1", 10_000), blanket("u2", 10_000)], setGroups5k);
     expect(pricing.itemsTotal).toBe(20_000);
-    const subtotal = pricing.itemsTotal - pricing.setDiscountTotal;
-    expect(subtotal).toBe(15_000);
+    expect(pricing.productsSubtotal).toBe(15_000);
     // A threshold between the subtotal (15000) and raw total (20000): the
     // discounted subtotal does NOT reach it, so delivery is charged.
-    expect(chargedDeliveryPrice(method(17_000), subtotal)).toBe(990);
+    expect(chargedDeliveryPrice(method(17_000), pricing)).toBe(990);
     // A threshold at or below the discounted subtotal: free.
-    expect(chargedDeliveryPrice(method(14_999), subtotal)).toBe(0);
+    expect(chargedDeliveryPrice(method(14_999), pricing)).toBe(0);
+  });
+});
+
+describe("isDeliveryFree", () => {
+  const method = (free_above?: number, price = 990): CmsEnhancedDeliveryMethod =>
+    makeDelivery("GLS házhozszállítás", price, "gls", true, free_above);
+  const pricingOf = (productsSubtotal: number): BasketPricing =>
+    resolveBasketPricing([makeProduct({ price: productsSubtotal })], []);
+
+  it("is true when a priced method is charged at 0 by its threshold", () => {
+    const delivery = method(60_000);
+    expect(isDeliveryFree(delivery, chargedDeliveryPrice(delivery, pricingOf(60_001)))).toBe(true);
+  });
+
+  it("is false while the method still costs money", () => {
+    const delivery = method(60_000);
+    expect(isDeliveryFree(delivery, chargedDeliveryPrice(delivery, pricingOf(60_000)))).toBe(false);
+  });
+
+  it("is false for a method that simply costs 0 Ft", () => {
+    const pickup = makeDelivery("Személyes átvétel", 0, "szemelyes");
+    expect(isDeliveryFree(pickup, chargedDeliveryPrice(pickup, pricingOf(0)))).toBe(false);
   });
 });

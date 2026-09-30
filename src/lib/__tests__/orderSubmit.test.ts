@@ -616,10 +616,8 @@ describe("free delivery above a threshold", () => {
     };
 
     // The raw 70k would be free, but the discounted 55k is below 60k -> charged.
-    const expected = orderTotal(
-      resolveBasketPricing(products, setGroups),
-      chargedDeliveryPrice(delivery, 55_000)
-    );
+    const pricing = resolveBasketPricing(products, setGroups);
+    const expected = orderTotal(pricing, chargedDeliveryPrice(delivery, pricing));
     expect(expected).toBe(57_500);
 
     const form = await captureForm(order);
