@@ -609,7 +609,11 @@ describe("free delivery above a threshold", () => {
       makeProduct({ uuid: "u2", product_id: "blanket", price: 35_000 }),
     ];
     const delivery = gls(60_000);
-    const order: OrderDetails = { ...baseOrder(products), deliveryMethod: delivery, productGroups: setGroups };
+    const order: OrderDetails = {
+      ...baseOrder(products),
+      deliveryMethod: delivery,
+      productGroups: setGroups,
+    };
 
     // The raw 70k would be free, but the discounted 55k is below 60k -> charged.
     const expected = orderTotal(
