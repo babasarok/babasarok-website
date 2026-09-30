@@ -3,4 +3,5 @@
   name: "__GLS házhozszállítás__ előre utalással"
   price: 2500
   needs_address: true
+  free_above: 60000
 ---

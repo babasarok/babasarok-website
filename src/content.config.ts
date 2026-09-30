@@ -318,6 +318,7 @@ const deliveryMethod = defineCollection({
     name: z.string(),
     price: z.number(),
     needs_address: z.boolean().optional().nullable(),
+    free_above: z.number().optional().nullable(),
   }),
 });
 

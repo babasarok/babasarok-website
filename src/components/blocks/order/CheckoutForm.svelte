@@ -12,7 +12,7 @@
   import { loadOrderState, updateOrderEnvelope } from "@/lib/order/storage";
   import { isItemValid, validateItem } from "@/lib/product/validation";
   import { submitOrder } from "@/lib/order/submit";
-  import { orderTotal } from "@/lib/order/total";
+  import { chargedDeliveryPrice, isDeliveryFree, orderTotal } from "@/lib/order/total";
   import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
   import type {
     CmsEnhancedConfig,
@@ -77,7 +77,11 @@
     deliveryMethods[deliveryMethod]
   );
 
-  const grandTotal = $derived(orderTotal(pricing, deliveryData?.price ?? 0));
+  // The delivery price actually charged: the selected method's price, or 0 when
+  // the basket's products subtotal is above its free threshold.
+  const deliveryCharged = $derived(deliveryData ? chargedDeliveryPrice(deliveryData, pricing) : 0);
+
+  const grandTotal = $derived(orderTotal(pricing, deliveryCharged));
 
   const valid = $derived(basket.length > 0 && name.trim() !== "" && email.trim() !== "");
 
@@ -150,7 +154,9 @@
       try {
         globalThis.window.fbq("track", "Purchase", {
           currency: "HUF",
-          value: orderTotal(resolveBasketPricing(items, productGroups), deliveryMethodData.price),
+          // `items` is the derived `basket` itself, so `grandTotal` already
+          // reflects exactly this submission.
+          value: grandTotal,
           num_items: items.length,
         });
       } catch (e) {
@@ -248,7 +254,7 @@
           onHighlight={(uuids) => (highlightedUuids = uuids)}
         />
 
-        <OrderDelivery {deliveryMethods} bind:deliveryMethod bind:address />
+        <OrderDelivery {deliveryMethods} bind:deliveryMethod bind:address {pricing} />
 
         <div class="flex flex-col rounded-xl bg-brown-200 p-4">
           <div class="flex items-center gap-2">
@@ -262,11 +268,28 @@
           ></textarea>
         </div>
 
-        <div class="flex items-center justify-between rounded-xl bg-brown-50 p-4">
-          <span class="text-lg font-medium uppercase">Végösszeg</span>
-          <span class="text-lg font-semibold text-dark">
-            {grandTotal} Ft
-          </span>
+        <div class="flex flex-col gap-1 rounded-xl bg-brown-50 p-4">
+          <div class="flex items-center justify-between text-sm text-body">
+            <span>Szállítás</span>
+            <span>
+              {#if deliveryData && isDeliveryFree(deliveryData, deliveryCharged)}
+                <span class="mr-1 line-through opacity-60">
+                  {deliveryData.price} Ft
+                </span>
+                Ingyenes
+              {:else if deliveryData}
+                {deliveryCharged} Ft
+              {:else}
+                —
+              {/if}
+            </span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-lg font-medium uppercase">Végösszeg</span>
+            <span class="text-lg font-semibold text-dark">
+              {grandTotal} Ft
+            </span>
+          </div>
         </div>
 
         <div class="flex items-center gap-2 rounded border border-gray-300 bg-brown-100 p-2">

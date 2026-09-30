@@ -5,7 +5,7 @@
 import { calculatePriceForItem } from "@/lib/pricing/price";
 import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
 import type { SetDiscountGroup, ResolvedSetInstance } from "@/lib/pricing/setDiscount";
-import { orderTotal } from "@/lib/order/total";
+import { chargedDeliveryPrice, isDeliveryFree, orderTotal } from "@/lib/order/total";
 import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "../types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "../data";
 import { isFieldVisible } from "../product/field";
@@ -174,7 +174,11 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
   // Resolve the basket allocation once; both the total and the summary price
   // from it so the set status can't be dropped by a single caller.
   const pricing = resolveBasketPricing(order.products, order.productGroups);
-  const total = orderTotal(pricing, order.deliveryMethod.price);
+  // The delivery charged: the method's price, or 0 when the products subtotal
+  // (items minus set discounts) is above its free threshold. Judged after the
+  // products and set discounts, never on the raw items subtotal.
+  const deliveryPrice = chargedDeliveryPrice(order.deliveryMethod, pricing);
+  const total = orderTotal(pricing, deliveryPrice);
 
   const formData = new FormData();
   formData.append("access_key", accessKey);
@@ -190,7 +194,9 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
   }
   formData.append(
     "szallitasimod",
-    `${order.deliveryMethod.name} (${order.deliveryMethod.price.toString()} Ft)`
+    isDeliveryFree(order.deliveryMethod, deliveryPrice)
+      ? `${order.deliveryMethod.name} (ingyenes)`
+      : `${order.deliveryMethod.name} (${deliveryPrice.toString()} Ft)`
   );
   if (order.deliveryMethod.needs_address) {
     formData.append("szallitasicim", order.address ?? "");
