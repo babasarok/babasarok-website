@@ -135,12 +135,14 @@ export function makeDelivery(
   name = "Személyes átvétel",
   price = 0,
   delivery_name = "szemelyes",
-  needs_address?: boolean
+  needs_address?: boolean,
+  free_above?: number
 ): CmsEnhancedDeliveryMethod {
   return {
     delivery_name,
     name,
     price,
     needs_address,
+    free_above: free_above ?? null,
   };
 }

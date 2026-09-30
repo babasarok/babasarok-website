@@ -13,8 +13,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { submitOrder, type OrderDetails } from "@/lib/order/submit";
 import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
-import { orderTotal } from "@/lib/order/total";
+import { chargedDeliveryPrice, orderTotal } from "@/lib/order/total";
 import { makeDelivery, makeField, makeMaterial, makeProduct } from "./fixtures";
+import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -563,6 +564,65 @@ describe("submitted total equals the shared order total (visible == charged)", (
     const form = await captureForm(order);
     const arFirstLine = (form.get("ar") as string).split("\n")[0];
     expect(arFirstLine).toBe(`${expected.toString()} Ft`);
+  });
+});
+
+describe("free delivery above a threshold", () => {
+  const gls = (free_above?: number): CmsEnhancedDeliveryMethod =>
+    makeDelivery("GLS házhozszállítás", 2500, "gls", true, free_above);
+
+  it("drops delivery to 0 when the products subtotal exceeds free_above", async () => {
+    // Two 40k items -> 80k products subtotal, above the 60k threshold.
+    const products = [makeProduct({ price: 40_000 }), makeProduct({ price: 40_000 })];
+    const delivery = gls(60_000);
+    const order: OrderDetails = { ...baseOrder(products), deliveryMethod: delivery };
+
+    const form = await captureForm(order);
+    // Total is the products subtotal with no delivery added.
+    expect(form.get("ar")).toBe("80000 Ft");
+    // The shipping line reports free, not the nominal price.
+    expect(form.get("szallitasimod")).toBe("GLS házhozszállítás (ingyenes)");
+  });
+
+  it("still charges delivery when the products subtotal is at/below free_above", async () => {
+    // A single 60k item -> 60k products subtotal, exactly at (not above) the threshold.
+    const products = [makeProduct({ price: 60_000 })];
+    const delivery = gls(60_000);
+    const order: OrderDetails = { ...baseOrder(products), deliveryMethod: delivery };
+
+    const form = await captureForm(order);
+    expect(form.get("ar")).toBe("62500 Ft");
+    expect(form.get("szallitasimod")).toBe("GLS házhozszállítás (2500 Ft)");
+  });
+
+  it("judges the threshold on the discounted subtotal, not the raw items total", async () => {
+    // Two 35k items (70k raw) with a 15k set discount -> 55k products subtotal.
+    const setGroups = [
+      {
+        title: "Szett",
+        discount_amount: 15_000,
+        products: [{ product_id: "nest" }, { product_id: "blanket" }],
+      },
+    ];
+    const products = [
+      makeProduct({ uuid: "u1", product_id: "nest", price: 35_000 }),
+      makeProduct({ uuid: "u2", product_id: "blanket", price: 35_000 }),
+    ];
+    const delivery = gls(60_000);
+    const order: OrderDetails = { ...baseOrder(products), deliveryMethod: delivery, productGroups: setGroups };
+
+    // The raw 70k would be free, but the discounted 55k is below 60k -> charged.
+    const expected = orderTotal(
+      resolveBasketPricing(products, setGroups),
+      chargedDeliveryPrice(delivery, 55_000)
+    );
+    expect(expected).toBe(57_500);
+
+    const form = await captureForm(order);
+    // The total is the first line of `ar`; the set-discount summary follows it.
+    const arFirstLine = (form.get("ar") as string).split("\n")[0];
+    expect(arFirstLine).toBe("57500 Ft");
+    expect(form.get("szallitasimod")).toBe("GLS házhozszállítás (2500 Ft)");
   });
 });
 

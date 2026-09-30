@@ -3,4 +3,5 @@
   name: "__GLS házhozszállítás__ utánvéttel"
   price: 3500
   needs_address: true
+  free_above: 60000
 ---

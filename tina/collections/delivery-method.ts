@@ -53,5 +53,10 @@ export const DeliveryMethodCollection: Collection = {
       label: "Ár - Forintban",
       required: true,
     },
+    {
+      type: "number",
+      name: "free_above",
+      label: "Ingyenes felett (Forintban)",
+    },
   ],
 };

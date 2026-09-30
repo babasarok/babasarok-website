@@ -23,6 +23,12 @@ and links to the checkout page.
   - WHEN a buyer selects a delivery method
   - THEN the method's price is included in the order total, and an address
     field is required when the method requires one
+- **Scenario: Free delivery above a threshold**
+  - WHEN the selected delivery method carries a `free_above` threshold and the
+    basket's products subtotal (the items subtotal after standalone and set
+    discounts, before delivery) is strictly greater than that threshold
+  - THEN the method is charged at 0 in the order total and its shipping line is
+    shown/reported as free (ingyenes), never at the method's nominal price
 - **Scenario: Contact page without form**
   - WHEN a visitor opens the contact page
   - THEN they see the contact information and a link to the checkout page,
@@ -43,21 +49,30 @@ provided.
 ### Order total
 
 The system SHALL compute the order total as the sum of all line total prices
-plus the selected delivery method's price.
+plus the selected delivery method's charged price. A delivery method MAY carry a
+`free_above` threshold in forint; the threshold is judged on the basket's
+products subtotal (the items subtotal after standalone and set discounts,
+before delivery). When that subtotal is strictly greater than the threshold,
+the method is charged at 0.
 
 - **Scenario: Total with delivery**
   - WHEN a basket has lines and a delivery method is selected
   - THEN the order total equals the sum of the line totals plus the delivery
     price
+- **Scenario: Free delivery**
+  - WHEN the selected delivery method's `free_above` threshold is set and the
+    products subtotal is strictly greater than it
+  - THEN the order total equals the sum of the line totals (delivery added as 0)
 
 ### Order submission
 
 The system SHALL submit the order by posting a Web3Forms form payload
 containing the buyer's name, email, phone, delivery method (and address when
-required), message, the computed total, and one text block per product
-describing its quantity, configured fields (indented per dependency level),
-materials with colors, price breakdown, unit price (and per-meter price for
-length-priced items), and total. Set discounts SHALL be described at basket
+required, and "ingyenes" instead of the price when the method is charged at 0 by
+its free-delivery threshold), message, the computed total, and one text block per
+product describing its quantity, configured fields (indented per dependency
+level), materials with colors, price breakdown, unit price (and per-meter price
+for length-priced items), and total. Set discounts SHALL be described at basket
 level: the payload SHALL summarize each formed set instance (set title,
 percent, and which items/units it covers) so each discount maps
 unambiguously to specific products.

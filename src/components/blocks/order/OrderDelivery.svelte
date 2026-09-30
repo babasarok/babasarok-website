@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { marked } from "marked";
+  import { chargedDeliveryPrice } from "@/lib/order/total";
   import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
   import TextInput from "./common/TextInput.svelte";
   import { slide } from "svelte/transition";
@@ -9,9 +10,19 @@
     deliveryMethods: Record<string, CmsEnhancedDeliveryMethod> | null;
     deliveryMethod: string;
     address: string;
+    /**
+     * The basket's products subtotal (after discounts, before delivery): the
+     * figure each method's `free_above` threshold is judged on.
+     */
+    productsSubtotal: number;
   }
 
-  let { deliveryMethods, deliveryMethod = $bindable(), address = $bindable() }: Props = $props();
+  let {
+    deliveryMethods,
+    deliveryMethod = $bindable(),
+    address = $bindable(),
+    productsSubtotal,
+  }: Props = $props();
 </script>
 
 <div class="flex flex-1 flex-col rounded-xl bg-brown-200 p-4">
@@ -21,6 +32,7 @@
   </div>
   <div class="flex flex-col gap-2 mt-4">
     {#each Object.values(deliveryMethods || {}) as method (method.delivery_name)}
+      {@const charged = chargedDeliveryPrice(method, productsSubtotal)}
       <label class="flex items-center gap-2">
         <input
           class="w-auto"
@@ -32,7 +44,19 @@
         <div class="flex flex-col">
           <!-- eslint-disable-next-line svelte/no-at-html-tags -->
           <span class="text-sm">{@html marked(method.name)}</span>
-          <span class="text-xs text-body">{method.price} Ft</span>
+          <span class="flex items-center gap-1.5 text-xs text-body">
+            {#if method.free_above != null && charged === 0 && method.price > 0}
+              <span class="line-through opacity-60">{method.price} Ft</span>
+              <span class="font-semibold text-success-700">Ingyenes</span>
+            {:else}
+              <span>{charged} Ft</span>
+            {/if}
+            {#if method.free_above != null && charged !== 0}
+              <span class="text-brown-500">
+                · Ingyenes {method.free_above.toLocaleString("hu-HU")} Ft felett
+              </span>
+            {/if}
+          </span>
           {#if method.needs_address && deliveryMethod === method.delivery_name}
             <div transition:slide class="mt-1">
               <TextInput placeholder="Add meg a szállítási címet" bind:value={address} />
