@@ -21,7 +21,7 @@ describe("parseListState", () => {
       q: "",
       types: [],
       sets: [],
-      sort: "name",
+      sort: "popular",
     });
   });
 
@@ -41,8 +41,12 @@ describe("parseListState", () => {
       q: "x",
       types: ["takaro"],
       sets: [],
-      sort: "name",
+      sort: "popular",
     });
+  });
+
+  it("parses an explicit popularity sort", () => {
+    expect(parseListState("?sort=popular").sort).toBe("popular");
   });
 
   it("passes set ids through (an unknown id matches nothing at apply time)", () => {
@@ -50,7 +54,7 @@ describe("parseListState", () => {
       q: "",
       types: [],
       sets: ["real-set", "ghost"],
-      sort: "name",
+      sort: "popular",
     });
   });
 
@@ -59,7 +63,7 @@ describe("parseListState", () => {
       q: "óvoda zsák",
       types: [],
       sets: [],
-      sort: "name",
+      sort: "popular",
     });
   });
 });
@@ -73,7 +77,7 @@ describe("serializeListState", () => {
   };
 
   it("serializes the default state to an empty string", () => {
-    expect(serializeListState({ q: "", types: [], sets: [], sort: "name" })).toBe("?sort=name");
+    expect(serializeListState({ q: "", types: [], sets: [], sort: "popular" })).toBe("");
   });
 
   it("serializes all state (repeated keys for multi-values)", () => {
@@ -84,6 +88,10 @@ describe("serializeListState", () => {
 
   it("round-trips through parseListState", () => {
     expect(parseListState(serializeListState(state))).toEqual(state);
+  });
+
+  it("round-trips the default state (empty query string)", () => {
+    expect(parseListState(serializeListState({ ...defaultState }))).toEqual(defaultState);
   });
 });
 
@@ -195,6 +203,44 @@ describe("applyListState", () => {
     ];
     const result = applyListState(products, { ...defaultState, sort: "name" });
     expect(result.map((p) => p.title)).toEqual(["Állat", "Babafészek", "Zsák"]);
+  });
+
+  it("sorts by the curated popularity order, unranked products last", () => {
+    const products = [product({ title: "A" }), product({ title: "B" }), product({ title: "C" })];
+    const result = applyListState(products, { ...defaultState }, ["C", "A"]);
+    expect(result.map((p) => p.title)).toEqual(["C", "A", "B"]);
+  });
+
+  it("sorts unranked products by name after the ranked ones", () => {
+    const products = [product({ title: "D" }), product({ title: "C" }), product({ title: "B" })];
+    const result = applyListState(products, { ...defaultState }, ["B"]);
+    expect(result.map((p) => p.title)).toEqual(["B", "C", "D"]);
+  });
+
+  it("uses the first occurrence when the popularity order repeats an id", () => {
+    const products = [product({ title: "A" }), product({ title: "B" })];
+    const result = applyListState(products, { ...defaultState }, ["B", "A", "B"]);
+    expect(result.map((p) => p.title)).toEqual(["B", "A"]);
+  });
+
+  it("falls back to name order when no popularity order is given", () => {
+    const products = [product({ title: "B" }), product({ title: "A" })];
+    const result = applyListState(products, { ...defaultState });
+    expect(result.map((p) => p.title)).toEqual(["A", "B"]);
+  });
+
+  it("applies the popularity order after filtering", () => {
+    const products = [
+      product({ title: "A", type: "parna" }),
+      product({ title: "B", type: "takaro" }),
+      product({ title: "C", type: "takaro" }),
+    ];
+    const result = applyListState(products, { ...defaultState, types: ["takaro"] }, [
+      "C",
+      "A",
+      "B",
+    ]);
+    expect(result.map((p) => p.title)).toEqual(["C", "B"]);
   });
 
   it("does not mutate the input", () => {

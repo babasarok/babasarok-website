@@ -37,7 +37,9 @@ products (no pagination), each entry linking to the product detail page, with:
   dimension are OR-combined.
 - **Filtering by product set**: a product matches the set filter when it is
   a member of a selected set; multiple set selections are OR-combined.
-- **Sorting**: newest first (default) or by name (title, ascending).
+- **Sorting**: by the CMS-curated popularity order (default), newest first,
+  or by name (title, ascending). Products without a curated popularity
+  position follow the ordered ones, name-ascending among themselves.
 
 The active search text, selected types, selected sets, and sort order SHALL
 be expressed in URL query parameters; the page SHALL apply them on load and
@@ -45,13 +47,13 @@ update them as the visitor changes the view, so any filtered view is
 shareable. Dimensions are AND-combined with each other and with the search
 text. When no product matches, the list SHALL show an empty state with a way
 to clear the filters. When JavaScript is unavailable, the page SHALL render
-the full product list (newest first) with search, filtering, and sorting
-inert.
+the full product list (in the default popularity order) with search,
+filtering, and sorting inert.
 
 - **Scenario: Browsing the catalogue**
   - WHEN a visitor opens the product list
-  - THEN they see all non-hidden products, most recently added first, without
-    pagination
+  - THEN they see all non-hidden products in the curated popularity order,
+    without pagination
 - **Scenario: Text search**
   - WHEN a visitor types a search term
   - THEN the list narrows to products whose title or short description
@@ -63,6 +65,11 @@ inert.
 - **Scenario: Filtering by set**
   - WHEN a visitor selects a product set
   - THEN the list shows only the member products of the selected sets
+- **Scenario: Sorting by popularity**
+  - WHEN a visitor opens the product list without an explicit sort parameter,
+    or selects popularity sorting
+  - THEN the list is ordered by the curated popularity sequence managed in
+    the CMS, with uncurated products following it, alphabetically
 - **Scenario: Sorting by name**
   - WHEN a visitor selects name sorting
   - THEN the list is ordered alphabetically by title, ascending
