@@ -1,6 +1,7 @@
 ---
 product_id: Fonott-babafeszek
 title: 'Fonott babafészek '
+can_be_ordered: true
 type: babafeszek
 date: 2026-10-01T09:33:57.411Z
 thumbnail: /src/assets/CC3A69B8-E539-4676-80C8-34F879F44283.png
