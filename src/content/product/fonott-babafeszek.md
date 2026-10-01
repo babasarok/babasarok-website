@@ -22,6 +22,9 @@ materials:
     - material_path: src/content/material/velur.md
       price: 0
       color_count: '1'
+    - material_path: src/content/material/teddy.md
+      price: 0
+      color_count: '1'
   material_required_count: 2
 ---
 
