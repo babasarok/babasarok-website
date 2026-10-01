@@ -55,5 +55,7 @@ materials:
     - materials:
         - material_path: src/content/material/pamutvaszon.md
         - material_path: src/content/material/pamutvaszon.md
+    - materials:
+        - material_path: src/content/material/minky.md
 ---
 
