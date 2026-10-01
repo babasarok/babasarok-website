@@ -52,5 +52,7 @@ materials:
     - materials:
         - material_path: src/content/material/potty-nelkuli-minky.md
         - material_path: src/content/material/potty-nelkuli-minky.md
+    - materials:
+        - material_path: src/content/material/pamutvaszon.md
 ---
 
