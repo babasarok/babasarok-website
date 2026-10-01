@@ -170,7 +170,14 @@ function formatSetDiscounts(instances: ResolvedSetInstance[], products: IProduct
   return ["Szett kedvezmények:", ...lines].join("\n");
 }
 
-function buildOrderFormData(order: OrderDetails, accessKey: string, message: string): FormData {
+export interface SubmitOrderOptions {
+  accessKey: string;
+  message: string;
+  /** Unique per submission attempt; shared with the Google Ads conversion event. */
+  transactionId: string;
+}
+
+function buildOrderFormData(order: OrderDetails, options: SubmitOrderOptions): FormData {
   // Resolve the basket allocation once; both the total and the summary price
   // from it so the set status can't be dropped by a single caller.
   const pricing = resolveBasketPricing(order.products, order.productGroups);
@@ -181,7 +188,7 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
   const total = orderTotal(pricing, deliveryPrice);
 
   const formData = new FormData();
-  formData.append("access_key", accessKey);
+  formData.append("access_key", options.accessKey);
   formData.append("subject", `Új árajánlatkérés - ${order.name}`);
   formData.append("nev", order.name);
   formData.append("email", order.email);
@@ -201,12 +208,15 @@ function buildOrderFormData(order: OrderDetails, accessKey: string, message: str
   if (order.deliveryMethod.needs_address) {
     formData.append("szallitasicim", order.address ?? "");
   }
-  formData.append("uzenet", message);
+  formData.append("uzenet", options.message);
   // Set discounts live inside `ar` (not a separate field) so the submitted
   // price and its breakdown stay together and trackable.
   const setSummary = formatSetDiscounts(pricing.instances, order.products);
   const arLines = [`${total.toString()} Ft`, ...(setSummary ? ["", setSummary] : [])];
   formData.append("ar", arLines.join("\n"));
+  // Last field of the email, matching the transaction_id of the conversion
+  // event recorded alongside the submission so the two can be reconciled.
+  formData.append("tranzakcio_id", options.transactionId);
   return formData;
 }
 
@@ -217,9 +227,9 @@ const GENERIC_ERROR =
 
 export async function submitOrder(
   order: OrderDetails,
-  options: { accessKey: string; message: string }
+  options: SubmitOrderOptions
 ): Promise<SubmitOrderResult> {
-  const formData = buildOrderFormData(order, options.accessKey, options.message);
+  const formData = buildOrderFormData(order, options);
 
   try {
     const res = await fetch(WEB3FORMS_ENDPOINT, { method: "POST", body: formData });

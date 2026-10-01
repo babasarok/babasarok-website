@@ -27,7 +27,12 @@ export default defineConfig([
       reportUnusedInlineConfigs: "error",
     },
     languageOptions: {
-      globals: { ...globals.browser, ...globals.node },
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        // Defined by the gtag shim in Base.astro; typed via @types/gtag.js.
+        gtag: "readonly",
+      },
     },
   },
   tseslint.configs.strictTypeChecked,
