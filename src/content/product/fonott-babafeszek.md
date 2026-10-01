@@ -51,5 +51,6 @@ materials:
         - material_path: src/content/material/velur.md
     - materials:
         - material_path: src/content/material/potty-nelkuli-minky.md
+        - material_path: src/content/material/potty-nelkuli-minky.md
 ---
 
