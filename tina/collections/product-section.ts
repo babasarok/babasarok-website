@@ -80,7 +80,7 @@ export const ProductSectionCollection: Collection = {
       label: "Népszerűségi sorrend",
       list: true,
       description:
-        "A termékek megjelenítési sorrendje a termékek listáján (\"Népszerű\" rendezés). A listában nem szereplő termékek a sorrend végére kerülnek.",
+        'A termékek megjelenítési sorrendje a termékek listáján ("Népszerű" rendezés). A listában nem szereplő termékek a sorrend végére kerülnek.',
       ui: {
         itemProps: (item) => ({
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-condition

@@ -235,7 +235,11 @@ describe("applyListState", () => {
       product({ title: "B", type: "takaro" }),
       product({ title: "C", type: "takaro" }),
     ];
-    const result = applyListState(products, { ...defaultState, types: ["takaro"] }, ["C", "A", "B"]);
+    const result = applyListState(products, { ...defaultState, types: ["takaro"] }, [
+      "C",
+      "A",
+      "B",
+    ]);
     expect(result.map((p) => p.title)).toEqual(["C", "B"]);
   });
 
