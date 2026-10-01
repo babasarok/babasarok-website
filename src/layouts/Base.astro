@@ -42,6 +42,15 @@ const themeColor = config.themeColor ?? "#F1D3B2";
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <GoogleTagmanager id={GTM_ID} />
+    <!-- gtag shim: the GTM container snippet sets up the shared dataLayer but
+         does not define gtag(). GTM processes gtag-style calls (an arguments
+         push) from the dataLayer, so define the shim once up front. -->
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function gtag() {
+        window.dataLayer.push(arguments);
+      };
+    </script>
 
     <!-- SEO -->
     <title>{title}</title>

@@ -69,13 +69,14 @@ the method is charged at 0.
 The system SHALL submit the order by posting a Web3Forms form payload
 containing the buyer's name, email, phone, delivery method (and address when
 required, and "ingyenes" instead of the price when the method is charged at 0 by
-its free-delivery threshold), message, the computed total, and one text block per
+its free-delivery threshold), message, the computed total, one text block per
 product describing its quantity, configured fields (indented per dependency
 level), materials with colors, price breakdown, unit price (and per-meter price
-for length-priced items), and total. Set discounts SHALL be described at basket
-level: the payload SHALL summarize each formed set instance (set title,
-percent, and which items/units it covers) so each discount maps
-unambiguously to specific products.
+for length-priced items), and total — closed by a unique transaction
+identifier generated per submission attempt as the last payload field. Set
+discounts SHALL be described at basket level: the payload SHALL summarize each
+formed set instance (set title, percent, and which items/units it covers) so
+each discount maps unambiguously to specific products.
 
 - **Scenario: Successful submission**
   - WHEN a valid order is submitted and Web3Forms accepts it
@@ -85,3 +86,18 @@ unambiguously to specific products.
   - WHEN Web3Forms rejects the request or the network request fails
   - THEN the buyer sees a generic error message and can retry; the order
     details remain intact
+
+### Conversion tracking
+
+The system SHALL record a Google Ads conversion (a `gtag('event', 'conversion')`
+call through the GTM data layer) when Web3Forms accepts a submission, carrying
+the computed order total in HUF and the same transaction identifier that closed
+the email payload. No conversion SHALL be recorded when the submission fails.
+
+- **Scenario: Successful submission**
+  - WHEN Web3Forms accepts the order email
+  - THEN a conversion event is recorded with the order total (HUF) and the
+    email's transaction identifier
+- **Scenario: Submission failure**
+  - WHEN Web3Forms rejects the request or the network request fails
+  - THEN no conversion event is recorded

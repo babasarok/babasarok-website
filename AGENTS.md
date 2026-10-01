@@ -60,25 +60,26 @@ These are listed in priority order. When values conflict, prefer the one higher 
   last resort.
 - **Browser:** there are no browser plugin tools; drive Chromium directly over
   the Chrome DevTools Protocol (CDP). Spawn it detached once per session, with
-  DevTools open:
+  DevTools open — use a dedicated user-data dir (not your normal profile) and a
+  spare debug port:
 
   ```bash
-  chromium --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-cdp \
+  chromium --remote-debugging-port=<port> --user-data-dir=<dedicated-dir> \
     --no-first-run --auto-open-devtools-for-tabs about:blank >/dev/null 2>&1 &
   ```
 
-  Confirm it is up with `curl http://127.0.0.1:9222/json/version` (if something
-  already listens on 9222, reuse it). Targets live at
-  `http://127.0.0.1:9222/json/list`; open a target's `webSocketDebuggerUrl`
+  Confirm it is up with `curl http://127.0.0.1:<port>/json/version` (if something
+  already listens on that port, reuse it). Targets live at
+  `http://127.0.0.1:<port>/json/list`; open a target's `webSocketDebuggerUrl`
   with Node's built-in `WebSocket` (no `ws` module needed) and send JSON
   commands. The useful ones: `Page.navigate`, `Runtime.evaluate` (use
   `{returnByValue: true, awaitPromise: true}`), `Emulation.setDeviceMetricsOverride`
   (device toolbar / viewport sizing), `Page.captureScreenshot`, and
   `Input.dispatchKeyEvent` / `Input.insertText` when real key presses matter.
   Listen for `Runtime.exceptionThrown` / `Runtime.consoleAPICalled` to catch
-  page errors. Keep one helper script for the session (e.g.
-  `/tmp/opencode/cdp.mjs`) that connects, sends commands, and prints results,
-  instead of re-deriving the plumbing each time.
+  page errors. Keep one helper script for the session (e.g. a small script in a
+  temp dir) that connects, sends commands, and prints results, instead of
+  re-deriving the plumbing each time.
 
 - **Always give the page a fixed size before interacting with it.** Send
   `Emulation.setDeviceMetricsOverride` (the device toolbar's job) right after
@@ -132,6 +133,25 @@ max-h-none`); `width: 100%` on a `position: fixed` element stops short of
   Plain `npm ci` aborts on `sharp`'s install script (it falls through to a
   from-source build that fails with `Please add node-addon-api`).
 - **This repo is npm-managed.** Do not use pnpm/yarn.
+
+## Pull requests
+
+- **The canonical repo is `babasarok/babasarok-website`.** It was transferred between
+  owner accounts, so a previous owner's URL 301-redirects here — but that is the *same*
+  repo, not a fork. Create PRs on the `babasarok` repo.
+- **Use a same-repo head, not a cross-account one.** GitHub does not treat a transferred
+  old-owner URL as a fork, so a cross-account head like `--head <old-owner>:<branch>`
+  fails with `Head ref must be a branch` / `No commits between`. Push your branch, then
+  create the PR against the canonical repo with a plain branch name:
+
+  ```bash
+  git push -u origin <branch>
+  gh pr create --repo babasarok/babasarok-website --head <branch> --base main \
+    --title "type: summary" --body "..."
+  ```
+- **Conventions:** conventional-commit titles (`fix:`, `feat:`, …) and `type/<slug>`
+  branch names (e.g. `fix/mobile-product-page-overflow`). Confirm with
+  `gh pr view <n> --repo babasarok/babasarok-website`.
 
 ## Agent skills
 

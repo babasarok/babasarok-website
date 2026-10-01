@@ -12,6 +12,8 @@
   import { loadOrderState, updateOrderEnvelope } from "@/lib/order/storage";
   import { isItemValid, validateItem } from "@/lib/product/validation";
   import { submitOrder } from "@/lib/order/submit";
+  import { randomUUID } from "@/lib/uuid";
+  import { GTM_CONVERSION_ID } from "astro:env/client";
   import { chargedDeliveryPrice, isDeliveryFree, orderTotal } from "@/lib/order/total";
   import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
   import type {
@@ -130,6 +132,9 @@
     }
 
     sending = true;
+    // One id per submission attempt, shared between the email payload and the
+    // conversion event below so Google Ads can deduplicate against the email.
+    const transactionId = randomUUID();
     const result = await submitOrder(
       {
         name,
@@ -141,7 +146,7 @@
         threadColors,
         productGroups,
       },
-      { accessKey: params.fabformURL ?? "", message }
+      { accessKey: params.fabformURL ?? "", message, transactionId }
     );
     sending = false;
 
@@ -161,6 +166,19 @@
         });
       } catch (e) {
         console.error("Failed to record purchase", e);
+      }
+    }
+
+    if (GTM_CONVERSION_ID) {
+      try {
+        gtag("event", "conversion", {
+          send_to: GTM_CONVERSION_ID,
+          value: grandTotal,
+          currency: "HUF",
+          transaction_id: transactionId,
+        });
+      } catch (e) {
+        console.error("Failed to record purchase conversion", e);
       }
     }
 

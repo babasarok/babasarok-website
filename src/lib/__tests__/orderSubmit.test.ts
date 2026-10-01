@@ -24,7 +24,7 @@ afterEach(() => {
 /** Run a successful submit and return the FormData that would have been POSTed. */
 async function captureForm(
   order: OrderDetails,
-  options?: { accessKey?: string; message?: string }
+  options?: { accessKey?: string; message?: string; transactionId?: string }
 ): Promise<FormData> {
   const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
   vi.stubGlobal("fetch", fetchMock);
@@ -32,6 +32,7 @@ async function captureForm(
   const result = await submitOrder(order, {
     accessKey: options?.accessKey ?? "TEST_KEY",
     message: options?.message ?? "",
+    transactionId: options?.transactionId ?? "TEST-TRANSACTION-ID",
   });
   expect(result).toEqual({ ok: true });
 
@@ -68,6 +69,10 @@ describe("order form envelope", () => {
     expect(form.get("szallitasimod")).toBe("Foxpost automata (990 Ft)");
     expect(form.get("uzenet")).toBe("Kérlek hímezzétek rá: Anna");
     expect(form.get("ar")).toBe("8990 Ft");
+    // The transaction id closes the email so it can be matched against the
+    // Google Ads conversion recorded for the same submission.
+    expect(form.get("tranzakcio_id")).toBe("TEST-TRANSACTION-ID");
+    expect([...form.keys()].at(-1)).toBe("tranzakcio_id");
   });
 
   it("emits one `termek N` entry per product, in order", async () => {
