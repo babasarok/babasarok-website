@@ -74,5 +74,27 @@ export const ProductSectionCollection: Collection = {
         },
       ],
     },
+    {
+      type: "object",
+      name: "product_popular_ordering",
+      label: "Népszerűségi sorrend",
+      list: true,
+      description:
+        "A termékek megjelenítési sorrendje a termékek listáján (\"Népszerű\" rendezés). A listában nem szereplő termékek a sorrend végére kerülnek.",
+      ui: {
+        itemProps: (item) => ({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-condition
+          label: item?.product || "Új termék",
+        }),
+      },
+      fields: [
+        {
+          type: "reference",
+          name: "product",
+          label: "Termék",
+          collections: ["product"],
+        },
+      ],
+    },
   ],
 };

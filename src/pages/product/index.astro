@@ -7,6 +7,7 @@ import {
   optimizeIslandImage,
   PRODUCT_CARD_IMAGE_WIDTH,
   PRODUCT_CARD_IMAGE_SIZES,
+  getProductSection,
 } from "../../lib/data";
 
 const products = (await getCollection("product"))
@@ -28,6 +29,12 @@ const sets = groups.map((group) => {
   }
   return { id: group.id, title: group.data.title };
 });
+
+const productSection = await getProductSection();
+
+const popularOrder = (productSection.product_popular_ordering ?? [])
+  .map((item) => item?.product?.product_id)
+  .filter((x) => x != null);
 
 const items = await Promise.all(
   products.map(async (product) => ({
@@ -54,7 +61,7 @@ const items = await Promise.all(
   <PageHeader title="Termékek" no-shapes compact />
   <section class="py-12">
     <div class="container xl:max-w-375 xl:px-3.5">
-      <ProductList client:load items={items} sets={sets} />
+      <ProductList client:load items={items} sets={sets} popularOrder={popularOrder} />
     </div>
   </section>
 </Base>

@@ -4,6 +4,7 @@
   import {
     applyListState,
     DEFAULT_LIST_STATE,
+    parseListSort,
     parseListState,
     serializeListState,
     type ListProduct,
@@ -21,7 +22,8 @@
 
   /**
    * A list item as handed over the island boundary. `date` is an ISO string
-   * (island props are JSON-serialized); `id` is the product's content entry id.
+   * (island props are JSON-serialized); `id` is the product's CMS
+   * `product_id` — also the identity the popularity order is keyed by.
    */
   interface ListItem extends Omit<ListProduct, "date"> {
     date?: string | undefined;
@@ -40,9 +42,15 @@
     items: ListItem[];
     /** The catalogue's product sets, as filter options. */
     sets: SetOption[];
+    /**
+     * Product ids (`product_id`) in the CMS-curated popularity order (the
+     * "Népszerű" sort). Products without a curated position follow the
+     * ordered ones.
+     */
+    popularOrder: string[];
   }
 
-  let { items, sets }: Props = $props();
+  let { items, sets, popularOrder }: Props = $props();
 
   const products: ProductView[] = $derived(
     items.map((item) => ({
@@ -60,7 +68,7 @@
 
   let view: ProductListViewState = $state({ ...DEFAULT_LIST_STATE });
 
-  const visible = $derived(applyListState(products, view));
+  const visible = $derived(applyListState(products, view, popularOrder));
 
   function syncUrl(): void {
     const search = serializeListState(view);
@@ -96,7 +104,7 @@
     if (!(event.target instanceof HTMLSelectElement)) {
       return;
     }
-    setView({ ...view, sort: event.target.value === "name" ? "name" : "newest" });
+    setView({ ...view, sort: parseListSort(event.target.value) });
   }
 
   onMount(() => {
@@ -113,6 +121,7 @@
     }`}
     onchange={handleSortChange}
   >
+    <option value="popular">Népszerű</option>
     <option value="newest">Legfrissebb</option>
     <option value="name">Név szerint</option>
   </select>

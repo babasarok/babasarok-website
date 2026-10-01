@@ -17,11 +17,98 @@
     {
       "product": "src/content/product/cumi-ragcsalanc.md"
     },
+    {},
     {
-      "product": null
+      "product": "src/content/product/babatakaro-szett.md"
+    }
+  ],
+  "product_popular_ordering": [
+    {
+      "product": "src/content/product/babafeszek.md"
     },
     {
       "product": "src/content/product/babatakaro-szett.md"
+    },
+    {
+      "product": "src/content/product/baldachin.md"
+    },
+    {
+      "product": "src/content/product/fonott-racsvedo.md"
+    },
+    {
+      "product": "src/content/product/racsvedo-pamutjersey.md"
+    },
+    {
+      "product": "src/content/product/hagyomanyos-racsvedo.md"
+    },
+    {
+      "product": "src/content/product/gumis-lepedo-feher.md"
+    },
+    {
+      "product": "src/content/product/gumis-lepedo-mintas.md"
+    },
+    {
+      "product": "src/content/product/vizhatlan-lepedo.md"
+    },
+    {
+      "product": "src/content/product/polya.md"
+    },
+    {
+      "product": "src/content/product/wellsoft-takaro-egyreteg.md"
+    },
+    {
+      "product": "src/content/product/wellsoft-takaro-ketreteg.md"
+    },
+    {
+      "product": "src/content/product/pelenka.md"
+    },
+    {
+      "product": "src/content/product/kismama-parna.md"
+    },
+    {
+      "product": "src/content/product/egyben-moshato-takaro-lapos-parna.md"
+    },
+    {
+      "product": "src/content/product/sima-takaro-lapos-parna.md"
+    },
+    {
+      "product": "src/content/product/paplan-parnahuzat.md"
+    },
+    {
+      "product": "src/content/product/pufi-parna.md"
+    },
+    {
+      "product": "src/content/product/pufi-parna-huzat.md"
+    },
+    {
+      "product": "src/content/product/vizhatlan-lepedo-ketretegu.md"
+    },
+    {
+      "product": "src/content/product/vallfas-zsak.md"
+    },
+    {
+      "product": "src/content/product/tornazsak.md"
+    },
+    {
+      "product": "src/content/product/kanikula-takaro.md"
+    },
+    {
+      "product": "src/content/product/kanikula-takaro-extravekony.md"
+    },
+    {
+      "product": "src/content/product/egeszsegugyi-kiskonyv-borito.md"
+    },
+    {
+      "product": "src/content/product/pelenkazo-neszeszer.md"
+    },
+    {
+      "product": "src/content/product/cumi-ragcsalanc.md"
+    },
+    {
+      "product": "src/content/product/zsebes-tarolo.md"
+    },
+    {
+      "product": "src/content/product/diszparna.md"
     }
   ]
 }
