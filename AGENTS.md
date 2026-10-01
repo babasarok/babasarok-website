@@ -79,10 +79,11 @@ These are listed in priority order. When values conflict, prefer the one higher 
   page errors. Keep one helper script for the session (e.g.
   `/tmp/opencode/cdp.mjs`) that connects, sends commands, and prints results,
   instead of re-deriving the plumbing each time.
+
 - **Always give the page a fixed size before interacting with it.** Send
   `Emulation.setDeviceMetricsOverride` (the device toolbar's job) right after
   opening/navigating a target — e.g. `{width: 1440, height: 900,
-  deviceScaleFactor: 0, mobile: false}` — and verify `innerWidth` with
+deviceScaleFactor: 0, mobile: false}` — and verify `innerWidth` with
   `Runtime.evaluate` afterwards. `--window-size` alone is unreliable (the
   window manager may resize it), and unfixed viewports make geometry checks
   and screenshots non-reproducible.
