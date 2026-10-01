@@ -39,5 +39,8 @@ materials:
       price: 0
       color_count: '1'
   material_required_count: 2
+  banned_combinations:
+    - materials:
+        - material_path: src/content/material/pamutjersey.md
 ---
 
