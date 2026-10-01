@@ -42,5 +42,6 @@ materials:
   banned_combinations:
     - materials:
         - material_path: src/content/material/pamutjersey.md
+        - material_path: src/content/material/pamutjersey.md
 ---
 
