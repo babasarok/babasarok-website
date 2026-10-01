@@ -25,12 +25,21 @@
   interface PartnerOpportunity {
     kind: "partner";
     setTitle: string;
+    /** The basket products already present that the set is waiting on. */
+    anchors: string[];
+    /** Their line uuids, so the card can highlight them like the set cards. */
+    anchorUuids: string[];
     siblings: Sibling[];
   }
   interface MaterialOpportunity {
     kind: "material";
     setTitle: string;
+    /** The basket line whose materials differ. */
     title: string;
+    /** The in-basket sibling it should be matched to (may be unknown). */
+    partnerTitle: string | undefined;
+    /** The line + its partner, so the card can highlight them like the set cards. */
+    uuids: string[];
     editHref: string | undefined;
   }
 
@@ -70,15 +79,16 @@
     });
   });
 
-  // A pinned instance keeps its members highlighted after the pointer leaves
-  // (and drives touch/keyboard, which have no hover).
+  // Only a formed-set card pins (it has no other action); it keeps its members
+  // highlighted after the pointer leaves and drives touch/keyboard. The
+  // opportunity cards just highlight their lines while hovered or focused.
   let pinned = $state<number | undefined>();
 
   function memberUuids(index: number): string[] {
     return activeInstances[index]?.members.map((m) => m.uuid) ?? [];
   }
-  function hover(index: number): void {
-    onHighlight?.(memberUuids(index));
+  function highlight(uuids: string[]): void {
+    onHighlight?.(uuids);
   }
   function leave(): void {
     onHighlight?.(pinned === undefined ? [] : memberUuids(pinned));
@@ -128,7 +138,17 @@
         continue;
       }
       seen.push(status.setTitle);
-      out.push({ kind: "partner", setTitle: status.setTitle, siblings });
+      // Every basket product already present that is waiting on this set
+      // (not just the first one, which the dedupe keys on).
+      const anchors: string[] = [];
+      const anchorUuids: string[] = [];
+      for (const { item: p, status: s } of statuses) {
+        if (s?.state === "pending-partner" && s.setTitle === status.setTitle) {
+          anchors.push(p.title);
+          anchorUuids.push(p.uuid);
+        }
+      }
+      out.push({ kind: "partner", setTitle: status.setTitle, anchors, anchorUuids, siblings });
     }
     return out;
   });
@@ -142,10 +162,13 @@
         continue;
       }
       const slug = slugByProductId[item.product_id];
+      const partner = basket.find((p) => p.uuid === status.partnerUuid);
       out.push({
         kind: "material",
         setTitle: status.setTitle,
         title: item.title,
+        partnerTitle: partner?.title,
+        uuids: [item.uuid, ...(partner ? [partner.uuid] : [])],
         editHref: slug ? `/product/${slug}/?uuid=${item.uuid}` : undefined,
       });
     }
@@ -170,9 +193,9 @@
           <button
             type="button"
             aria-pressed={pinned === i}
-            onmouseenter={() => hover(i)}
+            onmouseenter={() => highlight(memberUuids(i))}
             onmouseleave={leave}
-            onfocus={() => hover(i)}
+            onfocus={() => highlight(memberUuids(i))}
             onblur={leave}
             onclick={() => togglePin(i)}
             class={[
@@ -206,11 +229,19 @@
       </div>
     {/if}
 
-    {#each partnerOpportunities as op (op.setTitle)}
-      <div class="flex flex-col gap-3 rounded-xl border border-brown-200 bg-white p-4">
+    {#each partnerOpportunities as op, i (`${op.setTitle}-${i}`)}
+      <div
+        class="flex flex-col gap-3 rounded-xl border border-brown-200 bg-white p-4 transition-shadow focus-within:shadow-md hover:shadow-md"
+        onmouseenter={() => highlight(op.anchorUuids)}
+        onmouseleave={leave}
+        onfocusin={() => highlight(op.anchorUuids)}
+        onfocusout={leave}
+        role="group"
+      >
         <p class="text-sm text-brown-600">
-          Szerezd meg a <span class="font-medium">{op.setTitle}</span> szett kedvezményt! Add hozzá a
-          hiányzó darabokat ugyanazzal az anyaggal:
+          Szerezd meg a <span class="font-medium">{op.setTitle}</span> szett kedvezményt! Add hozzá
+          a hiányzó darabokat ugyanazzal az anyaggal, mint a
+          <span class="font-medium">{op.anchors.join(", ")}</span>:
         </p>
         <div class="flex flex-wrap gap-3">
           {#each op.siblings as sibling (sibling.product.product_id)}
@@ -251,14 +282,27 @@
       </div>
     {/each}
 
-    {#each materialOpportunities as op (op.title + op.setTitle)}
+    {#each materialOpportunities as op, i (`${op.title}-${op.setTitle}-${i}`)}
       <div
-        class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brown-200 bg-white p-4"
+        class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brown-200 bg-white p-4 transition-shadow focus-within:shadow-md hover:shadow-md"
+        onmouseenter={() => highlight(op.uuids)}
+        onmouseleave={leave}
+        onfocusin={() => highlight(op.uuids)}
+        onfocusout={leave}
+        role="group"
       >
-        <p class="text-sm text-brown-600">
-          Válaszd ugyanazt az anyagot a <span class="font-medium">{op.title}</span> darabhoz, és
-          megkapod a <span class="font-medium">{op.setTitle}</span> szett kedvezményt.
-        </p>
+        <div class="flex flex-col gap-1">
+          <span class="flex items-center gap-1 text-sm font-semibold text-brown-700">
+            <Icon icon="mdi:alert-circle-outline" class="shrink-0 text-brown-500" />
+            {op.setTitle} szett
+          </span>
+          <ul class="list-disc pl-5 text-sm text-brown-600">
+            <li>{op.title} <span class="text-brown-400">(anyagot cseréld)</span></li>
+            {#if op.partnerTitle}
+              <li>{op.partnerTitle} <span class="text-brown-400">(erre az anyagra)</span></li>
+            {/if}
+          </ul>
+        </div>
         {#if op.editHref}
           <a
             href={op.editHref}
