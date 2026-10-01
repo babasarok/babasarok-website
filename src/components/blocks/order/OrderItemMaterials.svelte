@@ -172,7 +172,7 @@
         </p>
         {#if multiColor}
           <div class="mt-1 flex gap-1 flex-wrap">
-            {#each value?.colors as colorId, index (colorId)}
+            {#each value?.colors as colorId, index (index)}
               {@const colorInfo = materialInfo?.colors?.find((c) => c.color_id === colorId)}
               {#if colorInfo}
                 <Chip
