@@ -165,7 +165,7 @@
     }
 
     orderBasket.clear();
-    success = "Árajánlatkérésed sikeresen elküldve! Hamarosan felvesszük veled a kapcsolatot.";
+    success = "Rendelésed sikeresen elküldve! Hamarosan felvesszük veled a kapcsolatot.";
   }
 </script>
 
