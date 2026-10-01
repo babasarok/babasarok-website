@@ -55,31 +55,37 @@ These are listed in priority order. When values conflict, prefer the one higher 
 ## UI development
 
 - **Verify every UI change in a live browser before calling it done.** Confirm
-  with measured geometry (`getBoundingClientRect`,
-  `getComputedStyle` via `browser_eval`) — never trust assumed CSS behavior. use screenshots as a last resort.
-- **Browser:** the `opencode-chrome-devtools` plugin drives Chromium over CDP.
-  Start it detached with devtools open: `chromium --remote-debugging-port=9222
---user-data-dir=/tmp/chrome-cdp --auto-open-devtools-for-tabs`, then
-  `browser_navigate` to a `dev`/`preview` URL. Note the tools
-  have no key-press — real-key behaviors (e.g. Escape on `<dialog>`) verify
-  the handler side (e.g. the `close` event) instead.
-- **Viewport sizing:** set the view with DevTools' responsive design mode —
-  programmatically that's `Emulation.setDeviceMetricsOverride` over CDP,
-  which Node can send with its built-in `WebSocket` (no `ws` module needed):
+  with measured geometry (`getBoundingClientRect`, `getComputedStyle` read via
+  `Runtime.evaluate`) — never trust assumed CSS behavior. Use screenshots as a
+  last resort.
+- **Browser:** there are no browser plugin tools; drive Chromium directly over
+  the Chrome DevTools Protocol (CDP). Spawn it detached once per session, with
+  DevTools open:
 
   ```bash
-  node -e '
-  const ws = new WebSocket("http://127.0.0.1:9222/devtools/page/<targetId>");
-  ws.onopen = () => ws.send(JSON.stringify({id: 1, method:
-    "Emulation.setDeviceMetricsOverride",
-    params: {width: 1440, height: 900, deviceScaleFactor: 0, mobile: false}}));
-  ws.onmessage = (m) => { console.log(m.data); ws.close(); };'
+  chromium --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-cdp \
+    --no-first-run --auto-open-devtools-for-tabs about:blank >/dev/null 2>&1 &
   ```
 
-  Get `<targetId>` from `browser_list`. `--window-size` alone is unreliable
-  (the window manager may resize it), so always verify `innerWidth` with
-  `browser_eval` after setting the viewport.
-
+  Confirm it is up with `curl http://127.0.0.1:9222/json/version` (if something
+  already listens on 9222, reuse it). Targets live at
+  `http://127.0.0.1:9222/json/list`; open a target's `webSocketDebuggerUrl`
+  with Node's built-in `WebSocket` (no `ws` module needed) and send JSON
+  commands. The useful ones: `Page.navigate`, `Runtime.evaluate` (use
+  `{returnByValue: true, awaitPromise: true}`), `Emulation.setDeviceMetricsOverride`
+  (device toolbar / viewport sizing), `Page.captureScreenshot`, and
+  `Input.dispatchKeyEvent` / `Input.insertText` when real key presses matter.
+  Listen for `Runtime.exceptionThrown` / `Runtime.consoleAPICalled` to catch
+  page errors. Keep one helper script for the session (e.g.
+  `/tmp/opencode/cdp.mjs`) that connects, sends commands, and prints results,
+  instead of re-deriving the plumbing each time.
+- **Always give the page a fixed size before interacting with it.** Send
+  `Emulation.setDeviceMetricsOverride` (the device toolbar's job) right after
+  opening/navigating a target — e.g. `{width: 1440, height: 900,
+  deviceScaleFactor: 0, mobile: false}` — and verify `innerWidth` with
+  `Runtime.evaluate` afterwards. `--window-size` alone is unreliable (the
+  window manager may resize it), and unfixed viewports make geometry checks
+  and screenshots non-reproducible.
 - **Browser defaults bite:** the UA stylesheet caps `<dialog>` at
   `max-width/max-height: calc(100% - 42px)` (override with `max-w-none
 max-h-none`); `width: 100%` on a `position: fixed` element stops short of
