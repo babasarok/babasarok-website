@@ -137,7 +137,7 @@ max-h-none`); `width: 100%` on a `position: fixed` element stops short of
 ## Pull requests
 
 - **The canonical repo is `babasarok/babasarok-website`.** It was transferred between
-  owner accounts, so a previous owner's URL 301-redirects here — but that is the *same*
+  owner accounts, so a previous owner's URL 301-redirects here — but that is the _same_
   repo, not a fork. Create PRs on the `babasarok` repo.
 - **Use a same-repo head, not a cross-account one.** GitHub does not treat a transferred
   old-owner URL as a fork, so a cross-account head like `--head <old-owner>:<branch>`
@@ -149,6 +149,7 @@ max-h-none`); `width: 100%` on a `position: fixed` element stops short of
   gh pr create --repo babasarok/babasarok-website --head <branch> --base main \
     --title "type: summary" --body "..."
   ```
+
 - **Conventions:** conventional-commit titles (`fix:`, `feat:`, …) and `type/<slug>`
   branch names (e.g. `fix/mobile-product-page-overflow`). Confirm with
   `gh pr view <n> --repo babasarok/babasarok-website`.
