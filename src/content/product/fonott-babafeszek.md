@@ -45,5 +45,6 @@ materials:
         - material_path: src/content/material/pamutjersey.md
     - materials:
         - material_path: src/content/material/velur.md
+        - material_path: src/content/material/velur.md
 ---
 
