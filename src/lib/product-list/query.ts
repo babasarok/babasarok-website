@@ -1,6 +1,6 @@
 import { isProductType, PRODUCT_TYPE_VALUES, type ProductType } from "../product/productTypes";
 
-export type ListSort = "newest" | "name";
+export type ListSort = "popular" | "newest" | "name";
 
 export interface ProductListViewState {
   /** Search text, matched against title and short description. */
@@ -16,8 +16,18 @@ export const DEFAULT_LIST_STATE: ProductListViewState = {
   q: "",
   types: [],
   sets: [],
-  sort: "name",
+  sort: "popular",
 };
+
+/**
+ * Narrow a raw sort value (URL param or `<select>` option value) to a
+ * {@link ListSort}; anything unknown falls back to the default sort.
+ */
+export function parseListSort(value: string | null | undefined): ListSort {
+  return value === "popular" || value === "newest" || value === "name"
+    ? value
+    : DEFAULT_LIST_STATE.sort;
+}
 
 /**
  * Parse a product list view state from a URL search string ("?" or "?q=...").
@@ -40,7 +50,7 @@ export function parseListState(search: string): ProductListViewState {
     .map((value) => value.trim())
     .filter((value) => value !== "");
 
-  const sort = (params.get("sort") ?? DEFAULT_LIST_STATE.sort) === "newest" ? "newest" : "name";
+  const sort = parseListSort(params.get("sort"));
 
   return { q, types, sets, sort };
 }
@@ -48,8 +58,9 @@ export function parseListState(search: string): ProductListViewState {
 /**
  * A product as seen by the list query: the minimal shape applyListState needs.
  * Anything structurally compatible (e.g. the CMS-enhanced product plus its
- * set memberships) can be passed in. `id` is the product's content entry id
- * (the list's card key), not the CMS `product_id`.
+ * set memberships) can be passed in. `id` is the product's CMS `product_id`
+ * (the list's card key and the identity the popularity order is keyed by),
+ * not the content entry id.
  */
 export interface ListProduct {
   id: string;
@@ -65,12 +76,15 @@ export interface ListProduct {
  * case-insensitive substring match on title or short description; selected
  * types and sets are OR-combined within their dimension and AND-combined with
  * each other and the search. Returns a new array sorted by the state's sort
- * ("newest": date descending, missing dates last, stable; "name": title
- * ascending, Hungarian locale). The input is not mutated.
+ * ("popular": position in `popularOrder`, products without a curated position
+ * following it name-ascending among themselves; "newest": date descending,
+ * missing dates last, stable; "name": title ascending, Hungarian locale). The
+ * input is not mutated.
  */
 export function applyListState<TProduct extends ListProduct>(
   products: readonly TProduct[],
-  state: ProductListViewState
+  state: ProductListViewState,
+  popularOrder: readonly string[] = []
 ): TProduct[] {
   const query = state.q.trim().toLowerCase();
 
@@ -93,6 +107,26 @@ export function applyListState<TProduct extends ListProduct>(
 
   let sorted: TProduct[];
   switch (state.sort) {
+    case "popular": {
+      // Curated popularity order: position in `popularOrder` (first occurrence
+      // wins); unranked products follow it, name-ascending among themselves.
+      const rank = new Map<string, number>();
+      for (const [index, id] of popularOrder.entries()) {
+        if (!rank.has(id)) {
+          rank.set(id, index);
+        }
+      }
+      const unranked = popularOrder.length;
+      sorted = matches.toSorted((a, b) => {
+        const aRank = rank.get(a.id) ?? unranked;
+        const bRank = rank.get(b.id) ?? unranked;
+        if (aRank === bRank) {
+          return a.title.localeCompare(b.title, "hu");
+        }
+        return aRank - bRank;
+      });
+      break;
+    }
     case "newest":
       // Newest first: date descending, missing dates last
       sorted = matches.toSorted((a, b) => (b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0));
@@ -125,7 +159,9 @@ export function serializeListState(state: ProductListViewState): string {
     params.append("set", set);
   }
 
-  params.set("sort", state.sort);
+  if (state.sort !== DEFAULT_LIST_STATE.sort) {
+    params.set("sort", state.sort);
+  }
 
   const query = params.toString();
   return query === "" ? "" : `?${query}`;

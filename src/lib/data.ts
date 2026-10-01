@@ -786,3 +786,18 @@ export const getProductGroups = async (): Promise<CmsProductGroup[]> => {
     };
   });
 };
+
+type CmsProductSection = RecursivelyNullableToUndefined<
+  RecursivelyRemoveKeys<
+    Awaited<ReturnType<typeof client.queries.productSection>>["data"]["productSection"],
+    `_${string}`
+  >
+>;
+
+export const getProductSection = async (): Promise<CmsProductSection> => {
+  const result = await requestWithMetadata(
+    client.queries.productSection({ relativePath: "product.json" })
+  );
+
+  return result.data.productSection;
+};
