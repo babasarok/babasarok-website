@@ -32,5 +32,7 @@ fields:
         label: Bájos Magnólia
       - value: Hamvas-rozsa
         label: Hamvas rózsa
+      - value: Harmatlevel
+        label: Harmatlevél
 ---
 
