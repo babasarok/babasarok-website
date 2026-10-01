@@ -38,7 +38,7 @@ const popularOrder = (productSection.product_popular_ordering ?? [])
 
 const items = await Promise.all(
   products.map(async (product) => ({
-    id: product.id,
+    id: product.data.product_id,
     title: product.data.title,
     shortDescription: product.data.shortDescription ?? undefined,
     type: product.data.type,
