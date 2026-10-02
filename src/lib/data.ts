@@ -548,7 +548,7 @@ function assertValidProductReferences(
     }
   }
 
-  for (const material of product.materials?.materials ?? []) {
+  for (const material of product.materials?.material_options ?? []) {
     const colorCount = material?.color_count;
     // A numeric literal is a plain count; anything else is a field reference.
     if (!material || !colorCount || !Number.isNaN(Number.parseFloat(colorCount))) {
@@ -557,12 +557,12 @@ function assertValidProductReferences(
     const target = fieldByName.get(colorCount);
     if (!target) {
       throw new Error(
-        `${where}: a "${material.material_path.material_id}" anyag "color_count" hivatkozása nem létező mezőre mutat: "${colorCount}".`
+        `${where}: a "${material.label}" anyag "color_count" hivatkozása nem létező mezőre mutat: "${colorCount}".`
       );
     }
     if (!canSupplyStringValue(target.type)) {
       throw new Error(
-        `${where}: a "${material.material_path.material_id}" anyag "color_count" forrásmezője ("${colorCount}") típusa "${target.type}", ami nem adhat számértéket.`
+        `${where}: a "${material.label}" anyag "color_count" forrásmezője ("${colorCount}") típusa "${target.type}", ami nem adhat számértéket.`
       );
     }
   }
@@ -609,15 +609,21 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
           }))
       ),
       materials: {
-        materials: await Promise.all(
-          (product.materials?.materials ?? [])
-            .filter((material) => material != null)
-            .map(async (material) => {
-              const material_path = material.material_path;
+        material_options: await Promise.all(
+          (product.materials?.material_options ?? [])
+            .filter((option) => option != null)
+            .map(async (option) => {
               return {
-                price: material.price,
-                color_count: material.color_count,
-                material_path: await transformMaterial(material_path),
+                label: option.label,
+                color_count: option.color_count,
+                materials: await Promise.all(
+                  (option.materials ?? [])
+                    .filter((material) => material != null)
+                    .map(async (material) => ({
+                      price: material.price,
+                      material_path: await transformMaterial(material.material_path),
+                    }))
+                ),
               };
             })
         ),
@@ -634,7 +640,6 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
               ),
             }))
         ),
-        material_required_count: product.materials?.material_required_count ?? 0,
       },
       fields:
         product.fields
