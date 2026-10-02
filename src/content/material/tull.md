@@ -40,5 +40,6 @@ colors:
   - color_id: 'Halvány barack '
     label: 'Halvány barack '
     image: /src/assets/IMG_7836.jpeg
+thumbnail: /src/assets/IMG_6533.jpeg
 ---
 
