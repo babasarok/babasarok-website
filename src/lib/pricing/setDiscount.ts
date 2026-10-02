@@ -1,5 +1,6 @@
 import type { IProduct } from "../types.svelte";
 import { calculatePriceForItem } from "./price";
+import { isMaterialInOption } from "../product/materials";
 
 /** Minimal structural shape of a product group, to avoid a data.ts import cycle. */
 export interface SetDiscountGroup {
@@ -199,7 +200,7 @@ export function canSyncMaterials(item: IProduct, partner: IProduct): boolean {
     if (v == null || v.material_id === "") {
       return true;
     }
-    return (option.materials ?? []).some((m) => m?.material_path.material_id === v.material_id);
+    return isMaterialInOption(option, v.material_id);
   });
 }
 

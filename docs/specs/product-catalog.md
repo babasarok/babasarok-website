@@ -23,9 +23,11 @@ pricing/discount data.
     options and prices so the order form can render and price them
 - **Scenario: Product with material slots**
   - WHEN a product requires materials
-  - THEN the product's shape includes the required material count and the
-    available material choices so the order form can collect one material (and
-    colors) per required slot
+  - THEN the product's shape includes an ordered list of material options
+    (slots), each carrying its own label, colour count, and its own set of
+    available material choices, so the order form can collect one material (and
+    its colors) per slot; any forbidden cross-slot material combinations are
+    listed separately
 
 ### Product list: search, filtering, and sorting
 

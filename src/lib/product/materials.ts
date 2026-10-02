@@ -18,6 +18,24 @@ export function findMaterialById(
   return undefined;
 }
 
+/** Whether `materialId` is one of the choices offered by `option` (its slot). */
+export function isMaterialInOption(
+  option: Pick<CmsProductMaterialOption, "materials">,
+  materialId: string
+): boolean {
+  return (option.materials ?? []).some((m) => m?.material_path.material_id === materialId);
+}
+
+/** Display label for a material slot: the option's own label, falling back to a
+ * generic "Anyag" / "Anyag {n}" when it is unlabelled. */
+export function materialSlotLabel(
+  option: Pick<CmsProductMaterialOption, "label">,
+  index: number,
+  total: number
+): string {
+  return option.label || (total > 1 ? `Anyag ${(index + 1).toString()}` : "Anyag");
+}
+
 export function resolveColorCount(
   option: CmsProductMaterialOption | null,
   product: Pick<IProduct, "fields">
@@ -55,10 +73,7 @@ export function areMaterialsComplete(item: Pick<IProduct, "fields" | "materials"
     }
 
     // The chosen material must belong to this slot's option.
-    const belongs = (option.materials ?? []).some(
-      (m) => m?.material_path.material_id === value.material_id
-    );
-    if (!belongs) {
+    if (!isMaterialInOption(option, value.material_id)) {
       return false;
     }
 

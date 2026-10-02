@@ -1,4 +1,5 @@
 import { sanitizeItem } from "../product/validation";
+import { isMaterialInOption } from "../product/materials";
 import { randomUUID } from "../uuid";
 import type { CmsEnhancedProduct } from "../data";
 import type { IProduct, ProductMaterialValue } from "../types.svelte";
@@ -29,34 +30,19 @@ export function instantiateProduct(product: CmsEnhancedProduct): IProduct {
   });
 }
 
-/** The set of material ids selectable in a given material option (slot) of an
- * item. Each option carries its own list, so validity is checked per slot. */
-function slotMaterialIds(item: Pick<IProduct, "materials">, slot: number): Set<string> {
-  const ids = new Set<string>();
-  for (const m of item.materials.material_options[slot]?.materials ?? []) {
-    const id = m?.material_path.material_id;
-    if (id != null) {
-      ids.add(id);
-    }
-  }
-  return ids;
-}
-
 /** Carry `sourceValues` onto `target`'s slots by position, keeping a value only
  * when its material still belongs to the target's option at that slot. */
 function carryOverValues(
   target: Pick<IProduct, "materials">,
   sourceValues: Array<ProductMaterialValue | undefined>
 ): Array<ProductMaterialValue | undefined> {
-  return target.materials.material_options.map((_, slot) => {
+  return target.materials.material_options.map((option, slot) => {
     const value = sourceValues[slot];
     if (value == null) {
       return;
     }
 
-    return slotMaterialIds(target, slot).has(value.material_id)
-      ? structuredClone(value)
-      : undefined;
+    return isMaterialInOption(option, value.material_id) ? structuredClone(value) : undefined;
   });
 }
 
@@ -78,7 +64,9 @@ function restoreProduct(catalog: CmsEnhancedProduct, saved: SavedProduct): IProd
 
   if (
     saved.materials.length > base.materials.material_options.length ||
-    saved.materials.some((m, i) => !slotMaterialIds(base, i).has(m.material_id))
+    saved.materials.some(
+      (m, i) => !isMaterialInOption(base.materials.material_options[i], m.material_id)
+    )
   ) {
     return null;
   }

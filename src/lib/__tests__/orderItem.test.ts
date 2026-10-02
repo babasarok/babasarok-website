@@ -156,8 +156,9 @@ describe("calculatePriceForItem — materials", () => {
     const price = calculatePriceForItem(
       makeProduct({
         price: 0,
-        materials: [makeMaterial({ material_id: "teddy", price: 2000 })],
-        material_required_count: 1,
+        material_options: [
+          makeMaterialOption({ materials: [makeMaterial({ material_id: "teddy", price: 2000 })] }),
+        ],
         values: [{ material_id: "teddy", colors: [] }],
       })
     );
@@ -165,14 +166,17 @@ describe("calculatePriceForItem — materials", () => {
   });
 
   it("labels multiple required materials 'Anyag N'", () => {
+    const pool = [
+      makeMaterial({ material_id: "teddy", price: 2000 }),
+      makeMaterial({ material_id: "minky", price: 2500 }),
+    ];
     const price = calculatePriceForItem(
       makeProduct({
         price: 0,
-        materials: [
-          makeMaterial({ material_id: "teddy", price: 2000 }),
-          makeMaterial({ material_id: "minky", price: 2500 }),
+        material_options: [
+          makeMaterialOption({ materials: pool }),
+          makeMaterialOption({ materials: pool }),
         ],
-        material_required_count: 2,
         values: [
           { material_id: "teddy", colors: [] },
           { material_id: "minky", colors: [] },
@@ -381,14 +385,17 @@ describe("validateItem / isItemValid", () => {
   it("requires the configured number of material colors", () => {
     const item = validateItem(
       makeProduct({
-        materials: [
-          makeMaterial({
-            material_id: "m",
+        material_options: [
+          makeMaterialOption({
             color_count: "2",
-            colors: [{ color_id: "a" }, { color_id: "b" }],
+            materials: [
+              makeMaterial({
+                material_id: "m",
+                colors: [{ color_id: "a" }, { color_id: "b" }],
+              }),
+            ],
           }),
         ],
-        material_required_count: 1,
         values: [{ material_id: "m", colors: ["a"] }],
       })
     );
@@ -397,10 +404,13 @@ describe("validateItem / isItemValid", () => {
   });
 
   it("fills missing material slots with required-but-empty errors", () => {
+    const pool = [makeMaterial({ material_id: "m" })];
     const item = validateItem(
       makeProduct({
-        materials: [makeMaterial({ material_id: "m" })],
-        material_required_count: 2,
+        material_options: [
+          makeMaterialOption({ materials: pool }),
+          makeMaterialOption({ materials: pool }),
+        ],
         values: [],
       })
     );
@@ -429,14 +439,17 @@ describe("sanitizeItem", () => {
   it("trims selected colors down to the allowed count", () => {
     const item = sanitizeItem(
       makeProduct({
-        materials: [
-          makeMaterial({
-            material_id: "m",
+        material_options: [
+          makeMaterialOption({
             color_count: "2",
-            colors: [{ color_id: "a" }, { color_id: "b" }, { color_id: "c" }],
+            materials: [
+              makeMaterial({
+                material_id: "m",
+                colors: [{ color_id: "a" }, { color_id: "b" }, { color_id: "c" }],
+              }),
+            ],
           }),
         ],
-        material_required_count: 1,
         values: [{ material_id: "m", colors: ["a", "b", "c"] }],
       })
     );

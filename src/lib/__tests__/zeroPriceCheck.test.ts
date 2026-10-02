@@ -11,7 +11,7 @@ import type { IProduct } from "@/lib/types.svelte";
 import { describe, expect, it } from "vitest";
 import { calculatePriceForItem } from "@/lib/pricing/price";
 import { findZeroPriceCombinations } from "@/lib/pricing/validCombinations";
-import { makeField, makeMaterial, makeProduct } from "./fixtures";
+import { makeField, makeMaterial, makeMaterialOption, makeProduct } from "./fixtures";
 
 /** The held value of a radio field, or `undefined` when not a radio. */
 function radioValue(product: IProduct, name: string): string | undefined {
@@ -78,7 +78,9 @@ describe("findZeroPriceCombinations", () => {
     it("flags a 0-base product with required free materials", () => {
       const product = makeProduct({
         price: 0,
-        materials: [makeMaterial({ material_id: "m1", price: 0 })],
+        material_options: [
+          makeMaterialOption({ materials: [makeMaterial({ material_id: "m1", price: 0 })] }),
+        ],
       });
       expect(findZeroPriceCombinations(product)).toHaveLength(1);
     });
@@ -86,7 +88,9 @@ describe("findZeroPriceCombinations", () => {
     it("passes when every material is priced", () => {
       const product = makeProduct({
         price: 0,
-        materials: [makeMaterial({ material_id: "m1", price: 1000 })],
+        material_options: [
+          makeMaterialOption({ materials: [makeMaterial({ material_id: "m1", price: 1000 })] }),
+        ],
       });
       expect(findZeroPriceCombinations(product)).toHaveLength(0);
     });
@@ -94,9 +98,13 @@ describe("findZeroPriceCombinations", () => {
     it("flags one of several material slots being free", () => {
       const product = makeProduct({
         price: 0,
-        materials: [
-          makeMaterial({ material_id: "m1", price: 0 }),
-          makeMaterial({ material_id: "m2", price: 1000 }),
+        material_options: [
+          makeMaterialOption({
+            materials: [
+              makeMaterial({ material_id: "m1", price: 0 }),
+              makeMaterial({ material_id: "m2", price: 1000 }),
+            ],
+          }),
         ],
       });
       const zero = findZeroPriceCombinations(product);
@@ -105,13 +113,16 @@ describe("findZeroPriceCombinations", () => {
     });
 
     it("skips banned material combinations", () => {
+      const pool = [
+        makeMaterial({ material_id: "m1", price: 0 }),
+        makeMaterial({ material_id: "m2", price: 0 }),
+        makeMaterial({ material_id: "m3", price: 500 }),
+      ];
       const product = makeProduct({
         price: 0,
-        material_required_count: 2,
-        materials: [
-          makeMaterial({ material_id: "m1", price: 0 }),
-          makeMaterial({ material_id: "m2", price: 0 }),
-          makeMaterial({ material_id: "m3", price: 500 }),
+        material_options: [
+          makeMaterialOption({ materials: pool }),
+          makeMaterialOption({ materials: pool }),
         ],
         banned_combinations: [
           {
@@ -131,12 +142,15 @@ describe("findZeroPriceCombinations", () => {
     });
 
     it("applies banned-combination multiplicity like the form picker", () => {
+      const pool = [
+        makeMaterial({ material_id: "m1", price: 0 }),
+        makeMaterial({ material_id: "m2", price: 500 }),
+      ];
       const product = makeProduct({
         price: 0,
-        material_required_count: 2,
-        materials: [
-          makeMaterial({ material_id: "m1", price: 0 }),
-          makeMaterial({ material_id: "m2", price: 500 }),
+        material_options: [
+          makeMaterialOption({ materials: pool }),
+          makeMaterialOption({ materials: pool }),
         ],
         banned_combinations: [
           {

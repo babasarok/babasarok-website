@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { prefillFromParams } from "@/lib/order/queryParams";
-import { makeProduct, makeField, makeMaterial } from "./fixtures";
+import { makeProduct, makeField, makeMaterial, makeMaterialOption } from "./fixtures";
 
 describe("prefillFromParams", () => {
   it("sets the item count from a valid count param", () => {
@@ -75,8 +75,9 @@ describe("prefillFromParams", () => {
 
   it("prefills a material slot with colours within the required count", () => {
     const item = makeProduct({
-      materials: [makeMaterial({ material_id: "cotton" })],
-      material_required_count: 1,
+      material_options: [
+        makeMaterialOption({ materials: [makeMaterial({ material_id: "cotton" })] }),
+      ],
     });
     prefillFromParams(item, new URLSearchParams("m0=cotton&m0_colors=red,blue"));
     expect(item.materials.values[0]).toEqual({ material_id: "cotton", colors: ["red", "blue"] });
@@ -84,8 +85,9 @@ describe("prefillFromParams", () => {
 
   it("ignores material slots beyond the required count", () => {
     const item = makeProduct({
-      materials: [makeMaterial({ material_id: "cotton" })],
-      material_required_count: 1,
+      material_options: [
+        makeMaterialOption({ materials: [makeMaterial({ material_id: "cotton" })] }),
+      ],
     });
     prefillFromParams(item, new URLSearchParams("m2=cotton"));
     expect(item.materials.values[2]).toBeUndefined();

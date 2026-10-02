@@ -7,7 +7,7 @@
   import Tooltip from "./common/Tooltip.svelte";
   import { slide } from "svelte/transition";
   import type { IProduct } from "@/lib/types.svelte";
-  import { resolveColorCount } from "@/lib/product/materials";
+  import { resolveColorCount, materialSlotLabel } from "@/lib/product/materials";
   import type { ProductMaterialValue } from "@/lib/types.svelte";
 
   interface Props {
@@ -97,8 +97,7 @@
 {#if (option.materials?.length ?? 0) > 0}
   <div class="flex flex-col gap-1">
     <p class="text-sm text-brown-500">
-      {option.label ||
-        (product.materials.material_options.length == 1 ? "Anyag" : `Anyag ${material_index + 1}`)}
+      {materialSlotLabel(option, material_index, product.materials.material_options.length)}
     </p>
     <div class="flex gap-1 flex-wrap">
       {#each (option.materials ?? []).filter((x) => x != null) as material (material.material_path.material_id)}

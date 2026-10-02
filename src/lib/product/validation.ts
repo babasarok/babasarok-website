@@ -1,4 +1,4 @@
-import { resolveColorCount } from "./materials";
+import { resolveColorCount, isMaterialInOption } from "./materials";
 import type { CmsProductMaterialOption, Field, IProduct } from "../types.svelte";
 import type { ProductMaterialValue } from "../types.svelte";
 import { isFieldVisible } from "./field";
@@ -211,11 +211,7 @@ function updateMaterialsWithErrors(item: IProduct): void {
       continue;
     }
 
-    const belongs = (option.materials ?? []).some(
-      (m) => !!m && m.material_path.material_id === materialValue.material_id
-    );
-
-    if (belongs) {
+    if (isMaterialInOption(option, materialValue.material_id)) {
       updateMaterialWithErrors(materialValue, option, item);
     } else {
       materialValue.error = "Kötelező mező";

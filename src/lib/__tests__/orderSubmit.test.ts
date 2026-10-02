@@ -14,7 +14,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { submitOrder, type OrderDetails } from "@/lib/order/submit";
 import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
 import { chargedDeliveryPrice, orderTotal } from "@/lib/order/total";
-import { makeDelivery, makeField, makeMaterial, makeProduct } from "./fixtures";
+import { makeDelivery, makeField, makeMaterial, makeMaterialOption, makeProduct } from "./fixtures";
 import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
 
 afterEach(() => {
@@ -92,6 +92,23 @@ describe("order form envelope", () => {
 
 describe("product string content", () => {
   it("formats a radio + toggle product with materials", async () => {
+    const materialPool = [
+      makeMaterial({
+        material_id: "teddy",
+        label: "Teddy",
+        price: 2000,
+        colors: [
+          { color_id: "bezs", label: "Bézs" },
+          { color_id: "szurke", label: "Szürke" },
+        ],
+      }),
+      makeMaterial({
+        material_id: "minky",
+        label: "Minky",
+        price: 2500,
+        colors: [{ color_id: "rozsa", label: "Rózsaszín" }],
+      }),
+    ];
     const product = makeProduct({
       title: "Babafészek",
       count: 2,
@@ -123,24 +140,10 @@ describe("product string content", () => {
           value: { value: false },
         }),
       ],
-      materials: [
-        makeMaterial({
-          material_id: "teddy",
-          label: "Teddy",
-          price: 2000,
-          colors: [
-            { color_id: "bezs", label: "Bézs" },
-            { color_id: "szurke", label: "Szürke" },
-          ],
-        }),
-        makeMaterial({
-          material_id: "minky",
-          label: "Minky",
-          price: 2500,
-          colors: [{ color_id: "rozsa", label: "Rózsaszín" }],
-        }),
+      material_options: [
+        makeMaterialOption({ materials: materialPool }),
+        makeMaterialOption({ materials: materialPool }),
       ],
-      material_required_count: 2,
       values: [
         { material_id: "teddy", colors: ["bezs", "szurke"] },
         { material_id: "minky", colors: ["rozsa"] },
@@ -274,21 +277,24 @@ describe("product string content", () => {
           value: { value: "4" },
         }),
       ],
-      materials: [
-        makeMaterial({
-          material_id: "pamutjersey",
-          label: "Pamutjersey",
-          price: 0,
+      material_options: [
+        makeMaterialOption({
           color_count: "fonas",
-          colors: [
-            { color_id: "feher", label: "Fehér" },
-            { color_id: "kek", label: "Kék" },
-            { color_id: "zold", label: "Zöld" },
-            { color_id: "piros", label: "Piros" },
+          materials: [
+            makeMaterial({
+              material_id: "pamutjersey",
+              label: "Pamutjersey",
+              price: 0,
+              colors: [
+                { color_id: "feher", label: "Fehér" },
+                { color_id: "kek", label: "Kék" },
+                { color_id: "zold", label: "Zöld" },
+                { color_id: "piros", label: "Piros" },
+              ],
+            }),
           ],
         }),
       ],
-      material_required_count: 1,
       values: [{ material_id: "pamutjersey", colors: ["feher", "kek", "zold", "piros"] }],
     });
 

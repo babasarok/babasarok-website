@@ -2,7 +2,7 @@
   import Icon from "@iconify/svelte";
   import { calculatePriceForItem } from "@/lib/pricing/price";
   import { isFieldVisible } from "@/lib/product/field";
-  import { findMaterialById } from "@/lib/product/materials";
+  import { findMaterialById, materialSlotLabel } from "@/lib/product/materials";
   import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
   import type { Field, IProduct, ProductMaterialValue } from "@/lib/types.svelte";
 
@@ -81,9 +81,7 @@
   const materialRows = $derived(
     product.materials.material_options
       .map((opt, i) => ({
-        label:
-          opt.label ||
-          (product.materials.material_options.length > 1 ? `Anyag ${i + 1}` : "Anyag"),
+        label: materialSlotLabel(opt, i, product.materials.material_options.length),
         value: materialDisplay(product.materials.values[i]),
       }))
       .filter((row): row is { label: string; value: string } => row.value != null)

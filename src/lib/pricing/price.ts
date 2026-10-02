@@ -5,6 +5,7 @@ import type {
   ProductMaterialValue,
 } from "../types.svelte";
 import { isFieldVisible, findFieldByName, resolveNumericValue } from "../product/field";
+import { materialSlotLabel } from "../product/materials";
 
 interface PricePart {
   label: string;
@@ -105,7 +106,7 @@ function getMaterialPrice(
 
   const materialPrice = material?.price;
   return {
-    label: option.label || (material_count > 1 ? `Anyag ${(material_index + 1).toString()}` : "Anyag"),
+    label: materialSlotLabel(option, material_index, material_count),
     price: materialPrice ?? undefined,
   };
 }

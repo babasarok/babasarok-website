@@ -23,7 +23,7 @@ import {
   type SetDiscountGroup,
 } from "@/lib/pricing/setDiscount";
 import type { IProduct, ProductMaterialValue } from "@/lib/types.svelte";
-import { makeProduct, makeMaterial, makeField } from "./fixtures";
+import { makeProduct, makeMaterial, makeMaterialOption, makeField } from "./fixtures";
 
 const val = (material_id: string, colors: string[]): ProductMaterialValue => ({
   material_id,
@@ -512,15 +512,17 @@ describe("resolveBasketPricing – per-item status", () => {
       uuid: "u1",
       product_id: "nest",
       values: [val("cotton", ["red"])],
-      materials: [makeMaterial({ material_id: "cotton" })],
-      material_required_count: 1,
+      material_options: [
+        makeMaterialOption({ materials: [makeMaterial({ material_id: "cotton" })] }),
+      ],
     });
     const blanketB = makeProduct({
       uuid: "u2",
       product_id: "blanket",
       values: [val("cotton", ["blue"])],
-      materials: [makeMaterial({ material_id: "cotton" })],
-      material_required_count: 1,
+      material_options: [
+        makeMaterialOption({ materials: [makeMaterial({ material_id: "cotton" })] }),
+      ],
     });
     expect(statusesOf([nestA, blanketB], groups).get("u1")).toEqual({
       state: "pending-material",
@@ -564,28 +566,41 @@ describe("resolveBasketPricing – per-item status", () => {
 describe("canSyncMaterials", () => {
   it("is true when counts match and every partner material is available", () => {
     const item = makeProduct({
-      materials: [makeMaterial({ material_id: "cotton" })],
-      material_required_count: 1,
+      material_options: [
+        makeMaterialOption({ materials: [makeMaterial({ material_id: "cotton" })] }),
+      ],
     });
-    const partner = makeProduct({ values: [val("cotton", ["red"])], material_required_count: 1 });
+    const partner = makeProduct({
+      values: [val("cotton", ["red"])],
+      material_options: [makeMaterialOption()],
+    });
     expect(canSyncMaterials(item, partner)).toBe(true);
   });
 
   it("is false when the item does not offer the partner's material", () => {
     const item = makeProduct({
-      materials: [makeMaterial({ material_id: "cotton" })],
-      material_required_count: 1,
+      material_options: [
+        makeMaterialOption({ materials: [makeMaterial({ material_id: "cotton" })] }),
+      ],
     });
-    const partner = makeProduct({ values: [val("wool", ["red"])], material_required_count: 1 });
+    const partner = makeProduct({
+      values: [val("wool", ["red"])],
+      material_options: [makeMaterialOption()],
+    });
     expect(canSyncMaterials(item, partner)).toBe(false);
   });
 
   it("is false when the required material counts differ", () => {
     const item = makeProduct({
-      materials: [makeMaterial({ material_id: "cotton" })],
-      material_required_count: 2,
+      material_options: [
+        makeMaterialOption({ materials: [makeMaterial({ material_id: "cotton" })] }),
+        makeMaterialOption({ materials: [makeMaterial({ material_id: "cotton" })] }),
+      ],
     });
-    const partner = makeProduct({ values: [val("cotton", ["red"])], material_required_count: 1 });
+    const partner = makeProduct({
+      values: [val("cotton", ["red"])],
+      material_options: [makeMaterialOption()],
+    });
     expect(canSyncMaterials(item, partner)).toBe(false);
   });
 });
