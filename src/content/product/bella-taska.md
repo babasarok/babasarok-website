@@ -5,7 +5,7 @@ can_be_ordered: true
 categories: Praktikus és stílus a mindennapokhoz
 type: kiegeszito
 date: 2026-09-28T10:13:25.483Z
-thumbnail: /src/assets/IMG_6499.jpeg
+thumbnail: /src/assets/IMG_6517.jpeg
 images:
   - image: /src/assets/IMG_6490.jpeg
     description: 'Hamvas rózsa '
