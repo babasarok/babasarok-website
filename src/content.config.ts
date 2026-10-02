@@ -250,14 +250,24 @@ const product = defineCollection({
         .nullable(),
       materials: z
         .object({
-          material_required_count: z.number(),
-          materials: z
+          material_options: z
             .array(
               z
                 .object({
+                  label: z.string(),
                   color_count: z.string(),
-                  price: z.number(),
-                  material_path: z.string(),
+                  materials: z
+                    .array(
+                      z
+                        .object({
+                          price: z.number(),
+                          material_path: z.string(),
+                        })
+                        .optional()
+                        .nullable()
+                    )
+                    .optional()
+                    .nullable(),
                 })
                 .optional()
                 .nullable()

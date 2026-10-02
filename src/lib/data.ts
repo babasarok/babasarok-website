@@ -95,7 +95,12 @@ type CmsProduct = RecursivelyNullableToUndefined<
 
 type CmsProductImage = NonNullable<NonNullable<CmsProduct["images"]>[number]>;
 type CmsProductMaterials = NonNullable<CmsProduct["materials"]>;
-type CmsProductMaterial = NonNullable<NonNullable<CmsProduct["materials"]>["materials"]>[number];
+type CmsProductMaterialOptions = NonNullable<
+  NonNullable<NonNullable<CmsProduct["materials"]>["material_options"]>[number]
+>;
+type CmsProductMaterial = NonNullable<
+  NonNullable<NonNullable<CmsProductMaterialOptions>["materials"]>[number]
+>;
 type CmsProductMaterialsBannedCombination = NonNullable<
   NonNullable<NonNullable<CmsProduct["materials"]>["banned_combinations"]>[number]
 >;
@@ -111,6 +116,10 @@ interface CmsEnhancedProductMaterial extends Omit<
   material_path: CmsEnhancedMaterial;
 }
 
+interface CmsEnhancedProductMaterialOptions extends Omit<CmsProductMaterialOptions, "materials"> {
+  materials: Array<CmsEnhancedProductMaterial | undefined | null> | undefined | null;
+}
+
 interface CmsEnhancedProductMaterialsBannedCombination extends Omit<
   NonNullable<CmsProductMaterialsBannedCombination>,
   "materials"
@@ -123,9 +132,9 @@ interface CmsEnhancedProductMaterialsBannedCombination extends Omit<
 
 interface CmsEnhancedProductMaterials extends Omit<
   CmsProductMaterials,
-  "materials" | "banned_combinations"
+  "material_options" | "banned_combinations"
 > {
-  materials: Array<CmsEnhancedProductMaterial | undefined | null> | undefined | null;
+  material_options: Array<CmsEnhancedProductMaterialOptions | undefined | null> | undefined | null;
   banned_combinations:
     Array<CmsEnhancedProductMaterialsBannedCombination | undefined | null> | undefined | null;
 }

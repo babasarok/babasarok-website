@@ -243,11 +243,6 @@ export const ProductCollection: Collection = {
       label: "Anyagok",
       description:
         "A termékhez tartozó anyagok beállításai. Ha nincs egy se hozzáadva, akkor a termékhez nem lesz anyag kiválasztási lehetőség a rendelési felületen.",
-      ui: {
-        defaultItem: {
-          material_required_count: 0,
-        },
-      },
       fields: [
         {
           type: "object",
@@ -294,7 +289,6 @@ export const ProductCollection: Collection = {
                 defaultItem: {
                   material_path: "",
                   price: 0,
-                  color_count: "1",
                 },
               },
               fields: [
