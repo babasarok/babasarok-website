@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest";
 import { calculatePriceForItem } from "@/lib/pricing/price";
 import { isItemValid, sanitizeItem, validateItem } from "@/lib/product/validation";
 import { resolveColorCount } from "@/lib/product/materials";
-import { fieldError, makeField, makeMaterial, makeProduct } from "./fixtures";
+import { fieldError, makeField, makeMaterial, makeMaterialOption, makeProduct } from "./fixtures";
 
 describe("calculatePriceForItem — field combinations", () => {
   it("uses the base price when there are no fields", () => {
@@ -250,22 +250,18 @@ describe("calculatePriceForItem — discount", () => {
 
 describe("resolveColorCount", () => {
   it("defaults to 1 when no color_count is set", () => {
-    expect(resolveColorCount(makeMaterial({ material_id: "m" }), makeProduct())).toBe(1);
+    expect(resolveColorCount(makeMaterialOption(), makeProduct())).toBe(1);
   });
 
   it("uses a numeric color_count directly", () => {
-    expect(
-      resolveColorCount(makeMaterial({ material_id: "m", color_count: "3" }), makeProduct())
-    ).toBe(3);
+    expect(resolveColorCount(makeMaterialOption({ color_count: "3" }), makeProduct())).toBe(3);
   });
 
   it("resolves color_count from a referenced field value", () => {
     const product = makeProduct({
       fields: [makeField({ name: "fonas", type: "radio", value: { value: "5" } })],
     });
-    expect(
-      resolveColorCount(makeMaterial({ material_id: "m", color_count: "fonas" }), product)
-    ).toBe(5);
+    expect(resolveColorCount(makeMaterialOption({ color_count: "fonas" }), product)).toBe(5);
   });
 
   it("returns undefined when the referenced field has no value", () => {
@@ -273,7 +269,7 @@ describe("resolveColorCount", () => {
       fields: [makeField({ name: "fonas", type: "radio" })],
     });
     expect(
-      resolveColorCount(makeMaterial({ material_id: "m", color_count: "fonas" }), product)
+      resolveColorCount(makeMaterialOption({ color_count: "fonas" }), product)
     ).toBeUndefined();
   });
 });

@@ -2,6 +2,7 @@
   import Icon from "@iconify/svelte";
   import { calculatePriceForItem } from "@/lib/pricing/price";
   import { isFieldVisible } from "@/lib/product/field";
+  import { findMaterialById } from "@/lib/product/materials";
   import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
   import type { Field, IProduct, ProductMaterialValue } from "@/lib/types.svelte";
 
@@ -69,9 +70,7 @@
     if (!value?.material_id) {
       return undefined;
     }
-    const material = product.materials.materials.find(
-      (m) => m?.material_path.material_id === value.material_id
-    );
+    const material = findMaterialById(product, value.material_id);
     const name = material?.material_path.label ?? value.material_id;
     const colors = value.colors
       .map((id) => material?.material_path.colors?.find((c) => c.color_id === id)?.label ?? id)
@@ -80,10 +79,14 @@
   }
 
   const materialRows = $derived(
-    Array.from({ length: product.materials.material_required_count }, (_, i) => ({
-      label: product.materials.material_required_count > 1 ? `Anyag ${i + 1}` : "Anyag",
-      value: materialDisplay(product.materials.values[i]),
-    })).filter((row): row is { label: string; value: string } => row.value != null)
+    product.materials.material_options
+      .map((opt, i) => ({
+        label:
+          opt.label ||
+          (product.materials.material_options.length > 1 ? `Anyag ${i + 1}` : "Anyag"),
+        value: materialDisplay(product.materials.values[i]),
+      }))
+      .filter((row): row is { label: string; value: string } => row.value != null)
   );
 </script>
 

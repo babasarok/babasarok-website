@@ -8,16 +8,16 @@ thumbnail: /src/assets/CC3A69B8-E539-4676-80C8-34F879F44283.png
 images:
   - image: /src/assets/9E44C255-3CE0-4630-82FA-52711D62AAE0.png
 shortDescription: |-
-  Hasznos, praktikus és mutatós darab. 
+  Hasznos, praktikus és mutatós darab.
 
   A fonat levehető, így később önmagában is tovább használható – egy termék, több lehetőség. ✨
 
-  Fonat hossza: kb. 180cm 
+  Fonat hossza: kb. 180cm
   Fekvő felület: kb. 43x75cm
 price: 28000
 materials:
   material_options:
-    - label: Anyag 1
+    - label: Rácsvédő
       color_count: '1'
       materials:
         - material_path: src/content/material/pamutjersey.md
@@ -26,19 +26,9 @@ materials:
           price: 0
         - material_path: src/content/material/teddy.md
           price: 0
-        - material_path: src/content/material/potty-nelkuli-minky.md
-          price: 0
-        - material_path: src/content/material/pamutvaszon.md
-          price: 0
-        - material_path: src/content/material/minky.md
-          price: 0
-    - label: Anyag 2
+    - label: Babadészek
       color_count: '1'
       materials:
-        - material_path: src/content/material/pamutjersey.md
-          price: 0
-        - material_path: src/content/material/velur.md
-          price: 0
         - material_path: src/content/material/teddy.md
           price: 0
         - material_path: src/content/material/potty-nelkuli-minky.md
@@ -47,33 +37,5 @@ materials:
           price: 0
         - material_path: src/content/material/minky.md
           price: 0
-  banned_combinations:
-    - materials:
-        - material_path: src/content/material/pamutjersey.md
-        - material_path: src/content/material/pamutjersey.md
-    - materials:
-        - material_path: src/content/material/velur.md
-        - material_path: src/content/material/velur.md
-    - materials:
-        - material_path: src/content/material/pamutjersey.md
-        - material_path: src/content/material/velur.md
-    - materials:
-        - material_path: src/content/material/potty-nelkuli-minky.md
-        - material_path: src/content/material/potty-nelkuli-minky.md
-    - materials:
-        - material_path: src/content/material/pamutvaszon.md
-        - material_path: src/content/material/pamutvaszon.md
-    - materials:
-        - material_path: src/content/material/minky.md
-        - material_path: src/content/material/minky.md
-    - materials:
-        - material_path: src/content/material/minky.md
-        - material_path: src/content/material/pamutvaszon.md
-    - materials:
-        - material_path: src/content/material/minky.md
-        - material_path: src/content/material/potty-nelkuli-minky.md
-    - materials:
-        - material_path: src/content/material/pamutvaszon.md
-        - material_path: src/content/material/potty-nelkuli-minky.md
 ---
 

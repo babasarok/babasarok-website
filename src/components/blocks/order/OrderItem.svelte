@@ -63,7 +63,7 @@
     <div class="w-full h-0.5 bg-brown-200"></div>
   {/if}
   <OrderItemFields {product} {threadColors} {onChange} />
-  {#each Array.from({ length: product.materials.material_required_count }) as _, i (i)}
+  {#each Array.from({ length: product.materials.material_options.length }) as _, i (i)}
     <OrderItemMaterials {product} {onChange} material_index={i} />
   {/each}
   <div class="w-full h-0.5 bg-brown-200"></div>

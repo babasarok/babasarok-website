@@ -31,6 +31,7 @@ import { resolveImage } from "./assets";
 import { instantiateProduct } from "./order/product";
 import { findZeroPriceCombinations, type PricedCombination } from "./pricing/validCombinations";
 import { isFieldVisible } from "./product/field";
+import { findMaterialById } from "./product/materials";
 import type { Field, IProduct } from "./types.svelte";
 import {
   canSupplyStringValue,
@@ -469,9 +470,7 @@ function describeZeroCombo(combo: PricedCombination, item: IProduct): string {
   const materialDescriptions = combo.product.materials.values
     .filter((value) => value != null && value.material_id !== "")
     .map((value) => {
-      const material = item.materials.materials.find(
-        (m) => m?.material_path.material_id === value?.material_id
-      );
+      const material = findMaterialById(item, value?.material_id ?? "");
       return material?.material_path.label ?? value?.material_id ?? "?";
     });
 

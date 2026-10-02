@@ -209,9 +209,8 @@ function matchesBanned(
  * `OrderItemMaterials.svelte`).
  */
 export function materialCombinations(product: IProduct): Array<ProductMaterialValue[]> {
-  const materials = product.materials.materials;
-  const required = product.materials.material_required_count;
-  if (required <= 0 || materials.length === 0) {
+  const options = product.materials.material_options;
+  if (options.length === 0) {
     return [[]];
   }
 
@@ -220,11 +219,11 @@ export function materialCombinations(product: IProduct): Array<ProductMaterialVa
     .map((combination) => combination.materials ?? []);
 
   const combos: Array<ProductMaterialValue[]> = [[]];
-  for (let slot = 0; slot < required; slot++) {
+  for (const option of options) {
     const next: Array<ProductMaterialValue[]> = [];
     for (const combo of combos) {
       const selectedIds = combo.map((value) => value.material_id);
-      for (const material of materials) {
+      for (const material of option.materials ?? []) {
         if (!material) {
           continue;
         }
@@ -306,9 +305,9 @@ function priceUnit(item: IProduct): number {
     parts.push(Math.round(fieldPrice(field, item) ?? 0));
   }
   const materials = item.materials;
-  for (let i = 0; i < materials.material_required_count; i++) {
+  for (const [i, option] of materials.material_options.entries()) {
     const value = materials.values[i];
-    const material = materials.materials.find(
+    const material = (option.materials ?? []).find(
       (m) => m?.material_path.material_id === value?.material_id
     );
     parts.push(Math.round(material?.price ?? 0));

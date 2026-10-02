@@ -29,7 +29,7 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
 
   const materialSlots = new Map<number, ProductMaterialValue>();
   const ensureSlot = (index: number): ProductMaterialValue | undefined => {
-    if (index < 0 || index >= item.materials.material_required_count) {
+    if (index < 0 || index >= item.materials.material_options.length) {
       return undefined;
     }
     let slot = materialSlots.get(index);
@@ -99,8 +99,8 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
  */
 export function buildMaterialParams(item: Pick<IProduct, "materials">): URLSearchParams {
   const params = new URLSearchParams();
-  const { values, material_required_count } = item.materials;
-  for (let i = 0; i < material_required_count; i++) {
+  const { values, material_options } = item.materials;
+  for (let i = 0; i < material_options.length; i++) {
     const slot = values[i];
     if (!slot?.material_id) {
       continue;

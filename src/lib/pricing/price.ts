@@ -1,4 +1,9 @@
-import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "../types.svelte";
+import type {
+  IProduct,
+  Field,
+  CmsProductMaterialOption,
+  ProductMaterialValue,
+} from "../types.svelte";
 import { isFieldVisible, findFieldByName, resolveNumericValue } from "../product/field";
 
 interface PricePart {
@@ -90,15 +95,17 @@ function getFieldPrice(field: Field, product: IProduct): PricePart | null {
 
 function getMaterialPrice(
   value: Pick<ProductMaterialValue, "material_id">,
-  productMaterials: CmsProductMaterial[],
+  option: CmsProductMaterialOption,
   material_count: number,
   material_index: number
 ): PricePart | null {
-  const material = productMaterials.find((m) => m?.material_path.material_id === value.material_id);
+  const material = (option.materials ?? []).find(
+    (m) => m?.material_path.material_id === value.material_id
+  );
 
   const materialPrice = material?.price;
   return {
-    label: material_count > 1 ? `Anyag ${(material_index + 1).toString()}` : "Anyag",
+    label: option.label || (material_count > 1 ? `Anyag ${(material_index + 1).toString()}` : "Anyag"),
     price: materialPrice ?? undefined,
   };
 }
@@ -116,14 +123,14 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
     parts.push(fieldPrice);
   }
 
-  if (product.materials.materials.length > 0) {
-    for (let i = 0; i < product.materials.material_required_count; i++) {
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      const value = product.materials.values?.[i];
+  const materialOptions = product.materials.material_options;
+  if (materialOptions.length > 0) {
+    for (let i = 0; i < materialOptions.length; i++) {
+      const value = product.materials.values[i];
       const price = getMaterialPrice(
         value ?? { material_id: "" },
-        product.materials.materials,
-        product.materials.material_required_count,
+        materialOptions[i],
+        materialOptions.length,
         i
       );
       if (!price) {

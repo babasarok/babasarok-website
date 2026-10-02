@@ -6,7 +6,12 @@ import { calculatePriceForItem } from "@/lib/pricing/price";
 import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
 import type { SetDiscountGroup, ResolvedSetInstance } from "@/lib/pricing/setDiscount";
 import { chargedDeliveryPrice, isDeliveryFree, orderTotal } from "@/lib/order/total";
-import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "../types.svelte";
+import type {
+  IProduct,
+  Field,
+  CmsProductMaterialOption,
+  ProductMaterialValue,
+} from "../types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "../data";
 import { isFieldVisible } from "../product/field";
 
@@ -69,10 +74,12 @@ function fieldIndentDepth(field: Field, fields: Field[]): number {
 /** The "- material (colors)" line for one chosen material value. */
 function formatMaterialLine(
   mv: ProductMaterialValue | undefined,
-  materials: CmsProductMaterial[],
+  option: CmsProductMaterialOption | undefined,
   i: number
 ): string {
-  const material = materials.find((m) => m?.material_path.material_id === mv?.material_id);
+  const material = (option?.materials ?? []).find(
+    (m) => m?.material_path.material_id === mv?.material_id
+  );
   const név = material?.material_path.label ?? mv?.material_id ?? "Ismeretlen anyag";
   const color =
     mv?.colors
@@ -94,7 +101,7 @@ function formatProductString(
   threadColors: CmsEnhancedEmbroideryColor[]
 ): string {
   const price = calculatePriceForItem(product);
-  const { materials, material_required_count, values } = product.materials;
+  const { material_options, values } = product.materials;
 
   // The forint a valid standalone discount removes from the line, so the email
   // records both the percent and the resulting amount without recomputation.
@@ -120,8 +127,8 @@ function formatProductString(
           `${"  ".repeat(fieldIndentDepth(f, product.fields) + 1)}${f.label}: ${formatFieldValue(f, threadColors)}`
       ),
 
-    ...(materials.length > 0 && material_required_count > 0
-      ? ["  Anyagok:", ...values.map((mv, i) => formatMaterialLine(mv, materials, i))]
+    ...(material_options.length > 0
+      ? ["  Anyagok:", ...values.map((mv, i) => formatMaterialLine(mv, material_options[i], i))]
       : []),
 
     "",

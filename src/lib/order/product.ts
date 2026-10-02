@@ -22,11 +22,41 @@ export function instantiateProduct(product: CmsEnhancedProduct): IProduct {
     fields: clone.fields?.filter((f) => f != null) ?? [],
     materials: {
       ...clone.materials,
-      materials: clone.materials?.materials?.filter((m) => m != null) ?? [],
+      material_options: clone.materials?.material_options?.filter((o) => o != null) ?? [],
       banned_combinations: clone.materials?.banned_combinations?.filter((c) => c != null) ?? [],
-      material_required_count: clone.materials?.material_required_count ?? 1,
       values: [] as Array<ProductMaterialValue | undefined>,
     },
+  });
+}
+
+/** The set of material ids selectable in a given material option (slot) of an
+ * item. Each option carries its own list, so validity is checked per slot. */
+function slotMaterialIds(item: Pick<IProduct, "materials">, slot: number): Set<string> {
+  const ids = new Set<string>();
+  for (const m of item.materials.material_options[slot]?.materials ?? []) {
+    const id = m?.material_path.material_id;
+    if (id != null) {
+      ids.add(id);
+    }
+  }
+  return ids;
+}
+
+/** Carry `sourceValues` onto `target`'s slots by position, keeping a value only
+ * when its material still belongs to the target's option at that slot. */
+function carryOverValues(
+  target: Pick<IProduct, "materials">,
+  sourceValues: Array<ProductMaterialValue | undefined>
+): Array<ProductMaterialValue | undefined> {
+  return target.materials.material_options.map((_, slot) => {
+    const value = sourceValues[slot];
+    if (value == null) {
+      return;
+    }
+
+    return slotMaterialIds(target, slot).has(value.material_id)
+      ? structuredClone(value)
+      : undefined;
   });
 }
 
@@ -46,10 +76,10 @@ function restoreProduct(catalog: CmsEnhancedProduct, saved: SavedProduct): IProd
     return null;
   }
 
-  const availableMaterials = new Set(
-    base.materials.materials.map((m) => m?.material_path.material_id).filter((id) => id != null)
-  );
-  if (saved.materials.some((m) => !availableMaterials.has(m.material_id))) {
+  if (
+    saved.materials.length > base.materials.material_options.length ||
+    saved.materials.some((m, i) => !slotMaterialIds(base, i).has(m.material_id))
+  ) {
     return null;
   }
 
@@ -106,13 +136,7 @@ export function instantiateRelatedProduct(target: CmsEnhancedProduct, source: IP
     }
   }
 
-  const availableMaterials = new Set(
-    base.materials.materials.map((m) => m?.material_path.material_id).filter((id) => id != null)
-  );
-  base.materials.values = source.materials.values
-    .filter((v): v is ProductMaterialValue => v != null && availableMaterials.has(v.material_id))
-    .slice(0, base.materials.material_required_count)
-    .map((v) => structuredClone(v));
+  base.materials.values = carryOverValues(base, source.materials.values);
 
   return sanitizeItem(base);
 }
@@ -122,13 +146,7 @@ export function instantiateRelatedProduct(target: CmsEnhancedProduct, source: IP
  * at its required count. Both inputs must be plain objects (e.g.
  * `$state.snapshot(...)`). */
 export function syncMaterialsToPartner(item: IProduct, partner: IProduct): IProduct {
-  const availableMaterials = new Set(
-    item.materials.materials.map((m) => m?.material_path.material_id).filter((id) => id != null)
-  );
-  const values = partner.materials.values
-    .filter((v): v is ProductMaterialValue => v != null && availableMaterials.has(v.material_id))
-    .slice(0, item.materials.material_required_count)
-    .map((v) => structuredClone(v));
+  const values = carryOverValues(item, partner.materials.values);
 
   return sanitizeItem({ ...item, materials: { ...item.materials, values } });
 }

@@ -1,5 +1,5 @@
 import { resolveColorCount } from "./materials";
-import type { CmsProductMaterial, Field, IProduct } from "../types.svelte";
+import type { CmsProductMaterialOption, Field, IProduct } from "../types.svelte";
 import type { ProductMaterialValue } from "../types.svelte";
 import { isFieldVisible } from "./field";
 
@@ -30,20 +30,13 @@ export function sanitizeItem(item: IProduct): IProduct {
     prefillField(field);
   }
 
-  for (const material of item.materials.values) {
+  for (const [i, option] of item.materials.material_options.entries()) {
+    const material = item.materials.values[i];
     if (!material) {
       continue;
     }
 
-    const materialInfo = item.materials.materials.find(
-      (m) => m?.material_path.material_id === material.material_id
-    );
-
-    if (!materialInfo) {
-      continue;
-    }
-
-    const count = resolveColorCount(materialInfo, item);
+    const count = resolveColorCount(option, item);
     // Resolving failed, bail.
     if (count == null) {
       continue;
@@ -171,7 +164,7 @@ function fieldHasError(field: Field): boolean {
 
 function updateMaterialWithErrors(
   value: ProductMaterialValue,
-  material: CmsProductMaterial,
+  option: CmsProductMaterialOption,
   product: IProduct
 ): void {
   value.error = undefined;
@@ -181,7 +174,7 @@ function updateMaterialWithErrors(
     return;
   }
 
-  const count = resolveColorCount(material, product);
+  const count = resolveColorCount(option, product);
   if (!count) {
     value.error = "Színt nem lehet választani, más érték még nincs megadva";
     return;
@@ -194,11 +187,12 @@ function updateMaterialWithErrors(
 }
 
 function updateMaterialsWithErrors(item: IProduct): void {
-  if (item.materials.materials.length === 0) {
+  const options = item.materials.material_options;
+  if (options.length === 0) {
     return;
   }
 
-  for (let i = 0; i < item.materials.material_required_count; i++) {
+  for (let i = 0; i < options.length; i++) {
     if (item.materials.values[i]) {
       continue;
     }
@@ -206,7 +200,8 @@ function updateMaterialsWithErrors(item: IProduct): void {
     item.materials.values[i] = { material_id: "", colors: [] };
   }
 
-  for (const materialValue of item.materials.values) {
+  for (const [i, option] of options.entries()) {
+    const materialValue = item.materials.values[i];
     if (!materialValue) {
       continue;
     }
@@ -216,12 +211,12 @@ function updateMaterialsWithErrors(item: IProduct): void {
       continue;
     }
 
-    const materialInfo = item.materials.materials.find(
+    const belongs = (option.materials ?? []).some(
       (m) => !!m && m.material_path.material_id === materialValue.material_id
     );
 
-    if (materialInfo) {
-      updateMaterialWithErrors(materialValue, materialInfo, item);
+    if (belongs) {
+      updateMaterialWithErrors(materialValue, option, item);
     } else {
       materialValue.error = "Kötelező mező";
     }
@@ -249,11 +244,11 @@ export function isItemValid(item: IProduct): boolean {
     }
   }
 
-  if (item.materials.materials.length === 0) {
+  if (item.materials.material_options.length === 0) {
     return true;
   }
 
-  if (item.materials.values.length < item.materials.material_required_count) {
+  if (item.materials.values.length < item.materials.material_options.length) {
     return false;
   }
 

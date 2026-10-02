@@ -10,6 +10,7 @@
  */
 import type {
   CmsProductMaterial,
+  CmsProductMaterialOption,
   Field,
   EmbroideryValue,
   IProduct,
@@ -70,15 +71,19 @@ export interface MaterialOpts {
   material_id: string;
   label?: string;
   price?: number | null;
-  /** Number of selectable colors, or the field `name` that supplies it. */
+  /** Number of selectable colors, or the field `name` that supplies it.
+   * In the new shape this is carried on the material option (slot), so
+   * {@link makeProduct} lifts it onto the generated option. */
   color_count?: string;
   colors?: MaterialColor[];
 }
 
-/** Build a product-material definition (`product.materials.materials[n]`). */
+/** Build a single material choice (`material_options[n].materials[n]`). The
+ * `color_count` is kept on the object so {@link makeProduct} can lift it onto
+ * the enclosing option. */
 export function makeMaterial(opts: MaterialOpts): CmsProductMaterial {
   return {
-    __typename: "ProductMaterialsMaterials",
+    __typename: "ProductMaterialsMaterial_optionsMaterials",
     price: opts.price ?? null,
     color_count: opts.color_count ?? null,
     material_path: {
@@ -87,6 +92,24 @@ export function makeMaterial(opts: MaterialOpts): CmsProductMaterial {
       colors: (opts.colors ?? []).map((c) => ({ label: c.color_id, hex: undefined, ...c })),
     },
   } as unknown as CmsProductMaterial;
+}
+
+export interface MaterialOptionOpts {
+  label?: string;
+  /** Number of selectable colors, or the field `name` that supplies it. */
+  color_count?: string;
+  materials?: CmsProductMaterial[];
+}
+
+/** Build a material option (slot): a label, its colour count, and the material
+ * choices available for that slot. */
+export function makeMaterialOption(opts: MaterialOptionOpts = {}): CmsProductMaterialOption {
+  return {
+    __typename: "ProductMaterialsMaterial_options",
+    label: opts.label ?? "Anyag",
+    color_count: opts.color_count ?? null,
+    materials: opts.materials ?? [],
+  } as unknown as CmsProductMaterialOption;
 }
 
 export interface ProductOpts {
@@ -101,10 +124,40 @@ export interface ProductOpts {
     sourceField: string;
   };
   fields?: Field[];
+  /** Legacy flat material pool: {@link makeProduct} fans it out into
+   * `material_required_count` identical options. */
   materials?: CmsProductMaterial[];
   material_required_count?: number;
+  /** Explicit per-slot options; takes precedence over `materials`. */
+  material_options?: CmsProductMaterialOption[];
   values?: Array<ProductMaterialValue | undefined>;
   banned_combinations?: { materials: { material_path: { material_id: string } }[] }[];
+}
+
+/** Fan a legacy flat pool + required count out into explicit per-slot options,
+ * lifting the pool's colour count onto each option. */
+function buildMaterialOptions(opts: ProductOpts): CmsProductMaterialOption[] {
+  if (opts.material_options) {
+    return opts.material_options;
+  }
+  const pool = opts.materials ?? [];
+  const count = opts.material_required_count ?? (pool.length > 0 ? 1 : 0);
+  const color_count =
+    pool
+      .map((m) => (m as unknown as { color_count?: string | null }).color_count)
+      .find((cc) => cc != null) ?? undefined;
+
+  const options: CmsProductMaterialOption[] = [];
+  for (let i = 0; i < count; i++) {
+    options.push(
+      makeMaterialOption({
+        label: count === 1 ? "Anyag" : `Anyag ${i + 1}`,
+        materials: pool,
+        ...(color_count == null ? {} : { color_count }),
+      })
+    );
+  }
+  return options;
 }
 
 /** Build an `IProduct` order item with sensible defaults. */
@@ -122,8 +175,7 @@ export function makeProduct(opts: ProductOpts = {}): IProduct {
     fields: opts.fields ?? [],
     materials: {
       __typename: "ProductMaterials",
-      materials: opts.materials ?? [],
-      material_required_count: opts.material_required_count ?? (opts.materials ? 1 : 0),
+      material_options: buildMaterialOptions(opts),
       values: opts.values ?? [],
       banned_combinations: opts.banned_combinations ?? [],
     },

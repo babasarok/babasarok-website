@@ -191,17 +191,16 @@ export type SetDiscountStatus =
  * to offer a one-click "match materials" action.
  */
 export function canSyncMaterials(item: IProduct, partner: IProduct): boolean {
-  if (item.materials.material_required_count !== partner.materials.material_required_count) {
+  if (item.materials.material_options.length !== partner.materials.material_options.length) {
     return false;
   }
-  const available = new Set(
-    item.materials.materials
-      .map((m) => m?.material_path.material_id)
-      .filter((id): id is string => id != null)
-  );
-  return partner.materials.values.every(
-    (v) => v == null || v.material_id === "" || available.has(v.material_id)
-  );
+  return item.materials.material_options.every((option, i) => {
+    const v = partner.materials.values[i];
+    if (v == null || v.material_id === "") {
+      return true;
+    }
+    return (option.materials ?? []).some((m) => m?.material_path.material_id === v.material_id);
+  });
 }
 
 /**

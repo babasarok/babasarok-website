@@ -18,6 +18,8 @@
 
   const { product, onChange, material_index = 0 }: Props = $props();
 
+  const option = $derived(product.materials.material_options[material_index]);
+
   /**
    * Returns true if selected materials satisfy required materials using count-aware matching.
    *
@@ -92,13 +94,14 @@
   });
 </script>
 
-{#if product.materials.materials.length > 0}
+{#if (option.materials?.length ?? 0) > 0}
   <div class="flex flex-col gap-1">
     <p class="text-sm text-brown-500">
-      {product.materials.material_required_count == 1 ? "Anyag" : `Anyag ${material_index + 1}`}
+      {option.label ||
+        (product.materials.material_options.length == 1 ? "Anyag" : `Anyag ${material_index + 1}`)}
     </p>
     <div class="flex gap-1 flex-wrap">
-      {#each product.materials.materials.filter((x) => x != null) as material (material.material_path.material_id)}
+      {#each (option.materials ?? []).filter((x) => x != null) as material (material.material_path.material_id)}
         {@const materialInfo = material.material_path}
         {@const disabled = bannedMaterials.includes(materialInfo.material_id)}
         {#if materialInfo}
@@ -132,11 +135,11 @@
   </div>
   {#if product.materials.values[material_index] && !!product.materials.values[material_index].material_id}
     {@const value = product.materials.values[material_index] as ProductMaterialValue | undefined}
-    {@const productMaterial = product.materials.materials.find(
+    {@const productMaterial = (option.materials ?? []).find(
       (m) => !!m && m.material_path.material_id === value?.material_id
     )}
     {@const materialInfo = productMaterial?.material_path}
-    {@const colorCount = resolveColorCount(productMaterial ?? null, product)}
+    {@const colorCount = resolveColorCount(option, product)}
     {@const multiColor = (colorCount ?? 0) > 1}
     {@const disabled =
       colorCount === undefined || (multiColor ? (value?.colors.length ?? 0) >= colorCount : false)}
