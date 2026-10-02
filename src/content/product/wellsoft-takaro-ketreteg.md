@@ -6,11 +6,17 @@ type: takaro
 date: 2026-02-01T10:42:40.867Z
 price: 6000
 materials:
-  materials:
-    - material_path: src/content/material/wellsoft.md
-      price: 0
+  material_options:
+    - label: Anyag 1
       color_count: '1'
-  material_required_count: 2
+      materials:
+        - material_path: src/content/material/wellsoft.md
+          price: 0
+    - label: Anyag 2
+      color_count: '1'
+      materials:
+        - material_path: src/content/material/wellsoft.md
+          price: 0
 fields:
   - name: meret
     label: Méret

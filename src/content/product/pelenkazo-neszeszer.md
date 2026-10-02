@@ -11,8 +11,6 @@ images:
 shortDescription: |
   A kisbabás szülők tökéletes utazó rendszerezője.
   Legyen szó rövid vagy hosszú útról, ez egy elengedhetetlen kellék.
-materials:
-  material_required_count: 0
 fields:
   - name: 'Himzes '
     label: 'Hímzés '

@@ -21,14 +21,14 @@ length_based_pricing:
   sourceField: sizes
 price: 0
 materials:
-  materials:
-    - material_path: src/content/material/velur.md
-      price: 0
+  material_options:
+    - label: Anyag
       color_count: fonas
-    - material_path: src/content/material/teddy.md
-      price: 0
-      color_count: fonas
-  material_required_count: 1
+      materials:
+        - material_path: src/content/material/velur.md
+          price: 0
+        - material_path: src/content/material/teddy.md
+          price: 0
 fields:
   - name: sizes
     label: Méret

@@ -16,26 +16,37 @@ shortDescription: |-
   Fekvő felület: kb. 43x75cm
 price: 28000
 materials:
-  materials:
-    - material_path: src/content/material/pamutjersey.md
-      price: 0
+  material_options:
+    - label: Anyag 1
       color_count: '1'
-    - material_path: src/content/material/velur.md
-      price: 0
+      materials:
+        - material_path: src/content/material/pamutjersey.md
+          price: 0
+        - material_path: src/content/material/velur.md
+          price: 0
+        - material_path: src/content/material/teddy.md
+          price: 0
+        - material_path: src/content/material/potty-nelkuli-minky.md
+          price: 0
+        - material_path: src/content/material/pamutvaszon.md
+          price: 0
+        - material_path: src/content/material/minky.md
+          price: 0
+    - label: Anyag 2
       color_count: '1'
-    - material_path: src/content/material/teddy.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/potty-nelkuli-minky.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/pamutvaszon.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/minky.md
-      price: 0
-      color_count: '1'
-  material_required_count: 2
+      materials:
+        - material_path: src/content/material/pamutjersey.md
+          price: 0
+        - material_path: src/content/material/velur.md
+          price: 0
+        - material_path: src/content/material/teddy.md
+          price: 0
+        - material_path: src/content/material/potty-nelkuli-minky.md
+          price: 0
+        - material_path: src/content/material/pamutvaszon.md
+          price: 0
+        - material_path: src/content/material/minky.md
+          price: 0
   banned_combinations:
     - materials:
         - material_path: src/content/material/pamutjersey.md

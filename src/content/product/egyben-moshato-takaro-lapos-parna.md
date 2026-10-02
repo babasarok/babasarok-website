@@ -9,10 +9,11 @@ thumbnail: /src/assets/IMG_5163.jpeg
 shortDescription: 'Egyben mosható. 100x140cm takaró, 40x50cm lapos párna'
 price: 12900
 materials:
-  materials:
-    - material_path: src/content/material/pamutvaszon.md
-      price: 0
+  material_options:
+    - label: Anyag
       color_count: '1'
-  material_required_count: 1
+      materials:
+        - material_path: src/content/material/pamutvaszon.md
+          price: 0
 ---
 

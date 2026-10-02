@@ -11,11 +11,12 @@ shortDescription: |
   Kétféle méretben kapható 
 price: 3000
 materials:
-  materials:
-    - material_path: src/content/material/wellsoft.md
-      price: 0
+  material_options:
+    - label: Anyag
       color_count: '1'
-  material_required_count: 1
+      materials:
+        - material_path: src/content/material/wellsoft.md
+          price: 0
 fields:
   - name: meret
     label: Méret

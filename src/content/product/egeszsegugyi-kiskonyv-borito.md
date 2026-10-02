@@ -15,11 +15,12 @@ images:
 shortDescription: 'Egyedi, névre hímzett egészségügyi kiskönyv borító, amely megvédi a kiskönyvet használat során. '
 price: 3490
 materials:
-  materials:
-    - material_path: src/content/material/pamutvaszon.md
-      price: 0
+  material_options:
+    - label: Anyag
       color_count: '2'
-  material_required_count: 1
+      materials:
+        - material_path: src/content/material/pamutvaszon.md
+          price: 0
 fields:
   - name: Himzes
     label: Hímzés

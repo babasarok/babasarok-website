@@ -13,8 +13,6 @@ shortDescription: |-
   Választható vízhatlan opció is, aminek az egyik oldala frottír (pamut) másik oldala vízhatlan anyag.
   (4 sarkán gumis)
 price: 0
-materials:
-  material_required_count: 0
 fields:
   - name: meret
     label: Méret

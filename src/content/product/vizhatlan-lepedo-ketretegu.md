@@ -9,10 +9,11 @@ thumbnail: /src/assets/IMG_4556.webp
 shortDescription: 'Egyik oldal vízhatlan, másik oldal egyszínű pamutvászon, vékony közbéléssel'
 price: 9500
 materials:
-  materials:
-    - material_path: src/content/material/pamutvaszon.md
-      price: 0
+  material_options:
+    - label: Anyag
       color_count: '1'
-  material_required_count: 1
+      materials:
+        - material_path: src/content/material/pamutvaszon.md
+          price: 0
 ---
 

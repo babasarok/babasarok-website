@@ -12,20 +12,18 @@ images:
   - image: /src/assets/IMG_0001.jpeg
 price: 3500
 materials:
-  materials:
-    - material_path: src/content/material/teddy.md
-      price: 0
+  material_options:
+    - label: Anyag
       color_count: '1'
-    - material_path: src/content/material/minky.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/potty-nelkuli-minky.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/wellsoft.md
-      price: 0
-      color_count: '1'
-  material_required_count: 1
+      materials:
+        - material_path: src/content/material/teddy.md
+          price: 0
+        - material_path: src/content/material/minky.md
+          price: 0
+        - material_path: src/content/material/potty-nelkuli-minky.md
+          price: 0
+        - material_path: src/content/material/wellsoft.md
+          price: 0
 fields:
   - name: fajta
     label: Fajta

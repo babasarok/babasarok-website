@@ -14,11 +14,12 @@ shortDescription: |-
   Cipzáras huzattal, a könnyű tisztíthatóság érdekében.
 price: 9500
 materials:
-  materials:
-    - material_path: src/content/material/pamutvaszon.md
-      price: 0
+  material_options:
+    - label: Anyag
       color_count: '1'
-  material_required_count: 1
+      materials:
+        - material_path: src/content/material/pamutvaszon.md
+          price: 0
 fields:
   - name: Iker
     label: Iker kismamapárnát kérek

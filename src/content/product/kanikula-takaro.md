@@ -32,17 +32,25 @@ shortDescription: |-
   100% pamut, légáteresztő és könnyed anyaga tökéletes választás a meleg napokra. Praktikus és sokoldalú!
 price: 0
 materials:
-  materials:
-    - material_path: src/content/material/duplagez.md
-      price: 3000
+  material_options:
+    - label: Anyag 1
       color_count: '1'
-    - material_path: src/content/material/waffle.md
-      price: 4000
+      materials:
+        - material_path: src/content/material/duplagez.md
+          price: 3000
+        - material_path: src/content/material/waffle.md
+          price: 4000
+        - material_path: src/content/material/pamutvaszon.md
+          price: 2500
+    - label: Anyag 2
       color_count: '1'
-    - material_path: src/content/material/pamutvaszon.md
-      price: 2500
-      color_count: '1'
-  material_required_count: 2
+      materials:
+        - material_path: src/content/material/duplagez.md
+          price: 3000
+        - material_path: src/content/material/waffle.md
+          price: 4000
+        - material_path: src/content/material/pamutvaszon.md
+          price: 2500
   banned_combinations:
     - materials:
         - material_path: src/content/material/pamutvaszon.md
