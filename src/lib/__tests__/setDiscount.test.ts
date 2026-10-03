@@ -596,9 +596,9 @@ describe("resolveBasketPricing – per-item status", () => {
 
 describe("canSyncMaterials", () => {
   /** A product with `fields` material fields (named `anyag1`…), offering cotton. */
-  const cottonItem = (fieldCount: number) =>
+  const cottonItem = (fieldCount: number): IProduct =>
     makeProduct({
-      fields: Array.from({ length: fieldCount }, (_, i) =>
+      fields: Array.from({ length: fieldCount }, (_, i): Field =>
         makeField({
           name: `anyag${i + 1}`,
           type: "material",
