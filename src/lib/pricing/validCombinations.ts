@@ -1,5 +1,10 @@
-import type { Field, IProduct, ProductMaterialValue } from "../types.svelte";
+import type { Field, IProduct } from "../types.svelte";
 import { isFieldVisible } from "../product/field";
+import {
+  bannedCombinationIds,
+  completesBannedCombination,
+  findMaterialOption,
+} from "../product/materials";
 
 /**
  * The "valid combination" check: a product may not be sellable at 0 Ft.
@@ -11,10 +16,11 @@ import { isFieldVisible } from "../product/field";
  *   `calculatePriceForItem` prices them and the form hides them;
  * - radio/select/color fields must be picked (the form marks them required, so
  *   no value is a legitimate configuration);
- * - every required material slot must be filled, subject to
- *   `banned_combinations` — the same multiplicity-based rule the material
- *   picker enforces (a banned entry disables a candidate once every other
- *   member of the banned set is already chosen);
+ * - `material` fields must have a material picked (each entry of the field's
+ *   `materials` list is a choice), subject to `banned_combinations` — the same
+ *   multiplicity-based rule the form's validation enforces (a choice is
+ *   pruned once it would complete a banned combination); the colour
+ *   selection is never enumerated — it never changes the price;
  * - embroidery is never forced (enabling it only adds price);
  * - `input` fields carry no price and are never blocking.
  *
@@ -95,12 +101,20 @@ function dependencyOrder(fields: Field[]): { order: Field[]; cyclic: Set<string>
  * - radio/select/color require a selection (each item; plus a sentinel custom
  *   value when `allow_custom_value` — it passes the required check and prices
  *   at 0, since no item matches it);
+ * - a `material` field requires a material (each entry is a choice); a choice
+ *   is pruned when it would complete a banned combination given the other
+ *   material fields' selections so far;
  * - toggle covers both states; embroidery/input never block and never price.
  *
  * `lengthSourceName` marks the field driving length-based pricing; it collapses
  * to one shape because the per-meter rule covers every reachable length.
+ * `banned` lists the product's banned material combinations (id multisets).
  */
-export function fieldCombinations(fields: Field[], lengthSourceName?: string): FieldCombo[] {
+export function fieldCombinations(
+  fields: Field[],
+  banned: string[][],
+  lengthSourceName?: string
+): FieldCombo[] {
   const { order, cyclic } = dependencyOrder(fields);
 
   interface Branch {
@@ -120,7 +134,7 @@ export function fieldCombinations(fields: Field[], lengthSourceName?: string): F
         next.push(branch);
         continue;
       }
-      let choices: Field[];
+      let choices: Field[] = [];
       if (field.name === lengthSourceName) {
         // The per-meter price is what matters; every length scales it.
         choices = [field];
@@ -142,6 +156,22 @@ export function fieldCombinations(fields: Field[], lengthSourceName?: string): F
               { ...field, value: { value: false } },
               { ...field, value: { value: true } },
             ];
+            break;
+          }
+          case "material": {
+            // The form requires a material; colours never change the price, so
+            // each entry is one choice with an empty colour selection. A
+            // choice is pruned when it would complete a banned combination.
+            for (const material of field.materials ?? []) {
+              if (!material) {
+                continue;
+              }
+              const id = material.material_path.material_id;
+              if (completesBannedCombination(branch.fields, field, id, banned)) {
+                continue;
+              }
+              choices.push({ ...field, value: { material_id: id, colors: [] } });
+            }
             break;
           }
           default: {
@@ -166,98 +196,14 @@ export function fieldCombinations(fields: Field[], lengthSourceName?: string): F
   return branches.map((branch) => branch.values);
 }
 
-function matchesBanned(
-  selectedIds: string[],
-  combination: Array<
-    { material_path: { material_id: string } | null | undefined } | null | undefined
-  >
-): boolean {
-  const wanted: string[] = [];
-  for (const material of combination) {
-    const id = material?.material_path?.material_id;
-    if (id != null) {
-      wanted.push(id);
-    }
-  }
-
-  // The material picker ignores single-member banned entries.
-  if (wanted.length <= 1) {
-    return false;
-  }
-
-  // Multiset subset: the selection must contain at least as many of each
-  // material as the banned entry lists.
-  const counts = new Map<string, number>();
-  for (const id of selectedIds) {
-    counts.set(id, (counts.get(id) ?? 0) + 1);
-  }
-  const wantedCounts = new Map<string, number>();
-  for (const id of wanted) {
-    wantedCounts.set(id, (wantedCounts.get(id) ?? 0) + 1);
-  }
-  for (const [id, need] of wantedCounts) {
-    if ((counts.get(id) ?? 0) < need) {
-      return false;
-    }
-  }
-  return true;
-}
-
-/**
- * All valid material-slot selections for a product: every slot filled, with no
- * banned combination completed (multiplicity-based, mirroring
- * `OrderItemMaterials.svelte`).
- */
-export function materialCombinations(product: IProduct): Array<ProductMaterialValue[]> {
-  const materials = product.materials.materials;
-  const required = product.materials.material_required_count;
-  if (required <= 0 || materials.length === 0) {
-    return [[]];
-  }
-
-  const banned = (product.materials.banned_combinations ?? [])
-    .filter((combination): combination is NonNullable<typeof combination> => combination != null)
-    .map((combination) => combination.materials ?? []);
-
-  const combos: Array<ProductMaterialValue[]> = [[]];
-  for (let slot = 0; slot < required; slot++) {
-    const next: Array<ProductMaterialValue[]> = [];
-    for (const combo of combos) {
-      const selectedIds = combo.map((value) => value.material_id);
-      for (const material of materials) {
-        if (!material) {
-          continue;
-        }
-        const id = material.material_path.material_id;
-        const trial = [...selectedIds, id];
-        const isBanned = banned.some((combination) => matchesBanned(trial, combination));
-        if (!isBanned) {
-          next.push([...combo, { material_id: id, colors: [] }]);
-        }
-      }
-    }
-    combos.length = 0;
-    combos.push(...next);
-  }
-  return combos;
-}
-
-/** Assemble a complete, form-reachable item from one field and material combo. */
-export function combineProduct(
-  product: IProduct,
-  fieldCombo: FieldCombo,
-  materialCombo: ProductMaterialValue[]
-): IProduct {
+/** Assemble a complete, form-reachable item from one field combo. */
+export function combineProduct(product: IProduct, fieldCombo: FieldCombo): IProduct {
   return {
     ...product,
     fields: product.fields.map((field) => {
       const choice = fieldCombo[field.name];
       return choice && choice !== field ? structuredClone(choice) : field;
     }),
-    materials: {
-      ...product.materials,
-      values: [...materialCombo],
-    },
   };
 }
 
@@ -271,29 +217,28 @@ export function combineProduct(
  */
 export function findZeroPriceCombinations(product: IProduct): PricedCombination[] {
   const lengthSourceName = product.length_based_pricing?.sourceField;
+  const banned = bannedCombinationIds(product);
 
   const zeroPrices: PricedCombination[] = [];
-  for (const fieldCombo of fieldCombinations(product.fields, lengthSourceName)) {
-    for (const materialCombo of materialCombinations(product)) {
-      const item = combineProduct(product, fieldCombo, materialCombo);
-      const combo: PricedCombination = {
-        product: item,
-        unitPrice: undefined,
-        perMeterPrice: undefined,
-      };
+  for (const fieldCombo of fieldCombinations(product.fields, banned, lengthSourceName)) {
+    const item = combineProduct(product, fieldCombo);
+    const combo: PricedCombination = {
+      product: item,
+      unitPrice: undefined,
+      perMeterPrice: undefined,
+    };
 
-      const unit = priceUnit(item);
-      if (lengthSourceName) {
-        // `unit` is the per-meter price; it prices every reachable length.
-        if (unit === 0) {
-          combo.perMeterPrice = 0;
-          zeroPrices.push(combo);
-        }
-      } else {
-        combo.unitPrice = unit;
-        if (unit === 0) {
-          zeroPrices.push(combo);
-        }
+    const unit = priceUnit(item);
+    if (lengthSourceName) {
+      // `unit` is the per-meter price; it prices every reachable length.
+      if (unit === 0) {
+        combo.perMeterPrice = 0;
+        zeroPrices.push(combo);
+      }
+    } else {
+      combo.unitPrice = unit;
+      if (unit === 0) {
+        zeroPrices.push(combo);
       }
     }
   }
@@ -304,14 +249,6 @@ function priceUnit(item: IProduct): number {
   const parts: number[] = [Math.round(item.price)];
   for (const field of visibleFields(item.fields)) {
     parts.push(Math.round(fieldPrice(field, item) ?? 0));
-  }
-  const materials = item.materials;
-  for (let i = 0; i < materials.material_required_count; i++) {
-    const value = materials.values[i];
-    const material = materials.materials.find(
-      (m) => m?.material_path.material_id === value?.material_id
-    );
-    parts.push(Math.round(material?.price ?? 0));
   }
   return parts.reduce((sum, part) => sum + part, 0);
 }
@@ -342,6 +279,10 @@ function fieldPrice(field: Field, product: IProduct): number | undefined {
     }
     case "input": {
       return field.price ?? undefined;
+    }
+    case "material": {
+      const material = findMaterialOption(field, field.value?.material_id);
+      return material?.price ?? undefined;
     }
     default: {
       // Embroidery is opt-in: its absent shape contributes nothing. (Its

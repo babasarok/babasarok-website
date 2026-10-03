@@ -8,35 +8,15 @@ date: 2024-02-02T06:49:27.000Z
 thumbnail: /src/assets/Noémi-04.webp
 images:
   - image: /src/assets/IMG_0209.jpeg
-shortDescription: |-
+shortDescription: >-
   A babafészek biztonságos, kényelmes pihenést biztosít a legkisebbeknek. 
-  A szűk, anyaméhhez hasonló környezet elősegíti a békés alvást, miközben a fészek alján lévő szalaggal könnyedén szabályozható a tér.
+
+  A szűk, anyaméhhez hasonló környezet elősegíti a békés alvást, miközben a
+  fészek alján lévő szalaggal könnyedén szabályozható a tér.
+
   Ideális választás a nyugodt, pihentető éjszakákért!
 price: 15000
 materials:
-  materials:
-    - material_path: src/content/material/teddy.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/pamutvaszon.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/minky.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/potty-nelkuli-minky.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/wellsoft.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/duplagez.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/waffle.md
-      price: 0
-      color_count: '1'
-  material_required_count: 2
   banned_combinations:
     - materials:
         - material_path: src/content/material/wellsoft.md
@@ -69,9 +49,47 @@ fields:
     price: 1500
     price_unit: word
   - name: Fodor
-    label: 'Fodorral kérem '
+    label: "Fodorral kérem "
     type: toggle
     price: 4000
     tooltip: A termékhez színben és anyagban illő fodor
+  - name: anyag1
+    label: Anyag 1
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/teddy.md
+        price: 0
+      - material_path: src/content/material/pamutvaszon.md
+        price: 0
+      - material_path: src/content/material/minky.md
+        price: 0
+      - material_path: src/content/material/potty-nelkuli-minky.md
+        price: 0
+      - material_path: src/content/material/wellsoft.md
+        price: 0
+      - material_path: src/content/material/duplagez.md
+        price: 0
+      - material_path: src/content/material/waffle.md
+        price: 0
+  - name: anyag2
+    label: Anyag 2
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/teddy.md
+        price: 0
+      - material_path: src/content/material/pamutvaszon.md
+        price: 0
+      - material_path: src/content/material/minky.md
+        price: 0
+      - material_path: src/content/material/potty-nelkuli-minky.md
+        price: 0
+      - material_path: src/content/material/wellsoft.md
+        price: 0
+      - material_path: src/content/material/duplagez.md
+        price: 0
+      - material_path: src/content/material/waffle.md
+        price: 0
 ---
 

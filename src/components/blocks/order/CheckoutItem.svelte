@@ -1,9 +1,11 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { calculatePriceForItem } from "@/lib/pricing/price";
+  import { formatMaterialValue } from "@/lib/pricing/format";
   import { isFieldVisible } from "@/lib/product/field";
+  import { findMaterialOption } from "@/lib/product/materials";
   import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
-  import type { Field, IProduct, ProductMaterialValue } from "@/lib/types.svelte";
+  import type { Field, IProduct, MaterialField } from "@/lib/types.svelte";
 
   interface Props {
     product: IProduct;
@@ -43,6 +45,9 @@
         const text = field.value.text.value.trim();
         return colorLabel ? `${text} (${colorLabel})`.trim() : text;
       }
+      case "material": {
+        return materialDisplay(field);
+      }
       default: {
         const value = field.value?.value;
         if (!value) {
@@ -64,27 +69,14 @@
       .filter((row): row is { label: string; value: string } => row.value != null)
   );
 
-  /** The chosen material + colours for one material slot, or `undefined`. */
-  function materialDisplay(value: ProductMaterialValue | undefined): string | undefined {
+  /** The chosen material + colours of one material field, or `undefined`. */
+  function materialDisplay(field: MaterialField): string | undefined {
+    const value = field.value;
     if (!value?.material_id) {
       return undefined;
     }
-    const material = product.materials.materials.find(
-      (m) => m?.material_path.material_id === value.material_id
-    );
-    const name = material?.material_path.label ?? value.material_id;
-    const colors = value.colors
-      .map((id) => material?.material_path.colors?.find((c) => c.color_id === id)?.label ?? id)
-      .join(", ");
-    return colors ? `${name} (${colors.trim()})` : name;
+    return formatMaterialValue(findMaterialOption(field, value.material_id), value);
   }
-
-  const materialRows = $derived(
-    Array.from({ length: product.materials.material_required_count }, (_, i) => ({
-      label: product.materials.material_required_count > 1 ? `Anyag ${i + 1}` : "Anyag",
-      value: materialDisplay(product.materials.values[i]),
-    })).filter((row): row is { label: string; value: string } => row.value != null)
-  );
 </script>
 
 <article
@@ -132,19 +124,6 @@
       </dd>
     </div>
     {#each fieldRows as row (row.label)}
-      <div class="flex justify-between gap-4">
-        <dt class="text-brown-500">{row.label}</dt>
-        <dd class="text-right text-dark">
-          {row.value}
-          {#if priceByLabel[row.label]}
-            <span class="ml-1 whitespace-nowrap text-xs font-medium text-sand-700"
-              >+{priceByLabel[row.label]} Ft</span
-            >
-          {/if}
-        </dd>
-      </div>
-    {/each}
-    {#each materialRows as row (row.label)}
       <div class="flex justify-between gap-4">
         <dt class="text-brown-500">{row.label}</dt>
         <dd class="text-right text-dark">

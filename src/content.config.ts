@@ -192,6 +192,21 @@ const productFieldBaseShape = {
     })
     .optional()
     .nullable(),
+  color_count: z.string().optional().nullable(),
+  // `material` fields pick their choices from a list of materials (a reference
+  // into the `material` collection) rather than the flat `items` list.
+  materials: z
+    .array(
+      z
+        .object({
+          material_path: z.string(),
+          price: z.number(),
+        })
+        .optional()
+        .nullable()
+    )
+    .optional()
+    .nullable(),
   items: z
     .array(
       z
@@ -250,20 +265,6 @@ const product = defineCollection({
         .nullable(),
       materials: z
         .object({
-          material_required_count: z.number(),
-          materials: z
-            .array(
-              z
-                .object({
-                  color_count: z.string(),
-                  price: z.number(),
-                  material_path: z.string(),
-                })
-                .optional()
-                .nullable()
-            )
-            .optional()
-            .nullable(),
           banned_combinations: z
             .array(
               z

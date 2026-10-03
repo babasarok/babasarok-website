@@ -5,33 +5,12 @@ can_be_ordered: true
 type: kiegeszito
 date: 2020-08-11T12:07:16.000Z
 thumbnail: /src/assets/Noémi-19.webp
-shortDescription: |
-  A puha, kókuszbetét nélküli pólya tökéletes a legelső hónapokra: biztonságérzetet ad a babának, könnyű vele ölelni, tartani. Igény szerint kókuszbetéttel is kérhető, ha egy kis extra tartást szeretnél hozzá.
+shortDescription: >
+  A puha, kókuszbetét nélküli pólya tökéletes a legelső hónapokra:
+  biztonságérzetet ad a babának, könnyű vele ölelni, tartani. Igény szerint
+  kókuszbetéttel is kérhető, ha egy kis extra tartást szeretnél hozzá.
 price: 6500
 materials:
-  materials:
-    - material_path: src/content/material/teddy.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/pamutvaszon.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/minky.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/potty-nelkuli-minky.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/wellsoft.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/duplagez.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/waffle.md
-      price: 0
-      color_count: '1'
-  material_required_count: 2
   banned_combinations:
     - materials:
         - material_path: src/content/material/wellsoft.md
@@ -46,5 +25,43 @@ fields:
     type: embroidery
     price: 1500
     price_unit: word
+  - name: anyag1
+    label: Anyag 1
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/teddy.md
+        price: 0
+      - material_path: src/content/material/pamutvaszon.md
+        price: 0
+      - material_path: src/content/material/minky.md
+        price: 0
+      - material_path: src/content/material/potty-nelkuli-minky.md
+        price: 0
+      - material_path: src/content/material/wellsoft.md
+        price: 0
+      - material_path: src/content/material/duplagez.md
+        price: 0
+      - material_path: src/content/material/waffle.md
+        price: 0
+  - name: anyag2
+    label: Anyag 2
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/teddy.md
+        price: 0
+      - material_path: src/content/material/pamutvaszon.md
+        price: 0
+      - material_path: src/content/material/minky.md
+        price: 0
+      - material_path: src/content/material/potty-nelkuli-minky.md
+        price: 0
+      - material_path: src/content/material/wellsoft.md
+        price: 0
+      - material_path: src/content/material/duplagez.md
+        price: 0
+      - material_path: src/content/material/waffle.md
+        price: 0
 ---
 

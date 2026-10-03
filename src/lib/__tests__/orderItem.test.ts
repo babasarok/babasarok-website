@@ -151,36 +151,105 @@ describe("calculatePriceForItem — field combinations", () => {
   });
 });
 
-describe("calculatePriceForItem — materials", () => {
-  it("labels a single required material 'Anyag'", () => {
+describe("calculatePriceForItem — material fields", () => {
+  it("adds the picked material's price under the field label", () => {
     const price = calculatePriceForItem(
       makeProduct({
-        price: 0,
-        materials: [makeMaterial({ material_id: "teddy", price: 2000 })],
-        material_required_count: 1,
-        values: [{ material_id: "teddy", colors: [] }],
+        price: 1000,
+        fields: [
+          makeField({
+            name: "anyag",
+            type: "material",
+            label: "Anyag",
+            materials: [makeMaterial({ material_id: "teddy", price: 2000 })],
+            value: { material_id: "teddy", colors: [] },
+          }),
+        ],
       })
     );
+    expect(price.unitPrice).toBe(3000);
     expect(price.options).toContainEqual({ label: "Anyag", price: 2000 });
   });
 
-  it("labels multiple required materials 'Anyag N'", () => {
+  it("contributes nothing when no material is picked yet", () => {
     const price = calculatePriceForItem(
       makeProduct({
-        price: 0,
-        materials: [
-          makeMaterial({ material_id: "teddy", price: 2000 }),
-          makeMaterial({ material_id: "minky", price: 2500 }),
-        ],
-        material_required_count: 2,
-        values: [
-          { material_id: "teddy", colors: [] },
-          { material_id: "minky", colors: [] },
+        price: 1000,
+        fields: [
+          makeField({
+            name: "anyag",
+            type: "material",
+            label: "Anyag",
+            materials: [makeMaterial({ material_id: "teddy", price: 2000 })],
+          }),
         ],
       })
     );
+    expect(price.unitPrice).toBe(1000);
+    // The unpriced part is present (like an unselected radio) but filtered out
+    // of the breakdown, so it contributes nothing.
+    expect(price.options).toEqual([{ label: "Anyag", price: undefined }]);
+  });
+
+  it("prices each material field from its own list", () => {
+    const pool = [
+      makeMaterial({ material_id: "teddy", price: 2000 }),
+      makeMaterial({ material_id: "minky", price: 2500 }),
+    ];
+    const price = calculatePriceForItem(
+      makeProduct({
+        price: 0,
+        fields: [
+          makeField({
+            name: "anyag1",
+            type: "material",
+            label: "Anyag 1",
+            materials: pool,
+            value: { material_id: "teddy", colors: [] },
+          }),
+          makeField({
+            name: "anyag2",
+            type: "material",
+            label: "Anyag 2",
+            materials: pool,
+            value: { material_id: "minky", colors: [] },
+          }),
+        ],
+      })
+    );
+    expect(price.unitPrice).toBe(4500);
     expect(price.options).toContainEqual({ label: "Anyag 1", price: 2000 });
     expect(price.options).toContainEqual({ label: "Anyag 2", price: 2500 });
+  });
+
+  it("scales a material field's price with length-based pricing", () => {
+    const price = calculatePriceForItem(
+      makeProduct({
+        price: 0,
+        length_based_pricing: { sourceField: "sizes" },
+        fields: [
+          makeField({
+            name: "sizes",
+            type: "radio",
+            items: [{ value: "300" }],
+            value: { value: "300" },
+          }),
+          makeField({
+            name: "anyag",
+            type: "material",
+            label: "Anyag",
+            materials: [makeMaterial({ material_id: "velur", price: 1000 })],
+            value: { material_id: "velur", colors: [] },
+          }),
+        ],
+      })
+    );
+    if (!price.priced_by_length) {
+      throw new Error("expected length-based price");
+    }
+    expect(price.per_meter_price).toBe(1000);
+    expect(price.unitPrice).toBe(3000);
+    expect(price.totalPrice).toBe(3000);
   });
 });
 
@@ -250,31 +319,25 @@ describe("calculatePriceForItem — discount", () => {
 
 describe("resolveColorCount", () => {
   it("defaults to 1 when no color_count is set", () => {
-    expect(resolveColorCount(makeMaterial({ material_id: "m" }), makeProduct())).toBe(1);
+    expect(resolveColorCount(null, makeProduct())).toBe(1);
   });
 
   it("uses a numeric color_count directly", () => {
-    expect(
-      resolveColorCount(makeMaterial({ material_id: "m", color_count: "3" }), makeProduct())
-    ).toBe(3);
+    expect(resolveColorCount({ color_count: "3" }, makeProduct())).toBe(3);
   });
 
   it("resolves color_count from a referenced field value", () => {
     const product = makeProduct({
       fields: [makeField({ name: "fonas", type: "radio", value: { value: "5" } })],
     });
-    expect(
-      resolveColorCount(makeMaterial({ material_id: "m", color_count: "fonas" }), product)
-    ).toBe(5);
+    expect(resolveColorCount({ color_count: "fonas" }, product)).toBe(5);
   });
 
   it("returns undefined when the referenced field has no value", () => {
     const product = makeProduct({
       fields: [makeField({ name: "fonas", type: "radio" })],
     });
-    expect(
-      resolveColorCount(makeMaterial({ material_id: "m", color_count: "fonas" }), product)
-    ).toBeUndefined();
+    expect(resolveColorCount({ color_count: "fonas" }, product)).toBeUndefined();
   });
 });
 
@@ -385,31 +448,122 @@ describe("validateItem / isItemValid", () => {
   it("requires the configured number of material colors", () => {
     const item = validateItem(
       makeProduct({
-        materials: [
-          makeMaterial({
-            material_id: "m",
+        fields: [
+          makeField({
+            name: "anyag",
+            type: "material",
             color_count: "2",
-            colors: [{ color_id: "a" }, { color_id: "b" }],
+            materials: [
+              makeMaterial({
+                material_id: "m",
+                colors: [{ color_id: "a" }, { color_id: "b" }],
+              }),
+            ],
+            value: { material_id: "m", colors: ["a"] },
           }),
         ],
-        material_required_count: 1,
-        values: [{ material_id: "m", colors: ["a"] }],
       })
     );
-    expect(item.materials.values[0]?.error).toBe("2 színt kell választani");
+    expect(fieldError(item.fields[0])).toBe("2 színt kell választani");
     expect(isItemValid(item)).toBe(false);
   });
 
-  it("fills missing material slots with required-but-empty errors", () => {
+  it("fills missing material fields with required-but-empty errors", () => {
+    const pool = [makeMaterial({ material_id: "m" })];
     const item = validateItem(
       makeProduct({
-        materials: [makeMaterial({ material_id: "m" })],
-        material_required_count: 2,
-        values: [],
+        fields: [
+          makeField({ name: "anyag1", type: "material", materials: pool }),
+          makeField({ name: "anyag2", type: "material", materials: pool }),
+        ],
       })
     );
-    expect(item.materials.values).toHaveLength(2);
-    expect(item.materials.values.every((v) => v?.error === "Kötelező mező")).toBe(true);
+    expect(fieldError(item.fields[0])).toBe("Kötelező mező");
+    expect(fieldError(item.fields[1])).toBe("Kötelező mező");
+    expect(isItemValid(item)).toBe(false);
+  });
+
+  it("treats a material field holding an unknown material id as unselected", () => {
+    const item = validateItem(
+      makeProduct({
+        fields: [
+          makeField({
+            name: "anyag",
+            type: "material",
+            materials: [makeMaterial({ material_id: "m" })],
+            value: { material_id: "ghost", colors: ["x"] },
+          }),
+        ],
+      })
+    );
+    expect(fieldError(item.fields[0])).toBe("Kötelező mező");
+    expect(isItemValid(item)).toBe(false);
+  });
+
+  it("flags every material field that completes a banned combination", () => {
+    const pool = [makeMaterial({ material_id: "m" }), makeMaterial({ material_id: "n" })];
+    const item = validateItem(
+      makeProduct({
+        fields: [
+          makeField({
+            name: "anyag1",
+            type: "material",
+            materials: pool,
+            value: { material_id: "m", colors: ["x"] },
+          }),
+          makeField({
+            name: "anyag2",
+            type: "material",
+            materials: pool,
+            value: { material_id: "m", colors: ["y"] },
+          }),
+        ],
+        banned_combinations: [
+          {
+            materials: [
+              { material_path: { material_id: "m" } },
+              { material_path: { material_id: "m" } },
+            ],
+          },
+        ],
+      })
+    );
+    expect(fieldError(item.fields[0])).toBe("Ez az anyagkombináció nem rendelhető");
+    expect(fieldError(item.fields[1])).toBe("Ez az anyagkombináció nem rendelhető");
+    expect(isItemValid(item)).toBe(false);
+  });
+
+  it("does not flag a banned combination that is not completed", () => {
+    const pool = [makeMaterial({ material_id: "m" }), makeMaterial({ material_id: "n" })];
+    const item = validateItem(
+      makeProduct({
+        fields: [
+          makeField({
+            name: "anyag1",
+            type: "material",
+            materials: pool,
+            value: { material_id: "m", colors: ["x"] },
+          }),
+          makeField({
+            name: "anyag2",
+            type: "material",
+            materials: pool,
+            value: { material_id: "n", colors: ["y"] },
+          }),
+        ],
+        banned_combinations: [
+          {
+            materials: [
+              { material_path: { material_id: "m" } },
+              { material_path: { material_id: "m" } },
+            ],
+          },
+        ],
+      })
+    );
+    expect(fieldError(item.fields[0])).toBeUndefined();
+    expect(fieldError(item.fields[1])).toBeUndefined();
+    expect(isItemValid(item)).toBe(true);
   });
 });
 
@@ -430,20 +584,36 @@ describe("sanitizeItem", () => {
     });
   });
 
-  it("trims selected colors down to the allowed count", () => {
+  it("prefills a material field as empty", () => {
+    const item = sanitizeItem(
+      makeProduct({ fields: [makeField({ name: "anyag", type: "material" })] })
+    );
+    expect(item.fields[0].value).toEqual({ material_id: "", colors: [] });
+  });
+
+  it("trims selected material colors down to the allowed count", () => {
     const item = sanitizeItem(
       makeProduct({
-        materials: [
-          makeMaterial({
-            material_id: "m",
+        fields: [
+          makeField({
+            name: "anyag",
+            type: "material",
             color_count: "2",
-            colors: [{ color_id: "a" }, { color_id: "b" }, { color_id: "c" }],
+            materials: [
+              makeMaterial({
+                material_id: "m",
+                colors: [{ color_id: "a" }, { color_id: "b" }, { color_id: "c" }],
+              }),
+            ],
+            value: { material_id: "m", colors: ["a", "b", "c"] },
           }),
         ],
-        material_required_count: 1,
-        values: [{ material_id: "m", colors: ["a", "b", "c"] }],
       })
     );
-    expect(item.materials.values[0]?.colors).toEqual(["a", "b"]);
+    const field = item.fields[0];
+    if (field.type !== "material") {
+      throw new Error("expected material field");
+    }
+    expect(field.value?.colors).toEqual(["a", "b"]);
   });
 });

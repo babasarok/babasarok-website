@@ -5,12 +5,6 @@ can_be_ordered: true
 type: takaro
 date: 2026-02-01T10:42:40.867Z
 price: 6000
-materials:
-  materials:
-    - material_path: src/content/material/wellsoft.md
-      price: 0
-      color_count: '1'
-  material_required_count: 2
 fields:
   - name: meret
     label: Méret
@@ -27,5 +21,19 @@ fields:
     type: embroidery
     price: 1500
     price_unit: word
+  - name: anyag1
+    label: Anyag 1
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/wellsoft.md
+        price: 0
+  - name: anyag2
+    label: Anyag 2
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/wellsoft.md
+        price: 0
 ---
 

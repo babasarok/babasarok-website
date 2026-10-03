@@ -5,32 +5,9 @@ can_be_ordered: true
 type: takaro
 date: 2025-04-20T12:07:16.000Z
 thumbnail: /src/assets/Noémi-41.webp
-shortDescription: 'Univerzális takaró és párna minden évszakra '
+shortDescription: "Univerzális takaró és párna minden évszakra "
 price: 7500
 materials:
-  materials:
-    - material_path: src/content/material/teddy.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/pamutvaszon.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/minky.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/potty-nelkuli-minky.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/wellsoft.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/duplagez.md
-      price: 0
-      color_count: '1'
-    - material_path: src/content/material/waffle.md
-      price: 0
-      color_count: '1'
-  material_required_count: 2
   banned_combinations:
     - materials:
         - material_path: src/content/material/wellsoft.md
@@ -46,5 +23,43 @@ fields:
     type: toggle
     price: 4000
     tooltip: A termék színével és anyagával egyező fodor
+  - name: anyag1
+    label: Anyag 1
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/teddy.md
+        price: 0
+      - material_path: src/content/material/pamutvaszon.md
+        price: 0
+      - material_path: src/content/material/minky.md
+        price: 0
+      - material_path: src/content/material/potty-nelkuli-minky.md
+        price: 0
+      - material_path: src/content/material/wellsoft.md
+        price: 0
+      - material_path: src/content/material/duplagez.md
+        price: 0
+      - material_path: src/content/material/waffle.md
+        price: 0
+  - name: anyag2
+    label: Anyag 2
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/teddy.md
+        price: 0
+      - material_path: src/content/material/pamutvaszon.md
+        price: 0
+      - material_path: src/content/material/minky.md
+        price: 0
+      - material_path: src/content/material/potty-nelkuli-minky.md
+        price: 0
+      - material_path: src/content/material/wellsoft.md
+        price: 0
+      - material_path: src/content/material/duplagez.md
+        price: 0
+      - material_path: src/content/material/waffle.md
+        price: 0
 ---
 

@@ -6,8 +6,6 @@ hidden_in_product_list: true
 date: 2026-07-06T09:46:20.507Z
 thumbnail: /src/assets/IMG_3353.webp
 shortDescription: 'Ezek a termékek vagy szettek raktáron vannak, nincs elkészítési idejük, azonnal tudom küldeni. Nem sérültek, nincs hibájuk, általában visszamondás vagy félrenézett rendelés miatt vannak készleten. '
-materials:
-  material_required_count: 0
 price: 0
 ---
 

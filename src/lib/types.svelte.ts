@@ -40,7 +40,7 @@ export interface EmbroideryValue {
 
 export type CmsField = NonNullable<NonNullable<CmsEnhancedProduct["fields"]>[number]>;
 export type CmsProductMaterials = NonNullable<CmsEnhancedProduct["materials"]>;
-export type CmsProductMaterial = NonNullable<CmsProductMaterials["materials"]>[number];
+export type CmsProductMaterial = NonNullable<NonNullable<CmsField["materials"]>[number]>;
 
 /** The runtime value shape each field `type` carries. */
 interface FieldValueByType {
@@ -48,6 +48,9 @@ interface FieldValueByType {
   select: ValueWithError;
   radio: ValueWithError;
   color: ValueWithError;
+  /** A `material` field picks one of its `materials` (a material) plus its
+   * colours — the same value shape the old standalone `materials` slots used. */
+  material: ProductMaterialValue;
   toggle: ToggleValue;
   embroidery: EmbroideryValue;
 }
@@ -66,18 +69,13 @@ export type Field = { [T in ProductFieldType]: FieldOf<T> }[ProductFieldType];
 
 /** Field types with the legacy string-valued `value` shape. */
 export type StringValueField = Extract<Field, { type: StringValuedFieldType }>;
-export type ProductMaterials = Omit<
-  CmsProductMaterials,
-  "values" | "materials" | "material_required_count"
-> & {
-  values: Array<ProductMaterialValue | undefined>;
-  material_required_count: number;
-  materials: CmsProductMaterial[];
-};
+
+/** The `material` field variant (picks one of its `materials` plus colours). */
+export type MaterialField = Extract<Field, { type: "material" }>;
 
 export interface IProduct extends Omit<CmsEnhancedProduct, "materials" | "fields"> {
   uuid: string;
   count: number;
-  materials: ProductMaterials;
+  materials: CmsProductMaterials;
   fields: Field[];
 }

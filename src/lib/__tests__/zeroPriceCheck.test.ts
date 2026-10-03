@@ -74,44 +74,84 @@ describe("findZeroPriceCombinations", () => {
     });
   });
 
-  describe("material slots", () => {
-    it("flags a 0-base product with required free materials", () => {
-      const product = makeProduct({
-        price: 0,
-        materials: [makeMaterial({ material_id: "m1", price: 0 })],
-      });
-      expect(findZeroPriceCombinations(product)).toHaveLength(1);
-    });
+  describe("material fields", () => {
+    /** The material id picked by the (single) material field of `product`. */
+    function materialFieldValue(product: IProduct): string | undefined {
+      const field = product.fields.find((f) => f.name === "anyag");
+      if (!field || field.type !== "material") {
+        return undefined;
+      }
+      return field.value?.material_id;
+    }
 
-    it("passes when every material is priced", () => {
+    it("flags a 0-base product whose material field offers only free materials", () => {
       const product = makeProduct({
         price: 0,
-        materials: [makeMaterial({ material_id: "m1", price: 1000 })],
-      });
-      expect(findZeroPriceCombinations(product)).toHaveLength(0);
-    });
-
-    it("flags one of several material slots being free", () => {
-      const product = makeProduct({
-        price: 0,
-        materials: [
-          makeMaterial({ material_id: "m1", price: 0 }),
-          makeMaterial({ material_id: "m2", price: 1000 }),
+        fields: [
+          makeField({
+            name: "anyag",
+            type: "material",
+            materials: [makeMaterial({ material_id: "m1", price: 0 })],
+          }),
         ],
       });
       const zero = findZeroPriceCombinations(product);
       expect(zero).toHaveLength(1);
-      expect(zero[0].product.materials.values[0]?.material_id).toBe("m1");
+      expect(zero[0].unitPrice).toBe(0);
+      expect(materialFieldValue(zero[0].product)).toBe("m1");
     });
 
-    it("skips banned material combinations", () => {
+    it("passes when every material of the material field is priced", () => {
       const product = makeProduct({
         price: 0,
-        material_required_count: 2,
-        materials: [
-          makeMaterial({ material_id: "m1", price: 0 }),
-          makeMaterial({ material_id: "m2", price: 0 }),
-          makeMaterial({ material_id: "m3", price: 500 }),
+        fields: [
+          makeField({
+            name: "anyag",
+            type: "material",
+            materials: [makeMaterial({ material_id: "m1", price: 1000 })],
+          }),
+        ],
+      });
+      expect(findZeroPriceCombinations(product)).toHaveLength(0);
+    });
+
+    it("flags only the free choices of a material field", () => {
+      const product = makeProduct({
+        price: 0,
+        fields: [
+          makeField({
+            name: "anyag",
+            type: "material",
+            materials: [
+              makeMaterial({ material_id: "m1", price: 0 }),
+              makeMaterial({ material_id: "m2", price: 1000 }),
+            ],
+          }),
+        ],
+      });
+      const zero = findZeroPriceCombinations(product);
+      expect(zero).toHaveLength(1);
+      expect(materialFieldValue(zero[0].product)).toBe("m1");
+    });
+
+    /** The material ids picked by every material field of `product`, in field order. */
+    function materialPicks(product: IProduct): string[] {
+      return product.fields
+        .map((f) => (f.type === "material" ? f.value?.material_id : undefined))
+        .filter((id): id is string => !!id);
+    }
+
+    it("prunes choices that would complete a banned combination", () => {
+      const pool = [
+        makeMaterial({ material_id: "m1", price: 0 }),
+        makeMaterial({ material_id: "m2", price: 0 }),
+        makeMaterial({ material_id: "m3", price: 500 }),
+      ];
+      const product = makeProduct({
+        price: 0,
+        fields: [
+          makeField({ name: "anyag1", type: "material", materials: pool }),
+          makeField({ name: "anyag2", type: "material", materials: pool }),
         ],
         banned_combinations: [
           {
@@ -122,21 +162,24 @@ describe("findZeroPriceCombinations", () => {
           },
         ],
       });
-      // (m1, m2) and (m2, m1) are banned; (m1, m1) and (m2, m2) stay free.
+      // (m1, m2) and (m2, m1) are pruned; (m1, m1) and (m2, m2) stay free.
       const zero = findZeroPriceCombinations(product);
-      expect(zero.map((c) => c.product.materials.values.map((v) => v?.material_id))).toEqual([
+      expect(zero.map((c) => materialPicks(c.product))).toEqual([
         ["m1", "m1"],
         ["m2", "m2"],
       ]);
     });
 
-    it("applies banned-combination multiplicity like the form picker", () => {
+    it("applies banned-combination multiplicity like the form", () => {
+      const pool = [
+        makeMaterial({ material_id: "m1", price: 0 }),
+        makeMaterial({ material_id: "m2", price: 500 }),
+      ];
       const product = makeProduct({
         price: 0,
-        material_required_count: 2,
-        materials: [
-          makeMaterial({ material_id: "m1", price: 0 }),
-          makeMaterial({ material_id: "m2", price: 500 }),
+        fields: [
+          makeField({ name: "anyag1", type: "material", materials: pool }),
+          makeField({ name: "anyag2", type: "material", materials: pool }),
         ],
         banned_combinations: [
           {
@@ -147,7 +190,7 @@ describe("findZeroPriceCombinations", () => {
           },
         ],
       });
-      // (m1, m1) is banned, (m1, m2) and (m2, m1) price at 500.
+      // (m1, m1) is pruned, (m1, m2) and (m2, m1) price at 500.
       expect(findZeroPriceCombinations(product)).toHaveLength(0);
     });
   });

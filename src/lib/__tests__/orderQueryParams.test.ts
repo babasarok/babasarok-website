@@ -1,10 +1,10 @@
 /**
  * URL query-param prefill for product pages. See {@link prefillFromParams} and
- * docs — reserved keys are `uuid` and `count`; fields are keyed by name and
- * materials by `m<index>`.
+ * docs — reserved keys are `uuid` and `count`; fields are keyed by name,
+ * including `material` fields (plus their `<name>_colors` companion).
  */
 import { describe, expect, it } from "vitest";
-import { prefillFromParams } from "@/lib/order/queryParams";
+import { prefillFromParams, buildMaterialParams } from "@/lib/order/queryParams";
 import { makeProduct, makeField, makeMaterial } from "./fixtures";
 
 describe("prefillFromParams", () => {
@@ -73,27 +73,150 @@ describe("prefillFromParams", () => {
     expect(item.fields[0].value).toBeUndefined();
   });
 
-  it("prefills a material slot with colours within the required count", () => {
+  it("prefills a material field by its name, with colours", () => {
     const item = makeProduct({
-      materials: [makeMaterial({ material_id: "cotton" })],
-      material_required_count: 1,
+      fields: [
+        makeField({
+          name: "anyag",
+          type: "material",
+          materials: [makeMaterial({ material_id: "cotton" })],
+        }),
+      ],
     });
-    prefillFromParams(item, new URLSearchParams("m0=cotton&m0_colors=red,blue"));
-    expect(item.materials.values[0]).toEqual({ material_id: "cotton", colors: ["red", "blue"] });
+    prefillFromParams(item, new URLSearchParams("anyag=cotton&anyag_colors=red,blue"));
+    const field = item.fields[0];
+    if (field.type !== "material") {
+      throw new Error("expected material field");
+    }
+    expect(field.value).toEqual({ material_id: "cotton", colors: ["red", "blue"] });
   });
 
-  it("ignores material slots beyond the required count", () => {
+  it("ignores a material id the field does not offer, along with its colours", () => {
     const item = makeProduct({
-      materials: [makeMaterial({ material_id: "cotton" })],
-      material_required_count: 1,
+      fields: [
+        makeField({
+          name: "anyag1",
+          type: "material",
+          materials: [makeMaterial({ material_id: "cotton" })],
+        }),
+      ],
     });
-    prefillFromParams(item, new URLSearchParams("m2=cotton"));
-    expect(item.materials.values[2]).toBeUndefined();
+    prefillFromParams(item, new URLSearchParams("anyag1=unknown&anyag1_colors=x"));
+    expect(item.fields[0].value).toBeUndefined();
+  });
+
+  it("ignores colours that arrive before an unknown material id", () => {
+    const item = makeProduct({
+      fields: [
+        makeField({
+          name: "anyag1",
+          type: "material",
+          materials: [makeMaterial({ material_id: "cotton" })],
+        }),
+      ],
+    });
+    prefillFromParams(item, new URLSearchParams("anyag1_colors=x&anyag1=unknown"));
+    expect(item.fields[0].value).toBeUndefined();
+  });
+
+  it("ignores colours prefilled without a material selection", () => {
+    const item = makeProduct({
+      fields: [
+        makeField({
+          name: "anyag",
+          type: "material",
+          materials: [makeMaterial({ material_id: "cotton" })],
+        }),
+      ],
+    });
+    prefillFromParams(item, new URLSearchParams("anyag_colors=red"));
+    expect(item.fields[0].value).toBeUndefined();
+  });
+
+  it("keeps prefilled colours the chosen material offers and drops unknown ones", () => {
+    const item = makeProduct({
+      fields: [
+        makeField({
+          name: "anyag",
+          type: "material",
+          materials: [
+            makeMaterial({
+              material_id: "cotton",
+              colors: [{ color_id: "red" }, { color_id: "blue" }],
+            }),
+          ],
+        }),
+      ],
+    });
+    prefillFromParams(item, new URLSearchParams("anyag=cotton&anyag_colors=red,zzz,blue"));
+    const field = item.fields[0];
+    if (field.type !== "material") {
+      throw new Error("expected material field");
+    }
+    expect(field.value).toEqual({ material_id: "cotton", colors: ["red", "blue"] });
+  });
+
+  it("ignores material params that name no field", () => {
+    const item = makeProduct({
+      fields: [makeField({ name: "szin", type: "color", items: [{ value: "piros" }] })],
+    });
+    prefillFromParams(item, new URLSearchParams("m0=cotton&bogus_colors=red,blue"));
+    expect(item.fields[0].value).toBeUndefined();
   });
 
   it("ignores unknown keys", () => {
     const item = makeProduct({ fields: [makeField({ name: "szin", type: "color" })] });
     prefillFromParams(item, new URLSearchParams("bogus=1&uuid=xyz"));
     expect(item.fields[0].value).toBeUndefined();
+  });
+});
+
+describe("buildMaterialParams", () => {
+  it("serialises material field selections by field name", () => {
+    const item = makeProduct({
+      fields: [
+        makeField({
+          name: "anyag",
+          type: "material",
+          value: { material_id: "cotton", colors: ["red", "blue"] },
+        }),
+      ],
+    });
+    const params = buildMaterialParams(item);
+    expect(params.get("anyag")).toBe("cotton");
+    expect(params.get("anyag_colors")).toBe("red,blue");
+  });
+
+  it("skips material fields without a selection", () => {
+    const item = makeProduct({ fields: [makeField({ name: "anyag", type: "material" })] });
+    expect(buildMaterialParams(item).toString()).toBe("");
+  });
+
+  it("round-trips through prefillFromParams", () => {
+    const source = makeProduct({
+      fields: [
+        makeField({
+          name: "anyag",
+          type: "material",
+          materials: [makeMaterial({ material_id: "cotton" })],
+          value: { material_id: "cotton", colors: ["red", "blue"] },
+        }),
+      ],
+    });
+    const target = makeProduct({
+      fields: [
+        makeField({
+          name: "anyag",
+          type: "material",
+          materials: [makeMaterial({ material_id: "cotton" })],
+        }),
+      ],
+    });
+    prefillFromParams(target, buildMaterialParams(source));
+    const field = target.fields[0];
+    if (field.type !== "material") {
+      throw new Error("expected material field");
+    }
+    expect(field.value).toEqual({ material_id: "cotton", colors: ["red", "blue"] });
   });
 });

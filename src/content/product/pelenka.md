@@ -2,22 +2,26 @@
 product_id: gezpelenka-szett
 title: Gézpelenka szett
 can_be_ordered: true
-categories: ''
+categories: ""
 type: kiegeszito
 date: 2020-08-11T12:07:16.000Z
 thumbnail: /src/assets/IMG_4175.jpeg
-shortDescription: |-
-  Puha duplagéz anyagból készült textilpelus, 65x65cm-es méretben. Az első hónapok egyik legfontosabb kelléke.
+shortDescription: >-
+  Puha duplagéz anyagból készült textilpelus, 65x65cm-es méretben. Az első
+  hónapok egyik legfontosabb kelléke.
+
 
   Szettben kérhető, egyszínű anyagból. 
+
   1 szett, azonos színekből áll 
 price: 3000
-materials:
-  materials:
-    - material_path: src/content/material/duplagez.md
-      price: 0
-      color_count: '1'
-  material_required_count: 1
-fields: []
+fields:
+  - name: anyag
+    label: Anyag
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/duplagez.md
+        price: 0
 ---
 

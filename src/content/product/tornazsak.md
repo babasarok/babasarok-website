@@ -18,17 +18,18 @@ shortDescription: |-
   Bölcsőde és óvodakezdésre alkalmas tornazsák.
   Mérete: kb. 28x35cm (+-3cm eltérés elfogadott)
 price: 4000
-materials:
-  materials:
-    - material_path: src/content/material/pamutvaszon.md
-      price: 0
-      color_count: '1'
-  material_required_count: 1
 fields:
   - name: himzes
     label: Hímzés
     type: embroidery
     price: 1500
     price_unit: word
+  - name: anyag
+    label: Anyag
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/pamutvaszon.md
+        price: 0
 ---
 

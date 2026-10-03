@@ -12,11 +12,13 @@ shortDescription: |
   Mérete kb 40x50cm 
   30fokon, alacsony fordulatszámon (800) tisztítható! 
 price: 3000
-materials:
-  materials:
-    - material_path: src/content/material/pamutvaszon.md
-      price: 0
-      color_count: '1'
-  material_required_count: 1
+fields:
+  - name: anyag
+    label: Anyag
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/pamutvaszon.md
+        price: 0
 ---
 

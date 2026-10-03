@@ -1,4 +1,5 @@
 import {
+  Group,
   ToggleField,
   GroupListField,
   TextField,
@@ -181,14 +182,13 @@ export const ProductCollection: Collection = {
                   .map((f) => ({ value: f.name ?? "", label: f.label || (f.name ?? "") })),
               ];
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument
               return SelectField({
                 ...props,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-                field: { ...props.field, options } as any,
+                field: { ...props.field, options } as unknown as Parameters<
+                  typeof SelectField
+                >[0]["field"],
                 options,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              } as any);
+              } as unknown as Parameters<typeof SelectField>[0]);
             },
             validate(value, allValues) {
               if (!value) {
@@ -232,8 +232,7 @@ export const ProductCollection: Collection = {
             return null;
           }
 
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-          return DateField(props as any);
+          return DateField(props as unknown as Parameters<typeof DateField>[0]);
         },
       },
     },
@@ -243,65 +242,7 @@ export const ProductCollection: Collection = {
       label: "Anyagok",
       description:
         "A termékhez tartozó anyagok beállításai. Ha nincs egy se hozzáadva, akkor a termékhez nem lesz anyag kiválasztási lehetőség a rendelési felületen.",
-      ui: {
-        defaultItem: {
-          material_required_count: 0,
-        },
-      },
       fields: [
-        {
-          type: "object",
-          name: "materials",
-          list: true,
-          label: "Anyag lista",
-          description:
-            "A termékhez tartozó anyagok listája. Ha nincs egy se hozzáadva, akkor a termékhez nem lesz anyag kiválasztási lehetőség a rendelési felületen.",
-          ui: {
-            itemProps: (item) => {
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-condition
-              return { label: item?.material_path || "Új anyag" };
-            },
-            defaultItem: {
-              material_path: "",
-              price: 0,
-              color_count: "1",
-            },
-          },
-          fields: [
-            {
-              type: "reference",
-              name: "material_path",
-              label: "Anyag",
-              description: "Válassz egy anyagot a listából.",
-              collections: ["product_materials"],
-              required: true,
-            },
-            {
-              type: "number",
-              name: "price",
-              label: "Ár",
-              description:
-                "Az opció ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni. Ha nincs megadva akkor 0.",
-              required: true,
-            },
-            {
-              type: "string",
-              name: "color_count",
-              label: "Választható színek/minták száma",
-              description:
-                "Az alap 1. Ha egy másik mező az alapja, írd be a Mező ID-jét. A Mezó szám alapú legyen.",
-              required: true,
-            },
-          ],
-        },
-        {
-          type: "number",
-          name: "material_required_count",
-          label: "Szükséges anyagok száma",
-          description:
-            "Ennek a terméknek a rendeléséhez hány anyagra van szükség. Ez csak akkor lesz releváns, ha anyagokat adtál hozzá a termékhez. Az alap 1.",
-          required: true,
-        },
         {
           type: "object",
           name: "banned_combinations",
@@ -417,8 +358,7 @@ export const ProductCollection: Collection = {
                 return null;
               }
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return ToggleField(props as any);
+              return ToggleField(props as unknown as Parameters<typeof ToggleField>[0]);
             },
           },
         },
@@ -440,8 +380,7 @@ export const ProductCollection: Collection = {
                 return null;
               }
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return SelectField(props as any);
+              return SelectField(props as unknown as Parameters<typeof SelectField>[0]);
             },
           },
         },
@@ -466,12 +405,13 @@ export const ProductCollection: Collection = {
             component(props) {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               const type = getValue(props, "type");
-              if (type === "toggle" || type === "embroidery") {
+              // Material fields pick their choices from the `materials` list
+              // below (a reference list), not the flat `items` list.
+              if (type === "toggle" || type === "embroidery" || type === "material") {
                 return null;
               }
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return GroupListField(props as any);
+              return GroupListField(props as unknown as Parameters<typeof GroupListField>[0]);
             },
           },
           fields: [
@@ -516,6 +456,69 @@ export const ProductCollection: Collection = {
           ],
         },
         {
+          type: "string",
+          name: "color_count",
+          label: "Választható színek/minták száma",
+          description:
+            "Hány színt/választást kell tenni az anyagból. Alapértelmezetten 1. Ha egy másik mező adja a számot, írd be a Mező ID-ját (a mezőnek számértékűnek kell lennie).",
+          ui: {
+            component(props): null | ReturnType<typeof TextField> {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              const typeValue = getValue(props, "type");
+              if (typeValue !== "material") {
+                return null;
+              }
+
+              return TextField(props as unknown as Parameters<typeof TextField>[0]);
+            },
+          },
+        },
+        {
+          type: "object",
+          name: "materials",
+          list: true,
+          label: "Anyag lista",
+          description:
+            "A mezőhöz rendelt anyagok listája. Ha nincs egy se hozzáadva, akkor nem lesz anyag kiválasztási lehetőség.",
+          ui: {
+            itemProps: (item) => {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-condition
+              return { label: item?.material_path || "Új anyag" };
+            },
+            defaultItem: {
+              material_path: "",
+              price: 0,
+            },
+            component(props) {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              const typeValue = getValue(props, "type");
+              if (typeValue !== "material") {
+                return null;
+              }
+
+              return GroupListField(props as unknown as Parameters<typeof GroupListField>[0]);
+            },
+          },
+          fields: [
+            {
+              type: "reference",
+              name: "material_path",
+              label: "Anyag",
+              description: "Válassz egy anyagot a listából.",
+              collections: ["product_materials"],
+              required: true,
+            },
+            {
+              type: "number",
+              name: "price",
+              label: "Ár",
+              description:
+                "Az anyag ára, amit a rendszer használ. Méteráru esetén a per méter árat kell megadni. Ha nincs megadva akkor 0.",
+              required: true,
+            },
+          ],
+        },
+        {
           type: "boolean",
           name: "allow_custom_value",
           description: "Ha engedélyezve van, a felhasználó egyedi értéket is megadhat a mezőhöz.",
@@ -528,8 +531,7 @@ export const ProductCollection: Collection = {
                 return null;
               }
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return ToggleField(props as any);
+              return ToggleField(props as unknown as Parameters<typeof ToggleField>[0]);
             },
           },
         },
@@ -538,6 +540,18 @@ export const ProductCollection: Collection = {
           name: "regex",
           description: "Opcionális reguláris kifejezés, aminek a mező értékének meg kell felelnie.",
           label: "Érvényességi minta (regex)",
+          ui: {
+            component(props) {
+              // A material field's value is a material + colour pick, not free text.
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              const typeValue = getValue(props, "type");
+              if (typeValue === "material") {
+                return null;
+              }
+
+              return TextField(props as unknown as Parameters<typeof TextField>[0]);
+            },
+          },
         },
         {
           type: "string",
@@ -559,8 +573,12 @@ export const ProductCollection: Collection = {
                 return null;
               }
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return TextField(props as any);
+              // A material field's value is a material + colour pick, no placeholder.
+              if (typeValue === "material") {
+                return null;
+              }
+
+              return TextField(props as unknown as Parameters<typeof TextField>[0]);
             },
           },
         },
@@ -570,6 +588,19 @@ export const ProductCollection: Collection = {
           label: "Feltételes megjelenítés",
           description:
             "Ha be van állítva, ez a mező csak akkor jelenik meg a rendelési felületen, ha a kiválasztott másik mező a megadott értékre van állítva.",
+          ui: {
+            component(props) {
+              // A material field is always shown (its slot is unconditional),
+              // so conditional display doesn't apply to it.
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              const typeValue = getValue(props, "type");
+              if (typeValue === "material") {
+                return null;
+              }
+
+              return Group(props as unknown as Parameters<typeof Group>[0]);
+            },
+          },
           fields: [
             {
               type: "string",
@@ -606,14 +637,13 @@ export const ProductCollection: Collection = {
                       .map((f) => ({ value: f.name ?? "", label: f.label || (f.name ?? "") })),
                   ];
 
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument
                   return SelectField({
                     ...props,
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-                    field: { ...props.field, options } as any,
+                    field: { ...props.field, options } as unknown as Parameters<
+                      typeof SelectField
+                    >[0]["field"],
                     options,
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  } as any);
+                  } as unknown as Parameters<typeof SelectField>[0]);
                 },
                 validate(value, allValues) {
                   if (!value) {
@@ -650,8 +680,7 @@ export const ProductCollection: Collection = {
 
                   // No dependency chosen yet, or a free-form field → plain text input.
                   if (!name || !target || target.type === "input") {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-                    return TextField(props as any);
+                    return TextField(props as unknown as Parameters<typeof TextField>[0]);
                   }
 
                   const valueOptions =
@@ -669,14 +698,13 @@ export const ProductCollection: Collection = {
 
                   const options = [{ value: "", label: "Bármelyik érték" }, ...valueOptions];
 
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument
                   return SelectField({
                     ...props,
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-                    field: { ...props.field, options } as any,
+                    field: { ...props.field, options } as unknown as Parameters<
+                      typeof SelectField
+                    >[0]["field"],
                     options,
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  } as any);
+                  } as unknown as Parameters<typeof SelectField>[0]);
                 },
               },
             },

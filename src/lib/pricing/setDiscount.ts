@@ -1,5 +1,6 @@
-import type { IProduct } from "../types.svelte";
+import type { IProduct, MaterialField } from "../types.svelte";
 import { calculatePriceForItem } from "./price";
+import { isMaterialInOption } from "../product/materials";
 
 /** Minimal structural shape of a product group, to avoid a data.ts import cycle. */
 export interface SetDiscountGroup {
@@ -98,7 +99,11 @@ export function resolveSetDiscount(
  */
 function materialEntries(product: IProduct): Map<string, number> {
   const counts = new Map<string, number>();
-  for (const v of product.materials.values) {
+  for (const field of product.fields) {
+    if (field.type !== "material") {
+      continue;
+    }
+    const v = field.value;
     if (v == null || v.material_id === "") {
       continue;
     }
@@ -186,22 +191,25 @@ export type SetDiscountStatus =
 
 /**
  * Whether copying `partner`'s selected materials onto `item` could produce a
- * matching selection: the two must need the same number of materials and every
- * material `partner` picked must be available on `item`. Used to decide whether
- * to offer a one-click "match materials" action.
+ * matching selection: the two must offer the same material fields (by name)
+ * and every material `partner` picked must be available on `item`'s field of
+ * the same name. Used to decide whether to offer a one-click "match materials"
+ * action.
  */
 export function canSyncMaterials(item: IProduct, partner: IProduct): boolean {
-  if (item.materials.material_required_count !== partner.materials.material_required_count) {
+  const itemMaterials = item.fields.filter((f): f is MaterialField => f.type === "material");
+  const partnerMaterials = partner.fields.filter((f): f is MaterialField => f.type === "material");
+  if (itemMaterials.length !== partnerMaterials.length) {
     return false;
   }
-  const available = new Set(
-    item.materials.materials
-      .map((m) => m?.material_path.material_id)
-      .filter((id): id is string => id != null)
-  );
-  return partner.materials.values.every(
-    (v) => v == null || v.material_id === "" || available.has(v.material_id)
-  );
+  return itemMaterials.every((field) => {
+    const partnerField = partnerMaterials.find((f) => f.name === field.name);
+    const v = partnerField?.value;
+    if (v == null || v.material_id === "") {
+      return true;
+    }
+    return isMaterialInOption(field, v.material_id);
+  });
 }
 
 /**

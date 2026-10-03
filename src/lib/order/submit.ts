@@ -3,12 +3,14 @@
  * it to web3forms. Kept out of the Svelte component so the form stays declarative.
  */
 import { calculatePriceForItem } from "@/lib/pricing/price";
+import { formatMaterialValue } from "@/lib/pricing/format";
 import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
 import type { SetDiscountGroup, ResolvedSetInstance } from "@/lib/pricing/setDiscount";
 import { chargedDeliveryPrice, isDeliveryFree, orderTotal } from "@/lib/order/total";
-import type { IProduct, Field, CmsProductMaterial, ProductMaterialValue } from "../types.svelte";
+import type { IProduct, Field } from "../types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "../data";
 import { isFieldVisible } from "../product/field";
+import { findMaterialOption } from "../product/materials";
 
 const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
 
@@ -28,14 +30,26 @@ function formatFieldValue(field: Field, threadColors: CmsEnhancedEmbroideryColor
   if (field.type === "toggle") {
     return field.value?.value ? "Igen" : "Nem";
   }
+
   if (field.type === "embroidery") {
     const color = threadColors.find((c) => c.color_id === field.value?.color.color);
     const colorLabel = color?.label ?? field.value?.color.color ?? "";
     return `${field.value?.text.value ?? ""} (${colorLabel})`;
   }
+
+  if (field.type === "material") {
+    const value = field.value;
+    if (!value?.material_id) {
+      return "";
+    }
+    // A `material` field picks from its own `materials` list (not `items`).
+    return formatMaterialValue(findMaterialOption(field, value.material_id), value);
+  }
+
   if (field.value?.is_custom) {
     return `Egyedi: ${field.value.value}`;
   }
+
   const label =
     "items" in field
       ? field.items?.find((option) => option?.value === field.value?.value)?.label
@@ -66,25 +80,15 @@ function fieldIndentDepth(field: Field, fields: Field[]): number {
   return depth;
 }
 
-/** The "- material (colors)" line for one chosen material value. */
-function formatMaterialLine(
-  mv: ProductMaterialValue | undefined,
-  materials: CmsProductMaterial[],
-  i: number
-): string {
-  const material = materials.find((m) => m?.material_path.material_id === mv?.material_id);
-  const név = material?.material_path.label ?? mv?.material_id ?? "Ismeretlen anyag";
-  const color =
-    mv?.colors
-      .map((x) => material?.material_path.colors?.find((c) => c.color_id === x)?.label ?? x)
-      .join(", ") ?? "";
-  return `    ${i + 1}. ${név} (${color})`;
-}
-
 /** Render a single product into the plain-text block used in the email body. */
 function shouldSubmitField(field: Field): boolean {
   if (field.type === "embroidery") {
     return field.value?.enabled ?? false;
+  }
+  if (field.type === "material") {
+    // A material pick is always required (validation.ts flags an empty pick),
+    // so a visible material field always has something to report.
+    return true;
   }
   return !("optional" in field) || !field.optional || !!field.value?.value;
 }
@@ -94,7 +98,6 @@ function formatProductString(
   threadColors: CmsEnhancedEmbroideryColor[]
 ): string {
   const price = calculatePriceForItem(product);
-  const { materials, material_required_count, values } = product.materials;
 
   // The forint a valid standalone discount removes from the line, so the email
   // records both the percent and the resulting amount without recomputation.
@@ -119,10 +122,6 @@ function formatProductString(
         (f) =>
           `${"  ".repeat(fieldIndentDepth(f, product.fields) + 1)}${f.label}: ${formatFieldValue(f, threadColors)}`
       ),
-
-    ...(materials.length > 0 && material_required_count > 0
-      ? ["  Anyagok:", ...values.map((mv, i) => formatMaterialLine(mv, materials, i))]
-      : []),
 
     "",
     `Alapár: ${price.basePrice.price?.toString() ?? ""} Ft`,

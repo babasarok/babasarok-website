@@ -2,7 +2,6 @@
   import Icon from "@iconify/svelte";
   import IconButton from "./common/IconButton.svelte";
   import type { HTMLAttributes } from "svelte/elements";
-  import OrderItemMaterials from "./OrderItemMaterials.svelte";
   import OrderItemFields from "./OrderItemFields.svelte";
   import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
   import type { IProduct } from "@/lib/types.svelte";
@@ -63,9 +62,6 @@
     <div class="w-full h-0.5 bg-brown-200"></div>
   {/if}
   <OrderItemFields {product} {threadColors} {onChange} />
-  {#each Array.from({ length: product.materials.material_required_count }) as _, i (i)}
-    <OrderItemMaterials {product} {onChange} material_index={i} />
-  {/each}
   <div class="w-full h-0.5 bg-brown-200"></div>
   <OrderItemPrice {product} {onChange} />
 </div>

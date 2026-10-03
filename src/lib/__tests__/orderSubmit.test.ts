@@ -14,7 +14,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { submitOrder, type OrderDetails } from "@/lib/order/submit";
 import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
 import { chargedDeliveryPrice, orderTotal } from "@/lib/order/total";
-import { makeDelivery, makeField, makeMaterial, makeProduct } from "./fixtures";
+import {
+  makeDelivery,
+  makeField,
+  makeMaterial,
+  makeMaterialProduct,
+  makeProduct,
+} from "./fixtures";
 import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
 
 afterEach(() => {
@@ -91,7 +97,24 @@ describe("order form envelope", () => {
 });
 
 describe("product string content", () => {
-  it("formats a radio + toggle product with materials", async () => {
+  it("formats a radio + toggle product with material fields", async () => {
+    const materialPool = [
+      makeMaterial({
+        material_id: "teddy",
+        label: "Teddy",
+        price: 2000,
+        colors: [
+          { color_id: "bezs", label: "Bézs" },
+          { color_id: "szurke", label: "Szürke" },
+        ],
+      }),
+      makeMaterial({
+        material_id: "minky",
+        label: "Minky",
+        price: 2500,
+        colors: [{ color_id: "rozsa", label: "Rózsaszín" }],
+      }),
+    ];
     const product = makeProduct({
       title: "Babafészek",
       count: 2,
@@ -122,28 +145,20 @@ describe("product string content", () => {
           price: 3700,
           value: { value: false },
         }),
-      ],
-      materials: [
-        makeMaterial({
-          material_id: "teddy",
-          label: "Teddy",
-          price: 2000,
-          colors: [
-            { color_id: "bezs", label: "Bézs" },
-            { color_id: "szurke", label: "Szürke" },
-          ],
+        makeField({
+          name: "anyag1",
+          label: "Anyag 1",
+          type: "material",
+          materials: materialPool,
+          value: { material_id: "teddy", colors: ["bezs", "szurke"] },
         }),
-        makeMaterial({
-          material_id: "minky",
-          label: "Minky",
-          price: 2500,
-          colors: [{ color_id: "rozsa", label: "Rózsaszín" }],
+        makeField({
+          name: "anyag2",
+          label: "Anyag 2",
+          type: "material",
+          materials: materialPool,
+          value: { material_id: "minky", colors: ["rozsa"] },
         }),
-      ],
-      material_required_count: 2,
-      values: [
-        { material_id: "teddy", colors: ["bezs", "szurke"] },
-        { material_id: "minky", colors: ["rozsa"] },
       ],
     });
 
@@ -152,9 +167,8 @@ describe("product string content", () => {
         Méret: Közepes
         Babatakaró és párna: Igen
         Betét: Nem
-        Anyagok:
-          1. Teddy (Bézs, Szürke)
-          2. Minky (Rózsaszín)
+        Anyag 1: Teddy (Bézs, Szürke)
+        Anyag 2: Minky (Rózsaszín)
 
       Alapár: 15000 Ft
       Méret: 1500Ft
@@ -273,31 +287,34 @@ describe("product string content", () => {
           ],
           value: { value: "4" },
         }),
-      ],
-      materials: [
-        makeMaterial({
-          material_id: "pamutjersey",
-          label: "Pamutjersey",
-          price: 0,
+        makeField({
+          name: "anyag",
+          label: "Anyag",
+          type: "material",
           color_count: "fonas",
-          colors: [
-            { color_id: "feher", label: "Fehér" },
-            { color_id: "kek", label: "Kék" },
-            { color_id: "zold", label: "Zöld" },
-            { color_id: "piros", label: "Piros" },
+          materials: [
+            makeMaterial({
+              material_id: "pamutjersey",
+              label: "Pamutjersey",
+              price: 0,
+              colors: [
+                { color_id: "feher", label: "Fehér" },
+                { color_id: "kek", label: "Kék" },
+                { color_id: "zold", label: "Zöld" },
+                { color_id: "piros", label: "Piros" },
+              ],
+            }),
           ],
+          value: { material_id: "pamutjersey", colors: ["feher", "kek", "zold", "piros"] },
         }),
       ],
-      material_required_count: 1,
-      values: [{ material_id: "pamutjersey", colors: ["feher", "kek", "zold", "piros"] }],
     });
 
     expect(form_text(await captureForm(baseOrder([product])))).toMatchInlineSnapshot(`
       "Fonott rácsvédő (1db)
         Méret: 300cm
         Fonás: Négyes
-        Anyagok:
-          1. Pamutjersey (Fehér, Kék, Zöld, Piros)
+        Anyag: Pamutjersey (Fehér, Kék, Zöld, Piros)
 
       Alapár: 0 Ft
       Fonás: 8000Ft
@@ -462,8 +479,8 @@ describe("set-discount summary", () => {
     uuid: string,
     product_id: string,
     title: string
-  ): ReturnType<typeof makeProduct> =>
-    makeProduct({
+  ): ReturnType<typeof makeMaterialProduct> =>
+    makeMaterialProduct({
       uuid,
       product_id,
       title,
@@ -485,14 +502,14 @@ describe("set-discount summary", () => {
 
   it("shows the nominal set amount when clamped to the covered subtotal", async () => {
     // Two 300 Ft members can only absorb 600 Ft of a 2000 Ft set discount.
-    const cheapNest = makeProduct({
+    const cheapNest = makeMaterialProduct({
       uuid: "u1",
       product_id: "nest",
       title: "Babafészek",
       price: 300,
       values: [{ material_id: "cotton", colors: ["red"] }],
     });
-    const cheapBlanket = makeProduct({
+    const cheapBlanket = makeMaterialProduct({
       uuid: "u2",
       product_id: "blanket",
       title: "Takaró",
@@ -530,8 +547,8 @@ describe("submitted total equals the shared order total (visible == charged)", (
     uuid: string,
     product_id: string,
     price: number
-  ): ReturnType<typeof makeProduct> =>
-    makeProduct({
+  ): ReturnType<typeof makeMaterialProduct> =>
+    makeMaterialProduct({
       uuid,
       product_id,
       title: product_id,

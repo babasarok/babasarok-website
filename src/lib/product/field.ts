@@ -31,6 +31,11 @@ export function resolveFieldValue(field: Field | undefined): ResolvedFieldValue 
     case "embroidery": {
       return { kind: "empty" };
     }
+    case "material": {
+      // A material value is a {material_id, colors} object, not a scalar the
+      // rest of the form can reference.
+      return { kind: "empty" };
+    }
     default: {
       const value = field.value?.value;
       return typeof value === "string" && value !== ""

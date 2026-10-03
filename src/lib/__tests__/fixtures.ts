@@ -19,7 +19,7 @@ import type {
 } from "@/lib/types.svelte";
 import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
 
-type FieldType = "input" | "select" | "radio" | "color" | "toggle" | "embroidery";
+type FieldType = "input" | "select" | "radio" | "color" | "toggle" | "embroidery" | "material";
 
 interface FieldItem {
   value: string;
@@ -38,17 +38,20 @@ export interface FieldOpts {
   items?: FieldItem[];
   allow_custom_value?: boolean;
   regex?: string;
-  value?: ValueWithError | ToggleValue | EmbroideryValue;
+  color_count?: string;
+  value?: ValueWithError | ToggleValue | EmbroideryValue | ProductMaterialValue;
   depends_on?: { field?: string | null; value?: string | null } | null;
+  materials?: CmsProductMaterial[];
 }
 
 /** Build a single product `Field` (the runtime slice the order logic reads). */
 export function makeField(opts: FieldOpts): Field {
-  const { value, items, ...rest } = opts;
+  const { value, items, materials, ...rest } = opts;
   return {
     label: opts.label ?? opts.name,
     ...rest,
     ...(items ? { items: items.map((i) => ({ label: i.value, ...i })) } : {}),
+    ...(materials ? { materials } : {}),
     ...(value ? { value } : {}),
   } as unknown as Field;
 }
@@ -70,17 +73,13 @@ export interface MaterialOpts {
   material_id: string;
   label?: string;
   price?: number | null;
-  /** Number of selectable colors, or the field `name` that supplies it. */
-  color_count?: string;
   colors?: MaterialColor[];
 }
 
-/** Build a product-material definition (`product.materials.materials[n]`). */
+/** Build a single material choice (an entry of a material field's `materials`). */
 export function makeMaterial(opts: MaterialOpts): CmsProductMaterial {
   return {
-    __typename: "ProductMaterialsMaterials",
     price: opts.price ?? null,
-    color_count: opts.color_count ?? null,
     material_path: {
       material_id: opts.material_id,
       label: opts.label ?? opts.material_id,
@@ -101,9 +100,6 @@ export interface ProductOpts {
     sourceField: string;
   };
   fields?: Field[];
-  materials?: CmsProductMaterial[];
-  material_required_count?: number;
-  values?: Array<ProductMaterialValue | undefined>;
   banned_combinations?: { materials: { material_path: { material_id: string } }[] }[];
 }
 
@@ -121,13 +117,50 @@ export function makeProduct(opts: ProductOpts = {}): IProduct {
     length_based_pricing: opts.length_based_pricing ?? undefined,
     fields: opts.fields ?? [],
     materials: {
-      __typename: "ProductMaterials",
-      materials: opts.materials ?? [],
-      material_required_count: opts.material_required_count ?? (opts.materials ? 1 : 0),
-      values: opts.values ?? [],
       banned_combinations: opts.banned_combinations ?? [],
     },
   } as unknown as IProduct;
+}
+
+/**
+ * A product whose material selections are expressed as `material` fields
+ * (`anyag1`…`anyagN`, in `values` order). Each field offers the picked
+ * material by default; `offer` overrides the offered ids per field. All other
+ * `makeProduct` opts pass through, and plain `fields` are kept alongside the
+ * generated material fields.
+ */
+export interface MaterialProductOpts {
+  values: ProductMaterialValue[];
+  offer?: string[][];
+  title?: string;
+  uuid?: string;
+  product_id?: string;
+  count?: number;
+  price?: number;
+  discount?: number | null;
+  discount_valid_until?: string | null;
+  fields?: Field[];
+}
+
+/** Build an `IProduct` order item with material selections (`material` fields). */
+export function makeMaterialProduct(opts: MaterialProductOpts): IProduct {
+  const { values, offer, fields, ...rest } = opts;
+  return makeProduct({
+    ...rest,
+    fields: [
+      ...(fields ?? []),
+      ...values.map((value, i) =>
+        makeField({
+          name: `anyag${i + 1}`,
+          type: "material",
+          materials: (offer?.[i] ?? [value.material_id]).map((id) =>
+            makeMaterial({ material_id: id })
+          ),
+          value,
+        })
+      ),
+    ],
+  });
 }
 
 /** Build a delivery method. */

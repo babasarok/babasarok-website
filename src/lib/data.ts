@@ -31,6 +31,7 @@ import { resolveImage } from "./assets";
 import { instantiateProduct } from "./order/product";
 import { findZeroPriceCombinations, type PricedCombination } from "./pricing/validCombinations";
 import { isFieldVisible } from "./product/field";
+import { findMaterialOption } from "./product/materials";
 import type { Field, IProduct } from "./types.svelte";
 import {
   canSupplyStringValue,
@@ -95,7 +96,7 @@ type CmsProduct = RecursivelyNullableToUndefined<
 
 type CmsProductImage = NonNullable<NonNullable<CmsProduct["images"]>[number]>;
 type CmsProductMaterials = NonNullable<CmsProduct["materials"]>;
-type CmsProductMaterial = NonNullable<NonNullable<CmsProduct["materials"]>["materials"]>[number];
+type CmsProductMaterial = NonNullable<NonNullable<NonNullable<CmsFlatField>["materials"]>[number]>;
 type CmsProductMaterialsBannedCombination = NonNullable<
   NonNullable<NonNullable<CmsProduct["materials"]>["banned_combinations"]>[number]
 >;
@@ -121,11 +122,7 @@ interface CmsEnhancedProductMaterialsBannedCombination extends Omit<
     | null;
 }
 
-interface CmsEnhancedProductMaterials extends Omit<
-  CmsProductMaterials,
-  "materials" | "banned_combinations"
-> {
-  materials: Array<CmsEnhancedProductMaterial | undefined | null> | undefined | null;
+interface CmsEnhancedProductMaterials extends Omit<CmsProductMaterials, "banned_combinations"> {
   banned_combinations:
     Array<CmsEnhancedProductMaterialsBannedCombination | undefined | null> | undefined | null;
 }
@@ -135,11 +132,18 @@ type CmsFlatField = NonNullable<NonNullable<CmsProduct["fields"]>[number]>;
  * `fields` share one shape with a `type` discriminant drawn from the central
  * PRODUCT_FIELD_TYPES list; the runtime `Field` type turns it into a per-type
  * discriminated union (see docs/embroidery-field-plan.md).
+ *
+ * A `material` field carries a `color_count` plus a `materials` list whose
+ * `material_path` is resolved to the enhanced material document.
  */
-type CmsField = {
-  [K in keyof CmsFlatField]: K extends "type" ? ProductFieldType : CmsFlatField[K];
-} & {
+type CmsField = Omit<
+  {
+    [K in keyof CmsFlatField]: K extends "type" ? ProductFieldType : CmsFlatField[K];
+  },
+  "materials"
+> & {
   price_unit: EmbroideryPriceUnit | undefined | null;
+  materials: Array<CmsEnhancedProductMaterial | undefined | null> | undefined | null;
 };
 
 export interface CmsEnhancedProduct extends Omit<
@@ -457,23 +461,7 @@ function describeZeroCombo(combo: PricedCombination, item: IProduct): string {
     .filter((field) => isFieldVisible(field, item.fields))
     .map((field) => describeFieldChoice(field));
 
-  const materialDescriptions = combo.product.materials.values
-    .filter((value) => value != null && value.material_id !== "")
-    .map((value) => {
-      const material = item.materials.materials.find(
-        (m) => m?.material_path.material_id === value?.material_id
-      );
-      return material?.material_path.label ?? value?.material_id ?? "?";
-    });
-
-  const parts = [
-    ...fieldDescriptions,
-    ...(materialDescriptions.length > 0
-      ? [
-          `${materialDescriptions.length === 1 ? "Anyag: " : "Anyagok: "}${materialDescriptions.join(", ")}`,
-        ]
-      : []),
-  ];
+  const parts = fieldDescriptions;
 
   const price = combo.perMeterPrice === undefined ? "0 Ft" : "0 Ft/m";
   return `  - ${parts.join(", ") || "nincs opció"} → ${price}`;
@@ -489,6 +477,10 @@ function describeFieldChoice(field: Field): string {
     }
     case "toggle": {
       return field.value?.value ? `${field.label}: igen` : "";
+    }
+    case "material": {
+      const material = findMaterialOption(field, field.value?.material_id);
+      return material ? `${field.label}: ${material.material_path.label}` : "";
     }
     default: {
       return "";
@@ -539,21 +531,25 @@ function assertValidProductReferences(
     }
   }
 
-  for (const material of product.materials?.materials ?? []) {
-    const colorCount = material?.color_count;
-    // A numeric literal is a plain count; anything else is a field reference.
-    if (!material || !colorCount || !Number.isNaN(Number.parseFloat(colorCount))) {
+  for (const field of fields) {
+    if (field.type !== "material" || !field.color_count) {
       continue;
     }
-    const target = fieldByName.get(colorCount);
+
+    // A numeric literal is a plain count; anything else is a field reference.
+    if (!Number.isNaN(Number.parseFloat(field.color_count))) {
+      continue;
+    }
+
+    const target = fieldByName.get(field.color_count);
     if (!target) {
       throw new Error(
-        `${where}: a "${material.material_path.material_id}" anyag "color_count" hivatkozása nem létező mezőre mutat: "${colorCount}".`
+        `${where}: a "${field.label}" anyaglemező "color_count" hivatkozása nem létező mezőre mutat: "${field.color_count}".`
       );
     }
     if (!canSupplyStringValue(target.type)) {
       throw new Error(
-        `${where}: a "${material.material_path.material_id}" anyag "color_count" forrásmezője ("${colorCount}") típusa "${target.type}", ami nem adhat számértéket.`
+        `${where}: a "${field.label}" anyaglemező "color_count" forrásmezője ("${field.color_count}") típusa "${target.type}", ami nem adhat számértéket.`
       );
     }
   }
@@ -600,18 +596,6 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
           }))
       ),
       materials: {
-        materials: await Promise.all(
-          (product.materials?.materials ?? [])
-            .filter((material) => material != null)
-            .map(async (material) => {
-              const material_path = material.material_path;
-              return {
-                price: material.price,
-                color_count: material.color_count,
-                material_path: await transformMaterial(material_path),
-              };
-            })
-        ),
         banned_combinations: await Promise.all(
           (product.materials?.banned_combinations ?? [])
             .filter((combination) => combination != null)
@@ -625,12 +609,11 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
               ),
             }))
         ),
-        material_required_count: product.materials?.material_required_count ?? 0,
       },
-      fields:
-        product.fields
-          ?.filter((field) => field != null)
-          .map((field): RecursiveRequired<CmsField, GetImageResult | Date> => {
+      fields: await Promise.all(
+        (product.fields ?? [])
+          .filter((field) => field != null)
+          .map(async (field): Promise<RecursiveRequired<CmsField, GetImageResult | Date>> => {
             const base = {
               allow_custom_value: field.allow_custom_value ?? undefined,
               label: field.label,
@@ -659,12 +642,22 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
                     price: item.price ?? undefined,
                     tooltip: item.tooltip ?? undefined,
                   })) ?? undefined,
+              color_count: field.color_count ?? undefined,
+              materials: await Promise.all(
+                (field.materials ?? [])
+                  .filter((material) => material != null)
+                  .map(async (material) => ({
+                    price: material.price,
+                    material_path: await transformMaterial(material.material_path),
+                  }))
+              ),
             };
 
             // Re-tag the shared shape with a literal `type` — the single point
             // where Tina's loose `type: string` becomes our discriminated union.
             return { ...base, type: toProductFieldType(field.type) };
-          }) ?? undefined,
+          })
+      ),
     };
 
     assertValidProductReferences(enhanced);

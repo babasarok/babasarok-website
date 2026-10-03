@@ -40,7 +40,8 @@ of no discounted set earns no set discount.
 ### Material-gated set detection
 
 Two basket lines of different set-member products count towards the same set
-only when their selected material values are compatible: the smaller
+only when their selected material values (the picks of their `material`
+fields) are compatible: the smaller
 selection is a subset of the larger (every selected material id and colors
 appears identically — at least as often — on the other, compared
 order-independently). Material counts need not be equal. Lines without
@@ -117,10 +118,10 @@ a separate "related items" list per group.
   - THEN the line shows a hint that the set discount is pending and offers
     the set's related members
 - **Scenario: One-click material sync**
-  - WHEN a pending-material line's partner uses materials available on the
-    line
+  - WHEN a pending-material line's partner picks materials on fields that the
+    line offers by the same field name
   - THEN the UI offers a one-click action that copies the partner's material
-    selection onto the line
+    selection onto the line's matching fields
 - **Scenario: Related items for a no-discount group**
   - WHEN a product belongs to one or more zero/absent-discount groups
   - THEN the product page shows those groups' other members as related items,

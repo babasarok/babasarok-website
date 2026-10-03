@@ -11,12 +11,6 @@ shortDescription: |+
   (Körbegumis)
 
 price: 0
-materials:
-  materials:
-    - material_path: src/content/material/pamutvaszon.md
-      price: 0
-      color_count: '1'
-  material_required_count: 1
 fields:
   - name: meret
     label: Méret
@@ -32,5 +26,12 @@ fields:
       - value: 70x140
         label: 70x140cm
         price: 4700
+  - name: anyag
+    label: Anyag
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/pamutvaszon.md
+        price: 0
 ---
 

@@ -1,6 +1,10 @@
-import { resolveColorCount } from "./materials";
-import type { CmsProductMaterial, Field, IProduct } from "../types.svelte";
-import type { ProductMaterialValue } from "../types.svelte";
+import {
+  bannedCombinationIds,
+  bannedMaterialFieldNames,
+  isMaterialInOption,
+  resolveColorCount,
+} from "./materials";
+import type { Field, IProduct } from "../types.svelte";
 import { isFieldVisible } from "./field";
 
 const emptyEmbroideryValue = {
@@ -21,6 +25,10 @@ function prefillField(field: Field): void {
       field.value ??= structuredClone(emptyEmbroideryValue);
       return;
     }
+    case "material": {
+      field.value ??= { material_id: "", colors: [] };
+      return;
+    }
   }
 }
 
@@ -28,35 +36,56 @@ export function sanitizeItem(item: IProduct): IProduct {
   // Prefill fields with default values if not set, to make sure validation and price calculation work correctly
   for (const field of item.fields) {
     prefillField(field);
-  }
 
-  for (const material of item.materials.values) {
-    if (!material) {
-      continue;
-    }
+    if (field.type === "material") {
+      if (!field.value?.material_id) {
+        continue;
+      }
 
-    const materialInfo = item.materials.materials.find(
-      (m) => m?.material_path.material_id === material.material_id
-    );
+      const count = resolveColorCount(field, item);
+      // Resolving failed, bail.
+      if (count == null) {
+        continue;
+      }
 
-    if (!materialInfo) {
-      continue;
-    }
-
-    const count = resolveColorCount(materialInfo, item);
-    // Resolving failed, bail.
-    if (count == null) {
-      continue;
-    }
-
-    if (material.colors.length > count) {
-      material.colors = material.colors.slice(0, count);
+      if (field.value.colors.length > count) {
+        field.value.colors = field.value.colors.slice(0, count);
+      }
     }
   }
   return item;
 }
 
-function updateFieldWithErrors(item: Field): void {
+function updateFieldWithErrors(product: IProduct, item: Field, banned: string[][]): void {
+  if (item.type === "material") {
+    // A material field needs the full product: `color_count` may name another
+    // field, and the banned-combination rule spans all material fields.
+    item.value ??= { material_id: "", colors: [] };
+    item.value.error = undefined;
+    // Backstop for every path that can set a material (deep links, restored
+    // baskets, future callers): an id the field does not offer counts as no
+    // selection, mirroring the basket-restore membership check.
+    if (!item.value.material_id || !isMaterialInOption(item, item.value.material_id)) {
+      item.value.error = "Kötelező mező";
+      return;
+    }
+    const count = resolveColorCount(item, product);
+    if (!count) {
+      item.value.error = "Színt nem lehet választani, más érték még nincs megadva";
+      return;
+    }
+    if (item.value.colors.length < count) {
+      item.value.error = `${count == 1 ? "" : count.toString()} színt kell választani`;
+      return;
+    }
+    // Once the selection is otherwise complete, flag every field whose
+    // material completes a banned combination (form-level enforcement).
+    if (bannedMaterialFieldNames(product.fields, banned).has(item.name)) {
+      item.value.error = "Ez az anyagkombináció nem rendelhető";
+    }
+    return;
+  }
+
   if (item.type === "toggle") {
     // A toggle always holds a boolean, so there is nothing to require.
     item.value ??= { value: false };
@@ -169,100 +198,23 @@ function fieldHasError(field: Field): boolean {
   return !!field.value.error;
 }
 
-function updateMaterialWithErrors(
-  value: ProductMaterialValue,
-  material: CmsProductMaterial,
-  product: IProduct
-): void {
-  value.error = undefined;
-
-  if (!value.material_id) {
-    value.error = "Kötelező mező";
-    return;
-  }
-
-  const count = resolveColorCount(material, product);
-  if (!count) {
-    value.error = "Színt nem lehet választani, más érték még nincs megadva";
-    return;
-  }
-
-  if (value.colors.length < count) {
-    value.error = `${count == 1 ? "" : count.toString()} színt kell választani`;
-    return;
-  }
-}
-
-function updateMaterialsWithErrors(item: IProduct): void {
-  if (item.materials.materials.length === 0) {
-    return;
-  }
-
-  for (let i = 0; i < item.materials.material_required_count; i++) {
-    if (item.materials.values[i]) {
-      continue;
-    }
-
-    item.materials.values[i] = { material_id: "", colors: [] };
-  }
-
-  for (const materialValue of item.materials.values) {
-    if (!materialValue) {
-      continue;
-    }
-
-    if (!materialValue.material_id) {
-      materialValue.error = "Kötelező mező";
-      continue;
-    }
-
-    const materialInfo = item.materials.materials.find(
-      (m) => !!m && m.material_path.material_id === materialValue.material_id
-    );
-
-    if (materialInfo) {
-      updateMaterialWithErrors(materialValue, materialInfo, item);
-    } else {
-      materialValue.error = "Kötelező mező";
-    }
-  }
-}
-
 export function validateItem(item: IProduct): IProduct {
+  // The banned-combination rule spans all material fields, so resolve the
+  // product's banned id multisets once instead of per field.
+  const banned = bannedCombinationIds(item);
   for (const field of item.fields) {
     // Hidden dependent fields must not block submission; clear any stale error.
     if (!isFieldVisible(field, item.fields)) {
       clearFieldErrors(field);
       continue;
     }
-    updateFieldWithErrors(field);
+    updateFieldWithErrors(item, field, banned);
   }
 
-  updateMaterialsWithErrors(item);
   return item;
 }
 
 export function isItemValid(item: IProduct): boolean {
-  for (const field of item.fields) {
-    if (isFieldVisible(field, item.fields) && fieldHasError(field)) {
-      return false;
-    }
-  }
-
-  if (item.materials.materials.length === 0) {
-    return true;
-  }
-
-  if (item.materials.values.length < item.materials.material_required_count) {
-    return false;
-  }
-
-  for (const materialValue of item.materials.values) {
-    if (materialValue?.error) {
-      return false;
-    }
-  }
-
   for (const field of item.fields) {
     if (isFieldVisible(field, item.fields) && fieldHasError(field)) {
       return false;

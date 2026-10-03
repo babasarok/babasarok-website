@@ -1,8 +1,12 @@
 import { sanitizeItem } from "../product/validation";
+import { isMaterialInOption } from "../product/materials";
 import { randomUUID } from "../uuid";
 import type { CmsEnhancedProduct } from "../data";
-import type { IProduct, ProductMaterialValue } from "../types.svelte";
+import type { Field, IProduct, ProductMaterialValue } from "../types.svelte";
 import type { SavedProduct } from "./storage";
+
+/** The persisted shape of a `material` field's value. */
+type SavedMaterialField = Extract<SavedProduct["fields"][number], { type: "material" }>;
 
 /** Whether a product carries its own configurable options (fields such as
  * size, toggles or embroidery) that don't transfer from a set partner, so it
@@ -21,13 +25,30 @@ export function instantiateProduct(product: CmsEnhancedProduct): IProduct {
     count: 1,
     fields: clone.fields?.filter((f) => f != null) ?? [],
     materials: {
-      ...clone.materials,
-      materials: clone.materials?.materials?.filter((m) => m != null) ?? [],
       banned_combinations: clone.materials?.banned_combinations?.filter((c) => c != null) ?? [],
-      material_required_count: clone.materials?.material_required_count ?? 1,
-      values: [] as Array<ProductMaterialValue | undefined>,
     },
   });
+}
+
+/** The value of `target`'s same-named material field on `source`, kept only
+ * when the material is still offered by `target`'s field (and actually
+ * chosen). Undefined for non-material fields or when nothing carries over. */
+function carriedMaterialValue(
+  target: Field,
+  sourceFields: Field[]
+): ProductMaterialValue | undefined {
+  if (target.type !== "material") {
+    return undefined;
+  }
+  const sourceField = sourceFields.find((f) => f.name === target.name);
+  if (sourceField?.type !== "material") {
+    return undefined;
+  }
+  const value = sourceField.value;
+  if (value == null || value.material_id === "") {
+    return undefined;
+  }
+  return isMaterialInOption(target, value.material_id) ? structuredClone(value) : undefined;
 }
 
 /** Re-apply saved user values onto a fresh item from the current catalog.
@@ -46,11 +67,22 @@ function restoreProduct(catalog: CmsEnhancedProduct, saved: SavedProduct): IProd
     return null;
   }
 
-  const availableMaterials = new Set(
-    base.materials.materials.map((m) => m?.material_path.material_id).filter((id) => id != null)
-  );
-  if (saved.materials.some((m) => !availableMaterials.has(m.material_id))) {
-    return null;
+  // A saved material selection must still be offered by the catalog field
+  // that holds it (stale state is discarded, not restored half-baked).
+  for (const field of base.fields) {
+    if (field.type !== "material") {
+      continue;
+    }
+    const savedField = saved.fields.find(
+      (f): f is SavedMaterialField => f.name === field.name && f.type === "material"
+    );
+    if (!savedField) {
+      continue;
+    }
+    const value = savedField.value;
+    if (value?.material_id && !isMaterialInOption(field, value.material_id)) {
+      return null;
+    }
   }
 
   base.count = saved.count;
@@ -62,7 +94,6 @@ function restoreProduct(catalog: CmsEnhancedProduct, saved: SavedProduct): IProd
       Object.assign(field, { value: savedField.value });
     }
   }
-  base.materials.values = saved.materials.map((m) => ({ ...m }));
 
   return sanitizeItem(base);
 }
@@ -91,14 +122,21 @@ export function restoreProducts(
 }
 
 /** Build a fresh order item for `target`, carrying over the choices the user
- * already made on `source` where they structurally match: field values with the
- * same name+type, and material selections whose material still exists on the
- * target (capped at the target's required count). Both inputs must be plain
- * objects (e.g. `$state.snapshot(...)`). */
+ * already made on `source` where they structurally match: field values with
+ * the same name+type — for material fields, only when the target field still
+ * offers that material. Both inputs must be plain objects (e.g.
+ * `$state.snapshot(...)`). */
 export function instantiateRelatedProduct(target: CmsEnhancedProduct, source: IProduct): IProduct {
   const base = instantiateProduct(target);
 
   for (const field of base.fields) {
+    if (field.type === "material") {
+      const value = carriedMaterialValue(field, source.fields);
+      if (value !== undefined) {
+        field.value = value;
+      }
+      continue;
+    }
     const sourceField = source.fields.find((f) => f.name === field.name && f.type === field.type);
     if (sourceField?.value !== undefined) {
       // name+type match guarantees the value shapes align.
@@ -106,29 +144,20 @@ export function instantiateRelatedProduct(target: CmsEnhancedProduct, source: IP
     }
   }
 
-  const availableMaterials = new Set(
-    base.materials.materials.map((m) => m?.material_path.material_id).filter((id) => id != null)
-  );
-  base.materials.values = source.materials.values
-    .filter((v): v is ProductMaterialValue => v != null && availableMaterials.has(v.material_id))
-    .slice(0, base.materials.material_required_count)
-    .map((v) => structuredClone(v));
-
   return sanitizeItem(base);
 }
 
 /** Copy `partner`'s material selections onto `item` so the two match and their
- * shared set discount activates. Keeps only materials the item supports, capped
- * at its required count. Both inputs must be plain objects (e.g.
- * `$state.snapshot(...)`). */
+ * shared set discount activates. Only the item's own material fields are
+ * touched, and only with materials the item offers. Both inputs must be plain
+ * objects (e.g. `$state.snapshot(...)`). */
 export function syncMaterialsToPartner(item: IProduct, partner: IProduct): IProduct {
-  const availableMaterials = new Set(
-    item.materials.materials.map((m) => m?.material_path.material_id).filter((id) => id != null)
-  );
-  const values = partner.materials.values
-    .filter((v): v is ProductMaterialValue => v != null && availableMaterials.has(v.material_id))
-    .slice(0, item.materials.material_required_count)
-    .map((v) => structuredClone(v));
+  for (const field of item.fields) {
+    const value = carriedMaterialValue(field, partner.fields);
+    if (value !== undefined) {
+      field.value = value;
+    }
+  }
 
-  return sanitizeItem({ ...item, materials: { ...item.materials, values } });
+  return sanitizeItem(item);
 }
