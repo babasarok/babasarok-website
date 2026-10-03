@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { Field, IProduct } from "../types.svelte";
 import { PRODUCT_FIELD_TYPE_VALUES } from "../product/fieldTypes";
+import { FIELD_BEHAVIORS } from "../product/behavior";
 
 const STORAGE_KEY = "babasarok-order-state";
 // Bump when the persisted value shapes change (older state is then discarded).
@@ -107,55 +108,23 @@ export function loadOrderState(): SavedOrderState | null {
 
 /**
  * The user-entered value of one field, dropped of its transient `error` (the
- * only live-only key). Built explicitly per field type instead of cast, so the
- * live→persisted mapping is checked by the type system.
+ * only live-only key). The live→persisted mapping lives in the field's
+ * behaviour (`toSaved`); the per-type value shape is its `SavedFieldValue`
+ * mirror.
  */
 function toSavedField(field: Field): SavedProduct["fields"][number] {
   const { name, type } = field;
-  switch (type) {
-    case "toggle": {
-      return field.value ? { name, type, value: { value: field.value.value } } : { name, type };
-    }
-    case "embroidery": {
-      return field.value
-        ? {
-            name,
-            type,
-            value: {
-              enabled: field.value.enabled,
-              text: { value: field.value.text.value },
-              color: {
-                color: field.value.color.color,
-              },
-            },
-          }
-        : { name, type };
-    }
-    case "material": {
-      return field.value
-        ? {
-            name,
-            type,
-            value: {
-              material_id: field.value.material_id,
-              colors: [...field.value.colors],
-            },
-          }
-        : { name, type };
-    }
-    default: {
-      return field.value
-        ? {
-            name,
-            type,
-            value: {
-              value: field.value.value,
-              ...(field.value.is_custom == null ? {} : { is_custom: field.value.is_custom }),
-            },
-          }
-        : { name, type };
-    }
+  const value = FIELD_BEHAVIORS[type].toSaved(field);
+  if (value === undefined) {
+    return { name, type };
   }
+  // The core `SavedFieldValue` mirror is kept structurally identical to the
+  // `savedField` value shapes (ADR 0006; the ADR 0002 layering rule forbids
+  // product/ from importing order/ to assert the type↔value correlation
+  // itself, so it is asserted here, once, at the seam). The `savedField`
+  // schema re-checks the correlation on every save and load, so any drift
+  // fails closed there.
+  return { name, type, value } as SavedProduct["fields"][number];
 }
 
 /**

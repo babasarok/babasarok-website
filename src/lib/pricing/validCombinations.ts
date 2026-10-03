@@ -1,10 +1,9 @@
 import type { Field, IProduct } from "../types.svelte";
 import { isFieldVisible } from "../product/field";
-import {
-  bannedCombinationIds,
-  completesBannedCombination,
-  findMaterialOption,
-} from "../product/materials";
+import { bannedCombinationIds, completesBannedCombination } from "../product/materials";
+import { FIELD_BEHAVIORS, fieldIs } from "../product/behavior";
+
+const isMaterialField = fieldIs("material");
 
 /**
  * The "valid combination" check: a product may not be sellable at 0 Ft.
@@ -134,52 +133,22 @@ export function fieldCombinations(
         next.push(branch);
         continue;
       }
-      let choices: Field[] = [];
+      let choices: Field[];
       if (field.name === lengthSourceName) {
         // The per-meter price is what matters; every length scales it.
         choices = [field];
       } else {
-        switch (field.type) {
-          case "radio":
-          case "select":
-          case "color": {
-            choices = (field.items ?? [])
-              .filter((item) => item != null)
-              .map((item) => ({ ...field, value: { value: item.value } }));
-            if (field.allow_custom_value) {
-              choices.push({ ...field, value: { value: "__custom__" } });
-            }
-            break;
-          }
-          case "toggle": {
-            choices = [
-              { ...field, value: { value: false } },
-              { ...field, value: { value: true } },
-            ];
-            break;
-          }
-          case "material": {
-            // The form requires a material; colours never change the price, so
-            // each entry is one choice with an empty colour selection. A
-            // choice is pruned when it would complete a banned combination.
-            for (const material of field.materials ?? []) {
-              if (!material) {
-                continue;
-              }
-              const id = material.material_path.material_id;
-              if (completesBannedCombination(branch.fields, field, id, banned)) {
-                continue;
-              }
-              choices.push({ ...field, value: { material_id: id, colors: [] } });
-            }
-            break;
-          }
-          default: {
-            // embroidery and input: never required, never price-relevant — one
-            // shape, no value.
-            choices = [field];
-            break;
-          }
+        choices = FIELD_BEHAVIORS[field.type].enumerate(field);
+        if (field.type === "material") {
+          // The gate's branch-dependent half of the banned-combination rule:
+          // a choice is pruned when it would complete a banned combination
+          // given the other material fields' selections on this branch.
+          choices = choices.filter((choice) => {
+            const id = isMaterialField(choice) ? choice.value?.material_id : undefined;
+            return (
+              id === undefined || !completesBannedCombination(branch.fields, field, id, banned)
+            );
+          });
         }
       }
       for (const choice of choices) {
@@ -253,7 +222,7 @@ function priceUnit(item: IProduct): number {
   return parts.reduce((sum, part) => sum + part, 0);
 }
 
-/** Per-part field price — the same branches as `calculatePriceForItem`. */
+/** Per-part field price — the same contribution as `calculatePriceForItem`. */
 function fieldPrice(field: Field, product: IProduct): number | undefined {
   const sourceField = product.length_based_pricing?.sourceField;
   if (sourceField && field.name === sourceField) {
@@ -261,34 +230,5 @@ function fieldPrice(field: Field, product: IProduct): number | undefined {
     return undefined;
   }
 
-  switch (field.type) {
-    case "radio":
-    case "color":
-    case "select": {
-      const selectedItem = (field.items ?? []).find(
-        (item) => !!item && item.value === field.value?.value
-      );
-      return selectedItem?.price ?? undefined;
-    }
-    case "toggle": {
-      return field.value?.value === undefined
-        ? undefined
-        : field.value.value
-          ? (field.price ?? undefined)
-          : 0;
-    }
-    case "input": {
-      return field.price ?? undefined;
-    }
-    case "material": {
-      const material = findMaterialOption(field, field.value?.material_id);
-      return material?.price ?? undefined;
-    }
-    default: {
-      // Embroidery is opt-in: its absent shape contributes nothing. (Its
-      // presence only adds price, so it can never be the *reason* a
-      // combination is free.)
-      return undefined;
-    }
-  }
+  return FIELD_BEHAVIORS[field.type].price(field)?.price;
 }

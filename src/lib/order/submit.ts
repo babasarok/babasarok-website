@@ -9,7 +9,7 @@ import { chargedDeliveryPrice, isDeliveryFree, orderTotal } from "@/lib/order/to
 import type { IProduct, Field } from "../types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "../data";
 import { isFieldVisible } from "../product/field";
-import { findMaterialOption, formatMaterialValue } from "../product/materials";
+import { FIELD_BEHAVIORS } from "../product/behavior";
 
 const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
 
@@ -22,38 +22,6 @@ export interface OrderDetails {
   products: IProduct[];
   threadColors: CmsEnhancedEmbroideryColor[];
   productGroups: SetDiscountGroup[];
-}
-
-/** The selected option label/value pair for a field, as shown in the email. */
-function formatFieldValue(field: Field, threadColors: CmsEnhancedEmbroideryColor[]): string {
-  if (field.type === "toggle") {
-    return field.value?.value ? "Igen" : "Nem";
-  }
-
-  if (field.type === "embroidery") {
-    const color = threadColors.find((c) => c.color_id === field.value?.color.color);
-    const colorLabel = color?.label ?? field.value?.color.color ?? "";
-    return `${field.value?.text.value ?? ""} (${colorLabel})`;
-  }
-
-  if (field.type === "material") {
-    const value = field.value;
-    if (!value?.material_id) {
-      return "";
-    }
-    // A `material` field picks from its own `materials` list (not `items`).
-    return formatMaterialValue(findMaterialOption(field, value.material_id), value);
-  }
-
-  if (field.value?.is_custom) {
-    return `Egyedi: ${field.value.value}`;
-  }
-
-  const label =
-    "items" in field
-      ? field.items?.find((option) => option?.value === field.value?.value)?.label
-      : undefined;
-  return label ?? field.value?.value ?? "";
 }
 
 /**
@@ -80,18 +48,6 @@ function fieldIndentDepth(field: Field, fields: Field[]): number {
 }
 
 /** Render a single product into the plain-text block used in the email body. */
-function shouldSubmitField(field: Field): boolean {
-  if (field.type === "embroidery") {
-    return field.value?.enabled ?? false;
-  }
-  if (field.type === "material") {
-    // A material pick is always required (validation.ts flags an empty pick),
-    // so a visible material field always has something to report.
-    return true;
-  }
-  return !("optional" in field) || !field.optional || !!field.value?.value;
-}
-
 function formatProductString(
   product: IProduct,
   threadColors: CmsEnhancedEmbroideryColor[]
@@ -116,10 +72,10 @@ function formatProductString(
       .filter((f) => isFieldVisible(f, product.fields))
       // Hide only *empty* optional fields; a filled-in optional answer (e.g. a
       // custom note) must still reach the email.
-      .filter(shouldSubmitField)
+      .filter((f) => FIELD_BEHAVIORS[f.type].includeInEmail(f))
       .map(
         (f) =>
-          `${"  ".repeat(fieldIndentDepth(f, product.fields) + 1)}${f.label}: ${formatFieldValue(f, threadColors)}`
+          `${"  ".repeat(fieldIndentDepth(f, product.fields) + 1)}${f.label}: ${FIELD_BEHAVIORS[f.type].formatForEmail(f, { fields: product.fields, threadColors })}`
       ),
 
     "",
