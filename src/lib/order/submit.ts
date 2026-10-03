@@ -40,6 +40,23 @@ function formatFieldValue(field: Field, threadColors: CmsEnhancedEmbroideryColor
     return `${field.value?.text.value ?? ""} (${colorLabel})`;
   }
 
+  if (field.type === "material") {
+    const value = field.value;
+    if (!value?.material_id) {
+      return "";
+    }
+    // A `material` field picks from its own `materials` list (not `items`), so
+    // resolve the material + colour names the same way `formatMaterialLine` does.
+    const material = field.materials?.find(
+      (m) => m?.material_path.material_id === value.material_id
+    )?.material_path;
+    const név = material?.label ?? value.material_id;
+    const color = value.colors
+      .map((x) => material?.colors?.find((c) => c.color_id === x)?.label ?? x)
+      .join(", ");
+    return `${név} (${color})`;
+  }
+
   if (field.value?.is_custom) {
     return `Egyedi: ${field.value.value}`;
   }
@@ -48,7 +65,6 @@ function formatFieldValue(field: Field, threadColors: CmsEnhancedEmbroideryColor
     "items" in field
       ? field.items?.find((option) => option?.value === field.value?.value)?.label
       : undefined;
-
   return label ?? field.value?.value ?? "";
 }
 
@@ -96,6 +112,9 @@ function formatMaterialLine(
 function shouldSubmitField(field: Field): boolean {
   if (field.type === "embroidery") {
     return field.value?.enabled ?? false;
+  }
+  if (field.type === "material") {
+    return !field.optional || !!field.value?.material_id;
   }
   return !("optional" in field) || !field.optional || !!field.value?.value;
 }

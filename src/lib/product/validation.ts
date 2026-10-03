@@ -49,7 +49,27 @@ export function sanitizeItem(item: IProduct): IProduct {
   return item;
 }
 
-function updateFieldWithErrors(item: Field): void {
+function updateFieldWithErrors(product: IProduct, item: Field): void {
+  if (item.type === "material") {
+    // Mirror `updateMaterialWithErrors` for a material slot: it needs the full
+    // product to resolve `color_count` (which may name another field).
+    item.value ??= { material_id: "", colors: [] };
+    item.value.error = undefined;
+    if (!item.value.material_id) {
+      item.value.error = "Kötelező mező";
+      return;
+    }
+    const count = resolveColorCount({ color_count: item.color_count }, product);
+    if (!count) {
+      item.value.error = "Színt nem lehet választani, más érték még nincs megadva";
+      return;
+    }
+    if (item.value.colors.length < count) {
+      item.value.error = `${count == 1 ? "" : count.toString()} színt kell választani`;
+    }
+    return;
+  }
+
   if (item.type === "toggle") {
     // A toggle always holds a boolean, so there is nothing to require.
     item.value ??= { value: false };
@@ -226,7 +246,7 @@ export function validateItem(item: IProduct): IProduct {
       clearFieldErrors(field);
       continue;
     }
-    updateFieldWithErrors(field);
+    updateFieldWithErrors(item, field);
   }
 
   updateMaterialsWithErrors(item);

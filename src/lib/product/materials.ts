@@ -37,7 +37,7 @@ export function materialSlotLabel(
 }
 
 export function resolveColorCount(
-  option: CmsProductMaterialOption | null,
+  option: { color_count: string | null | undefined } | null,
   product: Pick<IProduct, "fields">
 ): number | undefined {
   if (option?.color_count == null) {
