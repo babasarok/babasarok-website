@@ -1,39 +1,9 @@
-import type { IProduct, CmsProductMaterialOption, CmsProductMaterial } from "../types.svelte";
+import type { Field, IProduct, MaterialField } from "../types.svelte";
 import { findFieldByName, resolveNumericValue } from "./field";
 
-/** Find a material by id anywhere across the item's options. Label and colours
- * are slot-independent (the id resolves to the same material document), so a
- * flat lookup is correct for describing/summarising a selection. */
-export function findMaterialById(
-  item: Pick<IProduct, "materials">,
-  materialId: string
-): CmsProductMaterial | undefined {
-  for (const option of item.materials.material_options) {
-    for (const m of option.materials ?? []) {
-      if (m?.material_path.material_id === materialId) {
-        return m;
-      }
-    }
-  }
-  return undefined;
-}
-
-/** Whether `materialId` is one of the choices offered by `option` (its slot). */
-export function isMaterialInOption(
-  option: Pick<CmsProductMaterialOption, "materials">,
-  materialId: string
-): boolean {
+/** Whether `materialId` is one of the choices offered by the material field. */
+export function isMaterialInOption(option: MaterialField, materialId: string): boolean {
   return (option.materials ?? []).some((m) => m?.material_path.material_id === materialId);
-}
-
-/** Display label for a material slot: the option's own label, falling back to a
- * generic "Anyag" / "Anyag {n}" when it is unlabelled. */
-export function materialSlotLabel(
-  option: Pick<CmsProductMaterialOption, "label">,
-  index: number,
-  total: number
-): string {
-  return option.label || (total > 1 ? `Anyag ${(index + 1).toString()}` : "Anyag");
 }
 
 export function resolveColorCount(
@@ -58,15 +28,15 @@ export function resolveColorCount(
  * chosen (a custom colour satisfies the colour requirement). Read-only mirror of
  * the material validation rules, so set siblings only get offered once the
  * current selection is complete. */
-export function areMaterialsComplete(item: Pick<IProduct, "fields" | "materials">): boolean {
-  const { material_options, values } = item.materials;
-  if (material_options.length === 0) {
+export function areMaterialsComplete(item: Pick<IProduct, "fields">): boolean {
+  const materials = item.fields.filter((f) => f.type === "material");
+  if (materials.length === 0) {
     return true;
   }
 
-  for (let i = 0; i < material_options.length; i++) {
-    const option = material_options[i];
-    const value = values[i];
+  for (let i = 0; i < materials.length; i++) {
+    const option = materials[i];
+    const value = materials[i].value;
 
     if (!value || !value.material_id) {
       return false;

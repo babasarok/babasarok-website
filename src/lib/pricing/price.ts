@@ -1,11 +1,5 @@
-import type {
-  IProduct,
-  Field,
-  CmsProductMaterialOption,
-  ProductMaterialValue,
-} from "../types.svelte";
+import type { IProduct, Field } from "../types.svelte";
 import { isFieldVisible, findFieldByName, resolveNumericValue } from "../product/field";
-import { materialSlotLabel } from "../product/materials";
 
 interface PricePart {
   label: string;
@@ -106,23 +100,6 @@ function getFieldPrice(field: Field, product: IProduct): PricePart | null {
   }
 }
 
-function getMaterialPrice(
-  value: Pick<ProductMaterialValue, "material_id">,
-  option: CmsProductMaterialOption,
-  material_count: number,
-  material_index: number
-): PricePart | null {
-  const material = (option.materials ?? []).find(
-    (m) => m?.material_path.material_id === value.material_id
-  );
-
-  const materialPrice = material?.price;
-  return {
-    label: materialSlotLabel(option, material_index, material_count),
-    price: materialPrice ?? undefined,
-  };
-}
-
 export function calculatePriceForItem(product: IProduct): Price | LengthBasedPrice {
   const parts: PricePart[] = [];
   for (const field of product.fields) {
@@ -134,23 +111,6 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
       continue;
     }
     parts.push(fieldPrice);
-  }
-
-  const materialOptions = product.materials.material_options;
-  if (materialOptions.length > 0) {
-    for (let i = 0; i < materialOptions.length; i++) {
-      const value = product.materials.values[i];
-      const price = getMaterialPrice(
-        value ?? { material_id: "" },
-        materialOptions[i],
-        materialOptions.length,
-        i
-      );
-      if (!price) {
-        continue;
-      }
-      parts.push(price);
-    }
   }
 
   const basePrice: PricePart = { label: "Alapár", price: product.price };

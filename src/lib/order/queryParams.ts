@@ -27,19 +27,6 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
     }
   }
 
-  const materialSlots = new Map<number, ProductMaterialValue>();
-  const ensureSlot = (index: number): ProductMaterialValue | undefined => {
-    if (index < 0 || index >= item.materials.material_options.length) {
-      return undefined;
-    }
-    let slot = materialSlots.get(index);
-    if (!slot) {
-      slot = { material_id: "", colors: [] };
-      materialSlots.set(index, slot);
-    }
-    return slot;
-  };
-
   for (const [key, raw] of params.entries()) {
     if (key === "uuid" || key === "count") {
       continue;
@@ -81,15 +68,6 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
       }
     }
   }
-
-  if (materialSlots.size > 0) {
-    const values: Array<ProductMaterialValue | undefined> = [...item.materials.values];
-    for (const [index, slot] of materialSlots) {
-      values[index] = slot;
-    }
-
-    item.materials.values = values;
-  }
 }
 
 /**
@@ -123,6 +101,11 @@ function applyFieldParam(field: Field, raw: string): void {
       field.value ??= { enabled: true, text: { value: "" }, color: { color: "" } };
       field.value.enabled = true;
       field.value.text = { value: raw };
+      return;
+    }
+    case "material": {
+      field.value ??= { material_id: "", colors: [] };
+      field.value.material_id = raw;
       return;
     }
     default: {

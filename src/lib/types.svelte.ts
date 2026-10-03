@@ -40,12 +40,7 @@ export interface EmbroideryValue {
 
 export type CmsField = NonNullable<NonNullable<CmsEnhancedProduct["fields"]>[number]>;
 export type CmsProductMaterials = NonNullable<CmsEnhancedProduct["materials"]>;
-export type CmsProductMaterialOption = NonNullable<
-  NonNullable<CmsProductMaterials["material_options"]>[number]
->;
-export type CmsProductMaterial = NonNullable<
-  NonNullable<CmsProductMaterialOption["materials"]>[number]
->;
+export type CmsProductMaterial = NonNullable<NonNullable<CmsField["materials"]>[number]>;
 
 /** The runtime value shape each field `type` carries. */
 interface FieldValueByType {
@@ -77,14 +72,10 @@ export type StringValueField = Extract<Field, { type: StringValuedFieldType }>;
 
 /** The `material` field variant (picks one of its `materials` plus colours). */
 export type MaterialField = Extract<Field, { type: "material" }>;
-export type ProductMaterials = Omit<CmsProductMaterials, "values" | "material_options"> & {
-  values: Array<ProductMaterialValue | undefined>;
-  material_options: CmsProductMaterialOption[];
-};
 
 export interface IProduct extends Omit<CmsEnhancedProduct, "materials" | "fields"> {
   uuid: string;
   count: number;
-  materials: ProductMaterials;
+  materials: CmsProductMaterials;
   fields: Field[];
 }

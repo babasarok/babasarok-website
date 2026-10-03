@@ -19,6 +19,80 @@
   }
 
   const { product, threadColors, onChange }: Props = $props();
+
+  /**
+   * Returns true if selected materials satisfy required materials using count-aware matching.
+   *
+   * This treats material lists as multisets, not sets, so repeated entries are respected.
+   * Example: required [A, A] is only satisfied when selected contains at least two A values.
+   */
+  const hasRequiredCounts = (
+    requiredMaterialIds: string[],
+    selectedCounts: Map<string, number>
+  ): boolean => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
+    const requiredCounts = new Map<string, number>();
+    for (const materialId of requiredMaterialIds) {
+      requiredCounts.set(materialId, (requiredCounts.get(materialId) ?? 0) + 1);
+    }
+
+    for (const [materialId, requiredCount] of requiredCounts) {
+      if ((selectedCounts.get(materialId) ?? 0) < requiredCount) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  /**
+   * Material IDs that must be disabled in the current slot.
+   *
+   * Rules:
+   * - Banned combinations come from product.materials.banned_combinations.
+   * - Paths are resolved to material IDs before matching.
+   * - Only selections in other slots are considered.
+   * - A candidate is disabled only if choosing it now would complete a banned combination.
+   * - Single-item combinations are ignored here.
+   */
+  const bannedMaterials = $derived.by(() => {
+    const selectedInOtherSlots = product.fields
+      .filter((f) => f.type === "material")
+      .filter((value, index) => index !== material_index && !!value?.material_id)
+      .map((value) => value?.material_id)
+      .filter((materialId): materialId is string => !!materialId);
+
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
+    const selectedCounts = new Map<string, number>();
+    for (const materialId of selectedInOtherSlots) {
+      selectedCounts.set(materialId, (selectedCounts.get(materialId) ?? 0) + 1);
+    }
+
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
+    const banned = new Set<string>();
+    for (const combination of product.materials.banned_combinations ?? []) {
+      const combinationMaterialIds =
+        combination?.materials
+          ?.map((item) => item?.material_path?.material_id)
+          .filter((materialId): materialId is string => !!materialId) ?? [];
+
+      if (combinationMaterialIds.length <= 1) {
+        continue;
+      }
+
+      for (const [index, candidateId] of combinationMaterialIds.entries()) {
+        const requiredOtherIds = [
+          ...combinationMaterialIds.slice(0, index),
+          ...combinationMaterialIds.slice(index + 1),
+        ];
+        if (hasRequiredCounts(requiredOtherIds, selectedCounts)) {
+          banned.add(candidateId);
+        }
+      }
+    }
+
+    return [...banned];
+  });
 </script>
 
 {#snippet Input(field: StringValueField)}
@@ -332,7 +406,7 @@
               {/if}
             </div>
           {:else if field.type === "material"}
-            <OrderItemMaterialField {product} field={field} {onChange} />
+            <OrderItemMaterialField {product} {field} {onChange} />
           {:else}
             <p>--</p>
           {/if}

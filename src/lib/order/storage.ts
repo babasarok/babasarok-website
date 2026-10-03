@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Field, IProduct, ProductMaterialValue } from "../types.svelte";
+import type { Field, IProduct } from "../types.svelte";
 import { PRODUCT_FIELD_TYPE_VALUES } from "../product/fieldTypes";
 
 const STORAGE_KEY = "babasarok-order-state";
@@ -42,17 +42,11 @@ const savedField = z.discriminatedUnion("type", [
   z.object({ name: z.string(), type: z.literal("embroidery"), value: embroideryValue.optional() }),
 ]);
 
-const savedMaterial = z.object({
-  material_id: z.string(),
-  colors: z.array(z.string()),
-});
-
 const savedProductSchema = z.object({
   uuid: z.string(),
   product_id: z.string(),
   count: z.number(),
   fields: z.array(savedField),
-  materials: z.array(savedMaterial),
 });
 
 const savedStateSchema = z.object({
@@ -164,14 +158,6 @@ function toSavedField(field: Field): SavedProduct["fields"][number] {
   }
 }
 
-/** The user-entered value of one material slot, dropped of its transient `error`. */
-function toSavedMaterial(value: ProductMaterialValue): SavedProduct["materials"][number] {
-  return {
-    material_id: value.material_id,
-    colors: value.colors,
-  };
-}
-
 /**
  * Map a live order item down to the persisted, user-entered-values-only shape.
  * Undefined material slots are dropped: they can only appear on an unsaved,
@@ -184,9 +170,6 @@ export function mapProductToSaved(product: IProduct): SavedProduct {
     product_id: product.product_id,
     count: product.count,
     fields: product.fields.map(toSavedField),
-    materials: product.materials.values
-      .filter((value): value is ProductMaterialValue => value != null)
-      .map(toSavedMaterial),
   };
 }
 
@@ -212,20 +195,6 @@ const EMPTY_STATE: SavedOrderState = {
   products: [],
 };
 
-/** Normalised view of a persisted item's material selections (order- and
- * error-field-independent), for the duplicate-line comparison below. */
-function normalizeSavedMaterials(item: SavedProduct): string {
-  return JSON.stringify(
-    item.materials
-      .filter((m) => m.material_id !== "")
-      .map((m) => ({
-        material_id: m.material_id,
-        colors: m.colors.toSorted(),
-      }))
-      .toSorted((a, b) => a.material_id.localeCompare(b.material_id))
-  );
-}
-
 /** Normalised view of a persisted item's field values (order- and
  * error-field-independent). */
 function normalizeSavedFields(item: SavedProduct): string {
@@ -243,11 +212,7 @@ function normalizeSavedFields(item: SavedProduct): string {
  * value (e.g. embroidery text) stay separate.
  */
 export function isSameBasketItem(a: SavedProduct, b: SavedProduct): boolean {
-  return (
-    a.product_id === b.product_id &&
-    normalizeSavedMaterials(a) === normalizeSavedMaterials(b) &&
-    normalizeSavedFields(a) === normalizeSavedFields(b)
-  );
+  return a.product_id === b.product_id && normalizeSavedFields(a) === normalizeSavedFields(b);
 }
 
 /**
@@ -262,7 +227,7 @@ export function mergeDuplicateBasketItems(products: SavedProduct[]): SavedProduc
     if (existing) {
       existing.count += item.count;
     } else {
-      merged.push({ ...item, materials: [...item.materials], fields: [...item.fields] });
+      merged.push({ ...item, fields: [...item.fields] });
     }
   }
   return merged;

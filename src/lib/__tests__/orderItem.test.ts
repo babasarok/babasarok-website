@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest";
 import { calculatePriceForItem } from "@/lib/pricing/price";
 import { isItemValid, sanitizeItem, validateItem } from "@/lib/product/validation";
 import { resolveColorCount } from "@/lib/product/materials";
-import { fieldError, makeField, makeMaterial, makeMaterialOption, makeProduct } from "./fixtures";
+import { fieldError, makeField, makeMaterial, makeProduct } from "./fixtures";
 
 describe("calculatePriceForItem — field combinations", () => {
   it("uses the base price when there are no fields", () => {

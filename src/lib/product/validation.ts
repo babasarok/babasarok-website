@@ -1,6 +1,5 @@
-import { resolveColorCount, isMaterialInOption } from "./materials";
-import type { CmsProductMaterialOption, Field, IProduct } from "../types.svelte";
-import type { ProductMaterialValue } from "../types.svelte";
+import { resolveColorCount } from "./materials";
+import type { Field, IProduct } from "../types.svelte";
 import { isFieldVisible } from "./field";
 
 const emptyEmbroideryValue = {
@@ -21,6 +20,10 @@ function prefillField(field: Field): void {
       field.value ??= structuredClone(emptyEmbroideryValue);
       return;
     }
+    case "material": {
+      field.value ??= { material_id: "", colors: [] };
+      return;
+    }
   }
 }
 
@@ -28,22 +31,21 @@ export function sanitizeItem(item: IProduct): IProduct {
   // Prefill fields with default values if not set, to make sure validation and price calculation work correctly
   for (const field of item.fields) {
     prefillField(field);
-  }
 
-  for (const [i, option] of item.materials.material_options.entries()) {
-    const material = item.materials.values[i];
-    if (!material) {
-      continue;
-    }
+    if (field.type === "material") {
+      if (!field.value?.material_id) {
+        continue;
+      }
 
-    const count = resolveColorCount(option, item);
-    // Resolving failed, bail.
-    if (count == null) {
-      continue;
-    }
+      const count = resolveColorCount(field, item);
+      // Resolving failed, bail.
+      if (count == null) {
+        continue;
+      }
 
-    if (material.colors.length > count) {
-      material.colors = material.colors.slice(0, count);
+      if (field.value.colors.length > count) {
+        field.value.colors = field.value.colors.slice(0, count);
+      }
     }
   }
   return item;
@@ -182,63 +184,6 @@ function fieldHasError(field: Field): boolean {
   return !!field.value.error;
 }
 
-function updateMaterialWithErrors(
-  value: ProductMaterialValue,
-  option: CmsProductMaterialOption,
-  product: IProduct
-): void {
-  value.error = undefined;
-
-  if (!value.material_id) {
-    value.error = "Kötelező mező";
-    return;
-  }
-
-  const count = resolveColorCount(option, product);
-  if (!count) {
-    value.error = "Színt nem lehet választani, más érték még nincs megadva";
-    return;
-  }
-
-  if (value.colors.length < count) {
-    value.error = `${count == 1 ? "" : count.toString()} színt kell választani`;
-    return;
-  }
-}
-
-function updateMaterialsWithErrors(item: IProduct): void {
-  const options = item.materials.material_options;
-  if (options.length === 0) {
-    return;
-  }
-
-  for (let i = 0; i < options.length; i++) {
-    if (item.materials.values[i]) {
-      continue;
-    }
-
-    item.materials.values[i] = { material_id: "", colors: [] };
-  }
-
-  for (const [i, option] of options.entries()) {
-    const materialValue = item.materials.values[i];
-    if (!materialValue) {
-      continue;
-    }
-
-    if (!materialValue.material_id) {
-      materialValue.error = "Kötelező mező";
-      continue;
-    }
-
-    if (isMaterialInOption(option, materialValue.material_id)) {
-      updateMaterialWithErrors(materialValue, option, item);
-    } else {
-      materialValue.error = "Kötelező mező";
-    }
-  }
-}
-
 export function validateItem(item: IProduct): IProduct {
   for (const field of item.fields) {
     // Hidden dependent fields must not block submission; clear any stale error.
@@ -249,27 +194,12 @@ export function validateItem(item: IProduct): IProduct {
     updateFieldWithErrors(item, field);
   }
 
-  updateMaterialsWithErrors(item);
   return item;
 }
 
 export function isItemValid(item: IProduct): boolean {
   for (const field of item.fields) {
     if (isFieldVisible(field, item.fields) && fieldHasError(field)) {
-      return false;
-    }
-  }
-
-  if (item.materials.material_options.length === 0) {
-    return true;
-  }
-
-  if (item.materials.values.length < item.materials.material_options.length) {
-    return false;
-  }
-
-  for (const materialValue of item.materials.values) {
-    if (materialValue?.error) {
       return false;
     }
   }

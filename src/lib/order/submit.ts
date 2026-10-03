@@ -6,12 +6,7 @@ import { calculatePriceForItem } from "@/lib/pricing/price";
 import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
 import type { SetDiscountGroup, ResolvedSetInstance } from "@/lib/pricing/setDiscount";
 import { chargedDeliveryPrice, isDeliveryFree, orderTotal } from "@/lib/order/total";
-import type {
-  IProduct,
-  Field,
-  CmsProductMaterialOption,
-  ProductMaterialValue,
-} from "../types.svelte";
+import type { IProduct, Field } from "../types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "../data";
 import { isFieldVisible } from "../product/field";
 
@@ -91,23 +86,6 @@ function fieldIndentDepth(field: Field, fields: Field[]): number {
   return depth;
 }
 
-/** The "- material (colors)" line for one chosen material value. */
-function formatMaterialLine(
-  mv: ProductMaterialValue | undefined,
-  option: CmsProductMaterialOption | undefined,
-  i: number
-): string {
-  const material = (option?.materials ?? []).find(
-    (m) => m?.material_path.material_id === mv?.material_id
-  );
-  const név = material?.material_path.label ?? mv?.material_id ?? "Ismeretlen anyag";
-  const color =
-    mv?.colors
-      .map((x) => material?.material_path.colors?.find((c) => c.color_id === x)?.label ?? x)
-      .join(", ") ?? "";
-  return `    ${i + 1}. ${név} (${color})`;
-}
-
 /** Render a single product into the plain-text block used in the email body. */
 function shouldSubmitField(field: Field): boolean {
   if (field.type === "embroidery") {
@@ -124,7 +102,6 @@ function formatProductString(
   threadColors: CmsEnhancedEmbroideryColor[]
 ): string {
   const price = calculatePriceForItem(product);
-  const { material_options, values } = product.materials;
 
   // The forint a valid standalone discount removes from the line, so the email
   // records both the percent and the resulting amount without recomputation.
@@ -149,10 +126,6 @@ function formatProductString(
         (f) =>
           `${"  ".repeat(fieldIndentDepth(f, product.fields) + 1)}${f.label}: ${formatFieldValue(f, threadColors)}`
       ),
-
-    ...(material_options.length > 0
-      ? ["  Anyagok:", ...values.map((mv, i) => formatMaterialLine(mv, material_options[i], i))]
-      : []),
 
     "",
     `Alapár: ${price.basePrice.price?.toString() ?? ""} Ft`,

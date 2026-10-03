@@ -22,10 +22,7 @@ export function instantiateProduct(product: CmsEnhancedProduct): IProduct {
     count: 1,
     fields: clone.fields?.filter((f) => f != null) ?? [],
     materials: {
-      ...clone.materials,
-      material_options: clone.materials?.material_options?.filter((o) => o != null) ?? [],
       banned_combinations: clone.materials?.banned_combinations?.filter((c) => c != null) ?? [],
-      values: [] as Array<ProductMaterialValue | undefined>,
     },
   });
 }

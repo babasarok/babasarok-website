@@ -31,7 +31,6 @@ import { resolveImage } from "./assets";
 import { instantiateProduct } from "./order/product";
 import { findZeroPriceCombinations, type PricedCombination } from "./pricing/validCombinations";
 import { isFieldVisible } from "./product/field";
-import { findMaterialById } from "./product/materials";
 import type { Field, IProduct } from "./types.svelte";
 import {
   canSupplyStringValue,
@@ -96,12 +95,7 @@ type CmsProduct = RecursivelyNullableToUndefined<
 
 type CmsProductImage = NonNullable<NonNullable<CmsProduct["images"]>[number]>;
 type CmsProductMaterials = NonNullable<CmsProduct["materials"]>;
-type CmsProductMaterialOptions = NonNullable<
-  NonNullable<NonNullable<CmsProduct["materials"]>["material_options"]>[number]
->;
-type CmsProductMaterial = NonNullable<
-  NonNullable<NonNullable<CmsProductMaterialOptions>["materials"]>[number]
->;
+type CmsProductMaterial = NonNullable<NonNullable<NonNullable<CmsFlatField>["materials"]>[number]>;
 type CmsProductMaterialsBannedCombination = NonNullable<
   NonNullable<NonNullable<CmsProduct["materials"]>["banned_combinations"]>[number]
 >;
@@ -117,10 +111,6 @@ interface CmsEnhancedProductMaterial extends Omit<
   material_path: CmsEnhancedMaterial;
 }
 
-interface CmsEnhancedProductMaterialOptions extends Omit<CmsProductMaterialOptions, "materials"> {
-  materials: Array<CmsEnhancedProductMaterial | undefined | null> | undefined | null;
-}
-
 interface CmsEnhancedProductMaterialsBannedCombination extends Omit<
   NonNullable<CmsProductMaterialsBannedCombination>,
   "materials"
@@ -131,11 +121,7 @@ interface CmsEnhancedProductMaterialsBannedCombination extends Omit<
     | null;
 }
 
-interface CmsEnhancedProductMaterials extends Omit<
-  CmsProductMaterials,
-  "material_options" | "banned_combinations"
-> {
-  material_options: Array<CmsEnhancedProductMaterialOptions | undefined | null> | undefined | null;
+interface CmsEnhancedProductMaterials extends Omit<CmsProductMaterials, "banned_combinations"> {
   banned_combinations:
     Array<CmsEnhancedProductMaterialsBannedCombination | undefined | null> | undefined | null;
 }
@@ -475,21 +461,7 @@ function describeZeroCombo(combo: PricedCombination, item: IProduct): string {
     .filter((field) => isFieldVisible(field, item.fields))
     .map((field) => describeFieldChoice(field));
 
-  const materialDescriptions = combo.product.materials.values
-    .filter((value) => value != null && value.material_id !== "")
-    .map((value) => {
-      const material = findMaterialById(item, value?.material_id ?? "");
-      return material?.material_path.label ?? value?.material_id ?? "?";
-    });
-
-  const parts = [
-    ...fieldDescriptions,
-    ...(materialDescriptions.length > 0
-      ? [
-          `${materialDescriptions.length === 1 ? "Anyag: " : "Anyagok: "}${materialDescriptions.join(", ")}`,
-        ]
-      : []),
-  ];
+  const parts = [...fieldDescriptions];
 
   const price = combo.perMeterPrice === undefined ? "0 Ft" : "0 Ft/m";
   return `  - ${parts.join(", ") || "nincs opció"} → ${price}`;
@@ -555,33 +527,16 @@ function assertValidProductReferences(
     }
   }
 
-  for (const material of product.materials?.material_options ?? []) {
-    const colorCount = material?.color_count;
-    // A numeric literal is a plain count; anything else is a field reference.
-    if (!material || !colorCount || !Number.isNaN(Number.parseFloat(colorCount))) {
-      continue;
-    }
-    const target = fieldByName.get(colorCount);
-    if (!target) {
-      throw new Error(
-        `${where}: a "${material.label}" anyag "color_count" hivatkozása nem létező mezőre mutat: "${colorCount}".`
-      );
-    }
-    if (!canSupplyStringValue(target.type)) {
-      throw new Error(
-        `${where}: a "${material.label}" anyag "color_count" forrásmezője ("${colorCount}") típusa "${target.type}", ami nem adhat számértéket.`
-      );
-    }
-  }
-
   for (const field of fields) {
     if (field.type !== "material" || !field.color_count) {
       continue;
     }
+
     // A numeric literal is a plain count; anything else is a field reference.
     if (!Number.isNaN(Number.parseFloat(field.color_count))) {
       continue;
     }
+
     const target = fieldByName.get(field.color_count);
     if (!target) {
       throw new Error(
@@ -637,24 +592,6 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
           }))
       ),
       materials: {
-        material_options: await Promise.all(
-          (product.materials?.material_options ?? [])
-            .filter((option) => option != null)
-            .map(async (option) => {
-              return {
-                label: option.label,
-                color_count: option.color_count,
-                materials: await Promise.all(
-                  (option.materials ?? [])
-                    .filter((material) => material != null)
-                    .map(async (material) => ({
-                      price: material.price,
-                      material_path: await transformMaterial(material.material_path),
-                    }))
-                ),
-              };
-            })
-        ),
         banned_combinations: await Promise.all(
           (product.materials?.banned_combinations ?? [])
             .filter((combination) => combination != null)

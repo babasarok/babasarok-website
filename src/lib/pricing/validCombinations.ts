@@ -223,7 +223,7 @@ function matchesBanned(
  * `OrderItemMaterials.svelte`).
  */
 export function materialCombinations(product: IProduct): Array<ProductMaterialValue[]> {
-  const options = product.materials.material_options;
+  const options = product.fields.filter((f) => f.type === "material");
   if (options.length === 0) {
     return [[]];
   }

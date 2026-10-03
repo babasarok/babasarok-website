@@ -10,7 +10,6 @@
  */
 import type {
   CmsProductMaterial,
-  CmsProductMaterialOption,
   Field,
   EmbroideryValue,
   IProduct,
@@ -88,23 +87,6 @@ export function makeMaterial(opts: MaterialOpts): CmsProductMaterial {
   } as unknown as CmsProductMaterial;
 }
 
-export interface MaterialOptionOpts {
-  label?: string;
-  /** Number of selectable colors, or the field `name` that supplies it. */
-  color_count?: string;
-  materials?: CmsProductMaterial[];
-}
-
-/** Build a material option (slot): a label, its colour count, and the material
- * choices available for that slot. */
-export function makeMaterialOption(opts: MaterialOptionOpts = {}): CmsProductMaterialOption {
-  return {
-    label: opts.label ?? "",
-    color_count: opts.color_count ?? "1",
-    materials: opts.materials ?? [],
-  };
-}
-
 export interface ProductOpts {
   title?: string;
   uuid?: string;
@@ -117,7 +99,6 @@ export interface ProductOpts {
     sourceField: string;
   };
   fields?: Field[];
-  material_options?: CmsProductMaterialOption[];
   values?: Array<ProductMaterialValue | undefined>;
   banned_combinations?: { materials: { material_path: { material_id: string } }[] }[];
 }
@@ -136,8 +117,6 @@ export function makeProduct(opts: ProductOpts = {}): IProduct {
     length_based_pricing: opts.length_based_pricing ?? undefined,
     fields: opts.fields ?? [],
     materials: {
-      material_options: opts.material_options ?? [],
-      values: opts.values ?? [],
       banned_combinations: opts.banned_combinations ?? [],
     },
   } as unknown as IProduct;
