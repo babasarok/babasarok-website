@@ -88,6 +88,18 @@ function getFieldPrice(field: Field, product: IProduct): PricePart | null {
         price: field.price ?? undefined,
       };
     }
+    case "material": {
+      // A `material` field picks one of its own `materials`; its price comes
+      // from that entry (not the flat field `price`). Unchosen → no price, so
+      // it contributes nothing until the buyer selects a material.
+      const material = (field.materials ?? []).find(
+        (m) => m?.material_path.material_id === field.value?.material_id
+      );
+      return {
+        label: field.label || field.name,
+        price: material?.price ?? undefined,
+      };
+    }
     default: {
       return null;
     }

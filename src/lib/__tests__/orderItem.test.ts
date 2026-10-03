@@ -188,6 +188,108 @@ describe("calculatePriceForItem — materials", () => {
   });
 });
 
+describe("calculatePriceForItem — material fields", () => {
+  it("adds the picked material's price under the field label", () => {
+    const price = calculatePriceForItem(
+      makeProduct({
+        price: 1000,
+        fields: [
+          makeField({
+            name: "anyag",
+            type: "material",
+            label: "Anyag",
+            materials: [makeMaterial({ material_id: "teddy", price: 2000 })],
+            value: { material_id: "teddy", colors: [] },
+          }),
+        ],
+      })
+    );
+    expect(price.unitPrice).toBe(3000);
+    expect(price.options).toContainEqual({ label: "Anyag", price: 2000 });
+  });
+
+  it("contributes nothing when no material is picked yet", () => {
+    const price = calculatePriceForItem(
+      makeProduct({
+        price: 1000,
+        fields: [
+          makeField({
+            name: "anyag",
+            type: "material",
+            label: "Anyag",
+            materials: [makeMaterial({ material_id: "teddy", price: 2000 })],
+          }),
+        ],
+      })
+    );
+    expect(price.unitPrice).toBe(1000);
+    // The unpriced part is present (like an unselected radio) but filtered out
+    // of the breakdown, so it contributes nothing.
+    expect(price.options).toEqual([{ label: "Anyag", price: undefined }]);
+  });
+
+  it("prices each material field from its own list", () => {
+    const pool = [
+      makeMaterial({ material_id: "teddy", price: 2000 }),
+      makeMaterial({ material_id: "minky", price: 2500 }),
+    ];
+    const price = calculatePriceForItem(
+      makeProduct({
+        price: 0,
+        fields: [
+          makeField({
+            name: "anyag1",
+            type: "material",
+            label: "Anyag 1",
+            materials: pool,
+            value: { material_id: "teddy", colors: [] },
+          }),
+          makeField({
+            name: "anyag2",
+            type: "material",
+            label: "Anyag 2",
+            materials: pool,
+            value: { material_id: "minky", colors: [] },
+          }),
+        ],
+      })
+    );
+    expect(price.unitPrice).toBe(4500);
+    expect(price.options).toContainEqual({ label: "Anyag 1", price: 2000 });
+    expect(price.options).toContainEqual({ label: "Anyag 2", price: 2500 });
+  });
+
+  it("scales a material field's price with length-based pricing", () => {
+    const price = calculatePriceForItem(
+      makeProduct({
+        price: 0,
+        length_based_pricing: { sourceField: "sizes" },
+        fields: [
+          makeField({
+            name: "sizes",
+            type: "radio",
+            items: [{ value: "300" }],
+            value: { value: "300" },
+          }),
+          makeField({
+            name: "anyag",
+            type: "material",
+            label: "Anyag",
+            materials: [makeMaterial({ material_id: "velur", price: 1000 })],
+            value: { material_id: "velur", colors: [] },
+          }),
+        ],
+      })
+    );
+    if (!price.priced_by_length) {
+      throw new Error("expected length-based price");
+    }
+    expect(price.per_meter_price).toBe(1000);
+    expect(price.unitPrice).toBe(3000);
+    expect(price.totalPrice).toBe(3000);
+  });
+});
+
 describe("calculatePriceForItem — length-based pricing", () => {
   it("derives length from the source field (cm → m) and scales the price", () => {
     const price = calculatePriceForItem(

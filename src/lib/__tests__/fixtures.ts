@@ -39,7 +39,7 @@ export interface FieldOpts {
   items?: FieldItem[];
   allow_custom_value?: boolean;
   regex?: string;
-  value?: ValueWithError | ToggleValue | EmbroideryValue;
+  value?: ValueWithError | ToggleValue | EmbroideryValue | ProductMaterialValue;
   depends_on?: { field?: string | null; value?: string | null } | null;
   materials?: CmsProductMaterial[];
 }

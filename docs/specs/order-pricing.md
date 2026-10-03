@@ -11,8 +11,9 @@ treated as contributing nothing rather than producing a partial price.
 
 The system SHALL compute an item's unit price as the sum of the product's base
 price, the prices of all visible and selected priced configurable fields, and
-the prices of all required material selections. Each part's price MUST be
-rounded to whole units before summing.
+the prices of all required material selections (whether carried by standalone
+`materials` slots or by `material` fields). Each part's price MUST be rounded
+to whole units before summing.
 
 - **Scenario: Base price plus options**
   - WHEN a buyer selects priced options (e.g. a fabric variant, an extra
@@ -23,7 +24,8 @@ rounded to whole units before summing.
 - **Scenario: Material prices**
   - WHEN a product requires materials and the buyer selects them
   - THEN each selected material contributes its price to the unit price, with
-    one labeled line per material slot
+    one labeled line per material slot (or per `material` field, labeled by
+    the field; an as-yet-unchosen material selection contributes nothing)
 
 ### Quantity
 
