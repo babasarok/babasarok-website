@@ -1,4 +1,5 @@
 import {
+  Group,
   ToggleField,
   GroupListField,
   TextField,
@@ -615,6 +616,19 @@ export const ProductCollection: Collection = {
           name: "regex",
           description: "Opcionális reguláris kifejezés, aminek a mező értékének meg kell felelnie.",
           label: "Érvényességi minta (regex)",
+          ui: {
+            component(props) {
+              // A material field's value is a material + colour pick, not free text.
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              const typeValue = getValue(props, "type");
+              if (typeValue === "material") {
+                return null;
+              }
+
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+              return TextField(props as any);
+            },
+          },
         },
         {
           type: "string",
@@ -636,6 +650,11 @@ export const ProductCollection: Collection = {
                 return null;
               }
 
+              // A material field's value is a material + colour pick, no placeholder.
+              if (typeValue === "material") {
+                return null;
+              }
+
               // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
               return TextField(props as any);
             },
@@ -647,6 +666,20 @@ export const ProductCollection: Collection = {
           label: "Feltételes megjelenítés",
           description:
             "Ha be van állítva, ez a mező csak akkor jelenik meg a rendelési felületen, ha a kiválasztott másik mező a megadott értékre van állítva.",
+          ui: {
+            component(props) {
+              // A material field is always shown (its slot is unconditional),
+              // so conditional display doesn't apply to it.
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              const typeValue = getValue(props, "type");
+              if (typeValue === "material") {
+                return null;
+              }
+
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+              return Group(props as any);
+            },
+          },
           fields: [
             {
               type: "string",
