@@ -124,7 +124,7 @@ export interface FieldBehavior {
    * disabled, blank). This is the value column of the basket summary; the
    * summary hides rows whose value is `undefined`.
    */
-  formatValue(field: Field, ctx: FieldContext): string | undefined;
+  formatValue(field: Field, ctx: Omit<FieldContext, "banned">): string | undefined;
 
   /**
    * Whether the submitted order email gets a line for this field: a field is

@@ -31,7 +31,7 @@
   });
 
   /** The selected, human-readable value of a field, or `undefined` to hide it. */
-  const fieldCtx: FieldContext = $derived({ fields: product.fields, threadColors });
+  const fieldCtx: Omit<FieldContext, "banned"> = $derived({ fields: product.fields, threadColors });
 
   const fieldRows = $derived(
     product.fields
