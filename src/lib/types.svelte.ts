@@ -74,6 +74,9 @@ export type Field = { [T in ProductFieldType]: FieldOf<T> }[ProductFieldType];
 
 /** Field types with the legacy string-valued `value` shape. */
 export type StringValueField = Extract<Field, { type: StringValuedFieldType }>;
+
+/** The `material` field variant (picks one of its `materials` plus colours). */
+export type MaterialField = Extract<Field, { type: "material" }>;
 export type ProductMaterials = Omit<CmsProductMaterials, "values" | "material_options"> & {
   values: Array<ProductMaterialValue | undefined>;
   material_options: CmsProductMaterialOption[];

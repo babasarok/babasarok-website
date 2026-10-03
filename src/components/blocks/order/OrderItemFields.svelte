@@ -6,6 +6,7 @@
   import { slide } from "svelte/transition";
   import Color from "./common/Color.svelte";
   import Switch from "./common/Switch.svelte";
+  import OrderItemMaterialField from "./OrderItemMaterialField.svelte";
   import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
   import type { IProduct, StringValueField } from "@/lib/types.svelte";
   import { isFieldVisible } from "@/lib/product/field";
@@ -330,6 +331,8 @@
                 </div>
               {/if}
             </div>
+          {:else if field.type === "material"}
+            <OrderItemMaterialField {product} field={field} {onChange} />
           {:else}
             <p>--</p>
           {/if}
