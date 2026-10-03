@@ -1,53 +1,42 @@
 import { defineBehavior } from "./index";
 
 /**
- * TODO(field-behavior): real behaviour for the `toggle` field type. Stub for now
- * so the {@link FIELD_BEHAVIORS} registry type-checks; the body is the per-type
- * logic extracted from the scattered `switch (field.type)` sites.
+ * Behaviour of the `toggle` field type: a boolean switch whose value is always
+ * either on or off — there is no blank state.
+ *
+ * The off state is *hidden* from the basket summary (only an on toggle shows
+ * "Igen") but still *recorded* by the order email as "Nem", and it contributes
+ * an explicit `price: 0` part so the price breakdown always lists the field.
  */
 export const toggleBehavior = defineBehavior("toggle", {
   normalize: (f, _ctx) => {
-    void f;
+    f.value ??= { value: false };
   },
-  resolveValue: (f) => {
-    void f;
-    return;
+  resolveValue: (f) => f.value?.value,
+  price: (f) =>
+    f.value?.value === undefined
+      ? undefined
+      : { label: f.label || f.name, price: f.value.value ? (f.price ?? undefined) : 0 },
+  enumerate: (f) => [
+    { ...f, value: { value: false } },
+    { ...f, value: { value: true } },
+  ],
+  fillFromParams: (f, raw) => {
+    f.value = { value: raw === "true" || raw === "1" };
   },
-  price: (f) => {
-    void f;
-    return;
-  },
-  enumerate: (f) => {
-    void f;
-    return [f];
-  },
-  fillFromParams: (f, _raw) => {
-    void f;
-  },
-  toSaved: (f) => {
-    void f;
-    return;
-  },
+  toSaved: (f) => (f.value ? { value: f.value.value } : undefined),
   validate: (f, _ctx) => {
-    void f;
+    // A toggle always holds a boolean, so there is nothing to require.
+    f.value ??= { value: false };
+    f.value.error = undefined;
   },
-  hasError: (f) => {
-    void f;
-    return false;
-  },
+  hasError: (f) => (f.value ? !!f.value.error : false),
   clearErrors: (f) => {
-    void f;
+    if (f.value) {
+      f.value.error = undefined;
+    }
   },
-  formatValue: (f, _ctx) => {
-    void f;
-    return;
-  },
-  includeInEmail: (f) => {
-    void f;
-    return false;
-  },
-  formatForEmail: (f, _ctx) => {
-    void f;
-    return "";
-  },
+  formatValue: (f, _ctx) => (f.value?.value ? "Igen" : undefined),
+  includeInEmail: (f) => !f.optional || !!f.value?.value,
+  formatForEmail: (f, _ctx) => (f.value?.value ? "Igen" : "Nem"),
 });
