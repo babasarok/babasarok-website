@@ -483,6 +483,23 @@ describe("validateItem / isItemValid", () => {
     expect(isItemValid(item)).toBe(false);
   });
 
+  it("treats a material field holding an unknown material id as unselected", () => {
+    const item = validateItem(
+      makeProduct({
+        fields: [
+          makeField({
+            name: "anyag",
+            type: "material",
+            materials: [makeMaterial({ material_id: "m" })],
+            value: { material_id: "ghost", colors: ["x"] },
+          }),
+        ],
+      })
+    );
+    expect(fieldError(item.fields[0])).toBe("Kötelező mező");
+    expect(isItemValid(item)).toBe(false);
+  });
+
   it("flags every material field that completes a banned combination", () => {
     const pool = [makeMaterial({ material_id: "m" }), makeMaterial({ material_id: "n" })];
     const item = validateItem(
@@ -568,7 +585,9 @@ describe("sanitizeItem", () => {
   });
 
   it("prefills a material field as empty", () => {
-    const item = sanitizeItem(makeProduct({ fields: [makeField({ name: "anyag", type: "material" })] }));
+    const item = sanitizeItem(
+      makeProduct({ fields: [makeField({ name: "anyag", type: "material" })] })
+    );
     expect(item.fields[0].value).toEqual({ material_id: "", colors: [] });
   });
 

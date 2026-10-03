@@ -100,7 +100,6 @@ export interface ProductOpts {
     sourceField: string;
   };
   fields?: Field[];
-  values?: Array<ProductMaterialValue | undefined>;
   banned_combinations?: { materials: { material_path: { material_id: string } }[] }[];
 }
 
@@ -121,6 +120,47 @@ export function makeProduct(opts: ProductOpts = {}): IProduct {
       banned_combinations: opts.banned_combinations ?? [],
     },
   } as unknown as IProduct;
+}
+
+/**
+ * A product whose material selections are expressed as `material` fields
+ * (`anyag1`…`anyagN`, in `values` order). Each field offers the picked
+ * material by default; `offer` overrides the offered ids per field. All other
+ * `makeProduct` opts pass through, and plain `fields` are kept alongside the
+ * generated material fields.
+ */
+export interface MaterialProductOpts {
+  values: ProductMaterialValue[];
+  offer?: string[][];
+  title?: string;
+  uuid?: string;
+  product_id?: string;
+  count?: number;
+  price?: number;
+  discount?: number | null;
+  discount_valid_until?: string | null;
+  fields?: Field[];
+}
+
+/** Build an `IProduct` order item with material selections (`material` fields). */
+export function makeMaterialProduct(opts: MaterialProductOpts): IProduct {
+  const { values, offer, fields, ...rest } = opts;
+  return makeProduct({
+    ...rest,
+    fields: [
+      ...(fields ?? []),
+      ...values.map((value, i) =>
+        makeField({
+          name: `anyag${i + 1}`,
+          type: "material",
+          materials: (offer?.[i] ?? [value.material_id]).map((id) =>
+            makeMaterial({ material_id: id })
+          ),
+          value,
+        })
+      ),
+    ],
+  });
 }
 
 /** Build a delivery method. */

@@ -1,4 +1,5 @@
 import type { Field, IProduct } from "../types.svelte";
+import { isMaterialInOption } from "../product/materials";
 
 /**
  * Prefill an order item from URL query parameters, so product pages can be
@@ -17,6 +18,10 @@ import type { Field, IProduct } from "../types.svelte";
  *   pattern: a product field literally named `<name>_color` /
  * - `<materialField>_colors=<c1,c2,…>` — comma-separated colour ids for a
  *   `material` field.
+ *
+ * Prefilled values are validated like normal selections: an unknown field
+ * name, material id, or colour outside the chosen material's palette is
+ * ignored, so the configurator starts unselected for that part.
  */
 export function prefillFromParams(item: IProduct, params: URLSearchParams): void {
   const count = params.get("count");
@@ -66,6 +71,44 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
       }
     }
   }
+
+  discardUnofferedMaterialColors(item);
+}
+
+/**
+ * Validate the material selections a prefill produced: colours picked without
+ * a resolvable material are meaningless (the picker resets colours whenever a
+ * material is chosen), and colours are limited to the chosen material's own
+ * palette. Runs after the param loop so `<name>` and `<name>_colors` may
+ * arrive in any order.
+ */
+function discardUnofferedMaterialColors(item: IProduct): void {
+  for (const field of item.fields) {
+    if (field.type !== "material") {
+      continue;
+    }
+    const value = field.value;
+    if (!value) {
+      continue;
+    }
+    const material = (field.materials ?? []).find(
+      (m) => m?.material_path.material_id === value.material_id
+    );
+    if (!material) {
+      // Unknown (or no) material id: ignore the prefill entirely — per spec
+      // the configurator starts unselected for that part.
+      field.value = undefined;
+      continue;
+    }
+    // Without a listed palette there is nothing to validate against (the
+    // colour picker is hidden when a material offers no colours).
+    const palette = material.material_path.colors;
+    if (!palette?.length) {
+      continue;
+    }
+    const offered = new Set(palette.map((color) => color.color_id));
+    value.colors = value.colors.filter((color) => offered.has(color));
+  }
 }
 
 /**
@@ -104,6 +147,11 @@ function applyFieldParam(field: Field, raw: string): void {
       return;
     }
     case "material": {
+      // An unknown material id is ignored (deep-link spec: prefilled values
+      // are validated like normal selections), so the field stays unselected.
+      if (!isMaterialInOption(field, raw)) {
+        return;
+      }
       field.value ??= { material_id: "", colors: [] };
       field.value.material_id = raw;
       return;

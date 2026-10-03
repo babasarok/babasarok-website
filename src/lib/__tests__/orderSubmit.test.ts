@@ -14,7 +14,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { submitOrder, type OrderDetails } from "@/lib/order/submit";
 import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
 import { chargedDeliveryPrice, orderTotal } from "@/lib/order/total";
-import { makeDelivery, makeField, makeMaterial, makeProduct } from "./fixtures";
+import {
+  makeDelivery,
+  makeField,
+  makeMaterial,
+  makeMaterialProduct,
+  makeProduct,
+} from "./fixtures";
 import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
 
 afterEach(() => {
@@ -473,8 +479,8 @@ describe("set-discount summary", () => {
     uuid: string,
     product_id: string,
     title: string
-  ): ReturnType<typeof makeProduct> =>
-    makeProduct({
+  ): ReturnType<typeof makeMaterialProduct> =>
+    makeMaterialProduct({
       uuid,
       product_id,
       title,
@@ -496,14 +502,14 @@ describe("set-discount summary", () => {
 
   it("shows the nominal set amount when clamped to the covered subtotal", async () => {
     // Two 300 Ft members can only absorb 600 Ft of a 2000 Ft set discount.
-    const cheapNest = makeProduct({
+    const cheapNest = makeMaterialProduct({
       uuid: "u1",
       product_id: "nest",
       title: "Babafészek",
       price: 300,
       values: [{ material_id: "cotton", colors: ["red"] }],
     });
-    const cheapBlanket = makeProduct({
+    const cheapBlanket = makeMaterialProduct({
       uuid: "u2",
       product_id: "blanket",
       title: "Takaró",
@@ -541,8 +547,8 @@ describe("submitted total equals the shared order total (visible == charged)", (
     uuid: string,
     product_id: string,
     price: number
-  ): ReturnType<typeof makeProduct> =>
-    makeProduct({
+  ): ReturnType<typeof makeMaterialProduct> =>
+    makeMaterialProduct({
       uuid,
       product_id,
       title: product_id,

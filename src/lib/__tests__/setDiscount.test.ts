@@ -23,49 +23,17 @@ import {
   type SetDiscountGroup,
 } from "@/lib/pricing/setDiscount";
 import type { Field, IProduct, ProductMaterialValue } from "@/lib/types.svelte";
-import { makeProduct, makeMaterial, makeField } from "./fixtures";
+import {
+  makeProduct,
+  makeMaterial,
+  makeField,
+  makeMaterialProduct,
+} from "./fixtures";
 
 const val = (material_id: string, colors: string[]): ProductMaterialValue => ({
   material_id,
   colors,
 });
-
-/**
- * A product whose material selections are expressed as `material` fields
- * (`anyag1`…`anyagN`, in `values` order). Each field offers the picked
- * material by default; `offer` overrides the offered ids per field. All other
- * `makeProduct` opts pass through, and plain `fields` are kept alongside the
- * generated material fields.
- */
-const makeMaterialProduct = (opts: {
-  values: ProductMaterialValue[];
-  offer?: string[][];
-  fields?: Field[];
-  uuid?: string;
-  product_id?: string;
-  count?: number;
-  price?: number;
-  discount?: number | null;
-  discount_valid_until?: string | null;
-}): IProduct => {
-  const { values, offer, fields, ...rest } = opts;
-  return makeProduct({
-    ...rest,
-    fields: [
-      ...(fields ?? []),
-      ...values.map((value, i) =>
-        makeField({
-          name: `anyag${i + 1}`,
-          type: "material",
-          materials: (offer?.[i] ?? [value.material_id]).map((id) =>
-            makeMaterial({ material_id: id })
-          ),
-          value,
-        })
-      ),
-    ],
-  });
-};
 
 /** The formed instances (formation only: set + members), ignoring the money. */
 const formed = (

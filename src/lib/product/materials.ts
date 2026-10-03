@@ -1,9 +1,19 @@
-import type { Field, IProduct, MaterialField } from "../types.svelte";
+import type { CmsProductMaterial, Field, IProduct, MaterialField } from "../types.svelte";
 import { findFieldByName, resolveNumericValue } from "./field";
+
+/** The option in `field`'s `materials` list whose material is `materialId`. */
+export function findMaterialOption(
+  field: Pick<MaterialField, "materials">,
+  materialId: string | undefined
+): CmsProductMaterial | undefined {
+  return (
+    (field.materials ?? []).find((m) => m?.material_path.material_id === materialId) ?? undefined
+  );
+}
 
 /** Whether `materialId` is one of the choices offered by the material field. */
 export function isMaterialInOption(option: MaterialField, materialId: string): boolean {
-  return (option.materials ?? []).some((m) => m?.material_path.material_id === materialId);
+  return findMaterialOption(option, materialId) !== undefined;
 }
 
 export function resolveColorCount(
@@ -143,7 +153,9 @@ export function bannedMaterialFieldNames(fields: Field[], banned: string[][]): S
     if (!id) {
       continue;
     }
-    if (banned.some((combination) => combination.includes(id) && isMultisubset(counts, combination))) {
+    if (
+      banned.some((combination) => combination.includes(id) && isMultisubset(counts, combination))
+    ) {
       names.add(field.name);
     }
   }

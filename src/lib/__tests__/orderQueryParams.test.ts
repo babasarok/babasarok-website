@@ -91,6 +91,71 @@ describe("prefillFromParams", () => {
     expect(field.value).toEqual({ material_id: "cotton", colors: ["red", "blue"] });
   });
 
+  it("ignores a material id the field does not offer, along with its colours", () => {
+    const item = makeProduct({
+      fields: [
+        makeField({
+          name: "anyag1",
+          type: "material",
+          materials: [makeMaterial({ material_id: "cotton" })],
+        }),
+      ],
+    });
+    prefillFromParams(item, new URLSearchParams("anyag1=unknown&anyag1_colors=x"));
+    expect(item.fields[0].value).toBeUndefined();
+  });
+
+  it("ignores colours that arrive before an unknown material id", () => {
+    const item = makeProduct({
+      fields: [
+        makeField({
+          name: "anyag1",
+          type: "material",
+          materials: [makeMaterial({ material_id: "cotton" })],
+        }),
+      ],
+    });
+    prefillFromParams(item, new URLSearchParams("anyag1_colors=x&anyag1=unknown"));
+    expect(item.fields[0].value).toBeUndefined();
+  });
+
+  it("ignores colours prefilled without a material selection", () => {
+    const item = makeProduct({
+      fields: [
+        makeField({
+          name: "anyag",
+          type: "material",
+          materials: [makeMaterial({ material_id: "cotton" })],
+        }),
+      ],
+    });
+    prefillFromParams(item, new URLSearchParams("anyag_colors=red"));
+    expect(item.fields[0].value).toBeUndefined();
+  });
+
+  it("keeps prefilled colours the chosen material offers and drops unknown ones", () => {
+    const item = makeProduct({
+      fields: [
+        makeField({
+          name: "anyag",
+          type: "material",
+          materials: [
+            makeMaterial({
+              material_id: "cotton",
+              colors: [{ color_id: "red" }, { color_id: "blue" }],
+            }),
+          ],
+        }),
+      ],
+    });
+    prefillFromParams(item, new URLSearchParams("anyag=cotton&anyag_colors=red,zzz,blue"));
+    const field = item.fields[0];
+    if (field.type !== "material") {
+      throw new Error("expected material field");
+    }
+    expect(field.value).toEqual({ material_id: "cotton", colors: ["red", "blue"] });
+  });
+
   it("ignores material params that name no field", () => {
     const item = makeProduct({
       fields: [makeField({ name: "szin", type: "color", items: [{ value: "piros" }] })],

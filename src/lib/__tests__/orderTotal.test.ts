@@ -17,7 +17,7 @@ import {
 import { chargedDeliveryPrice, isDeliveryFree, orderTotal } from "@/lib/order/total";
 import type { IProduct, ProductMaterialValue } from "@/lib/types.svelte";
 import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
-import { makeDelivery, makeProduct } from "./fixtures";
+import { makeDelivery, makeMaterialProduct, makeProduct } from "./fixtures";
 
 const val = (material_id: string, colors: string[]): ProductMaterialValue => ({
   material_id,
@@ -40,9 +40,9 @@ const setGroups5k: SetDiscountGroup[] = [
   },
 ];
 const nest = (uuid: string, price: number): IProduct =>
-  makeProduct({ uuid, product_id: "nest", price, values: red });
+  makeMaterialProduct({ uuid, product_id: "nest", price, values: red });
 const blanket = (uuid: string, price: number): IProduct =>
-  makeProduct({ uuid, product_id: "blanket", price, values: red });
+  makeMaterialProduct({ uuid, product_id: "blanket", price, values: red });
 
 describe("resolveBasketPricing", () => {
   it("sums the items subtotal, treating unpriced parts as zero", () => {

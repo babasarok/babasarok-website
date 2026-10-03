@@ -1,4 +1,9 @@
-import { resolveColorCount, bannedCombinationIds, bannedMaterialFieldNames } from "./materials";
+import {
+  bannedCombinationIds,
+  bannedMaterialFieldNames,
+  isMaterialInOption,
+  resolveColorCount,
+} from "./materials";
 import type { Field, IProduct } from "../types.svelte";
 import { isFieldVisible } from "./field";
 
@@ -51,13 +56,16 @@ export function sanitizeItem(item: IProduct): IProduct {
   return item;
 }
 
-function updateFieldWithErrors(product: IProduct, item: Field): void {
+function updateFieldWithErrors(product: IProduct, item: Field, banned: string[][]): void {
   if (item.type === "material") {
     // A material field needs the full product: `color_count` may name another
     // field, and the banned-combination rule spans all material fields.
     item.value ??= { material_id: "", colors: [] };
     item.value.error = undefined;
-    if (!item.value.material_id) {
+    // Backstop for every path that can set a material (deep links, restored
+    // baskets, future callers): an id the field does not offer counts as no
+    // selection, mirroring the basket-restore membership check.
+    if (!item.value.material_id || !isMaterialInOption(item, item.value.material_id)) {
       item.value.error = "Kötelező mező";
       return;
     }
@@ -72,7 +80,7 @@ function updateFieldWithErrors(product: IProduct, item: Field): void {
     }
     // Once the selection is otherwise complete, flag every field whose
     // material completes a banned combination (form-level enforcement).
-    if (bannedMaterialFieldNames(product.fields, bannedCombinationIds(product)).has(item.name)) {
+    if (bannedMaterialFieldNames(product.fields, banned).has(item.name)) {
       item.value.error = "Ez az anyagkombináció nem rendelhető";
     }
     return;
@@ -191,25 +199,22 @@ function fieldHasError(field: Field): boolean {
 }
 
 export function validateItem(item: IProduct): IProduct {
+  // The banned-combination rule spans all material fields, so resolve the
+  // product's banned id multisets once instead of per field.
+  const banned = bannedCombinationIds(item);
   for (const field of item.fields) {
     // Hidden dependent fields must not block submission; clear any stale error.
     if (!isFieldVisible(field, item.fields)) {
       clearFieldErrors(field);
       continue;
     }
-    updateFieldWithErrors(item, field);
+    updateFieldWithErrors(item, field, banned);
   }
 
   return item;
 }
 
 export function isItemValid(item: IProduct): boolean {
-  for (const field of item.fields) {
-    if (isFieldVisible(field, item.fields) && fieldHasError(field)) {
-      return false;
-    }
-  }
-
   for (const field of item.fields) {
     if (isFieldVisible(field, item.fields) && fieldHasError(field)) {
       return false;

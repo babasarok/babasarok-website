@@ -31,6 +31,7 @@ import { resolveImage } from "./assets";
 import { instantiateProduct } from "./order/product";
 import { findZeroPriceCombinations, type PricedCombination } from "./pricing/validCombinations";
 import { isFieldVisible } from "./product/field";
+import { findMaterialOption } from "./product/materials";
 import type { Field, IProduct } from "./types.svelte";
 import {
   canSupplyStringValue,
@@ -133,8 +134,7 @@ type CmsFlatField = NonNullable<NonNullable<CmsProduct["fields"]>[number]>;
  * discriminated union (see docs/embroidery-field-plan.md).
  *
  * A `material` field carries a `color_count` plus a `materials` list whose
- * `material_path` is resolved to the enhanced material document — the same
- * element shape the standalone `materials` slots use.
+ * `material_path` is resolved to the enhanced material document.
  */
 type CmsField = Omit<
   {
@@ -461,7 +461,7 @@ function describeZeroCombo(combo: PricedCombination, item: IProduct): string {
     .filter((field) => isFieldVisible(field, item.fields))
     .map((field) => describeFieldChoice(field));
 
-  const parts = [...fieldDescriptions];
+  const parts = fieldDescriptions;
 
   const price = combo.perMeterPrice === undefined ? "0 Ft" : "0 Ft/m";
   return `  - ${parts.join(", ") || "nincs opció"} → ${price}`;
@@ -479,9 +479,7 @@ function describeFieldChoice(field: Field): string {
       return field.value?.value ? `${field.label}: igen` : "";
     }
     case "material": {
-      const material = (field.materials ?? []).find(
-        (m) => m?.material_path.material_id === field.value?.material_id
-      );
+      const material = findMaterialOption(field, field.value?.material_id);
       return material ? `${field.label}: ${material.material_path.label}` : "";
     }
     default: {

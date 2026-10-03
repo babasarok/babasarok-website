@@ -1,6 +1,10 @@
 import type { Field, IProduct } from "../types.svelte";
 import { isFieldVisible } from "../product/field";
-import { bannedCombinationIds, completesBannedCombination } from "../product/materials";
+import {
+  bannedCombinationIds,
+  completesBannedCombination,
+  findMaterialOption,
+} from "../product/materials";
 
 /**
  * The "valid combination" check: a product may not be sellable at 0 Ft.
@@ -108,8 +112,8 @@ function dependencyOrder(fields: Field[]): { order: Field[]; cyclic: Set<string>
  */
 export function fieldCombinations(
   fields: Field[],
-  lengthSourceName?: string,
-  banned: string[][] = []
+  banned: string[][],
+  lengthSourceName?: string
 ): FieldCombo[] {
   const { order, cyclic } = dependencyOrder(fields);
 
@@ -216,7 +220,7 @@ export function findZeroPriceCombinations(product: IProduct): PricedCombination[
   const banned = bannedCombinationIds(product);
 
   const zeroPrices: PricedCombination[] = [];
-  for (const fieldCombo of fieldCombinations(product.fields, lengthSourceName, banned)) {
+  for (const fieldCombo of fieldCombinations(product.fields, banned, lengthSourceName)) {
     const item = combineProduct(product, fieldCombo);
     const combo: PricedCombination = {
       product: item,
@@ -277,9 +281,7 @@ function fieldPrice(field: Field, product: IProduct): number | undefined {
       return field.price ?? undefined;
     }
     case "material": {
-      const material = (field.materials ?? []).find(
-        (m) => m?.material_path.material_id === field.value?.material_id
-      );
+      const material = findMaterialOption(field, field.value?.material_id);
       return material?.price ?? undefined;
     }
     default: {

@@ -1,7 +1,9 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { calculatePriceForItem } from "@/lib/pricing/price";
+  import { formatMaterialValue } from "@/lib/pricing/format";
   import { isFieldVisible } from "@/lib/product/field";
+  import { findMaterialOption } from "@/lib/product/materials";
   import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
   import type { Field, IProduct, MaterialField } from "@/lib/types.svelte";
 
@@ -73,15 +75,7 @@
     if (!value?.material_id) {
       return undefined;
     }
-    const material = (field.materials ?? []).find(
-      (m) => m?.material_path.material_id === value.material_id
-    )?.material_path;
-
-    const name = material?.label ?? value.material_id;
-    const colors = value.colors
-      .map((id) => material?.colors?.find((c) => c.color_id === id)?.label ?? id)
-      .join(", ");
-    return colors ? `${name} (${colors.trim()})` : name;
+    return formatMaterialValue(findMaterialOption(field, value.material_id), value);
   }
 </script>
 

@@ -3,12 +3,14 @@
  * it to web3forms. Kept out of the Svelte component so the form stays declarative.
  */
 import { calculatePriceForItem } from "@/lib/pricing/price";
+import { formatMaterialValue } from "@/lib/pricing/format";
 import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
 import type { SetDiscountGroup, ResolvedSetInstance } from "@/lib/pricing/setDiscount";
 import { chargedDeliveryPrice, isDeliveryFree, orderTotal } from "@/lib/order/total";
 import type { IProduct, Field } from "../types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "../data";
 import { isFieldVisible } from "../product/field";
+import { findMaterialOption } from "../product/materials";
 
 const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
 
@@ -40,16 +42,8 @@ function formatFieldValue(field: Field, threadColors: CmsEnhancedEmbroideryColor
     if (!value?.material_id) {
       return "";
     }
-    // A `material` field picks from its own `materials` list (not `items`), so
-    // resolve the material + colour names the same way `formatMaterialLine` does.
-    const material = field.materials?.find(
-      (m) => m?.material_path.material_id === value.material_id
-    )?.material_path;
-    const név = material?.label ?? value.material_id;
-    const color = value.colors
-      .map((x) => material?.colors?.find((c) => c.color_id === x)?.label ?? x)
-      .join(", ");
-    return `${név} (${color})`;
+    // A `material` field picks from its own `materials` list (not `items`).
+    return formatMaterialValue(findMaterialOption(field, value.material_id), value);
   }
 
   if (field.value?.is_custom) {
@@ -92,7 +86,9 @@ function shouldSubmitField(field: Field): boolean {
     return field.value?.enabled ?? false;
   }
   if (field.type === "material") {
-    return !field.optional || !!field.value?.material_id;
+    // A material pick is always required (validation.ts flags an empty pick),
+    // so a visible material field always has something to report.
+    return true;
   }
   return !("optional" in field) || !field.optional || !!field.value?.value;
 }

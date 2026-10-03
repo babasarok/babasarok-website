@@ -6,7 +6,7 @@ const STORAGE_KEY = "babasarok-order-state";
 // Bump when the persisted value shapes change (older state is then discarded).
 // Note: dedup is applied on load (see `loadOrderState`), so it does NOT change
 // the persisted shape and does not require a version bump.
-const STORAGE_VERSION = 3;
+const STORAGE_VERSION = 4;
 
 /** localStorage key the order/basket state is persisted under. */
 export const ORDER_STORAGE_KEY = STORAGE_KEY;

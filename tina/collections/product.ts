@@ -182,14 +182,13 @@ export const ProductCollection: Collection = {
                   .map((f) => ({ value: f.name ?? "", label: f.label || (f.name ?? "") })),
               ];
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument
               return SelectField({
                 ...props,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-                field: { ...props.field, options } as any,
+                field: { ...props.field, options } as unknown as Parameters<
+                  typeof SelectField
+                >[0]["field"],
                 options,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              } as any);
+              } as unknown as Parameters<typeof SelectField>[0]);
             },
             validate(value, allValues) {
               if (!value) {
@@ -233,8 +232,7 @@ export const ProductCollection: Collection = {
             return null;
           }
 
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-          return DateField(props as any);
+          return DateField(props as unknown as Parameters<typeof DateField>[0]);
         },
       },
     },
@@ -360,8 +358,7 @@ export const ProductCollection: Collection = {
                 return null;
               }
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return ToggleField(props as any);
+              return ToggleField(props as unknown as Parameters<typeof ToggleField>[0]);
             },
           },
         },
@@ -383,8 +380,7 @@ export const ProductCollection: Collection = {
                 return null;
               }
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return SelectField(props as any);
+              return SelectField(props as unknown as Parameters<typeof SelectField>[0]);
             },
           },
         },
@@ -415,8 +411,7 @@ export const ProductCollection: Collection = {
                 return null;
               }
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return GroupListField(props as any);
+              return GroupListField(props as unknown as Parameters<typeof GroupListField>[0]);
             },
           },
           fields: [
@@ -467,15 +462,14 @@ export const ProductCollection: Collection = {
           description:
             "Hány színt/választást kell tenni az anyagból. Alapértelmezetten 1. Ha egy másik mező adja a számot, írd be a Mező ID-ját (a mezőnek számértékűnek kell lennie).",
           ui: {
-            component(props) {
+            component(props): null | ReturnType<typeof TextField> {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               const typeValue = getValue(props, "type");
               if (typeValue !== "material") {
                 return null;
               }
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return TextField(props as any);
+              return TextField(props as unknown as Parameters<typeof TextField>[0]);
             },
           },
         },
@@ -502,8 +496,7 @@ export const ProductCollection: Collection = {
                 return null;
               }
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return GroupListField(props as any);
+              return GroupListField(props as unknown as Parameters<typeof GroupListField>[0]);
             },
           },
           fields: [
@@ -538,8 +531,7 @@ export const ProductCollection: Collection = {
                 return null;
               }
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return ToggleField(props as any);
+              return ToggleField(props as unknown as Parameters<typeof ToggleField>[0]);
             },
           },
         },
@@ -557,8 +549,7 @@ export const ProductCollection: Collection = {
                 return null;
               }
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return TextField(props as any);
+              return TextField(props as unknown as Parameters<typeof TextField>[0]);
             },
           },
         },
@@ -587,8 +578,7 @@ export const ProductCollection: Collection = {
                 return null;
               }
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return TextField(props as any);
+              return TextField(props as unknown as Parameters<typeof TextField>[0]);
             },
           },
         },
@@ -608,8 +598,7 @@ export const ProductCollection: Collection = {
                 return null;
               }
 
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-              return Group(props as any);
+              return Group(props as unknown as Parameters<typeof Group>[0]);
             },
           },
           fields: [
@@ -648,14 +637,13 @@ export const ProductCollection: Collection = {
                       .map((f) => ({ value: f.name ?? "", label: f.label || (f.name ?? "") })),
                   ];
 
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument
                   return SelectField({
                     ...props,
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-                    field: { ...props.field, options } as any,
+                    field: { ...props.field, options } as unknown as Parameters<
+                      typeof SelectField
+                    >[0]["field"],
                     options,
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  } as any);
+                  } as unknown as Parameters<typeof SelectField>[0]);
                 },
                 validate(value, allValues) {
                   if (!value) {
@@ -692,8 +680,7 @@ export const ProductCollection: Collection = {
 
                   // No dependency chosen yet, or a free-form field → plain text input.
                   if (!name || !target || target.type === "input") {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-                    return TextField(props as any);
+                    return TextField(props as unknown as Parameters<typeof TextField>[0]);
                   }
 
                   const valueOptions =
@@ -711,14 +698,13 @@ export const ProductCollection: Collection = {
 
                   const options = [{ value: "", label: "Bármelyik érték" }, ...valueOptions];
 
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument
                   return SelectField({
                     ...props,
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-                    field: { ...props.field, options } as any,
+                    field: { ...props.field, options } as unknown as Parameters<
+                      typeof SelectField
+                    >[0]["field"],
                     options,
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  } as any);
+                  } as unknown as Parameters<typeof SelectField>[0]);
                 },
               },
             },
