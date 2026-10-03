@@ -23,12 +23,7 @@ import {
   type SetDiscountGroup,
 } from "@/lib/pricing/setDiscount";
 import type { Field, IProduct, ProductMaterialValue } from "@/lib/types.svelte";
-import {
-  makeProduct,
-  makeMaterial,
-  makeField,
-  makeMaterialProduct,
-} from "./fixtures";
+import { makeProduct, makeMaterial, makeField, makeMaterialProduct } from "./fixtures";
 
 const val = (material_id: string, colors: string[]): ProductMaterialValue => ({
   material_id,
@@ -60,8 +55,12 @@ describe("materialsMatch", () => {
   });
 
   it("is order-independent for colours and materials", () => {
-    const a = makeMaterialProduct({ values: [val("cotton", ["red", "blue"]), val("wool", ["green"])] });
-    const b = makeMaterialProduct({ values: [val("wool", ["green"]), val("cotton", ["blue", "red"])] });
+    const a = makeMaterialProduct({
+      values: [val("cotton", ["red", "blue"]), val("wool", ["green"])],
+    });
+    const b = makeMaterialProduct({
+      values: [val("wool", ["green"]), val("cotton", ["blue", "red"])],
+    });
     expect(materialsMatch(a, b)).toBe(true);
   });
 
@@ -109,9 +108,15 @@ describe("materialsMatch", () => {
   it("requires an exact match when material counts are equal", () => {
     // Both pick two fabrics: subset matching is not allowed, so a feher+ekru
     // nest does not match a feher+feher blanket, but feher+feher does.
-    const nestMixed = makeMaterialProduct({ values: [val("teddy", ["feher"]), val("teddy", ["ekru"])] });
-    const nestFeher = makeMaterialProduct({ values: [val("teddy", ["feher"]), val("teddy", ["feher"])] });
-    const blanket = makeMaterialProduct({ values: [val("teddy", ["feher"]), val("teddy", ["feher"])] });
+    const nestMixed = makeMaterialProduct({
+      values: [val("teddy", ["feher"]), val("teddy", ["ekru"])],
+    });
+    const nestFeher = makeMaterialProduct({
+      values: [val("teddy", ["feher"]), val("teddy", ["feher"])],
+    });
+    const blanket = makeMaterialProduct({
+      values: [val("teddy", ["feher"]), val("teddy", ["feher"])],
+    });
     expect(materialsMatch(nestMixed, blanket)).toBe(false);
     expect(materialsMatch(nestFeher, blanket)).toBe(true);
   });
@@ -181,8 +186,16 @@ describe("resolveBasketPricing – formed instances", () => {
   });
 
   it("does not form an instance when materials differ", () => {
-    const a = makeMaterialProduct({ uuid: "u1", product_id: "nest", values: [val("cotton", ["red"])] });
-    const b = makeMaterialProduct({ uuid: "u2", product_id: "blanket", values: [val("cotton", ["blue"])] });
+    const a = makeMaterialProduct({
+      uuid: "u1",
+      product_id: "nest",
+      values: [val("cotton", ["red"])],
+    });
+    const b = makeMaterialProduct({
+      uuid: "u2",
+      product_id: "blanket",
+      values: [val("cotton", ["blue"])],
+    });
     expect(formed([a, b], groups)).toEqual([]);
   });
 
@@ -229,7 +242,12 @@ describe("resolveBasketPricing – formed instances", () => {
     // (the pricier carries an add-on). Only one instance can form, so it must
     // fall on the more expensive blanket to maximise the discount, regardless of
     // basket order.
-    const cheap = makeMaterialProduct({ uuid: "cheap", product_id: "blanket", price: 7500, values: red });
+    const cheap = makeMaterialProduct({
+      uuid: "cheap",
+      product_id: "blanket",
+      price: 7500,
+      values: red,
+    });
     const pricey = makeMaterialProduct({
       uuid: "pricey",
       product_id: "blanket",
@@ -244,7 +262,12 @@ describe("resolveBasketPricing – formed instances", () => {
         }),
       ],
     });
-    const onlyNest = makeMaterialProduct({ uuid: "nest", product_id: "nest", price: 15_000, values: red });
+    const onlyNest = makeMaterialProduct({
+      uuid: "nest",
+      product_id: "nest",
+      price: 15_000,
+      values: red,
+    });
     expect(formed([cheap, pricey, onlyNest], groups)).toEqual([
       { setTitle: "Babafészek szett", members: ["pricey", "nest"] },
     ]);

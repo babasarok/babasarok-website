@@ -33,7 +33,10 @@ export function instantiateProduct(product: CmsEnhancedProduct): IProduct {
 /** The value of `target`'s same-named material field on `source`, kept only
  * when the material is still offered by `target`'s field (and actually
  * chosen). Undefined for non-material fields or when nothing carries over. */
-function carriedMaterialValue(target: Field, sourceFields: Field[]): ProductMaterialValue | undefined {
+function carriedMaterialValue(
+  target: Field,
+  sourceFields: Field[]
+): ProductMaterialValue | undefined {
   if (target.type !== "material") {
     return undefined;
   }
