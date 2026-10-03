@@ -3,14 +3,13 @@
  * it to web3forms. Kept out of the Svelte component so the form stays declarative.
  */
 import { calculatePriceForItem } from "@/lib/pricing/price";
-import { formatMaterialValue } from "@/lib/pricing/format";
 import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
 import type { SetDiscountGroup, ResolvedSetInstance } from "@/lib/pricing/setDiscount";
 import { chargedDeliveryPrice, isDeliveryFree, orderTotal } from "@/lib/order/total";
 import type { IProduct, Field } from "../types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "../data";
 import { isFieldVisible } from "../product/field";
-import { findMaterialOption } from "../product/materials";
+import { findMaterialOption, formatMaterialValue } from "../product/materials";
 
 const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
 
