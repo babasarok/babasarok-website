@@ -254,7 +254,7 @@ usage is enforced by a lint rule. (In progress.)
 
 `src/lib/data.ts` (~800 lines) holds, for six collections, the `Cms*` type
 derivations, the Tina⇄zod parity assertions, the loaders, the image-optimisation
-calls, *and* the product-domain build gates (`assertValidProductReferences`,
+calls, _and_ the product-domain build gates (`assertValidProductReferences`,
 `assertNoZeroPriceProduct`) that import from `product/` and `pricing/`. Split it
 into per-entity modules (`data/product.ts`, `data/material.ts`, …), each owning
 its enhanced type + its `IfEquals` assertion + its loader, and move the product
@@ -274,13 +274,13 @@ labels + type-guard from one `as const` list; the same treatment is missing for:
   `switch` (carrying a live `eslint-disable unicorn/no-useless-switch-case`), and
   the hard-coded `<option>`s in `ProductList.svelte`. Derive it from one list +
   a `Record<ListSort, comparator>`; the select renders from the list, so a new
-  sort mode is a compile error until it is implemented *and* offered.
+  sort mode is a compile error until it is implemented _and_ offered.
 - **Set-discount status** (`pricing/setDiscount.ts`) — the
   `"active" | "pending-partner" | "pending-material"` states are compared with
   raw `===` in three components. A presentation record over the state gives one
   home for the copy, tone, and action of each.
 - **Saved field shape** (`order/storage.ts`) — the persisted zod union is built
-  by *exclusion* (`PRODUCT_FIELD_TYPE_VALUES.filter(t => t !== "toggle" && …)`),
+  by _exclusion_ (`PRODUCT_FIELD_TYPE_VALUES.filter(t => t !== "toggle" && …)`),
   so a new field type silently inherits the string persistence shape. Derive it
   from `valueKind` in `fieldTypes.ts` and keep it structurally identical to the
   behaviour registry's `SavedFieldValue`.

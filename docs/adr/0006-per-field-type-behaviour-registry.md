@@ -13,17 +13,17 @@ methods of its own, "what a field of a given type does" is answered by a
 `switch (field.type)` — and that switch has been **re-implemented in every
 consumer** that needs a per-type answer:
 
-| Concern                | Where the switch lived                          |
-| ---------------------- | ----------------------------------------------- |
-| value prefill/clamp    | `product/validation.ts` (`prefillField`, …)      |
-| value resolution       | `product/field.ts` (`resolveFieldValue`)         |
-| price contribution     | `pricing/price.ts` **and** `pricing/validCombinations.ts` (a duplicated copy) |
-| choice enumeration     | `pricing/validCombinations.ts` (`fieldCombinations`) |
-| deep-link fill         | `order/queryParams.ts` (`applyFieldParam`)       |
-| persistence shape      | `order/storage.ts` (`toSavedField`)              |
-| validation / errors    | `product/validation.ts` (`updateFieldWithErrors`) |
-| order-email record     | `order/submit.ts` (`shouldSubmitField`, `formatFieldValue`) |
-| basket-summary value   | `CheckoutItem.svelte` (`fieldDisplay`)           |
+| Concern              | Where the switch lived                                                        |
+| -------------------- | ----------------------------------------------------------------------------- |
+| value prefill/clamp  | `product/validation.ts` (`prefillField`, …)                                   |
+| value resolution     | `product/field.ts` (`resolveFieldValue`)                                      |
+| price contribution   | `pricing/price.ts` **and** `pricing/validCombinations.ts` (a duplicated copy) |
+| choice enumeration   | `pricing/validCombinations.ts` (`fieldCombinations`)                          |
+| deep-link fill       | `order/queryParams.ts` (`applyFieldParam`)                                    |
+| persistence shape    | `order/storage.ts` (`toSavedField`)                                           |
+| validation / errors  | `product/validation.ts` (`updateFieldWithErrors`)                             |
+| order-email record   | `order/submit.ts` (`shouldSubmitField`, `formatFieldValue`)                   |
+| basket-summary value | `CheckoutItem.svelte` (`fieldDisplay`)                                        |
 
 Two consequences bite:
 
@@ -43,11 +43,17 @@ an exhaustive record:
 
 ```ts
 export const FIELD_BEHAVIORS: Record<ProductFieldType, FieldBehavior> = {
-  input, select, radio, color, material, toggle, embroidery,
+  input,
+  select,
+  radio,
+  color,
+  material,
+  toggle,
+  embroidery,
 };
 ```
 
-`FieldBehavior` is the interface of every per-type *answer* the system asks of
+`FieldBehavior` is the interface of every per-type _answer_ the system asks of
 a field: `normalize`, `resolveValue`, `price`, `enumerate`, `fillFromParams`,
 `toSaved`, `validate`, `hasError`, `clearErrors`, `formatValue`,
 `includeInEmail`, `formatForEmail`.
@@ -59,12 +65,12 @@ Two of these are a pair with a subtle split:
   value column of the basket summary (which hides valueless rows) and the
   non-empty part of the email line.
 - **`formatForEmail(field): string`** — the email line text. For a non-empty
-  selection it equals `formatValue`; the difference is the *empty* state, which
+  selection it equals `formatValue`; the difference is the _empty_ state, which
   the record represents rather than hides (a toggle off reads "Nem", a blank
   custom field reads "Egyedi: ", a blank required option reads as an empty
   line). The email is a complete record; the summary is a glance.
 
-The line *name* is not a method: every type uses `field.label || field.name`,
+The line _name_ is not a method: every type uses `field.label || field.name`,
 so a per-type `stringifyName` would be seven identical implementations.
 
 Two supporting pieces keep the surface small and cast-free:
@@ -80,7 +86,7 @@ The change is behaviour-preserving: charged price, persisted basket shape,
 deep-link scheme, and the order email stay byte-for-byte identical (the Vitest
 snapshots are the safety net).
 
-### What is deliberately *not* in the registry
+### What is deliberately _not_ in the registry
 
 These are not per-type facts, so they stay where they already live:
 
@@ -96,7 +102,7 @@ These are not per-type facts, so they stay where they already live:
 - **Line layout** of the basket summary and the email — the name column
   (`field.label || field.name`), hiding of valueless rows, per-option price
   tags, and the email's dependency indentation. Presentational / graph-shaped;
-  the per-type *value text* is `formatValue`.
+  the per-type _value text_ is `formatValue`.
 
 ## Consequences
 
@@ -107,7 +113,7 @@ These are not per-type facts, so they stay where they already live:
 exists for it; removing a method from `FieldBehavior` is a compile error until
 every behaviour implements it. This is the same enforcement already used by
 `ProductType` and `ProductFieldType` — the "single source of truth" pattern
-extended from *values* to *behaviour*.
+extended from _values_ to _behaviour_.
 
 ### Usage coverage is a lint error
 
@@ -120,7 +126,7 @@ flags a `switch` whose discriminant's type is `ProductFieldType`, scoped to
   catches the identifier form (`const { type } = field; switch (type)`) that a
   purely syntactic `switch (x.type)` selector would miss.
 - It is **scoped to `src/lib/`**, so the presentational per-type renders in
-  `src/components/blocks/order/` (which branch on type to *choose UI*) are not
+  `src/components/blocks/order/` (which branch on type to _choose UI_) are not
   flagged.
 - It has **no false positives** on the current tree: the only `switch`es on a
   field type in `src/lib/` are exactly the bypasses this refactor removes
@@ -129,15 +135,15 @@ flags a `switch` whose discriminant's type is `ProductFieldType`, scoped to
   (`state.sort`, `targetValue.kind`) are on non-field discriminants and are not
   matched.
 
-A hit means "this is a per-type *answer* — it belongs in the registry." The fix
+A hit means "this is a per-type _answer_ — it belongs in the registry." The fix
 is to add the answer as a `FieldBehavior` method (or reuse an existing one),
-not to switch. This makes the registry the *only* home for per-type domain
+not to switch. This makes the registry the _only_ home for per-type domain
 answers, which is the long-term-maintainability goal.
 
 What the rule does **not** flag, by design:
 
 - **Cross-field selections** like `fields.filter(f => f.type === "material")`
-  in `materials.ts` / `setDiscount.ts` — these use the type as a *selector*,
+  in `materials.ts` / `setDiscount.ts` — these use the type as a _selector_,
   not a per-type answer, and are not `switch`es.
 - **Svelte render** in `src/components/` — presentational, out of scope.
 - **Test fixtures** that construct a specific type.
