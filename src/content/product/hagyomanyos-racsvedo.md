@@ -9,38 +9,17 @@ thumbnail: /src/assets/IMG_9614.webp
 images:
   - image: /src/assets/28ba3ec2e4b435bd2a8acb4026499664.jpeg
   - image: /src/assets/IMG_7914.jpeg
-shortDescription: 'A hagyományos rácsvédő 2 cm vastag habszivacsból készült, így hatékony védelmet nyújt a baba fejének a kiságy rácsai ellen. Tökéletes választás azoknak, akik kényelmesen szeretnék elhelyezni a babafészket is a kiságyban, miközben megőrzik a baba biztonságát és komfortját. A praktikus kialakítás mellett a rácsvédő könnyen kezelhető, cipzárral ellátott, így a szivacsbetét kivételével könnyedén tisztítható és garantáltan megóvja a kicsit az esetleges ütközésektől. '
+shortDescription: "A hagyományos rácsvédő 2 cm vastag habszivacsból készült, így
+  hatékony védelmet nyújt a baba fejének a kiságy rácsai ellen. Tökéletes
+  választás azoknak, akik kényelmesen szeretnék elhelyezni a babafészket is a
+  kiságyban, miközben megőrzik a baba biztonságát és komfortját. A praktikus
+  kialakítás mellett a rácsvédő könnyen kezelhető, cipzárral ellátott, így a
+  szivacsbetét kivételével könnyedén tisztítható és garantáltan megóvja a kicsit
+  az esetleges ütközésektől. "
 length_based_pricing:
   sourceField: meret
 price: 7500
 materials:
-  material_options:
-    - label: Anyag 1
-      color_count: '1'
-      materials:
-        - material_path: src/content/material/minky.md
-          price: 0
-        - material_path: src/content/material/teddy.md
-          price: 0
-        - material_path: src/content/material/potty-nelkuli-minky.md
-          price: 0
-        - material_path: src/content/material/pamutvaszon.md
-          price: 0
-        - material_path: src/content/material/wellsoft.md
-          price: 0
-    - label: Anyag 2
-      color_count: '1'
-      materials:
-        - material_path: src/content/material/minky.md
-          price: 0
-        - material_path: src/content/material/teddy.md
-          price: 0
-        - material_path: src/content/material/potty-nelkuli-minky.md
-          price: 0
-        - material_path: src/content/material/pamutvaszon.md
-          price: 0
-        - material_path: src/content/material/wellsoft.md
-          price: 0
   banned_combinations:
     - materials:
         - material_path: src/content/material/wellsoft.md
@@ -50,24 +29,54 @@ fields:
     label: Méret
     type: radio
     items:
-      - value: '330'
+      - value: "330"
         label: 60x120cm
-      - value: '335'
+      - value: "335"
         label: 70x120cm
-      - value: '340'
+      - value: "340"
         label: 70x140cm
-      - value: '60'
+      - value: "60"
         label: 60cm
-      - value: '70'
+      - value: "70"
         label: 70cm
-      - value: '120'
+      - value: "120"
         label: 120cm
-      - value: '140'
+      - value: "140"
         label: 140cm
     regex: ^(\d+)$
   - name: Fodor
-    label: 'Fodorral kérem '
+    label: "Fodorral kérem "
     type: toggle
     price: 1800
+  - name: anyag1
+    label: Anyag 1
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/minky.md
+        price: 0
+      - material_path: src/content/material/teddy.md
+        price: 0
+      - material_path: src/content/material/potty-nelkuli-minky.md
+        price: 0
+      - material_path: src/content/material/pamutvaszon.md
+        price: 0
+      - material_path: src/content/material/wellsoft.md
+        price: 0
+  - name: anyag2
+    label: Anyag 2
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/minky.md
+        price: 0
+      - material_path: src/content/material/teddy.md
+        price: 0
+      - material_path: src/content/material/potty-nelkuli-minky.md
+        price: 0
+      - material_path: src/content/material/pamutvaszon.md
+        price: 0
+      - material_path: src/content/material/wellsoft.md
+        price: 0
 ---
 

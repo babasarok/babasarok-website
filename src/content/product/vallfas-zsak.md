@@ -18,18 +18,18 @@ shortDescription: |-
   Bölcsőde és óvodakezdésre alkalmas, pakolható vállfás zsák.
   Mérete: kb. 40x60cm (+-3cm eltérés elfogadott)
 price: 4500
-materials:
-  material_options:
-    - label: Anyag
-      color_count: '1'
-      materials:
-        - material_path: src/content/material/pamutvaszon.md
-          price: 0
 fields:
   - name: himzes
     label: Hímzés
     type: embroidery
     price: 1500
     price_unit: word
+  - name: anyag
+    label: Anyag
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/pamutvaszon.md
+        price: 0
 ---
 

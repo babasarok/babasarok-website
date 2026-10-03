@@ -10,13 +10,6 @@ shortDescription: |
   Az oldalai, körben beszegve
   Kétféle méretben kapható 
 price: 3000
-materials:
-  material_options:
-    - label: Anyag
-      color_count: '1'
-      materials:
-        - material_path: src/content/material/wellsoft.md
-          price: 0
 fields:
   - name: meret
     label: Méret
@@ -27,6 +20,13 @@ fields:
         price: 1000
       - value: 50x80
         label: 50x80cm
+        price: 0
+  - name: anyag
+    label: Anyag
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/wellsoft.md
         price: 0
 ---
 

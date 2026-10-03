@@ -15,6 +15,9 @@ import { isFieldVisible } from "../product/field";
  *   `banned_combinations` — the same multiplicity-based rule the material
  *   picker enforces (a banned entry disables a candidate once every other
  *   member of the banned set is already chosen);
+ * - `material` fields must have a material picked (each entry of the field's
+ *   `materials` list is a choice); the colour selection is never enumerated —
+ *   it never changes the price;
  * - embroidery is never forced (enabling it only adds price);
  * - `input` fields carry no price and are never blocking.
  *
@@ -142,6 +145,17 @@ export function fieldCombinations(fields: Field[], lengthSourceName?: string): F
               { ...field, value: { value: false } },
               { ...field, value: { value: true } },
             ];
+            break;
+          }
+          case "material": {
+            // The form requires a material; colours never change the price, so
+            // each entry is one choice with an empty colour selection.
+            choices = (field.materials ?? [])
+              .filter((material) => material != null)
+              .map((material) => ({
+                ...field,
+                value: { material_id: material.material_path.material_id, colors: [] },
+              }));
             break;
           }
           default: {
@@ -341,6 +355,12 @@ function fieldPrice(field: Field, product: IProduct): number | undefined {
     }
     case "input": {
       return field.price ?? undefined;
+    }
+    case "material": {
+      const material = (field.materials ?? []).find(
+        (m) => m?.material_path.material_id === field.value?.material_id
+      );
+      return material?.price ?? undefined;
     }
     default: {
       // Embroidery is opt-in: its absent shape contributes nothing. (Its

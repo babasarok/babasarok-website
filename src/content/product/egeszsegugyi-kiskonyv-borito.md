@@ -1,6 +1,6 @@
 ---
 product_id: Eu borito
-title: 'Egészségügyi kiskönyv borító '
+title: "Egészségügyi kiskönyv borító "
 hidden_in_product_list: true
 can_be_ordered: false
 type: kiegeszito
@@ -12,20 +12,21 @@ images:
   - image: /src/assets/IMG_6279.jpeg
   - image: /src/assets/IMG_6280.jpeg
   - image: /src/assets/IMG_6282.jpeg
-shortDescription: 'Egyedi, névre hímzett egészségügyi kiskönyv borító, amely megvédi a kiskönyvet használat során. '
+shortDescription: "Egyedi, névre hímzett egészségügyi kiskönyv borító, amely
+  megvédi a kiskönyvet használat során. "
 price: 3490
-materials:
-  material_options:
-    - label: Anyag
-      color_count: '2'
-      materials:
-        - material_path: src/content/material/pamutvaszon.md
-          price: 0
 fields:
   - name: Himzes
     label: Hímzés
     type: embroidery
     price: 1500
     price_unit: word
+  - name: anyag
+    label: Anyag
+    type: material
+    color_count: "2"
+    materials:
+      - material_path: src/content/material/pamutvaszon.md
+        price: 0
 ---
 

@@ -11,19 +11,6 @@ images:
   - image: /src/assets/IMG_6602.jpeg
   - image: /src/assets/IMG_0001.jpeg
 price: 3500
-materials:
-  material_options:
-    - label: Anyag
-      color_count: '1'
-      materials:
-        - material_path: src/content/material/teddy.md
-          price: 0
-        - material_path: src/content/material/minky.md
-          price: 0
-        - material_path: src/content/material/potty-nelkuli-minky.md
-          price: 0
-        - material_path: src/content/material/wellsoft.md
-          price: 0
 fields:
   - name: fajta
     label: Fajta
@@ -44,5 +31,18 @@ fields:
     type: embroidery
     price: 1500
     price_unit: word
+  - name: anyag
+    label: Anyag
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/teddy.md
+        price: 0
+      - material_path: src/content/material/minky.md
+        price: 0
+      - material_path: src/content/material/potty-nelkuli-minky.md
+        price: 0
+      - material_path: src/content/material/wellsoft.md
+        price: 0
 ---
 

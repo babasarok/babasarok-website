@@ -7,11 +7,12 @@ can_be_ordered: true
 date: 2026-07-11T09:26:43.966Z
 shortDescription: Akkor kérd, hogyha az ovi/bölcső nem ad ágyneműt
 price: 10800
-materials:
-  material_options:
-    - label: Anyag
-      color_count: '1'
-      materials:
-        - material_path: src/content/material/pamutvaszon.md
-          price: 0
+fields:
+  - name: anyag
+    label: Anyag
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/pamutvaszon.md
+        price: 0
 ---

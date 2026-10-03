@@ -573,6 +573,27 @@ function assertValidProductReferences(
       );
     }
   }
+
+  for (const field of fields) {
+    if (field.type !== "material" || !field.color_count) {
+      continue;
+    }
+    // A numeric literal is a plain count; anything else is a field reference.
+    if (!Number.isNaN(Number.parseFloat(field.color_count))) {
+      continue;
+    }
+    const target = fieldByName.get(field.color_count);
+    if (!target) {
+      throw new Error(
+        `${where}: a "${field.label}" anyaglemező "color_count" hivatkozása nem létező mezőre mutat: "${field.color_count}".`
+      );
+    }
+    if (!canSupplyStringValue(target.type)) {
+      throw new Error(
+        `${where}: a "${field.label}" anyaglemező "color_count" forrásmezője ("${field.color_count}") típusa "${target.type}", ami nem adhat számértéket.`
+      );
+    }
+  }
 }
 
 export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {

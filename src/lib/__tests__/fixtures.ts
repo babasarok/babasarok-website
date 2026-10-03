@@ -20,7 +20,7 @@ import type {
 } from "@/lib/types.svelte";
 import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
 
-type FieldType = "input" | "select" | "radio" | "color" | "toggle" | "embroidery";
+type FieldType = "input" | "select" | "radio" | "color" | "toggle" | "embroidery" | "material";
 
 interface FieldItem {
   value: string;
@@ -41,15 +41,17 @@ export interface FieldOpts {
   regex?: string;
   value?: ValueWithError | ToggleValue | EmbroideryValue;
   depends_on?: { field?: string | null; value?: string | null } | null;
+  materials?: CmsProductMaterial[];
 }
 
 /** Build a single product `Field` (the runtime slice the order logic reads). */
 export function makeField(opts: FieldOpts): Field {
-  const { value, items, ...rest } = opts;
+  const { value, items, materials, ...rest } = opts;
   return {
     label: opts.label ?? opts.name,
     ...rest,
     ...(items ? { items: items.map((i) => ({ label: i.value, ...i })) } : {}),
+    ...(materials ? { materials } : {}),
     ...(value ? { value } : {}),
   } as unknown as Field;
 }

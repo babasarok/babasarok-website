@@ -166,6 +166,67 @@ describe("findZeroPriceCombinations", () => {
     });
   });
 
+  describe("material fields", () => {
+    /** The material id picked by the (single) material field of `product`. */
+    function materialFieldValue(product: IProduct): string | undefined {
+      const field = product.fields.find((f) => f.name === "anyag");
+      if (!field || field.type !== "material") {
+        return undefined;
+      }
+      return field.value?.material_id;
+    }
+
+    it("flags a 0-base product whose material field offers only free materials", () => {
+      const product = makeProduct({
+        price: 0,
+        fields: [
+          makeField({
+            name: "anyag",
+            type: "material",
+            materials: [makeMaterial({ material_id: "m1", price: 0 })],
+          }),
+        ],
+      });
+      const zero = findZeroPriceCombinations(product);
+      expect(zero).toHaveLength(1);
+      expect(zero[0].unitPrice).toBe(0);
+      expect(materialFieldValue(zero[0].product)).toBe("m1");
+    });
+
+    it("passes when every material of the material field is priced", () => {
+      const product = makeProduct({
+        price: 0,
+        fields: [
+          makeField({
+            name: "anyag",
+            type: "material",
+            materials: [makeMaterial({ material_id: "m1", price: 1000 })],
+          }),
+        ],
+      });
+      expect(findZeroPriceCombinations(product)).toHaveLength(0);
+    });
+
+    it("flags only the free choices of a material field", () => {
+      const product = makeProduct({
+        price: 0,
+        fields: [
+          makeField({
+            name: "anyag",
+            type: "material",
+            materials: [
+              makeMaterial({ material_id: "m1", price: 0 }),
+              makeMaterial({ material_id: "m2", price: 1000 }),
+            ],
+          }),
+        ],
+      });
+      const zero = findZeroPriceCombinations(product);
+      expect(zero).toHaveLength(1);
+      expect(materialFieldValue(zero[0].product)).toBe("m1");
+    });
+  });
+
   describe("toggles and inputs", () => {
     it("considers both toggle states", () => {
       const off = makeProduct({

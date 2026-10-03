@@ -81,7 +81,10 @@ free. The enumeration mirrors the order form's reachability rules: only
 visible fields (`depends_on`) count, radio/select/color selections are
 required (a custom value where `allow_custom_value` is set counts as a 0-Ft
 selection), every required material slot must be filled subject to
-`banned_combinations`, embroidery is optional, and the length source field of
+`banned_combinations`, every `material` field must have a material picked
+(each entry of the field's `materials` list is one choice; the colour
+selection is never enumerated, since it cannot change the price), embroidery
+is optional, and the length source field of
 a length-priced product is judged by its per-meter price (any length would
 then sell for 0 Ft). Non-orderable (browse-only) products are exempt.
 

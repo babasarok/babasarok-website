@@ -12,45 +12,31 @@ images:
   - image: /src/assets/IMG_8076.webp
     description: duplagéz+pamutvászon
   - image: /src/assets/IMG_3985.jpeg
-    description: 'Kétrétegű duplagéz '
+    description: "Kétrétegű duplagéz "
   - image: /src/assets/IMG_4638.jpeg
     description: Duplagéz+pamutvászon
   - image: /src/assets/IMG_4153.jpeg
-    description: 'Waffle+pamutvászon '
+    description: "Waffle+pamutvászon "
   - image: /src/assets/IMG_4914.jpeg
-    description: 'Kétrétegű duplagéz '
+    description: "Kétrétegű duplagéz "
   - image: /src/assets/IMG_4892.jpeg
-    description: 'Duplagéz+pamutvászon '
+    description: "Duplagéz+pamutvászon "
   - image: /src/assets/IMG_4687.jpeg
-shortDescription: |-
+shortDescription: >-
   Duplagéz kánikulatakaró, a nyár slágere!
 
+
   ✔️Két rétegben takaróként
+
   ✔️ egy rétegben textilpelusként is használható, 
+
   ✔️sok baba pedig nyunyókaként is imádja.
 
-  100% pamut, légáteresztő és könnyed anyaga tökéletes választás a meleg napokra. Praktikus és sokoldalú!
+
+  100% pamut, légáteresztő és könnyed anyaga tökéletes választás a meleg
+  napokra. Praktikus és sokoldalú!
 price: 0
 materials:
-  material_options:
-    - label: Anyag 1
-      color_count: '1'
-      materials:
-        - material_path: src/content/material/duplagez.md
-          price: 3000
-        - material_path: src/content/material/waffle.md
-          price: 4000
-        - material_path: src/content/material/pamutvaszon.md
-          price: 2500
-    - label: Anyag 2
-      color_count: '1'
-      materials:
-        - material_path: src/content/material/duplagez.md
-          price: 3000
-        - material_path: src/content/material/waffle.md
-          price: 4000
-        - material_path: src/content/material/pamutvaszon.md
-          price: 2500
   banned_combinations:
     - materials:
         - material_path: src/content/material/pamutvaszon.md
@@ -81,6 +67,28 @@ fields:
     type: embroidery
     price: 1500
     price_unit: word
+  - name: anyag1
+    label: Anyag 1
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/duplagez.md
+        price: 3000
+      - material_path: src/content/material/waffle.md
+        price: 4000
+      - material_path: src/content/material/pamutvaszon.md
+        price: 2500
+  - name: anyag2
+    label: Anyag 2
+    type: material
+    color_count: "1"
+    materials:
+      - material_path: src/content/material/duplagez.md
+        price: 3000
+      - material_path: src/content/material/waffle.md
+        price: 4000
+      - material_path: src/content/material/pamutvaszon.md
+        price: 2500
 ---
 
 Kánikulatakaróinkat akár waffle anyag kombinációval is kérhetitek, már felnőtt (140x200cm) méretben is.
