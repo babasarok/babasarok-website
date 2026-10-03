@@ -1,0 +1,49 @@
+import { defineBehavior } from "./index";
+
+/**
+ * TODO(field-behavior): real behaviour for the `color` field type. Stub for now
+ * so the {@link FIELD_BEHAVIORS} registry type-checks; the body is the per-type
+ * logic extracted from the scattered `switch (field.type)` sites.
+ */
+export const colorBehavior = defineBehavior("color", {
+  normalize: (f, _ctx) => {
+    void f;
+  },
+  resolveValue: (f) => {
+    void f;
+    return;
+  },
+  price: (f) => {
+    void f;
+    return;
+  },
+  enumerate: (f) => {
+    void f;
+    return [f];
+  },
+  fillFromParams: (f, _raw) => {
+    void f;
+  },
+  toSaved: (f) => {
+    void f;
+    return;
+  },
+  validate: (f, _ctx) => {
+    void f;
+  },
+  hasError: (f) => {
+    void f;
+    return false;
+  },
+  clearErrors: (f) => {
+    void f;
+  },
+  includeInEmail: (f) => {
+    void f;
+    return false;
+  },
+  formatForEmail: (f, _ctx) => {
+    void f;
+    return "";
+  },
+});
