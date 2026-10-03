@@ -1,11 +1,11 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { calculatePriceForItem } from "@/lib/pricing/price";
-  import { formatMaterialValue } from "@/lib/pricing/format";
   import { isFieldVisible } from "@/lib/product/field";
-  import { findMaterialOption } from "@/lib/product/materials";
+  import { FIELD_BEHAVIORS } from "@/lib/product/behavior";
+  import type { FieldContext } from "@/lib/product/behavior";
   import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
-  import type { Field, IProduct, MaterialField } from "@/lib/types.svelte";
+  import type { IProduct } from "@/lib/types.svelte";
 
   interface Props {
     product: IProduct;
@@ -31,52 +31,17 @@
   });
 
   /** The selected, human-readable value of a field, or `undefined` to hide it. */
-  function fieldDisplay(field: Field): string | undefined {
-    switch (field.type) {
-      case "toggle": {
-        return field.value?.value ? "Igen" : undefined;
-      }
-      case "embroidery": {
-        if (!field.value?.enabled) {
-          return undefined;
-        }
-        const color = threadColors.find((c) => c.color_id === field.value?.color.color);
-        const colorLabel = color?.label ?? field.value.color.color;
-        const text = field.value.text.value.trim();
-        return colorLabel ? `${text} (${colorLabel})`.trim() : text;
-      }
-      case "material": {
-        return materialDisplay(field);
-      }
-      default: {
-        const value = field.value?.value;
-        if (!value) {
-          return undefined;
-        }
-        if (field.value?.is_custom) {
-          return `Egyedi: ${value}`;
-        }
-        const option = "items" in field ? field.items?.find((o) => o?.value === value) : undefined;
-        return option?.label ?? value;
-      }
-    }
-  }
+  const fieldCtx: Omit<FieldContext, "banned"> = $derived({ fields: product.fields, threadColors });
 
   const fieldRows = $derived(
     product.fields
       .filter((f) => isFieldVisible(f, product.fields))
-      .map((f) => ({ label: f.label || f.name, value: fieldDisplay(f) }))
+      .map((f) => ({
+        label: f.label || f.name,
+        value: FIELD_BEHAVIORS[f.type].formatValue(f, fieldCtx),
+      }))
       .filter((row): row is { label: string; value: string } => row.value != null)
   );
-
-  /** The chosen material + colours of one material field, or `undefined`. */
-  function materialDisplay(field: MaterialField): string | undefined {
-    const value = field.value;
-    if (!value?.material_id) {
-      return undefined;
-    }
-    return formatMaterialValue(findMaterialOption(field, value.material_id), value);
-  }
 </script>
 
 <article

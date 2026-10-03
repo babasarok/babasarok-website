@@ -1,11 +1,7 @@
 import type { IProduct, Field } from "../types.svelte";
 import { isFieldVisible, findFieldByName, resolveNumericValue } from "../product/field";
-import { findMaterialOption } from "../product/materials";
-
-interface PricePart {
-  label: string;
-  price: number | undefined;
-}
+import { FIELD_BEHAVIORS } from "../product/behavior";
+import type { FieldPricePart } from "../product/behavior";
 
 /**
  * A line's standalone product discount: the per-line multiplier, how many units
@@ -21,8 +17,8 @@ interface DiscountInfo {
 }
 
 interface BasePrice {
-  basePrice: PricePart;
-  options: PricePart[];
+  basePrice: FieldPricePart;
+  options: FieldPricePart[];
   unitPrice: number | undefined;
   totalPrice: number | undefined;
   discountInfo: DiscountInfo | undefined;
@@ -38,69 +34,18 @@ export interface LengthBasedPrice extends BasePrice {
   per_meter_price: number | undefined;
 }
 
-function countWords(value: string): number {
-  return value.trim().split(/\s+/).filter(Boolean).length;
-}
-
-function getFieldPrice(field: Field, product: IProduct): PricePart | null {
-  // Skip pricing for fields that are used as the source of length-based pricing
+function getFieldPrice(field: Field, product: IProduct): FieldPricePart | undefined {
+  // The length source carries no price of its own; it scales the per-meter
+  // price (a product-level decision, so it stays with the caller).
   if (product.length_based_pricing && field.name === product.length_based_pricing.sourceField) {
-    return null;
+    return undefined;
   }
 
-  switch (field.type) {
-    case "radio":
-    case "color":
-    case "select": {
-      const items = field.items;
-      const selectedItem = items?.find((item) => !!item && item.value === field.value?.value);
-      return { label: field.label || field.name, price: selectedItem?.price ?? undefined };
-    }
-    case "toggle": {
-      return {
-        label: field.label || field.name,
-        price:
-          field.value?.value === undefined
-            ? undefined
-            : field.value.value
-              ? (field.price ?? undefined)
-              : 0,
-      };
-    }
-    case "embroidery": {
-      if (!field.value?.enabled) {
-        return null;
-      }
-      const multiplier = field.price_unit === "word" ? countWords(field.value.text.value) : 1;
-      return {
-        label: field.label || field.name,
-        price: field.price == null ? undefined : field.price * multiplier,
-      };
-    }
-    case "input": {
-      return {
-        label: field.label || field.name,
-        price: field.price ?? undefined,
-      };
-    }
-    case "material": {
-      // A `material` field picks one of its own `materials`; its price comes
-      // from that entry (not the flat field `price`). Unchosen → no price, so
-      // it contributes nothing until the buyer selects a material.
-      const material = findMaterialOption(field, field.value?.material_id);
-      return {
-        label: field.label || field.name,
-        price: material?.price ?? undefined,
-      };
-    }
-    default: {
-      return null;
-    }
-  }
+  return FIELD_BEHAVIORS[field.type].price(field);
 }
 
 export function calculatePriceForItem(product: IProduct): Price | LengthBasedPrice {
-  const parts: PricePart[] = [];
+  const parts: FieldPricePart[] = [];
   for (const field of product.fields) {
     if (!isFieldVisible(field, product.fields)) {
       continue;
@@ -112,7 +57,7 @@ export function calculatePriceForItem(product: IProduct): Price | LengthBasedPri
     parts.push(fieldPrice);
   }
 
-  const basePrice: PricePart = { label: "Alapár", price: product.price };
+  const basePrice: FieldPricePart = { label: "Alapár", price: product.price };
   const allParts = [basePrice, ...parts];
   const unitPrice = Math.round(
     allParts.reduce((sum, part) => sum + Math.round(part.price ?? 0), 0)

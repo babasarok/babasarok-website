@@ -1,4 +1,10 @@
-import type { CmsProductMaterial, Field, IProduct, MaterialField } from "../types.svelte";
+import type {
+  CmsProductMaterial,
+  Field,
+  IProduct,
+  MaterialField,
+  ProductMaterialValue,
+} from "../types.svelte";
 import { findFieldByName, resolveNumericValue } from "./field";
 
 /** The option in `field`'s `materials` list whose material is `materialId`. */
@@ -162,3 +168,14 @@ export function bannedMaterialFieldNames(fields: Field[], banned: string[][]): S
   return names;
 }
 // #endregion
+
+export function formatMaterialValue(
+  material: CmsProductMaterial | undefined,
+  value: ProductMaterialValue
+): string {
+  const name = material?.material_path.label ?? value.material_id;
+  const colors = value.colors
+    .map((id) => material?.material_path.colors?.find((c) => c.color_id === id)?.label ?? id)
+    .join(", ");
+  return colors ? `${name} (${colors.trim()})` : name;
+}

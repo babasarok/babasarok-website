@@ -1,5 +1,5 @@
-import type { Field, IProduct } from "../types.svelte";
-import { isMaterialInOption } from "../product/materials";
+import type { IProduct } from "../types.svelte";
+import { FIELD_BEHAVIORS } from "../product/behavior";
 
 /**
  * Prefill an order item from URL query parameters, so product pages can be
@@ -39,7 +39,9 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
 
     const field = item.fields.find((f) => f.name === key);
     if (field) {
-      applyFieldParam(field, raw);
+      // The type's own option/availability rules live in its behaviour; the
+      // `_color` / `_colors` companions below are a product-level scheme.
+      FIELD_BEHAVIORS[field.type].fillFromParams(field, raw);
       continue;
     }
 
@@ -132,34 +134,4 @@ export function buildMaterialParams(item: Pick<IProduct, "fields">): URLSearchPa
     }
   }
   return params;
-}
-
-function applyFieldParam(field: Field, raw: string): void {
-  switch (field.type) {
-    case "toggle": {
-      field.value = { value: raw === "true" || raw === "1" };
-      return;
-    }
-    case "embroidery": {
-      field.value ??= { enabled: true, text: { value: "" }, color: { color: "" } };
-      field.value.enabled = true;
-      field.value.text = { value: raw };
-      return;
-    }
-    case "material": {
-      // An unknown material id is ignored (deep-link spec: prefilled values
-      // are validated like normal selections), so the field stays unselected.
-      if (!isMaterialInOption(field, raw)) {
-        return;
-      }
-      field.value ??= { material_id: "", colors: [] };
-      field.value.material_id = raw;
-      return;
-    }
-    default: {
-      const matchesOption = field.items?.some((item) => item?.value === raw);
-      const isCustom = !matchesOption && !!field.allow_custom_value;
-      field.value = isCustom ? { value: raw, is_custom: true } : { value: raw };
-    }
-  }
 }

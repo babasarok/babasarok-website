@@ -1,4 +1,5 @@
 import type { Field } from "../types.svelte";
+import { FIELD_BEHAVIORS } from "./behavior";
 
 /**
  * The value a product field currently holds, tagged by `kind` so consumers
@@ -6,8 +7,9 @@ import type { Field } from "../types.svelte";
  * `FRAGILE` string→number / value→string reinterpretations that used to live in
  * priceUtils / materialUtils / fieldVisibility (issue #15).
  *
- * `embroidery` fields carry no scalar the rest of the form can reference, so
- * they resolve to `empty`; a blank string also collapses to `empty`.
+ * `embroidery` and `material` fields carry no scalar the rest of the form can
+ * reference, so they resolve to `empty`; a blank string also collapses to
+ * `empty`.
  */
 export type ResolvedFieldValue =
   { kind: "empty" } | { kind: "string"; value: string } | { kind: "boolean"; value: boolean };
@@ -23,26 +25,12 @@ export function resolveFieldValue(field: Field | undefined): ResolvedFieldValue 
     return { kind: "empty" };
   }
 
-  switch (field.type) {
-    case "toggle": {
-      const value = field.value?.value;
-      return value === undefined ? { kind: "empty" } : { kind: "boolean", value };
-    }
-    case "embroidery": {
-      return { kind: "empty" };
-    }
-    case "material": {
-      // A material value is a {material_id, colors} object, not a scalar the
-      // rest of the form can reference.
-      return { kind: "empty" };
-    }
-    default: {
-      const value = field.value?.value;
-      return typeof value === "string" && value !== ""
-        ? { kind: "string", value }
-        : { kind: "empty" };
-    }
+  // The per-type scalar lives in the behaviour registry; this only re-tags it.
+  const value = FIELD_BEHAVIORS[field.type].resolveValue(field);
+  if (value === undefined) {
+    return { kind: "empty" };
   }
+  return typeof value === "boolean" ? { kind: "boolean", value } : { kind: "string", value };
 }
 
 /**
