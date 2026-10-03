@@ -1,37 +1,3 @@
-/**
- * The per-field-type behaviour registry.
- *
- * `Field` is a plain, serializable data record — it crosses the Tina loader,
- * island props, localStorage and `$state.snapshot()` — so its behaviour does
- * not live *on* the record as methods. Each field type declares its behaviour
- * once in `behavior/<type>.ts`, and {@link FIELD_BEHAVIORS} gathers them into
- * an exhaustive record keyed by `ProductFieldType`.
- *
- * The record is the enforcement mechanism: adding an entry to
- * `PRODUCT_FIELD_TYPES` is a compile error until a behaviour for it exists,
- * and removing a method from {@link FieldBehavior} is a compile error until
- * every type's behaviour has been updated. Callers never switch on
- * `field.type` to answer a question the registry can — they index it — so
- * "where does X for a field type live?" has exactly one answer.
- *
- * What is *not* in the registry, and why:
- * - `depends_on` visibility — type-agnostic: `isFieldVisible` only reads the
- *   scalar `resolveValue` produces (see `field.ts`);
- * - the length-source collapse (the source field contributes no price of its
- *   own; its value scales the per-meter price) — a product-level decision
- *   taken by the callers, not a fact about any field type;
- * - banned-combination *pruning* — a cross-field reachability rule the
- *   zero-price gate applies to the choices {@link FieldBehavior.enumerate}
- *   returns (the rule and its matching live in `materials.ts`);
- * - the deep-link `_color` / `_colors` companions — a product-level scheme,
- *   parsed in `order/queryParams.ts` around the per-type `fillFromParams`;
- * - the order email's dependency indentation — a pure walk of the
- *   `depends_on` graph, no per-type branching;
- * - the line *layout* of the basket summary and the email (name column =
- *   `field.label || field.name`, hiding of valueless rows, per-option price
- *   tags) — presentational, rendered by the checkout components and
- *   `order/submit.ts`. The per-type *value text* is {@link FieldBehavior.formatValue}.
- */
 import type { ProductFieldType } from "../fieldTypes";
 import type { Field } from "../../types.svelte";
 import type { CmsEnhancedEmbroideryColor } from "../../data";
@@ -57,18 +23,20 @@ export type SavedFieldValue =
   | { material_id: string; colors: string[] }
   | { enabled: boolean; text: { value: string }; color: { color: string } };
 
-/** What a behaviour may read from the field's surroundings (read-only):
- *  - `fields` — the product's full field list (sibling lookups, `color_count`
- *    and other cross-field references);
- *  - `threadColors` — the shared embroidery thread palette, where a type
- *    resolves a colour id to a label;
- *  - `banned` — the product's banned material combinations as id multisets
- *    (`bannedCombinationIds`), precomputed by the caller because the rule
- *    spans all of the product's material fields. */
 export interface FieldContext {
+  /**
+   * The full list of fields in the product, allowing a behavior to reference
+   * sibling fields or other cross-field data.
+   */
   fields: Field[];
-  threadColors?: CmsEnhancedEmbroideryColor[] | undefined;
-  banned?: string[][] | undefined;
+  /**
+   * The shared embroidery thread palette, where a type resolves a colour id to a label.
+   */
+  threadColors: CmsEnhancedEmbroideryColor[] | undefined;
+  /**
+   * The product's banned material combinations as id multisets (`bannedCombinationIds`), precomputed by the caller because the rule spans all of the product's material fields.
+   */
+  banned: string[][] | undefined;
 }
 
 /** One line of the price breakdown: the label shown, and the price (Ft) the
@@ -80,35 +48,6 @@ export interface FieldPricePart {
   price: number | undefined;
 }
 
-/**
- * Everything a field type knows how to do. A behaviour answers the questions
- * the rest of the system asks of a field, in one place per type:
- *
- * - *shape*: {@link FieldBehavior.normalize} brings the value into canonical
- *   form (prefill, clamping) so validation and pricing see a complete item;
- * - *meaning*: {@link FieldBehavior.resolveValue} is the scalar the field
- *   refers to across field references;
- * - *money*: {@link FieldBehavior.price} contributes to the item price and
- *   {@link FieldBehavior.enumerate} lists the complete values a buyer can
- *   produce (used by the build-time 0-Ft gate);
- * - *edges*: {@link FieldBehavior.fillFromParams} reads the deep-link scheme,
- *   {@link FieldBehavior.toSaved} writes the persisted basket shape;
- * - *rules*: {@link FieldBehavior.validate} records problems on the value,
- *   {@link FieldBehavior.hasError} / {@link FieldBehavior.clearErrors} query
- *   and clear them;
- * - *record*: {@link FieldBehavior.formatValue} is the human-readable text of
- *   the current selection (the basket summary's value column, and the
- *   non-empty part of the email line); {@link FieldBehavior.includeInEmail} /
- *   {@link FieldBehavior.formatForEmail} decide what the submitted order
- *   email says about the field.
- *
- * The read methods (`resolveValue`, `price`, `enumerate`, `hasError`,
- * `toSaved`, `formatValue`, `includeInEmail`, `formatForEmail`) are pure over
- * their inputs.
- * The write methods (`normalize`, `fillFromParams`, `validate`,
- * `clearErrors`) mutate `field.value` in place, matching how the form mutates
- * the live item.
- */
 export interface FieldBehavior {
   /**
    * Bring the field's value into canonical form: prefill it when absent (so
@@ -118,7 +57,7 @@ export interface FieldBehavior {
    * hold no value until the buyer acts, and validation prefill happens on
    * submit.
    */
-  normalize(field: Field, ctx: FieldContext): void;
+  normalize(field: Field, ctx: Omit<FieldContext, "banned" | "threadColors">): void;
 
   /**
    * The scalar the field currently refers to, for cross-field references
@@ -168,7 +107,7 @@ export interface FieldBehavior {
    * {@link FieldBehavior.clearErrors}d instead, so a stale error never blocks
    * submission.
    */
-  validate(field: Field, ctx: FieldContext): void;
+  validate(field: Field, ctx: Omit<FieldContext, "threadColors">): void;
 
   /** Whether the field currently carries a validation error (including the
    *  type's sub-slots, e.g. embroidery text and colour). */
@@ -203,7 +142,7 @@ export interface FieldBehavior {
    * option reads as an empty line. Only meaningful when
    * {@link FieldBehavior.includeInEmail} is true.
    */
-  formatForEmail(field: Field, ctx: FieldContext): string;
+  formatForEmail(field: Field, ctx: Omit<FieldContext, "banned">): string;
 }
 
 /** The field narrowed to one type (`Field` is a discriminated union, so the

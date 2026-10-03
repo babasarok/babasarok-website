@@ -169,14 +169,6 @@ export function bannedMaterialFieldNames(fields: Field[], banned: string[][]): S
 }
 // #endregion
 
-/**
- * The "Name (colour, …)" label of a chosen material, with each chosen colour id
- * resolved to its label via the field's chosen material. The colours part is
- * trimmed and omitted entirely when there are no colours, so a colour-less pick
- * renders as just the material name (never `Név ()`). Shared by the basket
- * summary (`CheckoutItem`), the order email (`order/submit.ts`) and the
- * material behaviour (`behavior/material.ts`) so the three can never drift.
- */
 export function formatMaterialValue(
   material: CmsProductMaterial | undefined,
   value: ProductMaterialValue
