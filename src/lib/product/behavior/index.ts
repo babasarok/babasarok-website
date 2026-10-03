@@ -27,8 +27,10 @@
  *   parsed in `order/queryParams.ts` around the per-type `fillFromParams`;
  * - the order email's dependency indentation — a pure walk of the
  *   `depends_on` graph, no per-type branching;
- * - basket summary display text — presentational, rendered by the checkout
- *   components.
+ * - the line *layout* of the basket summary and the email (name column =
+ *   `field.label || field.name`, hiding of valueless rows, per-option price
+ *   tags) — presentational, rendered by the checkout components and
+ *   `order/submit.ts`. The per-type *value text* is {@link FieldBehavior.formatValue}.
  */
 import type { ProductFieldType } from "../fieldTypes";
 import type { Field } from "../../types.svelte";
@@ -94,12 +96,15 @@ export interface FieldPricePart {
  * - *rules*: {@link FieldBehavior.validate} records problems on the value,
  *   {@link FieldBehavior.hasError} / {@link FieldBehavior.clearErrors} query
  *   and clear them;
- * - *record*: {@link FieldBehavior.includeInEmail} /
+ * - *record*: {@link FieldBehavior.formatValue} is the human-readable text of
+ *   the current selection (the basket summary's value column, and the
+ *   non-empty part of the email line); {@link FieldBehavior.includeInEmail} /
  *   {@link FieldBehavior.formatForEmail} decide what the submitted order
  *   email says about the field.
  *
  * The read methods (`resolveValue`, `price`, `enumerate`, `hasError`,
- * `toSaved`, `includeInEmail`, `formatForEmail`) are pure over their inputs.
+ * `toSaved`, `formatValue`, `includeInEmail`, `formatForEmail`) are pure over
+ * their inputs.
  * The write methods (`normalize`, `fillFromParams`, `validate`,
  * `clearErrors`) mutate `field.value` in place, matching how the form mutates
  * the live item.
@@ -173,6 +178,16 @@ export interface FieldBehavior {
   clearErrors(field: Field): void;
 
   /**
+   * The human-readable text of the current selection — the chosen option's
+   * label, "Igen" for a toggle on, the embroidery text with its resolved
+   * thread colour, or the material name with its colours — or `undefined`
+   * when there is nothing to show (unselected, toggle off, embroidery
+   * disabled, blank). This is the value column of the basket summary; the
+   * summary hides rows whose value is `undefined`.
+   */
+  formatValue(field: Field, ctx: FieldContext): string | undefined;
+
+  /**
    * Whether the submitted order email gets a line for this field: a field is
    * in the record when its current state is part of the order (a picked
    * option, a toggle explicitly on *or* off, an enabled embroidery, a picked
@@ -181,10 +196,12 @@ export interface FieldBehavior {
   includeInEmail(field: Field): boolean;
 
   /**
-   * The text of the field's line in the order email, e.g. the chosen option's
-   * label, "Igen"/"Nem" for a toggle, the embroidery text with its resolved
-   * thread colour, or the material name with its colours. Only meaningful
-   * when {@link FieldBehavior.includeInEmail} is true.
+   * The text of the field's line in the order email. For a non-empty
+   * selection this is {@link FieldBehavior.formatValue}; the difference is the
+   * *empty* state, which the record represents rather than hides — a toggle
+   * off reads "Nem", a blank custom field reads "Egyedi: ", a blank required
+   * option reads as an empty line. Only meaningful when
+   * {@link FieldBehavior.includeInEmail} is true.
    */
   formatForEmail(field: Field, ctx: FieldContext): string;
 }
@@ -252,6 +269,7 @@ export function defineBehavior<T extends ProductFieldType>(
         impl.clearErrors(f);
       }
     },
+    formatValue: (f, ctx) => (is(f) ? impl.formatValue(f, ctx) : undefined),
     includeInEmail: (f) => (is(f) ? impl.includeInEmail(f) : false),
     formatForEmail: (f, ctx) => (is(f) ? impl.formatForEmail(f, ctx) : ""),
   };

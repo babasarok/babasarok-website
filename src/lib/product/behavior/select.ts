@@ -38,6 +38,10 @@ export const selectBehavior = defineBehavior("select", {
   clearErrors: (f) => {
     void f;
   },
+  formatValue: (f, _ctx) => {
+    void f;
+    return;
+  },
   includeInEmail: (f) => {
     void f;
     return false;

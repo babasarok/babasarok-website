@@ -239,6 +239,52 @@ memory (Vite override rationale, `--ignore-scripts`, Tina dev ports, the Plate
 duplicate-dependency crash). Promoting the essentials into this repo's docs would
 de-risk onboarding for humans who don't have that memory.
 
-```
+### 5.7 Per-field-type behaviour: a registry, not scattered `switch (field.type)`
 
-```
+The per-type answers a field needs (value resolution, price contribution, choice
+enumeration, deep-link fill, persistence shape, validation, order-email record)
+are currently re-implemented as a `switch (field.type)` in each consumer, which
+lets the price part drift between `pricing/price.ts` and
+`pricing/validCombinations.ts` and makes a new field type an ~8-file change.
+ADR 0006 moves them into an exhaustive `Record<ProductFieldType, FieldBehavior>`
+(`src/lib/product/behavior/`) so implementation coverage is a compile error and
+usage is enforced by a lint rule. (In progress.)
+
+### 5.8 Organise the data layer by entity
+
+`src/lib/data.ts` (~800 lines) holds, for six collections, the `Cms*` type
+derivations, the Tina⇄zod parity assertions, the loaders, the image-optimisation
+calls, *and* the product-domain build gates (`assertValidProductReferences`,
+`assertNoZeroPriceProduct`) that import from `product/` and `pricing/`. Split it
+into per-entity modules (`data/product.ts`, `data/material.ts`, …), each owning
+its enhanced type + its `IfEquals` assertion + its loader, and move the product
+build gates to `src/lib/product/buildChecks.ts`. Also split
+`src/lib/types.svelte.ts` so the product form types (`Field`, the per-type value
+shapes, `IProduct`) live next to the product entity — this completes an open task
+of ADR 0002 and removes the inverted `data.ts → types.svelte.ts` dependency.
+(Extends 5.3.)
+
+### 5.9 Single source of truth for the remaining discriminants
+
+`ProductType` and `ProductFieldType` already derive their union + values +
+labels + type-guard from one `as const` list; the same treatment is missing for:
+
+- **`ListSort`** (`product-list/query.ts`) — the sort list is duplicated across
+  the hand-written union, the `parseListSort` `||` chain, the `applyListState`
+  `switch` (carrying a live `eslint-disable unicorn/no-useless-switch-case`), and
+  the hard-coded `<option>`s in `ProductList.svelte`. Derive it from one list +
+  a `Record<ListSort, comparator>`; the select renders from the list, so a new
+  sort mode is a compile error until it is implemented *and* offered.
+- **Set-discount status** (`pricing/setDiscount.ts`) — the
+  `"active" | "pending-partner" | "pending-material"` states are compared with
+  raw `===` in three components. A presentation record over the state gives one
+  home for the copy, tone, and action of each.
+- **Saved field shape** (`order/storage.ts`) — the persisted zod union is built
+  by *exclusion* (`PRODUCT_FIELD_TYPE_VALUES.filter(t => t !== "toggle" && …)`),
+  so a new field type silently inherits the string persistence shape. Derive it
+  from `valueKind` in `fieldTypes.ts` and keep it structurally identical to the
+  behaviour registry's `SavedFieldValue`.
+
+Smaller: `content.config.ts` (six collections, ~380 lines) could split into
+per-collection schema modules, and `tina/collections/product.ts` (716 lines)
+could extract its per-field-type conditional-UI fragments.
