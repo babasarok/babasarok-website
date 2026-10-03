@@ -14,7 +14,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { submitOrder, type OrderDetails } from "@/lib/order/submit";
 import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
 import { chargedDeliveryPrice, orderTotal } from "@/lib/order/total";
-import { makeDelivery, makeField, makeMaterial, makeMaterialOption, makeProduct } from "./fixtures";
+import { makeDelivery, makeField, makeMaterial, makeProduct } from "./fixtures";
 import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
 
 afterEach(() => {
@@ -91,7 +91,7 @@ describe("order form envelope", () => {
 });
 
 describe("product string content", () => {
-  it("formats a radio + toggle product with materials", async () => {
+  it("formats a radio + toggle product with material fields", async () => {
     const materialPool = [
       makeMaterial({
         material_id: "teddy",
@@ -139,14 +139,20 @@ describe("product string content", () => {
           price: 3700,
           value: { value: false },
         }),
-      ],
-      material_options: [
-        makeMaterialOption({ materials: materialPool }),
-        makeMaterialOption({ materials: materialPool }),
-      ],
-      values: [
-        { material_id: "teddy", colors: ["bezs", "szurke"] },
-        { material_id: "minky", colors: ["rozsa"] },
+        makeField({
+          name: "anyag1",
+          label: "Anyag 1",
+          type: "material",
+          materials: materialPool,
+          value: { material_id: "teddy", colors: ["bezs", "szurke"] },
+        }),
+        makeField({
+          name: "anyag2",
+          label: "Anyag 2",
+          type: "material",
+          materials: materialPool,
+          value: { material_id: "minky", colors: ["rozsa"] },
+        }),
       ],
     });
 
@@ -155,9 +161,8 @@ describe("product string content", () => {
         Méret: Közepes
         Babatakaró és párna: Igen
         Betét: Nem
-        Anyagok:
-          1. Teddy (Bézs, Szürke)
-          2. Minky (Rózsaszín)
+        Anyag 1: Teddy (Bézs, Szürke)
+        Anyag 2: Minky (Rózsaszín)
 
       Alapár: 15000 Ft
       Méret: 1500Ft
@@ -276,9 +281,10 @@ describe("product string content", () => {
           ],
           value: { value: "4" },
         }),
-      ],
-      material_options: [
-        makeMaterialOption({
+        makeField({
+          name: "anyag",
+          label: "Anyag",
+          type: "material",
           color_count: "fonas",
           materials: [
             makeMaterial({
@@ -293,17 +299,16 @@ describe("product string content", () => {
               ],
             }),
           ],
+          value: { material_id: "pamutjersey", colors: ["feher", "kek", "zold", "piros"] },
         }),
       ],
-      values: [{ material_id: "pamutjersey", colors: ["feher", "kek", "zold", "piros"] }],
     });
 
     expect(form_text(await captureForm(baseOrder([product])))).toMatchInlineSnapshot(`
       "Fonott rácsvédő (1db)
         Méret: 300cm
         Fonás: Négyes
-        Anyagok:
-          1. Pamutjersey (Fehér, Kék, Zöld, Piros)
+        Anyag: Pamutjersey (Fehér, Kék, Zöld, Piros)
 
       Alapár: 0 Ft
       Fonás: 8000Ft

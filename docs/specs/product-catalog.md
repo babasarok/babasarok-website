@@ -2,7 +2,7 @@
 
 Catalogue of handmade baby products that buyers can browse. Products are managed
 as CMS content, each optionally carrying configurable fields (options,
-embroidery) and material slots, and are listed on a single searchable,
+embroidery, material picks), and are listed on a single searchable,
 filterable product list with a detail page per product.
 
 ## Requirements
@@ -21,13 +21,13 @@ pricing/discount data.
     colors, free inputs, embroidery) with per-option prices
   - THEN the product's shape includes those fields with their labels, types,
     options and prices so the order form can render and price them
-- **Scenario: Product with material slots**
+- **Scenario: Product with material fields**
   - WHEN a product requires materials
-  - THEN the product's shape includes an ordered list of material options
-    (slots), each carrying its own label, colour count, and its own set of
-    available material choices, so the order form can collect one material (and
-    its colors) per slot; any forbidden cross-slot material combinations are
-    listed separately
+  - THEN the product's shape includes `material` fields, each carrying its own
+    label, colour count, and its own set of available material choices (with
+    per-choice prices), so the order form can collect one material (and its
+    colors) per field; any forbidden cross-field material combinations are
+    listed at the product level
 
 ### Product list: search, filtering, and sorting
 
@@ -149,10 +149,10 @@ pending material with one-click sync) per the product-sets capability.
 ### Product page deep links
 
 The product page configurator SHALL support prefilling a new line from URL
-query parameters: quantity (`count`), field values keyed by field name
-(including embroidery enablement and thread color), and material selections
-per slot. Prefilled values SHALL be validated against the product's options
-like normal selections.
+query parameters: quantity (`count`), and field values keyed by field name
+(including embroidery enablement and thread color, and material field
+selections with their `<name>_colors` companion). Prefilled values SHALL be
+validated against the product's options like normal selections.
 
 - **Scenario: Deep link with preselected options**
   - WHEN a visitor opens a product page whose URL query prefills options and

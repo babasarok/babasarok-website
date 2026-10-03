@@ -38,6 +38,7 @@ export interface FieldOpts {
   items?: FieldItem[];
   allow_custom_value?: boolean;
   regex?: string;
+  color_count?: string;
   value?: ValueWithError | ToggleValue | EmbroideryValue | ProductMaterialValue;
   depends_on?: { field?: string | null; value?: string | null } | null;
   materials?: CmsProductMaterial[];
@@ -75,7 +76,7 @@ export interface MaterialOpts {
   colors?: MaterialColor[];
 }
 
-/** Build a single material choice (`material_options[n].materials[n]`). */
+/** Build a single material choice (an entry of a material field's `materials`). */
 export function makeMaterial(opts: MaterialOpts): CmsProductMaterial {
   return {
     price: opts.price ?? null,

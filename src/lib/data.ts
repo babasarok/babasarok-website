@@ -478,6 +478,12 @@ function describeFieldChoice(field: Field): string {
     case "toggle": {
       return field.value?.value ? `${field.label}: igen` : "";
     }
+    case "material": {
+      const material = (field.materials ?? []).find(
+        (m) => m?.material_path.material_id === field.value?.material_id
+      );
+      return material ? `${field.label}: ${material.material_path.label}` : "";
+    }
     default: {
       return "";
     }

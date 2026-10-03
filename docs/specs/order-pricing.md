@@ -11,8 +11,7 @@ treated as contributing nothing rather than producing a partial price.
 
 The system SHALL compute an item's unit price as the sum of the product's base
 price, the prices of all visible and selected priced configurable fields, and
-the prices of all required material selections (whether carried by standalone
-`materials` slots or by `material` fields). Each part's price MUST be rounded
+the price of each selected `material` field. Each part's price MUST be rounded
 to whole units before summing.
 
 - **Scenario: Base price plus options**
@@ -22,10 +21,10 @@ to whole units before summing.
     selected options' prices, each shown as a named line in the price
     breakdown
 - **Scenario: Material prices**
-  - WHEN a product requires materials and the buyer selects them
+  - WHEN a product has `material` fields and the buyer picks their materials
   - THEN each selected material contributes its price to the unit price, with
-    one labeled line per material slot (or per `material` field, labeled by
-    the field; an as-yet-unchosen material selection contributes nothing)
+    one labeled line per `material` field (labeled by the field; an
+    as-yet-unchosen material selection contributes nothing)
 
 ### Quantity
 
@@ -82,10 +81,11 @@ configuration that prices at 0 Ft — i.e. the product could be submitted for
 free. The enumeration mirrors the order form's reachability rules: only
 visible fields (`depends_on`) count, radio/select/color selections are
 required (a custom value where `allow_custom_value` is set counts as a 0-Ft
-selection), every required material slot must be filled subject to
-`banned_combinations`, every `material` field must have a material picked
-(each entry of the field's `materials` list is one choice; the colour
-selection is never enumerated, since it cannot change the price), embroidery
+selection), every `material` field must have a material picked — each entry of
+the field's `materials` list is one choice, and a choice is pruned when it
+would complete a `banned_combinations` entry, mirroring the form's validation;
+the colour selection is never enumerated, since it cannot change the price;
+embroidery
 is optional, and the length source field of
 a length-priced product is judged by its per-meter price (any length would
 then sell for 0 Ft). Non-orderable (browse-only) products are exempt.

@@ -1,4 +1,4 @@
-import { resolveColorCount } from "./materials";
+import { resolveColorCount, bannedCombinationIds, bannedMaterialFieldNames } from "./materials";
 import type { Field, IProduct } from "../types.svelte";
 import { isFieldVisible } from "./field";
 
@@ -53,21 +53,27 @@ export function sanitizeItem(item: IProduct): IProduct {
 
 function updateFieldWithErrors(product: IProduct, item: Field): void {
   if (item.type === "material") {
-    // Mirror `updateMaterialWithErrors` for a material slot: it needs the full
-    // product to resolve `color_count` (which may name another field).
+    // A material field needs the full product: `color_count` may name another
+    // field, and the banned-combination rule spans all material fields.
     item.value ??= { material_id: "", colors: [] };
     item.value.error = undefined;
     if (!item.value.material_id) {
       item.value.error = "Kötelező mező";
       return;
     }
-    const count = resolveColorCount({ color_count: item.color_count }, product);
+    const count = resolveColorCount(item, product);
     if (!count) {
       item.value.error = "Színt nem lehet választani, más érték még nincs megadva";
       return;
     }
     if (item.value.colors.length < count) {
       item.value.error = `${count == 1 ? "" : count.toString()} színt kell választani`;
+      return;
+    }
+    // Once the selection is otherwise complete, flag every field whose
+    // material completes a banned combination (form-level enforcement).
+    if (bannedMaterialFieldNames(product.fields, bannedCombinationIds(product)).has(item.name)) {
+      item.value.error = "Ez az anyagkombináció nem rendelhető";
     }
     return;
   }

@@ -1,4 +1,4 @@
-import type { Field, IProduct, ProductMaterialValue } from "../types.svelte";
+import type { Field, IProduct } from "../types.svelte";
 
 /**
  * Prefill an order item from URL query parameters, so product pages can be
@@ -10,13 +10,13 @@ import type { Field, IProduct, ProductMaterialValue } from "../types.svelte";
  * Scheme:
  * - `count=<n>` — item quantity (integer ≥ 1).
  * - `<fieldName>=<value>` — a product field, keyed by its frontmatter `name`.
- *   Toggles accept `true`/`1`; embroidery enables the field and sets its text.
+ *   Toggles accept `true`/`1`; embroidery enables the field and sets its text;
+ *   a `material` field sets its chosen material id.
  * - `<embroideryField>_color=<colorId>`
  *   — the thread colour for an embroidery field. Field names win over this
  *   pattern: a product field literally named `<name>_color` /
- * - `m<i>=<materialId>` — the material chosen for slot `i` (0-based).
- * - `m<i>_colors=<c1,c2,…>` — comma-separated colour ids for slot `i`.
- * - `m<i>_custom=<hex>` — a custom colour for slot `i`.
+ * - `<materialField>_colors=<c1,c2,…>` — comma-separated colour ids for a
+ *   `material` field.
  */
 export function prefillFromParams(item: IProduct, params: URLSearchParams): void {
   const count = params.get("count");
@@ -51,20 +51,18 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
       }
     }
 
-    const material = /^m(?<index>\d+)(?:_(?<kind>colors))?$/.exec(key);
-    if (material?.groups) {
-      const slot = ensureSlot(Number.parseInt(material.groups.index, 10));
-      if (!slot) {
-        continue;
-      }
-
-      if (material.groups.kind === "colors") {
-        slot.colors = decodeURIComponent(raw)
+    const materialColors = /^(?<name>.+?)_colors$/.exec(key);
+    if (materialColors?.groups) {
+      const target = item.fields.find(
+        (f) => f.type === "material" && f.name === materialColors.groups?.name
+      );
+      if (target?.type === "material") {
+        target.value ??= { material_id: "", colors: [] };
+        target.value.colors = raw
           .split(",")
           .map((c) => c.trim())
           .filter(Boolean);
-      } else {
-        slot.material_id = decodeURIComponent(raw);
+        continue;
       }
     }
   }
@@ -75,17 +73,19 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
  * {@link prefillFromParams} reads, so a set sibling's page can be deep-linked
  * with the current material selection preselected.
  */
-export function buildMaterialParams(item: Pick<IProduct, "materials">): URLSearchParams {
+export function buildMaterialParams(item: Pick<IProduct, "fields">): URLSearchParams {
   const params = new URLSearchParams();
-  const { values, material_options } = item.materials;
-  for (let i = 0; i < material_options.length; i++) {
-    const slot = values[i];
-    if (!slot?.material_id) {
+  for (const field of item.fields) {
+    if (field.type !== "material") {
       continue;
     }
-    params.set(`m${i}`, encodeURIComponent(slot.material_id));
-    if (slot.colors.length > 0) {
-      params.set(`m${i}_colors`, encodeURIComponent(slot.colors.join(",")));
+    const value = field.value;
+    if (!value?.material_id) {
+      continue;
+    }
+    params.set(field.name, value.material_id);
+    if (value.colors.length > 0) {
+      params.set(`${field.name}_colors`, value.colors.join(","));
     }
   }
   return params;

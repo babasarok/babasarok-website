@@ -10,7 +10,8 @@ reloads and revisits.
 
 The system SHALL represent the basket as a list of lines, each carrying a
 stable identity and referencing a product, holding its quantity, the buyer's
-configured field values, and the chosen material values per slot.
+configured field values (including the `material` field picks), and the chosen
+materials per material field.
 
 - **Scenario: Adding a product**
   - WHEN a buyer configures a product (quantity, options, materials) and adds
