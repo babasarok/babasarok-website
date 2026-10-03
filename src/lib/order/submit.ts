@@ -33,18 +33,22 @@ function formatFieldValue(field: Field, threadColors: CmsEnhancedEmbroideryColor
   if (field.type === "toggle") {
     return field.value?.value ? "Igen" : "Nem";
   }
+
   if (field.type === "embroidery") {
     const color = threadColors.find((c) => c.color_id === field.value?.color.color);
     const colorLabel = color?.label ?? field.value?.color.color ?? "";
     return `${field.value?.text.value ?? ""} (${colorLabel})`;
   }
+
   if (field.value?.is_custom) {
     return `Egyedi: ${field.value.value}`;
   }
+
   const label =
     "items" in field
       ? field.items?.find((option) => option?.value === field.value?.value)?.label
       : undefined;
+
   return label ?? field.value?.value ?? "";
 }
 

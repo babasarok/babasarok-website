@@ -11,6 +11,7 @@ export const PRODUCT_FIELD_TYPES = [
   { value: "select", label: "Legördülő", valueKind: "string" },
   { value: "radio", label: "Gombos - egyválasztós", valueKind: "string" },
   { value: "color", label: "Szín", valueKind: "string" },
+  { value: "material", label: "Anyag", valueKind: "none" },
   { value: "toggle", label: "Igen/Nem", valueKind: "boolean" },
   { value: "embroidery", label: "Hímzés", valueKind: "none" },
 ] as const;

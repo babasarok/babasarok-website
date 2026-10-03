@@ -44,6 +44,9 @@
         const text = field.value.text.value.trim();
         return colorLabel ? `${text} (${colorLabel})`.trim() : text;
       }
+      case "material": {
+        return materialDisplay(field.value);
+      }
       default: {
         const value = field.value?.value;
         if (!value) {

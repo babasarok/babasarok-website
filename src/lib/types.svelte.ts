@@ -53,6 +53,9 @@ interface FieldValueByType {
   select: ValueWithError;
   radio: ValueWithError;
   color: ValueWithError;
+  /** A `material` field picks one of its `materials` (a material) plus its
+   * colours — the same value shape the old standalone `materials` slots used. */
+  material: ProductMaterialValue;
   toggle: ToggleValue;
   embroidery: EmbroideryValue;
 }

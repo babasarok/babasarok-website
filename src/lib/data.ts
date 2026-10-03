@@ -145,11 +145,19 @@ type CmsFlatField = NonNullable<NonNullable<CmsProduct["fields"]>[number]>;
  * `fields` share one shape with a `type` discriminant drawn from the central
  * PRODUCT_FIELD_TYPES list; the runtime `Field` type turns it into a per-type
  * discriminated union (see docs/embroidery-field-plan.md).
+ *
+ * A `material` field carries a `color_count` plus a `materials` list whose
+ * `material_path` is resolved to the enhanced material document — the same
+ * element shape the standalone `materials` slots use.
  */
-type CmsField = {
-  [K in keyof CmsFlatField]: K extends "type" ? ProductFieldType : CmsFlatField[K];
-} & {
+type CmsField = Omit<
+  {
+    [K in keyof CmsFlatField]: K extends "type" ? ProductFieldType : CmsFlatField[K];
+  },
+  "materials"
+> & {
   price_unit: EmbroideryPriceUnit | undefined | null;
+  materials: Array<CmsEnhancedProductMaterial | undefined | null> | undefined | null;
 };
 
 export interface CmsEnhancedProduct extends Omit<
@@ -640,10 +648,10 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
             }))
         ),
       },
-      fields:
-        product.fields
-          ?.filter((field) => field != null)
-          .map((field): RecursiveRequired<CmsField, GetImageResult | Date> => {
+      fields: await Promise.all(
+        (product.fields ?? [])
+          .filter((field) => field != null)
+          .map(async (field): Promise<RecursiveRequired<CmsField, GetImageResult | Date>> => {
             const base = {
               allow_custom_value: field.allow_custom_value ?? undefined,
               label: field.label,
@@ -672,12 +680,22 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
                     price: item.price ?? undefined,
                     tooltip: item.tooltip ?? undefined,
                   })) ?? undefined,
+              color_count: field.color_count ?? undefined,
+              materials: await Promise.all(
+                (field.materials ?? [])
+                  .filter((material) => material != null)
+                  .map(async (material) => ({
+                    price: material.price,
+                    material_path: await transformMaterial(material.material_path),
+                  }))
+              ),
             };
 
             // Re-tag the shared shape with a literal `type` — the single point
             // where Tina's loose `type: string` becomes our discriminated union.
             return { ...base, type: toProductFieldType(field.type) };
-          }) ?? undefined,
+          })
+      ),
     };
 
     assertValidProductReferences(enhanced);

@@ -12,7 +12,7 @@ const STORAGE_VERSION = 3;
 export const ORDER_STORAGE_KEY = STORAGE_KEY;
 
 const stringValuedTypes = PRODUCT_FIELD_TYPE_VALUES.filter(
-  (type) => type !== "toggle" && type !== "embroidery"
+  (type) => type !== "toggle" && type !== "embroidery" && type !== "material"
 ) as [string, ...string[]];
 
 const stringValue = z.object({ value: z.string(), is_custom: z.boolean().optional() });
@@ -23,6 +23,8 @@ const embroideryValue = z.object({
   color: z.object({ color: z.string() }),
 });
 
+const materialValue = z.object({ material_id: z.string(), colors: z.array(z.string()) });
+
 // Only the user-entered field value, validated against its type. Unknown keys
 // (including transient `error`s) are stripped so restore stays clean.
 const savedField = z.discriminatedUnion("type", [
@@ -31,6 +33,11 @@ const savedField = z.discriminatedUnion("type", [
     name: z.string(),
     type: z.literal("toggle"),
     value: z.object({ value: z.boolean() }).optional(),
+  }),
+  z.object({
+    name: z.string(),
+    type: z.literal("material"),
+    value: materialValue.optional(),
   }),
   z.object({ name: z.string(), type: z.literal("embroidery"), value: embroideryValue.optional() }),
 ]);
@@ -126,6 +133,18 @@ function toSavedField(field: Field): SavedProduct["fields"][number] {
               color: {
                 color: field.value.color.color,
               },
+            },
+          }
+        : { name, type };
+    }
+    case "material": {
+      return field.value
+        ? {
+            name,
+            type,
+            value: {
+              material_id: field.value.material_id,
+              colors: [...field.value.colors],
             },
           }
         : { name, type };
