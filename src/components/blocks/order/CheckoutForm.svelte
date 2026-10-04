@@ -13,7 +13,6 @@
   import { isItemValid, validateItem } from "@/lib/product/validation";
   import { submitOrder } from "@/lib/order/submit";
   import { randomUUID } from "@/lib/uuid";
-  import { GTM_CONVERSION_ID } from "astro:env/client";
   import { chargedDeliveryPrice, isDeliveryFree, orderTotal } from "@/lib/order/total";
   import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
   import type {
@@ -169,17 +168,19 @@
       }
     }
 
-    if (GTM_CONVERSION_ID) {
-      try {
-        gtag("event", "conversion", {
-          send_to: GTM_CONVERSION_ID,
-          value: grandTotal,
-          currency: "HUF",
-          transaction_id: transactionId,
-        });
-      } catch (e) {
-        console.error("Failed to record purchase conversion", e);
-      }
+    try {
+      // The order total goes through the shared data layer (see the `gtag` shim
+      // in Base.astro) to the GTM container (GTM_ID), whose Google Ads
+      // conversion tag is configured over there — not in the site — so no
+      // conversion id lives here. `transaction_id` matches the email payload so
+      // Google Ads can deduplicate against the Web3Forms submission.
+      gtag("event", "conversion", {
+        value: grandTotal,
+        currency: "HUF",
+        transaction_id: transactionId,
+      });
+    } catch (e) {
+      console.error("Failed to record purchase conversion", e);
     }
 
     orderBasket.clear();
