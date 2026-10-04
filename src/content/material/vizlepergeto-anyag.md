@@ -41,5 +41,8 @@ colors:
   - color_id: Vilagosszurke
     label: 'Világos szürke '
     image: /src/assets/IMG_5422.jpeg
+  - color_id: Bezs
+    label: 'Bézs '
+    image: /src/assets/IMG_5418.jpeg
 ---
 
