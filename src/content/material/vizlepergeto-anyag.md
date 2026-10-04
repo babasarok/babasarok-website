@@ -26,8 +26,8 @@ colors:
   - color_id: 'Gomba barna '
     label: Pasztell gombamező
     image: /src/assets/IMG_5409.jpeg
-  - color_id: Kolibri
-    label: Kolibrik tánca
+  - color_id: Fecske
+    label: Fecskék tánca
     image: /src/assets/IMG_5415.jpeg
 ---
 
