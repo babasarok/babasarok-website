@@ -8,5 +8,8 @@ colors:
   - color_id: Zsiraf
     label: 'Zsiráfok '
     image: /src/assets/IMG_5407.jpeg
+  - color_id: Eukaliptusz
+    label: Eukaliptusz
+    image: /src/assets/IMG_5404.jpeg
 ---
 
