@@ -11,5 +11,8 @@ colors:
   - color_id: Eukaliptusz
     label: Eukaliptusz
     image: /src/assets/IMG_5404.jpeg
+  - color_id: Bambusz
+    label: Bambuszlevél
+    image: /src/assets/IMG_5413.jpeg
 ---
 
