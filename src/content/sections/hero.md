@@ -1,8 +1,8 @@
 ---
 enable: true
 topTitle: Babasarok
-buttonName: Érdeklődj itt
-buttonURL: contact
+buttonName: Megnézem a termékeket
+buttonURL: Product
 image: /src/assets/Noémi-22.webp
 ---
 
