@@ -38,5 +38,8 @@ colors:
   - color_id: Zsalya
     label: Zsálya
     image: /src/assets/IMG_5421.jpeg
+  - color_id: Vilagosszurke
+    label: 'Világos szürke '
+    image: /src/assets/IMG_5422.jpeg
 ---
 
