@@ -29,5 +29,8 @@ colors:
   - color_id: Fecske
     label: Fecskék tánca
     image: /src/assets/IMG_5415.jpeg
+  - color_id: 'Halvany puder '
+    label: Halvány púder
+    image: /src/assets/IMG_5420.jpeg
 ---
 
