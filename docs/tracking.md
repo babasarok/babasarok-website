@@ -2,8 +2,7 @@
 
 What the site sends to third-party analytics/ad networks, which events fire,
 and what data each event carries. This is the authoritative record of the
-marketing/analytics integration, cross-checked against a real local capture
-(`~/Downloads/localhost.har`) of a full pass of the site including a purchase.
+marketing/analytics integration.
 
 > Conventions and priorities live in [AGENTS.md](../AGENTS.md). The behavior this
 > builds on — order submission and when a conversion is recorded — is specified
@@ -19,7 +18,6 @@ through the base layout:
 | ---- | ---- | ---- | ---- |
 | **Google Tag Manager (GTM)** | Container that runs the Google Ads conversion tag (and form auto-events) | `googletagmanager.com/gtm.js` | Every page; conversion + form events on the checkout form |
 | **Meta (Facebook) Pixel** | Page views, form-interaction events, and purchase events | `connect.facebook.net/en_US/fbevents.js` | Every page (`PageView`); on checkout submit (`Purchase` + form events) |
-| **Web3Forms** | Not a tracker — the order-email transport | `web3forms.com/client/script.js` (+ `api.web3forms.com/submit`) | Only on order submit |
 
 One public client env var controls the Google side
 ([astro.config.ts](../astro.config.ts), [`.env.example`](../.env.example)):
@@ -44,8 +42,6 @@ enabled. Everything below describes the events the site is responsible for.
 - **Meta Pixel** — [src/components/MetaPixel.astro](../src/components/MetaPixel.astro),
   rendered in `Base.astro` head. Initializes the pixel and fires `PageView` inline.
   Its `<noscript>` fallback fires `PageView` via an `<img>` beacon when JS is off.
-- **Web3Forms** — inline `<script src="https://web3forms.com/client/script.js">` in
-  `Base.astro`; the order payload is built in [src/lib/order/submit.ts](../src/lib/order/submit.ts).
 - **Purchase / conversion events** — fired by the checkout island
   [src/components/blocks/order/CheckoutForm.svelte](../src/components/blocks/order/CheckoutForm.svelte)
   `onSubmit`.
@@ -93,51 +89,12 @@ On order submit the buyer's details are POSTed to `api.web3forms.com/submit` as
 message, the per-product breakdown, the computed total, and — as the **last
 payload field** — `tranzakcio_id`, the transaction identifier shared with the
 Google Ads conversion event. This is the only place the PII leaves the browser.
-In the current code the purchase is a disabled dry run (see §5): the `submitOrder`
-call is commented out, so **no `/submit` request goes out** while the conversion
-events still fire.
-
-## 4. Per-purchase event timeline (from the capture)
-
-All times are the seconds after first page load; purchase submit lands at ~23s.
-
-| t | Platform | Event | value |
-| ---- | ---- | ---- | ---- |
-| 0–3s | Meta | `PageView` ×N (one per navigation: `/`, `/product/…`, `/product/`, `/checkout`) | — |
-| ~23s | Meta | `Purchase` | `21500`, 2 items |
-| ~23s | Meta | form-interaction event (`SubscribedButtonClick`) | form shape |
-| ~23s | Google | `conversion` (pagead + viewthrough) | `21500` |
-| ~23s | Google | `form_begin` / `form_submit` | `21500` |
-| ~23s | Google | `1p-user-list` / `1p-conversion` (retargeting, `.com` + `.co.uk`) | — |
 
 No tracking call fires on ordinary browsing beyond Meta `PageView`; the
 `form_begin`/`form_submit`/`conversion`/`Purchase` cluster is gated behind a
 **valid** checkout submission.
 
-## 5. Known current-state gaps (intended vs. observed)
-
-The normative behavior is [order submission § Conversion tracking](specs/order-submission.md):
-a conversion is recorded **only when Web3Forms accepts** the submission, carrying
-the order total and the *same* transaction id that closed the email. Remaining
-deviations:
-
-- **The purchase is currently disabled at the source (dry run).** In
-  `CheckoutForm.svelte` the `submitOrder(...)` call and the `if (!result.ok)`
-  guard are commented out. The order email is not sent, but the
-  `fbq('track', 'Purchase')` and `gtag('event', 'conversion', …)` calls still run
-  — so **a conversion is recorded on any valid form submit**, not on a confirmed
-  Web3Forms acceptance (contrary to the spec). Once it's re-enabled the
-  conversion will carry the same per-attempt `randomUUID()` as the email's
-  `tranzakcio_id`.
-- **`orderBasket.clear()`** is also commented out, so a submitted order stays in
-  the basket locally.
-
-Net effect today: purchases are *not* actually sent (Web3Forms disabled), but
-both ad networks are told a purchase of the real order value happened. This is the
-correct "dry run" state for validating the tracking wiring and must not be shipped
-as-is.
-
-## 6. Privacy notes
+## 4. Privacy notes
 
 - **PII** (name, email, phone, delivery address) goes only to Web3Forms. It is not
   included in the Google or Meta events; Meta's form events contain field
@@ -151,9 +108,9 @@ as-is.
 - Two external parties receive first-party tracking data (Google, Meta); both
   also run their own auto-collected form events independent of the code above.
 
-## 7. Endpoints
+## 5. Endpoints
 
-```
+```text
 www.googletagmanager.com/gtm.js                        # Google Tag Manager container (GTM_ID)
 connect.facebook.net/en_US/fbevents.js                # Meta Pixel
 connect.facebook.net/signals/config/<pixel_id>        # Meta config
