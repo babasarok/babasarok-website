@@ -1,15 +1,16 @@
-# Product definition and Tina authoring plan
+# Product catalogue definition and Tina authoring plan
 
 ## Goal
 
-Define the canonical Product model with Zod, generate the Tina Product field form
-from a Product-specific authoring registry, and compile Tina's permissive stored
-shape into the canonical model.
+Define the canonical Product catalogue with Zod, generate the Tina Product,
+Material, and Product-group forms from catalogue-specific authoring registries,
+and compile Tina's permissive stored shapes into one validated catalogue graph.
 
-The result is the shared Product definition that the storefront and a future
-Vendure backend can both trust. This work preserves current storefront behavior;
-moving checkout, payments, delivery, and monetary authority to Vendure is later
-work.
+The result is the shared catalogue that the storefront and a future Vendure
+backend can both trust. Materials compile first; Products resolve Material
+references; Product groups compile last and resolve Product membership for deals
+and related items. This work preserves current storefront behavior. Delivery
+methods remain on their current path until Vendure replaces them.
 
 ## How to execute this plan
 
@@ -51,16 +52,46 @@ Tina form → Tina source record → codec/compiler → ProductDefinition
 Raw Tina records do not cross the compiler seam. Canonical modules do not import
 Tina, Astro, Svelte, Vendure, generated GraphQL types, or browser globals.
 
-### This is Product-specific tooling
+### The aggregate is a Product catalogue
 
-Build a small Product authoring library, not an arbitrary Zod-to-Tina converter.
-Support only the Zod and Tina constructs used by this Product model. Generalize
-only after two or more real field kinds require the same operation.
+Product behavior cannot be validated in isolation:
+
+```text
+Materials ──► Products ──► Product groups
+                 │               │
+                 │               ├── discounted Product sets
+                 │               └── related items
+                 └── material choices and forbidden combinations
+```
+
+Compile in that order. A successful catalogue contains no unresolved Tina paths
+or generated reference objects; relationships use stable `MaterialId` and
+`ProductId` values.
+
+The global embroidery thread-color palette is another Product dependency. Parse
+and validate it alongside Materials even if its Tina form is not generated in
+the first implementation.
+
+### Delivery methods are transitional
+
+Delivery methods are operational commerce configuration, not Product catalogue
+content. Keep the existing Tina collection working during this refactor, but do
+not add it to the canonical Product catalogue or invest in a generated form.
+Vendure will become the authority for delivery eligibility and prices. Record
+any intentional interim change separately so it does not become part of this
+architecture by accident.
+
+### This is catalogue-specific tooling
+
+Build a small catalogue authoring library, not an arbitrary Zod-to-Tina
+converter. Support only the Zod and Tina constructs used by Products, Materials,
+and Product groups. Generalize only after two or more real declarations require
+the same operation.
 
 ### Use public Zod interfaces
 
 The authoring generator must not inspect private Zod internals such as `_def`.
-Pair a Zod schema with explicit Tina metadata through Product-specific
+Pair a Zod schema with explicit Tina metadata through catalogue-specific
 descriptors. Zod remains the validation source; descriptors supply information
 that validation schemas do not carry, such as Hungarian editor labels, Tina
 controls, references, item labels, and conditional visibility.
@@ -97,8 +128,10 @@ dependency direction.
 ```text
 src/product-definition/
   model.ts                         Canonical Zod schemas and inferred types
-  catalog.ts                       Materials, thread colors, groups, catalogue
-  compile.ts                       Product/catalogue semantic compilation
+  catalog.ts                       Catalogue aggregate and resolved indexes
+  material.ts                      Material and Material-color schemas
+  product-group.ts                 Set and related-items schemas
+  compile.ts                       Ordered catalogue semantic compilation
   errors.ts                        Structured compiler issues
 
   authoring/
@@ -116,9 +149,13 @@ src/product-definition/
 
   adapters/
     tina/
-      source-schema.ts             Zod schema for Tina's stored Product shape
-      product-form.ts              Generated Tina fields
-      compile-product.ts           Tina source → canonical Product
+      product-source-schema.ts     Zod schema for Tina's stored Product shape
+      material-source-schema.ts    Zod schema for Tina's Material shape
+      group-source-schema.ts       Zod schema for Tina's Product-group shape
+      product-form.ts              Generated Product fields
+      material-form.ts             Generated Material fields
+      product-group-form.ts        Generated Product-group fields
+      compile-catalog.ts           Ordered Tina sources → canonical catalogue
       controls.tsx                 Tina-only dynamic controls, if needed
 ```
 
@@ -150,6 +187,10 @@ canonical Product modules ← future Vendure adapter
 - Stable references by domain ID
 - A deterministic Product definition revision
 - Human-readable labels needed to validate and snapshot an order
+- Materials and their colors/patterns
+- Product groups classified as discounted sets or related items
+- Resolved Product-to-Material and Product-group-to-Product relationships
+- A deterministic catalogue revision
 
 ### Excluded
 
@@ -163,7 +204,8 @@ canonical Product modules ← future Vendure adapter
 
 Buyer selections belong in a later `product-configuration` model. Product sets,
 materials, and thread colors belong in the catalogue model rather than being
-copied into every Product definition.
+copied into every Product definition. Product-group membership remains declared
+on the group, matching `CONTEXT.md` and the Product-sets behavior spec.
 
 ## Compiler invariants
 
@@ -184,6 +226,12 @@ It must eventually guarantee:
 12. Discounted sets contain at least two Products.
 13. Every reachable orderable configuration has a positive price.
 14. A revision changes whenever a commerce-relevant fact changes.
+15. Material IDs are unique across the catalogue.
+16. Material-color IDs are unique within their Material after source
+    normalization.
+17. Every Product Material option and forbidden combination resolves.
+18. A Product group is compiled explicitly as either a discounted Product set
+    or related items; downstream code does not reinterpret nullable discounts.
 
 Structural Zod parsing and graph compilation are separate steps. Use Zod for
 local shape validity; use explicit compiler passes for references, cycles,
@@ -195,17 +243,28 @@ reachability, and catalogue-wide invariants.
 
 ### Work
 
-1. Inventory every Tina Product field and classify it as:
+1. Inventory every field in these Tina collections:
+   - `product`
+   - `product_materials`
+   - `product_groups`
+   - the global embroidery thread-color configuration used by Products
+2. Classify every inventoried field as:
    - Product-level authored fact
+   - Material or Material-color fact
+   - Product-group fact
    - Common configurable-field fact
    - Field-kind-specific fact
    - Editor-only metadata
    - Page-only content
    - Deprecated or unused
-2. Record the current source-to-runtime transformation performed in
+3. Record the current source-to-runtime transformation performed in
    `src/lib/data.ts`, including null removal, reference resolution, dates,
-   images, material colors, field types, and length pricing.
-3. Add representative fixtures for at least:
+   images, material colors, Product-group membership, field types, and length
+   pricing.
+4. Add representative fixtures for at least:
+   - A Material with image-backed and hex-backed colors
+   - A discounted Product set
+   - A zero/absent-discount related-items group
    - Input
    - Select/radio/color with custom values
    - Toggle
@@ -215,23 +274,27 @@ reachability, and catalogue-wide invariants.
    - Visibility dependency
    - Length-based pricing
    - Forbidden material combinations
-4. Pin current observable behavior with tests before changing generation or
+5. Pin current observable behavior with tests before changing generation or
    compilation. Prefer extracted pure transformation tests. If extraction would
    itself be a behavioral refactor, use fixture assertions around the smallest
    existing callable seam and explain the limitation in the test.
 
 ### Completion criteria
 
-- Every property currently declared in `tina/collections/product.ts` appears in
-  the inventory exactly once.
+- Every property currently declared in `tina/collections/product.ts`,
+  `tina/collections/material.ts`, and `tina/collections/product-groups.ts`
+  appears in the inventory exactly once.
 - Every configurable field kind has at least one representative fixture.
+- Materials and both Product-group meanings have representative fixtures.
+- `delivery_methods` is listed as an explicitly deferred Vendure concern rather
+  than silently included in the catalogue.
 - Tests pin the current canonical meaning of those fixtures.
 - `npm test`, `npm run check`, and `npm run lint` pass.
 - No production behavior has changed.
 
 ---
 
-## Stage 2 — Define the canonical Zod model
+## Stage 2 — Define the canonical catalogue Zod model
 
 ### Work
 
@@ -239,6 +302,7 @@ Build `src/product-definition/model.ts` using Zod and inferred output types.
 Define, at minimum:
 
 - Stable IDs and `MoneySchema`
+- Material and Material-color definitions
 - Product type
 - Field visibility as `always | when-present | when-equal`
 - Unit pricing and length pricing as a discriminated union
@@ -249,6 +313,11 @@ Define, at minimum:
 - Embroidery field with `flat | per-word` pricing
 - Product field discriminated union
 - Product definition
+- Product group as a discriminated union:
+  - Discounted Product set with a positive fixed-forint amount
+  - Related items with no discount
+- Product catalogue aggregate containing Materials, Products, Product groups,
+  and the embroidery thread-color palette
 
 Use explicit semantic names in the canonical model. Examples:
 
@@ -258,6 +327,13 @@ Use explicit semantic names in the canonical model. Examples:
 - Tina `color_count: "2"` → `{ kind: "fixed", count: 2 }`
 - Tina `color_count: "meret"` →
   `{ kind: "from-field", fieldId: "meret" }`
+- Tina Product-group `discount_amount > 0` → `discounted-set`
+- Tina Product-group `discount_amount` absent or zero → `related-items`
+
+Introduce a stable authored `product_group_id`. Existing Product-group files do
+not have one; seed it from the current filename so existing catalogue filter IDs
+remain stable. The canonical ID must not depend on future title or filename
+changes.
 
 Do not include runtime buyer values or compatibility aliases in the canonical
 schema.
@@ -269,6 +345,10 @@ schema.
 - Money rejects fractions, negative values, and non-numbers.
 - Canonical material color-count variants reject ambiguous states.
 - Canonical visibility variants reject a comparison value without a field ID.
+- Discounted Product sets reject zero discounts.
+- Related-items definitions have no discount property.
+- Material colors require stable IDs and a usable appearance according to the
+  behavior characterized in Stage 1.
 
 ### Completion criteria
 
@@ -328,7 +408,7 @@ multiple broad casts, or duplicated source field names.
 
 ---
 
-## Stage 4 — Implement every field-kind declaration
+## Stage 4 — Implement field-kind and catalogue declarations
 
 ### Work
 
@@ -354,6 +434,16 @@ source codec accepts their existing discriminants.
 Build an exhaustive registry. Adding a canonical field kind must cause a compile
 error until its authoring declaration exists.
 
+Also define authoring declarations for:
+
+- Material
+- Material color/pattern
+- Product group
+- Product-group Product reference
+
+These declarations use the same schema-plus-Tina-metadata primitives but do not
+belong in the configurable-field-kind registry.
+
 ### Tests
 
 - Existing source fixtures decode into canonical definitions.
@@ -361,6 +451,8 @@ error until its authoring declaration exists.
 - Irrelevant Tina properties do not appear in canonical output.
 - Invalid local values fail at the source or canonical Zod parse step.
 - The registry covers every current field kind.
+- Material and Product-group declarations generate source schemas and Tina field
+  metadata independently of their current handwritten collections.
 
 ### Completion criteria
 
@@ -374,11 +466,12 @@ error until its authoring declaration exists.
 
 ---
 
-## Stage 5 — Generate the complete Tina configurable-field form
+## Stage 5 — Generate the complete Tina catalogue forms
 
 ### Work
 
-1. Generate the flat Tina v3 superset from the field-kind registry:
+1. Generate the flat Tina v3 Product-field superset from the field-kind
+   registry:
    - Discriminant selector
    - Common fields
    - Variant-specific fields
@@ -389,16 +482,20 @@ error until its authoring declaration exists.
    - Dependency source field
    - Dependency expected value
    - Material color-count source
-4. Detect incompatible source-key collisions while assembling the form.
-5. Snapshot the generated Tina configuration in a stable, readable projection;
+4. Generate the complete Material collection form, including Material colors
+   and their image/hex appearance inputs.
+5. Generate the complete Product-group collection form, including Product
+   references and fixed-forint discount authoring.
+6. Detect incompatible source-key collisions while assembling each form.
+7. Snapshot the generated Tina configurations in a stable, readable projection;
    omit function identities from snapshots and assert their behavior separately.
-6. Compare generated and current forms property by property using the Stage 1
+8. Compare generated and current forms property by property using the Stage 1
    inventory.
 
 ### Completion criteria
 
-- Every inventoried current field is generated or explicitly retired with user
-  approval.
+- Every inventoried Product, Material, and Product-group field is generated or
+  explicitly retired with user approval.
 - Field ordering, labels, descriptions, requirements, defaults, references, and
   applicability match current behavior.
 - The generator rejects duplicate source keys with incompatible definitions.
@@ -408,15 +505,20 @@ error until its authoring declaration exists.
 
 ---
 
-## Stage 6 — Replace the handwritten Tina field form
+## Stage 6 — Replace the handwritten Tina catalogue forms
 
 ### Work
 
-1. Replace only the configurable `fields` section of
+1. Replace the configurable `fields` section of
    `tina/collections/product.ts` with generated output.
-2. Keep unrelated Product collection fields unchanged.
-3. Remove handwritten declarations proven redundant by parity tests.
-4. Verify editing existing Products and creating each field kind in Tina.
+2. Replace `tina/collections/material.ts` fields with generated output.
+3. Replace `tina/collections/product-groups.ts` fields with generated output.
+4. Add `product_group_id` to existing Product-group content, seeded from each
+   current filename, and make it required for new groups.
+5. Keep unrelated Product collection fields unchanged until their generated
+   equivalents have explicit parity coverage.
+6. Remove handwritten declarations proven redundant by parity tests.
+7. Verify editing existing Products, Materials, and Product groups in Tina.
 
 ### Browser verification
 
@@ -428,36 +530,46 @@ Verify at least:
 - Existing Products open without schema errors.
 - Dynamic sibling-field selectors populate correctly.
 - Material references and list editing work.
+- Material color image/hex editing works.
+- Discounted and no-discount Product groups preserve their meaning.
+- Product-group Product references save and reload.
+- Existing Product-group filter IDs remain unchanged after introducing
+  `product_group_id`.
 - Embroidery pricing mode works.
 
 ### Completion criteria
 
-- Tina writes the same source representation for representative existing edits.
-- Generated fields are the active collection definition.
+- Tina writes the same source representation for representative Product,
+  Material, and Product-group edits.
+- Generated fields are active in all three collection definitions.
 - Removed handwritten code has no remaining callers.
 - Tina browser checks pass for every field kind.
 - `npm test`, `npm run check`, `npm run lint`, and `npm run build:local` pass.
 
 ---
 
-## Stage 7 — Compile complete Products and catalogues
+## Stage 7 — Compile the complete Product catalogue
 
 ### Work
 
-1. Define the Tina Product source schema independently from generated GraphQL
-   types. Generated types may describe transport, but Zod validates runtime
-   input.
-2. Compile Product-level facts and all field declarations into a canonical
-   Product definition.
-3. Define catalogue schemas for materials, thread colors, and Product groups.
-4. Resolve references in explicit compiler passes.
-5. Return structured issues carrying:
+1. Define Tina source schemas for Products, Materials, thread colors, and
+   Product groups independently from generated GraphQL types. Generated types
+   may describe transport, but Zod validates runtime input.
+2. Compile and index Materials first, validating Material and color identity.
+3. Compile Products second, resolving Material options and forbidden
+   combinations to stable `MaterialId` values.
+4. Compile Product groups third, resolving membership to stable `ProductId`
+   values and classifying each as a discounted Product set or related items.
+5. Resolve all references in explicit compiler passes; no canonical output
+   contains Tina file paths or generated reference objects.
+6. Return structured issues carrying:
    - Product ID
    - Field ID where applicable
    - Source path
    - Stable issue code
    - Human-actionable Hungarian or English message, consistent per audience
-6. Compute a deterministic commerce revision after successful compilation.
+7. Compute deterministic Product and catalogue revisions after successful
+   compilation.
    Canonicalize key and collection ordering where order is not semantically
    meaningful before hashing.
 
@@ -471,7 +583,12 @@ build reports every Product an editor needs to repair.
 - Invalid length sources
 - Invalid material color-count sources
 - Missing materials and colors
+- Duplicate Material and Material-color IDs
 - Invalid Product-group members
+- Missing or duplicate stable Product-group IDs
+- Duplicate Product-group members
+- Product groups with fewer than two distinct members when required by their
+  meaning
 - Reachable zero-price configurations
 - Stable revision under irrelevant source normalization
 - Changed revision after every commerce-relevant mutation
@@ -481,6 +598,7 @@ build reports every Product an editor needs to repair.
 - Every compiler invariant listed above is tested or explicitly deferred with a
   linked issue and reason.
 - Real repository content compiles successfully.
+- Compilation order is Materials → Products → Product groups.
 - Compiler output is deterministic.
 - Errors identify authored locations rather than generated transport paths.
 - `npm test`, `npm run check`, `npm run lint`, and `npm run build:local` pass.
@@ -501,12 +619,19 @@ build reports every Product an editor needs to repair.
    - Material choices and prices
    - Visibility
    - Forbidden combinations
-4. Fail tests or local builds on semantic disagreement.
-5. Do not expose raw Tina data to new consumers.
+4. Compare current and canonical semantics for every real Material and Product
+   group:
+   - Stable IDs and labels
+   - Material colors and appearances
+   - Product membership
+   - Discounted-set versus related-items meaning
+5. Fail tests or local builds on semantic disagreement.
+6. Do not expose raw Tina data to new consumers.
 
 ### Completion criteria
 
 - Every real Product has a canonical definition.
+- Every real Material and Product group has a canonical definition.
 - Semantic comparison passes for the full current catalogue.
 - Existing pages and islands still consume their previous shape.
 - The dual path is clearly marked as a temporary migration with a removal stage.
@@ -559,7 +684,7 @@ After implementation evidence exists, add an ADR covering:
 - Zod as the canonical Product model
 - Tina as the authoring source adapter
 - Flat Tina source shape compiled to a discriminated canonical shape
-- Product-specific descriptors rather than generic Zod introspection
+- Catalogue-specific descriptors rather than generic Zod introspection
 - Field-kind locality
 - Immutable Product definition versus mutable buyer configuration
 - Adapter dependency direction
@@ -595,6 +720,8 @@ defined, especially **Product definition**, **Product configuration**, and
 - Vendure entity-schema generation
 - Creating one Vendure variant per Product configuration
 - Payments or delivery implementation
+- Generating or migrating the Tina `delivery_methods` collection; Vendure will
+  replace its pricing and eligibility authority
 - TinaCMS 4 migration
 - Byte-for-byte round trips of normalized Tina records
 - Replacing Tina as the Product authoring source
