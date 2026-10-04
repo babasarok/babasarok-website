@@ -35,5 +35,8 @@ colors:
   - color_id: Puder
     label: Púder
     image: /src/assets/IMG_5419.jpeg
+  - color_id: Zsalya
+    label: Zsálya
+    image: /src/assets/IMG_5421.jpeg
 ---
 
