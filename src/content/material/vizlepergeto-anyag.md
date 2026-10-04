@@ -14,5 +14,8 @@ colors:
   - color_id: Bambusz
     label: Bambuszlevél
     image: /src/assets/IMG_5413.jpeg
+  - color_id: Macis
+    label: Masnis mackók
+    image: /src/assets/IMG_5406.jpeg
 ---
 
