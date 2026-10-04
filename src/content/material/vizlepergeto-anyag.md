@@ -44,5 +44,7 @@ colors:
   - color_id: Bezs
     label: 'Bézs '
     image: /src/assets/IMG_5418.jpeg
+thumbnail: /src/assets/IMG_6548.jpeg
+categories: 'Oxford vízlepergető anyag '
 ---
 

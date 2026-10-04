@@ -2,7 +2,7 @@
 enable: true
 topTitle: Babasarok
 buttonName: Megnézem a termékeket
-buttonURL: Product
+buttonURL: product
 image: /src/assets/Noémi-22.webp
 ---
 
