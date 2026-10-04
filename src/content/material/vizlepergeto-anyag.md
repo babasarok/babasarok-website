@@ -23,5 +23,8 @@ colors:
   - color_id: Mehecskes
     label: Virágporzás
     image: /src/assets/IMG_5408.jpeg
+  - color_id: 'Gomba barna '
+    label: Pasztell gombamező
+    image: /src/assets/IMG_5409.jpeg
 ---
 
