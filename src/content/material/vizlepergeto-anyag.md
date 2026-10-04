@@ -17,5 +17,8 @@ colors:
   - color_id: Macis
     label: Masnis mackók
     image: /src/assets/IMG_5406.jpeg
+  - color_id: Holegballon
+    label: 'Felhők felett '
+    image: /src/assets/IMG_5405.jpeg
 ---
 
