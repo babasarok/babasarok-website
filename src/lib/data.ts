@@ -42,6 +42,10 @@ import {
 } from "./product/fieldTypes";
 import { isProductType, type ProductType } from "./product/productTypes";
 import type { LengthBasedPricingConfig } from "./types.svelte";
+import {
+  compileMaterial,
+  formatMaterialCompileIssues,
+} from "../product-definition/adapters/tina/material";
 
 type Image = z.infer<ReturnType<ImageFunction>>;
 
@@ -698,26 +702,30 @@ export const getProductSlugs = async (): Promise<Record<string, string>> => {
 const transformMaterial = async (
   material: CmsOriginalMaterial
 ): Promise<RecursiveRequired<CmsEnhancedMaterial, SlimImage>> => {
+  const compiled = compileMaterial(material);
+  if (!compiled.success) {
+    throw new Error(formatMaterialCompileIssues(material, compiled.issues));
+  }
+
   return {
-    material_id: material.material_id,
-    label: material.label,
+    material_id: compiled.value.id,
+    label: compiled.value.label,
     categories: material.categories ?? undefined,
     shortDescription: material.shortDescription ?? undefined,
     thumbnail: material.thumbnail
       ? await optimizeIslandImage(material.thumbnail, LOGO_WIDTH)
       : undefined,
-    colors: material.colors
-      ? await Promise.all(
-          material.colors
-            .filter((color) => color != null)
-            .map(async (color) => ({
-              color_id: color.color_id.trim(),
-              label: color.label,
-              hex: color.hex ?? undefined,
-              image: color.image ? await optimizeIslandImage(color.image, SWATCH_WIDTH) : undefined,
-            }))
-        )
-      : undefined,
+    colors: await Promise.all(
+      compiled.value.colors.map(async (color) => ({
+        color_id: color.id,
+        label: color.label,
+        hex: color.appearance.kind === "hex" ? color.appearance.value : undefined,
+        image:
+          color.appearance.kind === "image"
+            ? await optimizeIslandImage(color.appearance.assetId, SWATCH_WIDTH)
+            : undefined,
+      }))
+    ),
   };
 };
 

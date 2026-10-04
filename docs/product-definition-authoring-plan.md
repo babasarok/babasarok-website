@@ -52,6 +52,33 @@ Tina form → Tina source record → codec/compiler → ProductDefinition
 Raw Tina records do not cross the compiler seam. Canonical modules do not import
 Tina, Astro, Svelte, Vendure, generated GraphQL types, or browser globals.
 
+### Generated Tina types define the trusted source contract
+
+The compiler receives results directly from the generated Tina client during the
+same build. Use those generated query-output types as the Tina source contract;
+do not duplicate them with handwritten Zod source schemas. Validate the
+compiler's constructed canonical value with the canonical Zod schema.
+
+Every source property must have an explicit disposition so a newly generated
+property causes a compile error until it is classified as canonical,
+presentation-only, editor-only, or deliberately ignored. Use an exhaustive
+record over the cleaned generated source type, for example:
+
+```ts
+const MATERIAL_SOURCE_FIELDS = {
+  material_id: "canonical",
+  label: "canonical",
+  colors: "canonical",
+  thumbnail: "presentation",
+  categories: "presentation",
+  shortDescription: "presentation",
+  content: "presentation",
+} satisfies Record<keyof TinaMaterialSource, SourceFieldDisposition>;
+```
+
+Add source Zod parsing only at an actually untrusted seam, such as accepting a
+webhook payload or stored JSON outside the generated Tina client.
+
 ### The aggregate is a Product catalogue
 
 Product behavior cannot be validated in isolation:
@@ -149,9 +176,8 @@ src/product-definition/
 
   adapters/
     tina/
-      product-source-schema.ts     Zod schema for Tina's stored Product shape
-      material-source-schema.ts    Zod schema for Tina's Material shape
-      group-source-schema.ts       Zod schema for Tina's Product-group shape
+      source-types.ts              Clean generated Tina query-output aliases
+      source-disposition.ts        Exhaustive handling of every source property
       product-form.ts              Generated Product fields
       material-form.ts             Generated Material fields
       product-group-form.ts        Generated Product-group fields
@@ -361,33 +387,40 @@ schema.
 
 ---
 
-## Stage 3 — Prototype the authoring descriptor with `input`
+## Stage 3 — Prove one live generated Material form
 
-This is the architectural proof. Keep the existing Tina Product form active.
+This is the architectural proof. Material is the first end-to-end example
+because it is a Product dependency and exercises nested color lists, images,
+hex values, IDs, labels, and presentation-only content without field-kind
+discrimination.
 
 ### Work
 
-1. Implement the smallest descriptor primitives needed by an input field.
-2. A descriptor must pair:
-   - Its Zod source schema
-   - Tina field metadata
-   - A decoder to the canonical schema
-3. Implement `defineProductFieldKind()` and the `input` field declaration.
-4. Generate an inactive Tina field fragment for `input`; do not replace the
-   collection yet.
-5. Decode an input fixture into the canonical input definition.
+1. Define a cleaned alias for the generated Tina Material query output.
+2. Add an exhaustive disposition record covering every generated Material
+   source property.
+3. Implement the smallest descriptor primitives needed by the Material form.
+4. A descriptor pairs canonical Zod intent with Tina field metadata; it does not
+   duplicate the generated Tina query-output type.
+5. Generate the complete Material collection fields, including nested colors.
+6. Compile a generated-client-shaped Material fixture into the canonical
+   Material schema and parse the result with Zod.
+7. Replace `tina/collections/material.ts` fields with the generated fields.
+8. Verify the generated Material form in Tina before extending the utility.
 
 The prototype must use public Zod APIs and explicit descriptors. It must not
-attempt to walk arbitrary Zod schemas.
+attempt to walk arbitrary Zod schemas or recreate Tina's generated output type.
 
 ### Questions this stage must answer in code or tests
 
 - Can Tina's `Collection["fields"]` types be satisfied without open index
   signatures or unsafe casts?
-- Can a descriptor provide both a Zod source schema and Tina field declarations
-  without duplicating field names?
+- Can canonical Zod intent and Tina field declarations share names and metadata
+  without a second source schema?
 - Can Tina-specific labels and controls stay outside the canonical schema?
-- Can decoding produce a value accepted by the canonical Zod schema?
+- Does adding a property to the generated source alias break the exhaustive
+  disposition record?
+- Can compilation produce a value accepted by the canonical Zod schema?
 
 If Tina's public types make a narrow justified assertion unavoidable, isolate it
 inside the Tina adapter, document the upstream mismatch, and do not let the
@@ -396,19 +429,22 @@ default design.
 
 ### Completion criteria
 
-- One `input` declaration generates its inactive Tina fragment and decodes its
-  fixture.
+- The complete Material form is generated and active in Tina.
+- Existing Material content opens, edits, saves, and reloads without shape
+  changes.
 - Generated field names and Tina metadata have snapshot tests.
+- A generated-client-shaped Material fixture compiles to canonical Material.
+- Every Material source property has an explicit disposition.
 - No Zod private internals are accessed.
-- The current Tina collection is still active and behavior is unchanged.
 - `npm test`, `npm run check`, and `npm run lint` pass.
 
 Stop and revise the design if this stage requires a generic schema walker,
-multiple broad casts, or duplicated source field names.
+multiple broad casts, a duplicate Tina source schema, or duplicated source field
+names.
 
 ---
 
-## Stage 4 — Implement field-kind and catalogue declarations
+## Stage 4 — Implement field-kind and remaining catalogue declarations
 
 ### Work
 
@@ -419,13 +455,12 @@ Add declarations for:
 - Material
 - Embroidery
 
-Each declaration provides:
+Each field-kind declaration provides:
 
 1. Canonical Zod schema member
-2. Tina source Zod schema
-3. Tina field metadata
-4. Source-to-canonical decoder
-5. Existing pure behavior, adapted rather than rewritten where possible
+2. Tina field metadata
+3. Source-to-canonical compiler
+4. Existing pure behavior, adapted rather than rewritten where possible
 
 Keep presentation distinctions explicit without duplicating domain semantics.
 Select, radio, and color may share one canonical choice kind while the Tina
@@ -436,8 +471,6 @@ error until its authoring declaration exists.
 
 Also define authoring declarations for:
 
-- Material
-- Material color/pattern
 - Product group
 - Product-group Product reference
 
@@ -451,8 +484,10 @@ belong in the configurable-field-kind registry.
 - Irrelevant Tina properties do not appear in canonical output.
 - Invalid local values fail at the source or canonical Zod parse step.
 - The registry covers every current field kind.
-- Material and Product-group declarations generate source schemas and Tina field
-  metadata independently of their current handwritten collections.
+- Product-group declarations generate Tina field metadata independently of the
+  current handwritten collection.
+- Product, Product-group, and supporting source-property disposition records are
+  exhaustive over their cleaned generated Tina types.
 
 ### Completion criteria
 
@@ -461,7 +496,7 @@ belong in the configurable-field-kind registry.
 - Every Stage 1 fixture decodes successfully or has an explicitly documented
   expected error.
 - The canonical output contains no nullable list members.
-- Current production Tina form remains active.
+- The current handwritten Product and Product-group forms remain active.
 - `npm test`, `npm run check`, and `npm run lint` pass.
 
 ---
@@ -482,8 +517,8 @@ belong in the configurable-field-kind registry.
    - Dependency source field
    - Dependency expected value
    - Material color-count source
-4. Generate the complete Material collection form, including Material colors
-   and their image/hex appearance inputs.
+4. Reuse the already active generated Material collection as the reference
+   implementation.
 5. Generate the complete Product-group collection form, including Product
    references and fixed-forint discount authoring.
 6. Detect incompatible source-key collisions while assembling each form.
@@ -500,7 +535,8 @@ belong in the configurable-field-kind registry.
   applicability match current behavior.
 - The generator rejects duplicate source keys with incompatible definitions.
 - No generated field uses private Tina internals.
-- Existing Tina form remains active until parity is demonstrated.
+- Existing handwritten Product and Product-group forms remain active until
+  parity is demonstrated.
 - `npm test`, `npm run check`, `npm run lint`, and `npm run build:local` pass.
 
 ---
@@ -511,7 +547,8 @@ belong in the configurable-field-kind registry.
 
 1. Replace the configurable `fields` section of
    `tina/collections/product.ts` with generated output.
-2. Replace `tina/collections/material.ts` fields with generated output.
+2. Keep the generated Material form from Stage 3 active and covered by its
+   parity tests.
 3. Replace `tina/collections/product-groups.ts` fields with generated output.
 4. Add `product_group_id` to existing Product-group content, seeded from each
    current filename, and make it required for new groups.
@@ -552,9 +589,9 @@ Verify at least:
 
 ### Work
 
-1. Define Tina source schemas for Products, Materials, thread colors, and
-   Product groups independently from generated GraphQL types. Generated types
-   may describe transport, but Zod validates runtime input.
+1. Define cleaned generated Tina query-output aliases and exhaustive property
+   disposition records for Products, Materials, thread colors, and Product
+   groups.
 2. Compile and index Materials first, validating Material and color identity.
 3. Compile Products second, resolving Material options and forbidden
    combinations to stable `MaterialId` values.
@@ -705,7 +742,8 @@ defined, especially **Product definition**, **Product configuration**, and
 - Preserve existing user behavior unless the stage explicitly changes a spec.
 - Keep `docs/specs/` synchronized with intentional behavioral changes.
 - Use integer forints in canonical commerce models.
-- Parse untrusted runtime input with Zod at seams.
+- Parse untrusted runtime input with Zod at seams; Tina generated-client output
+  is trusted statically and canonical compiler output is parsed with Zod.
 - Return or accumulate structured compiler issues; reserve thrown errors for
   programmer faults and failed build publication.
 - Keep generated Tina code deterministic and snapshot-testable.

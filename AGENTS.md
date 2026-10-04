@@ -109,6 +109,11 @@ max-h-none`); `width: 100%` on a `position: fixed` element stops short of
   GitHub schema, so use `build:local` for local verification. It fails while a
   `tinacms dev` server is running (datalayer port 9000); pass
   `--datalayer-port <other>` to the `tinacms build` invocation in that case.
+- **Tina admin local mode:** use the admin served by the same `npm run dev`
+  process. That local dev flow bypasses TinaCloud login. Running a second Tina
+  server at the same time causes datalayer/session conflicts and can make the
+  admin ask for a cloud login; stop the extra Tina process and restart the one
+  `npm run dev` server before debugging authentication or generated forms.
 - **Type/check:** `npm run check` (`astro check` + `sv check`)
 - **Lint:** `npm run lint` · **Styles:** `npm run lint:style`
 - **Format:** `npm run format` (Prettier)
