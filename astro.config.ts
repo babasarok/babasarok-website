@@ -83,11 +83,6 @@ export default defineConfig({
         access: "public",
         optional: false,
       }),
-      GTM_CONVERSION_ID: envField.string({
-        context: "client",
-        access: "public",
-        optional: true,
-      }),
     },
   },
 });
