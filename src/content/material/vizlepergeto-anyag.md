@@ -20,5 +20,8 @@ colors:
   - color_id: Holegballon
     label: 'Felhők felett '
     image: /src/assets/IMG_5405.jpeg
+  - color_id: Mehecskes
+    label: Virágporzás
+    image: /src/assets/IMG_5408.jpeg
 ---
 
