@@ -32,5 +32,8 @@ colors:
   - color_id: 'Halvany puder '
     label: Halvány púder
     image: /src/assets/IMG_5420.jpeg
+  - color_id: Puder
+    label: Púder
+    image: /src/assets/IMG_5419.jpeg
 ---
 
