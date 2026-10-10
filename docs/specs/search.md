@@ -25,16 +25,30 @@ page content is indexed:
   - THEN the card titles (product names) are not indexed from those pages, so
     only the product detail page ranks for its own name
 
-### Product name ranking
+### Product result ranking
 
-The system SHALL rank product names above all other matches:
+The system SHALL always show product pages above every other result:
 
-- **Scenario: Product name query**
-  - WHEN a query matches a product's name
-  - THEN the product's detail page outranks every other page mentioning the
-    name, because the name is the page's `<h1>` at maximum content weight
-    (`data-pagefind-weight="10"`) and the page title (default metadata boost)
-    on a short, focused page
+- **Scenario: Product query**
+  - WHEN a query matches at least one product page (section `Termékek`)
+  - THEN those pages appear first in the result list, keeping their relative
+    relevance order, and all non-product pages follow in their own relative
+    relevance order
+
+The product pages' `<h1>` additionally carries `data-pagefind-weight="10"`, so
+name matches dominate within each ordering.
+
+### Section tagging
+
+The system SHALL tag each page of the site with its section as page-level
+metadata (`data-pagefind-meta="section:..."` in the base layout): `Termékek`
+(`/product`), `Referenciamunkák` (`/blog`), `Anyagok` (`/material`), `Főoldal`
+(`/`); other pages carry no section.
+
+- **Scenario: Result section label**
+  - WHEN a result has a section tag
+  - THEN its section name is displayed on the result's row in the search
+    dialog
 
 ### Search UI
 

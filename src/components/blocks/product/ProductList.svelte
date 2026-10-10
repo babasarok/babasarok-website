@@ -114,6 +114,7 @@
 
 {#snippet sortSelect(padding: "sm" | "lg")}
   <select
+    data-pagefind-ignore
     value={view.sort}
     aria-label="Rendezés"
     class={`text-body rounded-full border border-muted bg-light py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sand-300 ${
@@ -148,7 +149,7 @@
     />
   </aside>
   <div class="min-w-0 flex-1">
-    <div class="mb-8 flex items-center gap-2 sm:hidden">
+    <div class="mb-8 flex items-center gap-2 sm:hidden" data-pagefind-ignore>
       <input
         type="search"
         bind:value={view.q}

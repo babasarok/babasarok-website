@@ -1,8 +1,10 @@
+export type PagefindSection = "product" | "material" | "blog";
 export interface PagefindDocument {
   url: string;
   excerpt: string;
   meta: {
     title?: string;
+    section?: PagefindSection;
   };
 }
 

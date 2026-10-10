@@ -51,7 +51,12 @@ const shareLinks = [
 ];
 ---
 
-<Base title={heading} description={shortDescription} isArticle>
+<Base
+  title={heading}
+  description={shortDescription}
+  isArticle
+  data-pagefind-meta={`section:material`}
+>
   <section class="relative overflow-hidden pt-30 pb-25 sm:pt-50">
     <FloatingShapes
       figureClass="top-[30%] left-[-7%]"

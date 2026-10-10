@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import Dialog from "@/components/ui/Dialog.svelte";
-  import { search, type PagefindDocument } from "@/lib/pagefind";
+  import { search, type PagefindDocument, type PagefindSection } from "@/lib/pagefind";
 
   let callSeq = 0;
 
@@ -29,7 +29,10 @@
       const found = await Promise.all(response.results.map((result) => result.data()));
 
       if (seq === callSeq) {
-        results = found;
+        // Products always rank first, in their relative order; everything after in its own order.
+        results = found.toSorted(
+          (a, b) => Number(a.meta.section !== "product") - Number(b.meta.section !== "product")
+        );
       }
     } catch {
       if (seq === callSeq) {
@@ -48,6 +51,12 @@
       globalThis.location.assign(results[0].url);
     }
   }
+
+  const SECTION_NAME: Record<PagefindSection, string> = {
+    product: "Termékek",
+    material: "Anyagok",
+    blog: "Referenciamunkák",
+  };
 </script>
 
 <Dialog aria-label="Keresés">
@@ -97,8 +106,13 @@
         {#each results as result (result.url)}
           <li>
             <a href={result.url} class="block rounded-lg p-3 transition-colors hover:bg-sand-50">
-              <span class="font-medium text-dark">
-                {result.meta.title}
+              <span class="flex items-baseline justify-between gap-2">
+                <span class="font-medium text-dark">{result.meta.title}</span>
+                {#if result.meta.section}
+                  <span class="shrink-0 text-xs text-brown-500"
+                    >{SECTION_NAME[result.meta.section]}</span
+                  >
+                {/if}
               </span>
               {#if result.excerpt}
                 <span
