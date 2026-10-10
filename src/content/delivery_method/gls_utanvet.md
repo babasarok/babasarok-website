@@ -1,7 +1,8 @@
 ---
-  delivery_name: "gls_utanvet"
-  name: "__GLS házhozszállítás__ utánvéttel"
-  price: 3500
-  needs_address: true
-  free_above: 60000
+delivery_name: gls_utanvet
+name: __GLS házhozszállítás__ utánvéttel (előleg szükséges)
+needs_address: true
+price: 3500
+free_above: 60000
 ---
+
