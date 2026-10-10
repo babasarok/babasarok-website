@@ -1,14 +1,24 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import Dialog from "@/components/ui/Dialog.svelte";
-  import { search, type PagefindDocument, type PagefindSection } from "@/lib/pagefind";
+  import {
+    search,
+    setOptions,
+    type PagefindSearchFragment,
+    type PagefindSection,
+  } from "@/lib/pagefind";
+  import { onMount } from "svelte";
+
+  onMount(() => {
+    void setOptions({ excerptLength: 10 });
+  });
 
   let callSeq = 0;
 
   let query = $state("");
   let searching = $state(false);
   let failed = $state(false);
-  let results = $state<PagefindDocument[]>([]);
+  let results = $state<PagefindSearchFragment[]>([]);
 
   async function onInput(event: Event): Promise<void> {
     query = (event.target as HTMLInputElement).value;
@@ -59,7 +69,15 @@
   };
 </script>
 
-<Dialog aria-label="Keresés">
+<Dialog
+  aria-label="Keresés"
+  onClose={() => {
+    searching = false;
+    failed = false;
+    query = "";
+    results = [];
+  }}
+>
   {#snippet button(id)}
     <button
       type="button"
@@ -105,15 +123,18 @@
       <ul class="mt-2 flex max-h-[60dvh] flex-col gap-1 overflow-y-auto">
         {#each results as result (result.url)}
           <li>
-            <a href={result.url} class="block rounded-lg p-3 transition-colors hover:bg-sand-50">
-              <span class="flex items-baseline justify-between gap-2">
-                <span class="font-medium text-dark">{result.meta.title}</span>
-                {#if result.meta.section}
-                  <span class="shrink-0 text-xs text-brown-500"
-                    >{SECTION_NAME[result.meta.section]}</span
-                  >
-                {/if}
-              </span>
+            <a
+              href={result.url}
+              class="flex flex-col rounded-lg p-3 transition-colors hover:bg-sand-50"
+            >
+              <span class="font-medium text-dark whitespace-nowrap text-ellipsis overflow-hidden"
+                >{result.meta.title}</span
+              >
+              {#if result.meta.section}
+                <span class="shrink-0 text-xs text-brown-500"
+                  >{SECTION_NAME[result.meta.section]}</span
+                >
+              {/if}
               {#if result.excerpt}
                 <span
                   class="mt-1 block text-sm text-body [&_mark]:bg-sand-100 [&_mark]:text-inherit"
