@@ -5,6 +5,7 @@ import icon from "astro-icon";
 import tina from "@tinacms/astro/integration";
 import { tinaAdminDevRedirect } from "@tinacms/astro/vite";
 import tailwindcss from "@tailwindcss/vite";
+import pagefind from "astro-pagefind";
 import { unified } from "@astrojs/markdown-remark";
 import { remarkAssetImages } from "./src/lib/assets/remarkAssetImages";
 
@@ -14,7 +15,7 @@ export default defineConfig({
   output: "static",
   redirects: { "/home": "/" },
   prefetch: true,
-  integrations: [sitemap(), icon(), tina(), svelte()],
+  integrations: [sitemap(), icon(), tina(), svelte(), pagefind()],
   markdown: {
     processor: unified({
       // Rewrite Tina's root-absolute image refs so Astro optimizes them from

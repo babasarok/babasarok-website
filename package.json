@@ -42,6 +42,7 @@
     "astro": "^7.3.2",
     "astro-icon": "^1.1.5",
     "astro-md-2": "^2.0.0",
+    "astro-pagefind": "^2.0.1",
     "clsx": "^2.1.1",
     "sharp": "^0.34.5",
     "svelte": "^5.57.0",

@@ -93,7 +93,7 @@ const themeColor = config.themeColor ?? "#F1D3B2";
   <body>
     <GoogleTagmanagerNoscript id={GTM_ID} />
     <Header />
-    <div id="content" role="document">
+    <div id="content" role="document" data-pagefind-body>
       <slot />
     </div>
     <Footer />

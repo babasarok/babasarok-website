@@ -11,7 +11,11 @@
   let { href, title, category, image }: Props = $props();
 </script>
 
-<a {href} class="group flex h-full w-full flex-col items-center sm:items-start">
+<a
+  {href}
+  class="group flex h-full w-full flex-col items-center sm:items-start"
+  data-pagefind-ignore
+>
   {#if image}
     <img
       src={image.src}
