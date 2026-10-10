@@ -54,40 +54,11 @@ These are listed in priority order. When values conflict, prefer the one higher 
 
 ## UI development
 
-- **Verify every UI change in a live browser before calling it done.** Confirm
-  with measured geometry (`getBoundingClientRect`, `getComputedStyle` read via
-  `Runtime.evaluate`) — never trust assumed CSS behavior. Use screenshots as a
-  last resort.
-- **Browser:** there are no browser plugin tools; drive Chromium directly over
-  the Chrome DevTools Protocol (CDP). Spawn it detached once per session, with
-  DevTools open — use a dedicated user-data dir (not your normal profile) and a
-  spare debug port:
-
-  ```bash
-  chromium --remote-debugging-port=<port> --user-data-dir=<dedicated-dir> \
-    --no-first-run --auto-open-devtools-for-tabs about:blank >/dev/null 2>&1 &
-  ```
-
-  Confirm it is up with `curl http://127.0.0.1:<port>/json/version` (if something
-  already listens on that port, reuse it). Targets live at
-  `http://127.0.0.1:<port>/json/list`; open a target's `webSocketDebuggerUrl`
-  with Node's built-in `WebSocket` (no `ws` module needed) and send JSON
-  commands. The useful ones: `Page.navigate`, `Runtime.evaluate` (use
-  `{returnByValue: true, awaitPromise: true}`), `Emulation.setDeviceMetricsOverride`
-  (device toolbar / viewport sizing), `Page.captureScreenshot`, and
-  `Input.dispatchKeyEvent` / `Input.insertText` when real key presses matter.
-  Listen for `Runtime.exceptionThrown` / `Runtime.consoleAPICalled` to catch
-  page errors. Keep one helper script for the session (e.g. a small script in a
-  temp dir) that connects, sends commands, and prints results, instead of
-  re-deriving the plumbing each time.
-
-- **Always give the page a fixed size before interacting with it.** Send
-  `Emulation.setDeviceMetricsOverride` (the device toolbar's job) right after
-  opening/navigating a target — e.g. `{width: 1440, height: 900,
-deviceScaleFactor: 0, mobile: false}` — and verify `innerWidth` with
-  `Runtime.evaluate` afterwards. `--window-size` alone is unreliable (the
-  window manager may resize it), and unfixed viewports make geometry checks
-  and screenshots non-reproducible.
+- **Do NOT verify UI changes in a live browser.** The user runs the site and
+  tests UI behavior manually; the agent never spawns the dev server, a build,
+  or a browser to "prove" a change works. The agent runs only static checks
+  (`npm run check`, `npm run lint`, `npm test`) and ends the reply by telling
+  the user exactly what to click through when verifying the change.
 - **Browser defaults bite:** the UA stylesheet caps `<dialog>` at
   `max-width/max-height: calc(100% - 42px)` (override with `max-w-none
 max-h-none`); `width: 100%` on a `position: fixed` element stops short of
@@ -97,8 +68,6 @@ max-h-none`); `width: 100%` on a `position: fixed` element stops short of
   transition on an element inside a `display:none` ancestor (e.g. a closed
   `<dialog>`) measures wrong and fires twice. Open the dialog with
   `showModal()` in a `$effect.pre` so content mounts after it is visible.
-- **Verifying animations:** patch `Element.prototype.animate` in the page to
-  record keyframes/durations while driving the UI, and screenshot mid-flight.
 
 ## Tooling
 
@@ -106,7 +75,7 @@ max-h-none`); `width: 100%` on a `position: fixed` element stops short of
 - **Dev:** `npm run dev`
 - **Build:** `npm run build:local` (skips the TinaCMS cloud schema check). Plain
   `npm run build` fails whenever the local CMS schema is ahead of the pushed
-  GitHub schema, so use `build:local` for local verification. It fails while a
+  GitHub schema, so use `build:local` for local builds. It fails while a
   `tinacms dev` server is running (datalayer port 9000); pass
   `--datalayer-port <other>` to the `tinacms build` invocation in that case.
 - **Type/check:** `npm run check` (`astro check` + `sv check`)
