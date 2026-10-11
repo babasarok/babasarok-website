@@ -84,7 +84,7 @@ const shareLinks = [
 ];
 ---
 
-<Base title={title} description={shortDescription} isArticle>
+<Base title={title} description={shortDescription} isArticle data-pagefind-meta={`section:product`}>
   <section class="relative overflow-hidden pt-30 pb-25 sm:pt-50">
     <div class="container">
       {
@@ -95,7 +95,9 @@ const shareLinks = [
                 <ProductGallery id={`case-details-carousel-${product.id}`} images={gallery} />
               </div>
               <div class="flex flex-col text-left">
-                <h1 class="text-h2 text-headings">{title}</h1>
+                <h1 class="text-h2 text-headings" data-pagefind-weight="10">
+                  {title}
+                </h1>
                 {shortDescription && <p class="mt-3">{shortDescription}</p>}
                 <div class="mt-6">
                   <ProductOrder
@@ -116,7 +118,9 @@ const shareLinks = [
           </div>
         ) : (
           <div class="relative z-1 mb-12 text-center lg:mx-auto lg:w-10/12">
-            <h1 class="text-h1 text-headings mb-6">{title}</h1>
+            <h1 class="text-h1 text-headings mb-6" data-pagefind-weight="10">
+              {title}
+            </h1>
             {shortDescription && <p>{shortDescription}</p>}
 
             <div class="mt-7.5 mb-12 flex flex-col items-center">

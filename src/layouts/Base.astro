@@ -15,8 +15,9 @@ import MetaPixel from "../components/MetaPixel.astro";
 import { ClientRouter } from "astro:transitions";
 import { GTM_ID } from "astro:env/client";
 import { GoogleTagmanager, GoogleTagmanagerNoscript } from "@digi4care/astro-google-tagmanager";
+import type { HTMLAttributes } from "astro/types";
 
-interface Props {
+interface Props extends HTMLAttributes<"html"> {
   title: string;
   description?: string | null | undefined;
   /** Absolute URL for og:image */
@@ -27,7 +28,14 @@ interface Props {
   robots?: string;
 }
 
-const { title, description, image, isArticle = false, robots = "index, follow" } = Astro.props;
+const {
+  title,
+  description,
+  image,
+  isArticle = false,
+  robots = "index, follow",
+  ...rest
+} = Astro.props;
 
 const config = await getConfig();
 const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin);
@@ -36,7 +44,7 @@ const themeColor = config.themeColor ?? "#F1D3B2";
 ---
 
 <!doctype html>
-<html lang="hu">
+<html lang="hu" {...rest}>
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
@@ -93,7 +101,7 @@ const themeColor = config.themeColor ?? "#F1D3B2";
   <body>
     <GoogleTagmanagerNoscript id={GTM_ID} />
     <Header />
-    <div id="content" role="document">
+    <div id="content" role="document" data-pagefind-body>
       <slot />
     </div>
     <Footer />
