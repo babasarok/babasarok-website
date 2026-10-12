@@ -1,13 +1,16 @@
 import type { TinaField } from "tinacms";
 import type { z } from "zod";
 
-type CanonicalProperty<TSchema extends z.ZodType> = Extract<keyof z.output<TSchema>, string>;
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+type CanonicalProperty<TSchema extends z.ZodType> = Extract<KeysOfUnion<z.output<TSchema>>, string>;
 
 type AuthoringField<TSchema extends z.ZodType> = {
   meaning:
     | {
         kind: "canonical";
-        property: CanonicalProperty<TSchema>;
+        property:
+          | CanonicalProperty<TSchema>
+          | readonly [CanonicalProperty<TSchema>, ...CanonicalProperty<TSchema>[]];
       }
     | {
         kind: "presentation";

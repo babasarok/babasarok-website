@@ -544,6 +544,42 @@ belong in the configurable-field-kind registry.
 - The current handwritten Product and Product-group forms remain active.
 - `npm test`, `npm run check`, and `npm run lint` pass.
 
+### Stage 4 execution plan
+
+Keep canonical field schemas free of Tina imports. Compose them with source
+types, codecs, and authoring metadata under the Tina adapter:
+
+1. Define cleaned aliases from the generated Product and Product-group fragment
+   outputs, including nested field, option, Material-reference, visibility, and
+   Product-reference shapes.
+2. Add exhaustive source-disposition records for those aliases before writing
+   codecs. Keep page-only Product content and Product-group body explicitly
+   classified rather than copied into canonical output.
+3. Compile each flat Tina field into one canonical field member. The source
+   registry is exhaustive over all seven Tina discriminants; a separate
+   canonical registry is exhaustive over the five canonical field kinds.
+4. Accumulate field-specific issues for null list members, missing required
+   source values, invalid discriminants, and failed canonical parsing. Product-
+   wide reference, cycle, uniqueness, and reachability checks remain Stage 7.
+5. Define inactive authoring declarations for Product fields and Product groups,
+   including the future `product_group_id`, while the handwritten Product and
+   Product-group forms remain active.
+6. Snapshot stable metadata projections and test every Stage 1 source shape
+   represented by current behavior: input, all three choice presentations,
+   toggle, fixed/dynamic Material color counts, flat/per-word embroidery,
+   visibility, length pricing source metadata, and forbidden Material source
+   classification.
+
+The existing behavior registry operates on buyer-owned configuration values,
+which canonical definitions deliberately exclude. Keep that registry unchanged
+in this stage; adapt it to canonical definitions during the Stage 9 workflow
+migration instead of duplicating buyer behavior in the authoring declarations.
+
+The current generated Product-group source has no stable `product_group_id`.
+Stage 4 generates its authoring declaration and classifies the current source,
+but canonical Product-group compilation waits for Stage 6 to add the field to
+content and regenerate the source contract.
+
 ---
 
 ## Stage 5 — Generate the complete Tina catalogue forms
