@@ -1,9 +1,19 @@
-import type { Product_Materials } from "../__generated__/types";
+import type { Product_Materials, Product_MaterialsColors } from "../__generated__/types";
 import { defineAuthoringForm } from "../lib/define-authoring-form";
 import {
   MaterialColorDefinitionSchema,
   MaterialDefinitionSchema,
 } from "../../src/product-definition/material";
+
+export function duplicateColorIdMessage(
+  colorId: string,
+  colors: Array<Product_MaterialsColors | null> | null | undefined
+): string | undefined {
+  const normalized = colorId.trim();
+  const matches = (colors ?? []).filter((color) => color?.color_id.trim() === normalized);
+
+  return matches.length > 1 ? "Ez az azonosító már létezik a színek/minták között." : undefined;
+}
 
 const materialColorAuthoring = defineAuthoringForm({
   schema: MaterialColorDefinitionSchema,
@@ -18,16 +28,8 @@ const materialColorAuthoring = defineAuthoringForm({
         label: "Kód",
         required: true,
         ui: {
-          validate: (value: string, material: Product_Materials) => {
-            const normalized = value.trim();
-            const duplicates = material.colors?.filter(
-              (color) => color?.color_id.trim() === normalized
-            );
-
-            if (duplicates && duplicates.length > 1) {
-              return "Ez az azonosító már létezik a színek/minták között.";
-            }
-          },
+          validate: (value: string, material: Product_Materials) =>
+            duplicateColorIdMessage(value, material.colors),
         },
       },
     },
@@ -98,10 +100,9 @@ export const materialAuthoring = defineAuthoringForm({
         label: "Színek/minták",
         description: "A termékhez tartozó színek vagy minták.",
         ui: {
-          itemProps: (item) => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-condition
-            return { label: item?.label || "Új mező" };
-          },
+          itemProps: (item: { label?: string | null }) => ({
+            label: item.label || "Új mező",
+          }),
         },
         fields: materialColorAuthoring.fields,
       },

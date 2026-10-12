@@ -472,6 +472,21 @@ Stop and revise the design if this stage requires a generic schema walker,
 multiple broad casts, a duplicate Tina source schema, or duplicated source field
 names.
 
+### Execution plan for the existing Material proof
+
+The active Material proof already provides the generated form, cleaned generated
+source aliases, exhaustive source dispositions, and source-to-canonical compiler.
+Complete this stage without redesigning it:
+
+1. Remove unsafe field callback access inherited from the handwritten form.
+2. Snapshot a stable recursive projection of the generated field names and Tina
+   metadata, omitting function identities.
+3. Test callback and validation behavior separately from the metadata snapshot.
+4. Keep the generated-client-shaped compiler fixture and exhaustive disposition
+   records as the compile-time source contract.
+5. Run `npm test`, `npm run check`, and `npm run lint`; leave Tina editor
+   interaction to the repository's required manual click-through.
+
 ---
 
 ## Stage 4 — Implement field-kind and remaining catalogue declarations
