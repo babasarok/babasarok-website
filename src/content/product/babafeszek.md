@@ -12,6 +12,7 @@ images:
   - image: /src/assets/IMG_5686.jpeg
   - image: /src/assets/IMG_6566.jpeg
   - image: /src/assets/IMG_3606.jpeg
+  - image: /src/assets/IMG_1936.webp
 shortDescription: |-
   Babafészek fekvő felület méretei: 
   Normál: kb. 35x65cm 
