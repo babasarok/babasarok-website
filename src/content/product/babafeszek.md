@@ -8,6 +8,7 @@ date: 2024-02-02T06:49:27.000Z
 thumbnail: /src/assets/Noémi-04.webp
 images:
   - image: /src/assets/IMG_0209.jpeg
+  - image: /src/assets/IMG_9131.jpeg
 shortDescription: |-
   Babafészek fekvő felület méretei: 
   Normál: kb. 35x65cm 
