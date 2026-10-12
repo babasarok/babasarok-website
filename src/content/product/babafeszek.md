@@ -8,13 +8,15 @@ date: 2024-02-02T06:49:27.000Z
 thumbnail: /src/assets/Noémi-04.webp
 images:
   - image: /src/assets/IMG_0209.jpeg
-shortDescription: >-
-  A babafészek biztonságos, kényelmes pihenést biztosít a legkisebbeknek. 
+shortDescription: |-
+  Babafészek fekvő felület méretei: 
+  Normál: kb. 35x65cm 
+  Közepes: kb. 40x75cm 
+  Xxl: kb. 50x90cm 
 
-  A szűk, anyaméhhez hasonló környezet elősegíti a békés alvást, miközben a
-  fészek alján lévő szalaggal könnyedén szabályozható a tér.
+  (+- 2cm eltérés elfogadott) 
 
-  Ideális választás a nyugodt, pihentető éjszakákért!
+  A babafészekbe való plusz betét mosás szempontjából nagyon hasznos, hiszen nem szükséges az egész babafészket mosni, ha baleset éri. 
 price: 15000
 materials:
   banned_combinations:
@@ -49,14 +51,14 @@ fields:
     price: 1500
     price_unit: word
   - name: Fodor
-    label: "Fodorral kérem "
+    label: 'Fodorral kérem '
     type: toggle
     price: 4000
     tooltip: A termékhez színben és anyagban illő fodor
   - name: anyag1
     label: Anyag 1
     type: material
-    color_count: "1"
+    color_count: '1'
     materials:
       - material_path: src/content/material/teddy.md
         price: 0
@@ -75,7 +77,7 @@ fields:
   - name: anyag2
     label: Anyag 2
     type: material
-    color_count: "1"
+    color_count: '1'
     materials:
       - material_path: src/content/material/teddy.md
         price: 0
@@ -93,3 +95,8 @@ fields:
         price: 0
 ---
 
+pihenést biztosít a legkisebbeknek. 
+
+A szűk, anyaméhhez hasonló környezet elősegíti a békés alvást, miközben a fészek alján lévő szalaggal könnyedén szabályozható a tér.
+
+Ideális választás a nyugodt, pihentető éjszakákért!
