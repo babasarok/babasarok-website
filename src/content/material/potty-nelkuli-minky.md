@@ -47,7 +47,7 @@ colors:
     image: /src/assets/IMG_5157.webp
   - color_id: Halvány babakek 13
     label: Pasztellkék
-    image: /src/assets/IMG_5175.webp
+    image: /src/assets/IMG_6664.jpeg
   - color_id: Turkiz-14
     label: Türkizkék
     image: /src/assets/IMG_5176.webp
