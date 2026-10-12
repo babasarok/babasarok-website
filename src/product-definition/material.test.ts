@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { TinaMaterialSource } from "./adapters/tina/material";
 import { compileMaterial } from "./adapters/tina/material";
+import { MaterialDefinitionSchema } from "./material";
 
 function material(overrides: Partial<TinaMaterialSource> = {}): TinaMaterialSource {
   return {
@@ -116,5 +117,73 @@ describe("compileMaterial", () => {
         }),
       ])
     );
+  });
+
+  it("trims surrounding whitespace from canonical values", () => {
+    const result = compileMaterial(
+      material({
+        material_id: " pamut ",
+        label: " Pamut ",
+        colors: [
+          {
+            __typename: "Product_materialsColors",
+            color_id: " feher ",
+            label: " Fehér ",
+            hex: "#FFFFFF",
+            image: null,
+          },
+        ],
+      })
+    );
+
+    expect(result).toEqual({
+      success: true,
+      value: {
+        id: "pamut",
+        label: "Pamut",
+        colors: [
+          {
+            id: "feher",
+            label: "Fehér",
+            appearance: { kind: "hex", value: "#FFFFFF" },
+          },
+        ],
+      },
+    });
+  });
+});
+
+describe("MaterialDefinitionSchema", () => {
+  const color = { id: "feher", label: "Fehér", appearance: { kind: "hex", value: "#FFFFFF" } };
+  const validMaterial = { id: "pamut", label: "Pamut", colors: [color] };
+
+  it("accepts a valid material", () => {
+    expect(MaterialDefinitionSchema.safeParse(validMaterial).success).toBe(true);
+  });
+
+  it.each([
+    ["an unknown key on the material", { ...validMaterial, extra: true }],
+    ["an unknown key on a color", { ...validMaterial, colors: [{ ...color, extra: true }] }],
+    [
+      "a hex appearance carrying assetId",
+      {
+        ...validMaterial,
+        colors: [
+          { ...color, appearance: { kind: "hex", value: "#FFFFFF", assetId: "/mintas.webp" } },
+        ],
+      },
+    ],
+    [
+      "an image appearance carrying value",
+      {
+        ...validMaterial,
+        colors: [
+          { ...color, appearance: { kind: "image", assetId: "/mintas.webp", value: "#FFFFFF" } },
+        ],
+      },
+    ],
+    ["zero colors", { ...validMaterial, colors: [] }],
+  ])("rejects %s", (_description, source) => {
+    expect(MaterialDefinitionSchema.safeParse(source).success).toBe(false);
   });
 });

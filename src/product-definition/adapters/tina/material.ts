@@ -5,7 +5,7 @@ import type {
 } from "../../../../tina/__generated__/types";
 import {
   MaterialDefinitionSchema,
-  type MaterialColorAppearance,
+  type ColorAppearance,
   type MaterialDefinition,
 } from "../../material";
 
@@ -57,7 +57,7 @@ function compileAppearance(
   color: TinaMaterialColorSource,
   index: number,
   issues: MaterialCompileIssue[]
-): MaterialColorAppearance | undefined {
+): ColorAppearance | undefined {
   const hex = color.hex?.trim();
   const image = color.image?.trim();
 
@@ -127,15 +127,15 @@ export function compileMaterial(source: TinaMaterialSource): MaterialCompileResu
     return [
       {
         id,
-        label: color.label,
+        label: color.label.trim(),
         appearance,
       },
     ];
   });
 
   const parsed = MaterialDefinitionSchema.safeParse({
-    id: source.material_id,
-    label: source.label,
+    id: source.material_id.trim(),
+    label: source.label.trim(),
     colors,
   });
 

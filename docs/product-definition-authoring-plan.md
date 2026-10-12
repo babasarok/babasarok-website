@@ -154,9 +154,12 @@ dependency direction.
 
 ```text
 src/product-definition/
-  model.ts                         Canonical Zod schemas and inferred types
+  model.ts                         Money, text, and Product ID primitives
+  field.ts                         Field visibility and shared field properties
+  product.ts                       Product definition and field union
   catalog.ts                       Catalogue aggregate and resolved indexes
-  material.ts                      Material and Material-color schemas
+  material.ts                      Material, Material-color, and color appearance
+  thread-color.ts                  Embroidery thread-color palette
   product-group.ts                 Set and related-items schemas
   compile.ts                       Ordered catalogue semantic compilation
   errors.ts                        Structured compiler issues
@@ -324,8 +327,8 @@ reachability, and catalogue-wide invariants.
 
 ### Work
 
-Build `src/product-definition/model.ts` using Zod and inferred output types.
-Define, at minimum:
+Build the canonical modules under `src/product-definition/` using Zod and
+inferred output types. Define, at minimum:
 
 - Stable IDs and `MoneySchema`
 - Material and Material-color definitions
@@ -363,6 +366,33 @@ changes.
 
 Do not include runtime buyer values or compatibility aliases in the canonical
 schema.
+
+### Canonical shape rules
+
+- Every object is `z.strictObject`; every union is
+  `z.discriminatedUnion("kind", …)`. Absent concepts use an explicit variant
+  (`visibility: { kind: "always" }`, `pricing: { kind: "unit" }`) or a required
+  empty array, not an optional property.
+- IDs are branded (`ProductId`, `ProductFieldId`, `ChoiceOptionId`,
+  `MaterialId`, `MaterialColorId`, `ThreadColorId`, `ProductGroupId`) and must
+  be non-empty with no surrounding whitespace. Schemas reject untrimmed text;
+  the Tina compiler trims. Existing content IDs are not slugs and stay valid;
+  the Tina forms slugify new IDs on save.
+- Product and catalogue revisions are opaque branded non-empty strings. Stage 7
+  chooses and owns their deterministic hash representation.
+- Schemas carry shape and local value constraints only (including regex
+  validity). Uniqueness, references, cycles, and kind compatibility stay in
+  the compiler passes.
+- Material fields have no visibility; they are always shown.
+- Input fields carry `placeholder` and `pattern`. Choice fields carry them only
+  inside an optional `customValue`, whose presence allows a buyer-entered value.
+- Choice fields preserve their authored field-level price even though current
+  pricing uses option prices instead.
+- Field and option tooltips and placeholders are included as optional
+  configurator text.
+- A Product discount is `{ percent: 1–99 integer, validUntil: ISO datetime }`;
+  both are required, matching current runtime behavior.
+- Both Product-group kinds require at least two Product IDs.
 
 ### Tests
 
