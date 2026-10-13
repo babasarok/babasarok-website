@@ -5,7 +5,7 @@ can_be_ordered: true
 categories: Pamutjersey fonott rácsvédő
 type: racsvedo
 date: 2026-02-09T10:42:21.210Z
-thumbnail: /src/assets/IMG_7422 (1).webp
+thumbnail: /src/assets/IMG_6708.jpeg
 images:
   - image: /src/assets/IMG_8843.webp
   - image: /src/assets/IMG_8842.webp
