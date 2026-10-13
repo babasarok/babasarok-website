@@ -52,7 +52,7 @@ fields:
         price: 10000
       - value: '5'
         label: Ötös
-        price: 11500
+        price: 12000
         tooltip: Más néven halszálka.
       - value: '6'
         label: Hatos
