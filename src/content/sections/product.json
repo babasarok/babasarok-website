@@ -1,6 +1,6 @@
 {
   "enable": true,
-  "title": "## Legnépszerűbb Termékeink\n\nFontos, hogy mivel minden termék egyedi elképzelés alapján készül, a színek és minták széles választéka nem található az oldalon. Ha konkrét elképzelésed van, ne habozz kapcsolatba lépni velünk!\n",
+  "title": "## Legnépszerűbb Termékeink\n",
   "itemCount": 6,
   "buttonName": "Összes termék",
   "buttonTarget": "product",
