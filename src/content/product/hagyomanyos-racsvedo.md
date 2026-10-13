@@ -90,8 +90,8 @@ fields:
       - value: 'Igen '
         label: 'Igen '
       - value: 'Nem '
-        label: 'Nem, teli tábla '
-    allow_custom_value: true
+        label: Nem
+    allow_custom_value: false
 ---
 
 Tökéletes választás azoknak, akik kényelmesen szeretnék elhelyezni a babafészket is a kiságyban, miközben megőrzik a baba biztonságát és komfortját.
