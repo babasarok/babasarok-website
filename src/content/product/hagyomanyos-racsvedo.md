@@ -35,7 +35,7 @@ fields:
     type: radio
     items:
       - value: '330'
-        label: 60x120cm
+        label: '60x120cm-es kiságyban körbeérő '
       - value: '335'
         label: 70x120cm
       - value: '340'
