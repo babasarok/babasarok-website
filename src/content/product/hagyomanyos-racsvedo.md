@@ -12,7 +12,7 @@ images:
 shortDescription: ''
 length_based_pricing:
   sourceField: meret
-price: 7500
+price: 0
 materials:
   banned_combinations:
     - materials:
