@@ -85,4 +85,11 @@ fields:
         tooltip: 'Extra biztonság '
 ---
 
-Tökéletes választás azoknak, akik kényelmesen szeretnék elhelyezni a babafészket is a kiságyban, miközben megőrzik a baba biztonságát és komfortját. 
+Tökéletes választás azoknak, akik kényelmesen szeretnék elhelyezni a babafészket is a kiságyban, miközben megőrzik a baba biztonságát és komfortját.
+
+Választható vatelin béléssel
+
+Vagy 
+
+Az extra biztonság érdekében 2cm vastag habszivaccsal készülő változat is. \
+&#x20;
