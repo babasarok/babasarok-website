@@ -21,6 +21,10 @@ fields:
     label: Kókuszbetéttel
     type: toggle
     price: 1200
+  - name: Gumiskoto
+    label: Gumis átkötővel kérem
+    type: toggle
+    price: 800
   - name: himzes
     label: Hímzés
     type: embroidery
@@ -64,9 +68,9 @@ fields:
         price: 0
       - material_path: src/content/material/waffle.md
         price: 0
-  - name: Gumiskoto
-    label: Gumis átkötővel kérem
+  - name: Masni
+    label: 'Kérek hozzá masnit '
     type: toggle
-    price: 800
+    price: 500
 ---
 
