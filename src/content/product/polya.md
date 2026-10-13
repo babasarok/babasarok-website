@@ -5,10 +5,10 @@ can_be_ordered: true
 type: kiegeszito
 date: 2020-08-11T12:07:16.000Z
 thumbnail: /src/assets/Noémi-19.webp
-shortDescription: >
-  A puha, kókuszbetét nélküli pólya tökéletes a legelső hónapokra:
-  biztonságérzetet ad a babának, könnyű vele ölelni, tartani. Igény szerint
-  kókuszbetéttel is kérhető, ha egy kis extra tartást szeretnél hozzá.
+images:
+  - image: /src/assets/IMG_6672.jpeg
+shortDescription: |
+  A puha, kókuszbetét nélküli pólya tökéletes a legelső hónapokra: biztonságérzetet ad a babának, könnyű vele ölelni, tartani. Igény szerint kókuszbetéttel is kérhető, ha egy kis extra tartást szeretnél hozzá.
 price: 6500
 materials:
   banned_combinations:
@@ -28,7 +28,7 @@ fields:
   - name: anyag1
     label: Anyag 1
     type: material
-    color_count: "1"
+    color_count: '1'
     materials:
       - material_path: src/content/material/teddy.md
         price: 0
@@ -47,7 +47,7 @@ fields:
   - name: anyag2
     label: Anyag 2
     type: material
-    color_count: "1"
+    color_count: '1'
     materials:
       - material_path: src/content/material/teddy.md
         price: 0
