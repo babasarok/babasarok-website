@@ -26,6 +26,7 @@ fields:
   - name: sizes
     label: Méret
     type: radio
+    price: 7000
     items:
       - value: '200'
         label: 200cm
@@ -75,4 +76,4 @@ dizájnos, rendkívül különleges fonat, ami igazán feldobja a kiságyat és 
 babaszobát.
 
 \
-Minden fonat béléssel készül, az extra biztonság érdekében! 
+Minden fonat béléssel készül, az extra biztonság érdekében!
