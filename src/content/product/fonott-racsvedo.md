@@ -49,7 +49,7 @@ fields:
         price: 8000
       - value: '4'
         label: Négyes
-        price: 9500
+        price: 10000
       - value: '5'
         label: Ötös
         price: 11500
