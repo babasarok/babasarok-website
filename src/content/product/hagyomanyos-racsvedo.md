@@ -19,6 +19,17 @@ materials:
         - material_path: src/content/material/wellsoft.md
         - material_path: src/content/material/wellsoft.md
 fields:
+  - name: Tipus
+    label: 'Típus '
+    type: radio
+    items:
+      - value: 'Vatelin '
+        label: 'Sima, közepes vastagságú vatelin béléssel kérem  '
+        price: 5000
+      - value: Habszivacs
+        label: '2cm vastag habszivaccsal, cipzáras huzattal kérem'
+        price: 7500
+        tooltip: 'Extra biztonság '
   - name: meret
     label: Méret
     type: radio
@@ -72,25 +83,14 @@ fields:
         price: 0
       - material_path: src/content/material/wellsoft.md
         price: 0
-  - name: Tipus
-    label: 'Típus '
-    type: radio
-    items:
-      - value: 'Vatelin '
-        label: 'Sima, közepes vastagságú vatelin béléssel kérem  '
-        price: 5000
-      - value: Habszivacs
-        label: '2cm vastag habszivaccsal, cipzáras huzattal kérem'
-        price: 7500
-        tooltip: 'Extra biztonság '
 ---
 
 Tökéletes választás azoknak, akik kényelmesen szeretnék elhelyezni a babafészket is a kiságyban, miközben megőrzik a baba biztonságát és komfortját.
 
 Választható vatelin béléssel
 
-Vagy 
+Vagy
 
 Az extra biztonság érdekében 2cm vastag habszivaccsal készülő változat is. \
 &#x20;\
-Standard magassága 28cm, ha ettől eltérő méretet szeretnél, előzetes egyeztetés szükséges 
+Standard magassága 28cm, ha ettől eltérő méretet szeretnél, előzetes egyeztetés szükséges
