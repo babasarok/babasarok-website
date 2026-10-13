@@ -29,6 +29,9 @@ fields:
     label: 'Kérek hozzá masnit '
     type: toggle
     price: 500
+    depends_on:
+      field: Gumiskoto
+      value: 'true'
   - name: himzes
     label: Hímzés
     type: embroidery
