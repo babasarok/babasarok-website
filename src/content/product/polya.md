@@ -4,7 +4,7 @@ title: Pólya
 can_be_ordered: true
 type: kiegeszito
 date: 2020-08-11T12:07:16.000Z
-thumbnail: /src/assets/Noémi-19.webp
+thumbnail: /src/assets/IMG_6692.jpeg
 images:
   - image: /src/assets/IMG_6672.jpeg
   - image: /src/assets/beed2822591ecd5699e48b8d19f5e2ec.jpeg
