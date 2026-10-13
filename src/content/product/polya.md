@@ -10,7 +10,7 @@ images:
   - image: /src/assets/beed2822591ecd5699e48b8d19f5e2ec.jpeg
 shortDescription: |
   A puha, kókuszbetét nélküli pólya tökéletes a legelső hónapokra: biztonságérzetet ad a babának, könnyű vele ölelni, tartani. Igény szerint kókuszbetéttel is kérhető, ha egy kis extra tartást szeretnél hozzá.
-price: 6500
+price: 6700
 materials:
   banned_combinations:
     - materials:
