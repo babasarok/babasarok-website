@@ -85,7 +85,10 @@ fields:
         price: 0
   - name: Racsos
     label: A kiságyad a fej és lábrésznél is rácsos?
-    type: toggle
+    type: select
+    items:
+      - value: 'Igen '
+        label: 'Igen '
 ---
 
 Tökéletes választás azoknak, akik kényelmesen szeretnék elhelyezni a babafészket is a kiságyban, miközben megőrzik a baba biztonságát és komfortját.
