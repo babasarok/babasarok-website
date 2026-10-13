@@ -75,6 +75,9 @@ colors:
     label: Mustár
     hex: ''
     image: /src/assets/IMG_6524.webp
+  - color_id: Fustos-zsalya
+    label: Füstös zsálya
+    image: /src/assets/IMG_6675.jpeg
 thumbnail: /src/assets/IMG_5128.webp
 categories: '95% pamut 5%elasztán anyagösszetételű, magas minőségű, rugalmas anyag'
 shortDescription: ''
