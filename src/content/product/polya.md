@@ -64,5 +64,9 @@ fields:
         price: 0
       - material_path: src/content/material/waffle.md
         price: 0
+  - name: Gumiskoto
+    label: Gumis átkötővel kérem
+    type: toggle
+    price: 800
 ---
 
