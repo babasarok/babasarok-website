@@ -39,7 +39,7 @@ fields:
       - value: '335'
         label: 70x120cm-es kiságyban körbeérő
       - value: '340'
-        label: 70x140cm
+        label: 70x140cm-es kiságyban körbeérő
       - value: '60'
         label: 60cm
       - value: '70'
