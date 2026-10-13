@@ -25,6 +25,10 @@ fields:
     label: Gumis átkötővel kérem
     type: toggle
     price: 800
+  - name: Masni
+    label: 'Kérek hozzá masnit '
+    type: toggle
+    price: 500
   - name: himzes
     label: Hímzés
     type: embroidery
@@ -68,9 +72,5 @@ fields:
         price: 0
       - material_path: src/content/material/waffle.md
         price: 0
-  - name: Masni
-    label: 'Kérek hozzá masnit '
-    type: toggle
-    price: 500
 ---
 
