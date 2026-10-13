@@ -48,7 +48,7 @@ fields:
     items:
       - value: '3'
         label: Hármas
-        price: 6400
+        price: 7000
       - value: '4'
         label: Négyes
         price: 8000
