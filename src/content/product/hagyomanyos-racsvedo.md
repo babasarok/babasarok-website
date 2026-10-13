@@ -92,4 +92,5 @@ Választható vatelin béléssel
 Vagy 
 
 Az extra biztonság érdekében 2cm vastag habszivaccsal készülő változat is. \
-&#x20;
+&#x20;\
+Standard magassága 28cm, ha ettől eltérő méretet szeretnél, előzetes egyeztetés szükséges 
