@@ -58,7 +58,7 @@ fields:
         tooltip: Más néven halszálka.
       - value: '6'
         label: Hatos
-        price: 12500
+        price: 13200
     regex: ^(\d+)$
   - name: anyag
     label: Anyag
