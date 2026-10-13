@@ -20,7 +20,7 @@ fields:
   - name: kokuszbetet
     label: Kókuszbetéttel
     type: toggle
-    price: 1200
+    price: 1500
   - name: Gumiskoto
     label: Gumis átkötővel kérem
     type: toggle
