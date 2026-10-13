@@ -1,9 +1,9 @@
 ---
 product_id: racsvedo
 title: Fonott Rácsvédő (Teddy/Velúr)
-type: racsvedo
 can_be_ordered: true
 categories: A baba biztonsága és stílusa egyben
+type: racsvedo
 date: 2025-05-20T12:07:16.000Z
 thumbnail: /src/assets/Noémi-35.webp
 images:
@@ -15,9 +15,7 @@ images:
   - image: /src/assets/IMG_2908.jpeg
   - image: /src/assets/IMG_3414.jpeg
   - image: /src/assets/IMG_2449.jpeg
-shortDescription: "A fonott rácsvédő nemcsak dizájnos kiegészítője a kiságyának,
-  hanem praktikus védelmet is nyújt. Puha, pufi anyaga megóvja a baba fejét a
-  rácsokkal való ütközéstől, különösen, amikor a pici már forogni kezd. "
+shortDescription: 'A fonott rácsvédő nemcsak dizájnos kiegészítője a kiságyának, hanem praktikus védelmet is nyújt. Puha, pufi anyaga megóvja a baba fejét a rácsokkal való ütközéstől, különösen, amikor a pici már forogni kezd. '
 icon: /src/assets/product/braids.svg
 length_based_pricing:
   sourceField: sizes
@@ -26,37 +24,38 @@ fields:
   - name: sizes
     label: Méret
     type: radio
+    price: 8000
     items:
-      - value: "200"
+      - value: '200'
         label: 200cm
-      - value: "260"
+      - value: '260'
         label: 260cm
-      - value: "300"
+      - value: '300'
         label: 300cm
-      - value: "340"
+      - value: '340'
         label: 340cm
-      - value: "380"
+      - value: '380'
         label: 380cm
-      - value: "400"
+      - value: '400'
         label: 400cm
     allow_custom_value: true
     regex: ^(\d+)$
-    placeholder: "220"
+    placeholder: '220'
   - name: fonas
     label: Fonás
     type: radio
     items:
-      - value: "3"
+      - value: '3'
         label: Hármas
         price: 7500
-      - value: "4"
+      - value: '4'
         label: Négyes
         price: 9500
-      - value: "5"
+      - value: '5'
         label: Ötös
         price: 11500
         tooltip: Más néven halszálka.
-      - value: "6"
+      - value: '6'
         label: Hatos
         price: 13500
     regex: ^(\d+)$
