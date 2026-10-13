@@ -72,6 +72,13 @@ fields:
         price: 0
       - material_path: src/content/material/wellsoft.md
         price: 0
+  - name: Tipus
+    label: 'Típus '
+    type: radio
+    items:
+      - value: 'Vatelin '
+        label: 'Sima, közepes vastagságú vatelin béléssel kérem  '
+        price: 5000
 ---
 
-A hagyományos rácsvédő 2 cm vastag habszivacsból készült, így hatékony védelmet nyújt a baba fejének a kiságy rácsai ellen. Tökéletes választás azoknak, akik kényelmesen szeretnék elhelyezni a babafészket is a kiságyban, miközben megőrzik a baba biztonságát és komfortját. A praktikus kialakítás mellett a rácsvédő könnyen kezelhető, cipzárral ellátott, így a szivacsbetét kivételével könnyedén tisztítható és garantáltan megóvja a kicsit az esetleges ütközésektől. 
+A hagyományos rácsvédő 2 cm vastag habszivacsból készült, így hatékony védelmet nyújt a baba fejének a kiságy rácsai ellen. Tökéletes választás azoknak, akik kényelmesen szeretnék elhelyezni a babafészket is a kiságyban, miközben megőrzik a baba biztonságát és komfortját. A praktikus kialakítás mellett a rácsvédő könnyen kezelhető, cipzárral ellátott, így a szivacsbetét kivételével könnyedén tisztítható és garantáltan megóvja a kicsit az esetleges ütközésektől.
