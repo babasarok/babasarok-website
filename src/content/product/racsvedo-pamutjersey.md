@@ -51,7 +51,7 @@ fields:
         price: 7000
       - value: '4'
         label: Négyes
-        price: 8000
+        price: 8600
       - value: '5'
         label: Ötös
         price: 9500
