@@ -26,7 +26,6 @@ fields:
   - name: sizes
     label: Méret
     type: radio
-    price: 7000
     items:
       - value: '200'
         label: 200cm
