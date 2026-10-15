@@ -14,7 +14,7 @@ colors:
     image: /src/assets/IMG_5169.webp
   - color_id: 'Világos bézs '
     label: 'Világos bézs '
-    image: /src/assets/IMG_5154.webp
+    image: /src/assets/IMG_6736.jpeg
   - color_id: Caffelatte66
     label: 'Tejeskávé '
     image: /src/assets/IMG_5179.webp
