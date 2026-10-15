@@ -74,6 +74,9 @@ colors:
     label: Mustár
     hex: ''
     image: /src/assets/IMG_6524.webp
+  - color_id: Vilagosmalyva
+    label: Világos mályva
+    image: /src/assets/IMG_4140.jpeg
 thumbnail: /src/assets/IMG_5128.webp
 categories: '95% pamut 5%elasztán anyagösszetételű, magas minőségű, rugalmas anyag'
 shortDescription: ''
