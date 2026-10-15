@@ -51,6 +51,9 @@ colors:
   - color_id: 'Róka '
     label: Rókakuckó
     image: /src/assets/IMG_6344.jpeg
+  - color_id: 'Barna '
+    label: 'Barna '
+    image: /src/assets/IMG_6731.jpeg
 thumbnail: /src/assets/IMG_5184.webp
 categories: 'Puha, vastag, szőrös, meleg téli anyag.  100%poliészter'
 shortDescription: |
