@@ -62,10 +62,6 @@ colors:
     label: Púderrózsaszín
     hex: ''
     image: /src/assets/att.977wkI9MriAB2Q68VSbjdzuTa1pyhbj1FX9tnMLEmo4.webp
-  - color_id: mályva
-    label: Mályva
-    hex: ''
-    image: /src/assets/IMG_0928.webp
   - color_id: pink
     label: Pink
     hex: ''
