@@ -46,8 +46,8 @@ colors:
     label: Menta
     image: /src/assets/IMG_6675.webp
   - color_id: '#6'
-    label: Csokibarna
-    image: /src/assets/IMG_3334.webp
+    label: 'Barna '
+    image: /src/assets/IMG_6732.jpeg
   - color_id: '#19'
     label: Mogyoró
     image: /src/assets/IMG_6638.webp
