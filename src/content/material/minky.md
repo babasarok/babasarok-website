@@ -57,12 +57,12 @@ colors:
   - color_id: '#11'
     label: Halványszürke
     image: /src/assets/IMG_6668.webp
-  - color_id: '#15'
-    label: Lila
-    image: /src/assets/IMG_6655.webp
   - color_id: Szurke
     label: 'Szürke '
     image: /src/assets/IMG_6723.jpeg
+  - color_id: '#15'
+    label: Lila
+    image: /src/assets/IMG_6655.webp
 thumbnail: '/src/assets/IMG_6615,1.webp'
 categories: 'Puha, pöttyös felületű, melegebb anyag. '
 shortDescription: |-
