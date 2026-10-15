@@ -5,22 +5,15 @@ breadcrumb: Rendelés
 
 ### Így készül a te egyedi csodád
 
-1. _Inspirálódj!_
+1. *Inspirálódj!*
 
    Nézz szét a termékeink között. Mivel minden darabot egyedileg, kézzel varrunk, a színeknek és a mintáknak csak a képzeleted szab határt.
-
-2. _Meséld el, mit álmodtál meg!_
+2. *Meséld el, mit álmodtál meg!*
 
    Add hozzá a kívánságaidat az kosárhoz. Küldd el nekünk, milyen termékek tetszenek, milyen színvilág illene a babaszobába.
+3. *Biztonságos fizetés.*
 
-3. _Közös tervezés._
-
-   Felvesszük veled a kapcsolatot, és minden apró részletet (méretek, anyagok, ár) leegyeztetünk, hogy a végeredmény tökéletes legyen.
-
-4. _Biztonságos fizetés._
-
-   Ha mindent lefixáltunk, választhatsz az előre utalás és az utánvétes fizetés között – ahogy neked kényelmesebb.
-
-5. _Érkezik a csomag!_
+   Ha mindent sikerült kosárba tenni, választhatsz az előre utalás, online bankkártyás fizetés és az utánvétes fizetés között – ahogy neked kényelmesebb.
+4. *Érkezik a csomag!*
 
    A gondosan elkészített termékeket GLS futárral küldjük egyenesen az ajtódig, amiről folyamatosan tájékoztatunk.
