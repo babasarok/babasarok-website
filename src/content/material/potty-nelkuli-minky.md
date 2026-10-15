@@ -54,6 +54,9 @@ colors:
   - color_id: Sotetkek-15
     label: Kék
     image: /src/assets/IMG_5177.webp
+  - color_id: Barna
+    label: 'Barna '
+    image: /src/assets/IMG_6730.jpeg
 thumbnail: /src/assets/IMG_5188.webp
 categories: 'Pihe-puha selymes tapintású, melegebb plüss anyag. 100% poliészter'
 shortDescription: |
