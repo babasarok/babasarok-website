@@ -60,6 +60,9 @@ colors:
   - color_id: '#15'
     label: Lila
     image: /src/assets/IMG_6655.webp
+  - color_id: Szurke
+    label: 'Szürke '
+    image: /src/assets/IMG_6723.jpeg
 thumbnail: '/src/assets/IMG_6615,1.webp'
 categories: 'Puha, pöttyös felületű, melegebb anyag. '
 shortDescription: |-
