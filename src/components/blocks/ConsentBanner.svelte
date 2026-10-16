@@ -40,7 +40,8 @@
     const consent = readConsent();
     if (consent?.marketing) {
       start();
-    } else {
+    } else if (!consent) {
+      // A stored rejection is a decision; the privacy page's button reopens the banner.
       open = true;
     }
     const onReset = (): void => {
