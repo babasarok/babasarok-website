@@ -365,6 +365,9 @@ const checkout = defineCollection({
   loader: glob({ pattern: "index.md", base: "src/content/checkout" }),
   schema: z.object({
     basket_note: z.string().optional(),
+    contact_heading: z.string(),
+    basket_heading: z.string(),
+    message_heading: z.string(),
   }),
 });
 

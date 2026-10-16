@@ -34,6 +34,9 @@
     productGroups: CmsProductGroup[];
     slugByProductId: Record<string, string | undefined>;
     basketInfo?: string | undefined;
+    contactHeading: string;
+    basketHeading: string;
+    messageHeading: string;
   }
 
   let {
@@ -44,6 +47,9 @@
     productGroups,
     slugByProductId,
     basketInfo,
+    contactHeading,
+    basketHeading,
+    messageHeading,
   }: Props = $props();
 
   const catalog = $derived($state.snapshot(productInfo));
@@ -227,7 +233,7 @@
             icon="mdi:account"
             class="shrink-0 rounded-full bg-brown-50 p-2 text-4xl text-brown-500"
           />
-          <h2 class="text-lg uppercase">Hova küldhetjük a terveket?</h2>
+          <h2 class="text-lg uppercase">{contactHeading}</h2>
         </div>
         <div class="flex flex-col gap-2">
           <TextInput type="text" placeholder="Név *" required bind:value={name} />
@@ -242,7 +248,7 @@
             icon="mdi:cart"
             class="shrink-0 rounded-full bg-brown-50 p-2 text-4xl text-brown-500"
           />
-          <h2 class="text-lg uppercase">A kosarad</h2>
+          <h2 class="text-lg uppercase">{basketHeading}</h2>
         </div>
         {#if basketInfo}
           <div class="flex items-start gap-2 rounded-lg bg-brown-100 p-2 text-xs text-brown-600">
@@ -278,7 +284,7 @@
         <div class="flex flex-col rounded-xl bg-brown-200 p-4">
           <div class="flex items-center gap-2">
             <Icon icon="mdi:message-text" class="shrink-0 text-2xl text-brown-500" />
-            <h2 class="text-lg uppercase">Van valami különleges kérésed?</h2>
+            <h2 class="text-lg uppercase">{messageHeading}</h2>
           </div>
           <textarea
             bind:value={message}
