@@ -2,10 +2,14 @@
 import { getCollection, render } from "astro:content";
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
+import { getConfig } from "../lib/data";
 
 const [entry] = await getCollection("adatvedelem");
 const { Content } = await render(entry);
 const { title } = entry.data;
+
+const config = await getConfig();
+const address = config.address ?? null;
 ---
 
 <Base title={title}>
@@ -14,6 +18,24 @@ const { title } = entry.data;
   <section class="py-12.5">
     <div class="container">
       <div class="prose mx-auto max-w-none">
+        {
+          address && (
+            <>
+              <h2>1. Adatkezelő</h2>
+              <p>
+                Adatkezelő: <strong>{config.title}</strong> — {address.address}
+                <br />
+                Kapcsolat: {address.phone}
+                {address.email && (
+                  <>
+                    {" · "}
+                    <a href={`mailto:${address.email}`}>{address.email}</a>
+                  </>
+                )}
+              </p>
+            </>
+          )
+        }
         <Content />
       </div>
 
