@@ -11,10 +11,9 @@ import favicon16 from "../assets/favicons/favicon-16x16.png?url";
 import favicon32 from "../assets/favicons/favicon-32x32.png?url";
 import appleTouchIcon from "../assets/favicons/apple-touch-icon.png?url";
 import safariPinnedTab from "../assets/favicons/safari-pinned-tab.svg?url";
-import MetaPixel from "../components/MetaPixel.astro";
 import { ClientRouter } from "astro:transitions";
 import { GTM_ID } from "astro:env/client";
-import { GoogleTagmanager, GoogleTagmanagerNoscript } from "@digi4care/astro-google-tagmanager";
+import ConsentBanner from "@/components/blocks/ConsentBanner.svelte";
 import type { HTMLAttributes } from "astro/types";
 
 interface Props extends HTMLAttributes<"html"> {
@@ -49,10 +48,9 @@ const themeColor = config.themeColor ?? "#F1D3B2";
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <GoogleTagmanager id={GTM_ID} />
-    <!-- gtag shim: the GTM container snippet sets up the shared dataLayer but
-         does not define gtag(). GTM processes gtag-style calls (an arguments
-         push) from the dataLayer, so define the shim once up front. -->
+    <!-- gtag shim: the GTM container (loaded only after consent, see
+         ConsentBanner) pushes its calls into this shared dataLayer, but does
+         not define gtag(). Keep the shim so unconsented pages stay no-ops. -->
     <script is:inline>
       window.dataLayer = window.dataLayer || [];
       window.gtag = function gtag() {
@@ -90,20 +88,18 @@ const themeColor = config.themeColor ?? "#F1D3B2";
     <link rel="icon" type="image/x-icon" href={faviconIco} />
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="mask-icon" href={safariPinnedTab} color="#5bbad5" />
-    <script is:inline src="https://web3forms.com/client/script.js" async defer></script>
 
     <!-- Fonts -->
     <Font cssVariable="--font-base" preload />
     <Font cssVariable="--font-heading" preload />
-    <MetaPixel />
     <ClientRouter />
   </head>
   <body>
-    <GoogleTagmanagerNoscript id={GTM_ID} />
     <Header />
     <div id="content" role="document" data-pagefind-body>
       <slot />
     </div>
     <Footer />
+    <ConsentBanner gtmId={GTM_ID} client:load />
   </body>
 </html>
