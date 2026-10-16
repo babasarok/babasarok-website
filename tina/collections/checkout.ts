@@ -22,5 +22,23 @@ export const CheckoutCollection: Collection = {
       label: "Kosár megjegyzés",
       required: false,
     },
+    {
+      type: "string",
+      name: "contact_heading",
+      label: "Kapcsolat fejléc",
+      required: true,
+    },
+    {
+      type: "string",
+      name: "basket_heading",
+      label: "Kosár fejléc",
+      required: true,
+    },
+    {
+      type: "string",
+      name: "message_heading",
+      label: "Kérés fejléc",
+      required: true,
+    },
   ],
 };

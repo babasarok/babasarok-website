@@ -24,6 +24,10 @@ const productGroups = await getProductGroups();
 // Slug lookup so the checkout can link each item back to its product page.
 const slugByProductId = await getProductSlugs();
 const checkout = await getEntry("checkout", "index");
+
+if (!checkout) {
+  throw new Error("Checkout entry not found");
+}
 ---
 
 <Base title="Pénztár">
@@ -32,7 +36,10 @@ const checkout = await getEntry("checkout", "index");
   <section class="py-12.5">
     <div class="not-prose container">
       <CheckoutForm
-        basketInfo={checkout?.data.basket_note}
+        basketInfo={checkout.data.basket_note}
+        contactHeading={checkout.data.contact_heading}
+        basketHeading={checkout.data.basket_heading}
+        messageHeading={checkout.data.message_heading}
         products={products.reduce<Record<string, CmsEnhancedProduct>>((acc, p) => {
           if (!p.can_be_ordered) {
             return acc;
