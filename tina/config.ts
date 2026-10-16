@@ -11,6 +11,7 @@ import { ProductCollection } from "./collections/product";
 import { MaterialCollection } from "./collections/material";
 import { DeliveryMethodCollection } from "./collections/delivery-method";
 import { ContactCollection } from "./collections/contact";
+import { AdatvedelemCollection } from "./collections/adatvedelem";
 import { ProductGroupCollection } from "./collections/product-groups";
 import { CheckoutCollection } from "./collections/checkout";
 
@@ -55,6 +56,7 @@ export default defineConfig({
       DeliveryMethodCollection,
       CheckoutCollection,
       ContactCollection,
+      AdatvedelemCollection,
       ProductGroupCollection,
     ],
   },

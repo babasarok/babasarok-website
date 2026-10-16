@@ -331,6 +331,13 @@ const contact = defineCollection({
   }),
 });
 
+const adatvedelem = defineCollection({
+  loader: glob({ pattern: "_index.md", base: "src/content/adatvedelem" }),
+  schema: z.object({
+    title: z.string(),
+  }),
+});
+
 const embroidery = defineCollection({
   loader: glob({ pattern: "embroidery.json", base: "src/content/config" }),
   schema: ({ image }) =>
@@ -378,6 +385,7 @@ export const collections = {
   blog,
   material,
   contact,
+  adatvedelem,
   heroBlock,
   servicesBlock,
   aboutBlock,

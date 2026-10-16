@@ -1,149 +1,20 @@
 ---
+import { getCollection, render } from "astro:content";
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
-import { getConfig } from "../lib/data";
 
-const config = await getConfig();
-const address = config.address ?? null;
+const [entry] = await getCollection("adatvedelem");
+const { Content } = await render(entry);
+const { title } = entry.data;
 ---
 
-<Base title="Adatvédelmi tájékoztató">
-  <PageHeader title="Adatvédelmi tájékoztató" breadcrumb="Adatvédelmi tájékoztató" no-shapes />
+<Base title={title}>
+  <PageHeader title={title} breadcrumb={title} no-shapes />
 
   <section class="py-12.5">
     <div class="container">
       <div class="prose mx-auto max-w-none">
-        <p>
-          Ez az adatvédelmi tájékoztató (továbbiakban: tájékoztató) elmagyarázza, milyen személyes
-          adatokat kezelünk a babasarok.net használata során, milyen jogalapon, mennyi ideig, és mi
-          a jogaid az EU 2016/679 rendelet (GDPR) szerint.
-        </p>
-
-        <h2>1. Adatkezelő</h2>
-        <p>
-          Adatkezelő: <strong>Babasarok</strong> — {address?.address}<br />
-          Kapcsolat: {address?.phone} ·
-          {address && <a href={`mailto:${address.email}`}>{address.email}</a>}
-        </p>
-
-        <h2>2. Milyen adatokat kezelünk, és miért</h2>
-        <h3>Rendelés és árajánlatkérés</h3>
-        <p>
-          A „Pénztár” oldalon leadott rendelési vagy árajánlatkérés során az alábbi adatokat küldöd
-          el nekünk: név, e-mail cím, telefonszám (ha megadsz), szállítási cím (ha a kiválasztott
-          szállítási mód megkívánja), esetleges üzenet, valamint a kosár tartalma (a kiválasztott
-          termékek és azok beállításai, az árszámítással együtt).
-        </p>
-        <p>
-          Az adatok jogalapja, hogy a kezelés a szerződéskötéshez szükséges és a megrendelés
-          teljesítéséhez elengedhetetlen (GDPR 6. § (1) b) pontja).
-        </p>
-        <h3>Oldallátogatás és kapcsolat</h3>
-        <p>
-          A kapcsolat-oldal csupán elérhetőségeinket mutatja, az oldal látogatása önmagában
-          személyes adatot nem gyűjt. A folyamatban lévő rendelésed tartalma a böngésződ helyi
-          tárhelyén (local storage) marad, és csak a rendelés leadásakor kerül hozzánk.
-        </p>
-        <h3>Mérőeszközök (csak a hozzájárulásoddal)</h3>
-        <p>
-          Az oldal a látogatást és a rendelési konverziókat méri. Ha kifejezetten hozzájárulsz, az
-          alábbi eszközök töltődnek be:
-        </p>
-        <ul>
-          <li>
-            <strong>Google Analytics / Google Ads</strong> (Google LLC) — Google Tag Manager segítségével
-            látogatást és rendelési konverziót mér.
-          </li>
-          <li>
-            <strong>Meta-pixel</strong> (Meta Platforms Inc.) — az oldal látogatását és a rendelési konverziókat
-            méri.
-          </li>
-        </ul>
-        <p>
-          A mérés jogalapja a hozzájárulásod. Ezek az eszközök cookie-t tárolnak az eszközödön, és a
-          látogató IP-címét, készülékadatait a szolgáltatóknak továbbítják. Mindkét szolgáltató
-          amerikai cég, ezért az adatok nemzetközi átvitelét az Európai Bizottság standard
-          szerződési rendelkezései (SCC) és a szolgáltatókkal kötött adatvédelmi kiegészítő
-          megállapodás (DPA) alapján végezzük. Ha nem adod meg a hozzájárulatot, a mérőeszközök nem
-          töltődnek be.
-        </p>
-        <p>
-          A hozzájárulásodat a lenti „Hozzájárulás módosítása” gombbal bármikor módosíthatod vagy
-          visszavonhatod; a visszavonás azonnal hatályos (a mérések már nem indulnak el), és a
-          visszavonás előtti, hozzájáruláshoz kötött feldolgozás érvényességét nem érinti.
-        </p>
-
-        <h2>3. Cookie-k</h2>
-        <p>
-          Saját oldalunk a működéséhez cookie-t nem használ. Ha a mérőeszközökhöz hozzájárulsz, az
-          alábbi cookie-k kerülhetnek az eszközödre:
-        </p>
-        <ul>
-          <li>
-            <strong>Google cookie-k</strong> (_ga, _ga_*, _gcl_*): a Google állítja be, legfeljebb 2 évre;
-            analitikai és hirdetésmérési cél.
-          </li>
-          <li>
-            <strong>Meta cookie-k</strong> (_fbp: 30 nap; _fbc, _fr: legfeljebb 365 nap): a Meta állítja
-            be, hirdetési mérési cél.
-          </li>
-        </ul>
-
-        <h2>4. Hová kerül az adataid (feldolgozók)</h2>
-        <ul>
-          <li>
-            <strong>web3forms.com</strong> — a rendelési és árajánlatkéréseket e-mailre juttatja; az adatot
-            legfeljebb 30 napig őrzi.
-          </li>
-          <li>
-            <strong>Cloudflare</strong> — az oldal hostolása és forgalmazása (CDN) ezen keresztül történik;
-            a keresetek (pl. az IP-cím) rövid ideig őrzött adatkezelési megállapodás alapján dolgozódik
-            fel.
-          </li>
-          <li>
-            <strong>Google LLC</strong> és <strong>Meta Platforms Inc.</strong> — mérőeszközök, részletek
-            a 2. pontban.
-          </li>
-        </ul>
-
-        <h2>5. Mennyi ideig tároljuk</h2>
-        <ul>
-          <li>
-            <strong>Rendelés és árajánlatkérés:</strong> ha a rendelés teljesül, 8 évig őrizzük (köteles
-            számviteli- és adókönyvi megőrzési idő), ezután törljük; ha az árajánlat nem vezetett rendeléshez,
-            12 hónap elteltével töröljük.
-          </li>
-          <li>
-            <strong>Hozzájárulás:</strong> a böngésződben tárolt, a választás módosításakor azonnal törlődik.
-          </li>
-          <li>
-            <strong>Mérőcookie-k:</strong> a 3. pontban feltüntetett időtartamig, a szolgáltatóknál.
-          </li>
-          <li>
-            <strong>Cloudflare kérésadatok:</strong> a Cloudflare nyilvános adattárhelyi politikája szerint,
-            rövid ideig.
-          </li>
-        </ul>
-
-        <h2>6. A jogaid</h2>
-        <p>
-          A személyes adataiddal kapcsolatban kérhetsz tájékoztatást, a helyesbítést, a törlést vagy
-          a kezelés korlátozását; tiltakozhatsz a feldolgozás ellen, és kérheted az adatok
-          átvihetőségét is. A kérelmeket 1 hónapon belül e-mailben válaszolunk. Amennyiben úgy
-          véled, hogy a személyes adataid kezelése sérti a hatályos jogi előírásokat, panaszt
-          tehetsz a Nemzeti Adatvédelmi és Információszabadsági Hatóságnál (<a
-            href="https://naih.gov.hu">naih.gov.hu</a
-          >).
-        </p>
-
-        <h2>7. A tájékoztató módosítása</h2>
-        <p>
-          Az adatkezelő a tájékoztatót a feldolgozás vagy a jogi környezet változásának megfelelően,
-          bármikor módosíthatja. A hatályos változat a jelen oldalon publikált tájékoztató.
-        </p>
-        <p>
-          <em>Legutóbbi módosítás: 2026. október 16.</em>
-        </p>
+        <Content />
       </div>
 
       <div class="not-prose mt-12 text-center">
