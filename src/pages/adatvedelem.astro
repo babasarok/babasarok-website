@@ -1,0 +1,64 @@
+---
+import { getCollection, render } from "astro:content";
+import Base from "../layouts/Base.astro";
+import PageHeader from "../components/ui/PageHeader.astro";
+import { getConfig } from "../lib/data";
+
+const [entry] = await getCollection("adatvedelem");
+const { Content } = await render(entry);
+const { title } = entry.data;
+
+const config = await getConfig();
+const address = config.address ?? null;
+---
+
+<Base title={title}>
+  <PageHeader title={title} breadcrumb={title} no-shapes />
+
+  <section class="py-12.5">
+    <div class="container">
+      <div class="prose mx-auto max-w-none">
+        {
+          address && (
+            <>
+              <h2>1. Adatkezelő</h2>
+              <p>
+                Adatkezelő: <strong>{config.title}</strong> — {address.address}
+                <br />
+                Kapcsolat: {address.phone}
+                {address.email && (
+                  <>
+                    {" · "}
+                    <a href={`mailto:${address.email}`}>{address.email}</a>
+                  </>
+                )}
+              </p>
+            </>
+          )
+        }
+        <Content />
+      </div>
+
+      <div class="not-prose mt-12 text-center">
+        <button
+          id="consent-reset-button"
+          type="button"
+          class="bg-brown-500 hover:bg-brown-700 inline-flex h-11 items-center justify-center rounded-md px-6 text-sm font-medium text-white uppercase transition-all"
+        >
+          Hozzájárulás módosítása
+        </button>
+        <p class="text-body mt-3 mb-0 text-sm">
+          A gomb megnyomásával a hozzájárulási ablak újra megjelenik.
+        </p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { CONSENT_RESET_EVENT } from "@/lib/tracking";
+
+  document.getElementById("consent-reset-button")?.addEventListener("click", () => {
+    globalThis.dispatchEvent(new CustomEvent(CONSENT_RESET_EVENT));
+  });
+</script>
