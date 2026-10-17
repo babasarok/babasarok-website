@@ -29,6 +29,12 @@ export const AdatvedelemCollection: Collection = {
       required: true,
     },
     {
+      type: "string",
+      name: "cookieBannerText",
+      label: "Cookie sáv szövege",
+      required: true,
+    },
+    {
       type: "rich-text",
       name: "content",
       label: "Tartalom",

@@ -1,5 +1,6 @@
 ---
 title: Adatvédelmi tájékoztató
+cookieBannerText: "Az oldal cookie-kkal méri a látogatást és a rendelési konverziókat: Google Analytics / Google Ads (Google) és Facebook Pixel (Meta). A mérések csak a hozzájárulásod esetén indulnak el, és a választásod bármikor módosítható az Adatvédelmi tájékoztatóban."
 ---
 
 Ez az adatvédelmi tájékoztató (továbbiakban: tájékoztató) elmagyarázza, milyen személyes adatokat kezelünk a babasarok.net használata során, milyen jogalapon, mennyi ideig, és mi a jogaid az EU 2016/679 rendelet (GDPR) szerint.

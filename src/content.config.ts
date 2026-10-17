@@ -335,6 +335,7 @@ const adatvedelem = defineCollection({
   loader: glob({ pattern: "_index.md", base: "src/content/adatvedelem" }),
   schema: z.object({
     title: z.string(),
+    cookieBannerText: z.string(),
   }),
 });
 

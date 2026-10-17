@@ -9,7 +9,7 @@
   } from "@/lib/tracking";
   import { onMount } from "svelte";
 
-  let { gtmId }: { gtmId: string } = $props();
+  let { gtmId, text }: { gtmId: string; text: string } = $props();
 
   let open = $state(false);
   let started = $state(false);
@@ -60,11 +60,7 @@
       class="mx-auto flex max-w-2xl flex-col gap-3 rounded-2xl border border-brown-200 bg-white p-5 text-sm text-body shadow-[0_20px_40px_0_rgba(50,65,141,0.18)]"
     >
       <h2 class="text-base font-semibold text-headings">Adatkezelési hozzájárulás</h2>
-      <p class="m-0">
-        Az oldal cookie-kkal méri a látogatást és a rendelési konverziókat: Google Analytics /
-        Google Ads (Google) és Facebook Pixel (Meta). A mérések csak a hozzájárulásod esetén
-        indulnak el, és a választásod bármikor módosítható az Adatvédelmi tájékoztatóban.
-      </p>
+      <p class="m-0">{text}</p>
       <div class="mt-1 flex flex-wrap items-center gap-3">
         <button
           type="button"
