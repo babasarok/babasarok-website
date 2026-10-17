@@ -11,7 +11,7 @@ import { remarkAssetImages } from "./src/lib/assets/remarkAssetImages";
 
 // https://astro.build/config
 export default defineConfig({
-  site: process.env.SITE_URL || `https://${process.env.VERCEL_URL}`,
+  site: process.env.SITE_URL || "https://babasarok.net",
   output: "static",
   redirects: { "/home": "/" },
   prefetch: true,
