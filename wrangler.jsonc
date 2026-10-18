@@ -1,0 +1,9 @@
+{
+  "name": "babasarok-website",
+  "compatibility_date": "2026-10-12",
+  "previews": {},
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page",
+  },
+}
