@@ -93,6 +93,9 @@ The system SHALL record a Google Ads conversion (a `gtag('event', 'conversion')`
 call through the GTM data layer) when Web3Forms accepts a submission, carrying
 the computed order total in HUF and the same transaction identifier that closed
 the email payload. No conversion SHALL be recorded when the submission fails.
+The call is only _pushed_ into the data layer unconditionally; whether it is
+transmitted depends on the visitor's marketing consent (see the
+consent-tracking spec).
 
 - **Scenario: Successful submission**
   - WHEN Web3Forms accepts the order email

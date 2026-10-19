@@ -11,10 +11,12 @@ import { ProductCollection } from "./collections/product";
 import { MaterialCollection } from "./collections/material";
 import { DeliveryMethodCollection } from "./collections/delivery-method";
 import { ContactCollection } from "./collections/contact";
+import { AdatvedelemCollection } from "./collections/adatvedelem";
 import { ProductGroupCollection } from "./collections/product-groups";
 import { CheckoutCollection } from "./collections/checkout";
 
 const branch =
+  process.env.WORKERS_CI_BRANCH ||
   process.env.CF_PAGES_BRANCH ||
   process.env.GITHUB_HEAD_REF ||
   process.env.GITHUB_REF_NAME ||
@@ -55,6 +57,7 @@ export default defineConfig({
       DeliveryMethodCollection,
       CheckoutCollection,
       ContactCollection,
+      AdatvedelemCollection,
       ProductGroupCollection,
     ],
   },

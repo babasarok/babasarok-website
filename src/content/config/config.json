@@ -50,6 +50,11 @@
       "name": "Referenciamunkák",
       "url": "/blog",
       "weight": 4
+    },
+    {
+      "name": "Adatvédelem",
+      "url": "/adatvedelem",
+      "weight": 5
     }
   ],
   "pagination": {

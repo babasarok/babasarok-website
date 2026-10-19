@@ -84,9 +84,10 @@ src/
     blocks/                 # Page-section components (Hero, Service, About, Product, Blog, Header, Footer)
     blocks/order/           # Order configurator Svelte island + sub-components
     ui/                     # Reusable presentational components (Button, *Card, Pagination, ...)
-    MetaPixel.astro         # Meta Pixel snippet
+    blocks/ConsentBanner.svelte  # Consent banner island; gates GTM + Meta pixel loading
   lib/                      # Framework-agnostic logic + data loaders
     data.ts                 # Tina loaders + image-ref resolution
+    tracking.ts             # Consent storage + consent-gated GTM / Meta pixel loading
     types.svelte.ts / typeHelpers.ts / cn.ts / uuid.ts / scrollSnapper.ts
     assets/                 # resolveImage() (index.ts), tinaImageUrl, remarkAssetImages
     product/                # field{Types,Value,Visibility}, materials, validation (product-config domain)

@@ -2,11 +2,10 @@
 
 declare global {
   interface Window {
-    fbq?: (
-      name: "track",
-      event: "Purchase",
-      params: { currency: string; value: number; num_items?: number }
-    ) => void;
+    /** Shared GTM queue; the `gtag` shim in Base.astro owns it. */
+    dataLayer?: unknown[];
+    /** Meta Connect Pixel, installed by fbevents.js after successful load. */
+    fbq?: (event: string, ...params: unknown[]) => void;
   }
 }
 
