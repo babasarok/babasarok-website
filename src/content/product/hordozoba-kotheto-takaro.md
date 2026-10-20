@@ -8,7 +8,7 @@ date: 2026-10-20T09:54:35.272Z
 thumbnail: /src/assets/IMG_6400.jpeg
 images:
   - image: /src/assets/IMG_6398.jpeg
-  - {}
+  - image: /src/assets/e7f0f62ddcc2e065c2f5712b0ddc3b66.jpeg
 shortDescription: |
   ✔️Praktikus kiegészítő a hűvösebb napokon. 
   ✔️A 3 ponton rögzíthető autós hordozóba biztonságosan beköthető. 
