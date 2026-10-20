@@ -18,5 +18,13 @@ shortDescription: |
 price: 12900
 materials:
   banned_combinations: []
+fields:
+  - name: Anyag
+    label: Szín/minta 1
+    type: material
+    color_count: '1'
+    materials:
+      - material_path: src/content/material/minky.md
+        price: 0
 ---
 
