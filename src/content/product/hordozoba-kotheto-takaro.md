@@ -19,7 +19,7 @@ price: 12900
 materials:
   banned_combinations: []
 fields:
-  - name: Anyag
+  - name: Anyag1
     label: Szín/minta 1
     type: material
     color_count: '1'
