@@ -7,6 +7,7 @@ type: takaro
 date: 2026-10-20T09:54:35.272Z
 thumbnail: /src/assets/IMG_6400.jpeg
 images:
+  - image: /src/assets/IMG_6398.jpeg
   - {}
 shortDescription: |
   ✔️Praktikus kiegészítő a hűvösebb napokon. 
