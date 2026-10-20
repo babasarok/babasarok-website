@@ -19,7 +19,7 @@ shortDescription: |-
   Közepes: kb. 40x75cm 
   Xxl: kb. 50x90cm 
 
-  (+- 2cm eltérés elfogadott) 
+  (+- 3cm eltérés elfogadott) 
 
   A babafészekbe való plusz betét mosás szempontjából nagyon hasznos, hiszen nem szükséges az egész babafészket mosni, ha baleset éri. 
 price: 15000
@@ -100,7 +100,7 @@ fields:
         price: 0
 ---
 
-pihenést biztosít a legkisebbeknek. 
+pihenést biztosít a legkisebbeknek.
 
 A szűk, anyaméhhez hasonló környezet elősegíti a békés alvást, miközben a fészek alján lévő szalaggal könnyedén szabályozható a tér.
 
