@@ -28,5 +28,7 @@ fields:
         price: 0
       - material_path: src/content/material/potty-nelkuli-minky.md
         price: 0
+      - material_path: src/content/material/pamutvaszon.md
+        price: 0
 ---
 
