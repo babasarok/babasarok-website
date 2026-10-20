@@ -34,5 +34,18 @@ fields:
         price: 0
       - material_path: src/content/material/wellsoft.md
         price: 0
+  - name: Anyag
+    label: Szín/minta 2
+    type: material
+    color_count: '1'
+    materials:
+      - material_path: src/content/material/teddy.md
+        price: 0
+      - material_path: src/content/material/potty-nelkuli-minky.md
+        price: 0
+      - material_path: src/content/material/pamutvaszon.md
+        price: 0
+      - material_path: src/content/material/minky.md
+        price: 0
 ---
 
