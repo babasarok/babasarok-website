@@ -26,5 +26,7 @@ fields:
     materials:
       - material_path: src/content/material/minky.md
         price: 0
+      - material_path: src/content/material/potty-nelkuli-minky.md
+        price: 0
 ---
 
