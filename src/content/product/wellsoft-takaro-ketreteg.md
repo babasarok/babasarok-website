@@ -4,6 +4,9 @@ title: Meleg Wellsoft Takaró (kétrétegű)
 can_be_ordered: true
 type: takaro
 date: 2026-02-01T10:42:40.867Z
+thumbnail: /src/assets/IMG_6826.jpeg
+images:
+  - image: /src/assets/IMG_6828.jpeg
 price: 6000
 fields:
   - name: meret
@@ -24,14 +27,14 @@ fields:
   - name: anyag1
     label: Anyag 1
     type: material
-    color_count: "1"
+    color_count: '1'
     materials:
       - material_path: src/content/material/wellsoft.md
         price: 0
   - name: anyag2
     label: Anyag 2
     type: material
-    color_count: "1"
+    color_count: '1'
     materials:
       - material_path: src/content/material/wellsoft.md
         price: 0
