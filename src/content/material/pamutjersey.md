@@ -7,10 +7,6 @@ colors:
     label: Sötétzöld
     hex: ''
     image: /src/assets/IMG_4369.webp
-  - color_id: zsalya
-    label: Zsálya
-    hex: ''
-    image: /src/assets/IMG_7926.webp
   - color_id: Fustos-zsalya
     label: Füstös zsálya
     image: /src/assets/IMG_6675.jpeg
