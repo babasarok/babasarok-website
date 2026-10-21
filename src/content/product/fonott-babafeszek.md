@@ -28,7 +28,7 @@ fields:
       - material_path: src/content/material/teddy.md
         price: 0
   - name: babadeszek
-    label: Babafészek
+    label: 'Babafészek aljának a színe, anyaga'
     type: material
     color_count: '1'
     materials:
