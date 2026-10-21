@@ -13,11 +13,7 @@ images:
     description: 'Pasztell tündér+bézs '
   - image: /src/assets/IMG_6280.jpeg
   - image: /src/assets/IMG_6282.jpeg
-shortDescription: |-
-  Egyedi, névre hímzett egészségügyi kiskönyv borító, amely megvédi a kiskönyvet használat során. 
-
-  12x18cm-es borítókra való. 
-  Ha ettől eltérő méretben szeretnéd, megjegyzésben tüntesd fel. 
+shortDescription: ''
 price: 3490
 fields:
   - name: Himzes
@@ -34,3 +30,8 @@ fields:
         price: 0
 ---
 
+Egyedi, névre hímzett egészségügyi kiskönyv borító, amely megvédi a kiskönyvet használat során. 
+
+12x18cm-es borítókra való. 
+
+Ha ettől eltérő méretben szeretnéd, megjegyzésben tüntesd fel. 
