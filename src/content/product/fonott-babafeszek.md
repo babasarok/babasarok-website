@@ -17,7 +17,7 @@ shortDescription: |-
 price: 28000
 fields:
   - name: racsvedo
-    label: Rácsvédő
+    label: 'Rácsvédő színe, anyaga'
     type: material
     color_count: '1'
     materials:
