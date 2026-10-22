@@ -11,7 +11,6 @@ cookieCategories:
       - name: "dataProtectionConsent"
         domain: "babasarok.net"
         lifetime: "Választás módosításáig"
-        purpose: "Hozzájárulási döntés tárolása (local storage)"
   - key: analytics
     label: "Elemzési sütik"
     description: "Segítenek megérteni, hogyan használják a weboldalt, így javíthatjuk a felhasználói élményt. (Google Analytics)"
@@ -20,7 +19,6 @@ cookieCategories:
       - name: "_ga, _ga_*"
         domain: "babasarok.net"
         lifetime: "2 év"
-        purpose: "Oldallátogatás mérése (Google Analytics)"
   - key: marketing
     label: "Marketing sütik"
     description: "Személyre szabott hirdetések és tartalmak megjelenítéséhez, valamint a kampányok hatékonyságának méréséhez használják. (Google Ads, Meta)"
@@ -29,15 +27,12 @@ cookieCategories:
       - name: "_gcl_*"
         domain: "babasarok.net"
         lifetime: "2 év"
-        purpose: "Hirdetési konverzió mérése (Google Ads)"
       - name: "_fbp"
         domain: "babasarok.net"
         lifetime: "30 nap"
-        purpose: "Hirdetési mérés (Meta)"
       - name: "_fbc, _fr"
         domain: "babasarok.net"
         lifetime: "365 nap"
-        purpose: "Hirdetési mérés (Meta)"
 ---
 
 Ez az adatvédelmi tájékoztató (továbbiakban: tájékoztató) elmagyarázza, milyen személyes adatokat kezelünk a babasarok.net használata során, milyen jogalapon, mennyi ideig, és mi a jogaid az EU 2016/679 rendelet (GDPR) szerint.

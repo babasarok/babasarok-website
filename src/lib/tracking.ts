@@ -9,28 +9,13 @@
 const CONSENT_STORAGE_KEY = "dataProtectionConsent";
 
 export interface Consent {
-  /** GA4 (Google Analytics), Google Tag Manageren keresztül. */
   analytics: boolean;
-  /** Google Ads konverzió + Meta-pixel. */
   marketing: boolean;
   /** ISO timestamp, when the choice was made. */
   at: string;
 }
 
-export interface Cookie {
-  name: string;
-  domain: string;
-  lifetime: string;
-  purpose: string;
-}
-
-export interface CookieCategory {
-  key: "necessary" | "analytics" | "marketing";
-  label: string;
-  description: string;
-  locked: boolean;
-  cookies: Cookie[];
-}
+export type Choice = Pick<Consent, "analytics" | "marketing">;
 
 /** CustomEvent name: the user asks to make a fresh consent choice. */
 export const CONSENT_RESET_EVENT = "babasarok:consent-reset";
@@ -38,7 +23,6 @@ export const CONSENT_RESET_EVENT = "babasarok:consent-reset";
 /** The site's Meta (Facebook) pixel. */
 export const META_PIXEL_ID = "1683952989437942";
 
-/** Stored form; `analytics` is optional because pre-split values lacked it. */
 type StoredConsent = { analytics?: boolean; marketing: boolean; at: string };
 
 function isStoredConsent(value: unknown): value is StoredConsent {
@@ -62,8 +46,6 @@ export function readConsent(): Consent | null {
     if (!isStoredConsent(parsed)) {
       return null;
     }
-    // Legacy single-flag values treated `marketing` as covering both purposes,
-    // so a missing `analytics` migrates to the stored `marketing`.
     return {
       analytics: parsed.analytics ?? parsed.marketing,
       marketing: parsed.marketing,
@@ -74,7 +56,7 @@ export function readConsent(): Consent | null {
   }
 }
 
-export function saveConsent(consent: Pick<Consent, "analytics" | "marketing">): void {
+export function saveConsent(consent: Choice): void {
   const value: Consent = { ...consent, at: new Date().toISOString() };
   try {
     localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(value));
@@ -83,15 +65,7 @@ export function saveConsent(consent: Pick<Consent, "analytics" | "marketing">): 
   }
 }
 
-/**
- * Trackers already in memory cannot be unloaded short of a full reload, so a
- * fresh choice only forces one when something loaded under `previous` would no
- * longer be loaded under `next`.
- */
-export function needsReload(
-  previous: Consent | null,
-  next: Pick<Consent, "analytics" | "marketing">,
-): boolean {
+export function needsReload(previous: Consent | null, next: Choice): boolean {
   const wasGtm = previous ? previous.analytics || previous.marketing : false;
   const nowGtm = next.analytics || next.marketing;
   const wasMeta = previous ? previous.marketing : false;
@@ -101,15 +75,14 @@ export function needsReload(
 
 let gtmLoading = false;
 let virtualPageViewTracked = false;
-let gtmConsent: Pick<Consent, "analytics" | "marketing"> | null = null;
+let gtmConsent: Choice | null = null;
 
 /**
  * Astro's `<ClientRouter />` does client-side navigations without a full page
  * load, so GTM's automatic pageview only fires on the first load. Mirror the
  * original `astro-google-tagmanager` behaviour: on every client-side swap
  * push a `virtualPageview` to the dataLayer, which the GTM container maps to
- * its GA4 pageview tag. Registered only once, and only after consent. Each
- * push carries the consent states so the container's tags can gate on them.
+ * its GA4 pageview tag. Registered only once, and only after consent.
  */
 function startVirtualPageViewTracking(): void {
   if (virtualPageViewTracked) {
@@ -127,17 +100,7 @@ function startVirtualPageViewTracking(): void {
   });
 }
 
-/**
- * Load the GTM container, carrying the visitor's consent states in the data
- * layer so the container's GA4 tag can gate on `consent.analytics` and its
- * Google Ads conversion tag on `consent.marketing` (see the consent-tracking
- * spec for the required GTM tag triggers). The `gtag` shim in Base.astro owns
- * `window.dataLayer`.
- */
-export function loadGtmContainer(
-  containerId: string,
-  consent: Pick<Consent, "analytics" | "marketing">,
-): void {
+export function loadGtmContainer(containerId: string, consent: Choice): void {
   if (gtmLoading) {
     return;
   }

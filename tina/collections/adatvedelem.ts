@@ -99,12 +99,6 @@ export const AdatvedelemCollection: Collection = {
               label: "Tárolási idő",
               required: true,
             },
-            {
-              type: "string",
-              name: "purpose",
-              label: "Cél",
-              required: true,
-            },
           ],
         },
       ],

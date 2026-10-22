@@ -26,8 +26,8 @@ value. An absent, malformed, or unreadable stored value SHALL be treated as
 ### Settings dialog
 
 **Beállítások** SHALL open a dialog listing the cookie categories — a locked
-*necessary* category (always on; it is what stores the consent choice), an
-*analytics* toggle, and a *marketing* toggle — each with an expandable
+_necessary_ category (always on; it is what stores the consent choice), an
+_analytics_ toggle, and a _marketing_ toggle — each with an expandable
 per-cookie table (name, domain, lifetime). The dialog offers **Mindent
 elutasít** (reject all) and **Beállítások mentése** (save the current
 toggles). Saving SHALL show a confirmation ("Beállítások mentve").

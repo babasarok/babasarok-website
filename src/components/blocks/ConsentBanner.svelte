@@ -2,6 +2,7 @@
   import Icon from "@iconify/svelte";
   import Dialog from "@/components/ui/Dialog.svelte";
   import Toggle from "@/components/ui/Toggle.svelte";
+  import type { CookieCategory } from "@/lib/cookie";
   import {
     CONSENT_RESET_EVENT,
     META_PIXEL_ID,
@@ -10,8 +11,9 @@
     needsReload,
     readConsent,
     saveConsent,
-    type CookieCategory,
+    type Choice,
   } from "@/lib/tracking";
+  import { SvelteSet } from "svelte/reactivity";
   import { onMount } from "svelte";
 
   let {
@@ -30,7 +32,7 @@
   let view = $state<"settings" | "confirmation">("settings");
   let analytics = $state(true);
   let marketing = $state(true);
-  let expandedKey = $state<string | null>(null);
+  let expandedKey = new SvelteSet<string>();
 
   const ICONS: Record<CookieCategory["key"], string> = {
     necessary: "mdi:shield-check",
@@ -38,20 +40,23 @@
     marketing: "mdi:target",
   };
 
-  /** Save a choice; reload to unload a tracker the visitor no longer allows. */
-  function apply(next: { analytics: boolean; marketing: boolean }): boolean {
+  function loadTrackers(consent: Choice): void {
+    if (consent.analytics || consent.marketing) {
+      loadGtmContainer(gtmId, consent);
+    }
+    if (consent.marketing) {
+      loadMetaPixel(META_PIXEL_ID);
+    }
+  }
+
+  function apply(next: Choice): boolean {
     const previous = readConsent();
     saveConsent(next);
     if (needsReload(previous, next)) {
       globalThis.location.reload();
       return true;
     }
-    if (next.analytics || next.marketing) {
-      loadGtmContainer(gtmId, next);
-    }
-    if (next.marketing) {
-      loadMetaPixel(META_PIXEL_ID);
-    }
+    loadTrackers(next);
     return false;
   }
 
@@ -82,17 +87,21 @@
   }
 
   function toggleDetails(key: string): void {
-    expandedKey = expandedKey === key ? null : key;
+    console.log(key, expandedKey, expandedKey.has(key));
+    if (expandedKey.has(key)) {
+      expandedKey.delete(key);
+    } else {
+      expandedKey.add(key);
+    }
   }
 
   function onDialogClose(): void {
     if (view === "confirmation") {
-      // A confirmed choice: hide the banner for good.
       open = false;
     }
     syncToggles();
     view = "settings";
-    expandedKey = null;
+    expandedKey.clear();
   }
 
   onMount(() => {
@@ -100,12 +109,7 @@
     if (consent) {
       analytics = consent.analytics;
       marketing = consent.marketing;
-      if (consent.analytics || consent.marketing) {
-        loadGtmContainer(gtmId, consent);
-      }
-      if (consent.marketing) {
-        loadMetaPixel(META_PIXEL_ID);
-      }
+      loadTrackers(consent);
     } else {
       open = true;
     }
@@ -188,10 +192,10 @@
                           >
                             Részletek
                             <Icon
-                              icon={expandedKey === category.key
+                              icon={expandedKey.has(category.key)
                                 ? "mdi:chevron-up"
                                 : "mdi:chevron-down"}
-                              class="text-sm nos"
+                              class="text-sm"
                             />
                           </button>
                           {#if category.locked}
@@ -203,7 +207,7 @@
                           {/if}
                         </div>
                       </div>
-                      {#if expandedKey === category.key}
+                      {#if expandedKey.has(category.key)}
                         <table class="w-full border-collapse text-left text-xs">
                           <thead>
                             <tr class="border-b border-brown-100 text-brown-500">
