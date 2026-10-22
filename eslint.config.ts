@@ -90,6 +90,8 @@ export default defineConfig([
         },
       ],
       "unicorn/no-empty-file": "error",
+      // We prefer if/else over ternaries
+      "unicorn/prefer-ternary": "off",
       curly: "error",
       "@typescript-eslint/no-empty-object-type": [
         "error",
