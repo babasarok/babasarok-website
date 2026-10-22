@@ -70,6 +70,7 @@
     if (!reloaded) {
       close();
     }
+
     open = false;
   }
 
@@ -87,18 +88,19 @@
   }
 
   function toggleDetails(key: string): void {
-    console.log(key, expandedKey, expandedKey.has(key));
     if (expandedKey.has(key)) {
       expandedKey.delete(key);
-    } else {
-      expandedKey.add(key);
+      return;
     }
+
+    expandedKey.add(key);
   }
 
   function onDialogClose(): void {
     if (view === "confirmation") {
       open = false;
     }
+
     syncToggles();
     view = "settings";
     expandedKey.clear();
@@ -113,10 +115,12 @@
     } else {
       open = true;
     }
+
     const onReset = (): void => {
       syncToggles();
       open = true;
     };
+
     globalThis.addEventListener(CONSENT_RESET_EVENT, onReset);
     return () => {
       globalThis.removeEventListener(CONSENT_RESET_EVENT, onReset);
