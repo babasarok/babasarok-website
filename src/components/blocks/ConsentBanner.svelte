@@ -1,50 +1,116 @@
 <script lang="ts">
+  import Icon from "@iconify/svelte";
+  import Dialog from "@/components/ui/Dialog.svelte";
+  import Toggle from "@/components/ui/Toggle.svelte";
   import {
     CONSENT_RESET_EVENT,
     META_PIXEL_ID,
     loadGtmContainer,
     loadMetaPixel,
+    needsReload,
     readConsent,
     saveConsent,
+    type CookieCategory,
   } from "@/lib/tracking";
   import { onMount } from "svelte";
 
-  let { gtmId, text }: { gtmId: string; text: string } = $props();
+  let {
+    gtmId,
+    heading,
+    text,
+    categories,
+  }: {
+    gtmId: string;
+    heading: string;
+    text: string;
+    categories: CookieCategory[];
+  } = $props();
 
   let open = $state(false);
-  let started = $state(false);
+  let view = $state<"settings" | "confirmation">("settings");
+  let analytics = $state(true);
+  let marketing = $state(true);
+  let expandedKey = $state<string | null>(null);
 
-  function start(): void {
-    if (started) {
-      return;
+  const ICONS: Record<CookieCategory["key"], string> = {
+    necessary: "mdi:shield-check",
+    analytics: "mdi:chart-box",
+    marketing: "mdi:target",
+  };
+
+  /** Save a choice; reload to unload a tracker the visitor no longer allows. */
+  function apply(next: { analytics: boolean; marketing: boolean }): boolean {
+    const previous = readConsent();
+    saveConsent(next);
+    if (needsReload(previous, next)) {
+      globalThis.location.reload();
+      return true;
     }
-    started = true;
-    loadGtmContainer(gtmId);
-    loadMetaPixel(META_PIXEL_ID);
+    if (next.analytics || next.marketing) {
+      loadGtmContainer(gtmId, next);
+    }
+    if (next.marketing) {
+      loadMetaPixel(META_PIXEL_ID);
+    }
+    return false;
   }
 
-  function choose(marketing: boolean): void {
-    const previous = readConsent();
-    saveConsent(marketing);
+  function acceptAll(): void {
     open = false;
-    if (marketing) {
-      start();
-    } else if (previous?.marketing) {
-      // Withdrawn: the trackers are already in memory, so the only way to
-      // unload them is a cold reload.
-      globalThis.location.reload();
+    apply({ analytics: true, marketing: true });
+  }
+
+  function rejectAll(close: () => void): void {
+    const reloaded = apply({ analytics: false, marketing: false });
+    if (!reloaded) {
+      close();
     }
+    open = false;
+  }
+
+  function saveSettings(): void {
+    const reloaded = apply({ analytics, marketing });
+    if (!reloaded) {
+      view = "confirmation";
+    }
+  }
+
+  function syncToggles(): void {
+    const consent = readConsent();
+    analytics = consent ? consent.analytics : false;
+    marketing = consent ? consent.marketing : false;
+  }
+
+  function toggleDetails(key: string): void {
+    expandedKey = expandedKey === key ? null : key;
+  }
+
+  function onDialogClose(): void {
+    if (view === "confirmation") {
+      // A confirmed choice: hide the banner for good.
+      open = false;
+    }
+    syncToggles();
+    view = "settings";
+    expandedKey = null;
   }
 
   onMount(() => {
     const consent = readConsent();
-    if (consent?.marketing) {
-      start();
-    } else if (!consent) {
-      // A stored rejection is a decision; the privacy page's button reopens the banner.
+    if (consent) {
+      analytics = consent.analytics;
+      marketing = consent.marketing;
+      if (consent.analytics || consent.marketing) {
+        loadGtmContainer(gtmId, consent);
+      }
+      if (consent.marketing) {
+        loadMetaPixel(META_PIXEL_ID);
+      }
+    } else {
       open = true;
     }
     const onReset = (): void => {
+      syncToggles();
       open = true;
     };
     globalThis.addEventListener(CONSENT_RESET_EVENT, onReset);
@@ -59,24 +125,146 @@
     <div
       class="mx-auto flex max-w-2xl flex-col gap-3 rounded-2xl border border-brown-200 bg-white p-5 text-sm text-body shadow-[0_20px_40px_0_rgba(50,65,141,0.18)]"
     >
-      <h2 class="text-base font-semibold text-headings">Adatkezelési hozzájárulás</h2>
+      <h2 class="text-base font-semibold text-headings">{heading}</h2>
       <p class="m-0">{text}</p>
       <div class="mt-1 flex flex-wrap items-center gap-3">
         <button
           type="button"
-          onclick={() => choose(true)}
+          onclick={acceptAll}
           class="flex h-11 items-center justify-center rounded-md bg-brown-500 px-4 text-sm font-medium uppercase text-white transition-all hover:bg-brown-700"
         >
-          Elfogadom
+          Összes elfogadása
         </button>
-        <button
-          type="button"
-          onclick={() => choose(false)}
-          class="flex h-11 items-center justify-center rounded-md border border-brown-200 bg-white px-4 text-sm font-medium uppercase text-brown-600 transition-all hover:bg-brown-100"
-        >
-          Elutasítom
-        </button>
-        <a href="/adatvedelem" class="text-accent underline">Részletek</a>
+        <Dialog aria-label="Cookie beállítások" onClose={onDialogClose}>
+          {#snippet button(id)}
+            <button
+              commandfor={id}
+              command="show-modal"
+              class="flex h-11 items-center justify-center rounded-md border border-brown-200 bg-white px-4 text-sm font-medium uppercase text-brown-600 transition-all hover:bg-brown-100"
+            >
+              Beállítások
+            </button>
+          {/snippet}
+          {#snippet content(close)}
+            {#if view === "settings"}
+              <div class="flex flex-col gap-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 class="text-base font-semibold text-headings">Cookie beállítások</h2>
+                    <p class="mt-1 mb-0 text-body">
+                      Itt szabályozhatja, hogy milyen típusú sütiket szeretne engedélyezni. A
+                      beállításokat bármikor módosíthatja.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onclick={close}
+                    aria-label="Bezárás"
+                    class="flex shrink-0 cursor-pointer rounded-full p-1.5 text-brown-500 transition-colors hover:bg-brown-100 hover:text-dark"
+                  >
+                    <Icon icon="mdi:close" class="text-2xl" />
+                  </button>
+                </div>
+
+                <ul class="flex flex-col gap-2">
+                  {#each categories as category (category.key)}
+                    <li class="flex flex-col gap-2 rounded-xl border border-brown-100 p-3">
+                      <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-start gap-3">
+                          <Icon
+                            icon={ICONS[category.key]}
+                            class="mt-0.5 text-xl text-brown-500 shrink-0"
+                          />
+                          <div>
+                            <h3 class="m-0 font-medium text-headings">{category.label}</h3>
+                            <p class="mt-1 mb-0 text-xs text-body">{category.description}</p>
+                          </div>
+                        </div>
+                        <div class="flex shrink-0 items-center gap-3">
+                          <button
+                            type="button"
+                            onclick={() => toggleDetails(category.key)}
+                            class="flex items-center gap-1 text-xs text-accent underline"
+                          >
+                            Részletek
+                            <Icon
+                              icon={expandedKey === category.key
+                                ? "mdi:chevron-up"
+                                : "mdi:chevron-down"}
+                              class="text-sm nos"
+                            />
+                          </button>
+                          {#if category.locked}
+                            <Toggle checked disabled />
+                          {:else if category.key === "analytics"}
+                            <Toggle bind:checked={analytics} />
+                          {:else if category.key === "marketing"}
+                            <Toggle bind:checked={marketing} />
+                          {/if}
+                        </div>
+                      </div>
+                      {#if expandedKey === category.key}
+                        <table class="w-full border-collapse text-left text-xs">
+                          <thead>
+                            <tr class="border-b border-brown-100 text-brown-500">
+                              <th class="py-1.5 pr-3 font-medium">Név</th>
+                              <th class="py-1.5 pr-3 font-medium">Domain</th>
+                              <th class="py-1.5 font-medium">Tárolási idő</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {#each category.cookies as cookie (cookie.name)}
+                              <tr class="border-b border-brown-100 last:border-0">
+                                <td class="py-1.5 pr-3 font-medium text-headings">{cookie.name}</td>
+                                <td class="py-1.5 pr-3 text-body">{cookie.domain}</td>
+                                <td class="py-1.5 text-body">{cookie.lifetime}</td>
+                              </tr>
+                            {/each}
+                          </tbody>
+                        </table>
+                      {/if}
+                    </li>
+                  {/each}
+                </ul>
+
+                <div class="flex flex-wrap justify-end gap-3">
+                  <button
+                    type="button"
+                    onclick={() => rejectAll(close)}
+                    class="flex h-11 items-center justify-center rounded-md border border-brown-200 bg-white px-4 text-sm font-medium uppercase text-brown-600 transition-all hover:bg-brown-100 cursor-pointer"
+                  >
+                    Mindent elutasít
+                  </button>
+                  <button
+                    type="button"
+                    onclick={saveSettings}
+                    class="flex h-11 items-center justify-center rounded-md bg-brown-500 px-4 text-sm font-medium uppercase text-white transition-all hover:bg-brown-700 cursor-pointer"
+                  >
+                    Beállítások mentése
+                  </button>
+                </div>
+              </div>
+            {:else}
+              <div class="flex flex-col items-center gap-3 py-4 text-center">
+                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-brown-100">
+                  <Icon icon="mdi:check" class="text-3xl text-brown-500" />
+                </div>
+                <h2 class="m-0 text-base font-semibold text-headings">Beállítások mentve</h2>
+                <p class="m-0 text-sm text-body">
+                  A cookie beállításait sikeresen elmentettük. A módosításokat bármikor
+                  visszavonhatja az Adatvédelmi tájékoztatóban.
+                </p>
+                <button
+                  type="button"
+                  onclick={close}
+                  class="mt-2 flex h-11 items-center justify-center rounded-md bg-brown-500 px-6 text-sm font-medium uppercase text-white transition-all hover:bg-brown-700"
+                >
+                  Rendben
+                </button>
+              </div>
+            {/if}
+          {/snippet}
+        </Dialog>
       </div>
     </div>
   </section>

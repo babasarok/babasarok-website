@@ -1,6 +1,43 @@
 ---
 title: Adatvédelmi tájékoztató
+cookieBannerHeading: "Fontos számunkra az adatvédelem"
 cookieBannerText: "Az oldal cookie-kkal méri a látogatást és a rendelési konverziókat: Google Analytics / Google Ads (Google) és Facebook Pixel (Meta). A mérések csak a hozzájárulásod esetén indulnak el, és a választásod bármikor módosítható az Adatvédelmi tájékoztatóban."
+cookieCategories:
+  - key: necessary
+    label: "Működéshez szükséges sütik"
+    description: "Ezek a sütik elengedhetetlenek a weboldal alapvető funkcióinak működéséhez. A hozzájárulási döntés tárolásához helyi tárhelyet (local storage) használunk."
+    locked: true
+    cookies:
+      - name: "dataProtectionConsent"
+        domain: "babasarok.net"
+        lifetime: "Választás módosításáig"
+        purpose: "Hozzájárulási döntés tárolása (local storage)"
+  - key: analytics
+    label: "Elemzési sütik"
+    description: "Segítenek megérteni, hogyan használják a weboldalt, így javíthatjuk a felhasználói élményt. (Google Analytics)"
+    locked: false
+    cookies:
+      - name: "_ga, _ga_*"
+        domain: "babasarok.net"
+        lifetime: "2 év"
+        purpose: "Oldallátogatás mérése (Google Analytics)"
+  - key: marketing
+    label: "Marketing sütik"
+    description: "Személyre szabott hirdetések és tartalmak megjelenítéséhez, valamint a kampányok hatékonyságának méréséhez használják. (Google Ads, Meta)"
+    locked: false
+    cookies:
+      - name: "_gcl_*"
+        domain: "babasarok.net"
+        lifetime: "2 év"
+        purpose: "Hirdetési konverzió mérése (Google Ads)"
+      - name: "_fbp"
+        domain: "babasarok.net"
+        lifetime: "30 nap"
+        purpose: "Hirdetési mérés (Meta)"
+      - name: "_fbc, _fr"
+        domain: "babasarok.net"
+        lifetime: "365 nap"
+        purpose: "Hirdetési mérés (Meta)"
 ---
 
 Ez az adatvédelmi tájékoztató (továbbiakban: tájékoztató) elmagyarázza, milyen személyes adatokat kezelünk a babasarok.net használata során, milyen jogalapon, mennyi ideig, és mi a jogaid az EU 2016/679 rendelet (GDPR) szerint.

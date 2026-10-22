@@ -331,11 +331,28 @@ const contact = defineCollection({
   }),
 });
 
+const cookie = z.object({
+  name: z.string(),
+  domain: z.string(),
+  lifetime: z.string(),
+  purpose: z.string(),
+});
+
+const cookieCategory = z.object({
+  key: z.enum(["necessary", "analytics", "marketing"]),
+  label: z.string(),
+  description: z.string(),
+  locked: z.boolean(),
+  cookies: z.array(cookie),
+});
+
 const adatvedelem = defineCollection({
   loader: glob({ pattern: "_index.md", base: "src/content/adatvedelem" }),
   schema: z.object({
     title: z.string(),
+    cookieBannerHeading: z.string(),
     cookieBannerText: z.string(),
+    cookieCategories: z.array(cookieCategory),
   }),
 });
 
