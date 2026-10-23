@@ -56,7 +56,7 @@ Megvásárolható termékek köre: a jelen ÁSZF végén közölt **Megvásárol
 
 Szolgáltató ezúton tájékoztatja a Megrendelőt, hogy a Webáruházban megjelenített Termékek árai magyar forintban értendők. Szolgáltató az általános forgalmi adóról szóló 2007. évi CXXVII. törvény (a továbbiakban: „Áfa tv.”) XIII. fejezete alapján alanyi adómentességet alkalmazó egyéni vállalkozó, ezért a Termékek feltüntetett árai általános forgalmi adót nem tartalmaznak. A Termék ára a házhozszállítás költéségét br. 60.000,- Ft alatti rendelési érték alatt nem tartalmazza. Br. 60.000,- Ft feletti rendelési érték felett a szállításért Szolgáltató nem számol fel díjat. Szolgáltató a megrendelt Termék vonatkozásában külön csomagolási díjat nem számít fel.
 
-A Webáruházban a Szolgáltató részletesen feltünteti a Termék nevét, leírását, illetve fotót jelenít meg a Termékről.  A Webáruházban megjelenített Termék képe eltérhet a valóságtól, bizonyos esetben illusztráció.
+A Webáruházban a Szolgáltató részletesen feltünteti a Termék nevét, leírását, illetve fotót jelenít meg a Termékről. A Webáruházban megjelenített Termék képe eltérhet a valóságtól, bizonyos esetben illusztráció.
 
 Amennyiben a Webáruházban szereplő Termék vonatkozásában akciós ár kerül(ne) bevezetésre a Szolgáltató minden esetben teljeskörűen tájékoztatja a Megrendelőt az akció mértékéről és annak tervezett időpontjáról.
 
@@ -64,7 +64,7 @@ Amennyiben a Webáruházban szereplő Termék vonatkozásában akciós ár kerü
 
 A Szolgáltató tájékoztatja a Megrendelőt, hogy a Webáruházban megjelenített termékek kizárólag online, az <https://babasarok.net/> oldalon vásárolhatóak meg. Szolgáltató telefonon megrendelést nem fogad.
 
-*Szolgáltató ezúton tájékoztatja a Megrendelőt, hogy a megrendelt, de átt nem vett (ideértve a Megrendelő által kifizetett és át nem vett Terméket is) Terméket a Szolgáltató a megrendelés leadásának időpontját követő maximum 1 (egy) éves határozott időtartamig tárolja.*
+_Szolgáltató ezúton tájékoztatja a Megrendelőt, hogy a megrendelt, de átt nem vett (ideértve a Megrendelő által kifizetett és át nem vett Terméket is) Terméket a Szolgáltató a megrendelés leadásának időpontját követő maximum 1 (egy) éves határozott időtartamig tárolja._
 
 #### II.3.1. Megrendelés menete
 
@@ -78,7 +78,7 @@ Amennyiben Felhasználó további terméket szeretne kosárba helyezni, kiválas
 
 Amennyiben a Webáruházban hiba vagy hiányosság lép fel a Terméknél vagy az áraknál, abban az esetben a Szolgáltató fenntartja a jogot a korrekcióra és nem köteles hibás áron a terméket eladni. Ilyen esetben a hiba felismerése illetve módosítása után a Szolgáltató azonnal tájékoztatja a Megrendelőt az új adatokról. A Megrendelő ezt követően még egyszer megerősítheti a megrendelést, vagy lehetőség van arra, hogy elálljon a szerződéstől.
 
-A fizetendő végösszeg a megrendelés összesítője és visszaigazoló levél alapján minden költséget tartalmaz. Felhasználó köteles a csomagot kézbesítéskor a futár előtt megvizsgálni, és a csomagoláson vagy a Terméken észlelt esetleges sérülés esetén köteles jegyzőkönyv felvételét kérni, sérülés esetén a csomagot illetve a Terméket nem köteles átvenni. *Utólagos, jegyzőkönyv nélküli reklamációt Szolgáltató nem fogad el.*
+A fizetendő végösszeg a megrendelés összesítője és visszaigazoló levél alapján minden költséget tartalmaz. Felhasználó köteles a csomagot kézbesítéskor a futár előtt megvizsgálni, és a csomagoláson vagy a Terméken észlelt esetleges sérülés esetén köteles jegyzőkönyv felvételét kérni, sérülés esetén a csomagot illetve a Terméket nem köteles átvenni. _Utólagos, jegyzőkönyv nélküli reklamációt Szolgáltató nem fogad el._
 
 Az adatok megadását követően a Megrendelő a „megrendelés” gombra kattintva tudja elküldeni megrendelését, előtte azonban még egyszer ellenőrizheti a megadott adatokat, illetve megjegyzést is küldhet a megrendelésével.
 

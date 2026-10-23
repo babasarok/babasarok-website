@@ -28,13 +28,7 @@ const productTitles = (await getCollection("product"))
 
         <h2>Megvásárolható termékek listája</h2>
         <ul>
-          {
-            productTitles.map((t) => (
-              <li>
-                {t}
-              </li>
-            ))
-          }
+          {productTitles.map((t) => <li>{t}</li>)}
         </ul>
       </div>
     </div>
