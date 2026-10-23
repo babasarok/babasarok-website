@@ -21,5 +21,12 @@ fields:
     type: embroidery
     price: 1500
     price_unit: word
+  - name: 'Anyag '
+    label: 'Szín és minta '
+    type: material
+    color_count: '2'
+    materials:
+      - material_path: src/content/material/vizlepergeto-anyag.md
+        price: 0
 ---
 
