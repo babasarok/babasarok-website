@@ -37,16 +37,37 @@ These are listed in priority order. When values conflict, prefer the one higher 
 - **Styling decisions:** Tailwind utility first → scoped component style →
   (last resort) global CSS. Before hardcoding a color, check the `@theme` block in
   [src/styles/global.css](src/styles/global.css) and use/add a `--color-*` token.
+  Prefer the generated utility (`text-brown-500`) over the arbitrary-value
+  `text-(--color-brown-500)` syntax for `--color-*` tokens; reserve `var()` /
+  `(--var)` for tokens outside the Tailwind namespace (e.g. `--nav-product-hover`)
+  and fallbacks (e.g. `text-(--color-link, --color-foreground)`). Don't add new
+  global CSS files without checking the existing structure of `global.css` and
+  its imports.
+- **Imports:** use the `@/*` path alias for imports from `src/`.
 - **New shared UI:** create a small reusable component (see
   [src/components/ui/](src/components/ui/)) rather than duplicating markup or adding
   global utilities.
 - **Rendering:** prefer Astro components and build-time rendering; only add a Svelte
-  island / client hydration when interactivity actually requires it.
+  island / client hydration when interactivity actually requires it. Once JS is
+  genuinely unavoidable, prefer one cohesive hydrated island over a server
+  component plus a detached `<script>` that reaches into it via DOM selectors.
+  Prefer Astro's built-in features (content collections, middleware, SSR) over
+  reinventing them in a framework component. When solving something with an
+  older-but-safe approach, flag newer standard APIs that could replace it as a
+  possible TODO.
+- **Data fetching:** in Astro frontmatter (the `---` block), not in client-side code.
+- **Astro component shape:** define a `Props` interface at the top of each
+  `.astro` component (for caller type-checking, even when not destructured).
 - **No sidestepping type-checking:** no type casts, non-null assertions, or
   index-signature prop bags (`[key: string]: unknown`) that silence the compiler.
   When a component should accept HTML element attributes, extend its props
   interface with the element's attribute types instead of an open index
-  signature.
+  signature. Prefer `satisfies` over type assertions where possible, and
+  discriminated unions over enums. If a cast seems genuinely unavoidable, raise
+  it and ask for directions instead of working around it silently.
+- **Validate external data with zod:** anything read from storage, the URL or
+  the network gets a zod schema — the schema is the author-time check and the
+  parse is unit-testable. zod is already installed.
 - **No silencing lint/check warnings:** fix eslint and svelte-check warnings
   (including a11y ones) properly. `eslint-disable` / `svelte-ignore` comments
   are a last resort and must carry a concrete justification for why the rule
@@ -72,9 +93,31 @@ Formatting is Prettier's job; these are the conventions it can't express.
   }
   ```
 
-- **Blank lines around blocks:** put a blank line between an `if`/`else`/loop
-  block and the statement that follows it, and between distinct steps of a
-  function, where it improves readability.
+- **Function declarations:** use the `function` keyword for named, standalone
+  function declarations — don't convert them to arrow functions. Prefer arrow
+  functions for inline callbacks (array methods, event handlers).
+- **Blank lines around blocks:** a statement spanning more than one line —
+  multiline calls, object/array literals, control-flow blocks
+  (`if`/`for`/`while`/`switch`/`try`), function declarations, multiline
+  JSX/template literals — gets one blank line before and after; two adjacent
+  multiline statements are separated by exactly one blank line. Exception: no
+  blank line at block edges (immediately after the opening `{` or before the
+  closing `}`).
+
+  ```ts
+  function f() {
+    const obj = {
+      a: 1,
+      b: 2,
+    };
+
+    if (obj.a > 0) {
+      doThing();
+    }
+
+    return obj;
+  }
+  ```
 - **Ternaries are a last resort:** use a guard clause if possible, otherwise an
   `if`/`else` block. A ternary is acceptable only when it is clearly the most
   readable option — i.e. it fits on one line, or both branches of the
@@ -112,6 +155,27 @@ max-h-none`); `width: 100%` on a `position: fixed` element stops short of
 - **Unit tests:** `npm test` (Vitest, `vitest run`) · watch with `npm run test:watch`.
   Specs live in `src/**/*.test.ts` (e.g. the order-form logic in
   [src/lib/**tests**/](src/lib/__tests__/)); fast pure-function tests, no build needed.
+- **Test levels, in order:** reach for each in this order and fall back only when
+  the earlier level genuinely can't do the job: **types** (illegal states,
+  required props, "only built through X" — via brands, discriminated unions,
+  narrowed props, un-exported helpers, `satisfies`) → **lint/build-time checks**
+  (patterns types can't see) → **unit tests** (pure decisions, parsing,
+  formatting) → **component tests** (rendered markup, event wiring, island state
+  transitions; Svelte via `@testing-library/svelte` + `jsdom` — install on
+  demand, nothing extra exists yet) → **hydration tests** (real browser
+  behaviour, Playwright). Types first, even if it costs a refactor: when a type
+  could solve the problem (a brand, splitting a function so the illegal state is
+  unrepresentable, un-exporting a helper so the only entry point is the
+  validated one), present the refactor to the user instead of silently settling
+  for a weaker level. Keep decisions pure so the unit level stays viable: inject
+  storage/URL/DOM access instead of reading it inside the decision logic. One
+  behaviour, one owner: don't re-test in Playwright what a type or unit test
+  already proves. Valid reasons to fall back a level: **can't express it** (e.g.
+  a type can't narrow a computed string, so that check is an ESLint rule),
+  **tests the wrong thing** (implementation details where behaviour matters, or
+  a jsdom test of something that depends on layout), or **hard to maintain** —
+  a judgement call to discuss with the user, recording the agreed reason in the
+  test file's header comment.
 - **Hydration tests:** `npm run test:hydration` (Playwright; needs a `dist/` build
   via `npm run build:local`). Its webServer reuses an already-running server on
   port 4321, so a running `astro dev` is tested instead of the dist — a stale-HMR
