@@ -57,6 +57,7 @@ const baseOrder = (products: OrderDetails["products"], address?: string): OrderD
   products,
   threadColors: [],
   productGroups: [],
+  termsAccepted: true,
 });
 
 describe("order form envelope", () => {
@@ -75,6 +76,7 @@ describe("order form envelope", () => {
     expect(form.get("szallitasimod")).toBe("Foxpost automata (990 Ft)");
     expect(form.get("uzenet")).toBe("Kérlek hímezzétek rá: Anna");
     expect(form.get("ar")).toBe("8990 Ft");
+    expect(form.get("feltetelek")).toBe("Igen");
     // The transaction id closes the email so it can be matched against the
     // Google Ads conversion recorded for the same submission.
     expect(form.get("tranzakcio_id")).toBe("TEST-TRANSACTION-ID");

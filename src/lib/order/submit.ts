@@ -22,6 +22,7 @@ export interface OrderDetails {
   products: IProduct[];
   threadColors: CmsEnhancedEmbroideryColor[];
   productGroups: SetDiscountGroup[];
+  termsAccepted: boolean;
 }
 
 /**
@@ -168,6 +169,7 @@ function buildOrderFormData(order: OrderDetails, options: SubmitOrderOptions): F
   const setSummary = formatSetDiscounts(pricing.instances, order.products);
   const arLines = [`${total.toString()} Ft`, ...(setSummary ? ["", setSummary] : [])];
   formData.append("ar", arLines.join("\n"));
+  formData.append("feltetelek", order.termsAccepted ? "Igen" : "Nem");
   // Last field of the email, matching the transaction_id of the conversion
   // event recorded alongside the submission so the two can be reconciled.
   formData.append("tranzakcio_id", options.transactionId);

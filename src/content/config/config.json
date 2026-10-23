@@ -55,6 +55,11 @@
       "name": "Adatvédelem",
       "url": "/adatvedelem",
       "weight": 5
+    },
+    {
+      "name": "ÁSZF",
+      "url": "/terms",
+      "weight": 6
     }
   ],
   "pagination": {

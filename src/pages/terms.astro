@@ -1,0 +1,36 @@
+---
+import { getCollection, getEntry, render } from "astro:content";
+import Base from "../layouts/Base.astro";
+import PageHeader from "../components/ui/PageHeader.astro";
+
+const terms = await getEntry("terms", "index");
+
+if (!terms) {
+  throw new Error("Terms entry not found");
+}
+
+const { Content } = await render(terms);
+const { title } = terms.data;
+
+const productTitles = (await getCollection("product"))
+  .filter((p) => p.data.can_be_ordered === true)
+  .map((p) => p.data.title.trim())
+  .toSorted((a, b) => a.localeCompare(b, "hu"));
+---
+
+<Base title={title}>
+  <PageHeader title={title} breadcrumb={title} no-shapes />
+
+  <section class="py-12.5">
+    <div class="container">
+      <div class="prose mx-auto max-w-none">
+        <Content />
+
+        <h2>Megvásárolható termékek listája</h2>
+        <ul>
+          {productTitles.map((t) => <li>{t}</li>)}
+        </ul>
+      </div>
+    </div>
+  </section>
+</Base>
