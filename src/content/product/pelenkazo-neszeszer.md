@@ -24,6 +24,7 @@ fields:
   - name: 'Anyag '
     label: 'Szín és minta '
     type: material
+    tooltip: 'Egy mintás és egy egyszínű anyagot kell jelölni '
     color_count: '2'
     materials:
       - material_path: src/content/material/vizlepergeto-anyag.md
