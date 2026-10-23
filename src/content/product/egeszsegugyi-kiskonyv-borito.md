@@ -24,6 +24,7 @@ fields:
   - name: anyag
     label: Anyag
     type: material
+    tooltip: Egy mintás és egy egyszínű anyagot szükséges választanod
     color_count: '2'
     materials:
       - material_path: src/content/material/pamutvaszon.md
