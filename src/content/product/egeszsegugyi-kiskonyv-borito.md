@@ -14,7 +14,7 @@ images:
   - image: /src/assets/IMG_6280.jpeg
   - image: /src/assets/IMG_6282.jpeg
 shortDescription: ''
-price: 3490
+price: 4000
 fields:
   - name: Himzes
     label: Hímzés
@@ -30,8 +30,8 @@ fields:
         price: 0
 ---
 
-Egyedi, névre hímzett egészségügyi kiskönyv borító, amely megvédi a kiskönyvet használat során. 
+Egyedi, névre hímzett egészségügyi kiskönyv borító, amely megvédi a kiskönyvet használat során.
 
-12x18cm-es borítókra való. 
+12x18cm-es borítókra való.
 
-Ha ettől eltérő méretben szeretnéd, megjegyzésben tüntesd fel. 
+Ha ettől eltérő méretben szeretnéd, megjegyzésben tüntesd fel.
