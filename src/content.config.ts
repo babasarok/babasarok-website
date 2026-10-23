@@ -382,6 +382,13 @@ const checkout = defineCollection({
   }),
 });
 
+const terms = defineCollection({
+  loader: glob({ pattern: "index.md", base: "src/content/terms" }),
+  schema: z.object({
+    title: z.string(),
+  }),
+});
+
 export const collections = {
   config,
   embroidery,
@@ -396,4 +403,5 @@ export const collections = {
   deliveryMethod,
   productGroup,
   checkout,
+  terms,
 };

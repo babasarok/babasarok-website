@@ -38,13 +38,19 @@ and links to the checkout page.
 
 The system SHALL validate the order before submission: every line must be
 complete (required fields and materials chosen), a delivery method must be
-selected, an address must be present when required, and name/email must be
-provided.
+selected, an address must be present when required, name/email must be
+provided, and the buyer must accept the general terms of service (ÁSZF). The
+terms acceptance is not persisted across visits; it must be given for every
+order.
 
 - **Scenario: Incomplete order**
   - WHEN a buyer attempts to submit an order with an incomplete line or
     missing required details
   - THEN the submission is blocked and a message tells the buyer what to fix
+- **Scenario: Terms not accepted**
+  - WHEN a buyer attempts to submit an order without accepting the general
+    terms of service
+  - THEN the submission is blocked until the terms are accepted
 
 ### Order total
 
@@ -69,11 +75,12 @@ the method is charged at 0.
 The system SHALL submit the order by posting a Web3Forms form payload
 containing the buyer's name, email, phone, delivery method (and address when
 required, and "ingyenes" instead of the price when the method is charged at 0 by
-its free-delivery threshold), message, the computed total, one text block per
-product describing its quantity, configured fields (indented per dependency
-level), materials with colors, price breakdown, unit price (and per-meter price
-for length-priced items), and total — closed by a unique transaction
-identifier generated per submission attempt as the last payload field. Set
+its free-delivery threshold), message, the terms acceptance flag, the computed
+total, one text block per product describing its quantity, configured fields
+(indented per dependency level), materials with colors, price breakdown, unit
+price (and per-meter price for length-priced items), and total — closed by a
+unique transaction identifier generated per submission attempt as the last
+payload field. Set
 discounts SHALL be described at basket level: the payload SHALL summarize each
 formed set instance (set title, percent, and which items/units it covers) so
 each discount maps unambiguously to specific products.

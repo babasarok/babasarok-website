@@ -14,6 +14,7 @@ import { ContactCollection } from "./collections/contact";
 import { AdatvedelemCollection } from "./collections/adatvedelem";
 import { ProductGroupCollection } from "./collections/product-groups";
 import { CheckoutCollection } from "./collections/checkout";
+import { TermsCollection } from "./collections/terms";
 
 const branch =
   process.env.WORKERS_CI_BRANCH ||
@@ -59,6 +60,7 @@ export default defineConfig({
       ContactCollection,
       AdatvedelemCollection,
       ProductGroupCollection,
+      TermsCollection,
     ],
   },
 });

@@ -61,6 +61,9 @@
   let deliveryMethod = $state<string>(savedState?.deliveryMethod ?? "");
   let address = $state<string>(savedState?.address ?? "");
   let message = $state(savedState?.message ?? "");
+  // Not persisted: acceptance must be given for every order, so it re-arms on
+  // each visit instead of surviving in localStorage.
+  let termsAccepted = $state(false);
 
   let mounted = $state(false);
   let sending = $state(false);
@@ -90,7 +93,9 @@
 
   const grandTotal = $derived(orderTotal(pricing, deliveryCharged));
 
-  const valid = $derived(basket.length > 0 && name.trim() !== "" && email.trim() !== "");
+  const valid = $derived(
+    basket.length > 0 && name.trim() !== "" && email.trim() !== "" && termsAccepted
+  );
 
   onMount(() => {
     orderBasket.start();
@@ -150,6 +155,7 @@
         products: items,
         threadColors,
         productGroups,
+        termsAccepted,
       },
       { accessKey: params.fabformURL ?? "", message, transactionId }
     );
@@ -332,6 +338,19 @@
         {#if error}
           <p class="text-sm text-red-500">{error}</p>
         {/if}
+
+        <label class="text-body flex cursor-pointer items-center gap-2.5 text-sm">
+          <input
+            type="checkbox"
+            bind:checked={termsAccepted}
+            required
+            class="size-4 accent-accent"
+          />
+          Elfogadom az
+          <a href="/terms" target="_blank" rel="noopener" class="underline hover:text-brown-700"
+            >Általános Szerződési Feltételeket (ÁSZF)</a
+          >
+        </label>
 
         <Button
           class="h-11 uppercase"
