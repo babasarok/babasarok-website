@@ -35,9 +35,9 @@ colors:
     hex: ''
     image: /src/assets/IMG_0048.webp
   - color_id: mogyoro
-    label: Mogyoró
+    label: Taupe
     hex: ''
-    image: /src/assets/IMG_3585.webp
+    image: /src/assets/FE03C51F-9CA0-4EA1-ACB0-0CBBAAFF1573.jpeg
   - color_id: drapp
     label: Drapp
     hex: ''
