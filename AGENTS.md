@@ -118,6 +118,7 @@ Formatting is Prettier's job; these are the conventions it can't express.
     return obj;
   }
   ```
+
 - **Ternaries are a last resort:** use a guard clause if possible, otherwise an
   `if`/`else` block. A ternary is acceptable only when it is clearly the most
   readable option — i.e. it fits on one line, or both branches of the
