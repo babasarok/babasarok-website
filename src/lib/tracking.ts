@@ -1,17 +1,21 @@
 /**
  * Adatvédelmi hozzájárulás: a látogató hozzájárulásának tárolása és a
- * hozzájáruláshoz kötött külső mérések (Google Tag Manager, Meta pixel)
- * betöltése. Egyik sem kerül a kezdő dokumentumba, és mindegyik legfeljebb
- * egyszer, csak marketing-hozzájárulás után tölt be.
+ * hozzájáruláshoz kötött külső mérések betöltése. A GA4 (analytics) és a
+ * Google Ads konverzió (marketing) a Google Tag Manager konténeren keresztül,
+ * a Meta-pixel (marketing) külön tölt be. Egyik sem kerül a kezdő dokumentumba,
+ * és mindegyik legfeljebb egyszer, csak hozzájárulás után indul.
  */
 
 const CONSENT_STORAGE_KEY = "dataProtectionConsent";
 
 export interface Consent {
+  analytics: boolean;
   marketing: boolean;
   /** ISO timestamp, when the choice was made. */
   at: string;
 }
+
+export type Choice = Pick<Consent, "analytics" | "marketing">;
 
 /** CustomEvent name: the user asks to make a fresh consent choice. */
 export const CONSENT_RESET_EVENT = "babasarok:consent-reset";
@@ -19,7 +23,9 @@ export const CONSENT_RESET_EVENT = "babasarok:consent-reset";
 /** The site's Meta (Facebook) pixel. */
 export const META_PIXEL_ID = "1683952989437942";
 
-function isConsent(value: unknown): value is Consent {
+type StoredConsent = { analytics?: boolean; marketing: boolean; at: string };
+
+function isStoredConsent(value: unknown): value is StoredConsent {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -37,23 +43,39 @@ export function readConsent(): Consent | null {
       return null;
     }
     const parsed: unknown = JSON.parse(raw);
-    return isConsent(parsed) ? parsed : null;
+    if (!isStoredConsent(parsed)) {
+      return null;
+    }
+    return {
+      analytics: parsed.analytics ?? parsed.marketing,
+      marketing: parsed.marketing,
+      at: parsed.at,
+    };
   } catch {
     return null;
   }
 }
 
-export function saveConsent(marketing: boolean): void {
-  const consent: Consent = { marketing, at: new Date().toISOString() };
+export function saveConsent(consent: Choice): void {
+  const value: Consent = { ...consent, at: new Date().toISOString() };
   try {
-    localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(consent));
+    localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(value));
   } catch {
     // Privát mód / tiltott storage: the choice applies to this page load only.
   }
 }
 
+export function needsReload(previous: Consent | null, next: Choice): boolean {
+  const wasGtm = previous ? previous.analytics || previous.marketing : false;
+  const nowGtm = next.analytics || next.marketing;
+  const wasMeta = previous ? previous.marketing : false;
+  const nowMeta = next.marketing;
+  return (wasGtm && !nowGtm) || (wasMeta && !nowMeta);
+}
+
 let gtmLoading = false;
 let virtualPageViewTracked = false;
+let gtmConsent: Choice | null = null;
 
 /**
  * Astro's `<ClientRouter />` does client-side navigations without a full page
@@ -73,17 +95,18 @@ function startVirtualPageViewTracking(): void {
       "gtm.start": Date.now(),
       virtualPagePath: globalThis.location.pathname,
       virtualPageTitle: document.title,
+      consent: gtmConsent,
     });
   });
 }
 
-/** Load the GTM container; the `gtag` shim in Base.astro owns `window.dataLayer`. */
-export function loadGtmContainer(containerId: string): void {
+export function loadGtmContainer(containerId: string, consent: Choice): void {
   if (gtmLoading) {
     return;
   }
   gtmLoading = true;
-  (globalThis.window.dataLayer ??= []).push({ "gtm.start": Date.now(), event: "gtm.js" });
+  gtmConsent = consent;
+  (globalThis.window.dataLayer ??= []).push({ "gtm.start": Date.now(), event: "gtm.js", consent });
   const script = document.createElement("script");
   script.async = true;
   script.src = `https://www.googletagmanager.com/gtm.js?id=${containerId}`;
