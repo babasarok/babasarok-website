@@ -14,7 +14,7 @@ images:
 shortDescription: |
   A kisbabás szülők tökéletes utazó rendszerezője.
   Legyen szó rövid vagy hosszú útról, ez egy elengedhetetlen kellék.
-price: 7490
+price: 8000
 fields:
   - name: 'Himzes '
     label: 'Hímzés '
