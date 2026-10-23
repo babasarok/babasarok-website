@@ -23,6 +23,7 @@ import z from "astro/zod";
 import type { SchemaContext } from "astro/content/config";
 import { EMBROIDERY_PRICE_UNIT_VALUES, PRODUCT_FIELD_TYPE_VALUES } from "./lib/product/fieldTypes";
 import { PRODUCT_TYPE_VALUES } from "./lib/product/productTypes";
+import { cookieCategorySchema } from "./lib/cookie";
 
 const heroBlock = defineCollection({
   loader: glob({ pattern: "hero.md", base: "src/content/sections" }),
@@ -335,7 +336,9 @@ const adatvedelem = defineCollection({
   loader: glob({ pattern: "_index.md", base: "src/content/adatvedelem" }),
   schema: z.object({
     title: z.string(),
+    cookieBannerHeading: z.string(),
     cookieBannerText: z.string(),
+    cookieCategories: z.array(cookieCategorySchema),
   }),
 });
 

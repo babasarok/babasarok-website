@@ -39,7 +39,7 @@ const {
 
 const config = await getConfig();
 const [adatvedelemEntry] = await getCollection("adatvedelem");
-const cookieBannerText = adatvedelemEntry.data.cookieBannerText;
+const { cookieBannerHeading, cookieBannerText, cookieCategories } = adatvedelemEntry.data;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin);
 const ogLocale = config.ogLocale ?? "hu_HU";
 const themeColor = config.themeColor ?? "#F1D3B2";
@@ -103,6 +103,12 @@ const themeColor = config.themeColor ?? "#F1D3B2";
       <slot />
     </div>
     <Footer />
-    <ConsentBanner gtmId={GTM_ID} text={cookieBannerText} client:load />
+    <ConsentBanner
+      gtmId={GTM_ID}
+      heading={cookieBannerHeading}
+      text={cookieBannerText}
+      categories={cookieCategories}
+      client:only="svelte"
+    />
   </body>
 </html>
