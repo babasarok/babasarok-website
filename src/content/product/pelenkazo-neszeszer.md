@@ -14,12 +14,20 @@ images:
 shortDescription: |
   A kisbabás szülők tökéletes utazó rendszerezője.
   Legyen szó rövid vagy hosszú útról, ez egy elengedhetetlen kellék.
-price: 7490
+price: 8000
 fields:
   - name: 'Himzes '
     label: 'Hímzés '
     type: embroidery
     price: 1500
     price_unit: word
+  - name: 'Anyag '
+    label: 'Szín és minta '
+    type: material
+    tooltip: 'Egy mintás és egy egyszínű anyagot kell jelölni '
+    color_count: '2'
+    materials:
+      - material_path: src/content/material/vizlepergeto-anyag.md
+        price: 0
 ---
 
