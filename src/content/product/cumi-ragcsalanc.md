@@ -28,7 +28,7 @@ fields:
         price: 3000
       - value: makrokragcsa
         label: Marokrágcsa
-        price: 9500
+        price: 6000
       - value: Cumi es ragcsa
         label: 2 ágú cumi és rágcsalánc
         price: 6500
