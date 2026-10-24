@@ -13,6 +13,8 @@ images:
     description: 'Pasztell tündér+bézs '
   - image: /src/assets/IMG_6280.jpeg
   - image: /src/assets/IMG_6282.jpeg
+  - image: /src/assets/IMG_6854.jpeg
+    description: 'Kis barna munkagépek+barna '
 shortDescription: ''
 price: 4000
 fields:
