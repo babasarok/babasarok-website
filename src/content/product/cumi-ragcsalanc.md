@@ -1,9 +1,9 @@
 ---
 product_id: cumilanc
 title: Cumi- és rágcsalánc
-type: kiegeszito
 can_be_ordered: true
 categories: Egyedi és praktikus segítők a fogzás idejére
+type: kiegeszito
 date: 2025-04-27T06:49:27.000Z
 thumbnail: /src/assets/IMG_9796.jpeg
 images:
@@ -13,7 +13,7 @@ images:
   - image: /src/assets/IMG_6394.jpeg
   - image: /src/assets/images/product/cumi-ragcsalanc.webp
 shortDescription: 'A szilikon cumi- és rágcsáláncok tökéletesek arra, hogy a baba mindig kéznél találja a cumit, így nem kell aggódni, ha lepottyan, ezek mellett pedig segítenek enyhíteni a fogzás okozta kellemetlenségeket is.  Stílusos és praktikus!'
-price: 3800
+price: 4000
 fields:
   - name: fajta
     label: Fajta
