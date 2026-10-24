@@ -31,7 +31,7 @@ fields:
         price: 6000
       - value: Cumi es ragcsa
         label: 2 ágú cumi és rágcsalánc
-        price: 6500
+        price: 4000
   - name: nev
     label: Név
     type: input
