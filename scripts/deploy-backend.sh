@@ -50,11 +50,18 @@ keyfile="$(mktemp)"
 cleanup() { rm -f "$keyfile"; }
 trap cleanup EXIT
 
-if [[ -n "${DEPLOY_SSH_KEY:-}" ]]; then
-  printf '%s\n' "$DEPLOY_SSH_KEY" > "$keyfile"
-else
+if [[ -z "${DEPLOY_SSH_KEY:-}" ]]; then
   echo "DEPLOY_SSH_KEY is required" >&2
   exit 1
+fi
+
+# Cloudflare build env can mangle multi-line secrets (newlines stripped or
+# turned into spaces), corrupting a PEM key. A base64-encoded key survives;
+# accept both forms.
+if [[ "$DEPLOY_SSH_KEY" == *"-----BEGIN"* ]]; then
+  printf '%s\n' "$DEPLOY_SSH_KEY" > "$keyfile"
+else
+  base64 -d -i <<<"$DEPLOY_SSH_KEY" > "$keyfile"
 fi
 chmod 600 "$keyfile"
 
