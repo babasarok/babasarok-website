@@ -67,6 +67,19 @@ services:
       NODE_ENV: development
       DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/${PREVIEW_DB_NAME}
     command: ["node", "dist/index-worker.js"]
+    # Same DB probe as the prod stack's worker (no HTTP listener to fetch).
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "const{Client}=require('pg');new Client({connectionString:process.env.DATABASE_URL}).connect().then(()=>process.exit(0)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     depends_on:
       migrate:
         condition: service_completed_successfully

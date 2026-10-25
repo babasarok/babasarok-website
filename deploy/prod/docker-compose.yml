@@ -91,6 +91,21 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/babasarok
     command: ["node", "dist/index-worker.js"]
+    # The worker has no HTTP listener (it polls the DB job queue), so probe
+    # its one critical dependency instead: a DB round-trip with its own
+    # credentials. Process death is already covered by restart: unless-stopped.
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "const{Client}=require('pg');new Client({connectionString:process.env.DATABASE_URL}).connect().then(()=>process.exit(0)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     depends_on:
       postgres:
         condition: service_healthy
