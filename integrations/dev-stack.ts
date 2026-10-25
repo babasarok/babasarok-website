@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { exec, spawn, type ChildProcess } from "node:child_process";
 import net from "node:net";
 import type { AstroIntegration } from "astro";
@@ -87,13 +88,52 @@ export function devStack(): AstroIntegration {
   let backend: ChildProcess | undefined;
   let dashboard: ChildProcess | undefined;
 
-  // The detached children are their own process-group leaders: one
-  // group-kill per child takes down pnpm, the tsc watcher and both node
-  // watchers (dashboard: vite and its compiled vendure-config import).
+  // Killing the tree, not the group: pnpm spawns its sh -c script runner
+  // as its own process-group leader, so a group-kill of the pnpm child
+  // stops at pnpm and orphans the whole watcher tree below it. Walk the
+  // /proc parent-child edges instead and TERM every descendant.
+  const descendants = (pid: number): number[] => {
+    const ppidByPid = new Map<number, number>();
+    try {
+      for (const entry of readdirSync("/proc")) {
+        if (!/^\d+$/.test(entry)) {
+          continue;
+        }
+        try {
+          const stat = readFileSync(`/proc/${entry}/stat`, "utf8");
+          // field 4 (ppid) sits after the comm field, which may contain
+          // spaces/parens — split on the last ')' instead.
+          const afterComm = stat.slice(stat.lastIndexOf(")") + 2);
+          const ppid = Number(afterComm.split(" ")[1]);
+          ppidByPid.set(Number(entry), ppid);
+        } catch {
+          // the process died between listing and reading — skip it
+        }
+      }
+    } catch {
+      return [];
+    }
+    const kids = [pid];
+    for (let i = 0; i < kids.length; i++) {
+      for (const [candidate, parent] of ppidByPid) {
+        if (parent === kids[i] && !kids.includes(candidate)) {
+          kids.push(candidate);
+        }
+      }
+    }
+    return kids;
+  };
+
   const stop = (): void => {
     for (const child of [dashboard, backend]) {
-      if (child?.pid && !child.killed) {
-        process.kill(-child.pid, "SIGTERM");
+      if (child?.pid && child.exitCode === null) {
+        for (const pid of descendants(child.pid)) {
+          try {
+            process.kill(pid, "SIGTERM");
+          } catch {
+            // already gone
+          }
+        }
       }
     }
     backend = undefined;
@@ -101,9 +141,9 @@ export function devStack(): AstroIntegration {
   };
 
   // Vite's SIGTERM listener (astro dev stop) closes the server, which fires
-  // astro:server:done — the hook below already stops the children. Nothing
-  // handles SIGINT (Ctrl+C), and signal death skips 'exit' handlers, so the
-  // children would leak; handle it here.
+  // astro:server:done — the hook below already stops the children. SIGINT
+  // (Ctrl+C) and signal death skip 'exit' handlers, so the children would
+  // leak; handle both here.
   let wired = false;
   const wireShutdown = (): void => {
     if (wired) {
@@ -115,6 +155,12 @@ export function devStack(): AstroIntegration {
       process.exit(0);
     });
     process.on("SIGTERM", () => {
+      stop();
+      process.exit(0);
+    });
+    // Terminal/editor closing the window sends SIGHUP without running exit
+    // handlers either.
+    process.on("SIGHUP", () => {
       stop();
       process.exit(0);
     });
