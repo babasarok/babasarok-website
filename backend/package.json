@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "tsc && node --env-file-if-exists=.env dist/migrate.js && (tsc --watch --preserveWatchOutput & node --watch --env-file-if-exists=.env dist/index.js & node --watch --env-file-if-exists=.env dist/index-worker.js)",
     "build": "tsc && node --env-file-if-exists=.env ./node_modules/vite/bin/vite.js build",
+    "dashboard": "node --env-file-if-exists=.env ./node_modules/vite/bin/vite.js",
     "start": "node --env-file-if-exists=.env dist/index.js",
     "worker": "node --env-file-if-exists=.env dist/index-worker.js",
     "migrate": "node --env-file-if-exists=.env dist/migrate.js",

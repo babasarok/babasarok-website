@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import { exec, spawn, type ChildProcess } from "node:child_process";
+import net from "node:net";
 import type { AstroIntegration } from "astro";
 
 const log = (message: string): void => {
@@ -15,6 +16,29 @@ const execp = (command: string): Promise<void> =>
       }
       resolve();
     });
+  });
+
+const BACKEND_PORT = 4000;
+const DASHBOARD_PORT = 5173;
+
+/** Rejects with a fix-it message when the port is taken by a stale process. */
+const assertPortFree = (name: string, port: number): Promise<void> =>
+  new Promise<void>((resolve, reject) => {
+    const probe = net.createServer();
+    probe.once("error", (error) => {
+      probe.close();
+      if ((error as NodeJS.ErrnoException).code === "EADDRINUSE") {
+        reject(
+          new Error(
+            `${name} port ${port} is already in use — a dev stack is probably still running. Stop it first ("astro dev stop", or kill the stale backend/vite processes).`
+          )
+        );
+        return;
+      }
+      reject(error);
+    });
+    probe.once("listening", () => probe.close(() => resolve()));
+    probe.listen(port, "127.0.0.1");
   });
 
 async function waitForPostgres(): Promise<void> {
@@ -49,20 +73,48 @@ async function waitForApi(): Promise<void> {
 }
 
 /**
- * Dev-only: brings up postgres and the Vendure backend (server + worker,
- * watched) alongside `astro dev`, and tears the backend down when the dev
- * server stops. Never added outside `astro dev` — see astro.config.ts.
+ * Dev-only: brings up postgres, the Vendure backend (server + worker,
+ * watched) and the dashboard's vite dev server (HMR, proxied by
+ * DashboardPlugin on :5173) alongside `astro dev`, and tears everything
+ * down when the dev server stops. Never added outside `astro dev` — see
+ * astro.config.ts.
  */
 export function devStack(): AstroIntegration {
   let backend: ChildProcess | undefined;
+  let dashboard: ChildProcess | undefined;
 
-  // The detached backend is its own process-group leader: one group-kill
-  // takes down pnpm, the tsc watcher and both node watchers.
+  // The detached children are their own process-group leaders: one
+  // group-kill per child takes down pnpm, the tsc watcher and both node
+  // watchers (dashboard: vite and its compiled vendure-config import).
   const stop = (): void => {
-    if (backend?.pid && !backend.killed) {
-      process.kill(-backend.pid, "SIGTERM");
+    for (const child of [dashboard, backend]) {
+      if (child?.pid && !child.killed) {
+        process.kill(-child.pid, "SIGTERM");
+      }
     }
     backend = undefined;
+    dashboard = undefined;
+  };
+
+  // Vite's SIGTERM listener (astro dev stop) closes the server, which fires
+  // astro:server:done — the hook below already stops the children. Nothing
+  // handles SIGINT (Ctrl+C), and signal death skips 'exit' handlers, so the
+  // children would leak; handle it here.
+  let wired = false;
+  const wireShutdown = (): void => {
+    if (wired) {
+      return;
+    }
+    wired = true;
+    process.on("SIGINT", () => {
+      stop();
+      process.exit(0);
+    });
+    process.on("SIGTERM", () => {
+      stop();
+      process.exit(0);
+    });
+    process.on("exit", stop);
   };
 
   return {
@@ -74,8 +126,21 @@ export function devStack(): AstroIntegration {
             "backend/.env is missing — copy backend/.env.example and fill it in first."
           );
         }
+        await assertPortFree("vendure", BACKEND_PORT);
+        await assertPortFree("dashboard", DASHBOARD_PORT);
 
         await waitForPostgres();
+
+        log("dashboard (vite dev server, HMR → http://localhost:4000/dashboard)");
+        dashboard = spawn("pnpm", ["-C", "backend", "run", "dashboard"], {
+          stdio: "inherit",
+          detached: true,
+        });
+        dashboard.on("exit", (code) => {
+          if (code !== 0 && code !== null) {
+            log(`dashboard vite exited with code ${code}`);
+          }
+        });
 
         log("vendure backend (server + worker, watching)");
         backend = spawn("pnpm", ["-C", "backend", "run", "dev"], {
@@ -89,9 +154,7 @@ export function devStack(): AstroIntegration {
         });
 
         void waitForApi();
-        // astro:server:done may not fire on every shutdown path (e.g. a
-        // SIGINT handled only by process exit); 'exit' covers those.
-        process.on("exit", stop);
+        wireShutdown();
       },
       "astro:server:done": stop,
     },
