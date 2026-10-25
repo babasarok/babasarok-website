@@ -12,7 +12,10 @@ RUN npm install -g pnpm@12.15.0 \
   && pnpm install --filter babasarok-vendure-backend --ignore-scripts --frozen-lockfile
 
 COPY backend/ ./backend/
-# The dashboard build's env placeholders live in the committed
-# backend/build.env (loaded by the build script after any local .env).
+# Compiles dist/ (tsc) and the dashboard (vite). The dashboard build's env
+# placeholders live in the committed backend/build.env; a local backend/.env,
+# if present, overrides them.
+RUN pnpm -C backend run build
+
 WORKDIR /app/backend
 CMD ["node", "dist/index.js"]
