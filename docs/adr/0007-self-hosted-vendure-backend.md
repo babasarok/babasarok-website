@@ -8,7 +8,7 @@
 ADR 0001 modeled orders as Web3Forms email requests: nothing stored, the
 buyer-facing email text was the only record, pricing was display-trusted in
 the browser. The commerce evaluation (`docs/commerce-platform-evaluation.md`)
-and the migration plan (`docs/vendure-migration.md`) chose a self-hosted
+and the platform evaluation (`docs/commerce-platform-evaluation.md`) chose a self-hosted
 Vendure backend on a single Hetzner box, deployed by the same Cloudflare
 Workers Builds that ship the frontend. Phase 1–4 of that migration are
 complete and verified in production.
