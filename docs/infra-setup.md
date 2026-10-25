@@ -28,7 +28,10 @@ One box hosts prod + test + previews. No need for three.
 1. [cloud.hetzner.com](https://cloud.hetzner.com) → choose/create a project →
    **Add Server**.
 2. Location: `Falkenstein` or `Helsinki` (eu-central, low latency to HU).
-3. Image: **Ubuntu 24.04**.
+3. Image: **Ubuntu 26.04** (current LTS; user's pick). If Docker's official
+   apt repo hasn't caught up to the new release yet, the workaround is
+   pinning the install to the 24.04 repo or Docker's convenience script —
+   I handle this during bootstrap.
 4. Type: cost-optimized **CAX21** (ARM64, 4 vCPU / 8 GB / 80 GB,
    €12.59/mo + €0.60 IPv4 = €13.19/mo — user's pick for headroom; the minimal
    fit would be CAX11 2 vCPU/4 GB ≈ €5.99/mo). ARM is verified fine: every
