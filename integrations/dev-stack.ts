@@ -38,7 +38,9 @@ const assertPortFree = (name: string, port: number): Promise<void> =>
       reject(error);
     });
     probe.once("listening", () => {
-      probe.close(() => { resolve(); });
+      probe.close(() => {
+        resolve();
+      });
     });
     probe.listen(port, "127.0.0.1");
   });
