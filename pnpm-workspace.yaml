@@ -1,2 +1,22 @@
 packages:
   - backend
+
+# pnpm >=11 build-script approvals. true = run (all prebuilt-binary
+# downloads or harmless postinstalls — no native compilation happens on the
+# cloudflare builder); false = deliberately skip (the vendure backend's
+# native modules are runtime-only; the site build never needs them). Any
+# dep with build scripts left unlisted fails the install with
+# ERR_PNPM_IGNORED_BUILDS.
+allowBuilds:
+  "@apollo/protobufjs": true
+  "@parcel/watcher": true
+  core-js: true
+  esbuild: true
+  sharp: true
+  workerd: true
+  bcrypt: false
+  better-sqlite3: false
+  lmdb: false
+  msgpackr-extract: false
+  re2: false
+
