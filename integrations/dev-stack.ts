@@ -37,7 +37,7 @@ async function waitForApi(): Promise<void> {
     try {
       const response = await fetch("http://localhost:4000/health");
       if (response.ok) {
-        log("vendure api ready → http://localhost:4000 (admin ui: /admin-ui)");
+        log("vendure api ready → http://localhost:4000 (dashboard: /dashboard)");
         return;
       }
     } catch {

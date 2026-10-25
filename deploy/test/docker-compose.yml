@@ -51,21 +51,6 @@ services:
     environment:
       NODE_ENV: development
       DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/babasarok
-    # AdminUiPlugin requires an existing vendure-ui-config.json at the app
-    # path (it overwrites the content with runtime values at boot); the
-    # committed artifact omits it, so create the empty shell if missing.
-    # $$ escapes compose interpolation so the shell sees the fallback.
-    # AdminUiPlugin requires an existing vendure-ui-config.json at the app
-    # path (it overwrites the content with runtime values at boot); the
-    # committed artifact omits it, so create the empty shell if missing.
-    # No shell/compose variables at all — compose interpolates even bare
-    # $names inside command strings.
-    command:
-      [
-        "sh",
-        "-c",
-        "test -f /app/backend/admin-ui-dist/vendure-ui-config.json || echo '{}' > /app/backend/admin-ui-dist/vendure-ui-config.json; exec node dist/index.js",
-      ]
     depends_on:
       postgres:
         condition: service_healthy

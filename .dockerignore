@@ -9,4 +9,3 @@ backend/node_modules
 backend/dist
 backend/email-out
 backend/.env
-backend/admin-ui-dist/vendure-ui-config.json

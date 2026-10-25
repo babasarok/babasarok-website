@@ -85,7 +85,7 @@ if [[ "$DEPLOY_STACK" == preview ]]; then
     owner=\$(grep '^SHOP_OWNER_EMAIL=' /srv/babasarok/test/.env | cut -d= -f2-)
     from=\$(grep '^ORDER_EMAIL_FROM=' /srv/babasarok/test/.env | cut -d= -f2-)
     origins=\$(grep '^API_ALLOWED_ORIGINS=' /srv/babasarok/test/.env | cut -d= -f2-)
-    printf 'POSTGRES_PASSWORD=%s\nTOKEN_SECRET=%s\nPREVIEW_SLUG=%s\nPREVIEW_DB_NAME=%s\nSHOP_OWNER_EMAIL=%s\nORDER_EMAIL_FROM=%s\nAPI_ALLOWED_ORIGINS=%s\nADMIN_URL=https://api-%s.babasarok.net/admin-ui\n' \"\$pw\" \"\$secret\" '$SLUG' '$DB' \"\$owner\" \"\$from\" \"\$origins\" '$SLUG' > $DIR/.env
+    printf 'POSTGRES_PASSWORD=%s\nTOKEN_SECRET=%s\nPREVIEW_SLUG=%s\nPREVIEW_DB_NAME=%s\nSHOP_OWNER_EMAIL=%s\nORDER_EMAIL_FROM=%s\nAPI_ALLOWED_ORIGINS=%s\nADMIN_URL=https://api-%s.babasarok.net/dashboard\n' \"\$pw\" \"\$secret\" '$SLUG' '$DB' \"\$owner\" \"\$from\" \"\$origins\" '$SLUG' > $DIR/.env
     chmod 600 $DIR/.env
   fi"
   $SSH "$TARGET" "printf '%s\n' '$BRANCH' > $DIR/branch.txt"
