@@ -108,7 +108,12 @@ Caddy, compose stacks, DKIM key generation) over SSH using
 > Server state after bootstrap (2026-10-25): Docker 29.1.3 + compose 2.40.3
 > installed; `deploy` user (docker group) authorized with **only**
 > `babasarok_cfdeploy`; root authorized with **only** `babasarok_bootstrap`;
-> ufw allows 22/80/443; stack home `/srv/babasarok`.
+> ufw allows 22/80/443; stack home `/srv/babasarok`. **Both stacks are
+> deployed and verified end to end** (test: `https://api-test.babasarok.net`,
+> prod: `https://api.babasarok.net` — Caddy auto-TLS, one-shot migrations,
+> health-gated deploys, emails via the Cloudflare REST API from the box).
+> Prod secrets live in `/srv/babasarok/prod/.env` and the shared password
+> manager (superadmin: `admin@babasarok.net`).
 
 ## 5. Mail DNS records (from the provider, replaces the old DKIM plan)
 

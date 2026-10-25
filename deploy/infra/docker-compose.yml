@@ -1,8 +1,10 @@
-# Shared edge: Caddy terminates TLS for api.babasarok.net and
-# api-test.babasarok.net and routes into the stacks' networks by service
-# name (each stack's `vendure` resolves independently per network).
-# Stacks must exist first — the deploy script creates the networks, brings
-# the stack up, then this compose.
+# Shared edge: Caddy terminates TLS for the API hostnames and routes into
+# the stacks' networks by per-stack alias (vendure-prod / vendure-test).
+# The stack networks are injected at deploy time via the generated
+# docker-compose.networks.yml override (one entry per existing stack) —
+# declared statically here, this file would fail on a not-yet-deployed
+# stack, and pre-created networks break the stacks' own compose (label
+# mismatch).
 name: babasarok-edge
 
 services:
@@ -19,15 +21,6 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
-    networks:
-      babasarok-prod_default:
-      babasarok-test_default:
-
-networks:
-  babasarok-prod_default:
-    external: true
-  babasarok-test_default:
-    external: true
 
 volumes:
   caddy-data:

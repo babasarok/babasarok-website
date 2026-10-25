@@ -38,10 +38,10 @@ async function main(): Promise<void> {
   // actually serves.
   const browserPath = path.join(adminUiBuildPath, "dist", "browser");
   // Source maps (~20 MB) stay in the scaffold's dist for local debugging;
-  // the committed artifact ships without them.
+  // the committed artifact ships without them (or stray backup files).
   fs.cpSync(browserPath, adminUiDistPath, {
     recursive: true,
-    filter: (src) => !src.endsWith(".map"),
+    filter: (src) => !src.endsWith(".map") && !src.endsWith(".bak"),
   });
   // The package exports map hides ./static, so resolve via its package.json.
   const pkgDir = path.dirname(require.resolve("@vendure/admin-ui/package.json"));
