@@ -125,6 +125,9 @@ account (account id `b64cf6f65472d9a85a44d39f7a68c81a`).
 - From address: `orders@babasarok.net` (`ORDER_EMAIL_FROM` on the box); buyer
   replies must reach a real mailbox, so Email Routing forwards
   `orders@babasarok.net` to the owner's gmail (see below).
+- Admin link: the owner notification email deep-links to the order
+  (`ADMIN_URL` + `orders/<id>`); `ADMIN_URL` is per-stack — previews get
+  their own host written into their `.env` at first deploy.
 - Limitations surfaced during review: path-only attachments throw (future
   invoice milestone must inline content); suppressed recipients and
   permanent-bounce retries are not surfaced beyond the sender's nonzero

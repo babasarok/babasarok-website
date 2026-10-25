@@ -1,7 +1,6 @@
 node_modules
 dist
 backend/dist/dashboard
-backend/admin-ui-dist
 .astro
 package.json
 package-lock.json
