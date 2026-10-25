@@ -13,6 +13,16 @@ key into chat — it goes into the Cloudflare dashboard by you.
 - [x] Owner notification mailbox: **`halminoemi99@gmail.com`** — the site's
       current contact email (Tina `config.address.email`), read from CMS
       content, not hard-coded in infra.
+- [x] **Mail delivery: Cloudflare Email Sending** (public beta; chosen over
+      SMTP2GO/Mailgun 2026-10-25). Requires the **Workers Paid plan** ($5/mo,
+      3,000 emails/mo included, then $0.35/1k) and exposes authenticated
+      SMTP — Vendure plugs in via the existing SMTP_* env with zero code
+      change. The self-hosted postfix/DKIM plan is shelved — §3 and the
+      `mail` DNS records below are NOT needed anymore; §5 becomes "add the
+      provider's records". Only the PROD stack gets SMTP_* credentials;
+      test/preview stacks stay on file transport (env.ts gate enforces it).
+      Keep Email Routing + the `orders@babasarok.net` forward address
+      anyway — buyer replies to the sender address need a real destination.
 
 ## 1. Generate SSH keys (local machine)
 
@@ -54,13 +64,11 @@ One box hosts prod + test + previews. No need for three.
    `~/.ssh/babasarok_bootstrap.pub`. Name it `babasarok-bootstrap`.
 6. Create → note the **IPv4 address** → **tell me the IP**.
 
-## 3. Hetzner: set PTR/rDNS (mail deliverability — required)
+## 3. Hetzner: PTR/rDNS — NOT NEEDED anymore
 
-1. Server detail page → **Networking** tab → click the attached IP /
-   **Edit DNS** (Reverse DNS).
-2. Set the rDNS of BOTH addresses to **`mail.babasarok.net`** — the IPv4
-   `178.105.79.2` and the IPv6 `2a01:4f8:c013:832f::1` (each has its own
-   rDNS field).
+Was required for self-hosted mail; with the external provider decision, no
+mail originates from this box. Skip this step (it remains documented in git
+history in case self-hosted mail ever returns).
 
 ## 4. Cloudflare DNS (babasarok.net zone)
 
@@ -71,10 +79,13 @@ the box issues its own TLS):
 |------|-----------|--------------------------------|-------|
 | A    | `api`     | `178.105.79.2`                 | No    |
 | A    | `api-test`| `178.105.79.2`                 | No    |
-| A    | `mail`    | `178.105.79.2`                 | No    |
 | AAAA | `api`     | `2a01:4f8:c013:832f::1`        | No    |
 | AAAA | `api-test`| `2a01:4f8:c013:832f::1`        | No    |
-| AAAA | `mail`    | `2a01:4f8:c013:832f::1`        | No    |
+
+(The server's primary IPv6 is the first address of its /64; the /64 itself is
+not a record target. Verified live on the box: `ip -6 addr` →
+`2a01:4f8:c013:832f::1/64`. No `mail` host records — the provider decision
+removed them.)
 
 (The server's primary IPv6 is the first address of its /64; the /64 itself is
 not a record target. Verified live on the box: `ip -6 addr` →
@@ -93,19 +104,20 @@ Caddy, compose stacks, DKIM key generation) over SSH using
 > `babasarok_cfdeploy`; root authorized with **only** `babasarok_bootstrap`;
 > ufw allows 22/80/443; stack home `/srv/babasarok`.
 
-## 5. Mail DNS records (after my server bootstrap)
+## 5. Mail DNS records (from the provider, replaces the old DKIM plan)
 
-When I give you the DKIM key, add in Cloudflare DNS:
+After you create the provider account and verify `babasarok.net`, the
+provider gives you the exact records (typically: SPF with their `include:`,
+two or three DKIM CNAMES/TXTs). Add those to Cloudflare exactly as they
+specify, plus keep this one:
 
-| Type | Name                        | Content (value I provide) |
-|------|-----------------------------|---------------------------|
-| TXT  | `babasarok.net`             | `v=spf1 a:mail.babasarok.net ~all` (resolves via the `mail` A record above; exact value from me) |
-| TXT  | `<selector>._domainkey`     | `v=DKIM1; k=rsa; p=<key>` (from me) |
-| TXT  | `_dmarc`                    | `v=DMARC1; p=none; rua=mailto:<your mailbox>` |
-| MX   | `babasarok.net` (only if the owner mailbox lives on this domain) | `10 mail.babasarok.net` |
+| Type | Name     | Content |
+|------|----------|---------|
+| TXT  | `_dmarc` | `v=DMARC1; p=none` |
 
-`p=none` is deliberate for launch (monitor, don't reject); we tighten to
-`quarantine` once deliverability is confirmed.
+`p=none` is deliberate for launch (monitor, don't reject); tighten to
+`quarantine` once deliverability is confirmed. The SPF/DKIM values I handed
+over earlier (self-hosted DKIM) are obsolete — discard them.
 
 ## 6. Cloudflare Workers Builds (dashboard, babasarok worker)
 
