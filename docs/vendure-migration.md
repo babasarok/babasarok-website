@@ -5,7 +5,8 @@ session. Status, decisions, roadmap and working agreements live here; the
 normative specs it changes are listed under [Docs to keep in sync](#docs-to-keep-in-sync).
 
 > Last updated: 2026-10-25. Branch: `feat/vendure-backend`. Phase 2 frontend
-> wiring is DONE but UNCOMMITTED unless the log below says otherwise.
+> wiring is committed. The user-side infra runbook is
+> [docs/infra-setup.md](docs/infra-setup.md).
 
 ## Why this exists
 
@@ -142,39 +143,39 @@ and their resolutions are in the ledger's history sections.
 
 ## Infrastructure needs (what the agent needs from the user)
 
-**Hetzner**
+The full click-by-click runbook for these steps lives in
+[docs/infra-setup.md](docs/infra-setup.md) — point the user at that.
 
-1. A dedicated VPS (Ubuntu 24.04, Docker installed). 2 vCPU/4GB is fine for
-   prod+test+one preview; the Admin UI is lazy-loaded Angular, modest RAM.
-2. SSH access for deploy: a deploy user + key. Recommended: a dedicated GitHub
-   Environment secret `DEPLOY_SSH_KEY`, host `DEPLOY_HOST`, user `DEPLOY_USER`.
-3. DNS (Cloudflare): A records `api.babasarok.net` and
-   `api-test.babasarok.net` (and a wildcard `*.api-test…` or per-branch
-   records) → server IP. **Set them DNS-only (grey cloud) or proxy with a
-   permissive config**; Caddy on the box issues TLS automatically. Backend
-   APIs on Cloudflare proxy: disable cache + allow WebSocket/POST; DNS-only is
-   simpler for the first cut.
-4. Mail deliverability (self-hosted postfix): Hetzner **PTR/rDNS record** for
-   the IP → a mail hostname (e.g. `mail.babasarok.net`), plus **SPF, DKIM,
-   DMARC** DNS records (DKIM key generated on the box during setup). This is
-   the deliverability-critical part; budget an hour.
-5. Decide the outbound sender address, e.g. `rendeles@babasarok.net`, and
-   whether an existing mailbox receives the owner notification.
+- **One VPS, not three.** prod + test + per-branch previews run as separate
+  docker-compose projects on the same box. Cost: Hetzner cost-optimized line
+  (June 2026 pricing) — CX23 2 vCPU/4 GB ≈ €5.49/mo, CX33 4 vCPU/8 GB ≈
+  €8.49/mo; the regular-performance CPX22 (2 vCPU/4 GB) is €19.49/mo after the
+  June 2026 hikes. Budget ~€6–9/mo.
+- **Deploy happens inside the Cloudflare Workers Builds process** (user
+  decision, NOT GitHub Actions): the CF build command builds backend+site, the
+  deploy command SSHes to the box (backend compose pull/up + migrations +
+  health check) and only then runs `npx wrangler deploy` for the frontend.
+  Backend-before-frontend ordering is enforced inside the single deploy step.
+  GH Actions keeps only PR checks. Needs `DEPLOY_SSH_KEY`, `DEPLOY_HOST`,
+  `DEPLOY_USER` as **Cloudflare build env vars** (not GitHub secrets).
+  No separate deploy hook — with both deploys in one pipeline the hook is
+  unnecessary.
+- DNS (Cloudflare): A records `api.babasarok.net` and `api-test.babasarok.net`
+  → server IP, DNS-only (grey cloud); Caddy on the box issues TLS.
+- Mail deliverability (self-hosted postfix): Hetzner **PTR/rDNS** for the IP →
+  `mail.babasarok.net`, plus SPF/DKIM/DMARC records (DKIM key generated on the
+  box during setup).
+- Decide: outbound sender address (e.g. `rendeles@babasarok.net`) and whether
+  an existing mailbox receives the owner notification.
 
-**Cloudflare (site deploys via Workers Builds)**
+**Cloudflare build env vars** — `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER`,
+`TINA_CMS_CLIENT_ID`, `TINA_CMS_CLIENT_TOKEN`, `GTM_ID`, `SITE_URL`,
+`PUBLIC_VENDURE_API_URL=https://api.babasarok.net` (previews:
+`https://api-test.babasarok.net`).
 
-1. Build settings: build command `pnpm run build`, deploy command
-   `npx wrangler deploy` (root scripts already chain backend+site).
-2. Build env vars: `TINA_CMS_CLIENT_ID`, `TINA_CMS_CLIENT_TOKEN`,
-   `GTM_ID`, `PUBLIC_VENDURE_API_URL=https://api.babasarok.net`
-   (previews: `https://api-test.babasarok.net`), `SITE_URL`.
-3. A **Deploy Hook** URL for the sync chain (backend deploy success → hook).
-4. Preview branch deploys enabled (per-PR worker previews), with the preview
-   env vars above.
-
-**Tina Cloud** 5. After the `fabformURL` field removal lands, the Tina Cloud schema must be
-re-pushed (`tinacms build` against the cloud or via the admin) or the
-plain `pnpm run build` will fail until they match.
+**Tina Cloud**: after the `fabformURL` field removal lands, the Tina Cloud
+schema must be re-pushed or plain `pnpm run build` fails until they match.
+Local Tina testing uses `pnpm run build:local`.
 
 **Secrets inventory (env vars the backend stack needs in prod)** —
 DATABASE_URL, TOKEN_SECRET (32+ chars), SHOP_OWNER_EMAIL, ORDER_EMAIL_FROM,
@@ -192,12 +193,9 @@ ADMIN_URL.
 - Vendure's native order totals read 0 Ft in the Admin UI until re-pricing
   lands; the real totals are in the custom fields and the emails.
 - Admin UI Hungarian: shipped Vendure UI has **no hu**; the 797-key
-  `ui-translations/hu.json` is translated and key-set/ICU-validated. The
-  custom Admin UI build (`pnpm -C backend run build-admin-ui`, uses
-  `command: "pnpm"` because the yarn scaffold trips over the repo's
-  packageManager field) was kicked off but NOT verified — if
-  `backend/admin-ui/` is missing or stale, re-run it and restart the server;
-  the fallback is the bundled English UI.
+  `ui-translations/hu.json` is translated and the custom Admin UI build
+  verified serving at `/admin-ui` with `defaultLanguage: hu` (build lives
+  self-contained in `~/.cache/babasarok-admin-ui`; runbook above).
 
 ## Docs to keep in sync
 
