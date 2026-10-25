@@ -76,14 +76,28 @@ self-hosted **Vendure** (Node + Postgres) on a dedicated Hetzner box:
       7. `.env.example`: add SHOP_COUNTRY_CODE/NAME and ADMIN_URL,
       8. replace the `Record<string, unknown>` payload bag in
          `src/lib/order/submit.ts` (+ mirrored test type) with a named
-         exported interface (repo rule: no index-signature prop bags).
+         exported interface (repo rule: no index-signature prop bags),
+      9. slug audit: for 8 products the order slug carries `product_id` ≠
+         slug (submit.ts:176) — reconcile or document,
+      10. record the "6 000 Ft előleg" fact wherever pricing behavior is
+         specced (currently unrecorded).
+      Non-issues to strike: the `shippingAddress` "hydrate bug" is NOT a bug
+      (simple-json column; a naive relations fix would throw — verified by
+      spec reviewer against 3.8.1 sources).
 - [ ] **Phase 3 — Hetzner automation.** docker compose prod+test stacks
       (vendure, worker, postgres, postfix, caddy). Deploys run inside the
       Cloudflare Workers build (user decision): the deploy command SSHes to
-      the box, brings the backend stack up (migrations run on boot),
-      health-checks it, then `npx wrangler deploy` — backend-before-frontend
-      by construction. No GitHub Actions deploy, no deploy hook. See
-      docs/infra-setup.md for the user-side runbook.
+      the box, brings the backend stack up, health-checks it, then
+      `npx wrangler deploy` — backend-before-frontend by construction. Stack
+      selection is fail-closed via the `DEPLOY_STACK` env var (`prod`/`test`;
+      missing/unknown aborts). No GitHub Actions deploy, no deploy hook. See
+      docs/infra-setup.md for the user-side runbook. **Admin UI artifact
+      decision:** the Hungarian UI cannot be built on the box or in the CF
+      build (Angular toolchain too heavy) — commit the built static artifact
+      to the repo (`backend/admin-ui-dist/`), have `build-admin-ui.ts` copy
+      it there, serve that path via `ADMIN_UI_PATH` env (default keeps the
+      local ~/.cache path for dev); rebuild + commit only when hu.json or
+      Vendure version changes.
 - [ ] **Phase 4 — previews.** Per-branch compose project on the box
       (`api-<branch>.…`), own bootstrapped DB (schema-change testing), torn
       down on PR close; Cloudflare preview builds point `PUBLIC_VENDURE_API_URL`

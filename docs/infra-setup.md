@@ -59,6 +59,7 @@ the box issues its own TLS):
 |------|-----------|----------------|-------|
 | A    | `api`     | `<server IPv4>` | No   |
 | A    | `api-test`| `<server IPv4>` | No   |
+| A    | `mail`    | `<server IPv4>` | No   |
 
 (Per-branch preview hostnames like `pr42.api-test` can be wildcarded later:
 `A * .api-test` if Cloudflare allows it on your plan, else we add records per
@@ -74,7 +75,7 @@ When I give you the DKIM key, add in Cloudflare DNS:
 
 | Type | Name                        | Content (value I provide) |
 |------|-----------------------------|---------------------------|
-| TXT  | `babasarok.net`             | `v=spf1 a:mail.babasarok.net ~all` (exact value from me) |
+| TXT  | `babasarok.net`             | `v=spf1 a:mail.babasarok.net ~all` (resolves via the `mail` A record above; exact value from me) |
 | TXT  | `<selector>._domainkey`     | `v=DKIM1; k=rsa; p=<key>` (from me) |
 | TXT  | `_dmarc`                    | `v=DMARC1; p=none; rua=mailto:<your mailbox>` |
 | MX   | `babasarok.net` (only if the owner mailbox lives on this domain) | `10 mail.babasarok.net` |
@@ -94,6 +95,7 @@ When I give you the DKIM key, add in Cloudflare DNS:
 2. **Environment variables** (Production; mark sensitive ones as secret):
    - `DEPLOY_HOST` = server IPv4
    - `DEPLOY_USER` = `deploy`
+   - `DEPLOY_STACK` = `prod` (Preview env: `test`)
    - `DEPLOY_SSH_KEY` = contents of `~/.ssh/babasarok_deploy` (the **private**
      key, multi-line — paste as-is)
    - `PUBLIC_VENDURE_API_URL` = `https://api.babasarok.net`
@@ -102,7 +104,11 @@ When I give you the DKIM key, add in Cloudflare DNS:
    - `GTM_ID`, `SITE_URL` (same)
 3. **Preview variables** (Preview env): same list, except
    `PUBLIC_VENDURE_API_URL` = `https://api-test.babasarok.net`.
-4. Enable **preview branch deploys** (non-production branches).
+4. Enable **preview branch deploys** (non-production branches), and add
+   `DEPLOY_STACK` to the env vars: `prod` in Production, `test` in Preview.
+   The deploy script is fail-closed: no/unknown `DEPLOY_STACK` aborts the
+   deploy instead of guessing — a preview build must never touch the prod
+   stack.
 
 ## 7. Done — what happens next
 
