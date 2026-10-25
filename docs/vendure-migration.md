@@ -59,14 +59,31 @@ self-hosted **Vendure** (Node + Postgres) on a dedicated Hetzner box:
       `docs/specs/order-submission.md` rewrite, AGENTS.md pnpm commands, legal
       texts (`src/content/adatvedelem/_index.md` still names web3forms as
       processor; `src/content/terms/index.md` lists Web3Creative as host;
-      retention claims need reconciling with "every submission is a stored
-      Order row"), remove the unused `fabformURL` Tina field (requires a Tina
-      Cloud schema push — see needs-from-you).
+      retention/reconciliation wording), remove `fabformURL` (needs Tina Cloud
+      push). Plus code hygiene from the org reviewer (ledger 15:32 entry,
+      preserved here):
+      1. migration race on fresh DBs — server+worker both run `runMigrations`
+         unsynchronized; consider server-only migrations (NOTE: this
+         contradicts the earlier "both entrypoints migrate" decision — decide
+         and record in the ADR),
+      2. owner-email admin link → `orders/:id`,
+      3. extract shared `partials/order-summary.hbs` from the two email
+         templates,
+      4. fix inaccurate comments in vendure-config.ts (no native
+         `transactionId` field in 3.8.1; AdminUiPlugin port rationale moot),
+      5. un-export `QuoteOrderPlacedStrategy` (no importer),
+      6. gitignore `backend/.vendure/` (committed telemetry file),
+      7. `.env.example`: add SHOP_COUNTRY_CODE/NAME and ADMIN_URL,
+      8. replace the `Record<string, unknown>` payload bag in
+         `src/lib/order/submit.ts` (+ mirrored test type) with a named
+         exported interface (repo rule: no index-signature prop bags).
 - [ ] **Phase 3 — Hetzner automation.** docker compose prod+test stacks
-      (vendure, worker, postgres, postfix, caddy), deploy chain: merge to main →
-      GH Action deploys backend over SSH (migrations run on boot) → on success
-      triggers the Cloudflare Workers deploy hook → only then does the site
-      build/deploy. Frontend and backend stay in sync by construction.
+      (vendure, worker, postgres, postfix, caddy). Deploys run inside the
+      Cloudflare Workers build (user decision): the deploy command SSHes to
+      the box, brings the backend stack up (migrations run on boot),
+      health-checks it, then `npx wrangler deploy` — backend-before-frontend
+      by construction. No GitHub Actions deploy, no deploy hook. See
+      docs/infra-setup.md for the user-side runbook.
 - [ ] **Phase 4 — previews.** Per-branch compose project on the box
       (`api-<branch>.…`), own bootstrapped DB (schema-change testing), torn
       down on PR close; Cloudflare preview builds point `PUBLIC_VENDURE_API_URL`
