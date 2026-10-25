@@ -30,6 +30,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@vendure/admin-ui": "3.8.1",
     "@vendure/ui-devkit": "^3.8.1",
     "typeorm": "^0.3.31",
     "typescript": "^5.9.3",

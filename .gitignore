@@ -70,3 +70,5 @@ blob-report/
 
 backend/admin-ui/
 backend/email-out/
+# Vendure AdminUiPlugin rewrites this at boot; generated, not source
+backend/admin-ui-dist/vendure-ui-config.json

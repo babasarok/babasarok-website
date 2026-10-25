@@ -13,7 +13,7 @@ import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
 import { EmailPlugin, FileBasedTemplateLoader } from "@vendure/email-plugin";
 import type { EmailPluginDevModeOptions, EmailPluginOptions } from "@vendure/email-plugin";
 import { env } from "./env";
-import { adminUiOutputPath } from "./paths";
+import { adminUiDistPath } from "./paths";
 import { HandlebarsHtmlGenerator } from "./email/handlebars-html-generator";
 import { orderConfirmationHandler, orderNotificationHandler } from "./email/order-emails";
 import { QuoteOrderPlugin } from "./quote-order/quote-order.plugin";
@@ -67,6 +67,15 @@ export const config: VendureConfig = {
     shopApiPath: "shop-api",
     cors: env.allowedOrigins ? { origin: env.allowedOrigins } : true,
     csrfPrevention: true,
+    middleware: [
+      {
+        // Liveness endpoint the deploy chain gates on.
+        route: "/health",
+        handler: (_req: unknown, res: { status: (n: number) => { send: (s: string) => void } }, next: () => void) => {
+          res.status(200).send("ok");
+        },
+      },
+    ],
   },
   authOptions: {
     cookieOptions: { secret: env.tokenSecret },
@@ -105,8 +114,8 @@ export const config: VendureConfig = {
     AdminUiPlugin.init({
       route: "admin-ui",
       port: env.port,
-      ...(existsSync(path.join(adminUiOutputPath, "dist", "browser", "index.html"))
-        ? { app: { path: path.join(adminUiOutputPath, "dist", "browser") } }
+      ...(existsSync(path.join(adminUiDistPath, "index.html"))
+        ? { app: { path: adminUiDistPath } }
         : {}),
       adminUiConfig: {
         defaultLanguage: LanguageCode.hu,

@@ -438,6 +438,9 @@ importers:
         specifier: ^4.4.3
         version: 4.6.7
     devDependencies:
+      '@vendure/admin-ui':
+        specifier: 3.8.1
+        version: 3.8.1(@angular/compiler@19.2.25)(@types/react@19.3.0)(graphql-ws@6.3.0(crossws@0.3.5)(graphql@16.14.2)(ws@8.22.0))
       '@vendure/ui-devkit':
         specifier: ^3.8.1
         version: 3.8.1(@types/node@25.9.9)(@types/react@19.3.0)(csso@5.0.5)(debug@4.4.3(supports-color@10.2.2))(graphql-ws@6.3.0(crossws@0.3.5)(graphql@16.14.2)(ws@8.22.0))(jiti@2.7.0)(lightningcss@1.33.0)(supports-color@10.2.2)(tailwindcss@4.3.3)(tsx@4.23.15)(typescript@5.9.3)(uglify-js@3.19.3)(vite@6.4.5(@types/node@25.9.9)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.33.0)(sass@1.85.0)(terser@5.39.0)(tsx@4.23.15)(yaml@2.9.1))(yaml@2.9.1)
