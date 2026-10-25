@@ -160,7 +160,7 @@ fi
 # preview deploys, which Caddy treats as a no-op.
 $SSH "$TARGET" "mkdir -p /srv/babasarok/infra/previews && cp $DIR/repo/deploy/infra/docker-compose.yml $DIR/repo/deploy/infra/Caddyfile $DIR/repo/deploy/infra/preview-teardown.sh $DIR/repo/deploy/infra/gen-networks-override.sh /srv/babasarok/infra/ && chmod +x /srv/babasarok/infra/preview-teardown.sh /srv/babasarok/infra/gen-networks-override.sh && cd /srv/babasarok/infra && bash /srv/babasarok/infra/gen-networks-override.sh && if [ -f docker-compose.networks.yml ]; then docker compose -f docker-compose.yml -f docker-compose.networks.yml up -d; else docker compose up -d; fi; for f in /srv/babasarok/infra/previews/*.caddy; do [ -e \"\$f\" ] || continue; s=\$(basename \"\$f\" .caddy); [ -d /srv/babasarok/\$s ] || rm -f \"\$f\"; done; if [ -n '$SLUG' ]; then printf 'api-%s.babasarok.net {\n\treverse_proxy vendure-%s:4000\n}\n' '$SLUG' '$SLUG' > /srv/babasarok/infra/previews/$SLUG.caddy; fi; docker compose exec -T caddy caddy reload --force /etc/caddy/Caddyfile"
 
-# Preview teardown cron: idempotent install, runs daily.
-$SSH "$TARGET" "(crontab -l 2>/dev/null | grep -v '/srv/babasarok/infra/preview-teardown.sh'; echo '17 4 * * * /srv/babasarok/infra/preview-teardown.sh >> /srv/babasarok/infra/preview-teardown.log 2>&1') | crontab -"
+# Preview teardown cron: idempotent install, runs hourly.
+$SSH "$TARGET" "(crontab -l 2>/dev/null | grep -v '/srv/babasarok/infra/preview-teardown.sh'; echo '17 * * * * /srv/babasarok/infra/preview-teardown.sh >> /srv/babasarok/infra/preview-teardown.log 2>&1') | crontab -"
 
 echo "backend $STACK deployed and healthy"

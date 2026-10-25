@@ -185,7 +185,7 @@ stack on the box:
 - **DNS (one-time, user step):** add wildcard DNS-only records to the
   Cloudflare zone — `A  *  178.105.79.2` and `AAAA  *  2a01:4f8:c013:832f::1`
   (same IPs as §4). DNS-only, like the api records.
-- **Teardown:** a daily cron on the box (`preview-teardown.sh`, installed
+- **Teardown:** an hourly cron on the box (`preview-teardown.sh`, installed
   by every deploy) checks each preview's recorded branch against origin;
   a branch that no longer exists gets its containers, database, route
   snippet and directory removed automatically.
