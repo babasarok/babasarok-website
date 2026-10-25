@@ -105,8 +105,8 @@ export const config: VendureConfig = {
     AdminUiPlugin.init({
       route: "admin-ui",
       port: env.port,
-      ...(existsSync(adminUiOutputPath)
-        ? { app: { path: adminUiOutputPath } }
+      ...(existsSync(path.join(adminUiOutputPath, "dist", "browser", "index.html"))
+        ? { app: { path: path.join(adminUiOutputPath, "dist", "browser") } }
         : {}),
       adminUiConfig: {
         defaultLanguage: LanguageCode.hu,

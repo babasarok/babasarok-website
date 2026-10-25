@@ -30,11 +30,11 @@ self-hosted **Vendure** (Node + Postgres) on a dedicated Hetzner box:
   37e109bf frontend submit, 6c71ee20 admin-ui-outside-workspace fix). 213/213
   site tests + backend check/test + lint + astro/svelte check all green.
   Local smoke tests passed end to end (order stored + both emails rendered).
-  Hungarian hu.json translated (797/797). Custom Admin UI compile launched
-  (~/.cache/babasarok-admin-ui) — verify `backend/admin-ui` NO wait: output
-  moved to `~/.cache/babasarok-admin-ui`; if the compile didn't finish,
-  re-run `pnpm -C backend run build-admin-ui` then restart server+worker and
-  confirm `/admin-ui` shows Hungarian. Reviewer ledger history in
+  Hungarian Admin UI DONE and verified: hu.json translated (797/797), custom
+  Admin UI compiled at ~/.cache/babasarok-admin-ui (self-contained
+  node_modules, see build-admin-ui.ts + runbook below), served at /admin-ui
+  with defaultLanguage hu and /admin-ui/i18n-messages/hu.json returning
+  Hungarian strings. Reviewer ledger history in
   /tmp/opencode/vendure-review.md (ephemeral — protocol is at its top).
 
 ## Where we are
@@ -85,14 +85,14 @@ node --env-file=backend/.env backend/dist/generate-migration.js <name> --from-em
 pnpm -C backend run build-admin-ui # re-scaffold + build Admin UI after ui-translations change
 # NOTE: compileUiExtensions never installs the scaffold deps itself, and the
 # scaffold package.json is dependency-less (it expects classic-hoisted
-# node_modules). After a fresh scaffold, make the scaffold self-contained:
-#   cd ~/.cache/babasarok-admin-ui && pnpm add \
-#     @vendure/admin-ui@<core-version> @vendure/common@<core-version> \
-#     "@angular/cli@^19.2.5" "@angular/compiler@^19.2.4" \
-#     "@angular/compiler-cli@^19.2.4" "@angular-devkit/build-angular@^19.2.5" \
-#     rxjs@^7.8.1
-# then `pnpm run build` there (or re-run build-admin-ui, which re-scaffolds
-# and wipes the added deps — prefer building manually after the first setup).
+# node_modules). After a fresh scaffold, make the scaffold self-contained —
+# install @vendure/admin-ui + @vendure/common + the Angular 19 toolchain
+# (cli, compiler, compiler-cli, @angular-devkit/build-angular) + rxjs +
+# lodash + tslib + zone.js as DIRECT deps of ~/.cache/babasarok-admin-ui
+# (pnpm's strict layout won't hoist admin-ui's transitive deps to it), then
+# `pnpm run build` there. build-admin-ui.ts re-scaffolds and wipes those deps,
+# so after its scaffold step re-run the pnpm add + pnpm run build manually.
+# The vendure-ui-config.json copy into dist/browser is automated.
 ```
 
 Env: `backend/.env` (from `backend/.env.example`) holds DATABASE_URL,
