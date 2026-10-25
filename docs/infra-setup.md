@@ -2,7 +2,9 @@
 
 What you click/create, in order. Wherever it says **"tell me"**, that's the
 signal for me (the agent) to take over the next piece. Never paste the private
-key into chat — it goes into the Cloudflare dashboard by you.
+key into chat — it goes into the Cloudflare dashboard by you. For the full
+inventory of external services, keys and their locations see
+[external-services.md](external-services.md).
 
 ## 0. Decisions (ANSWERED 2026-10-25)
 
@@ -14,21 +16,16 @@ key into chat — it goes into the Cloudflare dashboard by you.
       current contact email (Tina `config.address.email`), read from CMS
       content, not hard-coded in infra.
 - [x] **Mail delivery: Cloudflare Email Sending** (public beta; chosen over
-      SMTP2GO/Mailgun 2026-10-25) — **SHELVED pending billing authorization**
-      for the Workers Paid plan (user awaiting approval, 2026-10-25). When
-      un-shelved: verify `babasarok.net` in Email Service, add its DNS
-      records, create SMTP credentials into `backend/.env`
-      (`SMTP_HOST/PORT/USER/PASS/SECURE`). Requires the **Workers Paid plan**
-      ($5/mo, 3,000 emails/mo included, then $0.35/1k) and exposes
-      authenticated SMTP — Vendure plugs in via the existing SMTP_* env with
-      zero code change. Until then the env.ts gate keeps PROD undeployable
-      (deliberate fail-closed: no silent no-email prod); the deploy chain is
-      built and verified against the TEST stack (file transport) first. The
-      earlier self-hosted postfix/DKIM plan stays shelved — §3 and the
-      `mail` DNS records are NOT needed. Only the PROD stack gets SMTP_*
-      credentials; preview stacks stay on file transport (env.ts gate
-      enforces it). Keep Email Routing + the `orders@babasarok.net` forward
-      address — buyer replies to the sender address need a real destination.
+      SMTP2GO/Mailgun 2026-10-25) — **LIVE**: prod sends via Cloudflare's
+      REST API from the box (custom `CloudflareEmailSender`,
+      `backend/src/email/`), because Hetzner blocks SMTP ports (25/465).
+      Vendure plugs in via `EMAIL_TRANSPORT=cloudflare` +
+      `CLOUDFLARE_EMAIL_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` (carried to the box
+      via `.env.cloudflare` at deploy time). Preview stacks stay on file
+      transport (env.ts gate enforces it). Keep Email Routing + the
+      `orders@babasarok.net` forward address — buyer replies to the sender
+      address need a real destination. See
+      [external-services.md](external-services.md) for the service inventory.
 
 ## 1. Generate SSH keys (local machine)
 
@@ -129,8 +126,9 @@ over earlier (self-hosted DKIM) are obsolete — discard them.
 
 ## 6. Cloudflare Workers Builds (dashboard, babasarok worker)
 
-1. **Workers & Pages** → `babasarok` (site) → **Settings** → **Builds &
-   deployments** (or Build settings):
+1. **Workers & Pages** → `babasarok-website` (the Worker name must match
+   `wrangler.jsonc`'s `name`) → **Settings** → **Builds & deployments** (or
+   Build settings):
    - **Build command:** `pnpm run build`
    - **Deploy command:** `pnpm run deploy` — I extend this script so it
      deploys the backend over SSH, waits for its health check, and only then
