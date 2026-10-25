@@ -93,6 +93,8 @@ self-hosted **Vendure** (Node + Postgres) on a dedicated Hetzner box:
       pair for all stacks). Deploys run inside the
       Cloudflare Workers build (user decision): the deploy command SSHes to
       the box, brings the backend stack up, health-checks it, then
+      (post-deploy smoke: submit a test order and verify the provider
+      accepted both emails)
       `npx wrangler deploy` — backend-before-frontend by construction. Stack
       selection is fail-closed via the `DEPLOY_STACK` env var (`prod`/`test`;
       missing/unknown aborts). No GitHub Actions deploy, no deploy hook. See
@@ -123,14 +125,27 @@ self-hosted **Vendure** (Node + Postgres) on a dedicated Hetzner box:
       - **rsync set:** the deploy must include the root workspace manifests
         (package.json, pnpm-workspace.yaml, pnpm-lock.yaml) alongside
         backend/ — the on-box build installs via the workspace.
+      - **Mail delivery (decision changed 2026-10-25):** external SMTP
+        provider, reached on port 587 (Hetzner blocks outbound 25 — verified
+        from the box; unblock request declined by user). The self-hosted
+        postfix relay is SHELVED (validated config preserved in git history,
+        `deploy/infra` compose removed; DKIM volume wiped). Consequences:
+        infra compose = edge Caddy only; PTR/mail-A records and the DKIM
+        values handed to the user are OBSOLETE — provider's DNS records
+        replace them (documented in docs/infra-setup.md §5); test/preview
+        stacks keep NODE_ENV=development and get NO SMTP_* (the env.ts gate
+        then protects buyers from test-stack emails via the provider too).
+        Failure mode is loud (SMTP errors fail the email job visibly), not
+        the silent queue-defer of the blocked-25 postfix path.
       - **Networks:** each stack has its own compose network (no network
-        shared between stacks — alias collisions); the shared edge postfix
-        and Caddy ATTACH to each stack's network as an external network
-        (cross-project membership — verified required on the box: an infra
-        Caddy cannot reach other projects' services otherwise). Postfix
-        publishes NO host port; vendure relays to `postfix:25` over the
-        stack network. Infra joins a stack's network when the stack is
-        created (deploy-script step; re-run on preview create/teardown).
+        shared between stacks — alias collisions); the shared edge Caddy
+        ATTACHES to each stack's network — declared IN the compose files as
+        an external network (org reviewer: script-time `docker network
+        connect` silently breaks on infra recreate, and `--alias` must be
+        declared for name resolution to work). Infra joins a stack's network
+        when the stack is created (deploy-script step; re-run on preview
+        create/teardown). **Never publish the vendure API port either** —
+        published ports bypass ufw entirely (Docker docs).
       - **Migration strategy:** one-shot `migrate` compose service runs
         before `up` (race bites on every schema-changing deploy, not just
         fresh DBs); final say in the phase-2b ADR.
@@ -146,7 +161,16 @@ self-hosted **Vendure** (Node + Postgres) on a dedicated Hetzner box:
       needs DNS-01 + a scoped Cloudflare API token on the box (user must
       create the token — request when phase 4 starts); teardown and
       test-stack deploy triggers to be defined (deploy hook vs branch
-      detection).
+      detection). Additional phase-4 preconditions (arch reviewer 16:38):
+      preview branch names must be strictly sanitized before they touch
+      paths/project names (the DEPLOY_STACK case-gate pattern); preview
+      network attachments must be re-asserted after EVERY edge recreate
+      (script-connect drops on infra recreate — the deploy script does this
+      for prod/test, previews must follow); the Docker build context
+      whitelists only backend + manifests, so any future backend import of
+      the pricing core from `src/lib` (the re-pricing seam) needs the image
+      to carry it or the core extracted to a shared workspace package —
+      record in the phase-2b ADR.
 
 ## How to run things (current truth)
 

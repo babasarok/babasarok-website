@@ -45,6 +45,7 @@ tar -c --exclude-vcs \
   --exclude=backend/dist \
   --exclude=backend/email-out \
   --exclude=backend/.env \
+  --exclude=backend/.env.* \
   package.json pnpm-workspace.yaml pnpm-lock.yaml Dockerfile .dockerignore backend deploy \
   | $SSH "$TARGET" "tar -xf - -C $DIR/repo"
 $SSH "$TARGET" "cp $DIR/repo/deploy/$DEPLOY_STACK/docker-compose.yml $DIR/docker-compose.yml"
