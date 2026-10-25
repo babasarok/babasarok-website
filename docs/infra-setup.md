@@ -4,12 +4,15 @@ What you click/create, in order. Wherever it says **"tell me"**, that's the
 signal for me (the agent) to take over the next piece. Never paste the private
 key into chat — it goes into the Cloudflare dashboard by you.
 
-## 0. Decisions needed from you (can answer in chat)
+## 0. Decisions (ANSWERED 2026-10-25)
 
-- [ ] Outbound sender address for order emails — proposed:
-      `rendeles@babasarok.net`.
-- [ ] Which mailbox receives the owner notification (an existing mailbox is
-      fine; tell me the address).
+- [x] Outbound sender address for order emails: **`orders@babasarok.net`**
+      (`ORDER_EMAIL_FROM`). Multi-country rollout intent noted — the
+      SHOP_COUNTRY_* env seam already exists; per-market sender addresses are
+      a decision for the multi-market milestone, not now.
+- [x] Owner notification mailbox: **`halminoemi99@gmail.com`** — the site's
+      current contact email (Tina `config.address.email`), read from CMS
+      content, not hard-coded in infra.
 
 ## 1. Generate a deploy SSH key (local machine)
 
