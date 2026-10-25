@@ -19,4 +19,3 @@ allowBuilds:
   lmdb: false
   msgpackr-extract: false
   re2: false
-

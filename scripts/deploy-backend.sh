@@ -50,6 +50,17 @@ tar -c --exclude-vcs \
   | $SSH "$TARGET" "tar -xf - -C $DIR/repo"
 $SSH "$TARGET" "cp $DIR/repo/deploy/$DEPLOY_STACK/docker-compose.yml $DIR/docker-compose.yml"
 
+# Cloudflare-owned runtime secrets: written from the build env so rotation
+# in the cloudflare dashboard propagates on the next deploy. Only allowlisted
+# keys are carried; anything absent leaves the box's bootstrapped value.
+# Piped via stdin (the secret never appears in the remote command line) and
+# 600-chmod'd on the box.
+{
+  [ -n "${CLOUDFLARE_EMAIL_TOKEN:-}" ] && printf 'CLOUDFLARE_EMAIL_TOKEN=%s\n' "$CLOUDFLARE_EMAIL_TOKEN"
+  [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ] && printf 'CLOUDFLARE_ACCOUNT_ID=%s\n' "$CLOUDFLARE_ACCOUNT_ID"
+  true;
+} | $SSH "$TARGET" "cat > $DIR/.env.cloudflare && chmod 600 $DIR/.env.cloudflare"
+
 # Bring the stack up; --wait blocks until the vendure healthcheck is green,
 # which is the gate before the frontend is allowed to deploy.
 $SSH "$TARGET" "cd $DIR && docker compose up -d --build --wait --wait-timeout 300"

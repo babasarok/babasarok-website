@@ -26,6 +26,86 @@ self-hosted **Vendure** (Node + Postgres) on a dedicated Hetzner box:
 
 ## Session log (compressed)
 
+### 2026-10-25 late: IN-FLIGHT / NEXT-SESSION TODO (read before anything else)
+
+**Phase 3 is LIVE and verified**: prod (`https://api.babasarok.net`) + test
+(`https://api-test.babasarok.net`) stacks healthy, emails via
+CloudflareEmailSender (REST/SDK over 443; Hetzner blocks SMTP 25/465, 587
+open but CF is 465-only). User verified received emails. Superadmin:
+admin@babasarok.net, password generated 2026-10-25 (in the shared password
+manager — do NOT store in this doc). CF build env vars SET by user
+(DEPLOY_STACK=prod/test, DEPLOY_SSH_KEY etc.); CF builds still failing
+install at one point — fixed by `allowBuilds` in pnpm-workspace.yaml
+(cad12cd0) — watch the next CF build result.
+
+**UNCOMMITTED, in this working tree (finish FIRST):**
+1. `scripts/deploy-backend.sh` — the `.env.cloudflare` fragment block was
+   rewritten to the stdin-pipe form (secret never on the remote command
+   line; `chmod 600` on box). bash -n passed; NOT yet deployed/tested.
+2. `backend/src/env.ts` — TWO pending fixes NOT yet made:
+   a. remove the dead `smtp:` field from the exported `env` object
+      (vendure-config uses `env.email` only);
+   b. gate hole [MAJOR per arch reviewer 17:27]: `EMAIL_TRANSPORT=smtp`
+      without SMTP_HOST currently falls through to file transport — add a
+      superRefine issue (production must never silently get file transport).
+3. `backend/src/vendure-config.ts` — stale comment in emailPluginOptions:
+   says "SMTP_PASS holds the API token"; reality is CLOUDFLARE_EMAIL_TOKEN.
+4. `backend/package.json` dev script — add a migrate step before the
+   watchers to kill the dev-side fresh-DB migration race:
+   `tsc && node --env-file-if-exists=.env dist/migrate.js && (watchers...)`.
+5. `scripts/deploy-backend.sh` — the generated edge networks-override must
+   be SKIPPED (file removed) when no stack dirs exist; an empty `networks:`
+   is invalid compose.
+6. docs drift [MAJOR per spec reviewer 17:24] — fix in the phase-2b sweep:
+   infra-setup §0 mail bullet still says "SHELVED pending authorization"
+   and describes SMTP_* wiring (reality: REST sender is live code);
+   migration doc status header is two phases behind; the test@/orders@
+   From split and the owner-email subject change ("Új árajánlatkérés:
+   <rendelésszám>") are recorded NOWHERE durable — add to the phase-2b list;
+   vendure-migration.md has 5 stale mail/DNS passages.
+7. **Test stack container is currently running with a bogus
+   CLOUDFLARE_ACCOUNT_ID=OVERRIDE-SENTINEL** (from the env_file-layering
+   proof); the next test deploy with a working fragment regenerates
+   `.env.cloudflare` (manual runs carry no CF vars → empty fragment → .env
+   values win) — verify `docker compose exec vendure env | grep
+   CLOUDFLARE_ACCOUNT_ID` afterwards. ALSO: two consecutive deploy
+   verification runs hit the 120s opencode shell timeout — rerun with
+   timeout 300000 and investigate why they got slow.
+8. User asked for a subagent to audit/fix prettierignore, tsconfig and
+   eslint ignore configurations (files may already be fine) — NOT YET
+   SPAWNED. Spawn a `general` subagent for it.
+9. Reviewer reports awaiting integration (all in the ledger, which is
+   EPHEMERAL): spec 17:24, org 17:23, arch 17:27 (+ an older arch
+   session's seam verdict — all seams green for the roadmap). Key new
+   items: ADR 0007 must record an ownership table for the three secret
+   buckets + the cutover step "delete CLOUDFLARE_* from box .env after the
+   first fragment deploy"; path-only attachments throw in
+   CloudflareEmailSender (future invoice milestone wall); suppressed
+   recipients and permanent-bounce retries unsurfaced; AGENTS.md gotcha
+   replacement wording is in the org reviewer's 17:23 ledger entry.
+
+**Secrets-placement policy (decided with the user, arch-verified
+mechanism):** (a) box-permanent, never leave the box + password-manager
+backup: POSTGRES_PASSWORD (compose interpolates it from the project-dir
+.env ONLY — it cannot move), TOKEN_SECRET, SUPERADMIN_*; (b) cloudflare
+build/deploy glue, never on the box: DEPLOY_SSH_KEY/HOST/USER,
+TINA_CMS_*, GTM_ID, SITE_URL, PUBLIC_VENDURE_API_URL (per environment);
+(c) cloudflare-owned runtime secrets carried INTO the box at deploy time
+via `$DIR/.env.cloudflare` (compose env_file list, LAST file wins —
+verified empirically; `environment:` would override both): 
+CLOUDFLARE_EMAIL_TOKEN, CLOUDFLARE_ACCOUNT_ID. CF rotation propagates on
+the next deploy (env_file content change → config-hash change → container
+recreated). The user has NOT yet set CLOUDFLARE_* in the CF env — until
+then the box .env values are live and the fragment stays empty (graceful).
+
+**Three reviewers were re-spawned this session (spec ses_...1mi, org
+...JtowgFv, arch ...CYqE — all completed; their findings are above).**
+Phase-2b sweep remains the next phase after the TODOs above; then phase-4
+previews (preview dirs follow /srv/babasarok/<name>/repo + the generated
+networks override absorbs them).
+
+### 2026-10-25 earlier
+
 - 2026-10-25: Phase 1 + 2a complete and committed (`feat/vendure-backend`:
   ad9903de backend, 645999a1 search/migrations/emails/admin-ui groundwork,
   37e109bf frontend submit, 6c71ee20 admin-ui-outside-workspace fix). 213/213
