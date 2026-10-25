@@ -8,6 +8,7 @@ import tailwindcss from "@tailwindcss/vite";
 import pagefind from "astro-pagefind";
 import { unified } from "@astrojs/markdown-remark";
 import { remarkAssetImages } from "./src/lib/assets/remarkAssetImages";
+import { devStack } from "./integrations/dev-stack";
 
 // https://astro.build/config
 export default defineConfig({
@@ -15,7 +16,16 @@ export default defineConfig({
   output: "static",
   redirects: { "/home": "/" },
   prefetch: true,
-  integrations: [sitemap(), icon(), tina(), svelte(), pagefind()],
+  integrations: [
+    // Its server hooks only run during `astro dev`, so this is dev-only:
+    // postgres + the vendure backend come up beside the dev server.
+    devStack(),
+    sitemap(),
+    icon(),
+    tina(),
+    svelte(),
+    pagefind(),
+  ],
   markdown: {
     processor: unified({
       // Rewrite Tina's root-absolute image refs so Astro optimizes them from
