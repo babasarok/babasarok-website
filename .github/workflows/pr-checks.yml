@@ -87,6 +87,18 @@ jobs:
           TINA_CMS_CLIENT_ID: ${{ vars.TINA_CMS_CLIENT_ID }}
           TINA_CMS_CLIENT_TOKEN: ${{ secrets.TINA_CMS_CLIENT_TOKEN }}
           GTM_ID: ${{ vars.GTM_ID }}
+          # The backend dashboard build imports vendure-config.ts, which
+          # parses and validates env at import time; these placeholders
+          # satisfy that check and are never used at runtime (same values
+          # as the Dockerfile build step).
+          DATABASE_URL: postgres://build:build@localhost/build
+          TOKEN_SECRET: build-only-placeholder-secret
+          SHOP_OWNER_EMAIL: build@example.com
+          ORDER_EMAIL_FROM: build@example.com
+          EMAIL_TRANSPORT: smtp
+          SMTP_HOST: build.invalid
+          SUPERADMIN_EMAIL: build@example.com
+          SUPERADMIN_PASSWORD: build-only-placeholder
       - name: Upload dist
         uses: actions/upload-artifact@v4
         with:
