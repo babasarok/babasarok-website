@@ -55,7 +55,8 @@ $SSH "$TARGET" "cd $DIR && docker compose up -d --build --wait --wait-timeout 30
 
 # Attach the shared edge Caddy to this stack's network (idempotent; the
 # network is created by the stack's compose run above). The Caddyfile ships
-# with the deploy.
-$SSH "$TARGET" "mkdir -p /srv/babasarok/infra && cp $DIR/repo/deploy/infra/docker-compose.yml $DIR/repo/deploy/infra/Caddyfile /srv/babasarok/infra/ && cd /srv/babasarok/infra && docker compose up -d"
+# with the deploy. Pre-create both stack networks so the edge compose never
+# fails on a not-yet-deployed stack.
+$SSH "$TARGET" "mkdir -p /srv/babasarok/infra && cp $DIR/repo/deploy/infra/docker-compose.yml $DIR/repo/deploy/infra/Caddyfile /srv/babasarok/infra/ && docker network create babasarok-prod_default 2>/dev/null; docker network create babasarok-test_default 2>/dev/null; cd /srv/babasarok/infra && docker compose up -d"
 
 echo "backend $DEPLOY_STACK deployed and healthy"
