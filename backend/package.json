@@ -5,7 +5,7 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "tsc && (tsc --watch --preserveWatchOutput & node --watch --env-file-if-exists=.env dist/index.js & node --watch --env-file-if-exists=.env dist/index-worker.js)",
+    "dev": "tsc && node --env-file-if-exists=.env dist/migrate.js && (tsc --watch --preserveWatchOutput & node --watch --env-file-if-exists=.env dist/index.js & node --watch --env-file-if-exists=.env dist/index-worker.js)",
     "build": "tsc",
     "start": "node --env-file-if-exists=.env dist/index.js",
     "worker": "node --env-file-if-exists=.env dist/index-worker.js",

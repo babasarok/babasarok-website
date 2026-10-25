@@ -24,15 +24,19 @@ const EnvSchema = z
     SUPERADMIN_PASSWORD: z.string().min(8).optional(),
   })
   .superRefine((value, ctx) => {
-    if (
-      value.NODE_ENV === "production" &&
-      !value.EMAIL_TRANSPORT &&
-      !value.SMTP_HOST
-    ) {
+    if (value.NODE_ENV === "production" && !value.EMAIL_TRANSPORT && !value.SMTP_HOST) {
       ctx.addIssue({
         code: "custom",
         path: ["EMAIL_TRANSPORT"],
         message: "Production requires an email transport (EMAIL_TRANSPORT or SMTP_HOST)",
+      });
+    }
+
+    if (value.EMAIL_TRANSPORT === "smtp" && !value.SMTP_HOST) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["SMTP_HOST"],
+        message: "SMTP_HOST is required when EMAIL_TRANSPORT=smtp",
       });
     }
 
@@ -112,7 +116,9 @@ export type EmailConfig =
 function emailConfig(): EmailConfig {
   if (value.EMAIL_TRANSPORT === "cloudflare") {
     if (!value.CLOUDFLARE_ACCOUNT_ID || !value.CLOUDFLARE_EMAIL_TOKEN) {
-      throw new Error("EMAIL_TRANSPORT=cloudflare requires CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_EMAIL_TOKEN");
+      throw new Error(
+        "EMAIL_TRANSPORT=cloudflare requires CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_EMAIL_TOKEN"
+      );
     }
     return {
       kind: "cloudflare",
@@ -147,16 +153,6 @@ export const env = {
   shopCountryCode: value.SHOP_COUNTRY_CODE,
   adminUrl: value.ADMIN_URL,
   shopCountryName: value.SHOP_COUNTRY_NAME,
-  smtp:
-    value.SMTP_HOST === undefined
-      ? undefined
-      : {
-          host: value.SMTP_HOST,
-          port: value.SMTP_PORT,
-          user: value.SMTP_USER,
-          pass: value.SMTP_PASS,
-          secure: value.SMTP_SECURE === "true",
-        },
   superadmin: {
     email: value.SUPERADMIN_EMAIL,
     password: value.SUPERADMIN_PASSWORD,

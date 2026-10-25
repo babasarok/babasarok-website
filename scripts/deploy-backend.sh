@@ -73,6 +73,8 @@ $SSH "$TARGET" "cd $DIR && docker compose exec -T postgres psql -U babasarok -d 
 # networks override is generated from the stacks that exist on the box —
 # static declarations would fail on a not-yet-deployed stack, and
 # pre-created networks break the stacks' own compose (label mismatch).
-$SSH "$TARGET" "mkdir -p /srv/babasarok/infra && cp $DIR/repo/deploy/infra/docker-compose.yml $DIR/repo/deploy/infra/Caddyfile /srv/babasarok/infra/ && cd /srv/babasarok/infra && { echo networks:; for d in /srv/babasarok/*/repo; do [ -d \"\$d\" ] || continue; s=\$(basename \$(dirname \"\$d\")); printf '  babasarok-%s_default:\n    external: true\n' \"\$s\"; done; } > docker-compose.networks.yml && docker compose -f docker-compose.yml -f docker-compose.networks.yml up -d"
+# An empty `networks:` is invalid compose, so the override file is only
+# written (and only passed to compose) when at least one stack exists.
+$SSH "$TARGET" "mkdir -p /srv/babasarok/infra && cp $DIR/repo/deploy/infra/docker-compose.yml $DIR/repo/deploy/infra/Caddyfile /srv/babasarok/infra/ && cd /srv/babasarok/infra && { echo networks:; for d in /srv/babasarok/*/repo; do [ -d \"\$d\" ] || continue; s=\$(basename \$(dirname \"\$d\")); printf '  babasarok-%s_default:\n    external: true\n' \"\$s\"; done; } > docker-compose.networks.yml; if [ -s docker-compose.networks.yml ] && ! grep -q external docker-compose.networks.yml; then rm docker-compose.networks.yml; fi; if [ -f docker-compose.networks.yml ]; then docker compose -f docker-compose.yml -f docker-compose.networks.yml up -d; else docker compose up -d; fi"
 
 echo "backend $DEPLOY_STACK deployed and healthy"

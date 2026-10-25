@@ -33,9 +33,9 @@ function emailPluginOptions(): EmailPluginOptions | EmailPluginDevModeOptions {
   switch (email.kind) {
     case "cloudflare":
       // The Hetzner box cannot submit SMTP (25/465 blocked), so mail leaves
-      // through Cloudflare's REST API over 443; SMTP_PASS holds the API
-      // token. `transport: none` keeps the default sender idle — the custom
-      // sender does the sending.
+      // through Cloudflare's REST API over 443; CLOUDFLARE_EMAIL_TOKEN holds
+      // the API token. `transport: none` keeps the default sender idle — the
+      // custom sender does the sending.
       return {
         ...base,
         transport: { type: "none" },
@@ -88,7 +88,11 @@ export const config: VendureConfig = {
       {
         // Liveness endpoint the deploy chain gates on.
         route: "/health",
-        handler: (_req: unknown, res: { status: (n: number) => { send: (s: string) => void } }, next: () => void) => {
+        handler: (
+          _req: unknown,
+          res: { status: (n: number) => { send: (s: string) => void } },
+          next: () => void
+        ) => {
           res.status(200).send("ok");
         },
       },
