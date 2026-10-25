@@ -1,5 +1,4 @@
 import path from "node:path";
-import { existsSync } from "node:fs";
 import {
   configureDefaultOrderProcess,
   DefaultJobQueuePlugin,
@@ -9,11 +8,10 @@ import {
   RequestContext,
   VendureConfig,
 } from "@vendure/core";
-import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
+import { DashboardPlugin } from "@vendure/dashboard/plugin";
 import { EmailPlugin, FileBasedTemplateLoader } from "@vendure/email-plugin";
 import type { EmailPluginDevModeOptions, EmailPluginOptions } from "@vendure/email-plugin";
 import { env } from "./env";
-import { adminUiDistPath } from "./paths";
 import { HandlebarsHtmlGenerator } from "./email/handlebars-html-generator";
 import { CloudflareEmailSender } from "./email/cloudflare-email-sender";
 import { orderConfirmationHandler, orderNotificationHandler } from "./email/order-emails";
@@ -128,20 +126,11 @@ export const config: VendureConfig = {
     // quality (boosting, facets) is a later milestone.
     DefaultSearchPlugin.init({ indexStockStatus: false }),
     EmailPlugin.init(emailPluginOptions()),
-    // Serves the management dashboard at /admin-ui. The custom build (with
-    // Hungarian) is produced by build-admin-ui.ts; fall back to the bundled
-    // English app while it does not exist. The port must match the API server
-    // so the UI can reach the admin-api GraphQL endpoint.
-    AdminUiPlugin.init({
-      route: "admin-ui",
-      port: env.port,
-      ...(existsSync(path.join(adminUiDistPath, "index.html"))
-        ? { app: { path: adminUiDistPath } }
-        : {}),
-      adminUiConfig: {
-        defaultLanguage: LanguageCode.hu,
-        availableLanguages: [LanguageCode.hu, LanguageCode.en],
-      },
+    // Serves the React dashboard; the app is built by `vite build`
+    // (see vite.config.mts) into dist/dashboard.
+    DashboardPlugin.init({
+      route: "dashboard",
+      appDir: "./dist/dashboard",
     }),
   ],
   customFields: {

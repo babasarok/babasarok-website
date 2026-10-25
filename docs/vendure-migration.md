@@ -123,6 +123,17 @@ Phase-2b sweep remains the next phase after the TODOs above; then phase-4
 previews (preview dirs follow /srv/babasarok/<name>/repo + the generated
 networks override absorbs them).
 
+- 2026-10-25: legacy Angular Admin UI (`@vendure/admin-ui-plugin`) replaced
+  by the React Dashboard (`@vendure/dashboard`, served by `DashboardPlugin`
+  at `/dashboard`). Hungarian comes from the dashboard's built-in `hu.po`
+  catalog (~93% translated, vendure-maintained; untranslated strings fall
+  back to English) — no custom translation build anymore: `ui-translations/`,
+  `build-admin-ui.ts`, `paths.ts`, the committed `backend/admin-ui-dist/`
+  artifact and the compose `vendure-ui-config.json` boot hack are deleted.
+  The app is built by `backend/vite.config.mts` (`vite build`) inside the
+  Docker image; the build introspects `vendure-config.ts`, so the Dockerfile
+  feeds placeholder env vars to that step.
+
 ### 2026-10-25 earlier
 
 - 2026-10-25: Phase 1 + 2a complete and committed (`feat/vendure-backend`:
@@ -209,12 +220,13 @@ networks override absorbs them).
         stack = vendure + worker + postgres only. Non-prod stacks get no
         SMTP_* env → file transport, so previews physically cannot email
         real buyers.
-      - **Admin UI artifact:** commit the built static artifact to the repo
-        (`backend/admin-ui-dist/`), `build-admin-ui.ts` copies it there,
-        served via `ADMIN_UI_PATH` env whose DEFAULT is the repo artifact
-        path (the ~/.cache scaffold dir is build-time only, never the
-        served default); rebuild + commit only when hu.json or the Vendure
-        version changes.
+      - **Dashboard build:** `backend/vite.config.mts` builds the React
+        dashboard (`@vendure/dashboard`) into `backend/dist/dashboard` inside
+        the Docker image; `DashboardPlugin` serves it at `/dashboard`. The
+        build introspects `vendure-config.ts`, so the Dockerfile feeds
+        placeholder env vars to that step. Hungarian ships from the
+        dashboard's built-in `hu.po` catalog; no custom UI build artifact is
+        committed.
       - **Test/preview stacks run `NODE_ENV=development`** so the
         production SMTP gate in env.ts doesn't crash-loop them (they get no
         SMTP_* on purpose → file transport). Verified benign: NODE_ENV gates
@@ -276,23 +288,12 @@ networks override absorbs them).
 ```bash
 docker compose up -d postgres      # local DB
 pnpm -C backend run dev            # server (dist/index.js) + email worker, watched
-# Admin UI: http://localhost:4000/admin-ui  (login from backend/.env)
+# Dashboard: http://localhost:4000/dashboard  (login from backend/.env)
 # Dev mailbox: http://localhost:4000/mailbox ; rendered emails: backend/email-out/
 pnpm -C backend run check && pnpm -C backend test    # backend types + unit tests
-pnpm run build                     # backend build + full site build (Tina + Astro)
+pnpm run build                     # backend build (incl. dashboard vite build) + full site build (Tina + Astro)
 pnpm run deploy                    # wrangler deploy (Cloudflare)
 node --env-file=backend/.env backend/dist/generate-migration.js <name> --from-empty
-pnpm -C backend run build-admin-ui # re-scaffold + build Admin UI after ui-translations change
-# NOTE: compileUiExtensions never installs the scaffold deps itself, and the
-# scaffold package.json is dependency-less (it expects classic-hoisted
-# node_modules). After a fresh scaffold, make the scaffold self-contained —
-# install @vendure/admin-ui + @vendure/common + the Angular 19 toolchain
-# (cli, compiler, compiler-cli, @angular-devkit/build-angular) + rxjs +
-# lodash + tslib + zone.js as DIRECT deps of ~/.cache/babasarok-admin-ui
-# (pnpm's strict layout won't hoist admin-ui's transitive deps to it), then
-# `pnpm run build` there. build-admin-ui.ts re-scaffolds and wipes those deps,
-# so after its scaffold step re-run the pnpm add + pnpm run build manually.
-# The vendure-ui-config.json copy into dist/browser is automated.
 ```
 
 Env: `backend/.env` (from `backend/.env.example`) holds DATABASE_URL,

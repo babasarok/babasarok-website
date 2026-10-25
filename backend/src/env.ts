@@ -19,7 +19,7 @@ const EnvSchema = z
     SMTP_SECURE: z.enum(["true", "false"]).default("false"),
     SHOP_COUNTRY_CODE: z.string().length(2).default("HU"),
     SHOP_COUNTRY_NAME: z.string().min(1).default("Magyarország"),
-    ADMIN_URL: z.string().min(1).default("http://localhost:4000/admin-ui"),
+    ADMIN_URL: z.string().min(1).default("http://localhost:4000/dashboard"),
     SUPERADMIN_EMAIL: z.string().min(3).optional(),
     SUPERADMIN_PASSWORD: z.string().min(8).optional(),
   })

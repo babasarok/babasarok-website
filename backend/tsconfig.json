@@ -13,5 +13,7 @@
     "forceConsistentCasingInFileNames": true,
     "sourceMap": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/**/dashboard/*", "src/gql/*", "vite.*.*ts"],
+  "references": [{ "path": "./tsconfig.dashboard.json" }]
 }

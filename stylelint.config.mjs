@@ -15,7 +15,7 @@ const config = {
   reportNeedlessDisables: true,
   ignoreFiles: [
     "**/dist/**",
-    "backend/admin-ui-dist/**",
+    "backend/dist/dashboard/**",
     "public/admin/**",
     "node_modules/**",
     "tina/__generated__/**",
