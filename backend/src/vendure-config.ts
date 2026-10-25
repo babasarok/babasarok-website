@@ -156,5 +156,35 @@ export const config: VendureConfig = {
       { name: "quotedUnitPrice", type: "int" },
       { name: "quotedLineTotal", type: "int" },
     ],
+    // Email addresses editable in the dashboard's channel settings; the env
+    // values are the fallback (and what exists before this field is filled).
+    Channel: [
+      {
+        name: "orderEmailFrom",
+        type: "string",
+        label: [{ languageCode: LanguageCode.hu, value: "Rendelés-e-mail feladója" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value:
+              'A rendelés-e-mailek From: fejléce, pl. "Babasarok <orders@babasarok.net>". A tartomány (babasarok.net) a Cloudflare-ben hitelesített — idegen feladó cím sikertelen küldést okoz.',
+          },
+        ],
+        nullable: true,
+      },
+      {
+        name: "shopOwnerEmail",
+        type: "string",
+        label: [{ languageCode: LanguageCode.hu, value: "Értesítési e-mail cím (tulaj)" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value:
+              "Ide megy az értesítés minden új rendelésről. Üresen hagyva a kiszolgálón beállított cím marad érvényben.",
+          },
+        ],
+        nullable: true,
+      },
+    ],
   },
 };
