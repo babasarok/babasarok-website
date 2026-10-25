@@ -91,17 +91,39 @@ self-hosted **Vendure** (Node + Postgres) on a dedicated Hetzner box:
       `npx wrangler deploy` — backend-before-frontend by construction. Stack
       selection is fail-closed via the `DEPLOY_STACK` env var (`prod`/`test`;
       missing/unknown aborts). No GitHub Actions deploy, no deploy hook. See
-      docs/infra-setup.md for the user-side runbook. **Admin UI artifact
-      decision:** the Hungarian UI cannot be built on the box or in the CF
-      build (Angular toolchain too heavy) — commit the built static artifact
-      to the repo (`backend/admin-ui-dist/`), have `build-admin-ui.ts` copy
-      it there, serve that path via `ADMIN_UI_PATH` env (default keeps the
-      local ~/.cache path for dev); rebuild + commit only when hu.json or
-      Vendure version changes.
-- [ ] **Phase 4 — previews.** Per-branch compose project on the box
-      (`api-<branch>.…`), own bootstrapped DB (schema-change testing), torn
-      down on PR close; Cloudflare preview builds point `PUBLIC_VENDURE_API_URL`
-      at the test API.
+      docs/infra-setup.md for the user-side runbook. **Phase-3 design
+      decisions (architecture reviewer 15:46, settled):**
+      - **Code/deploy path:** CF build has no Docker daemon — the deploy
+        command rsyncs the backend (source + manifests, small) from the CF
+        build workspace (already pinned to the built commit) over SSH, and
+        the box runs `docker compose build && up -d`. SHA-consistent by
+        construction; no registry, no GitHub deploy key.
+      - **Topology:** ONE shared edge Caddy (80/443; routes api/api-test/
+        future preview hosts) and ONE shared postfix for all stacks; each
+        stack = vendure + worker + postgres only. Non-prod stacks get no
+        SMTP_* env → file transport, so previews physically cannot email
+        real buyers.
+      - **Admin UI artifact:** commit the built static artifact to the repo
+        (`backend/admin-ui-dist/`), `build-admin-ui.ts` copies it there,
+        served via `ADMIN_UI_PATH` env (default keeps the local ~/.cache
+        path for dev); rebuild + commit only when hu.json or the Vendure
+        version changes.
+      - **Migration strategy:** one-shot `migrate` compose service runs
+        before `up` (race bites on every schema-changing deploy, not just
+        fresh DBs); final say in the phase-2b ADR.
+      - **Health check:** `/health` middleware on the Vendure server; the
+        deploy chain gates `wrangler deploy` on it.
+      - **Deploy/SSH keys split:** agent bootstrap key (root, user machine
+        only) ≠ CF `DEPLOY_SSH_KEY` (deploy user, docker group only).
+- [ ] **Phase 4 — previews.** Per-branch compose project on the box, own
+      bootstrapped DB (schema-change testing), torn down on PR close. Open
+      wiring (architecture reviewer 15:46): per-branch API URLs must be
+      derived in the deploy/build script from the branch env var (CF preview
+      vars are uniform across branches); wildcard TLS over the preview hosts
+      needs DNS-01 + a scoped Cloudflare API token on the box (user must
+      create the token — request when phase 4 starts); teardown and
+      test-stack deploy triggers to be defined (deploy hook vs branch
+      detection).
 
 ## How to run things (current truth)
 

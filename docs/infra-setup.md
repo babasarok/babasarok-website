@@ -14,15 +14,25 @@ key into chat — it goes into the Cloudflare dashboard by you.
       current contact email (Tina `config.address.email`), read from CMS
       content, not hard-coded in infra.
 
-## 1. Generate a deploy SSH key (local machine)
+## 1. Generate SSH keys (local machine)
+
+Bootstrap key (agent/root — stays on your machine only):
 
 ```bash
-ssh-keygen -t ed25519 -f ~/.ssh/babasarok_deploy -C "babasarok-deploy" -N ""
+ssh-keygen -t ed25519 -f ~/.ssh/babasarok_bootstrap -C "babasarok-bootstrap" -N ""
 ```
 
-No passphrase (the Cloudflare build must read it non-interactively). This one
-key is used both by me (to bootstrap the box over SSH from this machine) and
-by the Cloudflare build (as the `DEPLOY_SSH_KEY` build variable).
+Cloudflare deploy key (least-privilege: lands only in the `deploy` user's
+`authorized_keys` and as the `DEPLOY_SSH_KEY` build variable — no root, no
+shell access to anything else):
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/babasarok_cfdeploy -C "babasarok-cf-deploy" -N ""
+```
+
+No passphrases (non-interactive use). Give me the **bootstrap** key path when
+the server exists; the **cfdeploy private key** is what you paste into
+Cloudflare in §6.
 
 ## 2. Hetzner: create the VPS (~5 min)
 
@@ -41,7 +51,7 @@ One box hosts prod + test + previews. No need for three.
    image in the stack (postgres, node, caddy, postfix-relay) publishes arm64
    builds, and the site + Admin UI builds happen off-box.
 5. SSH key: **Add new key** → paste the contents of
-   `~/.ssh/babasarok_deploy.pub`. Name it `babasarok-deploy`.
+   `~/.ssh/babasarok_bootstrap.pub`. Name it `babasarok-bootstrap`.
 6. Create → note the **IPv4 address** → **tell me the IP**.
 
 ## 3. Hetzner: set PTR/rDNS (mail deliverability — required)
@@ -96,7 +106,7 @@ When I give you the DKIM key, add in Cloudflare DNS:
    - `DEPLOY_HOST` = server IPv4
    - `DEPLOY_USER` = `deploy`
    - `DEPLOY_STACK` = `prod` (Preview env: `test`)
-   - `DEPLOY_SSH_KEY` = contents of `~/.ssh/babasarok_deploy` (the **private**
+   - `DEPLOY_SSH_KEY` = contents of `~/.ssh/babasarok_cfdeploy` (the **private**
      key, multi-line — paste as-is)
    - `PUBLIC_VENDURE_API_URL` = `https://api.babasarok.net`
    - `TINA_CMS_CLIENT_ID`, `TINA_CMS_CLIENT_TOKEN` (copy from current build
