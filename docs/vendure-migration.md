@@ -77,26 +77,20 @@ etc.). The **test stack is retired** — per-branch preview stacks replaced it
    owner-notification subject ("Új árajánlatkérés: <rendelésszám>");
    web3forms references removed from the normative specs and user-facing
    content; external service inventory added (docs/external-services.md).
-7. **Test stack container is currently running with a bogus
-   CLOUDFLARE_ACCOUNT_ID=OVERRIDE-SENTINEL** (from the env_file-layering
-   proof); the next test deploy with a working fragment regenerates
-   `.env.cloudflare` (manual runs carry no CF vars → empty fragment → .env
-   values win) — verify `docker compose exec vendure env | grep
-   CLOUDFLARE_ACCOUNT_ID` afterwards. ALSO: two consecutive deploy
-   verification runs hit the 120s opencode shell timeout — rerun with
-   timeout 300000 and investigate why they got slow.
+7. [RESOLVED] The test stack was retired (previews replaced it), so the
+   bogus OVERRIDE-SENTINEL CLOUDFLARE_ACCOUNT_ID went with it; prod's
+   `.env.cloudflare` and in-container env carry the real values (verified
+   2026-10-25, no sentinel). The slow-deploy investigation is moot — deploy
+   duration is documented in docs/infra-setup.md §6.
 8. User asked for a subagent to audit/fix prettierignore, tsconfig and
    eslint ignore configurations (files may already be fine) — NOT YET
    SPAWNED. Spawn a `general` subagent for it.
-9. Reviewer reports awaiting integration (all in the ledger, which is
-   EPHEMERAL): spec 17:24, org 17:23, arch 17:27 (+ an older arch
-   session's seam verdict — all seams green for the roadmap). Key new
-   items: ADR 0007 must record an ownership table for the three secret
-   buckets + the cutover step "delete CLOUDFLARE_* from box .env after the
-   first fragment deploy"; path-only attachments throw in
-   CloudflareEmailSender (future invoice milestone wall); suppressed
-   recipients and permanent-bounce retries unsurfaced; AGENTS.md gotcha
-   replacement wording is in the org reviewer's 17:23 ledger entry.
+9. [DONE] Reviewer findings integrated: secret-ownership table + cutover
+   step recorded in ADR 0007; path-only-attachment throw and the
+   suppressed-recipient/bounce limits are documented in
+   docs/external-services.md (Email Sending section); the arch reviewer's
+   deploy-topology and reliability findings landed as the infra lock,
+   image rollback and leftover cleanup in scripts/deploy-backend.sh.
 
 **Secrets-placement policy (decided with the user, arch-verified
 mechanism):** (a) box-permanent, never leave the box + password-manager

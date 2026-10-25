@@ -50,6 +50,15 @@ complete and verified in production.
 
 ## Consequences
 
+- **Secret ownership** (full inventory in `docs/external-services.md`):
+  box-permanent (`POSTGRES_PASSWORD`, `TOKEN_SECRET`, `SUPERADMIN_*` — plus
+  password-manager backup), Cloudflare-only (`DEPLOY_*`, `TINA_CMS_*`,
+  `GTM_ID`, `SITE_URL`, `PUBLIC_VENDURE_API_URL`), and Cloudflare-owned
+  runtime secrets carried into the box at deploy time via `.env.cloudflare`
+  (`CLOUDFLARE_EMAIL_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`). **Cutover step:** the
+  CF-owned values are set in the Cloudflare dashboard; after the first
+  fragment deploy, delete the `CLOUDFLARE_*` lines from the box's
+  `prod/.env`.
 - Orders, customers and credentials are durable state on the box: backups
   (Hetzner server backups) and monitoring (uptime polling of `/health`) are
   operational requirements, documented in `docs/external-services.md`.
