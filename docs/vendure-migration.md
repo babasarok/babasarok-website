@@ -100,6 +100,12 @@ then the box .env values are live and the fragment stays empty (graceful).
 
 **Three reviewers were re-spawned this session (spec ses_...1mi, org
 ...JtowgFv, arch ...CYqE — all completed; their findings are above).**
+   10. The plain `pnpm install` run migrated `pnpm-lock.yaml` to the
+   pnpm-12 lockfile format (committed in 29e02558, ~18k line churn): the
+   CF builder's pnpm version MUST support that lockfile version or install
+   fails — if the next CF build errors on the lockfile, pin
+   `"packageManager": "pnpm@12.15.0"` in the root package.json so corepack
+   aligns CF with local.
 Phase-2b sweep remains the next phase after the TODOs above; then phase-4
 previews (preview dirs follow /srv/babasarok/<name>/repo + the generated
 networks override absorbs them).
