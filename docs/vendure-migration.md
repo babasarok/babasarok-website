@@ -147,10 +147,9 @@ The full click-by-click runbook for these steps lives in
 [docs/infra-setup.md](docs/infra-setup.md) — point the user at that.
 
 - **One VPS, not three.** prod + test + per-branch previews run as separate
-  docker-compose projects on the same box. Cost: Hetzner cost-optimized line
-  (June 2026 pricing) — CX23 2 vCPU/4 GB ≈ €5.49/mo, CX33 4 vCPU/8 GB ≈
-  €8.49/mo; the regular-performance CPX22 (2 vCPU/4 GB) is €19.49/mo after the
-  June 2026 hikes. Budget ~€6–9/mo.
+  docker-compose projects on the same box. Machine: Hetzner **CAX11** (ARM64,
+  2 vCPU/4 GB, ≈ €5.99/mo after the June 2026 hikes) — ARM is fine, all stack
+  images (postgres/node/caddy/postfix) publish arm64.
 - **Deploy happens inside the Cloudflare Workers Builds process** (user
   decision, NOT GitHub Actions): the CF build command builds backend+site, the
   deploy command SSHes to the box (backend compose pull/up + migrations +
