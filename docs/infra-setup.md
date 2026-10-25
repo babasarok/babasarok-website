@@ -145,8 +145,10 @@ over earlier (self-hosted DKIM) are obsolete — discard them.
      settings if already set)
    - `GTM_ID`, `SITE_URL` (same)
 3. **Preview variables** (Preview env): same list, except
-   `DEPLOY_STACK` = `preview`. Do NOT set a fixed `PUBLIC_VENDURE_API_URL`
-   for previews — the build command derives it per branch (next item).
+   `DEPLOY_STACK` = `preview`. Do NOT set `PUBLIC_VENDURE_API_URL` for
+   previews — `astro.config.ts` derives it per branch from
+   `WORKERS_CI_BRANCH` + `DEPLOY_STACK` (via `scripts/preview-slug.sh`),
+   so plain `pnpm run build` is enough.
 4. Enable **preview branch deploys** (non-production branches). Preview
    builds inject `WORKERS_CI_BRANCH` automatically; the deploy script is
    fail-closed otherwise — no/unknown `DEPLOY_STACK` aborts instead of
@@ -170,9 +172,10 @@ stack on the box:
   garbage). The slug names the stack dir `/srv/babasarok/<slug>`, the
   compose project (`babasarok-<slug>`), the container alias
   (`vendure-<slug>`), the API host `api-<slug>.babasarok.net` and the
-  database `babasarok_preview_<slug>`. The same slug must drive the
-  frontend build — the Preview build command should be:
-  `export PUBLIC_VENDURE_API_URL="https://api-$(bash scripts/preview-slug.sh "$WORKERS_CI_BRANCH").babasarok.net" && pnpm run build`
+  database `babasarok_preview_<slug>`. The same slug drives the frontend
+  build: `astro.config.ts` derives the API URL per branch from
+  `WORKERS_CI_BRANCH` + `DEPLOY_STACK` (via `scripts/preview-slug.sh`), so
+  the Preview build command stays plain `pnpm run build`
   (the Preview _command_ stays `pnpm run deploy`, which now deploys the
   preview backend before `wrangler preview`).
 - **Database lifecycle (per deploy):** the branch database is dropped and

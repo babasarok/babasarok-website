@@ -9,6 +9,7 @@ import pagefind from "astro-pagefind";
 import { unified } from "@astrojs/markdown-remark";
 import { remarkAssetImages } from "./src/lib/assets/remarkAssetImages";
 import { devStack } from "./integrations/dev-stack";
+import { previewApiUrl } from "./src/lib/preview-url";
 
 // https://astro.build/config
 export default defineConfig({
@@ -97,7 +98,11 @@ export default defineConfig({
         context: "client",
         access: "public",
         optional: true,
-        default: "http://localhost:4000",
+        default:
+          previewApiUrl({
+            stack: process.env.DEPLOY_STACK,
+            branch: process.env.WORKERS_CI_BRANCH,
+          }) ?? "http://localhost:4000",
       }),
     },
   },

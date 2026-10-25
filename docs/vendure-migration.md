@@ -375,7 +375,8 @@ The full click-by-click runbook for these steps lives in
 **Cloudflare build env vars** — `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER`,
 `TINA_CMS_CLIENT_ID`, `TINA_CMS_CLIENT_TOKEN`, `GTM_ID`, `SITE_URL`,
 `PUBLIC_VENDURE_API_URL=https://api.babasarok.net` (previews:
-`https://api-<slug>.babasarok.net`, derived per branch).
+`https://api-<slug>.babasarok.net`, derived per branch by
+`astro.config.ts` from `WORKERS_CI_BRANCH` + `DEPLOY_STACK`).
 
 **Tina Cloud**: after the `fabformURL` field removal lands, the Tina Cloud
 schema must be re-pushed or plain `pnpm run build` fails until they match.
