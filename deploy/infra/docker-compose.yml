@@ -1,0 +1,34 @@
+# Shared edge infrastructure for all babasarok backend stacks on the box:
+# one postfix relay (outbound mail + DKIM signing) — the edge Caddy joins
+# this compose project once the vendure stacks exist. Stack compose files
+# live beside this one (deploy/prod, deploy/test).
+#
+# Non-prod stacks never get SMTP credentials, so previews physically cannot
+# send real email; this relay serves the prod stack only.
+#
+# mwader/postfix-relay ships an open-relay default protected only by docker
+# networking; the published port is only safe because ufw denies inbound 25
+# and mynetworks admits private ranges (vendure reaches it via host-gateway,
+# so published-loopback alone would not receive those connections).
+services:
+  postfix:
+    # mwader/postfix-relay publishes no version tags; pinned by digest.
+    image: mwader/postfix-relay@sha256:e32bb3e771b6e21e26f6cd3d1c0e9e41acbf7ae2d0e5012e49929021b9b4fcea
+    restart: unless-stopped
+    environment:
+      POSTFIX_myhostname: mail.babasarok.net
+      # Nothing is delivered locally; everything relays out (README:
+      # closing the root-run local(8) path).
+      POSTFIX_mydestination: ""
+      POSTFIX_mynetworks: 127.0.0.0/8,10.0.0.0/8,172.16.0.0/12
+      # Selects the signing domain; keys generate at first start under
+      # /etc/opendkim/keys/<domain>/<selector>.<private|txt>.
+      OPENDKIM_DOMAINS: babasarok.net=mail
+    volumes:
+      # Generated on first boot; persisted so the DNS record stays valid.
+      - dkim:/etc/opendkim/keys
+    ports:
+      - "25:25"
+
+volumes:
+  dkim:
