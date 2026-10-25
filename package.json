@@ -46,6 +46,7 @@
     "astro-md-2": "^2.0.0",
     "astro-pagefind": "^2.0.1",
     "clsx": "^2.1.1",
+    "marked": "^16.4.2",
     "sharp": "^0.34.5",
     "svelte": "^5.57.0",
     "svelte-bricks": "^0.5.0",
@@ -66,6 +67,7 @@
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@tinacms/cli": "^2.7.0",
     "@types/gtag.js": "^0.0.20",
+    "@types/mdast": "^4.0.4",
     "@types/node": "^25.9.1",
     "@types/react": "^19.3.0",
     "@typescript-eslint/eslint-plugin": "^8.62.0",
@@ -95,6 +97,7 @@
     "tinacms": "^3.13.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.62.0",
+    "vfile": "^6.0.3",
     "vitest": "^4.1.9",
     "yaml": "^2.6.0"
   },
