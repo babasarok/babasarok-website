@@ -27,9 +27,9 @@
   interface Props {
     products: Record<string, CmsEnhancedProduct>;
     deliveryMethods: Record<string, CmsEnhancedDeliveryMethod>;
-    // Only the form endpoint and support address are needed; passing the full
-    // config would serialize the heavyweight logo images into the island props.
-    config: Pick<CmsEnhancedConfig, "fabformURL" | "address">;
+    // Only the support address is needed; passing the full config would
+    // serialize the heavyweight logo images into the island props.
+    config: Pick<CmsEnhancedConfig, "address">;
     threadColors: CmsEnhancedEmbroideryColor[];
     productGroups: CmsProductGroup[];
     slugByProductId: Record<string, string | undefined>;
@@ -157,7 +157,7 @@
         productGroups,
         termsAccepted,
       },
-      { accessKey: params.fabformURL ?? "", message, transactionId }
+      { message, transactionId }
     );
     sending = false;
 

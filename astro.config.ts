@@ -82,6 +82,13 @@ export default defineConfig({
         access: "public",
         optional: false,
       }),
+      // Vendure shop API the checkout island submits orders to.
+      PUBLIC_VENDURE_API_URL: envField.string({
+        context: "client",
+        access: "public",
+        optional: true,
+        default: "http://localhost:4000",
+      }),
     },
   },
 });
