@@ -78,14 +78,15 @@ self-hosted **Vendure** (Node + Postgres) on a dedicated Hetzner box:
          `src/lib/order/submit.ts` (+ mirrored test type) with a named
          exported interface (repo rule: no index-signature prop bags),
       9. slug audit: for 8 products the order slug carries `product_id` ≠
-         slug (submit.ts:176) — reconcile or document,
+         slug (submit.ts:176) — reconcile or document (spec reviewer 15:41),
       10. record the "6 000 Ft előleg" fact wherever pricing behavior is
-         specced (currently unrecorded).
+         specced (currently unrecorded; spec reviewer 15:41).
       Non-issues to strike: the `shippingAddress` "hydrate bug" is NOT a bug
       (simple-json column; a naive relations fix would throw — verified by
       spec reviewer against 3.8.1 sources).
 - [ ] **Phase 3 — Hetzner automation.** docker compose prod+test stacks
-      (vendure, worker, postgres, postfix, caddy). Deploys run inside the
+      (vendure, worker, postgres; the edge Caddy and postfix are one shared
+      pair for all stacks). Deploys run inside the
       Cloudflare Workers build (user decision): the deploy command SSHes to
       the box, brings the backend stack up, health-checks it, then
       `npx wrangler deploy` — backend-before-frontend by construction. Stack
@@ -105,9 +106,23 @@ self-hosted **Vendure** (Node + Postgres) on a dedicated Hetzner box:
         real buyers.
       - **Admin UI artifact:** commit the built static artifact to the repo
         (`backend/admin-ui-dist/`), `build-admin-ui.ts` copies it there,
-        served via `ADMIN_UI_PATH` env (default keeps the local ~/.cache
-        path for dev); rebuild + commit only when hu.json or the Vendure
+        served via `ADMIN_UI_PATH` env whose DEFAULT is the repo artifact
+        path (the ~/.cache scaffold dir is build-time only, never the
+        served default); rebuild + commit only when hu.json or the Vendure
         version changes.
+      - **Test/preview stacks run `NODE_ENV=development`** so the
+        production SMTP gate in env.ts doesn't crash-loop them (they get no
+        SMTP_* on purpose → file transport). Verified benign: NODE_ENV gates
+        only 3 benign places in Vendure 3.8.1 core. The env.ts gate stays as
+        the fail-closed prod check. Test-stack env inventory = the prod one
+        minus SMTP_*, with its own DATABASE_URL/TOKEN_SECRET/ports.
+      - **rsync set:** the deploy must include the root workspace manifests
+        (package.json, pnpm-workspace.yaml, pnpm-lock.yaml) alongside
+        backend/ — the on-box build installs via the workspace.
+      - **No shared docker networks between stacks** (service-name aliases
+        would collide): each stack is an isolated compose network; the edge
+        Caddy and vendure reach shared postfix via a published loopback
+        port + host-gateway.
       - **Migration strategy:** one-shot `migrate` compose service runs
         before `up` (race bites on every schema-changing deploy, not just
         fresh DBs); final say in the phase-2b ADR.
@@ -162,8 +177,9 @@ env schema (default `http://localhost:4000`; prod/test values set per build).
   fields: line `configText`/`quotedUnitPrice`/`quotedLineTotal`, order
   `orderTotal`/`delivery*`/`setDiscountSummary`/`termsAccepted`/
   `submissionTransactionId`. **Do not** create a customField named
-  `transactionId` — that collides with the native (payments-derived)
-  `Order.transactionId`.
+  `transactionId` — in 3.8.1 the admin-API `OrderFilterParameter`/
+  `OrderSortParameter` derive a `transactionId` field from the order's
+  payments, so a same-named customField collides in the SDL.
 - **"Placed":** the shop stops at `ArrangingPayment`;
   `QuoteOrderPlacedStrategy` marks placed there. Barion will revisit.
 - **arrangingPaymentRequiresShipping: false** in `orderOptions.process` — no

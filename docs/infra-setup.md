@@ -86,7 +86,12 @@ branch — I'll handle that in phase 4.)
 
 Then **tell me** — I bootstrap the server (Docker, deploy user, firewall,
 Caddy, compose stacks, DKIM key generation) over SSH using
-`~/.ssh/babasarok_deploy`, and report back two DNS TXT values for DKIM.
+`~/.ssh/babasarok_bootstrap`, and report back two DNS TXT values for DKIM.
+
+> Server state after bootstrap (2026-10-25): Docker 29.1.3 + compose 2.40.3
+> installed; `deploy` user (docker group) authorized with **only**
+> `babasarok_cfdeploy`; root authorized with **only** `babasarok_bootstrap`;
+> ufw allows 22/80/443; stack home `/srv/babasarok`.
 
 ## 5. Mail DNS records (after my server bootstrap)
 

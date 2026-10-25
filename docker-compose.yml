@@ -1,6 +1,6 @@
-# Postgres for local development. The prod/test stacks on Hetzner use the
-# same compose file with a Caddy service and per-instance env/ports (see
-# docs/adr/0007-vendure-orders.md once written).
+# Postgres for local development only. The prod/test stacks on Hetzner get
+# their own compose files (shared edge Caddy + postfix live in a separate
+# infra compose; per-stack = vendure/worker/postgres).
 services:
   postgres:
     image: postgres:17-alpine
