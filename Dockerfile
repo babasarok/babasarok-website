@@ -12,19 +12,7 @@ RUN npm install -g pnpm@12.15.0 \
   && pnpm install --filter babasarok-vendure-backend --ignore-scripts --frozen-lockfile
 
 COPY backend/ ./backend/
-# The dashboard build introspects vendure-config.ts, which parses env at
-# import time — and vite build sets NODE_ENV=production for that import, so
-# the placeholders must satisfy env.ts's production gates. They are never
-# used at runtime.
-RUN DATABASE_URL=postgres://build:build@localhost/build \
-  TOKEN_SECRET=build-only-placeholder-secret \
-  SHOP_OWNER_EMAIL=build@example.com \
-  ORDER_EMAIL_FROM=build@example.com \
-  EMAIL_TRANSPORT=smtp \
-  SMTP_HOST=build.invalid \
-  SUPERADMIN_EMAIL=build@example.com \
-  SUPERADMIN_PASSWORD=build-only-placeholder \
-  pnpm -C backend run build
-
+# The dashboard build's env placeholders live in the committed
+# backend/build.env (loaded by the build script after any local .env).
 WORKDIR /app/backend
 CMD ["node", "dist/index.js"]
