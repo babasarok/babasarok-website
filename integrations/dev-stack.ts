@@ -2,24 +2,33 @@ import { existsSync } from "node:fs";
 import { exec, spawn, type ChildProcess } from "node:child_process";
 import type { AstroIntegration } from "astro";
 
-const log = (message: string) => console.log(`▶ [dev-stack] ${message}`);
+const log = (message: string): void => {
+  console.log(`▶ [dev-stack] ${message}`);
+};
 
-const execp = (command: string) =>
-  new Promise<void>((resolve, reject) =>
-    exec(command, error => (error ? reject(error) : resolve())),
-  );
+const execp = (command: string): Promise<void> =>
+  new Promise<void>((resolve, reject) => {
+    exec(command, (error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
 
 async function waitForPostgres(): Promise<void> {
   log("postgres");
   await execp("docker compose up -d postgres");
-  while (true) {
+  for (let i = 0; i < 120; i++) {
     try {
       await execp("docker compose exec -T postgres pg_isready -U babasarok -d babasarok");
       return;
     } catch {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
+  log("postgres did not become ready within 60 seconds");
 }
 
 /** Non-blocking: the site starts immediately, the API announces itself. */
@@ -34,7 +43,7 @@ async function waitForApi(): Promise<void> {
     } catch {
       // Not up yet — the backend dev script compiles before it can listen.
     }
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
   log("vendure api did not become healthy within 2 minutes");
 }
@@ -49,7 +58,7 @@ export function devStack(): AstroIntegration {
 
   // The detached backend is its own process-group leader: one group-kill
   // takes down pnpm, the tsc watcher and both node watchers.
-  const stop = () => {
+  const stop = (): void => {
     if (backend?.pid && !backend.killed) {
       process.kill(-backend.pid, "SIGTERM");
     }
@@ -61,7 +70,9 @@ export function devStack(): AstroIntegration {
     hooks: {
       "astro:server:start": async () => {
         if (!existsSync("backend/.env")) {
-          throw new Error("backend/.env is missing — copy backend/.env.example and fill it in first.");
+          throw new Error(
+            "backend/.env is missing — copy backend/.env.example and fill it in first."
+          );
         }
 
         await waitForPostgres();
@@ -71,7 +82,7 @@ export function devStack(): AstroIntegration {
           stdio: "inherit",
           detached: true,
         });
-        backend.on("exit", code => {
+        backend.on("exit", (code) => {
           if (code !== 0 && code !== null) {
             log(`vendure backend exited with code ${code}`);
           }
