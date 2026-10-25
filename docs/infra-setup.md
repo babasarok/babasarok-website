@@ -29,11 +29,11 @@ One box hosts prod + test + previews. No need for three.
    **Add Server**.
 2. Location: `Falkenstein` or `Helsinki` (eu-central, low latency to HU).
 3. Image: **Ubuntu 24.04**.
-4. Type: cost-optimized **CAX11** (ARM64, 2 vCPU / 4 GB / 40 GB,
-   ≈ €5.99/mo post-June-2026 pricing; if unavailable pick any CAX with
-   ≥ 4 GB RAM). ARM is verified fine: every image in the stack (postgres,
-   node, caddy, postfix-relay) publishes arm64 builds, and the site + Admin UI
-   builds happen off-box.
+4. Type: cost-optimized **CAX21** (ARM64, 4 vCPU / 8 GB / 80 GB,
+   ≈ €10.49/mo post-June-2026 pricing — user's pick for headroom; the minimal
+   fit would be CAX11 2 vCPU/4 GB ≈ €5.99/mo). ARM is verified fine: every
+   image in the stack (postgres, node, caddy, postfix-relay) publishes arm64
+   builds, and the site + Admin UI builds happen off-box.
 5. SSH key: **Add new key** → paste the contents of
    `~/.ssh/babasarok_deploy.pub`. Name it `babasarok-deploy`.
 6. Create → note the **IPv4 address** → **tell me the IP**.
