@@ -23,6 +23,20 @@ self-hosted **Vendure** (Node + Postgres) on a dedicated Hetzner box:
 - Emails on order changes via Vendure's email plugin; self-hosted SMTP
   (postfix container) in prod, file/mailbox transport locally.
 
+## Session log (compressed)
+
+- 2026-10-25: Phase 1 + 2a complete and committed (`feat/vendure-backend`:
+  ad9903de backend, 645999a1 search/migrations/emails/admin-ui groundwork,
+  37e109bf frontend submit, 6c71ee20 admin-ui-outside-workspace fix). 213/213
+  site tests + backend check/test + lint + astro/svelte check all green.
+  Local smoke tests passed end to end (order stored + both emails rendered).
+  Hungarian hu.json translated (797/797). Custom Admin UI compile launched
+  (~/.cache/babasarok-admin-ui) — verify `backend/admin-ui` NO wait: output
+  moved to `~/.cache/babasarok-admin-ui`; if the compile didn't finish,
+  re-run `pnpm -C backend run build-admin-ui` then restart server+worker and
+  confirm `/admin-ui` shows Hungarian. Reviewer ledger history in
+  /tmp/opencode/vendure-review.md (ephemeral — protocol is at its top).
+
 ## Where we are
 
 - [x] **Phase 1 — backend works locally.** pnpm workspaces; `backend/` Vendure
@@ -68,7 +82,17 @@ pnpm -C backend run check && pnpm -C backend test    # backend types + unit test
 pnpm run build                     # backend build + full site build (Tina + Astro)
 pnpm run deploy                    # wrangler deploy (Cloudflare)
 node --env-file=backend/.env backend/dist/generate-migration.js <name> --from-empty
-pnpm -C backend run build-admin-ui # recompile Admin UI after ui-translations change
+pnpm -C backend run build-admin-ui # re-scaffold + build Admin UI after ui-translations change
+# NOTE: compileUiExtensions never installs the scaffold deps itself, and the
+# scaffold package.json is dependency-less (it expects classic-hoisted
+# node_modules). After a fresh scaffold, make the scaffold self-contained:
+#   cd ~/.cache/babasarok-admin-ui && pnpm add \
+#     @vendure/admin-ui@<core-version> @vendure/common@<core-version> \
+#     "@angular/cli@^19.2.5" "@angular/compiler@^19.2.4" \
+#     "@angular/compiler-cli@^19.2.4" "@angular-devkit/build-angular@^19.2.5" \
+#     rxjs@^7.8.1
+# then `pnpm run build` there (or re-run build-admin-ui, which re-scaffolds
+# and wipes the added deps — prefer building manually after the first setup).
 ```
 
 Env: `backend/.env` (from `backend/.env.example`) holds DATABASE_URL,

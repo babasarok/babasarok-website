@@ -13,6 +13,7 @@ import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
 import { EmailPlugin, FileBasedTemplateLoader } from "@vendure/email-plugin";
 import type { EmailPluginDevModeOptions, EmailPluginOptions } from "@vendure/email-plugin";
 import { env } from "./env";
+import { adminUiOutputPath } from "./paths";
 import { HandlebarsHtmlGenerator } from "./email/handlebars-html-generator";
 import { orderConfirmationHandler, orderNotificationHandler } from "./email/order-emails";
 import { QuoteOrderPlugin } from "./quote-order/quote-order.plugin";
@@ -104,8 +105,8 @@ export const config: VendureConfig = {
     AdminUiPlugin.init({
       route: "admin-ui",
       port: env.port,
-      ...(existsSync(env.adminUiOutputPath)
-        ? { app: { path: env.adminUiOutputPath } }
+      ...(existsSync(adminUiOutputPath)
+        ? { app: { path: adminUiOutputPath } }
         : {}),
       adminUiConfig: {
         defaultLanguage: LanguageCode.hu,

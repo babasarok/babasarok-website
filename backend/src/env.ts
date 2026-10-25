@@ -1,4 +1,3 @@
-import os from "node:os";
 import { z } from "zod";
 
 const EnvSchema = z
@@ -71,10 +70,6 @@ export const env = {
   orderEmailFrom: value.ORDER_EMAIL_FROM,
   shopCountryCode: value.SHOP_COUNTRY_CODE,
   adminUrl: value.ADMIN_URL,
-  // Outside the repo on purpose: the ui-devkit scaffold installs its own
-  // dependencies, which pnpm would resolve against the repo workspace if the
-  // output lived inside it.
-  adminUiOutputPath: `${os.homedir()}/.cache/babasarok-admin-ui`,
   shopCountryName: value.SHOP_COUNTRY_NAME,
   smtp:
     value.SMTP_HOST === undefined
