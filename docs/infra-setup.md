@@ -30,7 +30,7 @@ One box hosts prod + test + previews. No need for three.
 2. Location: `Falkenstein` or `Helsinki` (eu-central, low latency to HU).
 3. Image: **Ubuntu 24.04**.
 4. Type: cost-optimized **CAX21** (ARM64, 4 vCPU / 8 GB / 80 GB,
-   ≈ €10.49/mo post-June-2026 pricing — user's pick for headroom; the minimal
+   €12.59/mo + €0.60 IPv4 = €13.19/mo — user's pick for headroom; the minimal
    fit would be CAX11 2 vCPU/4 GB ≈ €5.99/mo). ARM is verified fine: every
    image in the stack (postgres, node, caddy, postfix-relay) publishes arm64
    builds, and the site + Admin UI builds happen off-box.
