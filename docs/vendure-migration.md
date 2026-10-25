@@ -26,17 +26,30 @@ self-hosted **Vendure** (Node + Postgres) on a dedicated Hetzner box:
 
 ## Session log (compressed)
 
+### 2026-10-25 latest: TEST STACK RETIRED — previews replaced it
+
+`DEPLOY_STACK=test` is gone (Cloudflare's Preview env runs
+`DEPLOY_STACK=preview` per branch); prod is the only fixed stack. The shared
+preview postgres moved into the infra stack (`babasarok-edge-postgres-1`,
+own volume + password, fully separate from prod); preview stacks join
+`babasarok-edge_default`. Supersedes the test-stack wording in the phase-3
+topology bullets and the phase-4 design entry below (both were written when
+the test stack existed). The networks override now pins the caddy service to
+its own `default` network too — an override listing only external networks
+REPLACES the default attachment, which 502'd previews after the test stack
+went away. `deploy/test/` deleted; `api-test` DNS records can be removed.
+Verified live: preview stack rebuilt against the new postgres, prod and
+preview health endpoints 200.
+
 ### 2026-10-25 late: IN-FLIGHT / NEXT-SESSION TODO (read before anything else)
 
-**Phase 3 is LIVE and verified**: prod (`https://api.babasarok.net`) + test
-(`https://api-test.babasarok.net`) stacks healthy, emails via
-CloudflareEmailSender (REST/SDK over 443; Hetzner blocks SMTP 25/465, 587
-open but CF is 465-only). User verified received emails. Superadmin:
-admin@babasarok.net, password generated 2026-10-25 (in the shared password
-manager — do NOT store in this doc). CF build env vars SET by user
-(DEPLOY_STACK=prod/test, DEPLOY_SSH_KEY etc.); CF builds still failing
-install at one point — fixed by `allowBuilds` in pnpm-workspace.yaml
-(cad12cd0) — watch the next CF build result.
+**Phase 3 is LIVE and verified**: prod (`https://api.babasarok.net`) healthy,
+emails via CloudflareEmailSender (REST/SDK over 443; Hetzner blocks SMTP
+25/465, 587 open but CF is 465-only). Superadmin: admin@babasarok.net,
+password generated 2026-10-25 (in the shared password manager — do NOT store
+in this doc). CF build env vars SET by user (DEPLOY_STACK=prod, DEPLOY_SSH_KEY
+etc.). The **test stack is retired** — per-branch preview stacks replaced it
+(see the 2026-10-25 latest entry); prod is the only fixed stack.
 
 **UNCOMMITTED, in this working tree (finish FIRST):**
 1. `scripts/deploy-backend.sh` — the `.env.cloudflare` fragment block was
@@ -333,8 +346,10 @@ and their resolutions are in the ledger's history sections.
 The full click-by-click runbook for these steps lives in
 [docs/infra-setup.md](docs/infra-setup.md) — point the user at that.
 
-- **One VPS, not three.** prod + test + per-branch previews run as separate
-  docker-compose projects on the same box. Machine: Hetzner **CAX21** (ARM64,
+- **One VPS, not more.** prod + per-branch previews run as separate
+  docker-compose projects on the same box (the test stack was retired once
+  previews proved out — see the 2026-10-25 latest session-log entry).
+  Machine: Hetzner **CAX21** (ARM64,
   4 vCPU/8 GB, €12.59 + €0.60 IPv4 = €13.19/mo; user's pick for
   headroom) — ARM is fine, all stack images (postgres/node/caddy/postfix)
   publish arm64.
@@ -347,8 +362,9 @@ The full click-by-click runbook for these steps lives in
   `DEPLOY_USER` as **Cloudflare build env vars** (not GitHub secrets).
   No separate deploy hook — with both deploys in one pipeline the hook is
   unnecessary.
-- DNS (Cloudflare): A records `api.babasarok.net` and `api-test.babasarok.net`
-  → server IP, DNS-only (grey cloud); Caddy on the box issues TLS.
+- DNS (Cloudflare): wildcard A + AAAA records (`*` and `api`) → server IP,
+  DNS-only (grey cloud); Caddy on the box issues TLS. (The old `api-test`
+  records can be deleted.)
 - Mail deliverability (self-hosted postfix): Hetzner **PTR/rDNS** for the IP →
   `mail.babasarok.net`, plus SPF/DKIM/DMARC records (DKIM key generated on the
   box during setup).
@@ -358,7 +374,7 @@ The full click-by-click runbook for these steps lives in
 **Cloudflare build env vars** — `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER`,
 `TINA_CMS_CLIENT_ID`, `TINA_CMS_CLIENT_TOKEN`, `GTM_ID`, `SITE_URL`,
 `PUBLIC_VENDURE_API_URL=https://api.babasarok.net` (previews:
-`https://api-test.babasarok.net`).
+`https://api-<slug>.babasarok.net`, derived per branch).
 
 **Tina Cloud**: after the `fabformURL` field removal lands, the Tina Cloud
 schema must be re-pushed or plain `pnpm run build` fails until they match.
