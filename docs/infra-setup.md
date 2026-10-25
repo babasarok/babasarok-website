@@ -56,20 +56,29 @@ One box hosts prod + test + previews. No need for three.
 
 ## 3. Hetzner: set PTR/rDNS (mail deliverability — required)
 
-1. Server detail page → **Networking** tab → click the attached private IP /
+1. Server detail page → **Networking** tab → click the attached IP /
    **Edit DNS** (Reverse DNS).
-2. Set the rDNS of the IPv4 address to **`mail.babasarok.net`**.
+2. Set the rDNS of BOTH addresses to **`mail.babasarok.net`** — the IPv4
+   `178.105.79.2` and the IPv6 `2a01:4f8:c013:832f::1` (each has its own
+   rDNS field).
 
 ## 4. Cloudflare DNS (babasarok.net zone)
 
 Add these records (type A, **DNS-only = grey cloud**, NOT proxied — Caddy on
 the box issues its own TLS):
 
-| Type | Name      | Content        | Proxy |
-|------|-----------|----------------|-------|
-| A    | `api`     | `<server IPv4>` | No   |
-| A    | `api-test`| `<server IPv4>` | No   |
-| A    | `mail`    | `<server IPv4>` | No   |
+| Type | Name      | Content                        | Proxy |
+|------|-----------|--------------------------------|-------|
+| A    | `api`     | `178.105.79.2`                 | No    |
+| A    | `api-test`| `178.105.79.2`                 | No    |
+| A    | `mail`    | `178.105.79.2`                 | No    |
+| AAAA | `api`     | `2a01:4f8:c013:832f::1`        | No    |
+| AAAA | `api-test`| `2a01:4f8:c013:832f::1`        | No    |
+| AAAA | `mail`    | `2a01:4f8:c013:832f::1`        | No    |
+
+(The server's primary IPv6 is the first address of its /64; the /64 itself is
+not a record target. Verified live on the box: `ip -6 addr` →
+`2a01:4f8:c013:832f::1/64`.)
 
 (Per-branch preview hostnames like `pr42.api-test` can be wildcarded later:
 `A * .api-test` if Cloudflare allows it on your plan, else we add records per
