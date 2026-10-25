@@ -178,7 +178,14 @@ stack on the box:
   separate from prod; preview containers join the infra network, where
   `postgres` resolves), and teardown is a plain `DROP DATABASE`.
 - **No email:** previews get no `EMAIL_TRANSPORT`/`SMTP_*`, so they run
-  file transport and physically cannot mail a real buyer.
+  file transport and physically cannot mail a real buyer. The dev-mode
+  mailbox (`/mailbox` on the preview api host) stays reachable and lists
+  only emails the preview instance itself rendered at runtime — the prod
+  copy does not seed it.
+- **TODO — sanitised baseline:** the prod-copy baseline means previews hold
+  real customer/order PII behind publicly reachable hosts. Accepted for
+  now; switch to a sanitised dump (scrub customers/orders/emails) as the
+  preview baseline.
 - **Routing/TLS:** `deploy/infra/Caddyfile` imports one snippet per
   preview (`/etc/caddy/previews/<slug>.caddy`), written and reloaded by the
   deploy script. Certificates are issued per-host via HTTP-01 on port 80.
