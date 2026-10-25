@@ -37,6 +37,10 @@ self-hosted **Vendure** (Node + Postgres) on a dedicated Hetzner box:
   with defaultLanguage hu and /admin-ui/i18n-messages/hu.json returning
   Hungarian strings. Reviewer ledger history in
   /tmp/opencode/vendure-review.md (ephemeral — protocol is at its top).
+  **Reviewer mechanism (settled):** reviewer subagents cannot idle between
+  self-wakes — they run bounded passes and end. The implementer re-invokes
+  them (same sessionID where possible) at milestones; the ledger + this doc
+  carry all durable state. Do not ask reviewers to "watch"/poll.
 
 ## Where we are
 
@@ -119,10 +123,14 @@ self-hosted **Vendure** (Node + Postgres) on a dedicated Hetzner box:
       - **rsync set:** the deploy must include the root workspace manifests
         (package.json, pnpm-workspace.yaml, pnpm-lock.yaml) alongside
         backend/ — the on-box build installs via the workspace.
-      - **No shared docker networks between stacks** (service-name aliases
-        would collide): each stack is an isolated compose network; the edge
-        Caddy and vendure reach shared postfix via a published loopback
-        port + host-gateway.
+      - **Networks:** each stack has its own compose network (no network
+        shared between stacks — alias collisions); the shared edge postfix
+        and Caddy ATTACH to each stack's network as an external network
+        (cross-project membership — verified required on the box: an infra
+        Caddy cannot reach other projects' services otherwise). Postfix
+        publishes NO host port; vendure relays to `postfix:25` over the
+        stack network. Infra joins a stack's network when the stack is
+        created (deploy-script step; re-run on preview create/teardown).
       - **Migration strategy:** one-shot `migrate` compose service runs
         before `up` (race bites on every schema-changing deploy, not just
         fresh DBs); final say in the phase-2b ADR.

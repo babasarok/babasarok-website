@@ -7,12 +7,12 @@
 # send real email; this relay serves the prod stack only.
 #
 # mwader/postfix-relay ships an open-relay default protected only by docker
-# networking; the published port is only safe because ufw denies inbound 25
-# and mynetworks admits private ranges (vendure reaches it via host-gateway,
-# so published-loopback alone would not receive those connections).
+# networking; with no published port, reachability is bounded by the stacks
+# that attach it to their network (see the stack compose files).
 services:
   postfix:
-    # mwader/postfix-relay publishes no version tags; pinned by digest.
+    # mwader/postfix-relay publishes no semantic-version tags; pinned by
+    # immutable digest.
     image: mwader/postfix-relay@sha256:e32bb3e771b6e21e26f6cd3d1c0e9e41acbf7ae2d0e5012e49929021b9b4fcea
     restart: unless-stopped
     environment:
@@ -27,8 +27,6 @@ services:
     volumes:
       # Generated on first boot; persisted so the DNS record stays valid.
       - dkim:/etc/opendkim/keys
-    ports:
-      - "25:25"
 
 volumes:
   dkim:
