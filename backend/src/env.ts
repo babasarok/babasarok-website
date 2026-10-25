@@ -60,12 +60,24 @@ function parseCsv(raw: string | undefined): string[] | undefined {
   return entries && entries.length > 0 ? entries : undefined;
 }
 
+// The cors package only exact-matches string origins; wildcard entries
+// (e.g. Cloudflare preview hosts like *-babasarok-website.x.workers.dev)
+// are compiled to anchored regexes instead.
+function toCorsOrigin(origin: string): string | RegExp {
+  if (!origin.includes("*")) {
+    return origin;
+  }
+
+  const escaped = origin.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]*");
+  return new RegExp(`^${escaped}$`);
+}
+
 export const env = {
   isProduction: value.NODE_ENV === "production",
   port: value.PORT,
   databaseUrl: value.DATABASE_URL,
   tokenSecret: value.TOKEN_SECRET,
-  allowedOrigins: parseCsv(value.API_ALLOWED_ORIGINS),
+  allowedOrigins: parseCsv(value.API_ALLOWED_ORIGINS)?.map(toCorsOrigin),
   shopOwnerEmail: value.SHOP_OWNER_EMAIL,
   orderEmailFrom: value.ORDER_EMAIL_FROM,
   shopCountryCode: value.SHOP_COUNTRY_CODE,
