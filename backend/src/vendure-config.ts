@@ -15,6 +15,7 @@ import type { EmailPluginDevModeOptions, EmailPluginOptions } from "@vendure/ema
 import { env } from "./env";
 import { adminUiDistPath } from "./paths";
 import { HandlebarsHtmlGenerator } from "./email/handlebars-html-generator";
+import { CloudflareEmailSender } from "./email/cloudflare-email-sender";
 import { orderConfirmationHandler, orderNotificationHandler } from "./email/order-emails";
 import { QuoteOrderPlugin } from "./quote-order/quote-order.plugin";
 import { ChannelSetupPlugin } from "./setup/channel-setup.plugin";
@@ -28,26 +29,42 @@ function emailPluginOptions(): EmailPluginOptions | EmailPluginDevModeOptions {
     globalTemplateVars: { fromAddress: env.orderEmailFrom },
   };
 
-  const smtp = env.smtp;
-  if (!smtp) {
-    return {
-      ...base,
-      devMode: true,
-      outputPath: path.join(process.cwd(), "email-out"),
-      route: "/mailbox",
-    };
+  const email = env.email;
+  switch (email.kind) {
+    case "cloudflare":
+      // The Hetzner box cannot submit SMTP (25/465 blocked), so mail leaves
+      // through Cloudflare's REST API over 443; SMTP_PASS holds the API
+      // token. `transport: none` keeps the default sender idle — the custom
+      // sender does the sending.
+      return {
+        ...base,
+        transport: { type: "none" },
+        emailSender: new CloudflareEmailSender({
+          accountId: email.accountId,
+          apiToken: email.apiToken,
+        }),
+      };
+    case "file":
+      return {
+        ...base,
+        devMode: true,
+        outputPath: path.join(process.cwd(), "email-out"),
+        route: "/mailbox",
+      };
+    case "smtp":
+      return {
+        ...base,
+        transport: {
+          type: "smtp",
+          host: email.smtp.host,
+          port: email.smtp.port,
+          secure: email.smtp.secure,
+          ...(email.smtp.user
+            ? { auth: { user: email.smtp.user, pass: email.smtp.pass ?? "" } }
+            : {}),
+        },
+      };
   }
-
-  return {
-    ...base,
-    transport: {
-      type: "smtp",
-      host: smtp.host,
-      port: smtp.port,
-      secure: smtp.secure,
-      ...(smtp.user ? { auth: { user: smtp.user, pass: smtp.pass ?? "" } } : {}),
-    },
-  };
 }
 
 // A quote order is "placed" the moment the buyer submits it: the flow stops at

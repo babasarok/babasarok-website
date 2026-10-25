@@ -419,6 +419,9 @@ importers:
       '@vendure/email-plugin':
         specifier: ^3.8.1
         version: 3.8.1(supports-color@10.2.2)(svgo@4.1.0)(terser@5.39.0)(typescript@5.9.3)
+      cloudflare:
+        specifier: ^7.3.0
+        version: 7.3.0
       graphql-tag:
         specifier: ^2.12.6
         version: 2.12.7(graphql@16.14.2)
@@ -6480,6 +6483,10 @@ packages:
   clone@1.0.4:
     resolution: {integrity: sha512-JQHZ2QMW6l3aH/j6xCqQThY/9OH4D/9ls34cgkUBiEeocRTU04tHfKPBsUK1PqZCUQM7GiA0IIXJSuXHI64Kbg==}
     engines: {node: '>=0.8'}
+
+  cloudflare@7.3.0:
+    resolution: {integrity: sha512-0P4cMFjzdIe388E57xNCV2wKzv1ZVZqMFu7+p2gsZuggbXs39xTKtXJN8FACkKh+xjLQ7dNruNlT/aT+9ajJtg==}
+    hasBin: true
 
   clsx@1.2.1:
     resolution: {integrity: sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg==}
@@ -20356,6 +20363,8 @@ snapshots:
       shallow-clone: 3.0.1
 
   clone@1.0.4: {}
+
+  cloudflare@7.3.0: {}
 
   clsx@1.2.1: {}
 

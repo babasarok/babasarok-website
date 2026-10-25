@@ -22,6 +22,7 @@
     "@vendure/common": "^3.8.1",
     "@vendure/core": "^3.8.1",
     "@vendure/email-plugin": "^3.8.1",
+    "cloudflare": "^7.3.0",
     "graphql-tag": "^2.12.6",
     "handlebars": "^4.7.10",
     "pg": "^8.16.3",
