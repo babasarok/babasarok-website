@@ -34,6 +34,13 @@ services:
   vendure:
     build: ./repo
     restart: unless-stopped
+    # The edge Caddy sits on every stack's network; the per-stack alias keeps
+    # the hostname→stack routing unambiguous (bare `vendure` would be a
+    # cross-network DNS coin-flip).
+    networks:
+      default:
+        aliases:
+          - vendure-test
     env_file: .env
     environment:
       NODE_ENV: development

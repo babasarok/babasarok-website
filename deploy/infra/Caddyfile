@@ -3,9 +3,9 @@
 }
 
 api.babasarok.net {
-	reverse_proxy vendure:4000
+	reverse_proxy vendure-prod:4000
 }
 
 api-test.babasarok.net {
-	reverse_proxy vendure:4000
+	reverse_proxy vendure-test:4000
 }
