@@ -1,0 +1,34 @@
+# Shared edge: Caddy terminates TLS for api.babasarok.net and
+# api-test.babasarok.net and routes into the stacks' networks by service
+# name (each stack's `vendure` resolves independently per network).
+# Stacks must exist first — the deploy script creates the networks, brings
+# the stack up, then this compose.
+name: babasarok-edge
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      # The edge must be public; 80 serves ACME HTTP-01 challenges.
+      - "80:80"
+      - "443:443"
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      babasarok-prod_default:
+      babasarok-test_default:
+
+networks:
+  babasarok-prod_default:
+    external: true
+  babasarok-test_default:
+    external: true
+
+volumes:
+  caddy-data:
+  caddy-config:
