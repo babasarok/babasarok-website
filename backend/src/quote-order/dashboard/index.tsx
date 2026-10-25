@@ -15,7 +15,7 @@ export default defineDashboardExtension({
         {
           column: "configText",
           component: ({ value }) => (
-            <span className="whitespace-pre-wrap break-words">
+            <span className="break-words whitespace-pre-wrap">
               {typeof value === "string" ? value : ""}
             </span>
           ),
