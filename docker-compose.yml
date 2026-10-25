@@ -1,0 +1,17 @@
+# Postgres for local development. The prod/test stacks on Hetzner use the
+# same compose file with a Caddy service and per-instance env/ports (see
+# docs/adr/0007-vendure-orders.md once written).
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: babasarok
+      POSTGRES_PASSWORD: babasarok
+      POSTGRES_DB: babasarok
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

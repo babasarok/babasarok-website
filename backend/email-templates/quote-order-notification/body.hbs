@@ -1,0 +1,43 @@
+<p>Új árajánlatkérés érkezett: <strong>{{ order.code }}</strong></p>
+
+<h3>Vevő</h3>
+<p>
+  {{ order.customer.lastName }} {{ order.customer.firstName }}<br>
+  {{ order.customer.emailAddress }}<br>
+  {{ order.customer.phoneNumber }}
+</p>
+
+{{#if order.shippingAddress.streetLine1}}
+<h3>Szállítási cím</h3>
+<p>{{ order.shippingAddress.streetLine1 }}</p>
+{{/if}}
+
+<h3>Termékek</h3>
+{{#each products}}
+<pre>{{ number }}. termék
+
+{{ configText }}</pre>
+{{/each}}
+
+<p>Szállítás: {{ order.customFields.deliveryMethodName }}
+({{#if order.customFields.deliveryFree}}ingyenes{{else}}{{ order.customFields.deliveryPrice }} Ft{{/if}})</p>
+
+{{#if order.customFields.setDiscountSummary}}
+<pre>{{ order.customFields.setDiscountSummary }}</pre>
+{{/if}}
+
+{{#if order.customFields.message}}
+<p>Üzenet: {{ order.customFields.message }}</p>
+{{/if}}
+
+<p>ÁSZF elfogadva:
+{{#if order.customFields.termsAccepted}}
+Igen
+{{else}}
+NEM
+{{/if}}
+</p>
+
+<p><strong>Összesen: {{ order.customFields.orderTotal }} Ft</strong></p>
+
+<p>Tranzakció azonosító: {{ order.customFields.submissionTransactionId }}</p>

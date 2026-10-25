@@ -67,3 +67,6 @@ test-results/
 playwright-report/
 blob-report/
 .playwright/
+
+# Vendure backend build/email output
+backend/email-out/

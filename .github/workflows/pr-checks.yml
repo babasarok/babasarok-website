@@ -23,8 +23,8 @@ jobs:
         # check that type-checks the app.
         include:
           - { name: Format, run: "npx prettier --check .", typegen: "false" }
-          - { name: Lint, run: "npm run lint", typegen: "true" }
-          - { name: Stylelint, run: "npm run lint:style", typegen: "false" }
+          - { name: Lint, run: "pnpm run lint", typegen: "true" }
+          - { name: Stylelint, run: "pnpm run lint:style", typegen: "false" }
           - { name: Astro Check, run: "npx astro check", typegen: "true" }
           - {
               name: Svelte Check,
@@ -48,7 +48,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-      - run: npm test
+      - run: pnpm test
+
+  # Type-check + unit tests for the Vendure backend (backend/ workspace).
+  backend:
+    name: Backend Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm -C backend run check
+      - run: pnpm -C backend test
 
   # Real production build (`npm run build` -> `tinacms build`, talks to Tina
   # Cloud). The resulting `dist/` is uploaded so the guard jobs below can reuse
@@ -59,7 +69,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-      # Branch-scoped build cache. Restored after `npm ci` (which wipes
+      # Branch-scoped build cache. Restored after `pnpm install` (which wipes
       # node_modules) so Astro's persistent cache survives — `node_modules/.astro`
       # holds the image-optimization + content cache (e.g. transcoded Tina
       # images), avoiding re-fetching/re-encoding on every run.
@@ -72,7 +82,7 @@ jobs:
           restore-keys: |
             astro-build-${{ github.head_ref }}-
       - name: Build
-        run: npm run build
+        run: pnpm run build
         env:
           TINA_CMS_CLIENT_ID: ${{ vars.TINA_CMS_CLIENT_ID }}
           TINA_CMS_CLIENT_TOKEN: ${{ secrets.TINA_CMS_CLIENT_TOKEN }}
@@ -97,11 +107,11 @@ jobs:
         with:
           name: dist
           path: dist
-      - run: npm run test:dist-tina-urls
+      - run: pnpm run test:dist-tina-urls
 
   # Guard: Svelte client islands hydrate against the real production build.
-  # `npm run test:hydration` runs Playwright, whose `webServer` boots
-  # `npm run preview` (astro preview) over the downloaded `dist/`.
+  # `pnpm run test:hydration` runs Playwright, whose `webServer` boots
+  # `pnpm run preview` (astro preview) over the downloaded `dist/`.
   test-hydration:
     name: Test Hydration
     needs: build
@@ -114,8 +124,8 @@ jobs:
         with:
           name: dist
           path: dist
-      # `npm ci --ignore-scripts` skips Playwright's browser download, so install
+      # `pnpm install --frozen-lockfile --ignore-scripts` skips Playwright's browser download, so install
       # the Chromium the hydration test drives.
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
-      - run: npm run test:hydration
+      - run: pnpm run test:hydration
