@@ -184,8 +184,8 @@
       // The order total goes through the shared data layer (see the `gtag` shim
       // in Base.astro) to the GTM container (GTM_ID), whose Google Ads
       // conversion tag is configured over there — not in the site — so no
-      // conversion id lives here. `transaction_id` matches the email payload so
-      // Google Ads can deduplicate against the Web3Forms submission.
+      // conversion id lives here. `transaction_id` matches the transaction
+      // identifier stored with the order so Google Ads can deduplicate.
       gtag("event", "conversion", {
         value: grandTotal,
         currency: "HUF",

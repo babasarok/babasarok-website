@@ -18,7 +18,7 @@ opportunities for improvement are.
 | Markdown            | MDX + a custom `remark-asset-images` plugin                       |
 | Images              | `astro:assets` (`sharp`), responsive `layout: "constrained"`      |
 | Fonts               | `astro:assets` Google font provider (Poppins, Yeseva One)         |
-| Forms               | Order configurator island → Web3Forms email submission            |
+| Orders              | Order configurator island → Vendure shop API (quote-order plugin) |
 | Tests               | Vitest (unit), Playwright (hydration), dist guard scripts         |
 
 The site is a **static, build-time-first** application. Client JavaScript is
@@ -108,7 +108,7 @@ tests/                      # Playwright hydration.spec.ts
 Single shell for every page. Pulls global config from Tina (`getConfig()`) for
 title/description/OG/theme-color, emits canonical + Open Graph tags, preloads
 fonts, wires favicons through the Vite asset pipeline, and includes
-`ClientRouter` (view transitions), Meta Pixel, and the Web3Forms client script.
+`ClientRouter` (view transitions) and the Meta Pixel.
 
 ### 4.2 Content modelling (Tina + Astro collections)
 
@@ -171,12 +171,13 @@ review + submission, passing in Tina-derived `products`, `deliveryMethods`, and
 - `priceUtils.ts` — price computation
 - `materialUtils.ts` — material/color resolution (`resolveColorCount`)
 - `validation.ts` — field validation
-- `orderSubmit.ts` — `formatProductString` / `buildOrderFormData` / `submitOrder`
-- `emailConverter.ts` — typed `OrderEmailData`
+- `order/submit.ts` — `formatProductString` / `buildQuoteOrderInput` /
+  `submitOrder`; `order/total.ts` — delivery charging and the order total
 
-Submission posts a `FormData` payload to Web3Forms. Unit tests in
+Submission posts a `submitQuoteOrder` GraphQL mutation to the Vendure shop
+API (the backend stores the order and emails buyer + owner). Unit tests in
 `src/lib/__tests__/` drive `submitOrder` with a stubbed `fetch` and assert the
-exact email body via inline snapshots.
+exact mutation payload via inline snapshots.
 
 ### 4.5 Build & tooling specifics
 
