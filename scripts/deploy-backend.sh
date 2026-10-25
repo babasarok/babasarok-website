@@ -128,6 +128,14 @@ SECRET_TMP=$8
 DIR="/srv/babasarok/$STACK"
 DB="babasarok_preview_$SLUG"
 
+# One box-wide lock for the whole deploy: besides serialising this stack it
+# keeps prod and preview deploys from racing the shared infra stack
+# (gen-networks-override, Caddyfile, caddy reload). Not try-lock: waiting
+# here is the concurrency limit for image builds, not a failure.
+mkdir -p /srv/babasarok
+exec 8>>/srv/babasarok/.infra.lock
+flock -x -w 900 8
+
 mkdir -p "$DIR"
 exec 9>>"$DIR/.deploy.lock"
 if ! flock -x -w 600 9; then
@@ -198,12 +206,30 @@ else
 fi
 
 # Bring the stack up; --wait blocks until the vendure healthcheck is green,
-# which is the gate before the frontend is allowed to deploy.
+# which is the gate before the frontend is allowed to deploy. Before up,
+# tag the currently-running image as previous; if the new stack fails to
+# come healthy (bad migration, crashloop), roll the containers back to that
+# image so prod keeps serving instead of 502-ing until the next push.
 cd "$DIR"
 if [[ "$DEPLOY_STACK" == preview ]]; then
   docker compose -p "babasarok-$SLUG" up -d --build --wait --wait-timeout 300
 else
-  docker compose up -d --build --wait --wait-timeout 300
+  OLD_ID=$(docker compose ps -q vendure | xargs docker inspect --format '{{.Image}}' 2>/dev/null || true)
+  if [[ -n "$OLD_ID" ]]; then
+    docker tag "$OLD_ID" babasarok-prod:previous
+  fi
+  if ! docker compose up -d --build --wait --wait-timeout 300; then
+    echo "new stack failed to become healthy; rolling back to the previous image" >&2
+    if docker image inspect babasarok-prod:previous >/dev/null 2>&1; then
+      docker compose down
+      sed 's|build: ./repo|image: babasarok-prod:previous|' docker-compose.yml > docker-compose.rollback.yml
+      docker compose -f docker-compose.rollback.yml up -d --wait --wait-timeout 300
+      echo "rolled back to the previous image; fix the commit and redeploy" >&2
+    else
+      echo "no previous image tagged; the stack stays down" >&2
+    fi
+    exit 1
+  fi
 fi
 
 # The deploy restarted the worker; any job it had mid-flight is stuck in
@@ -251,8 +277,11 @@ if [[ -n "$SLUG" ]]; then
 fi
 docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force
 
-# Preview teardown cron: idempotent install, runs hourly.
-(crontab -l 2>/dev/null | grep -v '/srv/babasarok/infra/preview-teardown.sh'; echo '17 * * * * /srv/babasarok/infra/preview-teardown.sh >> /srv/babasarok/infra/preview-teardown.log 2>&1') | crontab -
+# Preview teardown cron: idempotent install, runs hourly. Same cron line also
+# prunes crash leftovers: incoming tarballs and secret-tmp files a killed CF
+# build leaves behind (the EXIT trap in the caller only runs if the SSH
+# session itself started the trap — a killed build can skip it).
+(crontab -l 2>/dev/null | grep -v '/srv/babasarok/infra/preview-teardown.sh' | grep -v 'incoming-.*\.tar'; echo '17 * * * * /srv/babasarok/infra/preview-teardown.sh >> /srv/babasarok/infra/preview-teardown.log 2>&1; find /srv/babasarok -name "incoming-*.tar" -mmin +120 -delete; find /srv/babasarok -name ".env.cloudflare-*.tmp" -mmin +120 -delete') | crontab -
 
 printf '%s %s\n' "$COMMIT_TS" "$COMMIT_SHA" > "$DIR/commit.txt"
 echo "backend $STACK deployed and healthy (commit $COMMIT_SHA)"

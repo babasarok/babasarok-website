@@ -63,6 +63,12 @@ describe("QuoteOrderSchema", () => {
     const result = QuoteOrderSchema.safeParse({ ...validInput, phone: "06 30" });
     expect(result.success).toBe(true);
   });
+
+  it("accepts a missing phone (optional field)", () => {
+    const { phone: _phone, ...withoutPhone } = validInput;
+    const result = QuoteOrderSchema.safeParse(withoutPhone);
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("splitName", () => {

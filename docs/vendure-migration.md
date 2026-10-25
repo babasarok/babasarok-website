@@ -4,7 +4,7 @@ Living document for the order-backend migration. Read this first in any new
 session. Status, decisions, roadmap and working agreements live here; the
 normative specs it changes are listed under [Docs to keep in sync](#docs-to-keep-in-sync).
 
-> Last updated: 2026-10-25. Branch: `feat/vendure-backend`. Phase 2 frontend
+> Last updated: 2026-10-25 (ADR 0007 records the landed architecture). Branch: `feat/vendure-backend`. Phase 2 frontend
 > wiring is committed. The user-side infra runbook is
 > [docs/infra-setup.md](docs/infra-setup.md).
 
@@ -69,13 +69,14 @@ etc.). The **test stack is retired** — per-branch preview stacks replaced it
 5. `scripts/deploy-backend.sh` — the generated edge networks-override must
    be SKIPPED (file removed) when no stack dirs exist; an empty `networks:`
    is invalid compose.
-6. docs drift [MAJOR per spec reviewer 17:24] — fix in the phase-2b sweep:
-   infra-setup §0 mail bullet still says "SHELVED pending authorization"
-   and describes SMTP_* wiring (reality: REST sender is live code);
-   migration doc status header is two phases behind; the test@/orders@
-   From split and the owner-email subject change ("Új árajánlatkérés:
-   <rendelésszám>") are recorded NOWHERE durable — add to the phase-2b list;
-   vendure-migration.md has 5 stale mail/DNS passages.
+6. [DONE 2026-10-25] docs drift fixed: infra-setup mail bullet corrected
+   (REST sender is live code, not SHELVED), worker name fixed
+   (babasarok-website), ADR 0007 written — supersedes ADR 0001 and records
+   the deploy topology, the quoted-pricing model, the migrations-owner call
+   (one-shot container in the deploy) and the test@/orders@ From split +
+   owner-notification subject ("Új árajánlatkérés: <rendelésszám>");
+   web3forms references removed from the normative specs and user-facing
+   content; external service inventory added (docs/external-services.md).
 7. **Test stack container is currently running with a bogus
    CLOUDFLARE_ACCOUNT_ID=OVERRIDE-SENTINEL** (from the env_file-layering
    proof); the next test deploy with a working fragment regenerates

@@ -13,7 +13,7 @@ export const QuoteOrderSchema = z
   .object({
     name: z.string().min(1).max(200),
     email: z.email().max(320),
-    phone: z.string().min(3).max(30),
+    phone: z.string().max(30).optional(),
     products: z.array(QuoteOrderProductSchema).min(1).max(50),
     deliveryMethod: z.string().min(1).max(300),
     deliveryPrice: z.number().int().min(0),

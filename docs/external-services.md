@@ -3,7 +3,7 @@
 Everything the site depends on that does **not** live in this repo: accounts,
 dashboards, DNS, keys. The repo can be cloned fresh and still know nothing
 about these — this page is the map. Runbook-style clicking instructions stay
-in [infra-setup.md](infra-setup.md); this doc records *what exists and why*.
+in [infra-setup.md](infra-setup.md); this doc records _what exists and why_.
 
 Last verified: 2026-10-25.
 
@@ -49,8 +49,19 @@ Content edits ──▶ Tina Cloud (CMS) ──▶ GitHub repo ──▶ Workers
     `.env.cloudflare` (env_file layering, last file wins):
     `CLOUDFLARE_EMAIL_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` — rotation in the CF
     dashboard propagates on the next deploy.
-- **Cron on the box:** nightly `docker system prune -af`; hourly
-  `preview-teardown.sh` (removes preview stacks whose branch is gone).
+- **Cron on the box:** nightly `docker system prune -af` (in the `deploy`
+  user's crontab, installed by every deploy — note it runs as `deploy`, whose
+  docker-group membership makes it work); hourly `preview-teardown.sh` plus
+  crash-leftover cleanup (stale `incoming-*.tar` and `.env.cloudflare-*.tmp`
+  files older than 2h are deleted).
+- **Backups: Hetzner server backups** (paid, enabled in the Hetzner Cloud
+  console — 7 rotating snapshots of the whole server incl. the postgres
+  volume, taken on Hetzner's schedule). This covers box loss and volume
+  corruption; single-file restores mean a full-server restore. The
+  `babasarok-prod_pgdata` volume lives only on that server.
+- **Monitoring: uptime.attilagreguss.co.uk** polls the prod health endpoint
+  (`https://api.babasarok.net/health`, which Vendure serves) and alerts the
+  owner on failure. Preview stacks are not polled.
 - **Access for agents:** `ssh -i ~/.ssh/babasarok_bootstrap root@178.105.79.2`.
   Container logs via `docker logs <container>`; Cloudflare build logs are
   dashboard-only (see below).
@@ -62,12 +73,12 @@ account (account id `b64cf6f65472d9a85a44d39f7a68c81a`).
 
 ### DNS (zone babasarok.net)
 
-| Type  | Name    | Content                   | Proxy          |
-| ----- | ------- | ------------------------- | -------------- |
-| A/AAAA | `api`  | box IPs (see above)       | No (grey)      |
-| A/AAAA | `*`    | box IPs (see above)       | No (grey)      |
-| TXT    | `_dmarc` | `v=DMARC1; p=none`      | —              |
-| (per provider) | SPF/DKIM for Email Sending | as Cloudflare specifies | — |
+| Type           | Name                       | Content                 | Proxy     |
+| -------------- | -------------------------- | ----------------------- | --------- |
+| A/AAAA         | `api`                      | box IPs (see above)     | No (grey) |
+| A/AAAA         | `*`                        | box IPs (see above)     | No (grey) |
+| TXT            | `_dmarc`                   | `v=DMARC1; p=none`      | —         |
+| (per provider) | SPF/DKIM for Email Sending | as Cloudflare specifies | —         |
 
 - DNS-only (not proxied) is deliberate: Caddy on the box issues its own TLS
   via HTTP-01; proxying would break that.
@@ -91,7 +102,7 @@ account (account id `b64cf6f65472d9a85a44d39f7a68c81a`).
   carries the preview script's tag. `package.json`'s `deploy` dispatches on
   `DEPLOY_STACK` for this reason.
 - **Rollback button: unsupported by design.** A CF rollback re-promotes an
-  old frontend version *without* redeploying the backend, breaking the
+  old frontend version _without_ redeploying the backend, breaking the
   backend+frontend same-commit invariant; and the box's `commit.txt` guard
   refuses builds of older commits anyway. Roll back by pushing a fresh
   commit (`git revert` + push, or `git commit --allow-empty` to re-ship).
@@ -109,8 +120,7 @@ account (account id `b64cf6f65472d9a85a44d39f7a68c81a`).
 
 - Vendure sends order emails through Cloudflare's **REST API** (custom
   `CloudflareEmailSender` in `backend/src/email/`), because SMTP ports are
-  blocked on Hetzner. Requires the Workers **Paid** plan.
-- Secrets: `CLOUDFLARE_EMAIL_TOKEN` (API token), `CLOUDFLARE_ACCOUNT_ID` —
+  blocked on Hetzner. Requires the Workers **Paid** plan.- Secrets: `CLOUDFLARE_EMAIL_TOKEN` (API token), `CLOUDFLARE_ACCOUNT_ID` —
   set in the CF dashboard, carried to the box via `.env.cloudflare`.
 - From address: `orders@babasarok.net` (`ORDER_EMAIL_FROM` on the box); buyer
   replies must reach a real mailbox, so Email Routing forwards

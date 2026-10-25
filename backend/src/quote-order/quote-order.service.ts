@@ -90,7 +90,7 @@ export class QuoteOrderService {
 
   private async resolveCustomer(
     ctx: RequestContext,
-    input: { email: string; name: string; phone: string }
+    input: { email: string; name: string; phone?: string }
   ): Promise<Customer> {
     const { firstName, lastName } = splitName(input.name);
     const result = await this.customerService.createOrUpdate(ctx, {
