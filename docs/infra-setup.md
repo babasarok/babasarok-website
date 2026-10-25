@@ -14,15 +14,21 @@ key into chat — it goes into the Cloudflare dashboard by you.
       current contact email (Tina `config.address.email`), read from CMS
       content, not hard-coded in infra.
 - [x] **Mail delivery: Cloudflare Email Sending** (public beta; chosen over
-      SMTP2GO/Mailgun 2026-10-25). Requires the **Workers Paid plan** ($5/mo,
-      3,000 emails/mo included, then $0.35/1k) and exposes authenticated
-      SMTP — Vendure plugs in via the existing SMTP_* env with zero code
-      change. The self-hosted postfix/DKIM plan is shelved — §3 and the
-      `mail` DNS records below are NOT needed anymore; §5 becomes "add the
-      provider's records". Only the PROD stack gets SMTP_* credentials;
-      test/preview stacks stay on file transport (env.ts gate enforces it).
-      Keep Email Routing + the `orders@babasarok.net` forward address
-      anyway — buyer replies to the sender address need a real destination.
+      SMTP2GO/Mailgun 2026-10-25) — **SHELVED pending billing authorization**
+      for the Workers Paid plan (user awaiting approval, 2026-10-25). When
+      un-shelved: verify `babasarok.net` in Email Service, add its DNS
+      records, create SMTP credentials into `backend/.env`
+      (`SMTP_HOST/PORT/USER/PASS/SECURE`). Requires the **Workers Paid plan**
+      ($5/mo, 3,000 emails/mo included, then $0.35/1k) and exposes
+      authenticated SMTP — Vendure plugs in via the existing SMTP_* env with
+      zero code change. Until then the env.ts gate keeps PROD undeployable
+      (deliberate fail-closed: no silent no-email prod); the deploy chain is
+      built and verified against the TEST stack (file transport) first. The
+      earlier self-hosted postfix/DKIM plan stays shelved — §3 and the
+      `mail` DNS records are NOT needed. Only the PROD stack gets SMTP_*
+      credentials; test/preview stacks stay on file transport (env.ts gate
+      enforces it). Keep Email Routing + the `orders@babasarok.net` forward
+      address — buyer replies to the sender address need a real destination.
 
 ## 1. Generate SSH keys (local machine)
 
