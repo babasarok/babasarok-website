@@ -1,13 +1,13 @@
 # Preview stack: one per branch, deployed by scripts/deploy-backend.sh when
 # DEPLOY_STACK=preview (project name babasarok-<slug>, passed via -p).
 #
-# No postgres of its own: every preview shares the test stack's postgres
-# (this stack's default network IS babasarok-test_default, so the `postgres`
-# service name resolves there), and the edge Caddy is already attached to
-# that network — no Caddy-side network work per branch. Each branch gets its
-# own database (babasarok_preview_<slug>) that the deploy script drops,
-# recreates and re-copies from prod before this stack boots, so migrations
-# on the branch always run against fresh prod data.
+# No postgres of its own: every preview shares the infra stack's postgres
+# (this stack's default network IS babasarok-edge_default, so the `postgres`
+# service name and the edge Caddy both resolve there — no Caddy-side network
+# work per branch). Each branch gets its own database
+# (babasarok_preview_<slug>) that the deploy script drops, recreates and
+# re-copies from prod before this stack boots, so migrations on the branch
+# always run against fresh prod data.
 #
 # NODE_ENV=development and no email transport in .env: previews run the file
 # transport and can never email a real buyer.
@@ -73,8 +73,8 @@ services:
 
 networks:
   default:
-    # The test stack's network, by fixed name: `postgres` resolves to the
-    # test stack's postgres, and the edge Caddy joins this same network, so
+    # The infra stack's network, by fixed name: `postgres` resolves to the
+    # shared preview postgres, and the edge Caddy joins this same network, so
     # it can route to the vendure-${PREVIEW_SLUG} alias above.
-    name: babasarok-test_default
+    name: babasarok-edge_default
     external: true

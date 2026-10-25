@@ -2,15 +2,15 @@
 # Preview stack teardown, installed as a daily cron by deploy-backend.sh
 # (runs on the Hetzner box). For each preview stack — the dirs carrying a
 # branch.txt marker — if its branch no longer exists on origin, remove the
-# compose project, its branch database (inside the shared test postgres),
-# its caddy route file and its directory. prod/test/infra and dirs without
-# the marker are never touched.
+# compose project, its branch database (inside the shared preview postgres
+# in the infra stack), its caddy route file and its directory. prod/infra
+# and dirs without the marker are never touched.
 #
 # The repo is public, so git ls-remote works unauthenticated.
 set -euo pipefail
 
 REPO_URL="https://github.com/babasarok/babasarok-website.git"
-TEST_PG="babasarok-test-postgres-1"
+SHARED_PG="babasarok-edge-postgres-1"
 changed=0
 
 for dir in /srv/babasarok/*/; do
@@ -31,7 +31,7 @@ for dir in /srv/babasarok/*/; do
   fi
   echo "branch '$branch' no longer exists on origin; tearing down $stack"
   cd "$dir" && docker compose -p "babasarok-$stack" down
-  docker exec "$TEST_PG" psql -U babasarok -d postgres \
+  docker exec "$SHARED_PG" psql -U babasarok -d postgres \
     -c "DROP DATABASE IF EXISTS \"babasarok_preview_$stack\" WITH (FORCE)"
   rm -rf "$dir"
   rm -f "/srv/babasarok/infra/previews/$stack.caddy"

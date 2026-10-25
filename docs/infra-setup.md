@@ -26,7 +26,7 @@ key into chat — it goes into the Cloudflare dashboard by you.
       built and verified against the TEST stack (file transport) first. The
       earlier self-hosted postfix/DKIM plan stays shelved — §3 and the
       `mail` DNS records are NOT needed. Only the PROD stack gets SMTP_*
-      credentials; test/preview stacks stay on file transport (env.ts gate
+      credentials; preview stacks stay on file transport (env.ts gate
       enforces it). Keep Email Routing + the `orders@babasarok.net` forward
       address — buyer replies to the sender address need a real destination.
 
@@ -52,7 +52,7 @@ Cloudflare in §6.
 
 ## 2. Hetzner: create the VPS (~5 min)
 
-One box hosts prod + test + previews. No need for three.
+One box hosts prod + previews. No need for more.
 
 1. [cloud.hetzner.com](https://cloud.hetzner.com) → choose/create a project →
    **Add Server**.
@@ -81,25 +81,21 @@ history in case self-hosted mail ever returns).
 Add these records (type A, **DNS-only = grey cloud**, NOT proxied — Caddy on
 the box issues its own TLS):
 
-| Type | Name       | Content                 | Proxy |
-| ---- | ---------- | ----------------------- | ----- |
-| A    | `api`      | `178.105.79.2`          | No    |
-| A    | `api-test` | `178.105.79.2`          | No    |
-| AAAA | `api`      | `2a01:4f8:c013:832f::1` | No    |
-| AAAA | `api-test` | `2a01:4f8:c013:832f::1` | No    |
+| Type | Name  | Content                 | Proxy |
+| ---- | ----- | ----------------------- | ----- |
+| A    | `api` | `178.105.79.2`          | No    |
+| A    | `*`   | `178.105.79.2`          | No    |
+| AAAA | `api` | `2a01:4f8:c013:832f::1` | No    |
+| AAAA | `*`   | `2a01:4f8:c013:832f::1` | No    |
 
 (The server's primary IPv6 is the first address of its /64; the /64 itself is
 not a record target. Verified live on the box: `ip -6 addr` →
 `2a01:4f8:c013:832f::1/64`. No `mail` host records — the provider decision
 removed them.)
 
-(The server's primary IPv6 is the first address of its /64; the /64 itself is
-not a record target. Verified live on the box: `ip -6 addr` →
-`2a01:4f8:c013:832f::1/64`.)
-
-(Per-branch preview hostnames like `pr42.api-test` can be wildcarded later:
-`A * .api-test` if Cloudflare allows it on your plan, else we add records per
-branch — I'll handle that in phase 4.)
+(The wildcard `*` covers every preview host `api-<slug>.babasarok.net`, plus
+`www` — the Caddyfile 301-redirects www to the apex since it is unused. The
+`api-test` records from before the test stack was retired can be deleted.)
 
 Then **tell me** — I bootstrap the server (Docker, deploy user, firewall,
 Caddy, compose stacks, DKIM key generation) over SSH using
@@ -108,12 +104,13 @@ Caddy, compose stacks, DKIM key generation) over SSH using
 > Server state after bootstrap (2026-10-25): Docker 29.1.3 + compose 2.40.3
 > installed; `deploy` user (docker group) authorized with **only**
 > `babasarok_cfdeploy`; root authorized with **only** `babasarok_bootstrap`;
-> ufw allows 22/80/443; stack home `/srv/babasarok`. **Both stacks are
-> deployed and verified end to end** (test: `https://api-test.babasarok.net`,
-> prod: `https://api.babasarok.net` — Caddy auto-TLS, one-shot migrations,
-> health-gated deploys, emails via the Cloudflare REST API from the box).
-> Prod secrets live in `/srv/babasarok/prod/.env` and the shared password
-> manager (superadmin: `admin@babasarok.net`).
+> ufw allows 22/80/443; stack home `/srv/babasarok`. **Prod and the first
+> preview are deployed and verified end to end** (prod:
+> `https://api.babasarok.net`, preview:
+> `https://api-vendure-preview-test.babasarok.net` — Caddy auto-TLS, one-shot
+> migrations, health-gated deploys, emails via the Cloudflare REST API from
+> the box). Prod secrets live in `/srv/babasarok/prod/.env` and the shared
+> password manager (superadmin: `admin@babasarok.net`).
 
 ## 5. Mail DNS records (from the provider, replaces the old DKIM plan)
 
@@ -142,7 +139,7 @@ over earlier (self-hosted DKIM) are obsolete — discard them.
 2. **Environment variables** (Production; mark sensitive ones as secret):
    - `DEPLOY_HOST` = server IPv4
    - `DEPLOY_USER` = `deploy`
-   - `DEPLOY_STACK` = `prod` (Preview env: `test`)
+   - `DEPLOY_STACK` = `prod` (Preview env: `preview`)
    - `DEPLOY_SSH_KEY` = contents of `~/.ssh/babasarok_cfdeploy` (the **private**
      key, multi-line — paste as-is)
    - `PUBLIC_VENDURE_API_URL` = `https://api.babasarok.net`
@@ -176,9 +173,10 @@ stack on the box:
   recreated from a live dump of the prod database on every deploy, then the
   branch's migrations run on top. Previews therefore always test branch
   schema changes against fresh prod data. No postgres container per
-  branch: all preview databases live inside the **test** stack's postgres
-  instance (preview containers join the test network, where `postgres`
-  resolves), and teardown is a plain `DROP DATABASE`.
+  branch: all preview databases live inside the shared preview postgres in
+  the **infra** stack (`babasarok-edge-postgres-1`, its own volume, fully
+  separate from prod; preview containers join the infra network, where
+  `postgres` resolves), and teardown is a plain `DROP DATABASE`.
 - **No email:** previews get no `EMAIL_TRANSPORT`/`SMTP_*`, so they run
   file transport and physically cannot mail a real buyer.
 - **Routing/TLS:** `deploy/infra/Caddyfile` imports one snippet per
@@ -195,6 +193,6 @@ stack on the box:
 ## 8. Done — what happens next
 
 Once you've done §2–§7 and told me, I build and run: server bootstrap
-script, prod + test compose stacks, the `pnpm run deploy` chain, a first
+script, the prod compose stack, the `pnpm run deploy` chain, a first
 end-to-end deploy, and preview stacks. Tina Cloud schema push is only
 needed when we remove the `fabformURL` field.

@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Generates docker-compose.networks.yml on the box: declares each fixed
-# stack's compose network AND attaches the edge caddy service to it.
-# (A top-level `networks:` declaration alone attaches no service — the
-# missing service attachment 502'd the edge after a recreate.)
-# Preview stacks are skipped: they share the test stack's network, which is
+# Generates docker-compose.networks.yml on the box: attaches the edge caddy
+# service to its own project network (default) AND to each fixed stack's
+# compose network. (A top-level `networks:` declaration alone attaches no
+# service — the missing service attachment 502'd the edge after a recreate.
+# And an override listing only external networks would REPLACE the caddy
+# service's default-network attachment — previews live on that network.)
+# Preview stacks are skipped: they ride the infra stack's network, which this
 # already attached. A stack's exact network name is recorded in its
 # `network` file; dirs predating that marker fall back to the default
 # compose name. When no fixed stacks exist the file is removed — the
@@ -24,7 +26,7 @@ for d in /srv/babasarok/*/repo; do
     net="babasarok-${s}_default"
   fi
   if [ "$n" -eq 0 ]; then
-    printf 'services:\n  caddy:\n    networks:\n' > "$out"
+    printf 'services:\n  caddy:\n    networks:\n      - default\n' > "$out"
     n=1
   fi
   printf '      - %s\n' "$net" >> "$out"
