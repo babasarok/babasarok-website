@@ -20,7 +20,7 @@ export class CloudflareEmailSender implements EmailSender {
 
   constructor(
     private readonly options: CloudflareEmailSenderOptions,
-    client?: CloudflareClient,
+    client?: CloudflareClient
   ) {
     this.client = client ?? new Cloudflare({ apiToken: options.apiToken });
   }
@@ -38,7 +38,7 @@ export class CloudflareEmailSender implements EmailSender {
       subject: email.subject,
       html: email.body,
       text: email.text,
-      attachments: email.attachments.map(attachment => ({
+      attachments: email.attachments.map((attachment) => ({
         content: attachmentContent(attachment),
         filename: attachment.filename || "attachment",
         disposition: "attachment",
@@ -49,7 +49,7 @@ export class CloudflareEmailSender implements EmailSender {
     const { delivered, queued, permanent_bounces } = response;
     if (delivered.length + queued.length === 0) {
       throw new Error(
-        `Cloudflare email sending delivered nothing${permanent_bounces.length ? `; permanent bounces: ${permanent_bounces.join(", ")}` : ""}`,
+        `Cloudflare email sending delivered nothing${permanent_bounces.length ? `; permanent bounces: ${permanent_bounces.join(", ")}` : ""}`
       );
     }
   }
@@ -66,7 +66,7 @@ function splitAddresses(raw: string | undefined): AddressValue | Array<AddressVa
 
   const addresses = raw
     .split(",")
-    .map(part => part.trim())
+    .map((part) => part.trim())
     .filter(Boolean)
     .map(parseAddress);
   return addresses.length === 1 ? addresses[0] : addresses;
@@ -91,6 +91,6 @@ function attachmentContent(attachment: EmailDetails["attachments"][number]): str
       : Buffer.from(content, "utf8").toString("base64");
   }
   throw new Error(
-    `Unsupported email attachment for Cloudflare sending: ${attachment.filename} has no inline content`,
+    `Unsupported email attachment for Cloudflare sending: ${attachment.filename} has no inline content`
   );
 }

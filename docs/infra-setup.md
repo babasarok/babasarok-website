@@ -81,12 +81,12 @@ history in case self-hosted mail ever returns).
 Add these records (type A, **DNS-only = grey cloud**, NOT proxied — Caddy on
 the box issues its own TLS):
 
-| Type | Name      | Content                        | Proxy |
-|------|-----------|--------------------------------|-------|
-| A    | `api`     | `178.105.79.2`                 | No    |
-| A    | `api-test`| `178.105.79.2`                 | No    |
-| AAAA | `api`     | `2a01:4f8:c013:832f::1`        | No    |
-| AAAA | `api-test`| `2a01:4f8:c013:832f::1`        | No    |
+| Type | Name       | Content                 | Proxy |
+| ---- | ---------- | ----------------------- | ----- |
+| A    | `api`      | `178.105.79.2`          | No    |
+| A    | `api-test` | `178.105.79.2`          | No    |
+| AAAA | `api`      | `2a01:4f8:c013:832f::1` | No    |
+| AAAA | `api-test` | `2a01:4f8:c013:832f::1` | No    |
 
 (The server's primary IPv6 is the first address of its /64; the /64 itself is
 not a record target. Verified live on the box: `ip -6 addr` →
@@ -122,8 +122,8 @@ provider gives you the exact records (typically: SPF with their `include:`,
 two or three DKIM CNAMES/TXTs). Add those to Cloudflare exactly as they
 specify, plus keep this one:
 
-| Type | Name     | Content |
-|------|----------|---------|
+| Type | Name     | Content            |
+| ---- | -------- | ------------------ |
 | TXT  | `_dmarc` | `v=DMARC1; p=none` |
 
 `p=none` is deliberate for launch (monitor, don't reject); tighten to
@@ -150,16 +150,51 @@ over earlier (self-hosted DKIM) are obsolete — discard them.
      settings if already set)
    - `GTM_ID`, `SITE_URL` (same)
 3. **Preview variables** (Preview env): same list, except
-   `PUBLIC_VENDURE_API_URL` = `https://api-test.babasarok.net`.
-4. Enable **preview branch deploys** (non-production branches), and add
-   `DEPLOY_STACK` to the env vars: `prod` in Production, `test` in Preview.
-   The deploy script is fail-closed: no/unknown `DEPLOY_STACK` aborts the
-   deploy instead of guessing — a preview build must never touch the prod
-   stack.
+   `DEPLOY_STACK` = `preview`. Do NOT set a fixed `PUBLIC_VENDURE_API_URL`
+   for previews — the build command derives it per branch (next item).
+4. Enable **preview branch deploys** (non-production branches). Preview
+   builds inject `WORKERS_CI_BRANCH` automatically; the deploy script is
+   fail-closed otherwise — no/unknown `DEPLOY_STACK` aborts instead of
+   guessing, and a preview build can never touch the prod stack.
 
-## 7. Done — what happens next
+## 7. Preview stacks (phase 4) — how they work
 
-Once you've done §2–§4 and told me, I build and run (phase 3): server
-bootstrap script, prod + test compose stacks, the `pnpm run deploy` chain,
-and a first end-to-end deploy; then per-branch previews (phase 4). Tina Cloud
-schema push is only needed when we remove the `fabformURL` field.
+Every non-`main` branch with preview deploys enabled gets its own backend
+stack on the box:
+
+- **Stack identity** comes from the branch: `WORKERS_CI_BRANCH` is
+  sanitised into a slug by `scripts/preview-slug.sh` (fail-closed on
+  garbage). The slug names the stack dir `/srv/babasarok/<slug>`, the
+  compose project (`babasarok-<slug>`), the container alias
+  (`vendure-<slug>`), the API host `api-<slug>.babasarok.net` and the
+  database `babasarok_preview_<slug>`. The same slug must drive the
+  frontend build — the Preview build command should be:
+  `export PUBLIC_VENDURE_API_URL="https://api-$(bash scripts/preview-slug.sh "$WORKERS_CI_BRANCH").babasarok.net" && pnpm run build`
+  (the Preview _command_ stays `pnpm run deploy`, which now deploys the
+  preview backend before `wrangler preview`).
+- **Database lifecycle (per deploy):** the branch database is dropped and
+  recreated from a live dump of the prod database on every deploy, then the
+  branch's migrations run on top. Previews therefore always test branch
+  schema changes against fresh prod data. No postgres container per
+  branch: all preview databases live inside the **test** stack's postgres
+  instance (preview containers join the test network, where `postgres`
+  resolves), and teardown is a plain `DROP DATABASE`.
+- **No email:** previews get no `EMAIL_TRANSPORT`/`SMTP_*`, so they run
+  file transport and physically cannot mail a real buyer.
+- **Routing/TLS:** `deploy/infra/Caddyfile` imports one snippet per
+  preview (`/etc/caddy/previews/<slug>.caddy`), written and reloaded by the
+  deploy script. Certificates are issued per-host via HTTP-01 on port 80.
+- **DNS (one-time, user step):** add wildcard DNS-only records to the
+  Cloudflare zone — `A  *  178.105.79.2` and `AAAA  *  2a01:4f8:c013:832f::1`
+  (same IPs as §4). DNS-only, like the api records.
+- **Teardown:** a daily cron on the box (`preview-teardown.sh`, installed
+  by every deploy) checks each preview's recorded branch against origin;
+  a branch that no longer exists gets its containers, database, route
+  snippet and directory removed automatically.
+
+## 8. Done — what happens next
+
+Once you've done §2–§7 and told me, I build and run: server bootstrap
+script, prod + test compose stacks, the `pnpm run deploy` chain, a first
+end-to-end deploy, and preview stacks. Tina Cloud schema push is only
+needed when we remove the `fabformURL` field.

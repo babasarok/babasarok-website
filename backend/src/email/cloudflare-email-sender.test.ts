@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { CloudflareEmailSender, type CloudflareEmailSenderOptions } from "./cloudflare-email-sender";
+import {
+  CloudflareEmailSender,
+  type CloudflareEmailSenderOptions,
+} from "./cloudflare-email-sender";
 import type { EmailDetails, EmailTransportOptions } from "@vendure/email-plugin";
 
 const transportOptions = { type: "none" } as unknown as EmailTransportOptions;
@@ -20,14 +23,16 @@ function senderWith(send: ReturnType<typeof vi.fn>) {
   const client = { emailSending: { send } };
   const sender = new CloudflareEmailSender(
     { accountId: "acc", apiToken: "tok" } satisfies CloudflareEmailSenderOptions,
-    client as never,
+    client as never
   );
   return sender;
 }
 
 describe("CloudflareEmailSender", () => {
   it("maps the email details onto the SDK send params", async () => {
-    const send = vi.fn().mockResolvedValue({ delivered: ["buyer@example.com"], queued: [], permanent_bounces: [] });
+    const send = vi
+      .fn()
+      .mockResolvedValue({ delivered: ["buyer@example.com"], queued: [], permanent_bounces: [] });
     const sender = senderWith(send);
 
     await sender.send(makeDetails(), transportOptions);
@@ -40,17 +45,19 @@ describe("CloudflareEmailSender", () => {
         subject: "Rendelés visszaigazolás",
         html: "<p>köszönjük</p>",
         text: "köszönjük",
-      }),
+      })
     );
   });
 
   it("splits comma-separated cc/bcc and keeps single values plain", async () => {
-    const send = vi.fn().mockResolvedValue({ delivered: ["a@b.c"], queued: [], permanent_bounces: [] });
+    const send = vi
+      .fn()
+      .mockResolvedValue({ delivered: ["a@b.c"], queued: [], permanent_bounces: [] });
     const sender = senderWith(send);
 
     await sender.send(
       makeDetails({ recipient: "a@b.c, d@e.f", cc: "cc1@x.y", bcc: "bcc1@x.y, bcc2@x.y" }),
-      transportOptions,
+      transportOptions
     );
 
     const params = send.mock.calls[0]![0]!;
@@ -60,10 +67,14 @@ describe("CloudflareEmailSender", () => {
   });
 
   it("throws when the API reports nothing was delivered", async () => {
-    const send = vi.fn().mockResolvedValue({ delivered: [], queued: [], permanent_bounces: ["b@x.y"] });
+    const send = vi
+      .fn()
+      .mockResolvedValue({ delivered: [], queued: [], permanent_bounces: ["b@x.y"] });
     const sender = senderWith(send);
 
-    await expect(sender.send(makeDetails(), transportOptions)).rejects.toThrow(/permanent bounces: b@x.y/);
+    await expect(sender.send(makeDetails(), transportOptions)).rejects.toThrow(
+      /permanent bounces: b@x.y/
+    );
   });
 
   it("propagates SDK errors", async () => {

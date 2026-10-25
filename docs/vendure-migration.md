@@ -239,24 +239,24 @@ networks override absorbs them).
         deploy chain gates `wrangler deploy` on it.
       - **Deploy/SSH keys split:** agent bootstrap key (root, user machine
         only) ≠ CF `DEPLOY_SSH_KEY` (deploy user, docker group only).
-- [ ] **Phase 4 — previews.** Per-branch compose project on the box, own
-      bootstrapped DB (schema-change testing), torn down on PR close. Open
-      wiring (architecture reviewer 15:46): per-branch API URLs must be
-      derived in the deploy/build script from the branch env var (CF preview
-      vars are uniform across branches); wildcard TLS over the preview hosts
-      needs DNS-01 + a scoped Cloudflare API token on the box (user must
-      create the token — request when phase 4 starts); teardown and
-      test-stack deploy triggers to be defined (deploy hook vs branch
-      detection). Additional phase-4 preconditions (arch reviewer 16:38):
-      preview branch names must be strictly sanitized before they touch
-      paths/project names (the DEPLOY_STACK case-gate pattern); preview
-      network attachments must be re-asserted after EVERY edge recreate
-      (script-connect drops on infra recreate — the deploy script does this
-      for prod/test, previews must follow); the Docker build context
-      whitelists only backend + manifests, so any future backend import of
-      the pricing core from `src/lib` (the re-pricing seam) needs the image
-      to carry it or the core extracted to a shared workspace package —
-      record in the phase-2b ADR.
+- [x] **Phase 4 — previews.** Per-branch compose project on the box,
+      branch DB dropped and re-copied from prod on every deploy, torn down
+      by a daily cron when the branch disappears. Design (settled
+      2026-10-25, runbook in docs/infra-setup.md §7): branch → slug via
+      `scripts/preview-slug.sh` (fail-closed); preview stacks have NO
+      postgres container — every branch DB lives inside the TEST stack's
+      postgres instance, preview containers join `babasarok-test_default`
+      (where the edge Caddy is already attached), and the copy is
+      `pg_dump` prod → `psql` into the branch DB, then the branch's
+      migrations run on top. Routing: generated per-branch Caddy snippets
+      (`/srv/babasarok/infra/previews/<slug>.caddy`), wildcard DNS-only
+      `*` records, per-host HTTP-01 certs — no DNS-01 token needed (the
+      earlier DNS-01 assumption is obsolete). Branch detection uses
+      Workers Builds' auto-injected `WORKERS_CI_BRANCH`. Verified live on
+      the box with a test preview deploy. The re-pricing-seam build-context
+      note (backend importing `src/lib` needs the image to carry it or the
+      core extracted to a workspace package) still applies — keep it in
+      the phase-2b ADR.
 
 ## How to run things (current truth)
 

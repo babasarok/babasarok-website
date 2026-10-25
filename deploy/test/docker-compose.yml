@@ -22,7 +22,11 @@ services:
   migrate:
     build: ./repo
     restart: "no"
-    env_file: .env
+    env_file:
+      - .env
+      # Written by the deploy script from the cloudflare build env (last
+      # file wins) — cloudflare-owned secrets propagate on every deploy.
+      - .env.cloudflare
     environment:
       NODE_ENV: development
       DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/babasarok
@@ -41,7 +45,9 @@ services:
       default:
         aliases:
           - vendure-test
-    env_file: .env
+    env_file:
+      - .env
+      - .env.cloudflare
     environment:
       NODE_ENV: development
       DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/babasarok
@@ -54,14 +60,25 @@ services:
     # committed artifact omits it, so create the empty shell if missing.
     # No shell/compose variables at all — compose interpolates even bare
     # $names inside command strings.
-    command: ["sh", "-c", "test -f /app/backend/admin-ui-dist/vendure-ui-config.json || echo '{}' > /app/backend/admin-ui-dist/vendure-ui-config.json; exec node dist/index.js"]
+    command:
+      [
+        "sh",
+        "-c",
+        "test -f /app/backend/admin-ui-dist/vendure-ui-config.json || echo '{}' > /app/backend/admin-ui-dist/vendure-ui-config.json; exec node dist/index.js",
+      ]
     depends_on:
       postgres:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -70,7 +87,9 @@ services:
   worker:
     build: ./repo
     restart: unless-stopped
-    env_file: .env
+    env_file:
+      - .env
+      - .env.cloudflare
     environment:
       NODE_ENV: development
       DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/babasarok

@@ -1,10 +1,12 @@
 # Shared edge: Caddy terminates TLS for the API hostnames and routes into
-# the stacks' networks by per-stack alias (vendure-prod / vendure-test).
-# The stack networks are injected at deploy time via the generated
-# docker-compose.networks.yml override (one entry per existing stack) —
-# declared statically here, this file would fail on a not-yet-deployed
-# stack, and pre-created networks break the stacks' own compose (label
-# mismatch).
+# the stacks' networks by per-stack alias (vendure-prod / vendure-test), and
+# into preview stacks by their generated per-branch snippets (the previews
+# directory — one file per branch, written by scripts/deploy-backend.sh).
+#
+# The generated networks override (docker-compose.networks.yml, created by
+# deploy-backend.sh from the stacks that exist on the box) attaches this
+# container to each stack's compose network. Preview stacks share the test
+# stack's network instead, so they need no extra attachment.
 name: babasarok-edge
 
 services:
@@ -12,15 +14,20 @@ services:
     image: caddy:2
     restart: unless-stopped
     ports:
-      # The edge must be public; 80 serves ACME HTTP-01 challenges.
       - "80:80"
       - "443:443"
-    environment:
-      ACME_EMAIL: ${ACME_EMAIL}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./previews:/etc/caddy/previews:ro
       - caddy-data:/data
       - caddy-config:/config
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL}
+    healthcheck:
+      test: ["CMD", "caddy", "version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 volumes:
   caddy-data:

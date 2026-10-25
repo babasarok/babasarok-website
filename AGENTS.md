@@ -191,10 +191,15 @@ max-h-none`); `width: 100%` on a `position: fixed` element stops short of
 
 ## Gotchas
 
-- **Install with `npm ci --ignore-scripts`** (or `npm install --ignore-scripts`).
-  Plain `npm ci` aborts on `sharp`'s install script (it falls through to a
-  from-source build that fails with `Please add node-addon-api`).
-- **This repo is npm-managed.** Do not use pnpm/yarn.
+- **This repo is pnpm-managed** (pnpm ≥ 12, `pnpm-workspace.yaml` with the
+  `backend` workspace). Install with `pnpm install` — build-script approvals
+  are pre-listed in `pnpm-workspace.yaml` (`allowBuilds`), so a plain install
+  passes; adding a dep with build scripts without an `allowBuilds` entry
+  fails the install with `ERR_PNPM_IGNORED_BUILDS`. The pnpm-lock.yaml is
+  generated and must not be hand-edited or reformatted (it's in
+  `.prettierignore`).
+- **npm leftovers:** `package-lock.json` is ignored/untracked; don't run
+  `npm install`/`npm ci` — it would create a stale npm lockfile.
 - **Don't read `tina/tina-lock.json` in full.** It is a huge minified JSON
   (the TinaCMS GraphQL schema dump) that floods the context. Inspect it with
   surgical searches instead, e.g. `grep -o 'SomeTypeName.\{0,200\}'

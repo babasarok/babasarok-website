@@ -1,0 +1,80 @@
+# Preview stack: one per branch, deployed by scripts/deploy-backend.sh when
+# DEPLOY_STACK=preview (project name babasarok-<slug>, passed via -p).
+#
+# No postgres of its own: every preview shares the test stack's postgres
+# (this stack's default network IS babasarok-test_default, so the `postgres`
+# service name resolves there), and the edge Caddy is already attached to
+# that network — no Caddy-side network work per branch. Each branch gets its
+# own database (babasarok_preview_<slug>) that the deploy script drops,
+# recreates and re-copies from prod before this stack boots, so migrations
+# on the branch always run against fresh prod data.
+#
+# NODE_ENV=development and no email transport in .env: previews run the file
+# transport and can never email a real buyer.
+services:
+  migrate:
+    build: ./repo
+    restart: "no"
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/${PREVIEW_DB_NAME}
+    command: ["node", "dist/migrate.js"]
+
+  vendure:
+    build: ./repo
+    restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - vendure-${PREVIEW_SLUG}
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/${PREVIEW_DB_NAME}
+    # AdminUiPlugin requires an existing vendure-ui-config.json at the app
+    # path (it overwrites the content with runtime values at boot); the
+    # committed artifact omits it, so create the empty shell if missing.
+    # No shell/compose variables at all — compose interpolates even bare
+    # $names inside command strings.
+    command:
+      [
+        "sh",
+        "-c",
+        "test -f /app/backend/admin-ui-dist/vendure-ui-config.json || echo '{}' > /app/backend/admin-ui-dist/vendure-ui-config.json; exec node dist/index.js",
+      ]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  worker:
+    build: ./repo
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/${PREVIEW_DB_NAME}
+    command: ["node", "dist/index-worker.js"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+networks:
+  default:
+    # The test stack's network, by fixed name: `postgres` resolves to the
+    # test stack's postgres, and the edge Caddy joins this same network, so
+    # it can route to the vendure-${PREVIEW_SLUG} alias above.
+    name: babasarok-test_default
+    external: true
