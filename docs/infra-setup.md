@@ -153,6 +153,14 @@ over earlier (self-hosted DKIM) are obsolete — discard them.
    builds inject `WORKERS_CI_BRANCH` automatically; the deploy script is
    fail-closed otherwise — no/unknown `DEPLOY_STACK` aborts instead of
    guessing, and a preview build can never touch the prod stack.
+5. **Concurrent builds:** paid plans run up to 6 builds in parallel and do
+   not cancel superseded ones. Per stack, `deploy-backend.sh` serialises
+   overlapping deploys behind a `flock` on the box and refuses to deploy a
+   commit **older** than the one already deployed (ordered by committer
+   timestamp, recorded in `<stack>/commit.txt`). The refusal exits nonzero,
+   which also stops `wrangler deploy` — a late, stale build can never roll
+   a stack (backend or frontend) back. Roll back by pushing a fresh commit;
+   a force-push of an older commit is refused by the same check.
 
 ## 7. Preview stacks (phase 4) — how they work
 
