@@ -68,5 +68,5 @@ playwright-report/
 blob-report/
 .playwright/
 
-# Vendure backend build/email output
+backend/admin-ui/
 backend/email-out/

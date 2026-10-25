@@ -9,6 +9,7 @@
     "build": "tsc",
     "start": "node --env-file-if-exists=.env dist/index.js",
     "worker": "node --env-file-if-exists=.env dist/index-worker.js",
+    "build-admin-ui": "node dist/build-admin-ui.js",
     "migrate": "node --env-file-if-exists=.env dist/migrate.js",
     "generate-migration": "node --env-file-if-exists=.env dist/generate-migration.js",
     "check": "tsc --noEmit",
@@ -29,6 +30,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@vendure/ui-devkit": "^3.8.1",
+    "typeorm": "^0.3.31",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   }

@@ -119,9 +119,7 @@ export class QuoteOrderService {
 
     try {
       const product = await this.productService.create(ctx, {
-        translations: [
-          { languageCode: ctx.languageCode, name: title, slug, description: "" },
-        ],
+        translations: [{ languageCode: ctx.languageCode, name: title, slug, description: "" }],
         enabled: true,
       });
       const variants = await this.productVariantService.create(ctx, [

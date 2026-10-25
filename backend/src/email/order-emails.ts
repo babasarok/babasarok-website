@@ -7,9 +7,7 @@ import { env } from "../env";
 function onOrderPlaced(name: string) {
   return new EmailEventListener(name)
     .on(OrderStateTransitionEvent)
-    .filter(
-      (event) => event.toState === "ArrangingPayment" && event.fromState === "AddingItems"
-    )
+    .filter((event) => event.toState === "ArrangingPayment" && event.fromState === "AddingItems")
     .loadData(async ({ event, injector }) => {
       const entityHydrator = injector.get(EntityHydrator);
       await entityHydrator.hydrate(event.ctx, event.order, {
@@ -18,6 +16,7 @@ function onOrderPlaced(name: string) {
     })
     .setTemplateVars((event) => ({
       order: event.order,
+      adminUrl: env.adminUrl,
       // 1-based numbering keeps the per-product blocks aligned with the
       // "1. termék: …" labels inside the client-generated set-discount summary.
       products: event.order.lines.map((line, index) => ({

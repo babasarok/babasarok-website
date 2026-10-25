@@ -16,6 +16,7 @@ const EnvSchema = z
     SMTP_SECURE: z.enum(["true", "false"]).default("false"),
     SHOP_COUNTRY_CODE: z.string().length(2).default("HU"),
     SHOP_COUNTRY_NAME: z.string().min(1).default("Magyarország"),
+    ADMIN_URL: z.string().min(1).default("http://localhost:4000/admin-ui"),
     SUPERADMIN_EMAIL: z.string().min(3).optional(),
     SUPERADMIN_PASSWORD: z.string().min(8).optional(),
   })
@@ -68,6 +69,7 @@ export const env = {
   shopOwnerEmail: value.SHOP_OWNER_EMAIL,
   orderEmailFrom: value.ORDER_EMAIL_FROM,
   shopCountryCode: value.SHOP_COUNTRY_CODE,
+  adminUrl: value.ADMIN_URL,
   shopCountryName: value.SHOP_COUNTRY_NAME,
   smtp:
     value.SMTP_HOST === undefined

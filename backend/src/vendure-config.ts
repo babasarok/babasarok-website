@@ -1,21 +1,17 @@
 import path from "node:path";
+import { existsSync } from "node:fs";
 import {
   configureDefaultOrderProcess,
   DefaultJobQueuePlugin,
+  DefaultSearchPlugin,
   LanguageCode,
   OrderPlacedStrategy,
   RequestContext,
   VendureConfig,
 } from "@vendure/core";
 import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
-import {
-  EmailPlugin,
-  FileBasedTemplateLoader,
-} from "@vendure/email-plugin";
-import type {
-  EmailPluginDevModeOptions,
-  EmailPluginOptions,
-} from "@vendure/email-plugin";
+import { EmailPlugin, FileBasedTemplateLoader } from "@vendure/email-plugin";
+import type { EmailPluginDevModeOptions, EmailPluginOptions } from "@vendure/email-plugin";
 import { env } from "./env";
 import { HandlebarsHtmlGenerator } from "./email/handlebars-html-generator";
 import { orderConfirmationHandler, orderNotificationHandler } from "./email/order-emails";
@@ -24,9 +20,7 @@ import { ChannelSetupPlugin } from "./setup/channel-setup.plugin";
 
 function emailPluginOptions(): EmailPluginOptions | EmailPluginDevModeOptions {
   const base = {
-    templateLoader: new FileBasedTemplateLoader(
-      path.join(__dirname, "..", "email-templates")
-    ),
+    templateLoader: new FileBasedTemplateLoader(path.join(__dirname, "..", "email-templates")),
     // Plain-HTML handlebars templates, not MJML.
     emailGenerator: new HandlebarsHtmlGenerator(),
     handlers: [orderConfirmationHandler, orderNotificationHandler],
@@ -59,11 +53,7 @@ function emailPluginOptions(): EmailPluginOptions | EmailPluginDevModeOptions {
 // ArrangingPayment (no payment integration yet) and must not linger as an
 // active order. Revisit when Barion lands.
 export class QuoteOrderPlacedStrategy implements OrderPlacedStrategy {
-  shouldSetAsPlaced(
-    _ctx: RequestContext,
-    fromState: string,
-    toState: string
-  ): boolean {
+  shouldSetAsPlaced(_ctx: RequestContext, fromState: string, toState: string): boolean {
     return fromState === "AddingItems" && toState === "ArrangingPayment";
   }
 }
@@ -94,19 +84,34 @@ export const config: VendureConfig = {
   dbConnectionOptions: {
     type: "postgres",
     url: env.databaseUrl,
-    // Dev provisions its schema directly; production uses generated
-    // migrations (see migrate.ts / generate-migration.ts).
-    synchronize: !env.isProduction,
+    migrations: [path.join(__dirname, "migrations/*.js")],
+    // Schema changes land as generated migrations (generate-migration.ts),
+    // run by the server and worker on boot. No synchronize anywhere: server
+    // and worker share one database.
   },
   plugins: [
     QuoteOrderPlugin,
     ChannelSetupPlugin,
     DefaultJobQueuePlugin.init({}),
+    // Ships in core; keeps the Admin UI's search views functional. Search
+    // quality (boosting, facets) is a later milestone.
+    DefaultSearchPlugin.init({ indexStockStatus: false }),
     EmailPlugin.init(emailPluginOptions()),
-    // Serves the management dashboard at /admin-api/admin-ui. In dev the
-    // bundled Angular app is compiled on first boot; the port must match the
-    // API server so the UI can reach the admin-api GraphQL endpoint.
-    AdminUiPlugin.init({ route: "admin-ui", port: env.port }),
+    // Serves the management dashboard at /admin-ui. The custom build (with
+    // Hungarian) is produced by build-admin-ui.ts; fall back to the bundled
+    // English app while it does not exist. The port must match the API server
+    // so the UI can reach the admin-api GraphQL endpoint.
+    AdminUiPlugin.init({
+      route: "admin-ui",
+      port: env.port,
+      ...(existsSync(path.join(__dirname, "..", "admin-ui"))
+        ? { app: { path: path.join(__dirname, "..", "admin-ui") } }
+        : {}),
+      adminUiConfig: {
+        defaultLanguage: LanguageCode.hu,
+        availableLanguages: [LanguageCode.hu, LanguageCode.en],
+      },
+    }),
   ],
   customFields: {
     Order: [
