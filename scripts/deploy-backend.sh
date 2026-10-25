@@ -54,6 +54,10 @@ $SSH "$TARGET" "cp $DIR/repo/deploy/$DEPLOY_STACK/docker-compose.yml $DIR/docker
 # which is the gate before the frontend is allowed to deploy.
 $SSH "$TARGET" "cd $DIR && docker compose up -d --build --wait --wait-timeout 300"
 
+# The deploy restarted the worker; any job it had mid-flight is stuck in
+# RUNNING forever (the queue never re-picks those). Requeue them.
+$SSH "$TARGET" "cd $DIR && docker compose exec -T postgres psql -U babasarok -d babasarok -c \"update job_record set state='PENDING', attempts=0 where state='RUNNING';\""
+
 # Attach the shared edge Caddy to this stack's network (idempotent; the
 # network is created by the stack's compose run above). The Caddyfile ships
 # with the deploy. Pre-create both stack networks so the edge compose never
