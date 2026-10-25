@@ -167,11 +167,13 @@ ADMIN_URL.
   come with the pricing milestone.
 - Vendure's native order totals read 0 Ft in the Admin UI until re-pricing
   lands; the real totals are in the custom fields and the emails.
-- Admin UI Hungarian: shipped Vendure UI has **no hu**; we translate the
-  797-key `en.json` → `ui-translations/hu.json` (subagent task — verify it's
-  actually Hungarian before compiling) and compile a custom Admin UI via
-  `build-admin-ui.ts`; if the compile fails, the fallback is the bundled
-  English UI.
+- Admin UI Hungarian: shipped Vendure UI has **no hu**; the 797-key
+  `ui-translations/hu.json` is translated and key-set/ICU-validated. The
+  custom Admin UI build (`pnpm -C backend run build-admin-ui`, uses
+  `command: "pnpm"` because the yarn scaffold trips over the repo's
+  packageManager field) was kicked off but NOT verified — if
+  `backend/admin-ui/` is missing or stale, re-run it and restart the server;
+  the fallback is the bundled English UI.
 
 ## Docs to keep in sync
 

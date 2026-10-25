@@ -1,13 +1,17 @@
 import "reflect-metadata";
 import path from "node:path";
 import { compileUiExtensions } from "@vendure/ui-devkit/compiler";
+import { env } from "./env";
 
 // One-off build of the Admin UI with the Hungarian language pack; the output
 // (backend/admin-ui) is gitignored and served by AdminUiPlugin when present.
 async function main(): Promise<void> {
   const app = compileUiExtensions({
-    outputPath: path.join(__dirname, "..", "admin-ui"),
+    outputPath: env.adminUiOutputPath,
     baseHref: "/admin-ui",
+    // The scaffold defaults to yarn, which trips over the repo's
+    // packageManager field; build with the repo's package manager.
+    command: "pnpm",
     extensions: [
       {
         translations: {
