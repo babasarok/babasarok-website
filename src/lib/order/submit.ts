@@ -13,12 +13,9 @@ import type { IProduct, Field } from "../types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "../data";
 import { isFieldVisible } from "../product/field";
 import { FIELD_BEHAVIORS } from "../product/behavior";
+import { PUBLIC_VENDURE_API_URL } from "astro:env/client";
 
-const VENDURE_API_URL =
-  typeof import.meta.env.PUBLIC_VENDURE_API_URL === "string" &&
-  import.meta.env.PUBLIC_VENDURE_API_URL !== ""
-    ? import.meta.env.PUBLIC_VENDURE_API_URL
-    : "http://localhost:4000";
+const VENDURE_API_URL = PUBLIC_VENDURE_API_URL;
 
 export interface OrderDetails {
   name: string;
