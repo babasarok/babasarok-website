@@ -51,7 +51,7 @@ Content edits ──▶ Tina Cloud (CMS) ──▶ GitHub repo ──▶ Workers
     dashboard propagates on the next deploy.
 - **Cron on the box:** nightly `docker system prune -af` (in the `deploy`
   user's crontab, installed by every deploy — note it runs as `deploy`, whose
-  docker-group membership makes it work); hourly `preview-teardown.sh` plus
+  docker-group membership makes it work); hourly `preview-teardown.ts` plus
   crash-leftover cleanup (stale `incoming-*.tar` and `.env.cloudflare-*.tmp`
   files older than 2h are deleted).
 - **Backups: Hetzner server backups** (paid, enabled in the Hetzner Cloud
@@ -110,7 +110,7 @@ account (account id `b64cf6f65472d9a85a44d39f7a68c81a`).
   `DEPLOY_USER` (`deploy`), `DEPLOY_STACK` (`prod`/`preview`),
   `DEPLOY_SSH_KEY`, `PUBLIC_VENDURE_API_URL` (prod: `https://api.babasarok.net`;
   previews: none fixed — the preview build command derives
-  `https://api-<slug>.babasarok.net` via `scripts/preview-slug.sh`), plus
+  `https://api-<slug>.babasarok.net` via `the shared previewSlug() helper (src/lib/preview-slug.ts)`), plus
   `TINA_CMS_*`, `GTM_ID`, `SITE_URL`.
 - **Concurrency:** paid plan allows parallel builds that don't cancel each
   other; the per-stack `flock` + commit-timestamp guard on the box makes

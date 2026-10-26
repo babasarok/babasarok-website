@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { previewApiUrl } from "../preview-url";
 
 describe("previewApiUrl", () => {
-  it("derives the API host from the branch via preview-slug.sh", () => {
+  it("derives the API host from the branch via the shared slug function", () => {
     expect(previewApiUrl({ branch: "fix/my_branch!", stack: "preview" })).toBe(
       "https://api-fix-my-branch.babasarok.net"
     );

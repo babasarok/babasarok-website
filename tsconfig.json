@@ -6,6 +6,7 @@
     "src/**/*",
     "integrations/**/*",
     "scripts/**/*",
+    "deploy/**/*",
     "tests/**/*",
     "tina/**/*",
     "*.ts",

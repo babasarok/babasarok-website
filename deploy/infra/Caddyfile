@@ -14,6 +14,6 @@ www.babasarok.net {
 }
 
 # Per-branch preview hosts (api-<slug>.babasarok.net), one file per preview
-# stack, written/removed by scripts/deploy-backend.sh. An empty previews
+# stack, written/removed by scripts/deploy-backend.ts. An empty previews
 # directory matches nothing and is a no-op.
 import /etc/caddy/previews/*.caddy

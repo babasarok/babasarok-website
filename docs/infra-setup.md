@@ -108,6 +108,13 @@ Caddy, compose stacks, DKIM key generation) over SSH using
 > migrations, health-gated deploys, emails via the Cloudflare REST API from
 > the box). Prod secrets live in `/srv/babasarok/prod/.env` and the shared
 > password manager (superadmin: `admin@babasarok.net`).
+>
+> Node.js 24 (NodeSource repo, 2026-10-26) is also required on the box: the
+> infra scripts (`deploy/infra/*.ts`) and the deploy payload
+> (`deploy/remote/deploy-stack.ts`) run under plain `node` with type
+> stripping — no node_modules on the box. Ubuntu's own `nodejs` package
+> has type stripping patched out; do not replace the NodeSource install
+> with it.
 
 ## 5. Mail DNS records (from the provider, replaces the old DKIM plan)
 
@@ -147,14 +154,14 @@ over earlier (self-hosted DKIM) are obsolete — discard them.
 3. **Preview variables** (Preview env): same list, except
    `DEPLOY_STACK` = `preview`. Do NOT set `PUBLIC_VENDURE_API_URL` for
    previews — `astro.config.ts` derives it per branch from
-   `WORKERS_CI_BRANCH` + `DEPLOY_STACK` (via `scripts/preview-slug.sh`),
+   `WORKERS_CI_BRANCH` + `DEPLOY_STACK` (via `the shared previewSlug() helper (src/lib/preview-slug.ts)`),
    so plain `pnpm run build` is enough.
 4. Enable **preview branch deploys** (non-production branches). Preview
    builds inject `WORKERS_CI_BRANCH` automatically; the deploy script is
    fail-closed otherwise — no/unknown `DEPLOY_STACK` aborts instead of
    guessing, and a preview build can never touch the prod stack.
 5. **Concurrent builds:** paid plans run up to 6 builds in parallel and do
-   not cancel superseded ones. Per stack, `deploy-backend.sh` serialises
+   not cancel superseded ones. Per stack, `deploy-backend.ts` serialises
    overlapping deploys behind a `flock` on the box and refuses to deploy a
    commit **older** than the one already deployed (ordered by committer
    timestamp, recorded in `<stack>/commit.txt`). The refusal exits nonzero,
@@ -168,13 +175,13 @@ Every non-`main` branch with preview deploys enabled gets its own backend
 stack on the box:
 
 - **Stack identity** comes from the branch: `WORKERS_CI_BRANCH` is
-  sanitised into a slug by `scripts/preview-slug.sh` (fail-closed on
+  sanitised into a slug by `the shared previewSlug() helper (src/lib/preview-slug.ts)` (fail-closed on
   garbage). The slug names the stack dir `/srv/babasarok/<slug>`, the
   compose project (`babasarok-<slug>`), the container alias
   (`vendure-<slug>`), the API host `api-<slug>.babasarok.net` and the
   database `babasarok_preview_<slug>`. The same slug drives the frontend
   build: `astro.config.ts` derives the API URL per branch from
-  `WORKERS_CI_BRANCH` + `DEPLOY_STACK` (via `scripts/preview-slug.sh`), so
+  `WORKERS_CI_BRANCH` + `DEPLOY_STACK` (via `the shared previewSlug() helper (src/lib/preview-slug.ts)`), so
   the Preview build command stays plain `pnpm run build`
   (the Preview _command_ stays `pnpm run deploy`, which now deploys the
   preview backend before `wrangler preview`).
@@ -201,7 +208,7 @@ stack on the box:
 - **DNS (one-time, user step):** add wildcard DNS-only records to the
   Cloudflare zone — `A  *  178.105.79.2` and `AAAA  *  2a01:4f8:c013:832f::1`
   (same IPs as §4). DNS-only, like the api records.
-- **Teardown:** an hourly cron on the box (`preview-teardown.sh`, installed
+- **Teardown:** an hourly cron on the box (`preview-teardown.ts`, installed
   by every deploy) checks each preview's recorded branch against origin;
   a branch that no longer exists gets its containers, database, route
   snippet and directory removed automatically.

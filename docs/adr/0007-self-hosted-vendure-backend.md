@@ -33,7 +33,7 @@ complete and verified in production.
    blocks SMTP). Two emails per order: buyer confirmation and owner
    notification. Previews/dev run file transport and cannot email a buyer.
 5. **Deploy topology: one Cloudflare build deploys both halves.** The build
-   command ships the repo tree to the box (`scripts/deploy-backend.sh`:
+   command ships the repo tree to the box (`scripts/deploy-backend.ts`:
    per-stack flock, box-wide infra lock, stale-commit refusal, docker compose
    build/up with a health gate, automatic rollback to the previous image on a
    failed health gate), then `wrangler deploy`/`wrangler preview` ships the

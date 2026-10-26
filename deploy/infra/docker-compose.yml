@@ -1,7 +1,7 @@
 # Shared platform: Caddy terminates TLS for the API hostnames and routes into
 # the prod stack's network (vendure-prod) and into preview stacks by their
 # generated per-branch snippets (the previews directory — one file per branch,
-# written by scripts/deploy-backend.sh).
+# written by scripts/deploy-backend.ts).
 #
 # The postgres service hosts every preview branch database (there is no test
 # stack any more — previews replaced it). Preview stacks join this project's
@@ -9,7 +9,7 @@
 # resolve.
 #
 # The generated networks override (docker-compose.networks.yml, created by
-# deploy-backend.sh from the stacks that exist on the box) attaches the Caddy
+# deploy-backend.ts from the stacks that exist on the box) attaches the Caddy
 # container to each fixed stack's compose network.
 name: babasarok-edge
 
@@ -36,7 +36,7 @@ services:
   # Shared preview postgres: no data of its own that matters — every database
   # inside it is a disposable per-branch copy of prod, re-copied on each
   # preview deploy. The password lives in this stack's .env (bootstrapped once
-  # on the box); preview .envs are provisioned from it by deploy-backend.sh.
+  # on the box); preview .envs are provisioned from it by deploy-backend.ts.
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
