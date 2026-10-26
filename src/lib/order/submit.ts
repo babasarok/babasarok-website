@@ -1,6 +1,9 @@
 /**
- * Order submission: format the order directly from the product models and POST
- * it to web3forms. Kept out of the Svelte component so the form stays declarative.
+ * Order submission: format the order from the product models and POST it to
+ * the Vendure shop API, which stores it as a Vendure order and emails the
+ * buyer + the shop owner. Kept out of the Svelte component so the form stays
+ * declarative. The pricing core stays the price authority (ADR 0002): the
+ * computed prices travel with the order and Vendure stores them as-is.
  */
 import { calculatePriceForItem } from "@/lib/pricing/price";
 import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
@@ -10,8 +13,9 @@ import type { IProduct, Field } from "../types.svelte";
 import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "../data";
 import { isFieldVisible } from "../product/field";
 import { FIELD_BEHAVIORS } from "../product/behavior";
+import { PUBLIC_VENDURE_API_URL } from "astro:env/client";
 
-const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
+const VENDURE_API_URL = PUBLIC_VENDURE_API_URL;
 
 export interface OrderDetails {
   name: string;
@@ -48,7 +52,7 @@ function fieldIndentDepth(field: Field, fields: Field[]): number {
   return depth;
 }
 
-/** Render a single product into the plain-text block used in the email body. */
+/** Render a single product into the plain-text block stored on the order line. */
 function formatProductString(
   product: IProduct,
   threadColors: CmsEnhancedEmbroideryColor[]
@@ -102,12 +106,11 @@ function formatProductString(
 }
 
 /**
- * Basket-level set-discount summary folded into the `ar` field: one line per
- * formed instance listing the set, the forint amount it removes, and the member
- * products (each prefixed with its order number, matching the `termek N` blocks)
- * so a discount maps unambiguously to specific items even when titles repeat.
- * When the flat set amount is clamped to the covered subtotal, the set's nominal
- * amount is shown alongside the applied one. Empty when no set discount is earned.
+ * Basket-level set-discount summary stored with the order: one line per
+ * formed instance listing the set, the forint amount it removes, and the
+ * member products (each prefixed with its order number, matching the "termek
+ * N" blocks) so a discount maps unambiguously to specific items even when
+ * titles repeat. Empty when no set discount is earned.
  */
 function formatSetDiscounts(instances: ResolvedSetInstance[], products: IProduct[]): string {
   if (instances.length === 0) {
@@ -126,15 +129,33 @@ function formatSetDiscounts(instances: ResolvedSetInstance[], products: IProduct
 }
 
 export interface SubmitOrderOptions {
-  accessKey: string;
+  /** Buyer's free-text message, stored with the order and shown in the emails. */
   message: string;
   /** Unique per submission attempt; shared with the Google Ads conversion event. */
   transactionId: string;
 }
 
-function buildOrderFormData(order: OrderDetails, options: SubmitOrderOptions): FormData {
-  // Resolve the basket allocation once; both the total and the summary price
-  // from it so the set status can't be dropped by a single caller.
+const SUBMIT_MUTATION = `
+  mutation SubmitQuoteOrder($input: QuoteOrderInput!) {
+    submitQuoteOrder(input: $input) {
+      __typename
+      ... on SubmitQuoteOrderSuccess {
+        orderCode
+      }
+      ... on SubmitQuoteOrderError {
+        errorCode
+        message
+      }
+    }
+  }
+`;
+
+function buildQuoteOrderInput(
+  order: OrderDetails,
+  options: SubmitOrderOptions
+): Record<string, unknown> {
+  // Resolve the basket allocation once; the total and the set summary come
+  // from it so the submitted price can't drift from what the buyer saw.
   const pricing = resolveBasketPricing(order.products, order.productGroups);
   // The delivery charged: the method's price, or 0 when the products subtotal
   // (items minus set discounts) is above its free threshold. Judged after the
@@ -142,38 +163,35 @@ function buildOrderFormData(order: OrderDetails, options: SubmitOrderOptions): F
   const deliveryPrice = chargedDeliveryPrice(order.deliveryMethod, pricing);
   const total = orderTotal(pricing, deliveryPrice);
 
-  const formData = new FormData();
-  formData.append("access_key", options.accessKey);
-  formData.append("subject", `Új árajánlatkérés - ${order.name}`);
-  formData.append("nev", order.name);
-  formData.append("email", order.email);
-  formData.append("telefonszam", order.phone);
-  for (const [index, product] of order.products.entries()) {
-    formData.append(
-      `termek ${(index + 1).toString()}`,
-      formatProductString(product, order.threadColors)
-    );
-  }
-  formData.append(
-    "szallitasimod",
-    isDeliveryFree(order.deliveryMethod, deliveryPrice)
-      ? `${order.deliveryMethod.name} (ingyenes)`
-      : `${order.deliveryMethod.name} (${deliveryPrice.toString()} Ft)`
-  );
-  if (order.deliveryMethod.needs_address) {
-    formData.append("szallitasicim", order.address ?? "");
-  }
-  formData.append("uzenet", options.message);
-  // Set discounts live inside `ar` (not a separate field) so the submitted
-  // price and its breakdown stay together and trackable.
-  const setSummary = formatSetDiscounts(pricing.instances, order.products);
-  const arLines = [`${total.toString()} Ft`, ...(setSummary ? ["", setSummary] : [])];
-  formData.append("ar", arLines.join("\n"));
-  formData.append("feltetelek", order.termsAccepted ? "Igen" : "Nem");
-  // Last field of the email, matching the transaction_id of the conversion
-  // event recorded alongside the submission so the two can be reconciled.
-  formData.append("tranzakcio_id", options.transactionId);
-  return formData;
+  return {
+    name: order.name,
+    email: order.email,
+    phone: order.phone,
+    products: order.products.map((product) => {
+      const price = calculatePriceForItem(product);
+      return {
+        slug: product.product_id,
+        title: product.title,
+        count: product.count,
+        configText: formatProductString(product, order.threadColors),
+        unitPrice: price.unitPrice ?? 0,
+        lineTotal: price.totalPrice ?? 0,
+      };
+    }),
+    deliveryMethod: order.deliveryMethod.name,
+    deliveryPrice,
+    // "ingyenes" only for a positively-priced method charged 0 by its
+    // free-delivery threshold; a nominally-free method shows "(0 Ft)".
+    deliveryFree: isDeliveryFree(order.deliveryMethod, deliveryPrice),
+    needsAddress: order.deliveryMethod.needs_address === true,
+    // Sent only for address-requiring methods, matching the old payload.
+    address: order.deliveryMethod.needs_address === true ? order.address : undefined,
+    message: options.message,
+    setDiscountSummary: formatSetDiscounts(pricing.instances, order.products),
+    totalPrice: total,
+    termsAccepted: order.termsAccepted,
+    transactionId: options.transactionId,
+  };
 }
 
 export type SubmitOrderResult = { ok: true } | { ok: false; message: string };
@@ -181,19 +199,40 @@ export type SubmitOrderResult = { ok: true } | { ok: false; message: string };
 const GENERIC_ERROR =
   "Hiba történt az árajánlatkérés elküldése közben. Kérlek, próbáld meg újra később.";
 
+interface SubmitQuoteOrderResponse {
+  data?: {
+    submitQuoteOrder?:
+      | { __typename: "SubmitQuoteOrderSuccess"; orderCode: string }
+      | { __typename: "SubmitQuoteOrderError"; errorCode: string; message: string }
+      | null;
+  };
+  errors?: Array<{ message: string }>;
+}
+
 export async function submitOrder(
   order: OrderDetails,
   options: SubmitOrderOptions
 ): Promise<SubmitOrderResult> {
-  const formData = buildOrderFormData(order, options);
+  const input = buildQuoteOrderInput(order, options);
 
   try {
-    const res = await fetch(WEB3FORMS_ENDPOINT, { method: "POST", body: formData });
-    const result = (await res.json()) as { message?: string } | null;
+    const res = await fetch(`${VENDURE_API_URL}/shop-api`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: SUBMIT_MUTATION,
+        variables: { input },
+      }),
+    });
+    const result = (await res.json()) as SubmitQuoteOrderResponse;
 
-    if (!res.ok) {
-      console.log("Failed to submit order", result);
-      return { ok: false, message: `${GENERIC_ERROR} (${result?.message ?? "Ismeretlen hiba"})` };
+    const submitted = result.data?.submitQuoteOrder;
+    if (submitted?.__typename === "SubmitQuoteOrderError") {
+      return { ok: false, message: `${GENERIC_ERROR} (${submitted.message})` };
+    }
+    if (submitted?.__typename !== "SubmitQuoteOrderSuccess") {
+      console.log("Failed to submit order", result.errors ?? result);
+      return { ok: false, message: GENERIC_ERROR };
     }
   } catch (e) {
     console.log("Failed to submit order", e);

@@ -1,0 +1,4 @@
+# Vendure dashboard chunks are content-hashed by its vite build, like Astro's
+# /_astro/* assets (the adapter injects that rule at build time).
+/dashboard/assets/*
+  Cache-Control: public, max-age=31536000, immutable

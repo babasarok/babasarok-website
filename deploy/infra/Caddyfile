@@ -1,0 +1,19 @@
+{
+	email {$ACME_EMAIL}
+}
+
+api.babasarok.net {
+	reverse_proxy vendure-prod:4000
+}
+
+# www is not used; the wildcard DNS record still points it at this box, so
+# send any stray visitors to the apex (hosted on Cloudflare) instead of a
+# TLS error.
+www.babasarok.net {
+	redir https://babasarok.net{uri} permanent
+}
+
+# Per-branch preview hosts (api-<slug>.babasarok.net), one file per preview
+# stack, written/removed by scripts/deploy-backend.ts. An empty previews
+# directory matches nothing and is a no-op.
+import /etc/caddy/previews/*.caddy

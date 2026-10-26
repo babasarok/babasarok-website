@@ -331,10 +331,8 @@
                 </div>
               {/if}
             </div>
-          {:else if field.type === "material"}
-            <OrderItemMaterialField {product} {field} {onChange} />
           {:else}
-            <p>--</p>
+            <OrderItemMaterialField {product} {field} {onChange} />
           {/if}
         </div>
         {#if field.value?.error}

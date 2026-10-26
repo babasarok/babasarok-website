@@ -1,0 +1,90 @@
+# Preview stack: one per branch, deployed by scripts/deploy-backend.ts when
+# DEPLOY_STACK=preview (project name babasarok-<slug>, written as `name:` at
+# the top of the deployed copy of this file by deploy-stack.ts).
+#
+# No postgres of its own: every preview shares the infra stack's postgres
+# (this stack's default network IS babasarok-edge_default, so the `postgres`
+# service name and the edge Caddy both resolve there — no Caddy-side network
+# work per branch). Each branch gets its own database
+# (babasarok_preview_<slug>) that the deploy script drops, recreates and
+# re-copies from prod before this stack boots, so migrations on the branch
+# always run against fresh prod data.
+#
+# NODE_ENV=development and no email transport in .env: previews run the file
+# transport and can never email a real buyer. Email rendering runs in the
+# worker (job queue), the /mailbox route in the vendure process — both mount
+# ./email-out so the mailbox sees what the worker wrote.
+services:
+  migrate:
+    build: ./repo
+    restart: "no"
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/${PREVIEW_DB_NAME}
+    command: ["node", "dist/migrate.js"]
+
+  vendure:
+    build: ./repo
+    restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - vendure-${PREVIEW_SLUG}
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/${PREVIEW_DB_NAME}
+    volumes:
+      # Email files written by the worker; /mailbox here serves them.
+      - ./email-out:/app/backend/email-out
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  worker:
+    build: ./repo
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/${PREVIEW_DB_NAME}
+    command: ["node", "dist/index-worker.js"]
+    volumes:
+      - ./email-out:/app/backend/email-out
+    # Same DB probe as the prod stack's worker (no HTTP listener to fetch).
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "const{Client}=require('pg');new Client({connectionString:process.env.DATABASE_URL}).connect().then(()=>process.exit(0)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+networks:
+  default:
+    # The infra stack's network, by fixed name: `postgres` resolves to the
+    # shared preview postgres, and the edge Caddy joins this same network, so
+    # it can route to the vendure-${PREVIEW_SLUG} alias above.
+    name: babasarok-edge_default
+    external: true

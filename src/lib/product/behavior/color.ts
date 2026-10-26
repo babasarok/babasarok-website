@@ -1,9 +1,7 @@
 import { defineBehavior } from "./index";
 
 export const colorBehavior = defineBehavior("color", {
-  normalize: (f, _ctx) => {
-    void f;
-  },
+  normalize: (_f, _ctx) => {},
 
   resolveValue: (f) => {
     const value = f.value?.value;

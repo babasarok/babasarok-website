@@ -13,11 +13,20 @@ const config = {
   reportDescriptionlessDisables: true,
   reportInvalidScopeDisables: true,
   reportNeedlessDisables: true,
-  ignoreFiles: ["**/dist/**", "public/admin/**", "node_modules/**", "tina/__generated__/**"],
+  ignoreFiles: [
+    "**/dist/**",
+    "backend/dist/dashboard/**",
+    "public/admin/**",
+    "node_modules/**",
+    "tina/__generated__/**",
+  ],
   rules: {
     // Tailwind v4 `@utility` blocks legitimately interleave declarations with
     // nested `@media` at-rules, which this rule misreads as misplaced.
     "no-invalid-position-declaration": null,
+    // `@apply` preludes (e.g. `@apply text-h1 mb-6`) are Tailwind utility
+    // names, not CSS grammar — the css-tree lexer can't validate them.
+    "at-rule-prelude-no-invalid": [true, { ignoreAtRules: ["media", "apply"] }],
     // `:global(...)` is valid in Astro/Svelte scoped <style> blocks.
     "selector-pseudo-class-no-unknown": [true, { ignorePseudoClasses: ["global"] }],
   },

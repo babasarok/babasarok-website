@@ -2,8 +2,11 @@
   "extends": "astro/tsconfigs/strict",
   "include": [
     ".astro/types.d.ts",
+    ".astro/env.d.ts",
     "src/**/*",
+    "integrations/**/*",
     "scripts/**/*",
+    "deploy/**/*",
     "tests/**/*",
     "tina/**/*",
     "*.ts",

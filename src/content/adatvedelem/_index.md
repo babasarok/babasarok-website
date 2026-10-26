@@ -69,8 +69,8 @@ Saját oldalunk a működéséhez cookie-t nem használ. Ha a mérőeszközökh�
 
 ## 4. Hová kerül az adataid (feldolgozók)
 
-- **web3forms.com** — a rendelési és árajánlatkéréseket e-mailre juttatja; az adatot legfeljebb 30 napig őrzi.
-- **Cloudflare** — az oldal hostolása és forgalmazása (CDN) ezen keresztül történik; a keresetek (pl. az IP-cím) rövid ideig őrzött adatkezelési megállapodás alapján dolgozódik fel.
+- **Saját webáruház-rendszerünk (Vendure)** — a rendelési és árajánlatkéréseket a saját üzemeltetésű szerverünkön tároljuk (Hetzner, Németország); a visszaigazoló e-mailek a Cloudflare e-mail-küldő szolgáltatásán mennek át.
+- **Cloudflare** — az oldal hostolása és forgalmazása (CDN), valamint a rendelés-visszaigazoló e-mailek kiküldése ezen keresztül történik; a keresetek (pl. az IP-cím) rövid ideig őrzött adatkezelési megállapodás alapján dolgozódnak fel.
 - **Google LLC** és **Meta Platforms Inc.** — mérőeszközök, részletek a 2. pontban.
 
 ## 5. Mennyi ideig tároljuk

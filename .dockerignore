@@ -1,0 +1,12 @@
+# Whitelist: only what the backend image build needs.
+*
+!package.json
+!pnpm-workspace.yaml
+!pnpm-lock.yaml
+!Dockerfile
+!backend
+backend/node_modules
+backend/dist
+backend/email-out
+backend/.env
+backend/.env.*

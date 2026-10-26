@@ -1,6 +1,6 @@
 # ADR 0001: Orders are email requests via Web3Forms
 
-- **Status:** accepted
+- **Status:** superseded by [ADR 0007](0007-self-hosted-vendure-backend.md)
 - **Date:** 2026-08 (pre-existing practice, recorded when set support was designed)
 
 ## Context
