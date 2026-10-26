@@ -15,11 +15,14 @@ import { env } from "../env";
 
 // Placeholder catalog: until the real pricing integration (ADR 0001 follow-up)
 // moves price authority into Vendure, variants are dumb pointers and every
-// price lives on the order/line customFields.
+// price lives on the order/line customFields. Everything a placeholder owns
+// (sku, slug, name) carries the prefix so they are searchable, bulk-deletable,
+// and cannot collide with slugs/skus of real products created later.
 // ponytail: submitQuoteOrder is public and creates a placeholder product per
 // unseen slug — unbounded catalog pollution by spam. Pre-create placeholders
 // from the Tina catalog when the real pricing integration lands.
-const SKU_PREFIX = "quote-";
+const PLACEHOLDER_PREFIX = "placeholder-";
+const PLACEHOLDER_NAME_PREFIX = "[placeholder] ";
 
 @Injectable()
 export class QuoteOrderService {
@@ -110,7 +113,7 @@ export class QuoteOrderService {
     slug: string,
     title: string
   ): Promise<ProductVariant> {
-    const sku = `${SKU_PREFIX}${slug}`;
+    const sku = `${PLACEHOLDER_PREFIX}${slug}`;
     const repo = this.connection.getRepository(ctx, ProductVariant);
     const existing = await repo.findOne({ where: { sku } });
     if (existing) {
@@ -119,7 +122,14 @@ export class QuoteOrderService {
 
     try {
       const product = await this.productService.create(ctx, {
-        translations: [{ languageCode: ctx.languageCode, name: title, slug, description: "" }],
+        translations: [
+          {
+            languageCode: ctx.languageCode,
+            name: `${PLACEHOLDER_NAME_PREFIX}${title}`,
+            slug: sku,
+            description: "",
+          },
+        ],
         enabled: true,
       });
       const variants = await this.productVariantService.create(ctx, [
@@ -129,7 +139,9 @@ export class QuoteOrderService {
           price: 0,
           enabled: true,
           trackInventory: GlobalFlag.FALSE,
-          translations: [{ languageCode: ctx.languageCode, name: title }],
+          translations: [
+            { languageCode: ctx.languageCode, name: `${PLACEHOLDER_NAME_PREFIX}${title}` },
+          ],
         },
       ]);
       const variant = variants[0];

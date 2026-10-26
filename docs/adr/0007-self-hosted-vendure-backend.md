@@ -26,8 +26,11 @@ complete and verified in production.
    decision, out of scope here.
 3. **Placeholder catalog.** Until real products exist in Vendure, every
    unseen product slug gets a 0-priced placeholder variant so orders can
-   reference it; the Tina catalog remains the real catalog. When products are
-   recreated natively in Vendure (the intended direction — one source of
+   reference it; the Tina catalog remains the real catalog. Placeholders are
+   marked with a `placeholder-` prefix on sku and slug and a
+   `[placeholder] ` prefix on names, so they never collide with real
+   products and are searchable/bulk-deletable in the dashboard. When products
+   are recreated natively in Vendure (the intended direction — one source of
    truth, not two), placeholders and this seam disappear.
 4. **Emails leave through Cloudflare Email Sending's REST API** (Hetzner
    blocks SMTP). Two emails per order: buyer confirmation and owner
