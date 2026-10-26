@@ -25,8 +25,8 @@ function onOrderPlaced(name: string) {
         });
       return {
         orderEmailFrom:
-          (channel?.customFields.orderEmailFrom as string | null) ?? env.orderEmailFrom,
-        ownerEmail: (channel?.customFields.shopOwnerEmail as string | null) ?? env.shopOwnerEmail,
+          (channel?.customFields?.orderEmailFrom as string | null) ?? env.orderEmailFrom,
+        ownerEmail: (channel?.customFields?.shopOwnerEmail as string | null) ?? env.shopOwnerEmail,
       };
     })
     .setTemplateVars((event) => ({
