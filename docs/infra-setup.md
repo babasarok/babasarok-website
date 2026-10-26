@@ -62,7 +62,8 @@ One box hosts prod + previews. No need for more.
    €12.59/mo + €0.60 IPv4 = €13.19/mo — user's pick for headroom; the minimal
    fit would be CAX11 2 vCPU/4 GB ≈ €5.99/mo). ARM is verified fine: every
    image in the stack (postgres, node, caddy, postfix-relay) publishes arm64
-   builds, and the site + Admin UI builds happen off-box.
+   builds, and the site build — which now also builds the Vendure dashboard
+   SPA (ADR 0008) — happens off-box; the backend image build is `tsc` only.
 5. SSH key: **Add new key** → paste the contents of
    `~/.ssh/babasarok_bootstrap.pub`. Name it `babasarok-bootstrap`.
 6. Create → note the **IPv4 address** → **tell me the IP**.
@@ -183,8 +184,9 @@ stack on the box:
   build: `astro.config.ts` derives the API URL per branch from
   `WORKERS_CI_BRANCH` + `DEPLOY_STACK` (via `the shared previewSlug() helper (src/lib/preview-slug.ts)`), so
   the Preview build command stays plain `pnpm run build`
-  (the Preview _command_ stays `pnpm run deploy`, which now deploys the
-  preview backend before `wrangler preview`).
+  (the Preview _command_ stays `pnpm run deploy`, which deploys the
+  preview backend before `wrangler preview` and then registers the
+  preview's site URL as the stack's `ADMIN_URL`).
 - **Database lifecycle (per deploy):** the branch database is dropped and
   recreated from a live dump of the prod database on every deploy, then the
   branch's migrations run on top. Previews therefore always test branch

@@ -119,7 +119,10 @@ try {
           `SHOP_OWNER_EMAIL=${envValue(`${ROOT}/prod/.env`, "SHOP_OWNER_EMAIL")}`,
           `ORDER_EMAIL_FROM=${envValue(`${ROOT}/prod/.env`, "ORDER_EMAIL_FROM")}`,
           `API_ALLOWED_ORIGINS=${envValue(`${ROOT}/prod/.env`, "API_ALLOWED_ORIGINS")}`,
-          `ADMIN_URL=https://api-${slug}.babasarok.net/dashboard`,
+          // Fallback until deploy-backend.ts registers the preview site URL
+          // (printed by wrangler preview) right after the frontend deploy;
+          // the URL does not exist before the first preview deploy.
+          `ADMIN_URL=https://babasarok.net/dashboard`,
           "",
         ].join("\n")
       );

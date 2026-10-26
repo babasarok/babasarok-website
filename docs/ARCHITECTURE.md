@@ -181,8 +181,11 @@ exact mutation payload via inline snapshots.
 
 ### 4.5 Build & tooling specifics
 
-- `npm run dev` = `tinacms dev -c "astro dev"` (Tina backend on :4001 + Astro on
-  :4321). Plain `astro dev` cannot reach Tina.
+- `npm run dev` runs, via `concurrently -k` (any exit or Ctrl+C stops all):
+  postgres (docker compose, foreground, stopped with the rest) + the Vendure backend (:4000), the
+  dashboard vite dev server (:5173, proxied at `/dashboard` by
+  `integrations/dev-proxy.ts`), and `tinacms dev -c "astro dev"` (Tina backend
+  on :4001 + Astro on :4321). Plain `astro dev` cannot reach Tina.
 - `npm run build` talks to Tina Cloud (needs creds); `npm run build:local` is the
   self-contained, cred-free local/CI build.
 - Scoped npm `overrides` pin `vite ^7` globally but `^4.5.9` for `@tinacms/cli`

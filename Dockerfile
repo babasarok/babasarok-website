@@ -12,9 +12,9 @@ RUN npm install -g pnpm@12.15.0 \
   && pnpm install --filter babasarok-vendure-backend --ignore-scripts --frozen-lockfile
 
 COPY backend/ ./backend/
-# Compiles dist/ (tsc) and the dashboard (vite). The dashboard build's env
-# placeholders live in the committed backend/build.env; a local backend/.env,
-# if present, overrides them.
+# Compiles the server (tsc). The dashboard SPA is built on the Cloudflare side
+# (integrations/vendure-dashboard.ts) and served by the site's Worker at
+# /dashboard, so it is not built or shipped in this image.
 RUN pnpm -C backend run build
 
 WORKDIR /app/backend

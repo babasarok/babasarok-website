@@ -1,5 +1,6 @@
 import { defineConfig, envField, fontProviders } from "astro/config";
 import svelte from "@astrojs/svelte";
+import cloudflare from "@astrojs/cloudflare";
 import sitemap from "@astrojs/sitemap";
 import icon from "astro-icon";
 import tina from "@tinacms/astro/integration";
@@ -8,19 +9,31 @@ import tailwindcss from "@tailwindcss/vite";
 import pagefind from "astro-pagefind";
 import { unified } from "@astrojs/markdown-remark";
 import { remarkAssetImages } from "./src/lib/assets/remarkAssetImages";
-import { devStack } from "./integrations/dev-stack";
+import { devProxy } from "./integrations/dev-proxy";
+import { vendureDashboard } from "./integrations/vendure-dashboard";
 import { previewApiUrl } from "./src/lib/preview-url";
 
 // https://astro.build/config
 export default defineConfig({
   site: process.env.SITE_URL || "https://babasarok.net",
   output: "static",
+  adapter: cloudflare({
+    // Build-time work (filesystem reads in prerendered endpoints, sharp image
+    // optimization) stays on Node; only the on-demand surface — the dashboard
+    // SPA fallback — runs in workerd.
+    prerenderEnvironment: "node",
+    // Keep sharp build-time image optimization for prerendered routes instead
+    // of the adapter's default runtime Images binding.
+    imageService: "compile",
+  }),
+  // No Astro sessions; the adapter would otherwise provision a KV namespace.
+  session: false,
   redirects: { "/home": "/" },
   prefetch: true,
   integrations: [
-    // Its server hooks only run during `astro dev`, so this is dev-only:
-    // postgres + the vendure backend come up beside the dev server.
-    devStack(),
+    devProxy(),
+    // Builds the vendure dashboard into dist/dashboard on every build.
+    vendureDashboard(),
     sitemap(),
     icon(),
     tina(),

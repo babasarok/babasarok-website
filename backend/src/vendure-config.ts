@@ -80,6 +80,9 @@ export const config: VendureConfig = {
     port: env.port,
     adminApiPath: "admin-api",
     shopApiPath: "shop-api",
+    // Without an allowlist (local dev), Nest's default CORS applies. No API
+    // needs credentialed CORS: the dashboard authenticates with a bearer token
+    // (ADR 0008), whose response header Vendure exposes automatically.
     cors: env.allowedOrigins ? { origin: env.allowedOrigins } : true,
     csrfPrevention: true,
     middleware: [
@@ -97,6 +100,10 @@ export const config: VendureConfig = {
     ],
   },
   authOptions: {
+    // Bearer lets the dashboard, served from the site (incl. workers.dev
+    // previews, cross-site to the API), authenticate without third-party
+    // cookies.
+    tokenMethod: ["cookie", "bearer"],
     cookieOptions: { secret: env.tokenSecret },
     superadminCredentials: {
       identifier: env.superadmin.email ?? "admin@babasarok.local",
@@ -126,12 +133,10 @@ export const config: VendureConfig = {
     // quality (boosting, facets) is a later milestone.
     DefaultSearchPlugin.init({ indexStockStatus: false }),
     EmailPlugin.init(emailPluginOptions()),
-    // Serves the React dashboard; the app is built by `vite build`
-    // (see vite.config.mts) into dist/dashboard.
-    DashboardPlugin.init({
-      route: "dashboard",
-      appDir: "./dist/dashboard",
-    }),
+    // Provides the dashboard's admin API (metrics, settings store, saved
+    // views). Not init()-ed, so it serves no UI: the app is built by the
+    // site's Astro build and served by the site's Worker (ADR 0008).
+    DashboardPlugin,
   ],
   customFields: {
     Order: [

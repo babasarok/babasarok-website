@@ -126,8 +126,11 @@ account (account id `b64cf6f65472d9a85a44d39f7a68c81a`).
   replies must reach a real mailbox, so Email Routing forwards
   `orders@babasarok.net` to the owner's gmail (see below).
 - Admin link: the owner notification email deep-links to the order
-  (`ADMIN_URL` + `orders/<id>`); `ADMIN_URL` is per-stack — previews get
-  their own host written into their `.env` at first deploy.
+  (`ADMIN_URL` + `orders/<id>`); the dashboard lives on the site
+  (`https://babasarok.net/dashboard`, ADR 0008). `ADMIN_URL` is per-stack:
+  previews are seeded with the prod dashboard and then updated by the deploy
+  script to the preview's own site URL (parsed from `wrangler preview`
+  output) right after the frontend deploy.
 - Limitations surfaced during review: path-only attachments throw (future
   invoice milestone must inline content); suppressed recipients and
   permanent-bounce retries are not surfaced beyond the sender's nonzero

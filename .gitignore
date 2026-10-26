@@ -75,3 +75,4 @@ backend/src/gql/
 
 # Vendure runtime state (telemetry installation id)
 backend/.vendure/
+.wrangler/
