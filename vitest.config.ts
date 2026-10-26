@@ -18,7 +18,9 @@ export default defineConfig({
     {
       name: "astro-env-client-shim",
       resolveId(id) {
-        if (id === "astro:env/client") {return "\0astro-env-client";}
+        if (id === "astro:env/client") {
+          return "\0astro-env-client";
+        }
       },
       load(id) {
         if (id === "\0astro-env-client") {
