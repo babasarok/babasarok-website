@@ -75,7 +75,7 @@ Cloudflare in the same commit's build.
   `ADMIN_URL` to the preview's own site URL (parsed from `wrangler preview`
   output, which prints the branch-stable Preview URL) right after the
   frontend deploy, recreating the preview server and worker so it applies immediately.
-- The deploy script (`pnpm run deploy` → `scripts/deploy-backend.ts`) now
+- The deploy script (`pnpm run ship` → `scripts/deploy-backend.ts`) now
   also owns the wrangler invocation; it deploys with the adapter-generated
   `dist/server/wrangler.json` (assets in `dist/client`).
 - The dashboard bundle must be built against the same Admin API schema as the

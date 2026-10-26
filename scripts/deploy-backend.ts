@@ -2,7 +2,7 @@
 /**
  * Deploy the backend stack to the Hetzner box, health-gate it, then ship the
  * frontend (wrangler). Runs INSIDE the Cloudflare Workers build process
- * (the `pnpm run deploy` command; not GitHub Actions).
+ * (the `pnpm run ship` command; not GitHub Actions).
  *
  * Requires (Cloudflare build env vars): DEPLOY_HOST, DEPLOY_USER,
  * DEPLOY_SSH_KEY, and DEPLOY_STACK:

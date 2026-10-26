@@ -92,7 +92,7 @@ account (account id `b64cf6f65472d9a85a44d39f7a68c81a`).
   `name`. (The dashboard URL shows the same string, but that's the build
   service path, not proof; the `name` field and the Worker are the pair that
   must agree. Prod deploys on `main` verify the current value.)
-- **Build command:** `pnpm run build`. **Deploy command:** `pnpm run deploy`
+- **Build command:** `pnpm run build`. **Deploy command:** `pnpm run ship`
   — which first deploys the backend over SSH (health-gated, serialized,
   stale-refusing — see infra-setup §6–7), then runs `wrangler deploy`
   (production) or `wrangler preview` (non-main branch builds).

@@ -138,7 +138,7 @@ over earlier (self-hosted DKIM) are obsolete — discard them.
    `wrangler.jsonc`'s `name`) → **Settings** → **Builds & deployments** (or
    Build settings):
    - **Build command:** `pnpm run build`
-   - **Deploy command:** `pnpm run deploy` — I extend this script so it
+   - **Deploy command:** `pnpm run ship` — I extend this script so it
      deploys the backend over SSH, waits for its health check, and only then
      runs `npx wrangler deploy`. Backend always lands before the frontend,
      inside the same Cloudflare build (no GitHub Actions deploy, no hook).
@@ -184,7 +184,7 @@ stack on the box:
   build: `astro.config.ts` derives the API URL per branch from
   `WORKERS_CI_BRANCH` + `DEPLOY_STACK` (via `the shared previewSlug() helper (src/lib/preview-slug.ts)`), so
   the Preview build command stays plain `pnpm run build`
-  (the Preview _command_ stays `pnpm run deploy`, which deploys the
+  (the Preview _command_ stays `pnpm run ship`, which deploys the
   preview backend before `wrangler preview` and then registers the
   preview's site URL as the stack's `ADMIN_URL`).
 - **Database lifecycle (per deploy):** the branch database is dropped and
@@ -218,6 +218,6 @@ stack on the box:
 ## 8. Done — what happens next
 
 Once you've done §2–§7 and told me, I build and run: server bootstrap
-script, the prod compose stack, the `pnpm run deploy` chain, a first
+script, the prod compose stack, the `pnpm run ship` chain, a first
 end-to-end deploy, and preview stacks. Tina Cloud schema push is only
 needed when we remove the `fabformURL` field.
