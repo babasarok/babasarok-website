@@ -44,8 +44,18 @@ const DB = `babasarok_preview_${slug}`;
 function run(
   cmd: string,
   args: string[],
-  opts: { cwd?: string; input?: string | Buffer } = {}
+  opts: { cwd?: string; input?: string | Buffer; stream?: boolean } = {}
 ): string {
+  // stream: inherit stdio so long-running output (image builds) flows to the
+  // CF build log live instead of surfacing only on completion.
+  if (opts.stream) {
+    const s = spawnSync(cmd, args, { cwd: opts.cwd, stdio: "inherit" });
+    if (s.status !== 0) {
+      throw new Error(`${cmd} ${args.join(" ")} failed (exit ${s.status})`);
+    }
+    return "";
+  }
+
   const r = spawnSync(cmd, args, { cwd: opts.cwd, input: opts.input, encoding: "utf8" });
   if (r.status !== 0) {
     const stderr = r.stderr ? r.stderr.trim() : "";
@@ -59,8 +69,8 @@ function psql(container: string, db: string, sql: string): string {
   return run("docker", ["exec", container, "psql", "-U", "babasarok", "-d", db, "-c", sql]);
 }
 
-function compose(args: string[], cwd: string = DIR): string {
-  return run("docker", ["compose", ...args], { cwd });
+function compose(args: string[], cwd: string = DIR, stream = false): string {
+  return run("docker", ["compose", ...args], { cwd, stream });
 }
 
 try {
@@ -175,8 +185,21 @@ try {
   // tag the currently-running image as previous; if the new stack fails to
   // come healthy (bad migration, crashloop), roll the containers back to
   // that image so prod keeps serving instead of 502-ing until the next push.
+  // First remove renamed leftovers of a deploy killed mid-recreate: compose
+  // renames the old container to <hash>_<name> during recreate, and an
+  // orphan with that deterministic name makes the next recreate conflict and
+  // --wait time out.
+  for (const name of compose(["ps", "-a", "--format", "{{.Names}}"]).split("\n")) {
+    if (/^[0-9a-f]{12}_/.test(name)) {
+      run("docker", ["rm", "-f", name.trim()]);
+    }
+  }
   if (isPreview) {
-    compose(["-p", `babasarok-${slug}`, "up", "-d", "--build", "--wait", "--wait-timeout", "300"]);
+    compose(
+      ["-p", `babasarok-${slug}`, "up", "-d", "--build", "--wait", "--wait-timeout", "300"],
+      DIR,
+      true
+    );
   } else {
     const oldId = compose(["ps", "-q", "vendure"]).trim();
     if (oldId) {
@@ -190,15 +213,9 @@ try {
       }
     }
 
-    const up = spawnSync(
-      "docker",
-      ["compose", "up", "-d", "--build", "--wait", "--wait-timeout", "300"],
-      {
-        cwd: DIR,
-        stdio: "inherit",
-      }
-    );
-    if (up.status !== 0) {
+    try {
+      compose(["up", "-d", "--build", "--wait", "--wait-timeout", "300"], DIR, true);
+    } catch {
       console.error("new stack failed to become healthy; rolling back to the previous image");
       if (existsSync(`${DIR}/docker-compose.rollback.yml`)) {
         rmSync(`${DIR}/docker-compose.rollback.yml`);
@@ -212,15 +229,11 @@ try {
             "image: babasarok-prod:previous"
           )
         );
-        compose([
-          "-f",
-          "docker-compose.rollback.yml",
-          "up",
-          "-d",
-          "--wait",
-          "--wait-timeout",
-          "300",
-        ]);
+        compose(
+          ["-f", "docker-compose.rollback.yml", "up", "-d", "--wait", "--wait-timeout", "300"],
+          DIR,
+          true
+        );
         console.error("rolled back to the previous image; fix the commit and redeploy");
       } else {
         console.error("no previous image tagged; the stack stays down");
