@@ -90,7 +90,13 @@ try {
   mkdirSync(`${DIR}/repo`, { recursive: true });
   run("tar", ["-xf", tarfile, "-C", `${DIR}/repo`]);
   rmSync(tarfile, { force: true });
-  copyFileSync(`${DIR}/repo/deploy/${deployStack}/docker-compose.yml`, `${DIR}/docker-compose.yml`);
+  // Previews get their project name pinned in the file (prod's compose has
+  // its own `name:`), so every compose command in this dir targets the stack.
+  const composeYaml = readFileSync(`${DIR}/repo/deploy/${deployStack}/docker-compose.yml`, "utf8");
+  writeFileSync(
+    `${DIR}/docker-compose.yml`,
+    isPreview ? `name: babasarok-${slug}\n${composeYaml}` : composeYaml
+  );
 
   if (isPreview) {
     // The .env is provisioned once on first deploy and kept on later deploys;
@@ -198,11 +204,7 @@ try {
     }
   }
   if (isPreview) {
-    compose(
-      ["-p", `babasarok-${slug}`, "up", "-d", "--build", "--wait", "--wait-timeout", "300"],
-      DIR,
-      true
-    );
+    compose(["up", "-d", "--build", "--wait", "--wait-timeout", "300"], DIR, true);
   } else {
     const oldId = compose(["ps", "-q", "vendure"]).trim();
     if (oldId) {

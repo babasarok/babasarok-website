@@ -274,7 +274,7 @@ exec node "$DIR/repo/deploy/remote/deploy-stack.ts" "$@"
           "bash",
           "-c",
           `'sed -i "s|^ADMIN_URL=.*|ADMIN_URL=${adminUrl}|" ${dir}/.env` +
-            ` && cd ${dir} && docker compose up -d vendure worker'`,
+            ` && cd ${dir} && docker compose up -d --wait vendure worker'`,
         ]),
         { stdio: "inherit" }
       );

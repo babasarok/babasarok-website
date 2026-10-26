@@ -1,5 +1,6 @@
 # Preview stack: one per branch, deployed by scripts/deploy-backend.ts when
-# DEPLOY_STACK=preview (project name babasarok-<slug>, passed via -p).
+# DEPLOY_STACK=preview (project name babasarok-<slug>, written as `name:` at
+# the top of the deployed copy of this file by deploy-stack.ts).
 #
 # No postgres of its own: every preview shares the infra stack's postgres
 # (this stack's default network IS babasarok-edge_default, so the `postgres`
