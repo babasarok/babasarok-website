@@ -13,7 +13,8 @@ import path from "node:path";
  *
  * Asset uploads go through the picker dialog's dropzone file input with
  * in-repo fixture images (tests/dashboard/fixtures); the asset server writes
- * to backend/assets on disk, so no external service is involved.
+ * to backend/assets on disk, so no external service is involved. The
+ * material's borítókép (thumbnail) reuses the same picker and helper.
  */
 
 const DASHBOARD = "/dashboard";
@@ -65,22 +66,37 @@ test("the Anyagok section handles the material lifecycle", async ({ page }) => {
     await expect(vaszon).toContainText("0");
   });
 
-  await test.step("create a material with a hex color", async () => {
+  await test.step("create a material with a hex color, content fields and a thumbnail", async () => {
     await page.goto(`${DASHBOARD}/materials/new`);
     // Fill the material fields before a color row exists: afterwards two
     // inputs are labelled "Név" (material + color row), and the material one
     // comes first in the DOM.
     await page.getByLabel("Azonosító").fill("e2e-filc");
     await page.getByLabel("Név").fill("Filc");
+    await page.getByLabel("Alcím").fill("Puha, rugalmas");
+    await page.getByLabel("Leírás").fill("Könnyű, jól varrható anyag.");
 
     await page.getByRole("button", { name: "+ Szín hozzáadása" }).click();
     await page.getByLabel("Kód", { exact: true }).fill("01");
     await page.getByLabel("Név").nth(1).fill("Kék");
     await page.getByLabel("Színkód", { exact: true }).fill("#4a90d9");
 
+    // exact: the color row's "Kép választása" is a substring of the
+    // thumbnail's "Borítókép választása".
+    await page.getByRole("button", { name: "Borítókép választása", exact: true }).click();
+    await uploadAndSelectAsset(page, "tests/dashboard/fixtures/e2e-blue.png");
+
     const create = waitForMutation(page, "mutation CreateMaterial");
     await page.getByRole("button", { name: "Létrehozás" }).click();
     await create;
+
+    // Creation navigates to the detail page; a reload proves the content
+    // fields and thumbnail round-tripped through the API.
+    await page.waitForURL(/\/materials\/e2e-filc/);
+    await page.reload();
+    await expect(page.getByLabel("Alcím")).toHaveValue("Puha, rugalmas");
+    await expect(page.getByLabel("Leírás")).toHaveValue("Könnyű, jól varrható anyag.");
+    await expect(page.locator('img[src*="e2e-blue"]')).toHaveCount(1);
 
     await page.goto(`${DASHBOARD}/materials`);
     const filc = page.getByRole("row", { name: /e2e-filc/ });
@@ -97,7 +113,7 @@ test("the Anyagok section handles the material lifecycle", async ({ page }) => {
     await page.getByLabel("Kód", { exact: true }).fill("T1");
     await page.getByLabel("Név").nth(1).fill("Kék minta");
 
-    await page.getByRole("button", { name: "Kép választása" }).click();
+    await page.getByRole("button", { name: "Kép választása", exact: true }).click();
     await uploadAndSelectAsset(page, "tests/dashboard/fixtures/e2e-blue.png");
 
     const create = waitForMutation(page, "mutation CreateMaterial");
@@ -153,7 +169,7 @@ test("the Anyagok section handles the material lifecycle", async ({ page }) => {
   });
 
   await test.step("change a color's image and verify the new asset persists", async () => {
-    await page.getByRole("button", { name: "Kép választása" }).click();
+    await page.getByRole("button", { name: "Kép választása", exact: true }).click();
     await uploadAndSelectAsset(page, "tests/dashboard/fixtures/e2e-red.png");
 
     const update = waitForMutation(page, "mutation UpdateMaterial");

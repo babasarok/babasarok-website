@@ -10,6 +10,16 @@ export class Material {
   @Column({ type: "varchar" })
   label!: string;
 
+  @Column({ type: "varchar", nullable: true })
+  subtitle!: string | null;
+
+  @Column({ type: "varchar", nullable: true })
+  description!: string | null;
+
+  @ManyToOne(() => Asset, { nullable: true, eager: true, onDelete: "SET NULL" })
+  @JoinColumn({ name: "thumbnailAssetId" })
+  thumbnail!: Asset | null;
+
   @OneToMany(() => MaterialColor, (color) => color.material, { eager: true })
   colors!: MaterialColor[];
 }

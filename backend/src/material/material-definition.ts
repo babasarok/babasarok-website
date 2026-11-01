@@ -10,6 +10,9 @@ export interface MaterialColorInputData {
 export interface MaterialInputData {
   id: string;
   label: string;
+  subtitle?: string | null;
+  description?: string | null;
+  thumbnailAssetId?: string | null;
   colors: MaterialColorInputData[];
 }
 
@@ -91,6 +94,15 @@ export function validateMaterialInput(
     seen.add(color.id);
   }
 
+  const rawThumbnailAssetId = input.thumbnailAssetId ?? null;
+  const thumbnailAssetId = rawThumbnailAssetId === null ? null : Number(rawThumbnailAssetId);
+
+  if (Number.isNaN(thumbnailAssetId)) {
+    errors.push("thumbnail: érvénytelen kép azonosító.");
+  } else if (thumbnailAssetId !== null && !existingAssetIds.has(thumbnailAssetId)) {
+    errors.push("thumbnail: a megadott kép nem létezik.");
+  }
+
   if (errors.length > 0) {
     return { success: false, errors };
   }
@@ -98,6 +110,9 @@ export function validateMaterialInput(
   const result = MaterialDefinitionSchema.safeParse({
     id: input.id,
     label: input.label,
+    subtitle: input.subtitle ?? null,
+    description: input.description ?? null,
+    thumbnail: thumbnailAssetId === null ? null : { assetId: String(thumbnailAssetId) },
     colors,
   });
 

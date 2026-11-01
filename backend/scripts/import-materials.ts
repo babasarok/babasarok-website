@@ -31,6 +31,9 @@ const TinaMaterialSchema = z.object({
   material_id: z.string(),
   label: z.string(),
   colors: z.array(TinaColorSchema).nullish(),
+  thumbnail: z.string().nullish(),
+  categories: z.string().nullish(),
+  shortDescription: z.string().nullish(),
 });
 
 type TinaMaterial = z.output<typeof TinaMaterialSchema>;
@@ -38,6 +41,9 @@ type TinaMaterial = z.output<typeof TinaMaterialSchema>;
 interface MaterialInput {
   id: string;
   label: string;
+  subtitle: string | null;
+  description: string | null;
+  thumbnailAssetId: string | null;
   colors: Array<{ id: string; label: string; hex: string | null; assetId: string | null }>;
 }
 
@@ -77,6 +83,16 @@ function parseFrontmatter(raw: string, file: string): TinaMaterial {
   }
 
   return result.data;
+}
+
+function trimOrNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+
+  if (trimmed === undefined || trimmed === "") {
+    return null;
+  }
+
+  return trimmed;
 }
 
 let authToken: string | null = null;
@@ -193,7 +209,24 @@ async function main(): Promise<void> {
       colors.push({ id: color.color_id, label: color.label, hex: null, assetId });
     }
 
-    inputs.push({ id: material.material_id, label: material.label, colors });
+    let thumbnailAssetId: string | null = null;
+
+    if (material.thumbnail !== null && material.thumbnail !== undefined) {
+      const imagePath = path.join(REPO_ROOT, material.thumbnail);
+      const uploaded = assetIdsByPath.get(imagePath);
+
+      thumbnailAssetId = uploaded ?? (await uploadAsset(imagePath));
+      assetIdsByPath.set(imagePath, thumbnailAssetId);
+    }
+
+    inputs.push({
+      id: material.material_id,
+      label: material.label,
+      subtitle: trimOrNull(material.categories),
+      description: trimOrNull(material.shortDescription),
+      thumbnailAssetId,
+      colors,
+    });
   }
 
   // Pre-flight against the canonical schema so dirty Tina data (e.g. ids or
@@ -213,6 +246,9 @@ async function main(): Promise<void> {
     const result = MaterialDefinitionSchema.safeParse({
       id: input.id,
       label: input.label,
+      subtitle: input.subtitle,
+      description: input.description,
+      thumbnail: input.thumbnailAssetId === null ? null : { assetId: input.thumbnailAssetId },
       colors,
     });
 

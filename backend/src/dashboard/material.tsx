@@ -26,6 +26,7 @@ import {
   PageBlock,
   PageLayout,
   PageTitle,
+  Textarea,
 } from "@vendure/dashboard";
 import { graphql } from "@/gql";
 
@@ -34,6 +35,9 @@ const materialsQuery = graphql(`
     materials {
       id
       label
+      thumbnail {
+        preview
+      }
       colors {
         id
         label
@@ -47,6 +51,13 @@ const materialQuery = graphql(`
     material(id: $id) {
       id
       label
+      subtitle
+      description
+      thumbnail {
+        id
+        name
+        preview
+      }
       colors {
         id
         label
@@ -86,6 +97,7 @@ const deleteMaterialMutation = graphql(`
 interface MaterialListRow {
   id: string;
   label: string;
+  thumbnailPreview: string | null;
   colorCount: number;
 }
 
@@ -103,6 +115,9 @@ interface ColorRow {
   hex: string;
   asset: AssetRef | null;
 }
+
+/** What the open asset picker writes into. */
+type PickerTarget = { kind: "color"; key: string } | { kind: "thumbnail" };
 
 function rowKey(): string {
   return crypto.randomUUID();
@@ -136,6 +151,7 @@ function MaterialsListPage(): ReactElement {
           result.materials.map((material) => ({
             id: material.id,
             label: material.label,
+            thumbnailPreview: material.thumbnail?.preview ?? null,
             colorCount: material.colors.length,
           }))
         );
@@ -163,6 +179,7 @@ function MaterialsListPage(): ReactElement {
                 <tr className="text-muted-foreground border-b text-left">
                   <th className="py-2 pr-4 font-medium">Azonosító</th>
                   <th className="py-2 pr-4 font-medium">Név</th>
+                  <th className="py-2 pr-4 font-medium">Kép</th>
                   <th className="py-2 pr-4 font-medium">Színek</th>
                 </tr>
               </thead>
@@ -172,6 +189,15 @@ function MaterialsListPage(): ReactElement {
                     <td className="py-2 pr-4 font-mono text-xs">{material.id}</td>
                     <td className="py-2 pr-4">
                       <DetailPageButton href={`/materials/${material.id}`} label={material.label} />
+                    </td>
+                    <td className="py-2 pr-4">
+                      {material.thumbnailPreview !== null && (
+                        <img
+                          src={material.thumbnailPreview}
+                          alt={material.label}
+                          className="h-9 w-9 rounded border object-cover"
+                        />
+                      )}
                     </td>
                     <td className="py-2 pr-4">{material.colorCount}</td>
                   </tr>
@@ -192,13 +218,16 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
   const creatingNew = materialId === "" || materialId === NEW_ENTITY_PATH;
 
   const [label, setLabel] = useState("");
+  const [subtitle, setSubtitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [thumbnail, setThumbnail] = useState<AssetRef | null>(null);
   const [newId, setNewId] = useState("");
   const [colors, setColors] = useState<ColorRow[]>([]);
   const [loadedId, setLoadedId] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [errors, setErrors] = useState<string[] | null>(null);
   const [saved, setSaved] = useState(false);
-  const [pickerRow, setPickerRow] = useState<string | null>(null);
+  const [pickerTarget, setPickerTarget] = useState<PickerTarget | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
@@ -216,6 +245,9 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
         }
 
         setLabel(result.material.label);
+        setSubtitle(result.material.subtitle ?? "");
+        setDescription(result.material.description ?? "");
+        setThumbnail(result.material.thumbnail);
         setColors(
           result.material.colors.map((color) => ({
             key: rowKey(),
@@ -250,6 +282,9 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
     const input = {
       id: (creatingNew ? newId : materialId).trim(),
       label: label.trim(),
+      subtitle: subtitle.trim() || null,
+      description: description.trim() || null,
+      thumbnailAssetId: thumbnail?.id ?? null,
       colors: colors.map((row) => ({
         id: row.colorId.trim(),
         label: row.label.trim(),
@@ -289,8 +324,6 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
       setPending(false);
     }
   }
-
-  const pickerRowData = colors.find((row) => row.key === pickerRow) ?? null;
 
   return (
     <Page pageId="material-detail">
@@ -354,6 +387,54 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
                 }}
               />
             </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span>Alcím</span>
+              <Input
+                value={subtitle}
+                onChange={(e) => {
+                  setSubtitle(e.target.value);
+                }}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span>Leírás</span>
+              <Textarea
+                rows={3}
+                value={description}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                }}
+              />
+            </label>
+            <div className="flex items-center gap-2">
+              {thumbnail !== null && (
+                <img
+                  src={thumbnail.preview}
+                  alt={thumbnail.name}
+                  className="h-9 w-9 rounded border object-cover"
+                />
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setPickerTarget({ kind: "thumbnail" });
+                }}
+              >
+                {thumbnail === null ? "Borítókép választása" : "Borítókép cseréje"}
+              </Button>
+              {thumbnail !== null && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setThumbnail(null);
+                  }}
+                >
+                  Borítókép törlése
+                </Button>
+              )}
+            </div>
           </div>
         </PageBlock>
         <PageBlock
@@ -411,7 +492,7 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
                     type="button"
                     variant="outline"
                     onClick={() => {
-                      setPickerRow(row.key);
+                      setPickerTarget({ kind: "color", key: row.key });
                     }}
                   >
                     {row.asset === null ? "Kép választása" : "Kép cseréje"}
@@ -448,23 +529,22 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
         </PageBlock>
       </PageLayout>
 
-      {pickerRowData !== null && (
+      {pickerTarget !== null && (
         <AssetPickerDialog
           open
           onClose={() => {
-            setPickerRow(null);
+            setPickerTarget(null);
           }}
           onSelect={(assets) => {
-            const asset = assets[0];
+            const asset = { id: assets[0].id, name: assets[0].name, preview: assets[0].preview };
 
-            if (pickerRow !== null) {
-              updateColor(pickerRow, {
-                asset: { id: asset.id, name: asset.name, preview: asset.preview },
-                hex: "",
-              });
+            if (pickerTarget.kind === "color") {
+              updateColor(pickerTarget.key, { asset, hex: "" });
+            } else {
+              setThumbnail(asset);
             }
 
-            setPickerRow(null);
+            setPickerTarget(null);
           }}
           multiSelect={false}
           title="Kép választása"

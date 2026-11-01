@@ -21,6 +21,9 @@ describe("validateMaterialInput", () => {
       definition: {
         id: "velur",
         label: "Velúr",
+        subtitle: null,
+        description: null,
+        thumbnail: null,
         colors: [{ id: "piros", label: "Piros", appearance: { kind: "hex", value: "#FF0000" } }],
       },
     });
@@ -37,8 +40,66 @@ describe("validateMaterialInput", () => {
       definition: {
         id: "velur",
         label: "Velúr",
+        subtitle: null,
+        description: null,
+        thumbnail: null,
         colors: [{ id: "mintas", label: "Mintás", appearance: { kind: "image", assetId: "2" } }],
       },
+    });
+  });
+
+  it("passes optional content fields through, trimming whitespace and normalizing absent values", () => {
+    const filled = validateMaterialInput(
+      input({
+        subtitle: "  Puha, bársonyos anyag  ",
+        description: "  Első sor\nMásodik sor  ",
+        thumbnailAssetId: "1",
+      }),
+      KNOWN_ASSETS
+    );
+    const absent = validateMaterialInput(
+      input({ subtitle: null, description: null, thumbnailAssetId: null }),
+      KNOWN_ASSETS
+    );
+
+    expect(filled.success).toBe(true);
+
+    if (filled.success) {
+      expect(filled.definition.subtitle).toBe("Puha, bársonyos anyag");
+      expect(filled.definition.description).toBe("Első sor\nMásodik sor");
+      expect(filled.definition.thumbnail).toEqual({ assetId: "1" });
+    }
+
+    expect(absent.success).toBe(true);
+
+    if (absent.success) {
+      expect(absent.definition.subtitle).toBeNull();
+      expect(absent.definition.description).toBeNull();
+      expect(absent.definition.thumbnail).toBeNull();
+    }
+  });
+
+  it("rejects whitespace-only content fields and unknown or malformed thumbnail assets", () => {
+    const blankSubtitle = validateMaterialInput(input({ subtitle: "   " }), KNOWN_ASSETS);
+    const blankDescription = validateMaterialInput(input({ description: "" }), KNOWN_ASSETS);
+    const unknownThumbnail = validateMaterialInput(
+      input({ thumbnailAssetId: "999" }),
+      KNOWN_ASSETS
+    );
+    const malformedThumbnail = validateMaterialInput(
+      input({ thumbnailAssetId: "not-a-number" }),
+      KNOWN_ASSETS
+    );
+
+    expect(blankSubtitle.success).toBe(false);
+    expect(blankDescription.success).toBe(false);
+    expect(unknownThumbnail).toEqual({
+      success: false,
+      errors: ["thumbnail: a megadott kép nem létezik."],
+    });
+    expect(malformedThumbnail).toEqual({
+      success: false,
+      errors: ["thumbnail: érvénytelen kép azonosító."],
     });
   });
 

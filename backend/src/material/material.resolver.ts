@@ -74,6 +74,9 @@ export const materialSchema = gql`
   type Material {
     id: String!
     label: String!
+    subtitle: String
+    description: String
+    thumbnail: Asset
     colors: [MaterialColor!]!
   }
 
@@ -87,6 +90,9 @@ export const materialSchema = gql`
   input MaterialInput {
     id: String!
     label: String!
+    subtitle: String
+    description: String
+    thumbnailAssetId: String
     colors: [MaterialColorInput!]!
   }
 

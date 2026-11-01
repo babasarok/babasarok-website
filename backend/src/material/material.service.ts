@@ -37,7 +37,11 @@ export class MaterialService {
 
     return this.connection.withTransaction(ctx, async (txCtx) => {
       const txRepo = this.connection.getRepository(txCtx, Material);
-      await txRepo.insert({ id: definition.id, label: definition.label });
+      await txRepo.insert({
+        id: definition.id,
+        label: definition.label,
+        ...this.contentValues(definition),
+      });
 
       const material = await txRepo.findOneByOrFail({ id: definition.id });
       await this.replaceColors(txCtx, material, definition.colors);
@@ -64,7 +68,7 @@ export class MaterialService {
 
     return this.connection.withTransaction(ctx, async (txCtx) => {
       const txRepo = this.connection.getRepository(txCtx, Material);
-      await txRepo.update({ id }, { label: definition.label });
+      await txRepo.update({ id }, { label: definition.label, ...this.contentValues(definition) });
 
       const material = await txRepo.findOneByOrFail({ id });
       await this.replaceColors(txCtx, material, definition.colors);
@@ -84,6 +88,21 @@ export class MaterialService {
       await this.connection.getRepository(txCtx, Material).delete({ id });
       return true;
     });
+  }
+
+  private contentValues(definition: MaterialDefinition): {
+    subtitle: string | null;
+    description: string | null;
+    thumbnail: { id: number } | null;
+  } {
+    return {
+      subtitle: definition.subtitle ?? null,
+      description: definition.description ?? null,
+      thumbnail:
+        definition.thumbnail === undefined || definition.thumbnail === null
+          ? null
+          : { id: Number(definition.thumbnail.assetId) },
+    };
   }
 
   private sortColors(material: Material): Material {
@@ -121,8 +140,10 @@ export class MaterialService {
   ): Promise<MaterialDefinition> {
     const existingAssetIds = new Set<number>();
 
-    const requestedAssetIds = input.colors
-      .map((color) => color.assetId)
+    const requestedAssetIds = [
+      ...input.colors.map((color) => color.assetId),
+      input.thumbnailAssetId,
+    ]
       .filter(
         (assetId): assetId is string => assetId !== null && assetId !== undefined && assetId !== ""
       )

@@ -28,6 +28,9 @@ export const MaterialColorDefinitionSchema = z.strictObject({
 export const MaterialDefinitionSchema = z.strictObject({
   id: MaterialIdSchema,
   label: LabelSchema,
+  subtitle: z.string().trim().min(1).nullish(),
+  description: z.string().trim().min(1).nullish(),
+  thumbnail: z.strictObject({ assetId: TrimmedTextSchema }).nullish(),
   colors: z.array(MaterialColorDefinitionSchema).min(1),
 });
 
