@@ -758,8 +758,8 @@ export function ConfiguratorEditor({
               {kindSwitchKey?.key === row.key && (
                 <Alert variant="destructive">
                   <AlertTitle>
-                    A(z) "{kindSwitchKey.label}" mezőhöz tartozó adatok (opciók, árak,
-                    beállítások) elvesznek a típusváltáskor.
+                    A(z) "{kindSwitchKey.label}" mezőhöz tartozó adatok (opciók, árak, beállítások)
+                    elvesznek a típusváltáskor.
                   </AlertTitle>
                   <div className="mt-2 flex gap-2">
                     <Button
