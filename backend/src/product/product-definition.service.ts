@@ -1,5 +1,7 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, OnApplicationBootstrap } from "@nestjs/common";
 import {
+  ChannelService,
+  DefaultSlugStrategy,
   LanguageCode,
   Product,
   ProductOptionGroupService,
@@ -8,16 +10,22 @@ import {
   ProductVariant,
   ProductVariantService,
   RequestContext,
+  RequestContextService,
   TransactionalConnection,
   UserInputError,
 } from "@vendure/core";
+import type { JobQueue } from "@vendure/core";
+import { JobQueueService } from "@vendure/core";
 import { IsNull } from "typeorm";
-import type { ProductDefinition as CanonicalProductDefinition } from "@babasarok/product-definition";
+import {
+  productRevision,
+  type ProductDefinition as CanonicalProductDefinition,
+} from "@babasarok/product-definition";
 import { Material } from "../material/material.entity";
 import { validateProductDefinition } from "./product-definition";
 import { ProductDefinition } from "./product.entity";
-import { definitionHash, nativeStateHash, type NativeProductState } from "./sync-state";
-import { planVariantCombinations, type VariantPlan } from "./variant-plan";
+import { nativeStateHash, type NativeProductState } from "./sync-state";
+import { plannedNativeState, planVariantCombinations, type VariantPlan } from "./variant-plan";
 
 function huName(
   translations: Array<{ languageCode: LanguageCode; name: string }> | undefined
@@ -28,15 +36,35 @@ function huName(
 /** The variant writes per ProductVariantService call — the spike's per-variant loop is not shippable. */
 const BATCH_SIZE = 100;
 
+/** The job queue processes jobs strictly sequentially (Vendure's default concurrency 1),
+ * so a re-save while a sync is running simply queues a second pass. */
+const SYNC_QUEUE_NAME = "product-definition-sync";
+
 @Injectable()
-export class ProductDefinitionService {
+export class ProductDefinitionService implements OnApplicationBootstrap {
+  private syncQueue: JobQueue<{ productId: string }> | null = null;
+  private readonly slugStrategy = new DefaultSlugStrategy();
+
   constructor(
     private connection: TransactionalConnection,
     private productService: ProductService,
     private optionGroupService: ProductOptionGroupService,
     private optionService: ProductOptionService,
-    private variantService: ProductVariantService
+    private variantService: ProductVariantService,
+    private jobQueueService: JobQueueService,
+    private requestContextService: RequestContextService,
+    private channelService: ChannelService
   ) {}
+
+  /** The server process only enqueues; the worker process runs the syncs. */
+  async onApplicationBootstrap(): Promise<void> {
+    this.syncQueue = await this.jobQueueService.createQueue({
+      name: SYNC_QUEUE_NAME,
+      process: async (job) => {
+        await this.processSyncJob(job.data.productId);
+      },
+    });
+  }
 
   async productDefinitions(ctx: RequestContext): Promise<ProductDefinition[]> {
     return this.connection
@@ -59,16 +87,21 @@ export class ProductDefinitionService {
       throw new UserInputError(`Már létezik termék ezzel az azonosítóval: ${definition.id}`);
     }
 
-    return this.connection.withTransaction(ctx, async (txCtx) => {
+    const row = await this.connection.withTransaction(ctx, async (txCtx) => {
       const txRepo = this.connection.getRepository(txCtx, ProductDefinition);
       const nativeProductId = await this.createNativeProduct(txCtx, definition);
-      await txRepo.insert({ productId: definition.id, definition, nativeProductId });
-
-      await this.sync(txCtx, nativeProductId, definition);
-      await this.recordSyncState(txCtx, definition.id, nativeProductId, definition);
+      await txRepo.insert({
+        productId: definition.id,
+        definition,
+        nativeProductId,
+        syncState: "pending",
+      });
 
       return txRepo.findOneByOrFail({ productId: definition.id });
     });
+
+    await this.enqueueSync(ctx, row.productId);
+    return row;
   }
 
   async updateProductDefinition(
@@ -90,31 +123,26 @@ export class ProductDefinitionService {
       throw new UserInputError("A termékazonosító nem módosítható.");
     }
 
-    if (existing.nativeProductId !== null) {
+    // While a sync is pending the recorded hashes do not describe the native
+    // product, so drift detection only guards settled states.
+    if (existing.nativeProductId !== null && existing.syncState !== "pending") {
       await this.assertNoNativeDrift(ctx, existing.nativeProductId, existing, force === true);
     }
 
-    return this.connection.withTransaction(ctx, async (txCtx) => {
+    const row = await this.connection.withTransaction(ctx, async (txCtx) => {
       const txRepo = this.connection.getRepository(txCtx, ProductDefinition);
-      await txRepo.update({ productId }, { definition });
+      await txRepo.update({ productId }, { definition, syncState: "pending", syncError: null });
 
-      let nativeProductId = existing.nativeProductId;
-
-      if (nativeProductId === null) {
-        nativeProductId = await this.createNativeProduct(txCtx, definition);
+      if (existing.nativeProductId === null) {
+        const nativeProductId = await this.createNativeProduct(txCtx, definition);
         await txRepo.update({ productId }, { nativeProductId });
-      } else if (existing.definition.label !== definition.label) {
-        await this.productService.update(txCtx, {
-          id: nativeProductId,
-          translations: [{ languageCode: LanguageCode.hu, name: definition.label }],
-        });
       }
-
-      await this.sync(txCtx, nativeProductId, definition);
-      await this.recordSyncState(txCtx, productId, nativeProductId, definition);
 
       return txRepo.findOneByOrFail({ productId });
     });
+
+    await this.enqueueSync(ctx, row.productId);
+    return row;
   }
 
   async deleteProductDefinition(ctx: RequestContext, productId: string): Promise<boolean> {
@@ -134,6 +162,150 @@ export class ProductDefinitionService {
     });
 
     return true;
+  }
+
+  async productDefinitionByNativeProduct(
+    ctx: RequestContext,
+    nativeProductId: number
+  ): Promise<ProductDefinition | null> {
+    return this.connection.getRepository(ctx, ProductDefinition).findOneBy({ nativeProductId });
+  }
+
+  /** The native variants a sync generates, paged for the dashboard's variant table. */
+  async generatedVariantList(
+    ctx: RequestContext,
+    row: ProductDefinition,
+    options: { skip?: number | null; take?: number | null } | null
+  ): Promise<{
+    items: Array<{ id: string; name: string; sku: string; price: number }>;
+    totalItems: number;
+  }> {
+    const skip = Math.max(options?.skip ?? 0, 0);
+    const take = Math.min(Math.max(options?.take ?? 20, 1), 100);
+
+    if (row.nativeProductId === null) {
+      return { items: [], totalItems: 0 };
+    }
+
+    const [variants, totalItems] = await this.connection
+      .getRepository(ctx, ProductVariant)
+      .findAndCount({
+        where: { product: { id: row.nativeProductId }, deletedAt: IsNull() },
+        relations: { translations: true, productVariantPrices: true },
+        order: { id: "ASC" },
+        skip,
+        take,
+      });
+
+    return {
+      totalItems,
+      items: variants.map((variant) => ({
+        id: String(variant.id),
+        name: huName(variant.translations) ?? variant.sku,
+        sku: variant.sku,
+        price:
+          variant.productVariantPrices.find((price) => price.channelId === ctx.channelId)?.price ??
+          0,
+      })),
+    };
+  }
+
+  /**
+   * Whether a sync would change the native product right now: the definition,
+   * the referenced materials or the native product itself moved since the last
+   * sync. Pure planned-vs-actual comparison, so it needs no stored hashes.
+   */
+  async staleness(ctx: RequestContext, rows: ProductDefinition[]): Promise<Map<string, boolean>> {
+    const materialLabels = await this.materialLabels(ctx);
+    const flags = new Map<string, boolean>();
+
+    for (const row of rows) {
+      if (row.nativeProductId === null) {
+        flags.set(row.productId, false);
+        continue;
+      }
+
+      const planned = plannedNativeState(row.definition, materialLabels, (id) =>
+        this.slugStrategy.generate(ctx, { value: id })
+      );
+      const current = await this.currentNativeState(ctx, row.nativeProductId);
+
+      flags.set(row.productId, nativeStateHash(planned) !== nativeStateHash(current));
+    }
+
+    return flags;
+  }
+
+  /** Queues a sync after the definition write committed. */
+  private async enqueueSync(ctx: RequestContext, productId: string): Promise<void> {
+    if (this.syncQueue === null) {
+      throw new Error("A termékszinkronizáló sor még nem áll rendelkezésre.");
+    }
+
+    try {
+      await this.syncQueue.add({ productId });
+    } catch (error: unknown) {
+      await this.connection
+        .getRepository(ctx, ProductDefinition)
+        .update({ productId }, { syncState: "failed", syncError: String(error) });
+
+      throw error;
+    }
+  }
+
+  /** The worker-side sync of a definition's current stored state. */
+  private async processSyncJob(productId: string): Promise<void> {
+    const ctx = await this.jobContext();
+    const repo = this.connection.getRepository(ctx, ProductDefinition);
+    const row = await repo.findOneBy({ productId });
+
+    // The definition write may have been rolled back after the job was queued.
+    if (row === null) {
+      return;
+    }
+
+    try {
+      await this.connection.withTransaction(ctx, async (txCtx) => {
+        let nativeProductId = row.nativeProductId;
+
+        if (nativeProductId === null) {
+          nativeProductId = await this.createNativeProduct(txCtx, row.definition);
+          await this.connection
+            .getRepository(txCtx, ProductDefinition)
+            .update({ productId }, { nativeProductId });
+        }
+
+        await this.sync(txCtx, nativeProductId, row.definition);
+
+        const state = await this.currentNativeState(txCtx, nativeProductId);
+        await this.connection.getRepository(txCtx, ProductDefinition).update(
+          { productId },
+          {
+            syncedDefinitionHash: productRevision(row.definition),
+            syncedNativeStateHash: nativeStateHash(state),
+            syncState: "synced",
+            syncError: null,
+          }
+        );
+      });
+    } catch (error: unknown) {
+      await repo.update(
+        { productId },
+        {
+          syncState: "failed",
+          syncError: error instanceof Error ? error.message : String(error),
+        }
+      );
+
+      throw error;
+    }
+  }
+
+  /** Job handlers run outside any request; the sync needs the default channel. */
+  private async jobContext(): Promise<RequestContext> {
+    const defaultChannel = await this.channelService.getDefaultChannel();
+
+    return this.requestContextService.create({ apiType: "admin", channelOrToken: defaultChannel });
   }
 
   /**
@@ -214,7 +386,12 @@ export class ProductDefinitionService {
       (translation) => translation.languageCode === LanguageCode.hu
     )?.slug;
 
-    if (name !== definition.label || slug !== definition.id) {
+    // Vendure normalizes slugs (DefaultSlugStrategy), so the comparison and
+    // the written value use the normalized form — ids like "Eu borito" can
+    // never be stored verbatim.
+    const expectedSlug = this.slugStrategy.generate(ctx, { value: definition.id });
+
+    if (name !== definition.label || slug !== expectedSlug) {
       await this.productService.update(ctx, {
         id: nativeProductId,
         translations: [
@@ -468,24 +645,6 @@ export class ProductDefinitionService {
     };
   }
 
-  /** Records the post-sync hashes that power drift detection. */
-  private async recordSyncState(
-    ctx: RequestContext,
-    productId: string,
-    nativeProductId: number,
-    definition: CanonicalProductDefinition
-  ): Promise<void> {
-    const state = await this.currentNativeState(ctx, nativeProductId);
-
-    await this.connection.getRepository(ctx, ProductDefinition).update(
-      { productId },
-      {
-        syncedDefinitionHash: definitionHash(definition),
-        syncedNativeStateHash: nativeStateHash(state),
-      }
-    );
-  }
-
   private async materialLabels(ctx: RequestContext): Promise<Map<string, string>> {
     const materials = await this.connection.getRepository(ctx, Material).find();
 
@@ -506,6 +665,10 @@ export class ProductDefinitionService {
       throw new UserInputError(result.errors.join("\n"));
     }
 
-    return result.definition;
+    // The revision is the server's determination: the caller's value (if any)
+    // is replaced with the canonical hash over the commerce-relevant facts.
+    const { revision: _clientRevision, ...facts } = result.definition;
+
+    return { ...facts, revision: productRevision(result.definition) };
   }
 }

@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { z } from "zod";
 import type { FieldVisibilitySchema, ProductDefinitionSchema } from "@babasarok/product-definition";
 import { ProductTypeSchema } from "@babasarok/product-definition";
@@ -332,43 +331,4 @@ export function definitionFromTinaProduct(source: TinaProduct): TinaProductParse
       ),
     },
   };
-}
-
-/**
- * The deterministic definition revision: a sha256 over the canonical
- * definition's commerce-relevant facts. The seed computes it from the parsed
- * Tina content; a future dashboard writes definitions that already carry one.
- *
- * ponytail: a small copy of src/product/sync-state.ts's canonical-JSON
- * hashing — scripts cannot import src/ (tsconfig.scripts.json rootDir), and
- * the two hashes never cross-compare (revision is stored as authored;
- * definitionHash feeds drift detection), so drift between them is harmless.
- */
-export function productRevision(
-  definition: Omit<z.input<typeof ProductDefinitionSchema>, "revision">
-): string {
-  const canonical = canonicalJson(definition);
-
-  return createHash("sha256").update(canonical).digest("hex");
-}
-
-/** JSON with recursively sorted object keys, so the hash never depends on key order. */
-function canonicalJson(value: unknown): string {
-  if (Array.isArray(value)) {
-    return `[${value.map((item) => canonicalJson(item)).join(",")}]`;
-  }
-
-  if (value !== null && typeof value === "object") {
-    const entries = Object.entries(value).toSorted(([a], [b]) => a.localeCompare(b));
-
-    return `{${entries
-      .map(([key, item]) => `${JSON.stringify(key)}:${canonicalJson(item)}`)
-      .join(",")}}`;
-  }
-
-  if (value === undefined) {
-    return "null";
-  }
-
-  return JSON.stringify(value);
 }

@@ -28,4 +28,13 @@ export class ProductDefinition extends VendureEntity {
   /** Hash of the native option-group/variant state the last sync produced. */
   @Column({ type: "varchar", nullable: true })
   syncedNativeStateHash!: string | null;
+
+  /** The queued/failed/done state of the definition→native sync. The default
+   * only exists for the migration's backfill; every write sets it explicitly. */
+  @Column({ type: "varchar", default: "synced" })
+  syncState!: "pending" | "synced" | "failed";
+
+  /** Why the last sync attempt failed, for the dashboard's status display. */
+  @Column({ type: "text", nullable: true })
+  syncError!: string | null;
 }

@@ -18,12 +18,11 @@
  */
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
-import { z } from "zod";
 import type { ProductDefinitionSchema } from "@babasarok/product-definition";
+import { z } from "zod";
 import { parse } from "yaml";
 import {
   definitionFromTinaProduct,
-  productRevision,
   TinaProductSchema,
   type TinaProduct,
 } from "./lib/tina-source.ts";
@@ -41,6 +40,13 @@ interface UpsertResult {
   kind: "created" | "updated";
 }
 
+/** A definition whose queued sync the run still waits for. */
+interface SyncTarget {
+  file: string;
+  productId: string;
+  startedAt: number;
+}
+
 interface AdminResult {
   data: unknown;
   errors: string[];
@@ -48,6 +54,14 @@ interface AdminResult {
 
 const DefinitionsDataSchema = z.object({
   productDefinitions: z.array(z.object({ productId: z.string() })).default([]),
+});
+
+const SyncStatesSchema = z.object({
+  productDefinitions: z
+    .array(
+      z.object({ productId: z.string(), syncState: z.string(), syncError: z.string().nullish() })
+    )
+    .default([]),
 });
 
 let authToken: string | null = null;
@@ -179,6 +193,7 @@ async function main(): Promise<void> {
   let updated = 0;
   let failed = 0;
   let skipped = 0;
+  const syncTargets: SyncTarget[] = [];
 
   for (const file of files) {
     if (Date.now() - startedAt > RUN_BUDGET_MS) {
@@ -204,10 +219,8 @@ async function main(): Promise<void> {
       continue;
     }
 
-    const final: DefinitionPayload = {
-      ...definition.definition,
-      revision: productRevision(definition.definition),
-    };
+    // The revision is the server's determination; the seed sends none.
+    const final: DefinitionPayload = definition.definition;
     console.log(`→ ${file}`);
     const fileStartedAt = Date.now();
 
@@ -238,19 +251,70 @@ async function main(): Promise<void> {
     console.log(
       `✓ ${file}: ${outcome.kind} (${((Date.now() - fileStartedAt) / 1000).toFixed(1)}s)`
     );
+    syncTargets.push({ file, productId: final.id, startedAt: fileStartedAt });
   }
+
+  const syncs = await waitForSyncs(syncTargets, startedAt);
 
   console.log(
     `products: ${created} created, ${updated} updated, ` +
-      `${failed} failed, ${skipped} skipped by schema`
+      `${failed} failed, ${skipped} skipped by schema | ` +
+      `syncs: ${syncs.synced} synced, ${syncs.failed.length} failed`
   );
 }
 
-// ponytail: a fresh create of a huge variant matrix (hagyomanyos-racsvedo ~2700
-// variants) outlasts any fetch timeout we can set (undici's headersTimeout
-// caps at 300s without the undici package); the aborted mutation still
-// finishes server-side, so simply re-running the seed picks those products
-// up on the fast update path.
+/** Waits for the queued syncs to settle (the worker processes them serially). */
+async function waitForSyncs(
+  targets: SyncTarget[],
+  startedAt: number
+): Promise<{ synced: number; failed: string[] }> {
+  const pending = new Map(targets.map((target) => [target.productId, target]));
+  let synced = 0;
+  const failed: string[] = [];
+
+  while (pending.size > 0) {
+    if (Date.now() - startedAt > RUN_BUDGET_MS) {
+      for (const target of pending.values()) {
+        console.error(`✗ ${target.file}: szinkronizálási időkeret túllépés`);
+        failed.push(target.file);
+      }
+
+      break;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    const states = SyncStatesSchema.parse(
+      (
+        await adminRequest(
+          JSON.stringify({ query: `{ productDefinitions { productId syncState syncError } }` })
+        )
+      ).data
+    );
+
+    for (const row of states.productDefinitions) {
+      const target = pending.get(row.productId);
+
+      if (target === undefined) {
+        continue;
+      }
+
+      const waited = ((Date.now() - target.startedAt) / 1000).toFixed(1);
+
+      if (row.syncState === "synced") {
+        pending.delete(row.productId);
+        synced += 1;
+        console.log(`✓ ${target.file}: szinkronizálva (${waited}s)`);
+      } else if (row.syncState === "failed") {
+        pending.delete(row.productId);
+        failed.push(target.file);
+        console.error(`✗ ${target.file}: szinkronizálás sikertelen — ${row.syncError ?? ""}`);
+      }
+    }
+  }
+
+  return { synced, failed };
+}
 
 try {
   await main();

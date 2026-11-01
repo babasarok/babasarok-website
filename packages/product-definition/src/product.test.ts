@@ -12,6 +12,8 @@ import {
   ProductDiscountSchema,
   ProductPricingSchema,
   PRODUCT_TYPE_VALUES,
+  productRevision,
+  type ProductDefinition,
 } from "./product";
 
 const inputFixture: z.input<typeof InputFieldSchema> = {
@@ -221,11 +223,13 @@ describe("material color count rejects ambiguous states", () => {
 });
 
 describe("ProductDefinitionSchema revision", () => {
-  it.each([
-    { name: "missing revision", revision: undefined },
-    { name: "blank revision", revision: " " },
-  ])("rejects %name", ({ revision }) => {
-    const definition = { ...productFixture("select"), revision };
+  it("accepts a missing revision — the server sets it on save", () => {
+    const { revision: _omitted, ...definition } = productFixture("select");
+    expect(ProductDefinitionSchema.safeParse(definition).success).toBe(true);
+  });
+
+  it("rejects a blank revision", () => {
+    const definition = { ...productFixture("select"), revision: " " };
     expect(ProductDefinitionSchema.safeParse(definition).success).toBe(false);
   });
 });
@@ -271,5 +275,57 @@ describe("ForbiddenMaterialCombinationSchema", () => {
       "pamut",
       "pamut",
     ]);
+  });
+});
+
+describe("productRevision", () => {
+  const definition: ProductDefinition = ProductDefinitionSchema.parse({
+    id: "babafeszek",
+    label: "Babafészek",
+    revision: "rev-1",
+    type: "babafeszek",
+    orderable: true,
+    basePrice: 15_000,
+    pricing: { kind: "unit" },
+    fields: [
+      { kind: "toggle", id: "betet", label: "Betét", visibility: { kind: "always" }, price: 3700 },
+    ],
+    forbiddenMaterialCombinations: [],
+  });
+
+  it("is stable under key order and irrelevant normalization", () => {
+    const reordered = ProductDefinitionSchema.parse({
+      forbiddenMaterialCombinations: [],
+      fields: [
+        {
+          price: 3700,
+          visibility: { kind: "always" },
+          label: "Betét",
+          id: "betet",
+          kind: "toggle",
+        },
+      ],
+      pricing: { kind: "unit" },
+      basePrice: 15_000,
+      orderable: true,
+      type: "babafeszek",
+      revision: "rev-1",
+      label: "Babafészek",
+      id: "babafeszek",
+    });
+
+    expect(productRevision(reordered)).toBe(productRevision(definition));
+  });
+
+  it("changes when a commerce-relevant fact changes", () => {
+    expect(productRevision({ ...definition, basePrice: 16_000 })).not.toBe(
+      productRevision(definition)
+    );
+  });
+
+  it("ignores the revision field itself", () => {
+    const revised = { ...definition, revision: "rev-2" };
+
+    expect(productRevision(revised)).toBe(productRevision(definition));
   });
 });

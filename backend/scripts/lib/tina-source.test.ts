@@ -1,11 +1,6 @@
-import { ProductDefinitionSchema } from "@babasarok/product-definition";
+import { ProductDefinitionSchema, productRevision } from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
-import {
-  definitionFromTinaProduct,
-  materialSlugFromPath,
-  productRevision,
-  type TinaProduct,
-} from "./tina-source";
+import { definitionFromTinaProduct, materialSlugFromPath, type TinaProduct } from "./tina-source";
 
 const babafeszek: TinaProduct = {
   product_id: "babafeszek",

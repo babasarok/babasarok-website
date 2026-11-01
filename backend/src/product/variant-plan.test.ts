@@ -1,6 +1,7 @@
 import { ProductDefinitionSchema, type ProductDefinition } from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
-import { planVariantCombinations } from "./variant-plan";
+import { nativeStateHash } from "./sync-state";
+import { plannedNativeState, planVariantCombinations } from "./variant-plan";
 
 // The specimen product's shape (src/content/product/babafeszek.md), parsed
 // through the canonical schema so ids carry their brands.
@@ -158,5 +159,26 @@ describe("planVariantCombinations", () => {
 
     expect(plan.variants).toHaveLength(3 * 2 * 2 * 3 * 3);
     expect(plan.variants.every((variant) => variant.price === 0)).toBe(true);
+  });
+});
+
+describe("plannedNativeState", () => {
+  it("produces exactly the native state a sync writes, hashable for staleness", () => {
+    const planned = plannedNativeState(babafeszek, labels);
+
+    // The sync derives slug/name from the definition and the groups/variants
+    // from the plan; the staleness flag compares hashes of the two states.
+    expect(planned.slug).toBe("babafeszek");
+    expect(planned.name).toBe("Babafészek");
+    expect(planned.optionGroups.map((group) => group.code)).toEqual([
+      "meret",
+      "betet",
+      "fodor",
+      "anyag1",
+      "anyag2",
+    ]);
+    expect(planned.variants).toHaveLength(3 * 2 * 2 * 3 * 3 - 3 * 2 * 2);
+    expect(planned.variants.every((variant) => variant.options.length === 5)).toBe(true);
+    expect(nativeStateHash(planned)).not.toBe(nativeStateHash({ ...planned, name: "Más" }));
   });
 });

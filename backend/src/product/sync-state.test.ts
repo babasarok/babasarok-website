@@ -1,20 +1,5 @@
-import { ProductDefinitionSchema, type ProductDefinition } from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
-import { definitionHash, nativeStateHash, type NativeProductState } from "./sync-state";
-
-const definition: ProductDefinition = ProductDefinitionSchema.parse({
-  id: "babafeszek",
-  label: "Babafészek",
-  revision: "rev-1",
-  type: "babafeszek",
-  orderable: true,
-  basePrice: 15_000,
-  pricing: { kind: "unit" },
-  fields: [
-    { kind: "toggle", id: "betet", label: "Betét", visibility: { kind: "always" }, price: 3700 },
-  ],
-  forbiddenMaterialCombinations: [],
-});
+import { nativeStateHash, type NativeProductState } from "./sync-state";
 
 const nativeState: NativeProductState = {
   slug: "babafeszek",
@@ -44,40 +29,6 @@ const nativeState: NativeProductState = {
     },
   ],
 };
-
-describe("definitionHash", () => {
-  it("is stable under key order and irrelevant normalization", () => {
-    const reordered = ProductDefinitionSchema.parse({
-      forbiddenMaterialCombinations: [],
-      fields: [
-        {
-          price: 3700,
-          visibility: { kind: "always" },
-          label: "Betét",
-          id: "betet",
-          kind: "toggle",
-        },
-      ],
-      pricing: { kind: "unit" },
-      basePrice: 15_000,
-      orderable: true,
-      type: "babafeszek",
-      revision: "rev-1",
-      label: "Babafészek",
-      id: "babafeszek",
-    });
-
-    expect(definitionHash(ProductDefinitionSchema.parse(reordered))).toBe(
-      definitionHash(definition)
-    );
-  });
-
-  it("changes when a commerce-relevant fact changes", () => {
-    const repriced = ProductDefinitionSchema.parse({ ...definition, basePrice: 16_000 });
-
-    expect(definitionHash(repriced)).not.toBe(definitionHash(definition));
-  });
-});
 
 describe("nativeStateHash", () => {
   it("is stable under option-group, option and variant ordering", () => {

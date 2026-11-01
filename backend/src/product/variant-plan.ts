@@ -1,4 +1,5 @@
 import type { ProductDefinition } from "@babasarok/product-definition";
+import type { NativeProductState } from "./sync-state";
 
 export interface PlannedOption {
   code: string;
@@ -146,4 +147,39 @@ export function planVariantCombinations(
   }
 
   return { optionGroups, variants, bannedOmitted };
+}
+
+/**
+ * The native state a sync of `definition` against the current materials would
+ * produce. Pure — the staleness indicator hashes this against the native
+ * product's actual state ("would a sync change anything?"), which covers
+ * edited definitions, renamed/deleted materials and native-side hand edits
+ * alike. `slugifyId` models how Vendure normalizes the sync-written slug
+ * (definition ids are not always valid slugs); it defaults to the identity.
+ */
+export function plannedNativeState(
+  definition: ProductDefinition,
+  materialLabelById: ReadonlyMap<string, string>,
+  slugifyId: (id: string) => string = (id) => id
+): NativeProductState {
+  const plan = planVariantCombinations(definition, materialLabelById);
+
+  return {
+    slug: slugifyId(definition.id),
+    name: definition.label,
+    optionGroups: plan.optionGroups.map((group) => ({
+      code: group.code,
+      name: group.name,
+      options: group.options.map((option) => ({ code: option.code, name: option.name })),
+    })),
+    variants: plan.variants.map((variant) => ({
+      sku: variant.sku,
+      name: variant.name,
+      price: variant.price,
+      options: variant.optionCodes.map((code, groupIndex) => ({
+        groupCode: plan.optionGroups[groupIndex]?.code ?? "",
+        optionCode: code,
+      })),
+    })),
+  };
 }
