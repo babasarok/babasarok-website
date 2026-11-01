@@ -35,7 +35,12 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["src/**/*.test.ts"],
+    include: [
+      "src/**/*.test.ts",
+      // The shared package's schema tests run in the same fast suite; they are
+      // excluded from the package's own tsc build (see its tsconfig.json).
+      "packages/product-definition/src/**/*.test.ts",
+    ],
     exclude: ["tests/**", "node_modules/**", "dist/**"],
     environment: "node",
   },
