@@ -20,8 +20,10 @@ ordering).
 3. **Vendure must support every product field Tina has today** (field kinds
    input/select/radio/color/toggle/embroidery/material, banned material
    combinations, length-based pricing, per-product discounts, product
-   groups/related products). Existing Tina product content is read-only test
-   data for the temporary preview seed and the completeness yardstick.
+   groups/related products). Existing Tina product content is test data for
+   the temporary preview seed and the completeness yardstick; **trimming
+   content files for schema validity is allowed** (both products and
+   materials, minimal frontmatter edits — site code/tooling stays untouched).
 4. **Length-based pricing is a hard requirement.** It is only phased out if it
    proves to be a really big problem — ADR 0010 shows it fits natively
    (OrderLine length + per-material per-cm prices), including un-splitting the

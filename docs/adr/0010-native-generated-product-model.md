@@ -94,8 +94,8 @@ an option → the missing variants appear; no manual variant work anywhere.
 8. **Tina never stores product information — at no point in the roadmap.** No
    Tina product collections are added or extended, no Tina authoring forms are
    built for the catalog, and the Astro site (`src/`, `tina/`) is not modified
-   for Vendure's benefit. The existing Tina product content is read-only
-   legacy data with exactly two uses: test data for the temporary preview
+   for Vendure's benefit. The existing Tina product content is legacy
+   test data with exactly two uses: test data for the temporary preview
    seed, and the completeness yardstick — **Vendure's product model must
    support every field Tina products have today** (field kinds, banned
    combinations, length-based pricing, discounts, product groups/related
