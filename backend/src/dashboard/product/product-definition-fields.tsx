@@ -77,7 +77,7 @@ export interface FieldEditorProps {
   index: number;
   count: number;
   materialOptions: Array<{ slug: string; label: string }>;
-  patchBase: (key: string, id: string, label: string) => void;
+  patchBase: (key: string, label: string) => void;
   patchChoice: (key: string, patch: Partial<ChoiceFieldInput>) => void;
   patchToggle: (key: string, patch: Partial<ToggleFieldInput>) => void;
   patchMaterial: (key: string, patch: Partial<MaterialFieldInput>) => void;
@@ -115,10 +115,6 @@ export function FieldEditor({
 }: FieldEditorProps): ReactElement {
   const field = row.field;
 
-  function setBase(next: { id: string; label: string }): void {
-    patchBase(row.key, next.id, next.label);
-  }
-
   return (
     <div className="flex flex-col gap-3 rounded border p-3">
       <div className="flex flex-wrap items-end gap-2">
@@ -142,22 +138,12 @@ export function FieldEditor({
           </NativeSelect>
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span>Kód</span>
-          <Input
-            className="w-32"
-            value={field.id}
-            onChange={(e) => {
-              setBase({ ...field, id: e.target.value });
-            }}
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
           <span>Név</span>
           <Input
             className="w-44"
             value={field.label}
             onChange={(e) => {
-              setBase({ ...field, label: e.target.value });
+              patchBase(row.key, e.target.value);
             }}
           />
         </label>
@@ -315,20 +301,6 @@ export function FieldEditor({
         <div className="flex flex-col gap-2">
           {field.options.map((option, optionIndex) => (
             <div key={optionIndex} className="flex items-end gap-2">
-              <label className="flex flex-col gap-1 text-sm">
-                <span>Kód</span>
-                <Input
-                  className="w-28"
-                  value={option.id}
-                  onChange={(e) => {
-                    patchChoiceOptions(row.key, (options) =>
-                      options.map((candidate, at) =>
-                        at === optionIndex ? { ...candidate, id: e.target.value } : candidate
-                      )
-                    );
-                  }}
-                />
-              </label>
               <label className="flex flex-col gap-1 text-sm">
                 <span>Név</span>
                 <Input

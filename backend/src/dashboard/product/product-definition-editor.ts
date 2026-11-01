@@ -118,6 +118,83 @@ export function carryOver(next: FieldInput, previous: FieldInput): FieldInput {
   return carried;
 }
 
+const HUNGARIAN_FOLDS: Record<string, string> = {
+  á: "a",
+  é: "e",
+  í: "i",
+  ó: "o",
+  ö: "o",
+  ő: "o",
+  ú: "u",
+  ü: "u",
+  ű: "u",
+};
+
+/** ASCII slug of a label, in the shape the canonical ids use. */
+export function slugifyLabel(label: string): string {
+  const folded = label
+    .toLowerCase()
+    .replace(/[áéíóöőúüű]/g, (char) => HUNGARIAN_FOLDS[char] ?? char);
+
+  return folded.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+function uniqueCode(base: string, used: Set<string>): string {
+  if (!used.has(base)) {
+    return base;
+  }
+
+  let n = 2;
+
+  while (used.has(`${base}-${n}`)) {
+    n += 1;
+  }
+
+  return `${base}-${n}`;
+}
+
+/** Fills in the codes the editor leaves blank (there are no manual code
+ * inputs): the slug of the label, deduplicated within the scopes the server
+ * validates — field ids product-wide, choice-option ids per field. Explicit
+ * (seeded) codes are never rewritten, so saved codes are stable across
+ * renames. */
+export function assignGeneratedIds(definition: ProductDefinitionInput): ProductDefinitionInput {
+  const fieldIds = new Set(definition.fields.map((field) => field.id).filter((id) => id !== ""));
+
+  return {
+    ...definition,
+    fields: definition.fields.map((field) => {
+      let id = field.id;
+
+      if (id === "") {
+        id = uniqueCode(slugifyLabel(field.label) || "mezo", fieldIds);
+        fieldIds.add(id);
+      }
+
+      if (field.kind !== "choice") {
+        return id === field.id ? field : { ...field, id };
+      }
+
+      const optionIds = new Set(field.options.map((option) => option.id).filter((id) => id !== ""));
+
+      return {
+        ...field,
+        id,
+        options: field.options.map((option) => {
+          if (option.id !== "") {
+            return option;
+          }
+
+          const optionId = uniqueCode(slugifyLabel(option.label) || "opcio", optionIds);
+          optionIds.add(optionId);
+
+          return { ...option, id: optionId };
+        }),
+      };
+    }),
+  };
+}
+
 /** Trims the values the editor can introduce untrimmed, so the canonical
  * schema rejects nothing on formatting alone. */
 export function sanitize(definition: ProductDefinitionInput): ProductDefinitionInput {

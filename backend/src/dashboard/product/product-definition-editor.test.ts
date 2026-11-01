@@ -7,11 +7,15 @@
 import { describe, expect, test } from "vitest";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import {
+  assignGeneratedIds,
   carryOver,
   hasEditableData,
   newDefinition,
   newField,
   sanitize,
+  slugifyLabel,
+  type ChoiceFieldInput,
+  type ChoiceOptionInput,
 } from "./product-definition-editor";
 
 describe("newField", () => {
@@ -189,5 +193,92 @@ describe("newDefinition", () => {
       fields: [],
       forbiddenMaterialCombinations: [],
     });
+  });
+});
+
+describe("slugifyLabel", () => {
+  test.each([
+    ["Szín", "szin"],
+    ["Méret (cm)", "meret-cm"],
+    ["Ajándék csomagolás", "ajandek-csomagolas"],
+    ["  -", ""],
+  ])("%j → %j", (label, expected) => {
+    expect(slugifyLabel(label)).toBe(expected);
+  });
+});
+
+describe("assignGeneratedIds", () => {
+  const choiceField = (
+    id: string,
+    label: string,
+    options: ChoiceOptionInput[]
+  ): ChoiceFieldInput => ({
+    id,
+    label,
+    kind: "choice",
+    presentation: "select",
+    visibility: { kind: "always" },
+    options,
+  });
+
+  test("derives field and option codes from the labels", () => {
+    const definition = assignGeneratedIds({
+      ...newDefinition("p", "P", "parna"),
+      fields: [
+        choiceField("", "Szín", [
+          { id: "", label: "Kék", price: 0 },
+          { id: "", label: "Piros", price: 0 },
+        ]),
+        newField("toggle", "", "Ajándék csomagolás"),
+      ],
+    });
+
+    expect(definition.fields.map((field) => field.id)).toEqual(["szin", "ajandek-csomagolas"]);
+    const choice = definition.fields[0];
+    if (choice.kind !== "choice") {
+      throw new Error("expected the first field to stay a choice");
+    }
+
+    expect(choice.options.map((option) => option.id)).toEqual(["kek", "piros"]);
+  });
+
+  test("deduplicates generated codes and keeps explicit ones untouched", () => {
+    const definition = assignGeneratedIds({
+      ...newDefinition("p", "P", "parna"),
+      fields: [
+        newField("toggle", "meret", "Első"),
+        newField("toggle", "", "Méret"),
+        newField("toggle", "", "Méret"),
+        choiceField("szin", "Szín", [
+          { id: "kek", label: "Kék", price: 0 },
+          { id: "", label: "Kék", price: 0 },
+          { id: "", label: "", price: 0 },
+        ]),
+      ],
+    });
+
+    expect(definition.fields.map((field) => field.id)).toEqual([
+      "meret",
+      "meret-2",
+      "meret-3",
+      "szin",
+    ]);
+    const choice = definition.fields[3];
+    if (choice.kind !== "choice") {
+      throw new Error("expected the fourth field to stay a choice");
+    }
+
+    expect(choice.options.map((option) => option.id)).toEqual(["kek", "kek-2", "opcio"]);
+  });
+
+  test("the output still satisfies the canonical schema", () => {
+    const definition = assignGeneratedIds(
+      sanitize({
+        ...newDefinition("p", "P", "parna"),
+        fields: [choiceField("", "Szín", [{ id: "", label: "Kék", price: 0 }])],
+      })
+    );
+
+    expect(ProductDefinitionSchema.safeParse(definition).success).toBe(true);
   });
 });

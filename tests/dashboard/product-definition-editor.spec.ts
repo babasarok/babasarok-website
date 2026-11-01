@@ -74,8 +74,8 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await page.getByRole("button", { name: "+ Választó mező" }).click();
     await page.getByRole("button", { name: "Létrehozás" }).click();
 
-    await expect(page.getByText("fields.0.id:")).toBeVisible();
-    await expect(page.getByText("fields.0.options.0.id:")).toBeVisible();
+    await expect(page.getByText("fields.0.label:")).toBeVisible();
+    await expect(page.getByText("fields.0.options.0.label:")).toBeVisible();
     await expect(
       page.getByText("Must be non-empty without leading or trailing whitespace").first()
     ).toBeVisible();
@@ -88,13 +88,12 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await alapar.fill("15000");
     await alapar.blur();
 
+    // Codes are generated from the labels (no manual Kód inputs): "Szín" →
+    // "szin", "Kék" → "kek", so the SKU assertions below hold unchanged.
     const valaszto = fieldBlock(page, 0);
-    await valaszto.getByLabel("Kód", { exact: true }).first().fill("szin");
     await valaszto.getByLabel("Név").first().fill("Szín");
-    await valaszto.getByLabel("Kód", { exact: true }).nth(1).fill("kek");
     await valaszto.getByLabel("Név").nth(1).fill("Kék");
     await valaszto.getByRole("button", { name: "+ Elem hozzáadása" }).click();
-    await valaszto.getByLabel("Kód", { exact: true }).nth(2).fill("piros");
     await valaszto.getByLabel("Név").nth(2).fill("Piros");
     const pirosAr = valaszto.getByLabel("Ár (Ft)").nth(1);
     await pirosAr.fill("500");
@@ -102,7 +101,6 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
 
     await page.getByRole("button", { name: "+ Kapcsoló mező" }).click();
     const kapcsolo = fieldBlock(page, 1);
-    await kapcsolo.getByLabel("Kód", { exact: true }).fill("ajandek");
     await kapcsolo.getByLabel("Név").first().fill("Ajándék csomagolás");
     const kapcsoloAr = kapcsolo.getByLabel("Ár ha bekapcsolva (Ft)");
     await kapcsoloAr.fill("1000");
@@ -110,7 +108,6 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
 
     await page.getByRole("button", { name: "+ Anyag mező" }).click();
     const kulso = fieldBlock(page, 2);
-    await kulso.getByLabel("Kód", { exact: true }).fill("anyag-a");
     await kulso.getByLabel("Név").first().fill("Külső anyag");
     await kulso.getByRole("button", { name: "+ Anyag hozzáadása" }).click();
     await materialSelect(kulso, 0).selectOption("e2e-m1");
@@ -122,7 +119,6 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
 
     await page.getByRole("button", { name: "+ Anyag mező" }).click();
     const belso = fieldBlock(page, 3);
-    await belso.getByLabel("Kód", { exact: true }).fill("anyag-b");
     await belso.getByLabel("Név").first().fill("Belső anyag");
     await belso.getByRole("button", { name: "+ Anyag hozzáadása" }).click();
     await materialSelect(belso, 0).selectOption("e2e-m1");
@@ -131,12 +127,10 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
 
     await page.getByRole("button", { name: "+ Szabad szöveg mező" }).click();
     const felirat = fieldBlock(page, 4);
-    await felirat.getByLabel("Kód", { exact: true }).fill("felirat");
     await felirat.getByLabel("Név").first().fill("Felirat");
 
     await page.getByRole("button", { name: "+ Hímzés mező" }).click();
     const himzes = fieldBlock(page, 5);
-    await himzes.getByLabel("Kód", { exact: true }).fill("nev");
     await himzes.getByLabel("Név").first().fill("Név hímzés");
     const szoAr = himzes.getByLabel("Ár / szó (Ft)");
     await szoAr.fill("300");
@@ -193,9 +187,7 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
 
     await page.getByRole("button", { name: "+ Választó mező" }).click();
     const meret = fieldBlock(page, 6);
-    await meret.getByLabel("Kód", { exact: true }).first().fill("meret");
     await meret.getByLabel("Név").first().fill("Méret");
-    await meret.getByLabel("Kód", { exact: true }).nth(1).fill("s");
     await meret.getByLabel("Név").nth(1).fill("S");
 
     const update = waitForMutation(page, "mutation UpdateProductDefinition");
