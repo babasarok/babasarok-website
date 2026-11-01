@@ -56,7 +56,7 @@ function sha256(value: string): string {
 }
 
 /** Hash of the canonical definition; changes whenever a commerce-relevant fact changes. */
-export function definitionHash(definition: ProductDefinition): string {
+export function definitionHash(definition: Omit<ProductDefinition, "revision">): string {
   return sha256(canonicalJson(definition));
 }
 
