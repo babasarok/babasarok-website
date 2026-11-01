@@ -18,6 +18,9 @@ const BASE_URL = `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: "./tests",
+  // tests/dashboard belongs to playwright.dashboard.config.ts (it needs the
+  // Vendure API on :4000, which this config's webServer never boots).
+  testIgnore: "tests/dashboard/**",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
