@@ -63,6 +63,9 @@ test("the Anyagok section handles the material lifecycle", async ({ page }) => {
     await deleteMaterialIfPresent(page, "e2e-tulipan");
     await ensureMaterials(page, SEED_MATERIALS);
 
+    // The list mounted before the restore: reload so it shows the fixed state.
+    await page.goto(`${DASHBOARD}/materials`);
+
     await expect(page.getByRole("button", { name: "Pamut" })).toBeVisible();
   });
 

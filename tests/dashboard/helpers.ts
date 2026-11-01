@@ -131,7 +131,12 @@ export async function deleteMaterialIfPresent(page: Page, slug: string): Promise
     return;
   }
 
-  await adminApi(page, DELETE_MATERIAL, { id: match.id }, z.boolean());
+  await adminApi(
+    page,
+    DELETE_MATERIAL,
+    { id: match.id },
+    z.object({ deleteMaterial: z.boolean() })
+  );
 }
 
 /** Deletes a leftover fixture definition from a previous attempt: the specs
@@ -144,7 +149,12 @@ export async function deleteDefinitionIfPresent(page: Page, productId: string): 
     return;
   }
 
-  await adminApi(page, DELETE_DEFINITION, { productId }, z.boolean());
+  await adminApi(
+    page,
+    DELETE_DEFINITION,
+    { productId },
+    z.object({ deleteProductDefinition: z.boolean() })
+  );
 }
 
 /** Deep-links to a dashboard route and signs in on the redirect; the router
