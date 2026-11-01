@@ -19,9 +19,10 @@ RUN npm install -g pnpm@12.15.0 \
 WORKDIR /app/backend
 COPY backend/ ./
 # The preview seed reads the Tina material content from the repo tree;
-# the deploy tar ships the content dirs plus exactly the assets the
-# content references (a local build of the full tree copies all of
-# src/assets). TEMPORARY and preview-only — prod never runs the seed
+# TEMPORARY, preview-only (ADR 0009/0010): the preview seed reads the Tina
+# catalog content baked into the image. The deploy tar ships the content
+# dirs plus exactly the assets the content references (a local build of the
+# full tree copies all of src/assets). Prod never runs the seed
 # (hand-migration at cutover); drop these COPYs then.
 COPY src/content/material /app/src/content/material
 COPY src/content/product /app/src/content/product
