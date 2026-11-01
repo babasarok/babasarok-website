@@ -28,7 +28,12 @@ import { sortDefinitions } from "./definition-sort";
 import { validateProductDefinition } from "./product-definition";
 import { ProductDefinition } from "./product.entity";
 import { nativeStateHash, type NativeProductState } from "./sync-state";
-import { plannedNativeState, planVariantCombinations, type VariantPlan } from "./variant-plan";
+import {
+  plannedNativeState,
+  planVariantCombinations,
+  type PlannedVariant,
+  type VariantPlan,
+} from "./variant-plan";
 
 function huTranslation<T extends { languageCode: LanguageCode }>(
   translations: readonly T[] | undefined
@@ -607,9 +612,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     const priceUpdates = existing
       .map((variant) => ({ variant, planned: plannedBySku.get(variant.sku) }))
       .filter(
-        (pair) => pair.planned !== undefined && channelPrice(pair.variant) !== pair.planned.price
+        (pair): pair is { variant: ProductVariant; planned: PlannedVariant } =>
+          pair.planned !== undefined && channelPrice(pair.variant) !== pair.planned.price
       )
-      .map((pair) => ({ id: pair.variant.id, price: pair.planned?.price ?? 0 }));
+      .map((pair) => ({ id: pair.variant.id, price: pair.planned.price }));
 
     for (let start = 0; start < priceUpdates.length; start += BATCH_SIZE) {
       await this.variantService.update(ctx, priceUpdates.slice(start, start + BATCH_SIZE));
