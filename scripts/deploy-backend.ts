@@ -19,7 +19,7 @@
  * this commit).
  */
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { z } from "zod";
@@ -111,6 +111,22 @@ try {
   // The tree lands in a per-build tar first — only the locked remote script
   // touches the live repo dir, so an overlapping deploy cannot corrupt a
   // transfer in flight.
+  // The one-way Tina→Vendure seed runs inside the backend image on preview
+  // deploys (ADR 0009) and reads the Tina material content from the repo
+  // tree, so the tar carries the content dir plus exactly the assets the
+  // materials reference — not the whole 589M src/assets tree.
+  const seedAssets = new Set<string>();
+  const materialDir = path.join(REPO_ROOT, "src", "content", "material");
+  for (const file of readdirSync(materialDir)) {
+    if (!file.endsWith(".md")) continue;
+    const text = readFileSync(path.join(materialDir, file), "utf8");
+    for (const match of text.matchAll(/\/src\/assets\/[^"'\n]+/g)) {
+      seedAssets.add(match[0].replace(/\/+$/, "").slice(1));
+    }
+  }
+  const seedList = path.join(tmp, "seed-files.txt");
+  writeFileSync(seedList, [...seedAssets].sort().join("\n") + "\n");
+
   const tarfile = `${dir}/incoming-${process.pid}.tar`;
   const tarLocal = path.join(tmp, "tree.tar");
 
@@ -133,6 +149,9 @@ try {
       "backend",
       "packages",
       "deploy",
+      "src/content/material",
+      "-T",
+      seedList,
     ],
     { cwd: REPO_ROOT, stdio: "inherit" }
   );

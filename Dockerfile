@@ -18,6 +18,11 @@ RUN npm install -g pnpm@12.15.0 \
 
 WORKDIR /app/backend
 COPY backend/ ./
+# The preview seed reads the Tina material content from the repo tree; the
+# deploy tar ships the content dir plus exactly the assets the materials
+# reference (a local build of the full tree copies all of src/assets).
+COPY src/content/material /app/src/content/material
+COPY src/assets /app/src/assets
 # The shared package must exist at the reference path backend's tsconfig
 # points to, and its runtime import must resolve: the packed copy from
 # `pnpm deploy` has no dist, so it is replaced by a symlink to the copied

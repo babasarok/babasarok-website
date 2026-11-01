@@ -10,6 +10,10 @@ backend/node_modules
 backend/dist
 # tsc -b would trust these and skip emitting dist in the image
 **/tsconfig.tsbuildinfo
+# the material seed's content and referenced assets (deploy tars them
+# selectively; a local build of the full tree sends all of src/assets)
+!src/content
+!src/assets
 backend/email-out
 backend/.env
 backend/.env.*
