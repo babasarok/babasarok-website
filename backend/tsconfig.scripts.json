@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    // The scripts run from source via node's type stripping (ESM); bundler
+    // resolution matches that and keeps import.meta legal. The emit into
+    // dist/scripts only satisfies tsc -b composite semantics — run the
+    // scripts from source, never from dist.
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "composite": true,
+    "outDir": "dist",
+    "rootDir": "scripts",
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  // Standalone backend scripts; referenced by tsconfig.json so `tsc -b`
+  // type-checks them.
+  "include": ["scripts"]
+}

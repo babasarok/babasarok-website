@@ -37,15 +37,16 @@ export class ChannelSetupPlugin implements OnApplicationBootstrap {
       return;
     }
 
-    const country =
-      (await this.connection
-        .getRepository(ctx, Country)
-        .findOne({ where: { code: env.shopCountryCode } })) ??
-      (await this.countryService.create(ctx, {
+    let country = await this.connection
+      .getRepository(ctx, Country)
+      .findOne({ where: { code: env.shopCountryCode } });
+    if (!country) {
+      country = await this.countryService.create(ctx, {
         code: env.shopCountryCode,
         enabled: true,
         translations: [{ languageCode: ctx.languageCode, name: env.shopCountryName }],
-      }));
+      });
+    }
     const zone = await this.getOrCreateZone(ctx, country.id);
     await this.channelService.update(ctx, {
       id: channel.id,

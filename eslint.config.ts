@@ -23,7 +23,6 @@ export default defineConfig([
     "backend/dist",
     "backend/node_modules",
     "backend/src/gql",
-    "backend/scripts",
     "packages/product-definition/dist",
   ]),
   {
@@ -128,20 +127,12 @@ export default defineConfig([
           "./backend/tsconfig.json",
           "./backend/tsconfig.dashboard.json",
           "./backend/src/dashboard/tsconfig.json",
+          "./backend/tsconfig.scripts.json",
         ],
         extraFileExtensions: [],
       },
     },
     rules: {
-      // Vendure/NestJS rely on decorator-parameter injection and loosely typed
-      // plugin APIs that the strict no-unsafe family flags wholesale.
-      "@typescript-eslint/no-unsafe-assignment": "off",
-      "@typescript-eslint/no-unsafe-member-access": "off",
-      "@typescript-eslint/no-unsafe-call": "off",
-      "@typescript-eslint/no-unsafe-argument": "off",
-      "@typescript-eslint/no-unsafe-return": "off",
-      "@typescript-eslint/no-floating-promises": "off",
-      "@typescript-eslint/unbound-method": "off",
       // Vendure plugin definitions are empty decorated classes.
       "@typescript-eslint/no-extraneous-class": ["error", { allowEmpty: true }],
     },
@@ -174,6 +165,13 @@ export default defineConfig([
       "unicorn/prefer-top-level-await": "off",
       // generate-migration.ts resolves paths relative to its compiled location.
       "unicorn/prefer-module": "off",
+    },
+  },
+  {
+    files: ["backend/scripts/**/*.ts"],
+    rules: {
+      // Process entry points: exiting with a status code is the contract.
+      "unicorn/no-process-exit": "off",
     },
   },
   // Astro-specific warnings and recommendations for .astro files

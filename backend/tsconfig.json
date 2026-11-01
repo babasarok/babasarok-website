@@ -18,5 +18,8 @@
   "exclude": ["src/**/dashboard/*", "src/gql/*", "vite.*.*ts"],
   // tsconfig.dashboard.json stays editor-only: its @/vdb paths map in the
   // whole dashboard source graph, which does not type-check under plain tsc.
-  "references": [{ "path": "../packages/product-definition" }]
+  "references": [
+    { "path": "../packages/product-definition" },
+    { "path": "./tsconfig.scripts.json" }
+  ]
 }

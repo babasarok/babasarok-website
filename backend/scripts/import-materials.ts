@@ -3,7 +3,8 @@
  * src/content/material/*.md, uploads color images as Vendure assets, then
  * creates or updates each material in the vendure-owned catalog. Tina stays
  * the live site's source until cutover; this script is re-runnable (upsert
- * by material id, images deduplicated by file path).
+ * by material id). Asset dedup is per-run only: every run (e.g. each preview
+ * deploy) re-uploads every referenced image.
  *
  * Run: pnpm -C backend run import-materials
  * (requires the backend running locally and SUPERADMIN_* in backend/.env)
@@ -13,23 +14,26 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { MaterialDefinitionSchema } from "@babasarok/product-definition";
 import { parse } from "yaml";
+import { z } from "zod";
 
 const API_URL = `http://localhost:${process.env.PORT ?? "4000"}/admin-api`;
 const CONTENT_DIR = path.resolve(import.meta.dirname, "..", "..", "src", "content", "material");
 const REPO_ROOT = path.resolve(import.meta.dirname, "..", "..");
 
-interface TinaColor {
-  color_id: string;
-  label: string;
-  hex?: string | null;
-  image?: string | null;
-}
+const TinaColorSchema = z.object({
+  color_id: z.string(),
+  label: z.string(),
+  hex: z.string().nullish(),
+  image: z.string().nullish(),
+});
 
-interface TinaMaterial {
-  material_id: string;
-  label: string;
-  colors?: TinaColor[] | null;
-}
+const TinaMaterialSchema = z.object({
+  material_id: z.string(),
+  label: z.string(),
+  colors: z.array(TinaColorSchema).nullish(),
+});
+
+type TinaMaterial = z.output<typeof TinaMaterialSchema>;
 
 interface MaterialInput {
   id: string;
@@ -37,22 +41,47 @@ interface MaterialInput {
   colors: Array<{ id: string; label: string; hex: string | null; assetId: string | null }>;
 }
 
-function parseFrontmatter(raw: string): unknown {
+const AuthenticateDataSchema = z.object({
+  authenticate: z.object({ message: z.string().optional() }).optional(),
+});
+
+const CreateAssetsDataSchema = z.object({
+  createAssets: z
+    .array(z.object({ id: z.string().optional(), message: z.string().optional() }))
+    .optional(),
+});
+
+const MaterialsDataSchema = z.object({
+  materials: z.array(z.object({ id: z.string() })).default([]),
+});
+
+interface AdminResult {
+  data: unknown;
+  errors: string[];
+}
+
+function parseFrontmatter(raw: string, file: string): TinaMaterial {
   const match = /^---\n([\s\S]*?)\n---/.exec(raw);
 
   if (match === null) {
-    throw new Error("no frontmatter found");
+    throw new Error(`${file}: no frontmatter found`);
   }
 
-  return parse(match[1]);
+  const result = TinaMaterialSchema.safeParse(parse(match[1]));
+
+  if (!result.success) {
+    throw new Error(
+      `${file}: invalid frontmatter — ` +
+        result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ")
+    );
+  }
+
+  return result.data;
 }
 
 let authToken: string | null = null;
 
-async function adminRequest(
-  body: FormData | string,
-  contentType?: string
-): Promise<{ data?: Record<string, unknown>; errors?: Array<{ message: string }> }> {
+async function adminRequest(body: FormData | string, contentType?: string): Promise<AdminResult> {
   const headers: Record<string, string> = { "Apollo-Require-Preflight": "true" };
 
   if (authToken !== null) {
@@ -70,15 +99,20 @@ async function adminRequest(
     authToken = tokenHeader;
   }
 
-  return (await response.json()) as {
-    data?: Record<string, unknown>;
-    errors?: Array<{ message: string }>;
-  };
+  const result = z
+    .object({
+      data: z.unknown().optional(),
+      errors: z.array(z.object({ message: z.string() })).optional(),
+    })
+    .parse(await response.json());
+
+  return { data: result.data, errors: result.errors?.map((error) => error.message) ?? [] };
 }
 
 async function authenticate(): Promise<void> {
-  // Same fallback as vendure-config's superadminCredentials: previews don't
-  // carry SUPERADMIN_* in their .env, so the bootstrap defaults apply there.
+  // ponytail: the fallbacks duplicate vendure-config's superadmin defaults;
+  // sharing them needs an import of ../src/env, which node's type stripping
+  // only resolves with a .ts extension that tsc's emit rules reject.
   const email = process.env.SUPERADMIN_EMAIL ?? "admin@babasarok.local";
   const password = process.env.SUPERADMIN_PASSWORD ?? "superadmin";
   const result = await adminRequest(
@@ -93,12 +127,11 @@ async function authenticate(): Promise<void> {
     }),
     "application/json"
   );
-
-  const error = (result.data as { authenticate?: { message?: string } } | undefined)?.authenticate
-    ?.message;
+  const parsed = AuthenticateDataSchema.safeParse(result.data);
+  const message = parsed.success ? parsed.data.authenticate?.message : undefined;
 
   if (authToken === null) {
-    throw new Error(`login failed: ${error ?? JSON.stringify(result.errors)}`);
+    throw new Error(`login failed: ${message ?? JSON.stringify(result.errors)}`);
   }
 }
 
@@ -120,10 +153,7 @@ async function uploadAsset(filePath: string): Promise<string> {
   form.append("map", JSON.stringify({ 0: ["variables.files.0.file"] }));
   form.append("0", openAsBlob(filePath), fileName);
 
-  const result = await adminRequest(form);
-  const created = (
-    result.data as { createAssets?: Array<{ id?: string; message?: string }> } | undefined
-  )?.createAssets?.[0];
+  const created = CreateAssetsDataSchema.parse((await adminRequest(form)).data).createAssets?.[0];
 
   if (created?.id === undefined) {
     throw new Error(`asset upload failed for ${filePath}: ${created?.message ?? "unknown error"}`);
@@ -141,7 +171,7 @@ async function main(): Promise<void> {
 
   for (const file of files) {
     const raw = await readFile(path.join(CONTENT_DIR, file), "utf8");
-    const material = parseFrontmatter(raw) as TinaMaterial;
+    const material = parseFrontmatter(raw, file);
     const colors: MaterialInput["colors"] = [];
 
     for (const color of material.colors ?? []) {
@@ -197,10 +227,10 @@ async function main(): Promise<void> {
     valid.push(input);
   }
 
-  const existing = (
-    await adminRequest(JSON.stringify({ query: "{ materials { id } }" }), "application/json")
-  ).data as { materials: Array<{ id: string }> } | undefined;
-  const existingIds = new Set(existing?.materials.map((material) => material.id) ?? []);
+  const existing = MaterialsDataSchema.parse(
+    (await adminRequest(JSON.stringify({ query: "{ materials { id } }" }), "application/json")).data
+  );
+  const existingIds = new Set(existing.materials.map((material) => material.id));
 
   let created = 0;
   let updated = 0;
@@ -208,7 +238,7 @@ async function main(): Promise<void> {
   for (const input of valid) {
     const exists = existingIds.has(input.id);
     const mutation = exists
-      ? `mutation Update($id: ID!, $input: MaterialInput!) { updateMaterial(id: $id, input: $input) { id } }`
+      ? `mutation Update($id: String!, $input: MaterialInput!) { updateMaterial(id: $id, input: $input) { id } }`
       : `mutation Create($input: MaterialInput!) { createMaterial(input: $input) { id } }`;
     const variables = exists ? { id: input.id, input } : { input };
     const result = await adminRequest(
@@ -216,8 +246,8 @@ async function main(): Promise<void> {
       "application/json"
     );
 
-    if (result.errors !== undefined && result.errors.length > 0) {
-      console.error(`✗ ${input.id}:`, result.errors.map((error) => error.message).join("; "));
+    if (result.errors.length > 0) {
+      console.error(`✗ ${input.id}:`, result.errors.join("; "));
       continue;
     }
 
@@ -235,7 +265,9 @@ async function main(): Promise<void> {
   );
 }
 
-main().catch((error: unknown) => {
+try {
+  await main();
+} catch (error: unknown) {
   console.error(error instanceof Error ? error.message : error);
   process.exit(1);
-});
+}

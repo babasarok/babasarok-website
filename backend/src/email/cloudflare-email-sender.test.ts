@@ -4,8 +4,12 @@ import {
   type CloudflareEmailSenderOptions,
 } from "./cloudflare-email-sender";
 import type { EmailDetails, EmailTransportOptions } from "@vendure/email-plugin";
+import type Cloudflare from "cloudflare";
 
 const transportOptions = { type: "none" } as unknown as EmailTransportOptions;
+
+/** The client method the sender delegates to; typing the mock types its call args. */
+type SendFn = Cloudflare["emailSending"]["send"];
 
 function makeDetails(overrides: Partial<EmailDetails> = {}): EmailDetails {
   return {
@@ -19,7 +23,7 @@ function makeDetails(overrides: Partial<EmailDetails> = {}): EmailDetails {
   };
 }
 
-function senderWith(send: ReturnType<typeof vi.fn>): CloudflareEmailSender {
+function senderWith(send: SendFn): CloudflareEmailSender {
   const client = { emailSending: { send } };
   const sender = new CloudflareEmailSender(
     { accountId: "acc", apiToken: "tok" } satisfies CloudflareEmailSenderOptions,
@@ -30,9 +34,13 @@ function senderWith(send: ReturnType<typeof vi.fn>): CloudflareEmailSender {
 
 describe("CloudflareEmailSender", () => {
   it("maps the email details onto the SDK send params", async () => {
-    const send = vi
-      .fn()
-      .mockResolvedValue({ delivered: ["buyer@example.com"], queued: [], permanent_bounces: [] });
+    const send = vi.fn<SendFn>().mockResolvedValue({
+      delivered: ["buyer@example.com"],
+      queued: [],
+      permanent_bounces: [],
+      message_id: "msg-1",
+      suppressed_recipients: [],
+    });
     const sender = senderWith(send);
 
     await sender.send(makeDetails(), transportOptions);
@@ -50,9 +58,13 @@ describe("CloudflareEmailSender", () => {
   });
 
   it("splits comma-separated cc/bcc and keeps single values plain", async () => {
-    const send = vi
-      .fn()
-      .mockResolvedValue({ delivered: ["a@b.c"], queued: [], permanent_bounces: [] });
+    const send = vi.fn<SendFn>().mockResolvedValue({
+      delivered: ["a@b.c"],
+      queued: [],
+      permanent_bounces: [],
+      message_id: "msg-1",
+      suppressed_recipients: [],
+    });
     const sender = senderWith(send);
 
     await sender.send(
@@ -60,16 +72,20 @@ describe("CloudflareEmailSender", () => {
       transportOptions
     );
 
-    const params = send.mock.calls[0]?.[0];
-    expect(params?.to).toEqual(["a@b.c", "d@e.f"]);
-    expect(params?.cc).toEqual("cc1@x.y");
-    expect(params?.bcc).toEqual(["bcc1@x.y", "bcc2@x.y"]);
+    const params = send.mock.calls[0][0];
+    expect(params.to).toEqual(["a@b.c", "d@e.f"]);
+    expect(params.cc).toEqual("cc1@x.y");
+    expect(params.bcc).toEqual(["bcc1@x.y", "bcc2@x.y"]);
   });
 
   it("throws when the API reports nothing was delivered", async () => {
-    const send = vi
-      .fn()
-      .mockResolvedValue({ delivered: [], queued: [], permanent_bounces: ["b@x.y"] });
+    const send = vi.fn<SendFn>().mockResolvedValue({
+      delivered: [],
+      queued: [],
+      permanent_bounces: ["b@x.y"],
+      message_id: "msg-1",
+      suppressed_recipients: [],
+    });
     const sender = senderWith(send);
 
     await expect(sender.send(makeDetails(), transportOptions)).rejects.toThrow(
@@ -78,7 +94,7 @@ describe("CloudflareEmailSender", () => {
   });
 
   it("propagates SDK errors", async () => {
-    const send = vi.fn().mockRejectedValue(new Error("403 forbidden"));
+    const send = vi.fn<SendFn>().mockRejectedValue(new Error("403 forbidden"));
     const sender = senderWith(send);
 
     await expect(sender.send(makeDetails(), transportOptions)).rejects.toThrow("403 forbidden");

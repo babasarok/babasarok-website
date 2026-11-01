@@ -105,7 +105,7 @@ interface ColorRow {
 }
 
 function rowKey(): string {
-  return `row-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return crypto.randomUUID();
 }
 
 // Extensions load for side effects only (the dashboard's virtual module
@@ -186,9 +186,9 @@ function MaterialsListPage(): ReactElement {
 }
 
 function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
-  const params = route.useParams();
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- the dashboard's extension contract passes an AnyRoute whose useParams() is untyped any (vendure's own detail-page.tsx reads params the same way); there is no typed alternative
+  const materialId: string = route.useParams().id ?? "";
   const navigate = route.useNavigate();
-  const materialId: string = params.id ?? "";
   const creatingNew = materialId === "" || materialId === NEW_ENTITY_PATH;
 
   const [label, setLabel] = useState("");
@@ -197,6 +197,7 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
   const [loadedId, setLoadedId] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [errors, setErrors] = useState<string[] | null>(null);
+  const [saved, setSaved] = useState(false);
   const [pickerRow, setPickerRow] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -244,6 +245,7 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
 
   async function save(): Promise<void> {
     setErrors(null);
+    setSaved(false);
     setPending(true);
     const input = {
       id: (creatingNew ? newId : materialId).trim(),
@@ -258,10 +260,11 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
 
     try {
       if (creatingNew) {
-        await api.query(createMaterialMutation, { input });
-        await navigate({ to: "/materials/$id", params: true });
+        const result = await api.query(createMaterialMutation, { input });
+        await navigate({ to: "/materials/$id", params: { id: result.createMaterial.id } });
       } else {
         await api.query(updateMaterialMutation, { id: materialId, input });
+        setSaved(true);
       }
     } catch (err: unknown) {
       setErrors(err instanceof Error ? err.message.split("\n") : [String(err)]);
@@ -322,6 +325,11 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
       <PageLayout>
         <PageBlock column="main" blockId="material-form" title="Anyag">
           {errors !== null && <ErrorNotice message={errors.join("\n")} />}
+          {saved && (
+            <Alert>
+              <AlertTitle>Mentés sikeres.</AlertTitle>
+            </Alert>
+          )}
 
           <div className="flex flex-col gap-4">
             <label className="flex flex-col gap-1 text-sm">
