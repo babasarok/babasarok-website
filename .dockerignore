@@ -8,6 +8,8 @@
 !packages
 backend/node_modules
 backend/dist
+# tsc -b would trust these and skip emitting dist in the image
+**/tsconfig.tsbuildinfo
 backend/email-out
 backend/.env
 backend/.env.*

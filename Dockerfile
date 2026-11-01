@@ -21,10 +21,15 @@ COPY backend/ ./
 # The shared package must exist at the reference path backend's tsconfig
 # points to, and its runtime import must resolve: the packed copy from
 # `pnpm deploy` has no dist, so it is replaced by a symlink to the copied
-# source, which `tsc -b` builds as a referenced project.
+# source. The source sits outside /app/backend, so it installs its own
+# dependencies (zod is not on its node_modules lookup path otherwise) and
+# `tsc -b` compiles it as a referenced project straight to dist. tsc is
+# invoked directly: `pnpm run` first re-resolves the manifest, whose
+# workspace:* dependency cannot resolve outside a workspace.
 COPY packages/product-definition /app/packages/product-definition
-RUN rm -rf node_modules/@babasarok/product-definition \
+RUN pnpm -C /app/packages/product-definition install --ignore-scripts \
+  && rm -rf node_modules/@babasarok/product-definition \
   && ln -s /app/packages/product-definition node_modules/@babasarok/product-definition \
-  && pnpm run build
+  && ./node_modules/.bin/tsc -b
 
 CMD ["node", "dist/index.js"]
