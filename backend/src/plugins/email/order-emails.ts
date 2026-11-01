@@ -5,7 +5,7 @@ import {
   type EmailEventHandler,
   type EventWithAsyncData,
 } from "@vendure/email-plugin";
-import { env } from "../env";
+import { env } from "../../env";
 
 // "Order placed" for a quote shop: the submission transitions AddingItems ->
 // ArrangingPayment and there is no payment step.

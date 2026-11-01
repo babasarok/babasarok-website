@@ -11,7 +11,7 @@ import {
   Zone,
   ZoneService,
 } from "@vendure/core";
-import { env } from "../env";
+import { env } from "../../env";
 import type { ID } from "@vendure/common/lib/shared-types";
 
 // Vendure refuses price calculations without channel default tax/shipping

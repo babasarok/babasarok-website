@@ -11,7 +11,7 @@ import {
 } from "@vendure/core";
 import { GlobalFlag } from "@vendure/common/lib/generated-types";
 import { splitName, QuoteOrderSchema } from "./quote-order.input";
-import { env } from "../env";
+import { env } from "../../env";
 
 // Placeholder catalog: until the real pricing integration (ADR 0001 follow-up)
 // moves price authority into Vendure, variants are dumb pointers and every
