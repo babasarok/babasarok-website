@@ -7,11 +7,11 @@ colors:
     label: Fehér
     hex: ''
     image: /src/assets/IMG_1189.jpeg
-  - color_id: 'Szürke '
-    label: 'Szürke '
+  - color_id: 'Szürke'
+    label: 'Szürke'
     image: /src/assets/IMG_9598.jpeg
-  - color_id: 'Rózsaszín '
-    label: 'Rózsaszín '
+  - color_id: 'Rózsaszín'
+    label: 'Rózsaszín'
     image: /src/assets/IMG_6917.jpeg
   - color_id: Kek
     label: Kék
@@ -28,17 +28,17 @@ colors:
   - color_id: Zsálya
     label: Zsálya
     image: /src/assets/IMG_3231.jpeg
-  - color_id: 'Sötétzöld '
-    label: 'Sötétzöld '
+  - color_id: 'Sötétzöld'
+    label: 'Sötétzöld'
     image: /src/assets/IMG_0355.jpeg
-  - color_id: 'Világos bézs '
-    label: 'Világos bézs '
+  - color_id: 'Világos bézs'
+    label: 'Világos bézs'
     image: /src/assets/IMG_5228.jpeg
-  - color_id: 'Világos barna '
-    label: 'Világos barna '
+  - color_id: 'Világos barna'
+    label: 'Világos barna'
     image: /src/assets/IMG_9812.jpeg
-  - color_id: 'Halvány barack '
-    label: 'Halvány barack '
+  - color_id: 'Halvány barack'
+    label: 'Halvány barack'
     image: /src/assets/IMG_7836.jpeg
 thumbnail: /src/assets/IMG_6533.jpeg
 ---
