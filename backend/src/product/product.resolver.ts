@@ -14,7 +14,7 @@ interface GeneratedVariantListOptionsInput {
 }
 
 interface GeneratedVariantListGraph {
-  items: Array<{ id: string; name: string; sku: string; price: number }>;
+  items: Array<{ id: string; name: string; code: string; price: number }>;
   totalItems: number;
 }
 
@@ -179,7 +179,10 @@ export class ProductDefinitionResolver {
 }
 
 export const productDefinitionSchema = gql`
-  type ProductDefinition {
+  # The Node/PaginatedList implementations are what the dashboard's table
+  # machinery keys on (the admin-api schema plugin marks list types by the
+  # PaginatedList interface); without them the lists render without columns.
+  type ProductDefinition implements Node {
     id: ID!
     productId: String!
     label: String!
@@ -193,15 +196,25 @@ export const productDefinitionSchema = gql`
     stale: Boolean!
   }
 
-  type GeneratedVariant {
+  type GeneratedVariant implements Node {
     id: ID!
     name: String!
-    sku: String!
+    # "code", not "sku": the dashboard's shipped table settings for the
+    # product-detail page hide a column literally named "sku" (the stock
+    # variants table's default), and a table column inherits the page's
+    # settings by id — a colliding name renders as a hidden column and the
+    # table's minimal-query rewrite stops fetching it.
+    code: String!
     price: Int!
   }
 
-  type GeneratedVariantList {
+  type GeneratedVariantList implements PaginatedList {
     items: [GeneratedVariant!]!
+    totalItems: Int!
+  }
+
+  type ProductDefinitionList implements PaginatedList {
+    items: [ProductDefinition!]!
     totalItems: Int!
   }
 
@@ -213,11 +226,6 @@ export const productDefinitionSchema = gql`
     # The table always sends sort/filter keys; JSON keeps the input tolerant.
     sort: JSON
     filter: JSON
-  }
-
-  type ProductDefinitionList {
-    items: [ProductDefinition!]!
-    totalItems: Int!
   }
 
   input GeneratedVariantListOptions {

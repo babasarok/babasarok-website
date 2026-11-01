@@ -113,7 +113,7 @@ const generatedVariantsQuery = graphql(`
       items {
         id
         name
-        sku
+        code
         price
       }
       totalItems
@@ -1168,7 +1168,11 @@ function ConfiguratorEditor({
               customizeColumns={{
                 id: { header: "ID", enableSorting: false },
                 name: { header: "Név", enableSorting: false },
-                sku: { header: "SKU", enableSorting: false },
+                // The variant's SKU arrives as "code": a column literally
+                // named "sku" collides with the product-detail page's shipped
+                // table settings (the stock variants table hides it by
+                // default) and would render hidden with an unfetched value.
+                code: { header: "SKU", enableSorting: false },
                 price: { header: "Ár (Ft)", enableSorting: false },
               }}
             />

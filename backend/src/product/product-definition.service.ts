@@ -202,7 +202,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     row: ProductDefinition,
     options: { skip?: number | null; take?: number | null } | null
   ): Promise<{
-    items: Array<{ id: string; name: string; sku: string; price: number }>;
+    items: Array<{ id: string; name: string; code: string; price: number }>;
     totalItems: number;
   }> {
     const skip = Math.max(options?.skip ?? 0, 0);
@@ -227,7 +227,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       items: variants.map((variant) => ({
         id: String(variant.id),
         name: huName(variant.translations) ?? variant.sku,
-        sku: variant.sku,
+        code: variant.sku,
         price:
           variant.productVariantPrices.find((price) => price.channelId === ctx.channelId)?.price ??
           0,
