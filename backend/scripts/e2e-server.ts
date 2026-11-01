@@ -7,12 +7,15 @@
  * process boots after the server's health check: the product-definition sync
  * runs on the job queue, which only the worker drains.
  *
- * The script tears its children down with itself: they run as their own
- * process groups and are killed on SIGTERM/SIGINT, on exit, and when the
- * script notices its own parent is gone (Playwright kills the pnpm wrapper
- * the webServer command runs as, and the signal does not necessarily reach
- * this script) — otherwise the server and worker survive holding the API
- * port and the e2e database, and the next run dies in the port-busy guard.
+ * The script tears its children down with itself: they are signaled on
+ * SIGTERM/SIGINT, on exit, and when the script notices its own parent is
+ * gone (Playwright kills the pnpm wrapper the webServer command runs as,
+ * and the signal does not necessarily reach this script) — otherwise the
+ * server and worker survive holding the API port and the e2e database, and
+ * the next run dies in the port-busy guard. The children deliberately stay
+ * in the script's process group: pnpm's own teardown watchdog SIGKILLs that
+ * whole group when the wrapper dies, and a group kill still reaches them
+ * when this script is killed without running any of its own handlers.
  *
  * Run: pnpm -C backend run e2e:server
  */
@@ -99,19 +102,13 @@ async function seedMaterials(dbUrl: string): Promise<void> {
 
 const children: Array<ChildProcess> = [];
 
-/** Signals each spawned child's whole process group: the children are spawned
- * detached, i.e. as their own group leaders, so anything they spawn dies too. */
+/** Signals the spawned server and worker. They deliberately share this
+ * script's process group (never detached): a group kill — pnpm's teardown
+ * watchdog, a terminal interrupt — must take them down even when this script
+ * is killed without running any of its own handlers. */
 function killChildren(): void {
   for (const child of children) {
-    if (child.pid === undefined) {
-      continue;
-    }
-
-    try {
-      process.kill(-child.pid, "SIGTERM");
-    } catch {
-      // The group is already gone.
-    }
+    child.kill("SIGTERM");
   }
 }
 
@@ -173,7 +170,6 @@ async function main(): Promise<void> {
   await seedMaterials(guard.dbUrl);
 
   const server = spawn(process.execPath, [path.join(backendRoot, "dist", "index.js")], {
-    detached: true,
     stdio: "inherit",
   });
 
@@ -189,7 +185,6 @@ async function main(): Promise<void> {
   // worker drains it, so the dashboard's pending→synced flow needs both
   // processes — the same server+worker pair dev and the deploy run.
   const worker = spawn(process.execPath, [path.join(backendRoot, "dist", "index-worker.js")], {
-    detached: true,
     stdio: "inherit",
   });
 
