@@ -161,7 +161,10 @@ function dependencyOrder(fields: readonly ProductField[]): {
     }
   }
 
-  return { order, cyclic: new Set(fields.map((field) => field.id).filter((id) => !ordered.has(id))) };
+  return {
+    order,
+    cyclic: new Set(fields.map((field) => field.id).filter((id) => !ordered.has(id))),
+  };
 }
 
 function isVisible(

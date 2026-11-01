@@ -53,7 +53,12 @@ describe("validateProductDefinition", () => {
   it("rejects a duplicate option id within a choice field", () => {
     const result = validateProductDefinition(
       definition({
-        fields: [choice("meret", [{ id: "kicsi", price: 0 }, { id: "kicsi", price: 500 }])],
+        fields: [
+          choice("meret", [
+            { id: "kicsi", price: 0 },
+            { id: "kicsi", price: 500 },
+          ]),
+        ],
       }),
       MATERIALS
     );
@@ -119,7 +124,12 @@ describe("validateProductDefinition", () => {
     const result = validateProductDefinition(
       definition({
         basePrice: 0,
-        fields: [choice("meret", [{ id: "ingyen", price: 0 }, { id: "dragabb", price: 500 }])],
+        fields: [
+          choice("meret", [
+            { id: "ingyen", price: 0 },
+            { id: "dragabb", price: 500 },
+          ]),
+        ],
       }),
       MATERIALS
     );
@@ -233,7 +243,10 @@ describe("validateProductDefinition", () => {
       definition({
         basePrice: 0,
         fields: [
-          choice("alap", [{ id: "ingyenes", price: 0 }, { id: "draga", price: 0 }]),
+          choice("alap", [
+            { id: "ingyenes", price: 0 },
+            { id: "draga", price: 0 },
+          ]),
           choice("kieg", [{ id: "extra", price: 100 }], {
             visibility: { kind: "when-equal", fieldId: "alap", value: "draga" },
           }),
@@ -265,7 +278,10 @@ describe("validateProductDefinition", () => {
   });
 
   it("exempts non-orderable products from the 0 Ft rule", () => {
-    const result = validateProductDefinition(definition({ basePrice: 0, orderable: false }), MATERIALS);
+    const result = validateProductDefinition(
+      definition({ basePrice: 0, orderable: false }),
+      MATERIALS
+    );
 
     expect(result.success).toBe(true);
   });
