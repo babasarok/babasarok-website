@@ -29,6 +29,7 @@ import {
   Textarea,
 } from "@vendure/dashboard";
 import { graphql } from "@/gql";
+import { ErrorNotice, rowKey } from "./shared";
 
 const materialsQuery = graphql(`
   query Materials {
@@ -121,10 +122,6 @@ interface ColorRow {
 
 /** What the open asset picker writes into. */
 type PickerTarget = { kind: "color"; key: string } | { kind: "thumbnail" };
-
-function rowKey(): string {
-  return crypto.randomUUID();
-}
 
 // Extensions load for side effects only (the dashboard's virtual module
 // dynamic-imports this file); the registration call must run on import.
@@ -557,13 +554,5 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
         />
       )}
     </Page>
-  );
-}
-
-function ErrorNotice({ message }: { message: string }): ReactElement {
-  return (
-    <Alert variant="destructive">
-      <AlertTitle className="whitespace-pre-wrap">{message}</AlertTitle>
-    </Alert>
   );
 }
