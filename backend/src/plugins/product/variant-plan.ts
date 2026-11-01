@@ -55,6 +55,35 @@ function isBanned(
 }
 
 /**
+ * `"<label> (<values joined by ', ')>", except a value that appears in more
+ * than one group of the same variant gets its group's label prefixed — two
+ * material fields both offering wool read "Külső anyag: Gyapjú, Belső anyag:
+ * Gyapjú" instead of an ambiguous "Gyapjú, Gyapjú".
+ */
+function variantName(
+  label: string,
+  combo: readonly PlannedOption[],
+  groups: readonly PlannedOptionGroup[]
+): string {
+  if (combo.length === 0) {
+    return label;
+  }
+
+  const occurrences = new Map<string, number>();
+
+  for (const option of combo) {
+    occurrences.set(option.name, (occurrences.get(option.name) ?? 0) + 1);
+  }
+
+  const values = groups.map((group, index) => {
+    const option = combo[index];
+    return (occurrences.get(option.name) ?? 0) > 1 ? `${group.name}: ${option.name}` : option.name;
+  });
+
+  return `${label} (${values.join(", ")})`;
+}
+
+/**
  * The decision core of the native sync: which option groups/options the
  * structured model demands, which variant combinations exist after forbidden
  * combinations are omitted, and each variant's total price. Pure — the service
@@ -139,10 +168,7 @@ export function planVariantCombinations(
 
     variants.push({
       sku: optionCodes.length === 0 ? definition.id : `${definition.id}--${optionCodes.join("-")}`,
-      name:
-        combo.length === 0
-          ? definition.label
-          : `${definition.label} (${combo.map((option) => option.name).join(", ")})`,
+      name: variantName(definition.label, combo, optionGroups),
       price:
         definition.pricing.kind === "length"
           ? 0

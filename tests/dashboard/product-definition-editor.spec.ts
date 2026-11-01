@@ -164,11 +164,15 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await expect(generated.getByRole("row", { name: /Gyapjú, Len/ })).toHaveCount(0);
     await expect(generated.getByRole("row", { name: /Len, Gyapjú/ })).toHaveCount(0);
 
-    const kek = generated.getByRole("row", { name: /E2E F1 \(Kék, Nem, Gyapjú, Gyapjú\)/ });
+    const kek = generated.getByRole("row", {
+      name: /E2E F1 \(Kék, Nem, Külső anyag: Gyapjú, Belső anyag: Gyapjú\)/,
+    });
     await expect(kek).toContainText("e2e-f1--kek-nem-e2e-m1-e2e-m1");
     await expect(kek).toContainText("15000");
 
-    const piros = generated.getByRole("row", { name: /E2E F1 \(Piros, Igen, Len, Len\)/ });
+    const piros = generated.getByRole("row", {
+      name: /E2E F1 \(Piros, Igen, Külső anyag: Len, Belső anyag: Len\)/,
+    });
     await expect(piros).toContainText("e2e-f1--piros-igen-e2e-m2-e2e-m2");
     await expect(piros).toContainText("16750");
   });
@@ -203,11 +207,15 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     const generated = generatedTable(page);
     await expect(generated.getByRole("row", { name: /E2E F1 \(/ })).toHaveCount(8);
 
-    const zafir = generated.getByRole("row", { name: /E2E F1 \(Zafír, Nem, Gyapjú, Gyapjú, S\)/ });
+    const zafir = generated.getByRole("row", {
+      name: /E2E F1 \(Zafír, Nem, Külső anyag: Gyapjú, Belső anyag: Gyapjú, S\)/,
+    });
     await expect(zafir).toContainText("e2e-f1--kek-nem-e2e-m1-e2e-m1-s");
     await expect(zafir).toContainText("15000");
 
-    const piros = generated.getByRole("row", { name: /E2E F1 \(Piros, Igen, Len, Len, S\)/ });
+    const piros = generated.getByRole("row", {
+      name: /E2E F1 \(Piros, Igen, Külső anyag: Len, Belső anyag: Len, S\)/,
+    });
     // 15000 base + Piros 700 (raised from 500 in this step) + toggle 1200
     // (raised from 1000) + Len 250 + S 0.
     await expect(piros).toContainText("17150");

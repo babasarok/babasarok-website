@@ -194,6 +194,112 @@ describe("planVariantCombinations", () => {
     expect(plan.variants).toHaveLength(3 * 2 * 2 * 3 * 3);
     expect(plan.variants.every((variant) => variant.price === 0)).toBe(true);
   });
+
+  it("keeps the short name while every value in a variant is unique", () => {
+    const definition = ProductDefinitionSchema.parse({
+      ...babafeszek,
+      id: "egyedi",
+      label: "Egyedi",
+      fields: [
+        {
+          kind: "choice",
+          id: "meret",
+          label: "Méret",
+          presentation: "radio",
+          visibility: { kind: "always" },
+          options: [{ id: "35x65", label: "Normál", price: 0 }],
+        },
+        {
+          kind: "material",
+          id: "anyag",
+          label: "Anyag",
+          colorCount: { kind: "fixed", count: 1 },
+          options: [{ materialId: "teddy", price: 0 }],
+        },
+      ],
+      forbiddenMaterialCombinations: [],
+    });
+
+    const plan = planVariantCombinations(definition, labels);
+
+    expect(plan.variants.map((variant) => variant.name)).toEqual(["Egyedi (Normál, Teddy)"]);
+  });
+
+  it("qualifies only the values that repeat across groups in the same variant", () => {
+    const definition = ProductDefinitionSchema.parse({
+      ...babafeszek,
+      id: "keverek",
+      label: "Keverék",
+      fields: [
+        {
+          kind: "material",
+          id: "kulso",
+          label: "Külső anyag",
+          colorCount: { kind: "fixed", count: 1 },
+          options: [
+            { materialId: "teddy", price: 0 },
+            { materialId: "waffle", price: 0 },
+          ],
+        },
+        {
+          kind: "material",
+          id: "belso",
+          label: "Belső anyag",
+          colorCount: { kind: "fixed", count: 1 },
+          options: [
+            { materialId: "teddy", price: 0 },
+            { materialId: "wellsoft", price: 0 },
+          ],
+        },
+      ],
+      forbiddenMaterialCombinations: [],
+    });
+
+    const plan = planVariantCombinations(definition, labels);
+
+    expect(plan.variants.map((variant) => variant.name)).toEqual([
+      "Keverék (Külső anyag: Teddy, Belső anyag: Teddy)",
+      "Keverék (Teddy, Wellsoft)",
+      "Keverék (Waffle, Teddy)",
+      "Keverék (Waffle, Wellsoft)",
+    ]);
+  });
+
+  it("qualifies a value repeated across three groups in every group it repeats in", () => {
+    const materialField = (id: string, label: string) => ({
+      kind: "material",
+      id,
+      label,
+      colorCount: { kind: "fixed", count: 1 },
+      options: [
+        { materialId: "teddy", price: 0 },
+        { materialId: "waffle", price: 0 },
+      ],
+    });
+
+    const definition = ProductDefinitionSchema.parse({
+      ...babafeszek,
+      id: "harom",
+      label: "Három",
+      fields: [
+        materialField("kulso", "Külső"),
+        materialField("kozep", "Középső"),
+        materialField("belso", "Belső"),
+      ],
+      forbiddenMaterialCombinations: [],
+    });
+
+    const plan = planVariantCombinations(definition, labels);
+    const nameOf = (codes: readonly string[]) =>
+      plan.variants.find((variant) => variant.optionCodes.join("-") === codes.join("-"))?.name;
+
+    expect(nameOf(["teddy", "teddy", "teddy"])).toBe(
+      "Három (Külső: Teddy, Középső: Teddy, Belső: Teddy)"
+    );
+    expect(nameOf(["teddy", "waffle", "waffle"])).toBe(
+      "Három (Teddy, Középső: Waffle, Belső: Waffle)"
+    );
+  });
 });
 
 describe("plannedNativeState", () => {
