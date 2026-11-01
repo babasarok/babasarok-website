@@ -72,9 +72,9 @@ an option → the missing variants appear; no manual variant work anywhere.
    (e.g. a hash of last-synced state) and refuse-or-confirm instead of
    silently overwriting.
 3. **The configurator is edited on the stock product page** via a dashboard
-   page block on `pageId: 'product-detail'` (spike-verified mechanism), not
-   primarily as a separate section; the standalone section remains the
-   creation entry point.
+   page block on `pageId: 'product-detail'` (spike-verified mechanism); no
+   separate section exists — creation happens via an action-bar item on the
+   stock products list (`pageId: 'product-list'`), implemented in PR #77.
 4. **Materials keep slugs as business keys; numeric ids for machinery**
    (already implemented). Product definitions reference materials by slug.
 5. **Colors, length and embroidery never become variant axes.** Colors are
@@ -107,22 +107,22 @@ an option → the missing variants appear; no manual variant work anywhere.
 
 ## Known UX gaps from the spike click-through (and remedies)
 
-1. **Generated preview list rendered empty** — spike-grade defect; the
-   production variant table must page real data (verify the query the block
-   issues).
+1. **Generated preview list rendered empty** — spike-grade defect; resolved
+   in PR #77 with a paged `generatedVariants` query.
 2. **The block does not span the full page width** — the stock page's
-   column layout constrains blocks; production may need a full-width block
-   or layout override.
+   column layout constrains blocks; needs a full-width block or layout
+   override (`pnpm patch` candidate; still open).
 3. **Stock blocks (variants grid) cannot be conditionally hidden** — the
    block API's `shouldRender` is synchronous while "is this product
    generated?" is asynchronous (spike-verified). Remedies, in order of
    preference: fold the definition lookup into the product page's own data
    query; a small `pnpm patch` to the dashboard package in our build (we
    already build the dashboard SPA ourselves) allowing async block
-   visibility; or an upstream contribution.
-4. **A separate Termékek section still exists** — production moves creation
-   to an action-bar item on the stock products list page, after which the
-   standalone section is removed.
+   visibility; or an upstream contribution. (Still open.)
+4. **A separate Termékek section still exists** — resolved in PR #77
+   (pulled forward at the owner's request): the standalone section is
+   removed; creation is an action-bar item on the stock products list,
+   delete lives in the configurator block.
 
 ## Delivery plan (non-spike work)
 

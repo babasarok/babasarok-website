@@ -65,8 +65,14 @@ merged to main until the backend structure is settled):
   PR #77). Known issue feeding the dashboard step: sync runs ~1.5–3
   variants/s inside Vendure's `ProductVariantService.create`; big matrices
   need minutes, so dashboard saves must go async (job queue)
-- 🔄 Dashboard production pass (configurator page block, ADR 0010's four UX
-  gaps, staleness indicator, delete/conflict policy, async sync) — in PR #77
+- ✅ Dashboard production pass (async job-queue sync — 576-variant save
+  returns in ~130ms with background convergence; configurator page block on
+  the stock product page; creation folded into the stock products list
+  action bar, standalone section removed; UI review pass fixed a real
+  data-loss bug in save; dashboard e2e 4 specs green — PR #77). Still open:
+  full-width block + conditionally hiding the stock variants grid (both
+  `pnpm patch` candidates), drift-detail display, validation-message
+  localization
 - ⬜ Facets + Collections (material/color facets, auto-managed collections)
 - ⬜ Promotions (per-product % discounts; set discounts — see
   [order-pricing](specs/order-pricing.md) and
