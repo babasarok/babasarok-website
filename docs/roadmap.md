@@ -71,7 +71,10 @@ merged to main until the backend structure is settled):
 - ✅ Canonical product schema in `packages/product-definition` (PR #77)
 - ✅ Products core (definition storage, batched variant sync with drift
   detection, migration, admin API; seed 33/33 products / 11/11 materials —
-  PR #77). Known issue feeding the dashboard step: sync runs ~1.5–3
+  PR #77; previews now import a curated 7-product subset covering every
+  implemented feature, so deploys fit Cloudflare's 30-minute limit — see
+  `backend/scripts/import-products.ts`). Known issue feeding the dashboard
+  step: sync runs ~1.5–3
   variants/s inside Vendure's `ProductVariantService.create`; big matrices
   need minutes, so dashboard saves must go async (job queue)
 - ✅ Dashboard production pass (async job-queue sync — 576-variant save

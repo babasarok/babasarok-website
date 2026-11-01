@@ -49,6 +49,24 @@ const REQUEST_TIMEOUT_MS = 240_000;
 const RUN_BUDGET_MS = (Number(process.env.IMPORT_PRODUCTS_SYNC_BUDGET_MINUTES) || 45) * 60_000;
 // Frequent enough that a slow big-matrix sync never reads as a hang.
 const SYNC_PROGRESS_INTERVAL_MS = 30_000;
+// TEMPORARY, preview-only (ADR 0009/0010): the preview seed imports a curated
+// subset — one product per implemented feature — so the deploy fits inside
+// Cloudflare's 30-minute build limit. Covers: input + depends_on
+// (cumi-ragcsalanc), choice/select (bella-taska), toggle (kismama-parna),
+// embroidery + hiddenInProductList (diszparna), banned combinations
+// (babatakaro-szett), length pricing + from-field colorCount + choice/radio
+// (fonott-racsvedo), material-only (egyben-moshato-takaro-lapos-parna).
+// Choice presentation "color" has no real content yet (e2e covers it).
+// At cutover prod is hand-migrated from the full content; drop this filter.
+const PREVIEW_PRODUCT_IDS = new Set([
+  "babatakaro-szett",
+  "bella-taska",
+  "cumi-ragcsalanc",
+  "diszparna",
+  "egyben-moshato-takaro-lapos-parna",
+  "fonott-racsvedo",
+  "kismama-parna",
+]);
 
 interface UpsertResult {
   kind: "created" | "updated";
@@ -258,6 +276,13 @@ async function main(): Promise<void> {
     }
 
     productIdByFile.set(file.replace(/\.md$/, ""), frontmatter.data.product_id.trim());
+
+    if (!PREVIEW_PRODUCT_IDS.has(frontmatter.data.product_id.trim())) {
+      // Curated-subset skip: silent per file, counted in the summary.
+      skipped += 1;
+      continue;
+    }
+
     const definition = definitionFromTinaProduct(frontmatter.data);
 
     if (!definition.success) {
@@ -306,7 +331,7 @@ async function main(): Promise<void> {
 
   console.log(
     `products: ${created} created, ${updated} updated, ` +
-      `${failed} failed, ${skipped} skipped by schema | ` +
+      `${failed} failed, ${skipped} skipped (${files.length} files; preview subset) | ` +
       `syncs: ${syncs.synced} synced, ${syncs.failed.length} failed | ` +
       `groups: ${groups.validated} validated, ${groups.failed} failed`
   );
