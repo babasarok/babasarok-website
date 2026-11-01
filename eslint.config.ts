@@ -18,6 +18,9 @@ export default defineConfig([
     "tina/__generated__",
     "scripts",
     "old",
+    // Has its own toolchain (Vendure/NestJS decorators) and tsconfig; checked
+    // and linted inside backend/, not by the site's eslint/tsconfig.
+    "backend",
   ]),
   {
     plugins: { js, astro, unicorn },

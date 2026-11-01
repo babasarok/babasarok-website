@@ -2,15 +2,17 @@
   "name": "babasarok-website",
   "type": "module",
   "version": "0.0.1",
+  "packageManager": "pnpm@12.15.0",
   "engines": {
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "tinacms dev -c \"astro dev --host\"",
+    "dev": "concurrently -k -n db,api,dashboard,site -c gray,blue,magenta,green \"docker compose up postgres\" \"pnpm run db:wait && pnpm -C backend run dev\" \"pnpm -C backend run dashboard\" \"tinacms dev -c 'astro dev --host'\"",
+    "db:wait": "until docker compose exec -T postgres pg_isready -q; do sleep 1; done",
     "build": "tinacms build -c \"astro build\"",
+    "ship": "node scripts/deploy-backend.ts",
     "build:local": "tinacms build --local --skip-cloud-checks -c \"astro build\"",
     "build:search": "tinacms search-index",
-    "migrate": "node scripts/migrate/index.ts",
     "preview": "astro preview",
     "astro": "astro",
     "test": "vitest run",
@@ -20,12 +22,14 @@
     "check": "npx astro check && npx sv check",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx,.astro,.svelte",
     "lint:style": "stylelint \"**/*.{css,astro,svelte}\"",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "dev:tina": "tinacms dev -c \"astro dev --host\""
   },
   "imports": {
     "#global.css": "./src/styles/global.css"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "^14.4.2",
     "@astrojs/markdown-remark": "^7.3.1",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.4",
@@ -43,12 +47,14 @@
     "astro-md-2": "^2.0.0",
     "astro-pagefind": "^2.0.1",
     "clsx": "^2.1.1",
+    "marked": "^16.4.2",
     "sharp": "^0.34.5",
     "svelte": "^5.57.0",
     "svelte-bricks": "^0.5.0",
     "tailwind-merge": "^3.6.0",
     "tailwind-variants": "^3.2.2",
     "tailwindcss": "^4.3.0",
+    "unist-util-visit": "^5.1.0",
     "wrangler": "^4.151.1",
     "zod": "^4.4.3"
   },
@@ -59,8 +65,10 @@
     "@iconify-json/fa-brands": "^1.2.2",
     "@iconify-json/streamline-logos": "^1.2.0",
     "@playwright/test": "^1.61.1",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@tinacms/cli": "^2.7.0",
     "@types/gtag.js": "^0.0.20",
+    "@types/mdast": "^4.0.4",
     "@types/node": "^25.9.1",
     "@types/react": "^19.3.0",
     "@typescript-eslint/eslint-plugin": "^8.62.0",
@@ -72,7 +80,9 @@
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-svelte": "^3.20.0",
     "eslint-plugin-unicorn": "^64.0.0",
+    "globals": "^16.5.0",
     "gray-matter": "^4.0.3",
+    "jiti": "^2.6.1",
     "prettier": "^3.9.1",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-svelte": "^3.5.2",
@@ -88,6 +98,7 @@
     "tinacms": "^3.13.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.62.0",
+    "vfile": "^6.0.3",
     "vitest": "^4.1.9",
     "yaml": "^2.6.0"
   },
@@ -96,13 +107,5 @@
     "@tinacms/cli": {
       "vite": "^6.4.3"
     }
-  },
-  "allowScripts": {
-    "sharp@0.34.5": true,
-    "esbuild@0.18.20": true,
-    "esbuild@0.27.7": true,
-    "esbuild@0.24.2": true,
-    "core-js@2.6.12": true,
-    "core-js@3.49.0": true
   }
 }

@@ -1,8 +1,10 @@
 node_modules
 dist
+backend/dist/dashboard
 .astro
 package.json
 package-lock.json
+pnpm-lock.yaml
 .npm
 old
 public/admin
@@ -19,6 +21,9 @@ src/content/delivery_method
 src/content/material
 src/content/product
 src/content/sections
+# Prettier's markdown reflow re-parses this hand-written log's list
+# structure (merges items, shifts emphasis markers) — it must stay as-is.
+docs/vendure-migration.md
 *.jpg
 *.jpeg
 *.png

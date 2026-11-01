@@ -99,8 +99,8 @@ pageview tracking covers soft navigations.
 
 ### Conversion events
 
-When Web3Forms accepts a submission, the system SHALL push a Google Ads
-conversion into the data layer (order total in HUF and the submission's
+When the backend accepts an order submission, the system SHALL push a Google
+Ads conversion into the data layer (order total in HUF and the submission's
 transaction identifier, see the order-submission spec), and SHALL send a Meta
 `Purchase` event with the same total (`currency: "HUF"`, `value`,
 `num_items`) when the pixel is loaded.
@@ -110,7 +110,7 @@ transaction identifier, see the order-submission spec), and SHALL send a Meta
     or blocked by the visitor)
   - THEN no `Purchase` event is sent and the submission succeeds regardless
 - **Scenario: Submission failure**
-  - WHEN Web3Forms rejects the submission
+  - WHEN the backend rejects the submission
   - THEN no conversion event is recorded
 
 ### Privacy page content

@@ -2,7 +2,9 @@
 
 Lets buyers place an order request for configured products: an order form on
 the checkout page collects the basket plus contact and delivery details, shows
-the computed order total, and submits the order as an email via Web3Forms.
+the computed order total, and submits the order to the shop's Vendure backend
+(`submitQuoteOrder` mutation on the shop API), which stores it as a Vendure
+order and emails the buyer and the shop owner.
 
 ## Requirements
 
@@ -72,42 +74,55 @@ the method is charged at 0.
 
 ### Order submission
 
-The system SHALL submit the order by posting a Web3Forms form payload
-containing the buyer's name, email, phone, delivery method (and address when
-required, and "ingyenes" instead of the price when the method is charged at 0 by
-its free-delivery threshold), message, the terms acceptance flag, the computed
-total, one text block per product describing its quantity, configured fields
-(indented per dependency level), materials with colors, price breakdown, unit
-price (and per-meter price for length-priced items), and total — closed by a
-unique transaction identifier generated per submission attempt as the last
-payload field. Set
-discounts SHALL be described at basket level: the payload SHALL summarize each
-formed set instance (set title, percent, and which items/units it covers) so
-each discount maps unambiguously to specific products.
+The system SHALL submit the order as a `submitQuoteOrder` mutation to the
+Vendure shop API, carrying the buyer's name, email, phone, delivery method
+(and address when required, plus a `deliveryFree` flag instead of the price
+when the method is charged at 0 by its free-delivery threshold), message, the
+terms acceptance flag, the computed total, one text block per product
+describing its quantity, configured fields (indented per dependency level),
+materials with colors, price breakdown, unit price (and per-meter price for
+length-priced items), and line total — plus a unique transaction identifier
+generated per submission attempt. Set discounts SHALL be described at basket
+level: the payload SHALL summarize each formed set instance (set title, forint
+amount, and which items/units it covers) so each discount maps unambiguously
+to specific products.
+
+The backend SHALL validate the payload (zod schema), store it as a Vendure
+order with the quoted prices and text blocks as order/line custom fields, and
+return the generated order code. The computed prices travel with the order as
+the price authority (ADR 0002); the backend stores them as-is.
+
+On the AddingItems → ArrangingPayment transition the backend SHALL email the
+buyer a confirmation (subject: `Köszönjük a rendelésed: <rendelésszám>`) and
+the shop owner a notification (subject: `Új árajánlatkérés:
+<rendelésszám>`), both carrying the per-product blocks, the set-discount
+summary, the order code, and the transaction identifier. Email delivery goes
+through Cloudflare Email Sending (REST); previews/dev run file transport and
+physically cannot email a buyer.
 
 - **Scenario: Successful submission**
-  - WHEN a valid order is submitted and Web3Forms accepts it
-  - THEN the buyer sees a confirmation and the order is not kept in a
-    re-submittable failed state
+  - WHEN a valid order is submitted and the backend accepts it
+  - THEN the buyer sees a confirmation, the order is stored with its quoted
+    prices, and the order is not kept in a re-submittable failed state
 - **Scenario: Submission failure**
-  - WHEN Web3Forms rejects the request or the network request fails
+  - WHEN the backend rejects the payload or the network request fails
   - THEN the buyer sees a generic error message and can retry; the order
     details remain intact
 
 ### Conversion tracking
 
 The system SHALL record a Google Ads conversion (a `gtag('event', 'conversion')`
-call through the GTM data layer) when Web3Forms accepts a submission, carrying
-the computed order total in HUF and the same transaction identifier that closed
-the email payload. No conversion SHALL be recorded when the submission fails.
-The call is only _pushed_ into the data layer unconditionally; whether it is
-transmitted depends on the visitor's marketing consent (see the
-consent-tracking spec).
+call through the GTM data layer) when the backend accepts the submission,
+carrying the computed order total in HUF and the same transaction identifier
+that was stored with the order. No conversion SHALL be recorded when the
+submission fails. The call is only _pushed_ into the data layer
+unconditionally; whether it is transmitted depends on the visitor's marketing
+consent (see the consent-tracking spec).
 
 - **Scenario: Successful submission**
-  - WHEN Web3Forms accepts the order email
+  - WHEN the backend accepts the order
   - THEN a conversion event is recorded with the order total (HUF) and the
-    email's transaction identifier
+    transaction identifier stored with the order
 - **Scenario: Submission failure**
-  - WHEN Web3Forms rejects the request or the network request fails
+  - WHEN the backend rejects the submission or the network request fails
   - THEN no conversion event is recorded

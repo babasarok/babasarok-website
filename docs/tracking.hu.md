@@ -15,8 +15,8 @@ háttér.
   hogy vásárlás történt, a rendelés végösszegével (HUF) és a tételek számával
   együtt. A személyes adataid nem részei ennek.
 - **A rendelésed maga** (név, e-mail, telefon, szállítási mód és szállítási cím,
-  üzenet, tételek, végösszeg) egy Web3Forms nevű űrlapszolgáltatás e-mailben
-  továbbítja. Kizárólag ide kerülnek a személyes adataid.
+  üzenet, tételek, végösszeg) a saját üzemeltetésű webáruház-rendszerünkben
+  (Vendure) tárolódik. Kizárólag ide kerülnek a személyes adataid.
 - Nincs cookie-banner: a követés alapértelmezés szerint be van kapcsolva minden
   látogató számára.
 - Nem működtetünk saját analitikai szoftvert; a követést teljes egészében a
@@ -29,7 +29,7 @@ háttér.
 | Google (Google Ads)             | Oldalmegtekintések (`PageView`); rendelés esetén `conversion` esemény a rendelés végösszegével (HUF) és standard hirdetési azonosítókkal, plusz form begin/submit jelzések                                                              | Minden oldalon; leadott rendelés esetén |
 | Meta (Facebook)                 | Oldalmegtekintések (`PageView`); rendelés esetén `Purchase` esemény a rendelés végösszegével (HUF) és a tételek számával                                                                                                                | Minden oldalon; leadott rendelés esetén |
 | Google és Meta (űrlapesemények) | Hogyan épül fel a rendelési űrlap – gombszöveg, mezőfeliratok (pl. `Név *`, `Email cím *`, `Telefonszám`) és beviteli mezőtípusok –, de soha nem az, amit bárki beírt                                                                   | Automatikusan, a rendelési űrlapon      |
-| Web3Forms (e-mail szolgáltatás) | A teljes rendelés: név, e-mail, telefon, szállítási mód és szállítási cím, üzenet, termékenkénti bontás, végösszeg, valamint egy rendelésazonosító, amely alapján a rendelést össze tudjuk vetni a hozzá tartozó hirdetési konverzióval | Csak amikor leadod a rendelést          |
+| Saját rendszerünk (Vendure)     | A teljes rendelés: név, e-mail, telefon, szállítási mód és szállítási cím, üzenet, termékenkénti bontás, végösszeg, valamint egy rendelésazonosító, amely alapján a rendelést össze tudjuk vetni a hozzá tartozó hirdetési konverzióval | Csak amikor leadod a rendelést          |
 
 ## A követés által beállított cookie-k
 

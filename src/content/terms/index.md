@@ -17,12 +17,12 @@ Kérjük, hogy csak akkor vegye igénybe szolgáltatásainkat, amennyiben jelen 
 - Honlap: <https://babasarok.net/>
 - E-mail cím: <halminoemi99@gmail.com>
 
-**Weboldal tárhely szolgáltató adatai:**
+**Tárhely- és webáruház-rendszer üzemeltetője:**
 
-- Neve: Web3Creative (Web3Forms)
-- Székhelye: India
-- Telefon: –
-- E-mail: <support@web3forms.com>
+- Neve: Babasarok (saját üzemeltetés)
+- Székhelye: Magyarország
+- Tárhelyszolgáltató: Hetzner Online GmbH (Németország)
+- E-mail: <halminoemi99@gmail.com>
 
 ## I. Általános rendelkezések
 

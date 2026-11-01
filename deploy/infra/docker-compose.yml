@@ -1,0 +1,59 @@
+# Shared platform: Caddy terminates TLS for the API hostnames and routes into
+# the prod stack's network (vendure-prod) and into preview stacks by their
+# generated per-branch snippets (the previews directory — one file per branch,
+# written by scripts/deploy-backend.ts).
+#
+# The postgres service hosts every preview branch database (there is no test
+# stack any more — previews replaced it). Preview stacks join this project's
+# network, where the `postgres` service alias and the Caddy container both
+# resolve.
+#
+# The generated networks override (docker-compose.networks.yml, created by
+# deploy-backend.ts from the stacks that exist on the box) attaches the Caddy
+# container to each fixed stack's compose network.
+name: babasarok-edge
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./previews:/etc/caddy/previews:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL}
+    healthcheck:
+      test: ["CMD", "caddy", "version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Shared preview postgres: no data of its own that matters — every database
+  # inside it is a disposable per-branch copy of prod, re-copied on each
+  # preview deploy. The password lives in this stack's .env (bootstrapped once
+  # on the box); preview .envs are provisioned from it by deploy-backend.ts.
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_USER: babasarok
+      POSTGRES_DB: babasarok
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - preview-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U babasarok"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+volumes:
+  caddy-data:
+  caddy-config:
+  preview-pgdata:

@@ -44,7 +44,7 @@ the Tina editor.
 
 | Command                       | What it does                                              |
 | ----------------------------- | --------------------------------------------------------- |
-| `npm run dev`                 | Tina backend + Astro dev server                           |
+| `npm run dev`                 | Postgres + Vendure + dashboard + Tina + Astro dev server  |
 | `npm run build`               | Production build (talks to Tina Cloud — needs creds)      |
 | `npm run build:local`         | Self-contained build, no Tina Cloud creds needed          |
 | `npm run preview`             | Serve the built `dist/` locally                           |

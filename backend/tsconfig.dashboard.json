@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "paths": {
+      // Shared generated GraphQL types (see vite.config.mts gqlOutputPath)
+      "@/gql": ["./src/gql/graphql.ts"],
+      // Resolves internal Vendure Dashboard imports for extension type safety
+      "@/vdb/*": ["./node_modules/@vendure/dashboard/src/lib/*"]
+    }
+  },
+  "include": ["src/**/dashboard/*", "src/gql/**/*.ts"]
+}

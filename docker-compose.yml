@@ -1,0 +1,17 @@
+# Postgres for local development only. The prod/test stacks on Hetzner get
+# their own compose files (shared edge Caddy + postfix live in a separate
+# infra compose; per-stack = vendure/worker/postgres).
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: babasarok
+      POSTGRES_PASSWORD: babasarok
+      POSTGRES_DB: babasarok
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

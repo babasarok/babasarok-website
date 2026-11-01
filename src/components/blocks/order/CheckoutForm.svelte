@@ -27,9 +27,9 @@
   interface Props {
     products: Record<string, CmsEnhancedProduct>;
     deliveryMethods: Record<string, CmsEnhancedDeliveryMethod>;
-    // Only the form endpoint and support address are needed; passing the full
-    // config would serialize the heavyweight logo images into the island props.
-    config: Pick<CmsEnhancedConfig, "fabformURL" | "address">;
+    // Only the support address is needed; passing the full config would
+    // serialize the heavyweight logo images into the island props.
+    config: Pick<CmsEnhancedConfig, "address">;
     threadColors: CmsEnhancedEmbroideryColor[];
     productGroups: CmsProductGroup[];
     slugByProductId: Record<string, string | undefined>;
@@ -157,7 +157,7 @@
         productGroups,
         termsAccepted,
       },
-      { accessKey: params.fabformURL ?? "", message, transactionId }
+      { message, transactionId }
     );
     sending = false;
 
@@ -184,8 +184,8 @@
       // The order total goes through the shared data layer (see the `gtag` shim
       // in Base.astro) to the GTM container (GTM_ID), whose Google Ads
       // conversion tag is configured over there — not in the site — so no
-      // conversion id lives here. `transaction_id` matches the email payload so
-      // Google Ads can deduplicate against the Web3Forms submission.
+      // conversion id lives here. `transaction_id` matches the transaction
+      // identifier stored with the order so Google Ads can deduplicate.
       gtag("event", "conversion", {
         value: grandTotal,
         currency: "HUF",

@@ -1,5 +1,6 @@
 import { defineConfig, envField, fontProviders } from "astro/config";
 import svelte from "@astrojs/svelte";
+import cloudflare from "@astrojs/cloudflare";
 import sitemap from "@astrojs/sitemap";
 import icon from "astro-icon";
 import tina from "@tinacms/astro/integration";
@@ -8,14 +9,37 @@ import tailwindcss from "@tailwindcss/vite";
 import pagefind from "astro-pagefind";
 import { unified } from "@astrojs/markdown-remark";
 import { remarkAssetImages } from "./src/lib/assets/remarkAssetImages";
+import { devProxy } from "./integrations/dev-proxy";
+import { vendureDashboard } from "./integrations/vendure-dashboard";
+import { previewApiUrl } from "./src/lib/preview-url";
 
 // https://astro.build/config
 export default defineConfig({
   site: process.env.SITE_URL || "https://babasarok.net",
   output: "static",
+  adapter: cloudflare({
+    // Build-time work (filesystem reads in prerendered endpoints, sharp image
+    // optimization) stays on Node; only the on-demand surface — the dashboard
+    // SPA fallback — runs in workerd.
+    prerenderEnvironment: "node",
+    // Keep sharp build-time image optimization for prerendered routes instead
+    // of the adapter's default runtime Images binding.
+    imageService: "compile",
+  }),
+  // No Astro sessions; the adapter would otherwise provision a KV namespace.
+  session: false,
   redirects: { "/home": "/" },
   prefetch: true,
-  integrations: [sitemap(), icon(), tina(), svelte(), pagefind()],
+  integrations: [
+    devProxy(),
+    // Builds the vendure dashboard into dist/dashboard on every build.
+    vendureDashboard(),
+    sitemap(),
+    icon(),
+    tina(),
+    svelte(),
+    pagefind(),
+  ],
   markdown: {
     processor: unified({
       // Rewrite Tina's root-absolute image refs so Astro optimizes them from
@@ -65,15 +89,12 @@ export default defineConfig({
       noExternal: ["@tinacms/astro", "@tinacms/bridge"],
     },
     build: {
-      rollupOptions: {
-        onwarn(warning, warn) {
-          if (
-            warning.code === "UNUSED_EXTERNAL_IMPORT" &&
-            warning.exporter === "tinacms/dist/client"
-          ) {
+      rolldownOptions: {
+        onLog(level, log, defaultHandler) {
+          if (log.code === "UNUSED_EXTERNAL_IMPORT" && log.exporter === "tinacms/dist/client") {
             return;
           }
-          warn(warning);
+          defaultHandler(level, log);
         },
       },
     },
@@ -84,6 +105,17 @@ export default defineConfig({
         context: "client",
         access: "public",
         optional: false,
+      }),
+      // Vendure shop API the checkout island submits orders to.
+      PUBLIC_VENDURE_API_URL: envField.string({
+        context: "client",
+        access: "public",
+        optional: true,
+        default:
+          previewApiUrl({
+            stack: process.env.DEPLOY_STACK,
+            branch: process.env.WORKERS_CI_BRANCH,
+          }) ?? "http://localhost:4000",
       }),
     },
   },

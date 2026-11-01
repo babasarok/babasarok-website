@@ -1,5 +1,5 @@
 name: Setup
-description: Install Node, restore the npm cache, install dependencies, and (optionally) generate Tina + Astro types.
+description: Install pnpm + Node, install workspace dependencies, and (optionally) generate Tina + Astro types.
 
 inputs:
   typegen:
@@ -13,22 +13,26 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      # Version comes from the packageManager field in package.json.
+
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version: "24"
-        cache: npm
+        cache: pnpm
 
     # `--ignore-scripts` is intentional: sharp and esbuild ship prebuilt
     # platform binaries via optionalDependencies, so lifecycle scripts are not
     # needed and only slow installs down / risk failures.
     - name: Install dependencies
       shell: bash
-      run: npm ci --ignore-scripts
+      run: pnpm install --frozen-lockfile --ignore-scripts
 
     - name: Generate Tina client and Astro types
       if: inputs.typegen == 'true'
       shell: bash
       run: |
-        npx tinacms build --local --skip-cloud-checks
-        npx astro sync
+        pnpm exec tinacms build --local --skip-cloud-checks
+        pnpm exec astro sync

@@ -1,14 +1,15 @@
 /**
- * Regression guard for the exact text sent to web3forms.
+ * Regression guard for the exact order payload sent to the Vendure shop API.
  *
- * These tests pin the *content* of the order strings (the per-product blocks and
- * the surrounding form fields) so any accidental change to wording, ordering, or
- * formatting in `orderSubmit.ts` shows up as a failing snapshot/assertion.
+ * These tests pin the *content* of the submitted order (the per-product
+ * configText blocks and the surrounding fields) so any accidental change to
+ * wording, ordering, or formatting in `submit.ts` shows up as a failing
+ * assertion.
  *
  * We drive the real public entry point (`submitOrder`) with a stubbed `fetch`
- * and read back the `FormData` it would POST, rather than calling the private
- * formatter — that way the test also covers the field wiring (subject, name,
- * delivery, total, …), not just one helper.
+ * and read back the GraphQL input it would POST, rather than calling the
+ * private formatter — that way the test also covers the field wiring (buyer,
+ * delivery, total, set summary, …), not just one helper.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { submitOrder, type OrderDetails } from "@/lib/order/submit";
@@ -23,29 +24,37 @@ import {
 } from "./fixtures";
 import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
 
+type QuoteOrderInput = Record<string, unknown>;
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** Run a successful submit and return the FormData that would have been POSTed. */
-async function captureForm(
+/** Run a successful submit and return the QuoteOrderInput that would be POSTed. */
+async function captureInput(
   order: OrderDetails,
-  options?: { accessKey?: string; message?: string; transactionId?: string }
-): Promise<FormData> {
-  const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
+  options?: { message?: string; transactionId?: string }
+): Promise<QuoteOrderInput> {
+  const fetchMock = vi.fn().mockResolvedValue({
+    ok: true,
+    json: () =>
+      Promise.resolve({
+        data: { submitQuoteOrder: { __typename: "SubmitQuoteOrderSuccess", orderCode: "CODE" } },
+      }),
+  });
   vi.stubGlobal("fetch", fetchMock);
 
   const result = await submitOrder(order, {
-    accessKey: options?.accessKey ?? "TEST_KEY",
     message: options?.message ?? "",
     transactionId: options?.transactionId ?? "TEST-TRANSACTION-ID",
   });
   expect(result).toEqual({ ok: true });
 
   const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-  expect(url).toBe("https://api.web3forms.com/submit");
+  expect(url).toBe("http://localhost:4000/shop-api");
   expect(init.method).toBe("POST");
-  return init.body as FormData;
+  const body = JSON.parse(init.body as string) as { variables: { input: QuoteOrderInput } };
+  return body.variables.input;
 }
 
 const baseOrder = (products: OrderDetails["products"], address?: string): OrderDetails => ({
@@ -60,41 +69,46 @@ const baseOrder = (products: OrderDetails["products"], address?: string): OrderD
   termsAccepted: true,
 });
 
-describe("order form envelope", () => {
-  it("includes contact, delivery, message, access key and total fields", async () => {
+/** The joined per-product config text blocks of a captured input. */
+function productTexts(input: QuoteOrderInput): string[] {
+  return (input.products as Array<{ configText: string }>).map((p) => p.configText);
+}
+
+describe("order envelope", () => {
+  it("includes buyer, delivery, message, terms, total and transaction id", async () => {
     const product = makeProduct({ title: "Pólya", price: 8000 });
-    const form = await captureForm(baseOrder([product]), {
-      accessKey: "SECRET_KEY",
+    const input = await captureInput(baseOrder([product]), {
       message: "Kérlek hímezzétek rá: Anna",
     });
 
-    expect(form.get("access_key")).toBe("SECRET_KEY");
-    expect(form.get("subject")).toBe("Új árajánlatkérés - Teszt Elek");
-    expect(form.get("nev")).toBe("Teszt Elek");
-    expect(form.get("email")).toBe("teszt@example.com");
-    expect(form.get("telefonszam")).toBe("+36301234567");
-    expect(form.get("szallitasimod")).toBe("Foxpost automata (990 Ft)");
-    expect(form.get("uzenet")).toBe("Kérlek hímezzétek rá: Anna");
-    expect(form.get("ar")).toBe("8990 Ft");
-    expect(form.get("feltetelek")).toBe("Igen");
-    // The transaction id closes the email so it can be matched against the
+    expect(input.name).toBe("Teszt Elek");
+    expect(input.email).toBe("teszt@example.com");
+    expect(input.phone).toBe("+36301234567");
+    expect(input.deliveryMethod).toBe("Foxpost automata");
+    expect(input.deliveryPrice).toBe(990);
+    expect(input.deliveryFree).toBe(false);
+    expect(input.message).toBe("Kérlek hímezzétek rá: Anna");
+    expect(input.totalPrice).toBe(8990);
+    expect(input.termsAccepted).toBe(true);
+    // The transaction id closes the payload so it can be matched against the
     // Google Ads conversion recorded for the same submission.
-    expect(form.get("tranzakcio_id")).toBe("TEST-TRANSACTION-ID");
-    expect([...form.keys()].at(-1)).toBe("tranzakcio_id");
+    expect(input.transactionId).toBe("TEST-TRANSACTION-ID");
+    expect(Object.keys(input).at(-1)).toBe("transactionId");
   });
 
-  it("emits one `termek N` entry per product, in order", async () => {
-    const form = await captureForm(
+  it("emits one product entry per basket line, in order", async () => {
+    const input = await captureInput(
       baseOrder([
         makeProduct({ title: "Első", price: 1000 }),
         makeProduct({ title: "Második", price: 2000 }),
       ])
     );
 
-    expect(form.getAll("termek 1")).toHaveLength(1);
-    expect(form.get("termek 1")).toContain("Első");
-    expect(form.get("termek 2")).toContain("Második");
-    expect(form.get("ar")).toBe("3990 Ft");
+    const products = input.products as Array<{ title: string; count: number }>;
+    expect(products).toHaveLength(2);
+    expect(products[0]?.title).toBe("Első");
+    expect(products[1]?.title).toBe("Második");
+    expect(input.totalPrice).toBe(3990);
   });
 });
 
@@ -164,7 +178,7 @@ describe("product string content", () => {
       ],
     });
 
-    expect(form_text(await captureForm(baseOrder([product])))).toMatchInlineSnapshot(`
+    expect(productTexts(await captureInput(baseOrder([product])))[0]).toMatchInlineSnapshot(`
       "Babafészek (2db)
         Méret: Közepes
         Babatakaró és párna: Igen
@@ -199,7 +213,7 @@ describe("product string content", () => {
       ],
     });
 
-    expect(form_text(await captureForm(baseOrder([product])))).toMatchInlineSnapshot(`
+    expect(productTexts(await captureInput(baseOrder([product])))[0]).toMatchInlineSnapshot(`
       "Baldachin (1db)
         Szín: Egyedi: mályva
 
@@ -211,23 +225,25 @@ describe("product string content", () => {
     `);
   });
 
-  it("includes delivery address when needed", async () => {
+  it("carries the delivery address only when the method needs one", async () => {
     const product = makeProduct({ title: "Pólya", price: 8000 });
 
-    const form = await captureForm({
+    const input = await captureInput({
       ...baseOrder([product]),
       deliveryMethod: makeDelivery("GLS házhozszállítás", 1390, "gls", true),
       address: "1234 Budapest, Kossuth Lajos utca 12.",
     });
-    expect(form.get("szallitasicim")).toBe("1234 Budapest, Kossuth Lajos utca 12.");
+    expect(input.needsAddress).toBe(true);
+    expect(input.address).toBe("1234 Budapest, Kossuth Lajos utca 12.");
 
-    // needs_address false → field must be absent
-    const formWithoutAddress = await captureForm({
+    // needs_address false → the address must be absent from the payload
+    const inputWithoutAddress = await captureInput({
       ...baseOrder([product]),
       deliveryMethod: makeDelivery("Személyes átvétel", 0, "szemelyes"),
       address: "1234 Budapest, Kossuth Lajos utca 12.",
     });
-    expect(formWithoutAddress.get("szallitasicim")).toBeNull();
+    expect(inputWithoutAddress.needsAddress).toBe(false);
+    expect(inputWithoutAddress.address).toBeUndefined();
   });
 
   it("includes filled-in optional fields but still hides empty ones", async () => {
@@ -254,7 +270,7 @@ describe("product string content", () => {
       ],
     });
 
-    const text = form_text(await captureForm(baseOrder([product])));
+    const text = productTexts(await captureInput(baseOrder([product])))[0];
     expect(text).toContain("  Név: Anna");
     // The filled-in optional note now reaches the email's answers block …
     expect(text).toContain("  Egyéb megjegyzés: Sürgős, kérlek!");
@@ -312,7 +328,7 @@ describe("product string content", () => {
       ],
     });
 
-    expect(form_text(await captureForm(baseOrder([product])))).toMatchInlineSnapshot(`
+    expect(productTexts(await captureInput(baseOrder([product])))[0]).toMatchInlineSnapshot(`
       "Fonott rácsvédő (1db)
         Méret: 300cm
         Fonás: Négyes
@@ -350,14 +366,14 @@ describe("product string content", () => {
       ],
     });
 
-    const form = await captureForm({
+    const input = await captureInput({
       ...baseOrder([product]),
       threadColors: [
         { color_id: "ekru", label: "Ekrü", hex: undefined, image: undefined },
         { color_id: "fekete", label: "Fekete", hex: undefined, image: undefined },
       ],
     });
-    const text = form_text(form);
+    const text = productTexts(input)[0];
     expect(text).toContain("  Hímzés: Anna (Ekrü)");
     expect(text).toContain("Hímzés: 1500Ft");
     expect(text).not.toContain("Másik hímzés");
@@ -373,7 +389,8 @@ describe("product string content", () => {
       discount_valid_until: "2999-01-01",
     });
 
-    const text = form_text(await captureForm(baseOrder([product])));
+    const input = await captureInput(baseOrder([product]));
+    const text = productTexts(input)[0];
     expect(text).toContain("Alapár: 10000 Ft");
     // 20% off 20000 = 4000 Ft, recorded as both percent and forint.
     expect(text).toContain("Kedvezmény: 20% (-4000 Ft) (2 db)");
@@ -404,7 +421,7 @@ describe("dependent fields (depends_on)", () => {
       ],
     });
 
-    const text = form_text(await captureForm(baseOrder([product])));
+    const text = productTexts(await captureInput(baseOrder([product])))[0];
     // Parent stays at the normal 2-space indent, the dependent field gets 4.
     expect(text).toContain("  Hímzés: Igen");
     expect(text).toContain("    Hímzés szövege: Anna");
@@ -433,7 +450,7 @@ describe("dependent fields (depends_on)", () => {
       ],
     });
 
-    const text = form_text(await captureForm(baseOrder([product])));
+    const text = productTexts(await captureInput(baseOrder([product])))[0];
     expect(text).toContain("  A: Igen");
     expect(text).toContain("    B: Igen");
     expect(text).toContain("      C: mély");
@@ -460,7 +477,7 @@ describe("dependent fields (depends_on)", () => {
       ],
     });
 
-    const text = form_text(await captureForm(baseOrder([product])));
+    const text = productTexts(await captureInput(baseOrder([product])))[0];
     expect(text).toContain("Hímzés: Nem");
     // The dependency (Hímzés = Igen) is unmet, so the field must not appear —
     // not even its filled-in value.
@@ -490,16 +507,18 @@ describe("set-discount summary", () => {
       values: [{ material_id: "cotton", colors: ["red"] }],
     });
 
-  it("identifies each set member by its order number inside the ar field", async () => {
+  it("identifies each set member by its order number inside the summary", async () => {
     const order = baseOrder([
       withMaterial("u1", "nest", "Babafészek"),
       withMaterial("u2", "blanket", "Takaró"),
     ]);
     order.productGroups = setGroups;
-    const form = await captureForm(order);
-    const ar = form.get("ar");
-    expect(ar).toContain("Szett kedvezmények:");
-    expect(ar).toContain("Babafészek szett: -2000 Ft [1. termék: Babafészek + 2. termék: Takaró]");
+    const input = await captureInput(order);
+    const summary = input.setDiscountSummary as string;
+    expect(summary).toContain("Szett kedvezmények:");
+    expect(summary).toContain(
+      "Babafészek szett: -2000 Ft [1. termék: Babafészek + 2. termék: Takaró]"
+    );
   });
 
   it("shows the nominal set amount when clamped to the covered subtotal", async () => {
@@ -520,20 +539,17 @@ describe("set-discount summary", () => {
     });
     const order = baseOrder([cheapNest, cheapBlanket]);
     order.productGroups = setGroups;
-    const form = await captureForm(order);
-    const ar = form.get("ar");
-    expect(ar).toContain(
+    const input = await captureInput(order);
+    expect(input.setDiscountSummary).toContain(
       "Babafészek szett: -600 Ft (szett kedvezmény: 2000 Ft) [1. termék: Babafészek + 2. termék: Takaró]"
     );
   });
 
-  it("omits the set section from ar when no set discount is earned", async () => {
+  it("omits the set section when no set discount is earned", async () => {
     const order = baseOrder([withMaterial("u1", "nest", "Babafészek")]);
     order.productGroups = setGroups;
-    const form = await captureForm(order);
-    const ar = form.get("ar");
-    expect(ar).not.toContain("Szett kedvezmények:");
-    expect(form.get("szett kedvezmenyek")).toBeNull();
+    const input = await captureInput(order);
+    expect(input.setDiscountSummary).toBe("");
   });
 });
 
@@ -558,7 +574,7 @@ describe("submitted total equals the shared order total (visible == charged)", (
       values: [{ material_id: "cotton", colors: ["red"] }],
     });
 
-  it("puts the same figure in `ar` as orderTotal over the resolved basket pricing", async () => {
+  it("puts the same figure in totalPrice as orderTotal over the resolved basket pricing", async () => {
     const products = [member("u1", "nest", 10_000), member("u2", "blanket", 10_000)];
     const delivery = makeDelivery("Foxpost automata", 990, "foxpost");
     const order: OrderDetails = { ...baseOrder(products), deliveryMethod: delivery };
@@ -569,9 +585,8 @@ describe("submitted total equals the shared order total (visible == charged)", (
     // 20000 items - 2000 set discount + 990 delivery
     expect(expected).toBe(18_990);
 
-    const form = await captureForm(order);
-    const arFirstLine = (form.get("ar") as string).split("\n")[0];
-    expect(arFirstLine).toBe(`${expected.toString()} Ft`);
+    const input = await captureInput(order);
+    expect(input.totalPrice).toBe(expected);
   });
 
   it("matches when the set discount is clamped to the covered subtotal", async () => {
@@ -585,9 +600,8 @@ describe("submitted total equals the shared order total (visible == charged)", (
     // 600 items - 600 set discount + 0 delivery
     expect(expected).toBe(0);
 
-    const form = await captureForm(order);
-    const arFirstLine = (form.get("ar") as string).split("\n")[0];
-    expect(arFirstLine).toBe(`${expected.toString()} Ft`);
+    const input = await captureInput(order);
+    expect(input.totalPrice).toBe(expected);
   });
 });
 
@@ -601,11 +615,11 @@ describe("free delivery above a threshold", () => {
     const delivery = gls(60_000);
     const order: OrderDetails = { ...baseOrder(products), deliveryMethod: delivery };
 
-    const form = await captureForm(order);
+    const input = await captureInput(order);
     // Total is the products subtotal with no delivery added.
-    expect(form.get("ar")).toBe("80000 Ft");
+    expect(input.totalPrice).toBe(80_000);
     // The shipping line reports free, not the nominal price.
-    expect(form.get("szallitasimod")).toBe("GLS házhozszállítás (ingyenes)");
+    expect(input.deliveryFree).toBe(true);
   });
 
   it("still charges delivery when the products subtotal is at/below free_above", async () => {
@@ -614,9 +628,10 @@ describe("free delivery above a threshold", () => {
     const delivery = gls(60_000);
     const order: OrderDetails = { ...baseOrder(products), deliveryMethod: delivery };
 
-    const form = await captureForm(order);
-    expect(form.get("ar")).toBe("62500 Ft");
-    expect(form.get("szallitasimod")).toBe("GLS házhozszállítás (2500 Ft)");
+    const input = await captureInput(order);
+    expect(input.totalPrice).toBe(62_500);
+    expect(input.deliveryFree).toBe(false);
+    expect(input.deliveryPrice).toBe(2500);
   });
 
   it("judges the threshold on the discounted subtotal, not the raw items total", async () => {
@@ -644,18 +659,9 @@ describe("free delivery above a threshold", () => {
     const expected = orderTotal(pricing, chargedDeliveryPrice(delivery, pricing));
     expect(expected).toBe(57_500);
 
-    const form = await captureForm(order);
-    // The total is the first line of `ar`; the set-discount summary follows it.
-    const arFirstLine = (form.get("ar") as string).split("\n")[0];
-    expect(arFirstLine).toBe("57500 Ft");
-    expect(form.get("szallitasimod")).toBe("GLS házhozszállítás (2500 Ft)");
+    const input = await captureInput(order);
+    expect(input.totalPrice).toBe(expected);
+    expect(input.deliveryFree).toBe(false);
+    expect(input.deliveryPrice).toBe(2500);
   });
 });
-
-/** Read the joined `termek N` blocks of a captured form for snapshotting. */
-function form_text(form: FormData): string {
-  return form
-    .getAll("termek 1")
-    .map((v) => (typeof v === "string" ? v : ""))
-    .join("\n");
-}

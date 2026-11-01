@@ -1,0 +1,105 @@
+# Production stack: vendure + worker + postgres, one-shot migrations.
+# Shared edge Caddy attaches to this stack's network from deploy/infra.
+# The .env beside this file holds all secrets; it is provisioned on the box
+# and never shipped by the deploy.
+name: babasarok-prod
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: babasarok
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: babasarok
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U babasarok -d babasarok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    build: ./repo
+    restart: "no"
+    env_file:
+      - .env
+      # Written by the deploy script from the cloudflare build env (last
+      # file wins) — cloudflare-owned secrets propagate on every deploy.
+      - .env.cloudflare
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/babasarok
+    command: ["node", "dist/migrate.js"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  vendure:
+    build: ./repo
+    restart: unless-stopped
+    # The edge Caddy sits on every stack's network; the per-stack alias keeps
+    # the hostname→stack routing unambiguous (bare `vendure` would be a
+    # cross-network DNS coin-flip).
+    networks:
+      default:
+        aliases:
+          - vendure-prod
+    env_file:
+      - .env
+      - .env.cloudflare
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/babasarok
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  worker:
+    build: ./repo
+    restart: unless-stopped
+    env_file:
+      - .env
+      - .env.cloudflare
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/babasarok
+    command: ["node", "dist/index-worker.js"]
+    # The worker has no HTTP listener (it polls the DB job queue), so probe
+    # its one critical dependency instead: a DB round-trip with its own
+    # credentials. Process death is already covered by restart: unless-stopped.
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "const{Client}=require('pg');new Client({connectionString:process.env.DATABASE_URL}).connect().then(()=>process.exit(0)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:

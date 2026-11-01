@@ -1,0 +1,103 @@
+<html lang="hu">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body style="margin:0; padding:0; background-color:#fbf7f4;">
+    <div style="background-color:#fbf7f4; padding:24px 12px;">
+      <table
+        role="presentation"
+        width="100%"
+        cellpadding="0"
+        cellspacing="0"
+        style="max-width:600px; margin:0 auto; background-color:#ffffff; border-radius:8px; overflow:hidden; font-family: Arial, Helvetica, sans-serif; color:#444444;"
+      >
+        <tr>
+          <td style="background-color:#6f5447; padding:16px 24px;">
+            <span
+              style="font-family: Georgia, 'Times New Roman', serif; font-size:20px; color:#fbf7f4; letter-spacing:1px;"
+            >Babasarok</span>
+            <span style="float:right; color:#e0c0a3; font-size:14px;">Új árajánlatkérés</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 28px 4px 28px;">
+            <p style="margin:0 0 12px 0; font-size:15px; color:#28341d;"><strong>Új árajánlatkérés
+                érkezett:
+                {{order.code}}</strong></p>
+            <p style="margin:0 0 4px 0; font-size:13px;">
+              {{order.customer.lastName}}
+              {{order.customer.firstName}}<br />
+              {{order.customer.emailAddress}}<br />
+              {{order.customer.phoneNumber}}
+            </p>
+          </td>
+        </tr>
+        {{#if order.shippingAddress.streetLine1}}
+          <tr>
+            <td style="padding:12px 28px 0 28px;">
+              <p
+                style="margin:0 0 4px 0; font-size:13px; color:#28341d; font-weight:bold;"
+              >Szállítási cím</p>
+              <p style="margin:0; font-size:13px;">{{order.shippingAddress.streetLine1}}</p>
+            </td>
+          </tr>
+        {{/if}}
+        <tr>
+          <td style="padding:16px 28px 0 28px;">
+            <p
+              style="margin:0 0 6px 0; font-size:13px; color:#28341d; font-weight:bold;"
+            >Termékek</p>
+            {{#each products}}
+              <div
+                style="border:1px solid #e0c0a3; border-radius:6px; padding:10px 14px; margin:0 0 10px 0;"
+              >
+                <p
+                  style="margin:0; font-size:13px; line-height:1.5; white-space:pre-line;"
+                >{{number}}. termék
+
+                  {{configText}}</p>
+              </div>
+            {{/each}}
+            {{#if order.customFields.setDiscountSummary}}
+              <div
+                style="border:1px solid #e0c0a3; border-radius:6px; padding:10px 14px; margin:0 0 10px 0;"
+              >
+                <p
+                  style="margin:0; font-size:13px; line-height:1.5; white-space:pre-line;"
+                >{{order.customFields.setDiscountSummary}}</p>
+              </div>
+            {{/if}}
+            <p style="margin:0 0 4px 0; font-size:13px;">Szállítás:
+              {{order.customFields.deliveryMethodName}}
+              ({{#if
+                order.customFields.deliveryFree
+              }}ingyenes{{else}}{{order.customFields.deliveryPrice}} Ft{{/if}})</p>
+            {{#if order.customFields.message}}
+              <p style="margin:0 0 4px 0; font-size:13px;">Üzenet:
+                {{order.customFields.message}}</p>
+            {{/if}}
+            <p style="margin:0 0 4px 0; font-size:13px;">ÁSZF elfogadva:
+              {{#if order.customFields.termsAccepted}}
+                Igen
+              {{else}}
+                NEM
+              {{/if}}
+            </p>
+            <p style="margin:0 0 16px 0; font-size:15px; color:#28341d;"><strong>Összesen:
+                {{order.customFields.orderTotal}}
+                Ft</strong></p>
+            <p style="margin:0 0 16px 0; font-size:11px; color:#a18472;">Tranzakció azonosító:
+              {{order.customFields.submissionTransactionId}}</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:#f3e7dc; padding:12px 28px; text-align:center;">
+            <p style="margin:0; font-size:12px; color:#6f5447;">Admin:
+              <a href="{{adminOrderUrl}}" style="color:#6f5447;">{{order.code}} megnyitása</a></p>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

@@ -55,7 +55,7 @@ type Prop<T, K extends PropertyKey> = K extends keyof T ? T[K] : Missing;
  * modifier — a bare indexed access (`T[K]`) would drop it and hide the very
  * difference we're trying to surface.
  */
-type PickProp<T, K extends PropertyKey> = K extends keyof T ? Pick<T, K> : Record<never, never>;
+type PickProp<T, K extends PropertyKey> = K extends keyof T ? Pick<T, K> : object;
 
 /** One flattened diff: a dotted `path` and the `{ left; right }` found there. */
 interface DiffEntry {
