@@ -1,9 +1,69 @@
 import { Injectable } from "@nestjs/common";
-import { Asset, RequestContext, TransactionalConnection, UserInputError } from "@vendure/core";
+import {
+  Asset,
+  I18nError,
+  LogLevel,
+  RequestContext,
+  TransactionalConnection,
+  UserInputError,
+} from "@vendure/core";
 import { In } from "typeorm";
-import type { MaterialDefinition } from "@babasarok/product-definition";
+import type {
+  MaterialDefinition,
+  ProductDefinition as CanonicalProductDefinition,
+} from "@babasarok/product-definition";
+import { ProductDefinition } from "../product/product.entity";
 import { Material, MaterialColor } from "./material.entity";
 import { validateMaterialInput, type MaterialInputData } from "./material-definition";
+
+/** Deletion refusal with a machine-readable code: the dashboard keys its
+ * error handling off `extensions.code`, not the message text. */
+class MaterialInUseError extends I18nError {
+  constructor(message: string) {
+    super(message, {}, "MATERIAL_IN_USE", LogLevel.Warn);
+  }
+}
+
+/** The material slugs a product definition references: material-field options
+ * and forbidden combinations. */
+function materialReferenceSlugs(definition: CanonicalProductDefinition): Set<string> {
+  const slugs = new Set<string>();
+
+  for (const field of definition.fields) {
+    if (field.kind === "material") {
+      for (const option of field.options) {
+        slugs.add(option.materialId);
+      }
+    }
+  }
+
+  for (const combination of definition.forbiddenMaterialCombinations) {
+    for (const slug of combination) {
+      slugs.add(slug);
+    }
+  }
+
+  return slugs;
+}
+
+/** The refusal for deleting a material referenced by the given definitions,
+ * or null when nothing references it. */
+export function materialInUseError(
+  slug: string,
+  definitions: CanonicalProductDefinition[]
+): MaterialInUseError | null {
+  const labels = definitions
+    .filter((definition) => materialReferenceSlugs(definition).has(slug))
+    .map((definition) => definition.label);
+
+  if (labels.length === 0) {
+    return null;
+  }
+
+  return new MaterialInUseError(
+    `Az anyag nem törölhető, mert ezek a termékdefiníciók hivatkoznak rá: ${labels.join(", ")}`
+  );
+}
 
 @Injectable()
 export class MaterialService {
@@ -81,12 +141,23 @@ export class MaterialService {
 
   async deleteMaterial(ctx: RequestContext, id: number): Promise<boolean> {
     const repo = this.connection.getRepository(ctx, Material);
+    const material = await repo.findOneBy({ id });
 
-    if ((await repo.findOneBy({ id })) === null) {
+    if (material === null) {
       throw new UserInputError(`Nincs anyag ezzel az azonosítóval: ${id}`);
     }
 
     return this.connection.withTransaction(ctx, async (txCtx) => {
+      const definitions = await this.connection.getRepository(txCtx, ProductDefinition).find();
+      const error = materialInUseError(
+        material.slug,
+        definitions.map((definition) => definition.definition)
+      );
+
+      if (error !== null) {
+        throw error;
+      }
+
       await this.connection.getRepository(txCtx, Material).delete({ id });
       return true;
     });
