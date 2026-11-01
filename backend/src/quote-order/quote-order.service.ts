@@ -144,7 +144,7 @@ export class QuoteOrderService {
           ],
         },
       ]);
-      const variant = variants[0];
+      const variant = variants.at(0);
       if (!variant) {
         throw new Error(`Variant creation returned no variant for ${sku}`);
       }

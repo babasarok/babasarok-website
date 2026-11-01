@@ -69,6 +69,10 @@ services:
       timeout: 5s
       retries: 12
       start_period: 60s
+    volumes:
+      # Vendure-owned imagery (ADR 0009): uploads and previews persist on the
+      # box and are copied into preview stacks on every preview deploy.
+      - assets:/app/backend/assets
 
   worker:
     build: ./repo
@@ -103,3 +107,4 @@ services:
 
 volumes:
   pgdata:
+  assets:

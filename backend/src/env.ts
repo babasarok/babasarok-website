@@ -96,7 +96,7 @@ function toCorsOrigin(origin: string): string | RegExp {
     return origin;
   }
 
-  const escaped = origin.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]*");
+  const escaped = origin.replaceAll(/[.+?^${}()|[\]\\]/g, String.raw`\$&`).replaceAll("*", "[^.]*");
   return new RegExp(`^${escaped}$`);
 }
 

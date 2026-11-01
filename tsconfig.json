@@ -9,6 +9,7 @@
     "deploy/**/*",
     "tests/**/*",
     "tina/**/*",
+    "packages/product-definition/src/**/*",
     "*.ts",
     "stylelint.config.mjs",
     "astro.config.ts",

@@ -97,6 +97,6 @@ export const quoteOrderSchema = gql`
     resolvers: [QuoteOrderResolver],
   },
   providers: [QuoteOrderService],
-  dashboard: "./dashboard/index.tsx",
+  dashboard: "../dashboard/quote-order.tsx",
 })
 export class QuoteOrderPlugin {}

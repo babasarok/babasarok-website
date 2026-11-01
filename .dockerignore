@@ -5,8 +5,11 @@
 !pnpm-lock.yaml
 !Dockerfile
 !backend
+!packages
 backend/node_modules
 backend/dist
 backend/email-out
 backend/.env
 backend/.env.*
+packages/product-definition/dist
+packages/product-definition/node_modules

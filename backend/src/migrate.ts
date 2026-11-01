@@ -8,7 +8,7 @@ runMigrations(config)
       console.log(`Applied migration ${migration}`);
     }
   })
-  .catch((error) => {
+  .catch((error: unknown) => {
     console.error(error);
     process.exit(1);
   });

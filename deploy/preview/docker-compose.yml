@@ -38,6 +38,9 @@ services:
     volumes:
       # Email files written by the worker; /mailbox here serves them.
       - ./email-out:/app/backend/email-out
+      # Vendure-owned imagery, copied from the prod volume on every deploy
+      # (deploy-stack.ts), same lifecycle as the preview database.
+      - assets:/app/backend/assets
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -80,6 +83,9 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+
+volumes:
+  assets:
 
 networks:
   default:

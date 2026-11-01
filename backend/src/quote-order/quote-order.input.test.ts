@@ -16,7 +16,7 @@ const validInput = {
     },
   ],
   deliveryMethod: "Házhozszállítás",
-  deliveryPrice: 1_500,
+  deliveryPrice: 1500,
   deliveryFree: false,
   needsAddress: true,
   address: "1117 Budapest, Teszt utca 1.",

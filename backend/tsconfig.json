@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "composite": true,
     "target": "ES2023",
     "lib": ["ES2023"],
     "module": "nodenext",
@@ -15,5 +16,7 @@
   },
   "include": ["src"],
   "exclude": ["src/**/dashboard/*", "src/gql/*", "vite.*.*ts"],
-  "references": [{ "path": "./tsconfig.dashboard.json" }]
+  // tsconfig.dashboard.json stays editor-only: its @/vdb paths map in the
+  // whole dashboard source graph, which does not type-check under plain tsc.
+  "references": [{ "path": "../packages/product-definition" }]
 }

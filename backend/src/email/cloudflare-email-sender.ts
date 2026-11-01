@@ -55,8 +55,6 @@ export class CloudflareEmailSender implements EmailSender {
   }
 }
 
-type AddressInput = string | { address: string; name?: string | null } | undefined;
-
 type AddressValue = string | { address: string; name?: string };
 
 function splitAddresses(raw: string | undefined): AddressValue | Array<AddressValue> | undefined {
@@ -75,7 +73,7 @@ function splitAddresses(raw: string | undefined): AddressValue | Array<AddressVa
 function parseAddress(raw: string): AddressValue {
   const match = /^(.*?)\s*<(.*?)>$/.exec(raw.trim());
   if (match && match[1]) {
-    return { address: match[2]!, name: match[1].replace(/^"|"$/g, "") };
+    return { address: match[2], name: match[1].replaceAll(/^"|"$/g, "") };
   }
   return raw.trim();
 }

@@ -1,6 +1,8 @@
 # ADR 0007: Self-hosted Vendure backend replaces Web3Forms
 
-- **Status:** accepted (supersedes ADR 0001)
+- **Status:** accepted (supersedes ADR 0001; decision 3's catalog ownership
+  is amended by ADR 0009 — the catalog becomes 100% Vendure-owned via a
+  side-by-side migration)
 - **Date:** 2026-10
 
 ## Context

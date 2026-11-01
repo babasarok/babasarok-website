@@ -18,9 +18,13 @@ export default defineConfig([
     "tina/__generated__",
     "scripts",
     "old",
-    // Has its own toolchain (Vendure/NestJS decorators) and tsconfig; checked
-    // and linted inside backend/, not by the site's eslint/tsconfig.
-    "backend",
+    // Has its own toolchain (Vendure/NestJS decorators) and tsconfigs; linted
+    // by the backend-scoped block below against those tsconfigs.
+    "backend/dist",
+    "backend/node_modules",
+    "backend/src/gql",
+    "backend/scripts",
+    "packages/product-definition/dist",
   ]),
   {
     plugins: { js, astro, unicorn },
@@ -112,6 +116,64 @@ export default defineConfig([
           allowRegExp: false,
         },
       ],
+    },
+  },
+  {
+    files: ["backend/**/*.ts", "backend/**/*.tsx", "backend/**/*.mts"],
+    languageOptions: {
+      parserOptions: {
+        parser: "@typescript-eslint/parser",
+        project: [
+          "./tsconfig.json",
+          "./backend/tsconfig.json",
+          "./backend/tsconfig.dashboard.json",
+          "./backend/src/dashboard/tsconfig.json",
+        ],
+        extraFileExtensions: [],
+      },
+    },
+    rules: {
+      // Vendure/NestJS rely on decorator-parameter injection and loosely typed
+      // plugin APIs that the strict no-unsafe family flags wholesale.
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-floating-promises": "off",
+      "@typescript-eslint/unbound-method": "off",
+      // Vendure plugin definitions are empty decorated classes.
+      "@typescript-eslint/no-extraneous-class": ["error", { allowEmpty: true }],
+    },
+  },
+  {
+    files: ["backend/src/migrations/**/*.ts"],
+    rules: {
+      // TypeORM's migration generator emits `Promise<any>` signatures and
+      // its own idioms; historical migrations are generator output, not
+      // hand-written code.
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/consistent-type-imports": "off",
+      "unicorn/no-useless-undefined": "off",
+    },
+  },
+  {
+    files: [
+      "backend/src/index.ts",
+      "backend/src/index-worker.ts",
+      "backend/src/migrate.ts",
+      "backend/src/generate-migration.ts",
+      "backend/src/env.ts",
+      // Compiled to CommonJS, where __dirname is the idiomatic path source.
+      "backend/src/vendure-config.ts",
+    ],
+    rules: {
+      // Process entry points: exiting with a status code is the contract, and
+      // the compiled output is CommonJS, where top-level await is illegal.
+      "unicorn/no-process-exit": "off",
+      "unicorn/prefer-top-level-await": "off",
+      // generate-migration.ts resolves paths relative to its compiled location.
+      "unicorn/prefer-module": "off",
     },
   },
   // Astro-specific warnings and recommendations for .astro files

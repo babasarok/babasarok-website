@@ -131,6 +131,7 @@ try {
       "Dockerfile",
       ".dockerignore",
       "backend",
+      "packages",
       "deploy",
     ],
     { cwd: REPO_ROOT, stdio: "inherit" }

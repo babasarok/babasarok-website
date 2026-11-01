@@ -7,6 +7,7 @@ WORKDIR /workspace
 # Workspace manifests first so dependency install is a cached layer.
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY backend/package.json ./backend/
+COPY packages/product-definition/package.json packages/product-definition/tsconfig.json ./packages/product-definition/
 
 # `pnpm deploy` installs only the backend's dependencies into an isolated
 # directory; a filtered `pnpm install` would also install the workspace
@@ -17,9 +18,13 @@ RUN npm install -g pnpm@12.15.0 \
 
 WORKDIR /app/backend
 COPY backend/ ./
-# Compiles the server (tsc). The dashboard SPA is built on the Cloudflare side
-# (integrations/vendure-dashboard.ts) and served by the site's Worker at
-# /dashboard, so it is not built or shipped in this image.
-RUN pnpm run build
+# The shared package must exist at the reference path backend's tsconfig
+# points to, and its runtime import must resolve: the packed copy from
+# `pnpm deploy` has no dist, so it is replaced by a symlink to the copied
+# source, which `tsc -b` builds as a referenced project.
+COPY packages/product-definition /app/packages/product-definition
+RUN rm -rf node_modules/@babasarok/product-definition \
+  && ln -s /app/packages/product-definition node_modules/@babasarok/product-definition \
+  && pnpm run build
 
 CMD ["node", "dist/index.js"]

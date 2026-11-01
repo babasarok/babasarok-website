@@ -19,7 +19,7 @@ function makeDetails(overrides: Partial<EmailDetails> = {}): EmailDetails {
   };
 }
 
-function senderWith(send: ReturnType<typeof vi.fn>) {
+function senderWith(send: ReturnType<typeof vi.fn>): CloudflareEmailSender {
   const client = { emailSending: { send } };
   const sender = new CloudflareEmailSender(
     { accountId: "acc", apiToken: "tok" } satisfies CloudflareEmailSenderOptions,
@@ -60,10 +60,10 @@ describe("CloudflareEmailSender", () => {
       transportOptions
     );
 
-    const params = send.mock.calls[0]![0]!;
-    expect(params.to).toEqual(["a@b.c", "d@e.f"]);
-    expect(params.cc).toEqual("cc1@x.y");
-    expect(params.bcc).toEqual(["bcc1@x.y", "bcc2@x.y"]);
+    const params = send.mock.calls[0]?.[0];
+    expect(params?.to).toEqual(["a@b.c", "d@e.f"]);
+    expect(params?.cc).toEqual("cc1@x.y");
+    expect(params?.bcc).toEqual(["bcc1@x.y", "bcc2@x.y"]);
   });
 
   it("throws when the API reports nothing was delivered", async () => {

@@ -32,6 +32,7 @@ export class ChannelSetupPlugin implements OnApplicationBootstrap {
   async onApplicationBootstrap(): Promise<void> {
     const ctx = await this.requestContextService.create({ apiType: "admin" });
     const channel = await this.channelService.getDefaultChannel(ctx);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- the zone relations are typed non-null but sit unset on a fresh database, which is exactly what this guard handles
     if (channel.defaultTaxZone && channel.defaultShippingZone) {
       return;
     }
@@ -45,10 +46,6 @@ export class ChannelSetupPlugin implements OnApplicationBootstrap {
         enabled: true,
         translations: [{ languageCode: ctx.languageCode, name: env.shopCountryName }],
       }));
-    if (!country) {
-      throw new Error("Failed to look up or create the shop country");
-    }
-
     const zone = await this.getOrCreateZone(ctx, country.id);
     await this.channelService.update(ctx, {
       id: channel.id,
@@ -57,7 +54,7 @@ export class ChannelSetupPlugin implements OnApplicationBootstrap {
     });
   }
 
-  private async getOrCreateZone(ctx: RequestContext, countryId: ID) {
+  private async getOrCreateZone(ctx: RequestContext, countryId: ID): Promise<Zone> {
     const zone = await this.connection
       .getRepository(ctx, Zone)
       .findOne({ where: { name: ZONE_NAME }, relations: { members: true } });

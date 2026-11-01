@@ -6,7 +6,8 @@
  */
 import { defineDashboardExtension } from "@vendure/dashboard";
 
-export default defineDashboardExtension({
+// Extensions load for side effects only.
+defineDashboardExtension({
   dataTables: [
     {
       pageId: "order-detail",

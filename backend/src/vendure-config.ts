@@ -1,13 +1,12 @@
 import path from "node:path";
+import type { OrderPlacedStrategy, RequestContext, VendureConfig } from "@vendure/core";
 import {
   configureDefaultOrderProcess,
   DefaultJobQueuePlugin,
   DefaultSearchPlugin,
   LanguageCode,
-  OrderPlacedStrategy,
-  RequestContext,
-  VendureConfig,
 } from "@vendure/core";
+import { AssetServerPlugin } from "@vendure/asset-server-plugin";
 import { DashboardPlugin } from "@vendure/dashboard/plugin";
 import { EmailPlugin, FileBasedTemplateLoader } from "@vendure/email-plugin";
 import type { EmailPluginDevModeOptions, EmailPluginOptions } from "@vendure/email-plugin";
@@ -15,6 +14,7 @@ import { env } from "./env";
 import { HandlebarsHtmlGenerator } from "./email/handlebars-html-generator";
 import { CloudflareEmailSender } from "./email/cloudflare-email-sender";
 import { orderConfirmationHandler, orderNotificationHandler } from "./email/order-emails";
+import { MaterialPlugin } from "./material/material.plugin";
 import { QuoteOrderPlugin } from "./quote-order/quote-order.plugin";
 import { ChannelSetupPlugin } from "./setup/channel-setup.plugin";
 
@@ -92,7 +92,7 @@ export const config: VendureConfig = {
         handler: (
           _req: unknown,
           res: { status: (n: number) => { send: (s: string) => void } },
-          next: () => void
+          _next: () => void
         ) => {
           res.status(200).send("ok");
         },
@@ -127,7 +127,11 @@ export const config: VendureConfig = {
   },
   plugins: [
     QuoteOrderPlugin,
+    MaterialPlugin,
     ChannelSetupPlugin,
+    // Owns the material/product imagery (ADR 0009): uploads and previews are
+    // stored on local disk (a docker volume in deploys) and served at /assets.
+    AssetServerPlugin.init({ route: "assets", assetUploadDir: "assets" }),
     DefaultJobQueuePlugin.init({}),
     // Ships in core; keeps the Admin UI's search views functional. Search
     // quality (boosting, facets) is a later milestone.

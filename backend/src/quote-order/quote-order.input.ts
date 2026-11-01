@@ -43,7 +43,7 @@ export type QuoteOrderProductInput = z.infer<typeof QuoteOrderProductSchema>;
 export function splitName(name: string): { firstName: string; lastName: string } {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) {
-    return { firstName: parts[0]!, lastName: "" };
+    return { firstName: parts[0], lastName: "" };
   }
-  return { lastName: parts[0]!, firstName: parts.slice(1).join(" ") };
+  return { lastName: parts[0], firstName: parts.slice(1).join(" ") };
 }

@@ -1,11 +1,20 @@
 import { EntityHydrator, OrderStateTransitionEvent, TransactionalConnection } from "@vendure/core";
 import { Channel } from "@vendure/core/dist/entity/channel/channel.entity";
-import { EmailEventListener } from "@vendure/email-plugin";
+import {
+  EmailEventListener,
+  type EmailEventHandler,
+  type EventWithAsyncData,
+} from "@vendure/email-plugin";
 import { env } from "../env";
 
 // "Order placed" for a quote shop: the submission transitions AddingItems ->
 // ArrangingPayment and there is no payment step.
-function onOrderPlaced(name: string) {
+function onOrderPlaced(
+  name: string
+): EmailEventHandler<
+  string,
+  EventWithAsyncData<OrderStateTransitionEvent, { orderEmailFrom: string; ownerEmail: string }>
+> {
   return new EmailEventListener(name)
     .on(OrderStateTransitionEvent)
     .filter((event) => event.toState === "ArrangingPayment" && event.fromState === "AddingItems")
@@ -23,9 +32,8 @@ function onOrderPlaced(name: string) {
         // (selects none of its columns), which silently emptied customFields.
         .findOne({ where: { id: event.ctx.channelId } });
       return {
-        orderEmailFrom:
-          (channel?.customFields?.orderEmailFrom as string | null) ?? env.orderEmailFrom,
-        ownerEmail: (channel?.customFields?.shopOwnerEmail as string | null) ?? env.shopOwnerEmail,
+        orderEmailFrom: channel?.customFields.orderEmailFrom ?? env.orderEmailFrom,
+        ownerEmail: channel?.customFields.shopOwnerEmail ?? env.shopOwnerEmail,
       };
     })
     .setTemplateVars((event) => ({
@@ -39,6 +47,7 @@ function onOrderPlaced(name: string) {
       // "1. termék: …" labels inside the client-generated set-discount summary.
       products: event.order.lines.map((line, index) => ({
         number: index + 1,
+        // eslint-disable-next-line @typescript-eslint/no-misused-spread -- customFields is a plain column bag at runtime; its class typing is a Vendure artifact
         ...line.customFields,
       })),
     }));

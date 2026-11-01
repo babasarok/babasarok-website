@@ -59,6 +59,10 @@ for (const entry of readdirSync(ROOT, { withFileTypes: true })) {
   }
   console.log(`branch '${branch}' no longer exists on origin; tearing down ${stack}`);
   compose(["-p", `babasarok-${stack}`, "down"], dir);
+  // The stack's assets volume (vendure-owned imagery) is per-branch state;
+  // `compose down` leaves named volumes behind, so remove it explicitly.
+  // Tolerate absence: stacks deployed before assets existed have none.
+  spawnSync("docker", ["volume", "rm", `babasarok-${stack}_assets`], { stdio: "ignore" });
   execFileSync(
     "docker",
     [

@@ -1,6 +1,5 @@
 import { LanguageCode } from "@vendure/common/lib/generated-types";
 import { vendureDashboardPlugin } from "@vendure/dashboard/vite";
-import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { defineConfig } from "vite";
 
@@ -47,10 +46,4 @@ export default defineConfig({
       gqlOutputPath: "./src/gql",
     }),
   ],
-  resolve: {
-    alias: {
-      // Lets plugin dashboard extensions reference the shared generated types.
-      "@/gql": resolve(__dirname, "./src/gql/graphql.ts"),
-    },
-  },
 });

@@ -22,7 +22,7 @@ generateMigration(config, {
   .then((file) => {
     console.log(file === undefined ? "No schema changes detected" : `Generated ${file}`);
   })
-  .catch((error) => {
+  .catch((error: unknown) => {
     console.error(error);
     process.exit(1);
   });

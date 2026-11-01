@@ -5,19 +5,23 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "tsc && node --env-file-if-exists=.env dist/migrate.js && (tsc --watch --preserveWatchOutput & node --watch --env-file-if-exists=.env dist/index.js & node --watch --env-file-if-exists=.env dist/index-worker.js)",
+    "dev": "tsc -b && node --env-file-if-exists=.env dist/migrate.js && (tsc -b --watch --preserveWatchOutput & node --watch --env-file-if-exists=.env dist/index.js & node --watch --env-file-if-exists=.env dist/index-worker.js)",
     "dashboard": "node --env-file-if-exists=build.env --env-file-if-exists=.env ./node_modules/vite/bin/vite.js",
-    "build": "tsc",
+    "build": "tsc -b",
     "start": "node --env-file-if-exists=.env dist/index.js",
     "worker": "node --env-file-if-exists=.env dist/index-worker.js",
     "migrate": "node --env-file-if-exists=.env dist/migrate.js",
     "generate-migration": "node --env-file-if-exists=.env dist/generate-migration.js",
-    "check": "tsc --noEmit",
+    "import-materials": "node --env-file-if-exists=.env scripts/import-materials.ts",
+    "check": "tsc -b",
+    "check:dashboard": "node scripts/check-dashboard-types.ts",
     "test": "vitest run"
   },
   "dependencies": {
+    "@babasarok/product-definition": "workspace:*",
     "@nestjs/common": "^12.0.1",
     "@nestjs/graphql": "~14.0.0",
+    "@vendure/asset-server-plugin": "^3.8.1",
     "@vendure/common": "^3.8.1",
     "@vendure/core": "^3.8.1",
     "@vendure/dashboard": "^3.8.1",
@@ -29,9 +33,12 @@
     "react": "^19.3.1",
     "reflect-metadata": "^0.2.2",
     "tslib": "^2.8.1",
+    "yaml": "^2.6.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@tanstack/react-router": "1.170.46",
+    "gql.tada": "^1.11.4",
     "typeorm": "^0.3.31",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",

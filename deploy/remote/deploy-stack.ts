@@ -189,6 +189,27 @@ try {
     // postgres service definition still lands.
     copyFileSync(`${DIR}/repo/deploy/infra/docker-compose.yml`, `${INFRA}/docker-compose.yml`);
     compose(["up", "-d", "--wait", "postgres"], INFRA);
+
+    // The preview DB references prod assets by id, so the asset files must
+    // ride along: wipe this stack's own assets volume and copy prod's in,
+    // a fresh snapshot on every deploy exactly like the database (uploads
+    // made on the preview itself are dropped, since the rows backing them
+    // are dropped too). Every stack owns its volume: prod writes
+    // babasarok-prod_assets, this preview writes its own, nothing shared.
+    // Missing volumes (first deploy on either side) are created empty by
+    // docker run, so this is a no-op until prod has assets.
+    run("docker", [
+      "run",
+      "--rm",
+      "-v",
+      "babasarok-prod_assets:/from:ro",
+      "-v",
+      `babasarok-${slug}_assets:/to`,
+      "alpine:3",
+      "sh",
+      "-c",
+      "rm -rf /to/* && cp -a /from/. /to/",
+    ]);
   } else {
     // For the infra networks-override generation (below): a stack's compose
     // network name. Previews ride the infra network and must NOT be listed —
@@ -223,6 +244,17 @@ try {
       log("compose up failed; stack state follows");
       dumpStackState();
       throw error;
+    }
+
+    // Seed the vendure-owned catalog from the Tina content in this commit
+    // (ADR 0009): previews get the one-way material import on every deploy,
+    // against their own fresh DB and assets volume. Production is seeded
+    // once, manually, at cutover — never by the deploy.
+    try {
+      compose(["exec", "-T", "vendure", "node", "scripts/import-materials.ts"], DIR, true);
+    } catch (error) {
+      log("material import failed; preview stack stays up");
+      console.error(error);
     }
   } else {
     const oldId = compose(["ps", "-q", "vendure"]).trim();

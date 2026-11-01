@@ -422,12 +422,18 @@ importers:
 
   backend:
     dependencies:
+      '@babasarok/product-definition':
+        specifier: workspace:*
+        version: link:../packages/product-definition
       '@nestjs/common':
         specifier: ^12.0.1
         version: 12.2.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2)
       '@nestjs/graphql':
         specifier: ~14.0.0
         version: 14.0.3(@nestjs/common@12.2.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.2.0)(crossws@0.3.5)(graphql@16.14.2)(reflect-metadata@0.2.2)(typescript@5.9.3)
+      '@vendure/asset-server-plugin':
+        specifier: ^3.8.1
+        version: 3.8.1(@types/node@25.9.9)(supports-color@10.2.2)
       '@vendure/common':
         specifier: ^3.8.1
         version: 3.8.1
@@ -461,10 +467,19 @@ importers:
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
+      yaml:
+        specifier: ^2.6.0
+        version: 2.9.1
       zod:
         specifier: ^4.4.3
         version: 4.6.7
     devDependencies:
+      '@tanstack/react-router':
+        specifier: 1.170.46
+        version: 1.170.46(react-dom@18.3.1(react@19.3.1))(react@19.3.1)
+      gql.tada:
+        specifier: ^1.11.4
+        version: 1.11.4(graphql@16.14.2)(typescript@5.9.3)
       typeorm:
         specifier: ^0.3.31
         version: 0.3.31(better-sqlite3@12.11.1)(pg@8.23.1)(supports-color@10.2.2)
@@ -477,6 +492,12 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.7(@types/debug@4.1.13)(@types/node@25.9.9)(jiti@2.7.0)(less@4.2.2)(lightningcss@1.33.0)(sass@1.85.0)(supports-color@10.2.2)(terser@5.39.0)(tsx@4.23.15)(yaml@2.9.1)
+
+  packages/product-definition:
+    dependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.6.7
 
 packages:
 
@@ -4801,6 +4822,9 @@ packages:
         optional: true
       next-themes:
         optional: true
+
+  '@vendure/asset-server-plugin@3.8.1':
+    resolution: {integrity: sha512-buYUXaciV2BKF/wOmSwMBPPltexwMjbihG8CR+5v7E02dgOoHo7EzOeN/u2TXLVB85Z/2Y4yZd4Qv2rAHPOAdg==}
 
   '@vendure/common@3.8.1':
     resolution: {integrity: sha512-UwDNy5gf/37cBArRySUZX4g0KxuC9HoZrZRBYGZ7T0QNcHftubNFnIJU2FgqTpZTh8tdpqkZT/VHiI8GZylYpg==}
@@ -15465,6 +15489,15 @@ snapshots:
     transitivePeerDependencies:
       - csstype
 
+  '@tanstack/react-router@1.170.46(react-dom@18.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@tanstack/history': 1.162.5
+      '@tanstack/react-store': 0.11.2(react-dom@18.3.1(react@19.3.1))(react@19.3.1)
+      '@tanstack/router-core': 1.171.39
+      isbot: 5.2.2
+      react: 19.3.1
+      react-dom: 18.3.1(react@19.3.1)
+
   '@tanstack/react-router@1.170.46(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       '@tanstack/history': 1.162.5
@@ -15473,6 +15506,13 @@ snapshots:
       isbot: 5.2.2
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
+
+  '@tanstack/react-store@0.11.2(react-dom@18.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@tanstack/store': 0.11.2
+      react: 19.3.1
+      react-dom: 18.3.1(react@19.3.1)
+      use-sync-external-store: 1.7.0(react@19.3.1)
 
   '@tanstack/react-store@0.11.2(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
@@ -16832,6 +16872,18 @@ snapshots:
       - '@emotion/is-prop-valid'
       - '@types/react'
       - '@types/react-dom'
+
+  '@vendure/asset-server-plugin@3.8.1(@types/node@25.9.9)(supports-color@10.2.2)':
+    dependencies:
+      '@types/express': 5.0.6
+      express: 5.3.0(supports-color@10.2.2)
+      file-type: 21.3.4(supports-color@10.2.2)
+      fs-extra: 11.4.1
+      mime-types: 3.0.2
+      sharp: 0.35.5(@types/node@25.9.9)
+    transitivePeerDependencies:
+      - '@types/node'
+      - supports-color
 
   '@vendure/common@3.8.1': {}
 
@@ -23306,6 +23358,12 @@ snapshots:
     dependencies:
       loose-envify: 1.4.0
       react: 18.3.1
+      scheduler: 0.23.2
+
+  react-dom@18.3.1(react@19.3.1):
+    dependencies:
+      loose-envify: 1.4.0
+      react: 19.3.1
       scheduler: 0.23.2
 
   react-dom@19.3.1(react@19.3.1):
