@@ -15,6 +15,7 @@ import { HandlebarsHtmlGenerator } from "./email/handlebars-html-generator";
 import { CloudflareEmailSender } from "./email/cloudflare-email-sender";
 import { orderConfirmationHandler, orderNotificationHandler } from "./email/order-emails";
 import { MaterialPlugin } from "./material/material.plugin";
+import { ProductPlugin } from "./product/product.plugin";
 import { QuoteOrderPlugin } from "./quote-order/quote-order.plugin";
 import { ChannelSetupPlugin } from "./setup/channel-setup.plugin";
 
@@ -133,6 +134,7 @@ export const config: VendureConfig = {
   plugins: [
     QuoteOrderPlugin,
     MaterialPlugin,
+    ProductPlugin,
     ChannelSetupPlugin,
     // Owns the material/product imagery (ADR 0009): uploads and previews are
     // stored on local disk (a docker volume in deploys) and served at /assets.
