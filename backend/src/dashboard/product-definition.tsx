@@ -772,7 +772,14 @@ function ConfiguratorEditor({
     setSaved(false);
     setDriftConflict(false);
 
-    const payload = sanitize(definition);
+    // The rows and banned pairs are the editor's authoritative state (the
+    // definition state only carries the load-time values), so the payload
+    // serializes from them — otherwise every field edit would be dropped.
+    const payload = sanitize({
+      ...definition,
+      fields: rows.map((row) => row.field),
+      forbiddenMaterialCombinations: banned.map((rule) => [...rule]),
+    });
     const clientErrors: string[] = [];
 
     if (creatingNew && (payload.id === "" || payload.label === "")) {
