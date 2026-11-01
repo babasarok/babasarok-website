@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { z } from "zod";
 import { ChoiceFieldSchema } from "./field-kinds/choice";
 import { EmbroideryFieldSchema } from "./field-kinds/embroidery";
@@ -12,7 +11,6 @@ import {
   ProductFieldIdSchema,
   ProductIdSchema,
   ProductRevisionSchema,
-  type ProductRevision,
 } from "./model";
 
 // ponytail: duplicates the site's src/lib/product/productTypes.ts values; the
@@ -72,44 +70,3 @@ export type ProductDiscount = z.output<typeof ProductDiscountSchema>;
 export type ProductField = z.output<typeof ProductFieldSchema>;
 export type ProductDefinition = z.output<typeof ProductDefinitionSchema>;
 export type ProductDefinitionInput = z.input<typeof ProductDefinitionSchema>;
-
-/** JSON with recursively sorted object keys, so hashes never depend on key order. */
-export function canonicalJson(value: unknown): string {
-  if (Array.isArray(value)) {
-    return `[${value.map((item) => canonicalJson(item)).join(",")}]`;
-  }
-
-  if (value !== null && typeof value === "object") {
-    const entries = Object.entries(value).toSorted(([a], [b]) => a.localeCompare(b));
-
-    return `{${entries
-      .map(([key, item]) => `${JSON.stringify(key)}:${canonicalJson(item)}`)
-      .join(",")}}`;
-  }
-
-  if (value === undefined) {
-    return "null";
-  }
-
-  return JSON.stringify(value);
-}
-
-/**
- * The deterministic definition revision: a sha256 over the canonical
- * definition's commerce-relevant facts (the `revision` field itself is
- * stripped first, so the hash never depends on its value). The server sets it
- * on every save; the seed and the dashboard import the same function instead
- * of carrying copies.
- *
- * ponytail: pulls in node:crypto, so this stays a Node-side concern — the
- * Astro site keeps reading products via the API until cutover.
- */
-export function productRevision(
-  definition: ProductDefinitionInput | ProductDefinition
-): ProductRevision {
-  const { revision: _ignored, ...facts } = definition;
-
-  return ProductRevisionSchema.parse(
-    createHash("sha256").update(canonicalJson(facts)).digest("hex")
-  );
-}

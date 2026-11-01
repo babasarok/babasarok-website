@@ -12,9 +12,9 @@ import {
   ProductDiscountSchema,
   ProductPricingSchema,
   PRODUCT_TYPE_VALUES,
-  productRevision,
   type ProductDefinition,
 } from "./product";
+import { productRevision } from "./revision";
 
 const inputFixture: z.input<typeof InputFieldSchema> = {
   id: "szoveg",

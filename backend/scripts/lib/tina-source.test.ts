@@ -1,8 +1,8 @@
 import {
   ProductDefinitionSchema,
   ProductGroupDefinitionSchema,
-  productRevision,
 } from "@babasarok/product-definition";
+import { productRevision } from "@babasarok/product-definition/node";
 import { describe, expect, it } from "vitest";
 import {
   definitionFromTinaProduct,

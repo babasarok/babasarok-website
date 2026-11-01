@@ -1,6 +1,8 @@
-// Re-exports are spelled out per module: the dashboard's vite pipeline
-// resolves workspace-linked packages from source, where a CJS `export *`
-// indirection has no statically detectable named exports.
+// Re-exports are spelled out per module because the dashboard's vite pipeline
+// resolves the package's built CJS dist (vite.config.mts commonjsOptions), and
+// a barrel that transitively required node:crypto (productRevision) externalized
+// it into the browser bundle — that export now lives behind the node-only
+// subpath (`@babasarok/product-definition/node`).
 export {
   CatalogRevisionSchema,
   LabelSchema,
@@ -63,8 +65,6 @@ export {
   ProductFieldSchema,
   ProductPricingSchema,
   ProductTypeSchema,
-  canonicalJson,
-  productRevision,
   type ProductDefinition,
   type ProductDefinitionInput,
   type ProductDiscount,
@@ -72,6 +72,7 @@ export {
   type ProductPricing,
   type ProductType,
 } from "./product.js";
+export { canonicalJson } from "./canonical-json.js";
 export {
   DiscountedProductSetSchema,
   ProductGroupDefinitionSchema,

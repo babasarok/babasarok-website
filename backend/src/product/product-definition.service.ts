@@ -20,10 +20,10 @@ import type { JobQueue } from "@vendure/core";
 import type { UpdateProductVariantInput } from "@vendure/common/lib/generated-types";
 import { JobQueueService } from "@vendure/core";
 import { IsNull } from "typeorm";
-import {
-  productRevision,
-  type ProductDefinition as CanonicalProductDefinition,
-} from "@babasarok/product-definition";
+import type { ProductDefinition as CanonicalProductDefinition } from "@babasarok/product-definition";
+// The node-only entry: productRevision needs node:crypto, which must not reach
+// the dashboard's browser bundle through the main barrel.
+import { productRevision } from "@babasarok/product-definition/node";
 import { Material } from "../material/material.entity";
 import { sortDefinitions } from "./definition-sort";
 import { validateProductDefinition } from "./product-definition";
