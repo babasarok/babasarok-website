@@ -82,7 +82,12 @@ an option → the missing variants appear; no manual variant work anywhere.
    client-quote path); length-based pricing reads a length input plus
    per-material per-cm prices from the structured model (which also enables
    merging the split rácsvédő products); embroidery stays a per-word priced
-   input field kind outside options and variants.
+   input field kind outside options and variants. Product×material×color
+   imagery (a photo of the completed product in a specific material+color)
+   is definition data keyed by (product, material, color) — not a variant
+   axis; the editor slots and storefront resolution are post-cutover
+   follow-ups (the fallback chain: definition image → material-color image
+   → product featured asset).
 6. **Collections and promotions stay native**: facets (Material, Color) on
    variants for facet-based Collections; the per-product % discount maps to
    stock promotions; the set (szett) discount's material+color multiset

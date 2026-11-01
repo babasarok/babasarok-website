@@ -50,6 +50,15 @@ ordering).
 | 8   | **English translation of the site**                                                                                                                                                                                                                                                                                                                                                                                                                                | not started |
 | 9   | **Expand to Slovakia** — accept orders from Slovakia (delivery, tax, translations as needed)                                                                                                                                                                                                                                                                                                                                                                       | not started |
 
+## Post-cutover follow-ups
+
+- **Product×material×color imagery** — photos of completed products keyed by
+  (product, material, color): editor slots in the configurator (asset
+  upload/picker per material+color row in the definition's material fields),
+  storefront resolution when the site reads Vendure (definition image →
+  material-color image → product featured asset). Modeled in ADR 0010
+  decision 5; deliberately not a variant axis.
+
 ## Epic 2 status detail
 
 Stacked PRs against `feat/vendure-materials` (the migration base branch, not
