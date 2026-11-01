@@ -5,6 +5,17 @@ as CMS content, each optionally carrying configurable fields (options,
 embroidery, material picks), and are listed on a single searchable,
 filterable product list with a detail page per product.
 
+> **Transition note (ADR 0009/0010).** During the Vendure migration the
+> commerce model above is owned by the canonical product definition stored in
+> Vendure: `product_id` ↔ the definition's `id` (the native product's
+> `productId`), `can_be_ordered` ↔ `orderable`, field kinds map to `input`,
+> `choice` (presentation `select`/`radio`/`color`), `toggle`, `material` and
+> `embroidery`, and `banned_combinations` ↔ `forbiddenMaterialCombinations`.
+> Editorial content (tagline, short description, body, images) stays on the
+> native product until cutover. "Configurator" in this spec means the
+> buyer-facing order form; the admin-side editor is the dashboard's product
+> configurator editor.
+
 ## Requirements
 
 ### Product content model

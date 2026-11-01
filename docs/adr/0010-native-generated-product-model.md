@@ -93,7 +93,9 @@ an option → the missing variants appear; no manual variant work anywhere.
    stock promotions; the set (szett) discount's material+color multiset
    matching stays in the pricing layer initially (spec: order-pricing,
    product-sets), with a custom PromotionCondition as a later, optional
-   refactor.
+   refactor. Group membership itself gets its Vendure home at the
+   promotions step — the canonical group schemas already exist in the
+   package and the seed validates group content against them.
 7. Seed/import direction stays one-way Tina → Vendure, temporary and
    preview-only (ADR 0009); prod is hand-migrated at cutover.
 8. **Tina never stores product information — at no point in the roadmap.** No

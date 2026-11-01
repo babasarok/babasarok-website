@@ -103,6 +103,13 @@ then sell for 0 Ft). Non-orderable (browse-only) products are exempt.
     above 0 Ft
   - THEN the build succeeds
 
+During the transition this rule is enforced twice with the same enumeration:
+by the site build (today) and by Vendure's product-definition validation on
+every definition save (`backend/src/plugins/product/`). The 0 Ft native
+variant prices on length-priced products are not buyer-reachable until the
+storefront orders through Vendure with per-meter repricing in place
+(issue #71).
+
 ### Set discount application
 
 Set discounts are flat forint deductions applied at basket level, not per line.

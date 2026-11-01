@@ -4,6 +4,13 @@ Lets the shop group products into sets that carry a single flat forint discount,
 detect which basket lines form a set (material-gated, globally allocated per
 unit), and surface the formed set discounts to the buyer at basket level.
 
+> **Transition note (ADR 0009/0010).** During the migration this capability
+> stays Tina-owned until the promotions step: the canonical group schemas
+> (`DiscountedProductSet`/`RelatedItems`) already exist in
+> `packages/product-definition` and the preview seed validates group content
+> against them, but Vendure-side membership storage and the set-discount
+> application land with the promotions step (roadmap epic 2).
+
 ## Requirements
 
 ### Product set content model
