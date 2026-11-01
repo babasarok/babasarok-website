@@ -50,18 +50,32 @@ interface SyncTarget {
 interface AdminResult {
   data: unknown;
   errors: string[];
+  codes: string[];
 }
 
 const DefinitionsDataSchema = z.object({
-  productDefinitions: z.array(z.object({ productId: z.string() })).default([]),
+  productDefinitions: z
+    .object({
+      totalItems: z.number(),
+      items: z.array(z.object({ productId: z.string() })).default([]),
+    })
+    .default({ totalItems: 0, items: [] }),
 });
 
 const SyncStatesSchema = z.object({
   productDefinitions: z
-    .array(
-      z.object({ productId: z.string(), syncState: z.string(), syncError: z.string().nullish() })
-    )
-    .default([]),
+    .object({
+      items: z
+        .array(
+          z.object({
+            productId: z.string(),
+            syncState: z.string(),
+            syncError: z.string().nullish(),
+          })
+        )
+        .default([]),
+    })
+    .default({ items: [] }),
 });
 
 let authToken: string | null = null;
@@ -91,11 +105,19 @@ async function adminRequest(body: string): Promise<AdminResult> {
   const result = z
     .object({
       data: z.unknown().optional(),
-      errors: z.array(z.object({ message: z.string() })).optional(),
+      errors: z
+        .array(
+          z.object({ message: z.string(), extensions: z.object({ code: z.string() }).optional() })
+        )
+        .optional(),
     })
     .parse(await response.json());
 
-  return { data: result.data, errors: result.errors?.map((error) => error.message) ?? [] };
+  return {
+    data: result.data,
+    errors: result.errors?.map((error) => error.message) ?? [],
+    codes: result.errors?.map((error) => error.extensions?.code ?? "") ?? [],
+  };
 }
 
 async function authenticate(): Promise<void> {
@@ -146,9 +168,17 @@ function parseFrontmatter(
 
 async function upsert(definition: DefinitionPayload): Promise<UpsertResult | string> {
   const existing = DefinitionsDataSchema.parse(
-    (await adminRequest(JSON.stringify({ query: `{ productDefinitions { productId } }` }))).data
+    (
+      await adminRequest(
+        JSON.stringify({
+          query: `{ productDefinitions(options: { skip: 0, take: 100 }) { totalItems items { productId } } }`,
+        })
+      )
+    ).data
   );
-  const isExisting = existing.productDefinitions.some((row) => row.productId === definition.id);
+  const isExisting = existing.productDefinitions.items.some(
+    (row) => row.productId === definition.id
+  );
 
   if (!isExisting) {
     const result = await adminRequest(
@@ -169,7 +199,7 @@ async function upsert(definition: DefinitionPayload): Promise<UpsertResult | str
     })
   );
 
-  const drifted = result.errors.some((message) => message.includes("natív adatai"));
+  const drifted = result.codes.includes("PRODUCT_DEFINITION_NATIVE_DRIFT");
 
   if (drifted) {
     console.warn(`! ${definition.id}: natív módosítás felülírása a szinkronizálással (force).`);
@@ -287,12 +317,14 @@ async function waitForSyncs(
     const states = SyncStatesSchema.parse(
       (
         await adminRequest(
-          JSON.stringify({ query: `{ productDefinitions { productId syncState syncError } }` })
+          JSON.stringify({
+            query: `{ productDefinitions(options: { skip: 0, take: 100 }) { items { productId syncState syncError } } }`,
+          })
         )
       ).data
     );
 
-    for (const row of states.productDefinitions) {
+    for (const row of states.productDefinitions.items) {
       const target = pending.get(row.productId);
 
       if (target === undefined) {

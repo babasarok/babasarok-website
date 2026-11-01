@@ -18,6 +18,17 @@ interface GeneratedVariantListGraph {
   totalItems: number;
 }
 
+/** Mirrors the dashboard's PaginatedListDataTable contract (spike-proven). */
+interface ProductDefinitionListOptionsInput {
+  skip?: number | null;
+  take?: number | null;
+}
+
+interface ProductDefinitionListGraph {
+  items: ProductDefinitionGraph[];
+  totalItems: number;
+}
+
 /** The admin-API projection of a definition row (the list fields come from the definition itself). */
 export interface ProductDefinitionGraph {
   id: ID;
@@ -55,11 +66,20 @@ export class ProductDefinitionResolver {
 
   @Query()
   @Allow(Permission.UpdateCatalog)
-  async productDefinitions(@Ctx() ctx: RequestContext): Promise<ProductDefinitionGraph[]> {
-    const rows = await this.productDefinitionService.productDefinitions(ctx);
-    const staleness = await this.productDefinitionService.staleness(ctx, rows);
+  async productDefinitions(
+    @Ctx() ctx: RequestContext,
+    @Args("options") options: ProductDefinitionListOptionsInput
+  ): Promise<ProductDefinitionListGraph> {
+    const { items, totalItems } = await this.productDefinitionService.productDefinitions(
+      ctx,
+      options
+    );
+    const staleness = await this.productDefinitionService.staleness(ctx, items);
 
-    return rows.map((row) => toGraph(row, staleness.get(row.productId) ?? false));
+    return {
+      items: items.map((row) => toGraph(row, staleness.get(row.productId) ?? false)),
+      totalItems,
+    };
   }
 
   @Query()
@@ -183,6 +203,18 @@ export const productDefinitionSchema = gql`
     totalItems: Int!
   }
 
+  input ProductDefinitionListOptions {
+    # Non-null with defaults: the dashboard's PaginatedListDataTable contract
+    # types skip/take as plain numbers, so nullable fields fail its constraint.
+    skip: Int! = 0
+    take: Int! = 20
+  }
+
+  type ProductDefinitionList {
+    items: [ProductDefinition!]!
+    totalItems: Int!
+  }
+
   input GeneratedVariantListOptions {
     # Non-null with defaults: the dashboard's PaginatedListDataTable contract
     # types skip/take as plain numbers, so nullable fields fail its constraint.
@@ -196,7 +228,7 @@ export const productDefinitionSchema = gql`
 
   extend type Query {
     productDefinition(productId: String!): ProductDefinition
-    productDefinitions: [ProductDefinition!]!
+    productDefinitions(options: ProductDefinitionListOptions!): ProductDefinitionList!
     productDefinitionByNativeProduct(nativeProductId: Int!): ProductDefinition
     generatedVariants(
       productDefinitionId: String!

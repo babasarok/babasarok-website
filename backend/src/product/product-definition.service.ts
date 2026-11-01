@@ -2,7 +2,9 @@ import { Injectable, OnApplicationBootstrap } from "@nestjs/common";
 import {
   ChannelService,
   DefaultSlugStrategy,
+  I18nError,
   LanguageCode,
+  LogLevel,
   Product,
   ProductOptionGroupService,
   ProductOptionService,
@@ -36,6 +38,14 @@ function huName(
 /** The variant writes per ProductVariantService call — the spike's per-variant loop is not shippable. */
 const BATCH_SIZE = 100;
 
+/** Drift refusal with a machine-readable code: the dashboard keys its
+ * force-confirmation UX off `extensions.code`, not the message text. */
+class NativeDriftError extends I18nError {
+  constructor(message: string) {
+    super(message, {}, "PRODUCT_DEFINITION_NATIVE_DRIFT", LogLevel.Warn);
+  }
+}
+
 /** The job queue processes jobs strictly sequentially (Vendure's default concurrency 1),
  * so a re-save while a sync is running simply queues a second pass. */
 const SYNC_QUEUE_NAME = "product-definition-sync";
@@ -66,10 +76,17 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     });
   }
 
-  async productDefinitions(ctx: RequestContext): Promise<ProductDefinition[]> {
-    return this.connection
+  async productDefinitions(
+    ctx: RequestContext,
+    options: { skip?: number | null; take?: number | null } | null
+  ): Promise<{ items: ProductDefinition[]; totalItems: number }> {
+    const rows = await this.connection
       .getRepository(ctx, ProductDefinition)
       .find({ order: { productId: "ASC" } });
+    const skip = Math.max(options?.skip ?? 0, 0);
+    const take = Math.min(Math.max(options?.take ?? 20, 1), 100);
+
+    return { items: rows.slice(skip, skip + take), totalItems: rows.length };
   }
 
   async productDefinition(
@@ -326,7 +343,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     const state = await this.currentNativeState(ctx, nativeProductId);
 
     if (nativeStateHash(state) !== existing.syncedNativeStateHash) {
-      throw new UserInputError(
+      throw new NativeDriftError(
         `A(z) "${existing.productId}" termék natív adatai (opciók, változatok, árak) a ` +
           "szinkronizáláson kívül módosultak. A felülírásukhoz hagyd jóvá a szinkronizálást."
       );
