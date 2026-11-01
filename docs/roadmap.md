@@ -74,9 +74,11 @@ merged to main until the backend structure is settled):
   PR #77; previews now import a curated 7-product subset covering every
   implemented feature, so deploys fit Cloudflare's 30-minute limit — see
   `backend/scripts/import-products.ts`). Known issue feeding the dashboard
-  step: sync runs ~1.5–3
-  variants/s inside Vendure's `ProductVariantService.create`; big matrices
-  need minutes, so dashboard saves must go async (job queue)
+  step: sync runs ~1.5–3 variants/s inside Vendure's
+  `ProductVariantService.create` (on the shared box, observed ~1/s with the
+  whole matrix buffered in one uncommitted transaction — no observable
+  progress for 20+ min on the 1344-variant product); big matrices need
+  minutes, so dashboard saves must go async (job queue)
 - ✅ Dashboard production pass (async job-queue sync — 576-variant save
   returns in ~130ms with background convergence; configurator page block on
   the stock product page; creation folded into the stock products list
@@ -95,3 +97,45 @@ merged to main until the backend structure is settled):
   Vendure-complete gate
 - ⬜ Vendure-complete gate — catalog fully manageable in the Vendure dashboard,
   nothing left that only Tina can do
+
+## Epic 9 design notes (multi-market tax & pricing)
+
+Analysis parked from the epic 7 tax work, so epic 9 (Slovakia) starts here
+instead of re-deriving it. Verified against the Vendure docs (Taxes,
+Channels) and core source.
+
+**Already in place, correct for every option:** the channel is
+`pricesIncludeTax` (stored prices are gross — `ChannelSetupPlugin`), the HU
+zone is wired as `defaultTaxZone`/`defaultShippingZone`, and variants carry
+Vendure's default "standard" `TaxCategory`. Gross prices are the right
+invariant for both HU and SK (both are gross-display consumer markets), and
+none of the options below changes stored prices.
+
+**Options:**
+
+1. **Single channel + `AddressBasedTaxZoneStrategy`** — smallest change: add
+   the SK zone + SK TaxRates, swap the strategy (one config line). Only
+   viable with one currency, and a gross Ft price re-extracted at the SK
+   rate _changes the buyer's price_ — tax-inclusive prices don't translate
+   across differing VAT rates. Cross-border VAT legality (distance
+   selling/OSS) is not simply "buyer's country rate"; rates are data, so a
+   custom strategy can encode the registration model chosen then.
+2. **One Channel per market** (Vendure's region-specific pattern) — HU
+   channel (Ft, 27%), SK channel (EUR, SK rates). The catalog is shared:
+   every variant stays assigned to the default channel and a sub-channel
+   references the same variants with its own `ProductVariantPrice` row per
+   currency (`syncPricesAcrossChannels` if prices should stay linked).
+   Materials, facets, collections and promotions are channel-aware the same
+   way. Deciding factor: EUR for SK pushes here.
+
+**Open questions to decide at epic 9:**
+
+- **Where SK prices come from.** The configurator resync writes prices in
+  the default channel's context only; a second channel needs a source for
+  its price rows — manual per-channel pricing in the dashboard, a conversion
+  rule applied at resync, or per-market prices in the canonical definition
+  model. Do not create the SK channel before deciding.
+- **Currency precision.** `MoneyStrategy` is process-global, not
+  per-channel: `ForintMoneyStrategy`'s `precision: 0` would also render
+  whole-euro prices on a SK channel. Likely acceptable (round prices), but a
+  conscious decision, not an accident.
