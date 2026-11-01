@@ -1,8 +1,9 @@
 /**
- * Dashboard extension for the ProductPlugin: a "Termékek" section under the
- * catalog nav (paged list + create + delete — the creation entry point) and a
- * configurator block embedded on the stock product-detail page for products
- * generated from a definition (ADR 0010 decision 3). The shared
+ * Dashboard extension for the ProductPlugin: creation of configurator products
+ * via the `/product-definitions/new` route (opened from the stock products
+ * list's action bar) and a configurator block embedded on the stock
+ * product-detail page for products generated from a definition (ADR 0010
+ * decision 3) — that block is the editor home and hosts delete. The shared
  * ConfiguratorEditor edits the canonical definition in its input shape and
  * re-validates it with the canonical schema on save; the server re-derives
  * the native option groups/variants via the queued sync, whose state and
@@ -17,9 +18,8 @@
  */
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useBlocker, useNavigate, type AnyRoute } from "@tanstack/react-router";
+import { useBlocker, useNavigate } from "@tanstack/react-router";
 import {
-  ActionBarItem,
   Alert,
   AlertTitle,
   api,
@@ -27,13 +27,11 @@ import {
   Button,
   ConfirmationDialog,
   defineDashboardExtension,
-  DetailPageButton,
   Input,
   NEW_ENTITY_PATH,
   NativeSelect,
   PaginatedListDataTable,
   Page,
-  PageActionBar,
   PageBlock,
   PageLayout,
   PageTitle,
@@ -49,22 +47,6 @@ import {
 } from "@babasarok/product-definition";
 import { graphql } from "@/gql";
 import { Switch } from "@/vdb/components/ui/switch.js";
-
-const productDefinitionsQuery = graphql(`
-  query ProductDefinitions($options: ProductDefinitionListOptions!) {
-    productDefinitions(options: $options) {
-      items {
-        productId
-        label
-        type
-        basePrice
-        syncState
-        stale
-      }
-      totalItems
-    }
-  }
-`);
 
 const productDefinitionQuery = graphql(`
   query ProductDefinition($productId: String!) {
@@ -104,6 +86,7 @@ const createProductDefinitionMutation = graphql(`
   mutation CreateProductDefinition($definition: JSON!) {
     createProductDefinition(definition: $definition) {
       productId
+      nativeProductId
     }
   }
 `);
@@ -179,8 +162,6 @@ const EMBROIDERY_PRICING_LABELS: Record<
 };
 
 type FieldRow = { key: string; field: FieldInput };
-
-const NO_SORTING: Array<{ id: string; desc: boolean }> = [];
 
 interface SyncInfo {
   state: string;
@@ -355,13 +336,8 @@ function duplicates(definition: ProductDefinitionInput): string[] {
 defineDashboardExtension({
   routes: [
     {
-      path: "/product-definitions",
-      component: () => <ProductDefinitionsListPage />,
-      navMenuItem: { sectionId: "catalog", title: "Termékek" },
-    },
-    {
-      path: "/product-definitions/$id",
-      component: (route) => <ProductDefinitionDetailPage route={route} />,
+      path: "/product-definitions/new",
+      component: () => <NewProductDefinitionPage />,
     },
   ],
   pageBlocks: [
@@ -377,17 +353,36 @@ defineDashboardExtension({
       component: ProductConfiguratorBlock,
     },
   ],
+  actionBarItems: [
+    {
+      pageId: "product-list",
+      component: NewProductDefinitionActionBarItem,
+      requiresPermission: ["UpdateCatalog"],
+    },
+  ],
 });
 
-/** Thin wrapper: the standalone route keeps its own Page + title around the
- * shared editor. */
-function ProductDefinitionDetailPage({ route }: { route: AnyRoute }): ReactElement {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- the dashboard's extension contract passes an AnyRoute whose useParams() is untyped any (vendure's own detail-page.tsx reads params the same way); there is no typed alternative
-  const definitionId: string = route.useParams().id ?? "";
+/** The stock products list's entry point for creating a configurator product. */
+function NewProductDefinitionActionBarItem(): ReactElement {
+  const navigate = useNavigate();
 
   return (
-    <Page pageId="product-definition-detail">
-      <ConfiguratorEditor key={definitionId} definitionId={definitionId} mode="standalone" />
+    <Button
+      type="button"
+      onClick={() => {
+        void navigate({ to: "/product-definitions/new" });
+      }}
+    >
+      Új konfigurátor termék
+    </Button>
+  );
+}
+
+function NewProductDefinitionPage(): ReactElement {
+  return (
+    <Page pageId="product-definition-create">
+      <PageTitle>Új konfigurátor termék</PageTitle>
+      <ConfiguratorEditor definitionId={NEW_ENTITY_PATH} mode="create" />
     </Page>
   );
 }
@@ -408,63 +403,6 @@ function SyncBadge({ sync }: { sync: SyncInfo | null }): ReactElement {
         <Badge variant="warning">Elavult — mentéskor újraszinkronizálódik</Badge>
       )}
     </span>
-  );
-}
-
-function ProductDefinitionsListPage(): ReactElement {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-
-  return (
-    <Page pageId="product-definition-list">
-      <PageTitle>Termékek</PageTitle>
-      <PageActionBar>
-        <ActionBarItem itemId="create-product-definition">
-          <DetailPageButton href="/product-definitions/new" label="Új termék" />
-        </ActionBarItem>
-      </PageActionBar>
-      <PageLayout>
-        <PageBlock
-          column="main"
-          blockId="product-definition-list"
-          title="Termékek"
-          description="A strukturált konfigurátorból generált termékek. Létrehozás és törlés itt történik; szerkesztés a termék oldalán."
-        >
-          <PaginatedListDataTable
-            listQuery={productDefinitionsQuery}
-            transformVariables={(variables) => ({
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- under the repo's TS 6 (eslint's parser) the PaginatedListDataTable generics fall back to `any`; tsc 5.9 (check:dashboard, the gate for dashboard extensions) type-checks this concretely and passes
-              options: variables.options,
-            })}
-            page={page}
-            itemsPerPage={pageSize}
-            sorting={NO_SORTING}
-            onSortChange={() => {}}
-            onPageChange={(_table, page, perPage) => {
-              setPage(page);
-              setPageSize(perPage);
-            }}
-            customizeColumns={{
-              productId: { header: "Azonosító" },
-              label: { header: "Név" },
-              basePrice: { header: "Alapár (Ft)" },
-              syncState: {
-                header: "Szinkron",
-                cell: ({ row }) => (
-                  <SyncBadge
-                    sync={{
-                      state: row.original.syncState,
-                      error: null,
-                      stale: row.original.stale,
-                    }}
-                  />
-                ),
-              },
-            }}
-          />
-        </PageBlock>
-      </PageLayout>
-    </Page>
   );
 }
 
@@ -512,20 +450,19 @@ function NumberInput({
   );
 }
 
-/** The configurator editor shared by the standalone Termékek detail page and
- * the embedded stock product-detail block. Renders PageLayout content only;
- * `standalone` adds the page title and delete. */
+/** The configurator editor shared by the create route and the embedded stock
+ * product-detail block. Renders PageLayout content only; the create page
+ * supplies the page title and framing. */
 function ConfiguratorEditor({
   definitionId,
   mode,
 }: {
   definitionId: string;
-  mode: "standalone" | "embedded";
+  mode: "create" | "embedded";
 }): ReactElement {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const creatingNew =
-    mode === "standalone" && (definitionId === "" || definitionId === NEW_ENTITY_PATH);
+  const creatingNew = mode === "create";
 
   const [definition, setDefinition] = useState<ProductDefinitionInput | null>(() =>
     creatingNew ? newDefinition("", "", PRODUCT_TYPE_VALUES[0]) : null
@@ -550,7 +487,6 @@ function ConfiguratorEditor({
   // Structural SortingState (the dashboard package doesn't re-export the type).
   const [variantSorting, setVariantSorting] = useState<Array<{ id: string; desc: boolean }>>([]);
   const pollRun = useRef(0);
-  const loadedSnapshot = useRef<string | null>(null);
 
   useEffect(() => {
     api
@@ -577,14 +513,6 @@ function ConfiguratorEditor({
         }
 
         const parsed = ProductDefinitionSchema.parse(result.productDefinition.definition);
-        loadedSnapshot.current = JSON.stringify([
-          parsed.label,
-          parsed.basePrice,
-          parsed.orderable,
-          parsed.type,
-          parsed.fields,
-          parsed.forbiddenMaterialCombinations,
-        ]);
         setDefinition(parsed);
         setRows(parsed.fields.map((field) => ({ key: rowKey(), field })));
         setBanned(parsed.forbiddenMaterialCombinations.map((rule) => [...rule]));
@@ -628,43 +556,14 @@ function ConfiguratorEditor({
     };
   }, [saved]);
 
-  function snapshotCurrent(): string {
-    if (definition === null) {
-      return "";
-    }
-
-    return JSON.stringify([
-      definition.label,
-      definition.basePrice,
-      definition.orderable,
-      definition.type,
-      rows.map((row) => row.field),
-      banned,
-    ]);
-  }
-
   const dirty =
     definition !== null &&
-    (creatingNew
-      ? snapshotCurrent() !== JSON.stringify(["", "", true, definition.type, [], []])
-      : (loadedSnapshot.current !== null && snapshotCurrent() !== loadedSnapshot.current) || saved);
+    (definition.id !== "" || definition.label !== "" || rows.length > 0 || banned.length > 0);
 
-  // Guards only the standalone route: the embedded block shares the stock
+  // Guards only the create route: the embedded block shares the stock
   // product page's navigation, where blocking is too broad a blast radius.
   useBlocker({
-    shouldBlockFn: () => {
-      if (mode !== "standalone" || pending || definition === null) {
-        return false;
-      }
-
-      if (creatingNew) {
-        return (
-          definition.id !== "" || definition.label !== "" || rows.length > 0 || banned.length > 0
-        );
-      }
-
-      return dirty;
-    },
+    shouldBlockFn: () => mode === "create" && !pending && dirty,
   });
 
   function patchBase(key: string, id: string, label: string): void {
@@ -913,9 +812,16 @@ function ConfiguratorEditor({
     try {
       if (creatingNew) {
         const result = await api.query(createProductDefinitionMutation, { definition: validated });
+        const created = result.createProductDefinition;
+
+        if (created.nativeProductId === null) {
+          setErrors(["A termék létrejött, de a natív termék megnyitása nem sikerült."]);
+          return;
+        }
+
         await navigate({
-          to: "/product-definitions/$id",
-          params: { id: result.createProductDefinition.productId },
+          to: "/products/$id",
+          params: { id: String(created.nativeProductId) },
         });
       } else {
         const result = await api.query(updateProductDefinitionMutation, {
@@ -948,7 +854,7 @@ function ConfiguratorEditor({
 
     try {
       await api.query(deleteProductDefinitionMutation, { productId: definitionId });
-      await navigate({ to: "/product-definitions" });
+      await navigate({ to: "/products" });
     } catch (err: unknown) {
       setErrors(err instanceof Error ? err.message.split("\n") : [String(err)]);
       setPending(false);
@@ -990,7 +896,7 @@ function ConfiguratorEditor({
           >
             {creatingNew ? "Létrehozás" : "Mentés"}
           </Button>
-          {mode === "standalone" && !creatingNew && (
+          {!creatingNew && (
             <ConfirmationDialog
               title="Termék törlése"
               description={`Biztosan törlöd a terméket: ${definition.id}? A natív termék is törlődik.`}
@@ -1266,44 +1172,39 @@ function ConfiguratorEditor({
   );
 
   return (
-    <>
-      {mode === "standalone" && (
-        <PageTitle>{creatingNew ? "Új termék" : definition.label}</PageTitle>
+    <PageLayout>
+      {editor}
+      {kindSwitchKey !== null && (
+        <Alert variant="destructive">
+          <AlertTitle>
+            A(z) "{kindSwitchKey.label}" mezőhöz tartozó adatok (opciók, árak, beállítások)
+            elvesznek a típusváltáskor.
+          </AlertTitle>
+          <div className="mt-2 flex gap-2">
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                const switching = kindSwitchKey;
+                setKindSwitchKey(null);
+                applyKindSwitch(switching.key, switching.kind);
+              }}
+            >
+              Mégis cserélem
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setKindSwitchKey(null);
+              }}
+            >
+              Mégse
+            </Button>
+          </div>
+        </Alert>
       )}
-      <PageLayout>
-        {editor}
-        {kindSwitchKey !== null && (
-          <Alert variant="destructive">
-            <AlertTitle>
-              A(z) "{kindSwitchKey.label}" mezőhöz tartozó adatok (opciók, árak, beállítások)
-              elvesznek a típusváltáskor.
-            </AlertTitle>
-            <div className="mt-2 flex gap-2">
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => {
-                  const switching = kindSwitchKey;
-                  setKindSwitchKey(null);
-                  applyKindSwitch(switching.key, switching.kind);
-                }}
-              >
-                Mégis cserélem
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setKindSwitchKey(null);
-                }}
-              >
-                Mégse
-              </Button>
-            </div>
-          </Alert>
-        )}
-      </PageLayout>
-    </>
+    </PageLayout>
   );
 }
 
@@ -1769,8 +1670,9 @@ function ProductConfiguratorBlock({ context }: { context: PageContextValue }): R
   if (definitionId === null) {
     return (
       <p className="text-muted-foreground text-sm">
-        Ehhez a termékhez nem tartozik strukturált konfigurátor. Definíció a Termékek szekcióban
-        hozható létre — meglévő termékhez utólag nem csatolható.
+        Ehhez a termékhez nem tartozik strukturált konfigurátor. Konfigurátor termék a Termékek
+        listában hozható létre (Új konfigurátor termék gomb) — meglévő termékhez utólag nem
+        csatolható.
       </p>
     );
   }
