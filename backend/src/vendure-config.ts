@@ -3,6 +3,7 @@ import type { OrderPlacedStrategy, RequestContext, VendureConfig } from "@vendur
 import {
   configureDefaultOrderProcess,
   DefaultJobQueuePlugin,
+  DefaultMoneyStrategy,
   DefaultSearchPlugin,
   LanguageCode,
 } from "@vendure/core";
@@ -18,6 +19,14 @@ import { MaterialPlugin } from "./material/material.plugin";
 import { ProductPlugin } from "./product/product.plugin";
 import { QuoteOrderPlugin } from "./quote-order/quote-order.plugin";
 import { ChannelSetupPlugin } from "./setup/channel-setup.plugin";
+
+/** Prices are whole Forints everywhere (definitions, seed, sync, order lines);
+ * the default precision 2 would make the stock dashboard read a stored 15000
+ * as 150.00 Ft. Precision only changes how UIs display minor units — the
+ * stored value is untouched. */
+class ForintMoneyStrategy extends DefaultMoneyStrategy {
+  override readonly precision = 0;
+}
 
 function emailPluginOptions(): EmailPluginOptions | EmailPluginDevModeOptions {
   const base = {
@@ -121,6 +130,12 @@ export const config: VendureConfig = {
   orderOptions: {
     process: [configureDefaultOrderProcess({ arrangingPaymentRequiresShipping: false })],
     orderPlacedStrategy: new QuoteOrderPlacedStrategy(),
+  },
+  // Prices are whole Forints everywhere (definitions, seed, sync, order lines);
+  // the default precision 2 would make the stock dashboard read a stored
+  // 15000 as 150.00 Ft. Precision only changes how UIs display minor units.
+  entityOptions: {
+    moneyStrategy: new ForintMoneyStrategy(),
   },
   paymentOptions: { paymentMethodHandlers: [] },
   dbConnectionOptions: {
