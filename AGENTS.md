@@ -198,6 +198,13 @@ max-h-none`); `width: 100%` on a `position: fixed` element stops short of
   `babasarok_e2e` database (fixed credentials/seed in backend/e2e.env) and the
   built site on :4100 — stop the dev backend first, ports must be free; the
   servers are never reused.
+- **Backend plugin layout:** custom Vendure plugins live in
+  `backend/src/plugins/<name>/` — one folder per plugin, with the plugin's
+  entity/entities, service, resolver and plugin file together. Dashboard
+  extensions mirror this: `backend/src/dashboard/<name>/` (one folder per
+  plugin's dashboard code), with cross-plugin dashboard helpers only in
+  `backend/src/dashboard/shared*`. Infrastructure (vendure-config, env,
+  migrations, gql) stays at `backend/src/` top level.
 - **Behavior specs:** normative specs live in [docs/specs/](docs/specs/) (one
   file per capability: `product-catalog`, `order-pricing`, `order-basket`,
   `order-submission`, `product-sets`). Read the relevant spec before touching
