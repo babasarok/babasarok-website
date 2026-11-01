@@ -19,7 +19,6 @@ const babafeszek: ProductDefinition = ProductDefinitionSchema.parse({
       id: "meret",
       label: "Méret",
       presentation: "radio",
-      price: 0,
       visibility: { kind: "always" },
       options: [
         { id: "35x65", label: "Normál", price: 0 },
@@ -155,7 +154,6 @@ describe("planVariantCombinations", () => {
           id: "szin",
           label: "Szín",
           presentation: "color",
-          price: 0,
           visibility: { kind: "always" },
           options: [
             { id: "piros", label: "Piros", price: 0 },
