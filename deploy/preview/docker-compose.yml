@@ -25,7 +25,12 @@ services:
     command: ["node", "dist/migrate.js"]
 
   vendure:
-    build: ./repo
+    # SEED_CONTENT bakes the Tina catalog content for the preview seed
+    # (TEMPORARY, preview-only per the Dockerfile; prod builds omit it).
+    build:
+      context: ./repo
+      args:
+        SEED_CONTENT: "1"
     restart: unless-stopped
     networks:
       default:
