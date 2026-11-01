@@ -30,10 +30,16 @@ import { ProductDefinition } from "./product.entity";
 import { nativeStateHash, type NativeProductState } from "./sync-state";
 import { plannedNativeState, planVariantCombinations, type VariantPlan } from "./variant-plan";
 
+function huTranslation<T extends { languageCode: LanguageCode }>(
+  translations: readonly T[] | undefined
+): T | undefined {
+  return translations?.find((translation) => translation.languageCode === LanguageCode.hu);
+}
+
 function huName(
   translations: Array<{ languageCode: LanguageCode; name: string }> | undefined
 ): string | undefined {
-  return translations?.find((translation) => translation.languageCode === LanguageCode.hu)?.name;
+  return huTranslation(translations)?.name;
 }
 
 /** The variant writes per ProductVariantService call — the spike's per-variant loop is not shippable. */
@@ -406,10 +412,9 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       throw new Error(`A szinkronizált natív termék eltűnt: ${nativeProductId}`);
     }
 
-    const name = huName(product.translations);
-    const slug = product.translations.find(
-      (translation) => translation.languageCode === LanguageCode.hu
-    )?.slug;
+    const translation = huTranslation(product.translations);
+    const name = translation?.name;
+    const slug = translation?.slug;
 
     // Vendure normalizes slugs (DefaultSlugStrategy), so the comparison and
     // the written value use the normalized form — ids like "Eu borito" can
