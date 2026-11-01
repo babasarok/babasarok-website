@@ -3,14 +3,7 @@ import { formatSyncProgress } from "./sync-progress";
 
 describe("formatSyncProgress", () => {
   it("formats pending count, names, elapsed clock and counters", () => {
-    expect(
-      formatSyncProgress(
-        ["hagyomanyos-racsvedo", "polya"],
-        12 * 60_000 + 34_000,
-        31,
-        0
-      )
-    ).toBe(
+    expect(formatSyncProgress(["hagyomanyos-racsvedo", "polya"], 12 * 60_000 + 34_000, 31, 0)).toBe(
       "… várakozás: 2 függő (hagyomanyos-racsvedo, polya) — " +
         "12:34 eltelt, 31 szinkronizálva, 0 sikertelen"
     );
