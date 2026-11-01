@@ -36,6 +36,11 @@ the material color images all exist in Tina today.
 - Import scripts are one-way seeds (Tina content → Vendure), not a sync: once
   a domain is ported, edits happen in the Vendure dashboard, and the Tina
   copy of that domain becomes stale by design until cutover removes it.
+- The automated seed machinery (deploy tar carrying Tina content, the backend
+  image baking it, preview deploys running the import) is completely
+  temporary and preview-only. Production ships no Tina content, and the prod
+  import at cutover is a hand-migration run directly from the repo — the
+  automated path never runs against prod.
 - During the transition the same entity exists twice (e.g. a material in
   Tina and in Vendure); the ported copy in Vendure is the one that matters
   going forward, and discrepancies at cutover time are resolved in Vendure's

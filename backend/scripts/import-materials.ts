@@ -6,6 +6,10 @@
  * by material id). Asset dedup is per-run only: every run (e.g. each preview
  * deploy) re-uploads every referenced image.
  *
+ * TEMPORARY and preview-only: wired into preview deploys only; production
+ * is seeded once by a hand-migration directly from the repo at cutover,
+ * never by this script (or only run deliberately by a human).
+ *
  * Run: pnpm -C backend run import-materials
  * (requires the backend running locally and SUPERADMIN_* in backend/.env)
  */

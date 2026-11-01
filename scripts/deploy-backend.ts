@@ -111,10 +111,11 @@ try {
   // The tree lands in a per-build tar first — only the locked remote script
   // touches the live repo dir, so an overlapping deploy cannot corrupt a
   // transfer in flight.
-  // The one-way Tina→Vendure seed runs inside the backend image on preview
-  // deploys (ADR 0009) and reads the Tina material content from the repo
-  // tree, so the tar carries the content dir plus exactly the assets the
-  // materials reference — not the whole 589M src/assets tree.
+  // TEMPORARY, preview-only (ADR 0009): the preview seed reads the Tina
+  // material content from the repo tree, so the tar carries the content dir
+  // plus exactly the assets the materials reference — not the whole 589M
+  // src/assets tree. Prod never runs the seed (hand-migration at cutover);
+  // drop this when the Tina material domain is removed at cutover.
   const seedAssets = new Set<string>();
   const materialDir = path.join(REPO_ROOT, "src", "content", "material");
   for (const file of readdirSync(materialDir)) {
