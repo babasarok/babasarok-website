@@ -35,7 +35,6 @@ const choiceFixture = (
   label: "Szín",
   kind: "choice",
   presentation,
-  price: 0,
   visibility: { kind: "when-present", fieldId: "szin" },
   options: [{ id: "feher", label: "Fehér", price: 100 }],
 });
@@ -142,15 +141,6 @@ describe("ProductDefinitionSchema", () => {
         pricing: { kind: "per-word", pricePerWord: 500 },
       }).success
     ).toBe(true);
-  });
-
-  it.each([-1, 1.5])("rejects a non-integer or negative choice field price %i", (price) => {
-    expect(
-      ChoiceFieldSchema.safeParse({
-        ...choiceFixture("select"),
-        price,
-      }).success
-    ).toBe(false);
   });
 });
 

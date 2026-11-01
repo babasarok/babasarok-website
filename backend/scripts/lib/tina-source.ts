@@ -78,9 +78,9 @@ type DefinitionInput = NonNullable<z.input<typeof ProductDefinitionSchema>["fiel
 type FieldVisibilityInput = z.input<typeof FieldVisibilitySchema>;
 type ChoiceInput = Extract<DefinitionInput, { kind: "choice" }>;
 
-/** `src/content/material/wellsoft.md` → `wellsoft` (the canonical MaterialId). */
-export function materialSlugFromPath(materialPath: string): string {
-  return materialPath.split("/").pop()?.replace(/\.md$/, "") ?? materialPath;
+/** `src/content/<collection>/<slug>.md` → `<slug>` (the canonical id). */
+export function slugFromPath(contentPath: string): string {
+  return contentPath.split("/").pop()?.replace(/\.md$/, "") ?? contentPath;
 }
 
 function trimmed(value: string | null | undefined): string | undefined {
@@ -142,7 +142,9 @@ function choiceField(
     id: field.name.trim(),
     label: field.label.trim(),
     presentation,
-    price: field.price ?? 0,
+    // The field-level `price` is vestigial Tina frontmatter — pricing is per
+    // option (the site and the variant plan both read `option.price`), so the
+    // canonical model has no such member and the value is dropped here.
     visibility: visibility(field),
     options,
     ...(tooltip === undefined ? {} : { tooltip }),
@@ -213,7 +215,7 @@ function materialField(field: TinaProductField): DefinitionInput {
         ? []
         : [
             {
-              materialId: materialSlugFromPath(entry.material_path).trim(),
+              materialId: slugFromPath(entry.material_path).trim(),
               price: entry.price ?? 0,
             },
           ]
@@ -327,7 +329,7 @@ export function definitionFromTinaProduct(source: TinaProduct): TinaProductParse
         (combination) =>
           combination.materials
             ?.filter((member) => member !== null)
-            .map((member) => materialSlugFromPath(member.material_path).trim()) ?? []
+            .map((member) => slugFromPath(member.material_path).trim()) ?? []
       ),
     },
   };

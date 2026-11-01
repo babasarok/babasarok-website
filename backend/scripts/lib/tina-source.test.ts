@@ -1,6 +1,6 @@
 import { ProductDefinitionSchema, productRevision } from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
-import { definitionFromTinaProduct, materialSlugFromPath, type TinaProduct } from "./tina-source";
+import { definitionFromTinaProduct, slugFromPath, type TinaProduct } from "./tina-source";
 
 const babafeszek: TinaProduct = {
   product_id: "babafeszek",
@@ -57,10 +57,10 @@ const babafeszek: TinaProduct = {
   ],
 };
 
-describe("materialSlugFromPath", () => {
+describe("slugFromPath", () => {
   it("maps Tina material paths to canonical material ids", () => {
-    expect(materialSlugFromPath("src/content/material/wellsoft.md")).toBe("wellsoft");
-    expect(materialSlugFromPath("wellsoft.md")).toBe("wellsoft");
+    expect(slugFromPath("src/content/material/wellsoft.md")).toBe("wellsoft");
+    expect(slugFromPath("wellsoft.md")).toBe("wellsoft");
   });
 });
 

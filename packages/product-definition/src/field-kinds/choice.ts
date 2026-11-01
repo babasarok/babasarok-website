@@ -15,7 +15,6 @@ export const ChoiceFieldSchema = z.strictObject({
   ...fieldBaseShape,
   kind: z.literal("choice"),
   presentation: z.enum(["select", "radio", "color"]),
-  price: MoneySchema,
   visibility: FieldVisibilitySchema,
   options: z.array(ChoiceOptionSchema).min(1),
   customValue: z
