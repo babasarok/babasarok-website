@@ -59,13 +59,14 @@ merged to main until the backend structure is settled):
   data-preserving migration, preview seed (PR #76)
 - ✅ Product architecture decided — native-with-generation (ADR 0010,
   spike-proven)
-- 🔄 Canonical product schema in `packages/product-definition`
-  (`feat/product-definition-unification`)
-- ⬜ Products core (Product plugin: structured definition storage, batched
-  variant sync with drift detection, migration, admin API; seed reads Tina
-  product content as test data)
-- ⬜ Dashboard production pass (configurator page block, ADR 0010's four UX
-  gaps, staleness indicator, delete/conflict policy)
+- ✅ Canonical product schema in `packages/product-definition` (PR #77)
+- ✅ Products core (definition storage, batched variant sync with drift
+  detection, migration, admin API; seed 33/33 products / 11/11 materials —
+  PR #77). Known issue feeding the dashboard step: sync runs ~1.5–3
+  variants/s inside Vendure's `ProductVariantService.create`; big matrices
+  need minutes, so dashboard saves must go async (job queue)
+- 🔄 Dashboard production pass (configurator page block, ADR 0010's four UX
+  gaps, staleness indicator, delete/conflict policy, async sync) — in PR #77
 - ⬜ Facets + Collections (material/color facets, auto-managed collections)
 - ⬜ Promotions (per-product % discounts; set discounts — see
   [order-pricing](specs/order-pricing.md) and
