@@ -196,7 +196,7 @@ function MaterialsListPage(): ReactElement {
                         <img
                           src={material.thumbnailPreview}
                           alt={material.label}
-                          className="h-9 w-9 rounded border object-cover"
+                          className="h-12 w-12 rounded border object-cover"
                         />
                       )}
                     </td>
@@ -421,7 +421,7 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
                 <img
                   src={thumbnail.preview}
                   alt={thumbnail.name}
-                  className="h-9 w-9 rounded border object-cover"
+                  className="h-24 w-24 rounded border object-cover"
                 />
               )}
               <Button
@@ -496,7 +496,7 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
                     <img
                       src={row.asset.preview}
                       alt={row.asset.name}
-                      className="h-9 w-9 rounded border object-cover"
+                      className="h-12 w-12 rounded border object-cover"
                     />
                   )}
                   <Button

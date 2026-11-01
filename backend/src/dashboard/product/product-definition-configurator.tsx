@@ -36,8 +36,10 @@ import {
 import { graphql } from "@/gql";
 import { Switch } from "@/vdb/components/ui/switch.js";
 import { ErrorNotice, errorCodeOf, rowKey } from "../shared";
+import "./stock-image-sizes.css";
 import { FieldEditor, NumberInput } from "./product-definition-fields";
 import {
+  assignGeneratedIds,
   carryOver,
   hasEditableData,
   newDefinition,
@@ -267,9 +269,9 @@ export function ConfiguratorEditor({
     shouldBlockFn: () => mode === "create" && !pending && dirty,
   });
 
-  function patchBase(key: string, id: string, label: string): void {
+  function patchBase(key: string, label: string): void {
     setRows((current) =>
-      current.map((row) => (row.key === key ? { ...row, field: { ...row.field, id, label } } : row))
+      current.map((row) => (row.key === key ? { ...row, field: { ...row.field, label } } : row))
     );
   }
 
@@ -476,11 +478,14 @@ export function ConfiguratorEditor({
     // The rows and banned pairs are the editor's authoritative state (the
     // definition state only carries the load-time values), so the payload
     // serializes from them — otherwise every field edit would be dropped.
-    const payload = sanitize({
-      ...definition,
-      fields: rows.map((row) => row.field),
-      forbiddenMaterialCombinations: banned.map((rule) => [...rule]),
-    });
+    // Blank codes are generated from the labels here; see assignGeneratedIds.
+    const payload = assignGeneratedIds(
+      sanitize({
+        ...definition,
+        fields: rows.map((row) => row.field),
+        forbiddenMaterialCombinations: banned.map((rule) => [...rule]),
+      })
+    );
     const clientErrors: string[] = [];
 
     if (creatingNew && (payload.id === "" || payload.label === "")) {
@@ -535,6 +540,11 @@ export function ConfiguratorEditor({
           error: result.updateProductDefinition.syncError,
           stale: false,
         });
+        // Adopt the saved payload (with the generated codes filled in) so the
+        // next save keeps them stable instead of regenerating from labels.
+        setRows((current) =>
+          current.map((row, index) => ({ ...row, field: validated.fields[index] }))
+        );
         setSaved(true);
         void pollSync(definitionId);
       }
@@ -574,10 +584,6 @@ export function ConfiguratorEditor({
     definition.pricing.kind === "length"
       ? `Méteráras árazás (mező: ${definition.pricing.sourceFieldId}) — a variánsok ára 0 Ft.`
       : null;
-  const discount =
-    definition.discount === undefined
-      ? null
-      : `Kedvezmény: ${definition.discount.percent}% — ${definition.discount.validUntil}sig.`;
 
   const editor = (
     <>
@@ -726,7 +732,6 @@ export function ConfiguratorEditor({
           {lengthPricing !== null && (
             <p className="text-muted-foreground text-xs">{lengthPricing}</p>
           )}
-          {discount !== null && <p className="text-muted-foreground text-xs">{discount}</p>}
         </div>
       </PageBlock>
       <PageBlock
