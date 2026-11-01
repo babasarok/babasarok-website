@@ -65,10 +65,11 @@ export class ProductDefinitionResolver {
   async updateProductDefinition(
     @Ctx() ctx: RequestContext,
     @Args("productId") productId: string,
-    @Args("definition") definition: unknown
+    @Args("definition") definition: unknown,
+    @Args("force", { nullable: true }) force: boolean | null
   ): Promise<ProductDefinitionGraph> {
     return toGraph(
-      await this.productDefinitionService.updateProductDefinition(ctx, productId, definition)
+      await this.productDefinitionService.updateProductDefinition(ctx, productId, definition, force)
     );
   }
 
@@ -101,7 +102,11 @@ export const productDefinitionSchema = gql`
 
   extend type Mutation {
     createProductDefinition(definition: JSON!): ProductDefinition!
-    updateProductDefinition(productId: String!, definition: JSON!): ProductDefinition!
+    updateProductDefinition(
+      productId: String!
+      definition: JSON!
+      force: Boolean
+    ): ProductDefinition!
     deleteProductDefinition(productId: String!): Boolean!
   }
 `;
