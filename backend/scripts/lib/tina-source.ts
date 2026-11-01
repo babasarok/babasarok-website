@@ -51,6 +51,7 @@ export const TinaProductSchema = z.object({
   product_id: z.string(),
   title: z.string(),
   can_be_ordered: z.boolean().nullish(),
+  hidden_in_product_list: z.boolean().nullish(),
   type: z.string(),
   price: z.number().nullish(),
   discount: z.number().nullish(),
@@ -319,6 +320,7 @@ export function definitionFromTinaProduct(source: TinaProduct): TinaProductParse
       label: source.title.trim(),
       type: productType.data,
       orderable: source.can_be_ordered ?? false,
+      hiddenInProductList: source.hidden_in_product_list ?? false,
       basePrice: source.price ?? 0,
       pricing: sourceFieldId === undefined ? { kind: "unit" } : { kind: "length", sourceFieldId },
       ...(discount > 0 && validUntil !== undefined

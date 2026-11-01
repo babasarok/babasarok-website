@@ -78,8 +78,25 @@ describe("definitionFromTinaProduct", () => {
     expect(result.definition.label).toBe("Babafészek");
     expect(result.definition.pricing).toEqual({ kind: "unit" });
     expect(result.definition.orderable).toBe(true);
+    expect(result.definition.hiddenInProductList).toBe(false);
     expect(result.definition.basePrice).toBe(15_000);
     expect(result.definition.forbiddenMaterialCombinations).toEqual([["wellsoft", "wellsoft"]]);
+  });
+
+  it("carries hidden_in_product_list onto the definition", () => {
+    const result = definitionFromTinaProduct({
+      ...babafeszek,
+      product_id: "kedvezmenyes-termekek",
+      hidden_in_product_list: true,
+    });
+
+    expect(result.success).toBe(true);
+
+    if (!result.success) {
+      return;
+    }
+
+    expect(result.definition.hiddenInProductList).toBe(true);
   });
 
   it("trims untrimmed labels and maps field kinds onto canonical members", () => {

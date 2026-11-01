@@ -56,6 +56,9 @@ export const ProductDefinitionSchema = z.strictObject({
   revision: ProductRevisionSchema.optional(),
   type: ProductTypeSchema,
   orderable: z.boolean(),
+  // Storefront listing maps this at cutover; it is deliberately not Vendure's
+  // native product visibility.
+  hiddenInProductList: z.boolean().optional(),
   basePrice: MoneySchema,
   pricing: ProductPricingSchema,
   discount: ProductDiscountSchema.optional(),
