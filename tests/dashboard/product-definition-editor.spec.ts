@@ -1,5 +1,11 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { deleteDefinitionIfPresent, ensureMaterials, login, waitForMutation } from "./helpers";
+import {
+  deleteDefinitionIfPresent,
+  ensureMaterials,
+  generatedTable,
+  login,
+  waitForMutation,
+} from "./helpers";
 
 /**
  * Browser-level e2e for the product-definition create and editor flows. The
@@ -37,14 +43,6 @@ function fieldBlock(page: Page, index: number): Locator {
  * nothing — the position after the Típus select is the stable handle. */
 function materialSelect(block: Locator, index: number): Locator {
   return block.getByRole("combobox").nth(1 + index);
-}
-
-/** The configurator's generated-variants table (its Hungarian price column
- * keeps it apart from the stock variants table on the same page). */
-function generatedTable(page: Page): Locator {
-  return page
-    .locator('[data-slot="data-table"]')
-    .filter({ has: page.getByRole("columnheader", { name: "Ár (Ft)" }) });
 }
 
 test("the configurator product lifecycle: create, edit every field kind, delete", async ({

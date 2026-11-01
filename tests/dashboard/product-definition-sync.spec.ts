@@ -1,5 +1,15 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
-import { adminApi, CreatedDefinition, DefinitionState, deleteDefinitionIfPresent, login } from "./helpers";
+import { expect, test } from "@playwright/test";
+import {
+  adminApi,
+  CREATE_DEFINITION,
+  CreatedDefinition,
+  DEFINITION_STATE,
+  DefinitionState,
+  deleteDefinitionIfPresent,
+  generatedTable,
+  login,
+  stockTable,
+} from "./helpers";
 
 /**
  * Browser-level e2e for the product-definition sync flow: the save/create
@@ -16,19 +26,6 @@ import { adminApi, CreatedDefinition, DefinitionState, deleteDefinitionIfPresent
  * (ForintMoneyStrategy precision 0, so a stored 15400 must not read 154.00).
  */
 
-const CREATE_DEFINITION = `mutation CreateProductDefinitionE2E($definition: JSON!) {
-  createProductDefinition(definition: $definition) {
-    productId
-    syncState
-  }
-}`;
-
-const DEFINITION_STATE = `query ProductDefinitionE2E($productId: String!) {
-  productDefinition(productId: $productId) {
-    nativeProductId
-  }
-}`;
-
 const SYNC_FIXTURE = {
   id: "e2e-s1",
   label: "E2E S1",
@@ -42,7 +39,6 @@ const SYNC_FIXTURE = {
       id: "szin",
       label: "Szín",
       presentation: "select",
-      price: 0,
       visibility: { kind: "always" },
       options: Array.from({ length: 15 }, (_, index) => ({
         id: `k${String(index + 1).padStart(2, "0")}`,
@@ -53,21 +49,6 @@ const SYNC_FIXTURE = {
   ],
   forbiddenMaterialCombinations: [],
 };
-
-/** The configurator's generated-variants table (its Hungarian price column
- * keeps it apart from the stock variants table on the same page). */
-function generatedTable(page: Page): Locator {
-  return page
-    .locator('[data-slot="data-table"]')
-    .filter({ has: page.getByRole("columnheader", { name: "Ár (Ft)" }) });
-}
-
-/** The stock product page's own variants table (Money-formatted prices). */
-function stockTable(page: Page): Locator {
-  return page
-    .locator('[data-slot="data-table"]')
-    .filter({ has: page.getByRole("columnheader", { name: "Price" }) });
-}
 
 test("the async sync settles and the generated-variants table follows it", async ({ page }) => {
   let nativeProductId: number | null | undefined;

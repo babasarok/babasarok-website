@@ -1,11 +1,15 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import {
   adminApi,
+  CREATE_DEFINITION,
   CreatedDefinition,
+  DEFINITION_STATE,
   DefinitionState,
   deleteDefinitionIfPresent,
   GeneratedVariants,
+  generatedTable,
   login,
+  stockTable,
   UpdatedVariant,
   waitForMutation,
 } from "./helpers";
@@ -14,28 +18,38 @@ import {
  * Browser-level e2e for the drift UX (ADR 0010): after the sync settles, a
  * variant hand-edited through the stock admin API makes the next save refused
  * with PRODUCT_DEFINITION_NATIVE_DRIFT, the editor surfaces the destructive
- * alert with a force button, and forcing re-syncs (overwriting the hand edit)
- * and clears the stale badge. The editor is the "Konfigurátor" page block on
- * the stock product-detail page; the fixture is created through the admin
- * API (helpers.ts).
+ * alert with the overwrite button, and forcing re-syncs (overwriting the hand
+ * edit) and clears the stale badge. The editor is the "Konfigurátor" page
+ * block on the stock product-detail page; the fixture is created through the
+ * admin API (helpers.ts).
  *
  * The hand edit targets a variant price because that is what the sync owns
- * end to end: variant names of existing variants are never rewritten, so a
- * hand-edited name would survive the force re-sync and a renamed product
- * label would leave the definition stale for reasons the sync cannot fix.
+ * end to end; a renamed product label would leave the definition stale for
+ * reasons the sync cannot fix.
  */
 
-const CREATE_DEFINITION = `mutation CreateProductDefinitionE2E($definition: JSON!) {
-  createProductDefinition(definition: $definition) {
-    productId
-  }
-}`;
-
-const DEFINITION_STATE = `query ProductDefinitionE2E($productId: String!) {
-  productDefinition(productId: $productId) {
-    nativeProductId
-  }
-}`;
+const DRIFT_FIXTURE = {
+  id: "e2e-d1",
+  label: "E2E D1",
+  type: "kiegeszito",
+  orderable: true,
+  basePrice: 15_000,
+  pricing: { kind: "unit" },
+  fields: [
+    {
+      kind: "choice",
+      id: "szin",
+      label: "Szín",
+      presentation: "select",
+      visibility: { kind: "always" },
+      options: [
+        { id: "kek", label: "Kék", price: 0 },
+        { id: "piros", label: "Piros", price: 500 },
+      ],
+    },
+  ],
+  forbiddenMaterialCombinations: [],
+};
 
 const GENERATED_VARIANTS = `query GeneratedVariantsE2E($productDefinitionId: String!, $options: GeneratedVariantListOptions!) {
   generatedVariants(productDefinitionId: $productDefinitionId, options: $options) {
@@ -51,45 +65,6 @@ const HAND_EDIT_VARIANT = `mutation HandEditVariantE2E($input: UpdateProductVari
     id
   }
 }`;
-
-const DRIFT_FIXTURE = {
-  id: "e2e-d1",
-  label: "E2E D1",
-  type: "kiegeszito",
-  orderable: true,
-  basePrice: 15_000,
-  pricing: { kind: "unit" },
-  fields: [
-    {
-      kind: "choice",
-      id: "szin",
-      label: "Szín",
-      presentation: "select",
-      price: 0,
-      visibility: { kind: "always" },
-      options: [
-        { id: "kek", label: "Kék", price: 0 },
-        { id: "piros", label: "Piros", price: 500 },
-      ],
-    },
-  ],
-  forbiddenMaterialCombinations: [],
-};
-
-/** The configurator's generated-variants table (its Hungarian price column
- * keeps it apart from the stock variants table on the same page). */
-function generatedTable(page: Page): Locator {
-  return page
-    .locator('[data-slot="data-table"]')
-    .filter({ has: page.getByRole("columnheader", { name: "Ár (Ft)" }) });
-}
-
-/** The stock product page's own variants table (Money-formatted prices). */
-function stockTable(page: Page): Locator {
-  return page
-    .locator('[data-slot="data-table"]')
-    .filter({ has: page.getByRole("columnheader", { name: "Price" }) });
-}
 
 test("a natively hand-edited variant price is refused until the force re-sync", async ({
   page,
@@ -153,7 +128,9 @@ test("a natively hand-edited variant price is refused until the force re-sync", 
   await test.step("the editor shows the stale badge next to the synced state", async () => {
     await page.goto(`/dashboard/products/${nativeProductId}`);
     await expect(page.getByText("Szinkronizálva")).toBeVisible();
-    await expect(page.getByText("Elavult — mentéskor újraszinkronizálódik")).toBeVisible();
+    await expect(
+      page.getByText("Elavult — a mentés a natív módosítások felülírása nélkül elutasított")
+    ).toBeVisible();
   });
 
   await test.step("a save is refused with the drift alert and the force button", async () => {
@@ -166,21 +143,21 @@ test("a natively hand-edited variant price is refused until the force re-sync", 
         "A natív termék opciói, változatai vagy árai a szinkronizáláson kívül módosultak."
       )
     ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Natív módosítások felülírása (force)" })
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Natív módosítások felülírása" })).toBeVisible();
     await expect(page.getByText("termék natív adatai")).toBeVisible();
     await expect(page.getByText("Mentés sikeres — a szinkronizálás fut.")).toHaveCount(0);
   });
 
   await test.step("forcing re-syncs, clears the stale badge and overwrites the hand edit", async () => {
     const forced = waitForMutation(page, "mutation UpdateProductDefinition");
-    await page.getByRole("button", { name: "Natív módosítások felülírása (force)" }).click();
+    await page.getByRole("button", { name: "Natív módosítások felülírása" }).click();
     await forced;
 
     await expect(page.getByText("Szinkronizálás…")).toBeVisible();
     await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
-    await expect(page.getByText("Elavult — mentéskor újraszinkronizálódik")).toHaveCount(0);
+    await expect(
+      page.getByText("Elavult — a mentés a natív módosítások felülírása nélkül elutasított")
+    ).toHaveCount(0);
 
     await page.reload();
 

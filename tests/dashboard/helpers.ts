@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { z } from "zod";
 
 /**
@@ -11,9 +11,8 @@ import { z } from "zod";
  * fixtures without exercising a creation flow, hand-editing native data to
  * provoke drift).
  */
-const DASHBOARD = "/dashboard";
-const ADMIN_API_URL = "http://localhost:4000/admin-api";
-// Fixed e2e superadmin, also set in backend/e2e.env (fresh database every
+export const DASHBOARD = "/dashboard";
+const ADMIN_API_URL = "http://localhost:4000/admin-api"; // Fixed e2e superadmin, also set in backend/e2e.env (fresh database every
 // run, so Vendure bootstraps exactly this administrator).
 const EMAIL = "admin@babasarok.local";
 const PASSWORD = "superadmin";
@@ -69,15 +68,39 @@ const DELETE_MATERIAL = `mutation DeleteMaterialE2E($id: ID!) {
   deleteMaterial(id: $id)
 }`;
 
-const DEFINITION_QUERY = `query ProductDefinitionE2E($productId: String!) {
+const DELETE_DEFINITION = `mutation DeleteProductDefinitionE2E($productId: String!) {
+  deleteProductDefinition(productId: $productId)
+}`;
+
+/** Creates a definition fixture; the mutation returns before the queued sync
+ * produced the native structure (that is what the sync spec asserts). */
+export const CREATE_DEFINITION = `mutation CreateProductDefinitionE2E($definition: JSON!) {
+  createProductDefinition(definition: $definition) {
+    productId
+    syncState
+  }
+}`;
+
+export const DEFINITION_STATE = `query ProductDefinitionE2E($productId: String!) {
   productDefinition(productId: $productId) {
     nativeProductId
   }
 }`;
 
-const DELETE_DEFINITION = `mutation DeleteProductDefinitionE2E($productId: String!) {
-  deleteProductDefinition(productId: $productId)
-}`;
+/** The configurator's generated-variants table (its Hungarian price column
+ * keeps it apart from the stock variants table on the same page). */
+export function generatedTable(page: Page): Locator {
+  return page
+    .locator('[data-slot="data-table"]')
+    .filter({ has: page.getByRole("columnheader", { name: "Ár (Ft)" }) });
+}
+
+/** The stock product page's own variants table (Money-formatted prices). */
+export function stockTable(page: Page): Locator {
+  return page
+    .locator('[data-slot="data-table"]')
+    .filter({ has: page.getByRole("columnheader", { name: "Price" }) });
+}
 
 interface FixtureMaterial {
   slug: string;
@@ -95,10 +118,7 @@ export const SEED_MATERIALS: FixtureMaterial[] = [
 
 /** Ensures the fixture materials exist: the material specs mutate and delete
  * the seeded ones, so the product-definition specs rely on their own. */
-export async function ensureMaterials(
-  page: Page,
-  materials: FixtureMaterial[]
-): Promise<void> {
+export async function ensureMaterials(page: Page, materials: FixtureMaterial[]): Promise<void> {
   const existing = await adminApi(page, MATERIALS_QUERY, {}, MaterialsList);
   const known = new Set(existing.materials.map((material) => material.slug));
 
@@ -143,7 +163,7 @@ export async function deleteMaterialIfPresent(page: Page, slug: string): Promise
  * re-create the same fixed productId and assert on its fresh-create state, so
  * each run must start from an absent id. */
 export async function deleteDefinitionIfPresent(page: Page, productId: string): Promise<void> {
-  const state = await adminApi(page, DEFINITION_QUERY, { productId }, DefinitionState);
+  const state = await adminApi(page, DEFINITION_STATE, { productId }, DefinitionState);
 
   if (state.productDefinition === null) {
     return;
