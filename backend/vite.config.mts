@@ -33,7 +33,7 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-    proxy: { "/admin-api": "http://localhost:4000" },
+    proxy: { "/admin-api": `http://localhost:${process.env.PORT ?? 4000}` },
   },
   plugins: [
     vendureDashboardPlugin({
