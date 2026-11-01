@@ -191,8 +191,11 @@ TARFILE=$7
 # (networks override, Caddyfile, caddy reload). Not try-lock: waiting here is
 # the concurrency limit for image builds, not a failure.
 mkdir -p /srv/babasarok
+SECONDS=0
+echo "[deploy] commit $5: waiting for infra lock"
 exec 8>>/srv/babasarok/.infra.lock
 flock -x -w 900 8
+echo "[deploy] commit $5: infra lock acquired after $SECONDS s"
 
 mkdir -p "$DIR"
 exec 9>>"$DIR/.deploy.lock"
@@ -200,6 +203,7 @@ if ! flock -x -w 600 9; then
   echo "timed out waiting for the deploy lock" >&2
   exit 1
 fi
+echo "[deploy] commit $5: stack lock acquired after $SECONDS s"
 
 command -v node >/dev/null 2>&1 || {
   echo "node is not installed on the deploy box" >&2
@@ -271,6 +275,11 @@ exec node "$DIR/repo/deploy/remote/deploy-stack.ts" "$@"
       const update = spawnSync(
         "ssh",
         sshArgs([
+          "flock",
+          "-x",
+          "-w",
+          "600",
+          `${dir}/.deploy.lock`,
           "bash",
           "-c",
           `'sed -i "s|^ADMIN_URL=.*|ADMIN_URL=${adminUrl}|" ${dir}/.env` +

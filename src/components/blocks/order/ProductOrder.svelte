@@ -5,6 +5,7 @@
   import SetPanel from "./SetPanel.svelte";
   import RelatedItems from "./RelatedItems.svelte";
   import Button from "./common/Button.svelte";
+  import IconButton from "./common/IconButton.svelte";
   import { orderBasket } from "@/lib/order/basket.svelte";
   import {
     instantiateProduct,
@@ -286,9 +287,48 @@
       </div>
     {/if}
 
-    <Button class="mt-4 h-11 w-full uppercase" variant="contained" type="button" onclick={save}>
-      {editing ? "Kosár frissítése" : "Kosárba"}
-    </Button>
+    <div class="mt-4 flex items-center gap-3">
+      <div
+        class="flex h-11 items-center justify-between rounded-full border border-brown-300 bg-white px-2 w-32 shrink-0 shadow-xs"
+      >
+        <IconButton
+          class="text-xl"
+          type="button"
+          aria-label="Mennyiség csökkentése"
+          disabled={item.count <= 1}
+          onclick={() => {
+            if (!item) {
+              return;
+            }
+
+            item.count--;
+            saved = false;
+          }}
+        >
+          <Icon icon="mdi:minus" class="h-[1em]" />
+        </IconButton>
+        <span class="text-sm font-semibold select-none">{item.count} db</span>
+        <IconButton
+          class="text-xl"
+          type="button"
+          aria-label="Mennyiség növelése"
+          onclick={() => {
+            if (!item) {
+              return;
+            }
+
+            item.count++;
+            saved = false;
+          }}
+        >
+          <Icon icon="mdi:add" class="h-[1em]" />
+        </IconButton>
+      </div>
+
+      <Button class="h-11 flex-1 uppercase" variant="contained" type="button" onclick={save}>
+        {editing ? "Kosár frissítése" : "Kosárba"}
+      </Button>
+    </div>
 
     {#if relatedProducts.length > 0 && setInfo}
       <div class="mt-6">
