@@ -77,3 +77,7 @@ backend/assets/
 # Vendure runtime state (telemetry installation id)
 backend/.vendure/
 .wrangler/
+
+# Vendure runtime artifacts created when a backend runs from the repo root
+/.vendure/
+/assets/
