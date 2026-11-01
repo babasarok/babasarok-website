@@ -3,7 +3,9 @@
  * runs this as its webServer and waits on http://localhost:4000/health. Every
  * run starts from a known state — the e2e database named in e2e.env is dropped
  * and re-created, migrations are applied, two materials are seeded, then the
- * Vendure server serves the admin API on the port from e2e.env.
+ * Vendure server serves the admin API on the port from e2e.env. The worker
+ * process boots after the server's health check: the product-definition sync
+ * runs on the job queue, which only the worker drains.
  *
  * Run: pnpm -C backend run e2e:server
  */
@@ -132,6 +134,43 @@ async function main(): Promise<void> {
   server.on("exit", (code) => {
     process.exit(code ?? 1);
   });
+
+  await waitForServerHealth();
+
+  // The server only enqueues product-definition syncs (the job queue); the
+  // worker drains it, so the dashboard's pending→synced flow needs both
+  // processes — the same server+worker pair dev and the deploy run.
+  const worker = spawn(process.execPath, [path.join(backendRoot, "dist", "index-worker.js")], {
+    stdio: "inherit",
+  });
+
+  worker.on("exit", (code) => {
+    process.exit(code ?? 1);
+  });
+}
+
+/** Resolves once the server answers /health, so its bootstrap (channel setup
+ * on a fresh database) is done before the worker bootstraps against the same
+ * database. */
+async function waitForServerHealth(): Promise<void> {
+  const url = `http://localhost:${process.env.PORT ?? "4000"}/health`;
+
+  for (let attempt = 0; attempt < 240; attempt += 1) {
+    try {
+      const response = await fetch(url);
+
+      if (response.ok) {
+        return;
+      }
+    } catch {
+      // The server is not listening yet; the playwright webServer timeout
+      // surfaces the failure if it never comes up.
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  throw new Error("A szerver nem jelentkezett be a /health végponton.");
 }
 
 try {
