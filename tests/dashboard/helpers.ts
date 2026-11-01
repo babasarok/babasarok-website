@@ -46,12 +46,15 @@ export const UpdatedVariant = z.object({
   updateProductVariant: z.object({ id: z.string() }),
 });
 
-const MaterialsList = z.object({ materials: z.array(z.object({ slug: z.string() })) });
+const MaterialsList = z.object({
+  materials: z.array(z.object({ id: z.string(), slug: z.string() })),
+});
 
 const CreatedMaterial = z.object({ createMaterial: z.object({ slug: z.string() }) });
 
 const MATERIALS_QUERY = `query MaterialsE2E {
   materials {
+    id
     slug
   }
 }`;
@@ -62,11 +65,39 @@ const CREATE_MATERIAL = `mutation CreateMaterialE2E($input: MaterialInput!) {
   }
 }`;
 
+const DELETE_MATERIAL = `mutation DeleteMaterialE2E($id: ID!) {
+  deleteMaterial(id: $id)
+}`;
+
+const DEFINITION_QUERY = `query ProductDefinitionE2E($productId: String!) {
+  productDefinition(productId: $productId) {
+    nativeProductId
+  }
+}`;
+
+const DELETE_DEFINITION = `mutation DeleteProductDefinitionE2E($productId: String!) {
+  deleteProductDefinition(productId: $productId)
+}`;
+
+interface FixtureMaterial {
+  slug: string;
+  label: string;
+  colors?: Array<{ id: string; label: string; hex: string }>;
+}
+
+/** The materials the e2e server seeds (backend/scripts/e2e-server.ts), in the
+ * shape the materials spec asserts; a failed attempt leaves them renamed,
+ * mutated or deleted, so the spec's fixture setup re-creates them here. */
+export const SEED_MATERIALS: FixtureMaterial[] = [
+  { slug: "e2e-pamut", label: "Pamut", colors: [{ id: "feher", label: "Fehér", hex: "#f5f5f5" }] },
+  { slug: "e2e-vaszon", label: "Vászon", colors: [] },
+];
+
 /** Ensures the fixture materials exist: the material specs mutate and delete
  * the seeded ones, so the product-definition specs rely on their own. */
 export async function ensureMaterials(
   page: Page,
-  materials: Array<{ slug: string; label: string }>
+  materials: FixtureMaterial[]
 ): Promise<void> {
   const existing = await adminApi(page, MATERIALS_QUERY, {}, MaterialsList);
   const known = new Set(existing.materials.map((material) => material.slug));
@@ -80,11 +111,40 @@ export async function ensureMaterials(
       page,
       CREATE_MATERIAL,
       {
-        input: { ...material, colors: [{ id: "alap", label: "Alap", hex: "#f5f5f5" }] },
+        input: {
+          ...material,
+          colors: material.colors ?? [{ id: "alap", label: "Alap", hex: "#f5f5f5" }],
+        },
       },
       CreatedMaterial
     );
   }
+}
+
+/** Deletes a leftover fixture material from a previous attempt: createMaterial
+ * hard-rejects an existing slug, so a retried spec must start without it. */
+export async function deleteMaterialIfPresent(page: Page, slug: string): Promise<void> {
+  const existing = await adminApi(page, MATERIALS_QUERY, {}, MaterialsList);
+  const match = existing.materials.find((material) => material.slug === slug);
+
+  if (match === undefined) {
+    return;
+  }
+
+  await adminApi(page, DELETE_MATERIAL, { id: match.id }, z.boolean());
+}
+
+/** Deletes a leftover fixture definition from a previous attempt: the specs
+ * re-create the same fixed productId and assert on its fresh-create state, so
+ * each run must start from an absent id. */
+export async function deleteDefinitionIfPresent(page: Page, productId: string): Promise<void> {
+  const state = await adminApi(page, DEFINITION_QUERY, { productId }, DefinitionState);
+
+  if (state.productDefinition === null) {
+    return;
+  }
+
+  await adminApi(page, DELETE_DEFINITION, { productId }, z.boolean());
 }
 
 /** Deep-links to a dashboard route and signs in on the redirect; the router

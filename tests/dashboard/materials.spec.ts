@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import path from "node:path";
+import { deleteMaterialIfPresent, ensureMaterials, SEED_MATERIALS } from "./helpers";
 
 /**
  * Browser-level e2e for the Vendure dashboard's custom "Anyagok" section
@@ -52,6 +53,15 @@ test("the Anyagok section handles the material lifecycle", async ({ page }) => {
     await page.locator("#field-username").fill(EMAIL);
     await page.locator("#field-password").fill(PASSWORD);
     await page.locator("form").getByRole("button", { name: "Sign in" }).click();
+
+    // Retry-safety: a previous attempt leaves the seeds renamed/mutated or
+    // deleted and its own materials behind; restore the seeded state and drop
+    // the spec's own slugs so the creates below start clean.
+    await deleteMaterialIfPresent(page, "e2e-pamut");
+    await deleteMaterialIfPresent(page, "e2e-vaszon");
+    await deleteMaterialIfPresent(page, "e2e-filc");
+    await deleteMaterialIfPresent(page, "e2e-tulipan");
+    await ensureMaterials(page, SEED_MATERIALS);
 
     await expect(page.getByRole("button", { name: "Pamut" })).toBeVisible();
   });

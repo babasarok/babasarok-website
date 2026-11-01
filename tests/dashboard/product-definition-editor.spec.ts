@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { ensureMaterials, login, waitForMutation } from "./helpers";
+import { deleteDefinitionIfPresent, ensureMaterials, login, waitForMutation } from "./helpers";
 
 /**
  * Browser-level e2e for the product-definition create and editor flows. The
@@ -53,6 +53,7 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
   await test.step("login, ensure materials and open the create form", async () => {
     await login(page, "/products");
     await ensureMaterials(page, E2E_MATERIALS);
+    await deleteDefinitionIfPresent(page, "e2e-f1");
 
     await page.getByRole("button", { name: "Új konfigurátor termék" }).click();
     await page.waitForURL("**/dashboard/product-definitions/new");

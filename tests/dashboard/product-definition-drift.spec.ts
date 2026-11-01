@@ -3,6 +3,7 @@ import {
   adminApi,
   CreatedDefinition,
   DefinitionState,
+  deleteDefinitionIfPresent,
   GeneratedVariants,
   login,
   UpdatedVariant,
@@ -97,6 +98,7 @@ test("a natively hand-edited variant price is refused until the force re-sync", 
 
   await test.step("login and create the fixture through the admin API", async () => {
     await login(page, "/products");
+    await deleteDefinitionIfPresent(page, "e2e-d1");
     await adminApi(page, CREATE_DEFINITION, { definition: DRIFT_FIXTURE }, CreatedDefinition);
   });
 

@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { adminApi, CreatedDefinition, DefinitionState, login } from "./helpers";
+import { adminApi, CreatedDefinition, DefinitionState, deleteDefinitionIfPresent, login } from "./helpers";
 
 /**
  * Browser-level e2e for the product-definition sync flow: the save/create
@@ -74,6 +74,7 @@ test("the async sync settles and the generated-variants table follows it", async
 
   await test.step("login, create the fixture and see the mutation return pending", async () => {
     await login(page, "/products");
+    await deleteDefinitionIfPresent(page, "e2e-s1");
     const created = await adminApi(
       page,
       CREATE_DEFINITION,
