@@ -32,6 +32,19 @@ export class ChannelSetupPlugin implements OnApplicationBootstrap {
   async onApplicationBootstrap(): Promise<void> {
     const ctx = await this.requestContextService.create({ apiType: "admin" });
     const channel = await this.channelService.getDefaultChannel(ctx);
+
+    // Prices are stored gross (consumer prices, ÁFA-inclusive) everywhere:
+    // definitions, quotes, order lines. Vendure's default channel treats
+    // stored prices as net and would add 27% on top once a TaxRate exists.
+    // With pricesIncludeTax the tax portion is extracted (×100/127) and
+    // totals stay equal to the stored prices. Must happen before real orders
+    // carry native totals: OrderLine snapshots listPriceIncludesTax at
+    // add-to-order, so flipping later would mix semantics across lines. The
+    // 27% HU TaxRate itself lands with payments/invoicing (roadmap epic 7).
+    if (!channel.pricesIncludeTax) {
+      await this.channelService.update(ctx, { id: channel.id, pricesIncludeTax: true });
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- the zone relations are typed non-null but sit unset on a fresh database, which is exactly what this guard handles
     if (channel.defaultTaxZone && channel.defaultShippingZone) {
       return;
