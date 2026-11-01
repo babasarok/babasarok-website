@@ -36,6 +36,11 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           typegen: ${{ matrix.typegen }}
+      # Typed lint resolves @babasarok/product-definition through its dist
+      # type declarations; the backend tree's node10 module resolution cannot
+      # follow the package's node16-style source imports.
+      - if: matrix.name == 'Lint'
+        run: pnpm -C packages/product-definition run build
       - run: ${{ matrix.run }}
 
   # Fast unit tests for the order-form domain logic (pricing, validation,
@@ -59,6 +64,9 @@ jobs:
       - uses: ./.github/actions/setup
       - run: pnpm -C backend run check
       - run: pnpm -C backend run check:dashboard
+      # The committed gql types must match the schema: regenerate and fail on
+      # any drift (see gql.tada docs, "Verifying committed output files").
+      - run: pnpm -C backend run gql:fresh
       - run: pnpm -C backend test
 
   # Real production build (`npm run build` -> `tinacms build`, talks to Tina
