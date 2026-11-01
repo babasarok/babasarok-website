@@ -1,7 +1,7 @@
 # Order pricing
 
 Computes the price of an order item from its base price, selected configurable
-field options, selected materials, quantity, and any applicable discount. A
+field options, selected materials, and quantity. A
 price is only surfaced once it can be fully computed; an unpriced part is
 treated as contributing nothing rather than producing a partial price.
 
@@ -37,25 +37,11 @@ item's total price.
 
 ### Standalone product discount
 
-A product MAY carry a discount percentage and a `discount_valid_until` date.
-The system SHALL apply the discount as a multiplier (`1 - percent/100`) on the
-item's total price only while the current date is on or before
-`discount_valid_until`; otherwise no standalone discount applies. A standalone
-discount applies to every unit of the line, including units that also belong to
-a set instance (set and standalone discounts stack).
-
-- **Scenario: Discount within validity**
-  - WHEN a product has a discount and its `discount_valid_until` is in the
-    future
-  - THEN the item total is reduced by the discount percentage and the
-    discount is surfaced in the price breakdown
-- **Scenario: Expired discount**
-  - WHEN a product's `discount_valid_until` date has passed
-  - THEN no standalone discount is applied to the item
-- **Scenario: Stacks with a set discount**
-  - WHEN a set-covered item also has a valid standalone discount
-  - THEN the standalone discount reduces the whole line and the set discount
-    is deducted from the already-discounted subtotal on top of it
+**Dropped.** Per-product % discounts are retired (owner decision; no Tina
+content ever sets `discount`, so behavior is unchanged). The dormant site
+code goes away at cutover without a Vendure replacement, and the canonical
+product model carries no discount field. Set discounts (below) are
+unaffected.
 
 ### Length-based pricing
 
@@ -115,12 +101,11 @@ storefront orders through Vendure with per-meter repricing in place
 Set discounts are flat forint deductions applied at basket level, not per line.
 Each formed set instance (see the product-sets capability) removes its set's
 flat amount once from the order total, clamped so it never exceeds the covered
-units' charged subtotal (after any standalone discount on those units). Line
-prices themselves reflect only the standalone discount; the set deductions are
-summed and subtracted from the order total. Set discounts are surfaced at basket
+units' charged subtotal. Set deductions are summed and subtracted from the
+order total. Set discounts are surfaced at basket
 level (the "set discounts" section listing each formed instance and the forint
-it removes), not as per-line labels. The order email records each line's
-standalone discount and, per formed instance, the set title, its members, and
+it removes), not as per-line labels. The order email records, per formed
+instance, the set title, its members, and
 both the nominal and the actually applied (clamped) forint amount.
 
 - **Scenario: Flat deduction**

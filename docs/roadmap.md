@@ -83,8 +83,12 @@ merged to main until the backend structure is settled):
   `pnpm patch` candidates), drift-detail display, validation-message
   localization
 - ⬜ Facets + Collections (material/color facets, auto-managed collections)
-- ⬜ Promotions (per-product % discounts; set discounts — see
-  [order-pricing](specs/order-pricing.md) and
-  [product-sets](specs/product-sets.md) specs)
+- ⬜ Promotions (set discounts — see [order-pricing](specs/order-pricing.md)
+  and [product-sets](specs/product-sets.md) specs). Per-product % discounts
+  are dropped (owner decision: unused); they get no Vendure home
+- ⚠ Display-field gap — `shortDescription`, `categories` (tagline), `date`,
+  `icon` and per-image gallery descriptions have no Vendure home yet
+  ([ADR 0010](adr/0010-native-generated-product-model.md)); resolve by the
+  Vendure-complete gate
 - ⬜ Vendure-complete gate — catalog fully manageable in the Vendure dashboard,
   nothing left that only Tina can do

@@ -11,8 +11,16 @@ filterable product list with a detail page per product.
 > `productId`), `can_be_ordered` ↔ `orderable`, field kinds map to `input`,
 > `choice` (presentation `select`/`radio`/`color`), `toggle`, `material` and
 > `embroidery`, and `banned_combinations` ↔ `forbiddenMaterialCombinations`.
-> Editorial content (tagline, short description, body, images) stays on the
-> native product until cutover. "Configurator" in this spec means the
+> Editorial content maps to the native product at cutover: `title` → `name`,
+> body → `description`, `thumbnail` → featured asset, `images` → assets.
+> Four display fields have no home yet (native Vendure has no slot and the
+> canonical model does not carry them): `shortDescription` (list search and
+> card text), `categories` (the "Alcím" tagline), `date` ("newest first"
+> sorting), and `icon` (order-item/checkout icon) — plus per-image gallery
+> descriptions, since Vendure `Asset` has only a `name`. Tracked as the
+> display-field gap in ADR 0010; must be resolved (custom fields on
+> `Product` or canonical-model entries) before the Vendure-complete gate.
+> "Configurator" in this spec means the
 > buyer-facing order form; the admin-side editor is the dashboard's product
 > configurator editor.
 
@@ -24,8 +32,7 @@ The system SHALL model each product as CMS content carrying at least: an
 identifier (`product_id`), title, a single product type drawn from a fixed
 set of classification values, a tagline (free-text subtitle), short
 description, body content, images (thumbnail plus optional gallery entries
-with descriptions), a base price, a `can_be_ordered` flag, and optional
-pricing/discount data.
+with descriptions), a base price, and a `can_be_ordered` flag.
 
 - **Scenario: Product with configurable options**
   - WHEN a product defines configurable fields (radios, selects, toggles,

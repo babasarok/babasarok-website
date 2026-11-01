@@ -42,7 +42,7 @@ of no discounted set earns no set discount.
   - THEN only the set with the larger amount is applied to that product
 - **Scenario: Product in no set**
   - WHEN a product in the basket is a member of no discounted set
-  - THEN it earns no set discount (its standalone discount, if any, still applies)
+  - THEN it earns no set discount
 
 ### Material-gated set detection
 
@@ -79,8 +79,7 @@ consuming units globally — each basket unit is consumed at most once, so a
 partner line covers no more sets than it has units. Leftover units earn no
 set discount. A unit consumed by a higher-amount set is unavailable to
 lower-amount sets. Each formed instance removes its set's flat forint amount
-once, clamped so it never exceeds the covered units' charged subtotal (after
-any standalone discount on those units).
+once, clamped so it never exceeds the covered units' charged subtotal.
 
 - **Scenario: Partner line cap**
   - WHEN the basket holds two lines of set member A and one line of set

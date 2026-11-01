@@ -9,7 +9,6 @@ import { ToggleFieldSchema } from "./field-kinds/toggle";
 import {
   ForbiddenMaterialCombinationSchema,
   ProductDefinitionSchema,
-  ProductDiscountSchema,
   ProductPricingSchema,
   PRODUCT_TYPE_VALUES,
   type ProductDefinition,
@@ -75,7 +74,6 @@ const productFixture = (
   orderable: true,
   basePrice: 20_000,
   pricing: { kind: "unit" },
-  discount: { percent: 30, validUntil: "2026-12-31T23:59:59Z" },
   fields: [
     inputFixture,
     choiceFixture(presentation),
@@ -239,19 +237,6 @@ describe("PatternSchema", () => {
 
   it("accepts a valid regular expression", () => {
     expect(PatternSchema.parse(String.raw`^(\d+)$`)).toBe(String.raw`^(\d+)$`);
-  });
-});
-
-describe("ProductDiscountSchema", () => {
-  const validUntil = "2026-12-31T23:59:59Z";
-
-  it.each([
-    { name: "percent 0", value: { percent: 0, validUntil } },
-    { name: "percent 100", value: { percent: 100, validUntil } },
-    { name: "percent 1.5", value: { percent: 1.5, validUntil } },
-    { name: "missing validUntil", value: { percent: 10 } },
-  ])("rejects %name", ({ value }) => {
-    expect(ProductDiscountSchema.safeParse(value).success).toBe(false);
   });
 });
 

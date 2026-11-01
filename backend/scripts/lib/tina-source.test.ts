@@ -18,8 +18,6 @@ const babafeszek: TinaProduct = {
   can_be_ordered: true,
   type: "babafeszek",
   price: 15_000,
-  discount: null,
-  discount_valid_until: null,
   length_based_pricing: null,
   materials: {
     banned_combinations: [

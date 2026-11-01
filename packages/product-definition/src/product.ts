@@ -33,11 +33,6 @@ export const ProductPricingSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("length"), sourceFieldId: ProductFieldIdSchema }),
 ]);
 
-export const ProductDiscountSchema = z.strictObject({
-  percent: z.int().min(1).max(99),
-  validUntil: z.iso.datetime({ offset: true }),
-});
-
 export const ForbiddenMaterialCombinationSchema = z.array(MaterialIdSchema).min(2);
 
 export const ProductFieldSchema = z.discriminatedUnion("kind", [
@@ -59,14 +54,12 @@ export const ProductDefinitionSchema = z.strictObject({
   hiddenInProductList: z.boolean().optional(),
   basePrice: MoneySchema,
   pricing: ProductPricingSchema,
-  discount: ProductDiscountSchema.optional(),
   fields: z.array(ProductFieldSchema),
   forbiddenMaterialCombinations: z.array(ForbiddenMaterialCombinationSchema),
 });
 
 export type ProductType = z.output<typeof ProductTypeSchema>;
 export type ProductPricing = z.output<typeof ProductPricingSchema>;
-export type ProductDiscount = z.output<typeof ProductDiscountSchema>;
 export type ProductField = z.output<typeof ProductFieldSchema>;
 export type ProductDefinition = z.output<typeof ProductDefinitionSchema>;
 export type ProductDefinitionInput = z.input<typeof ProductDefinitionSchema>;

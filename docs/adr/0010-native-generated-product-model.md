@@ -9,10 +9,12 @@ Products in Tina are a configurator, not a variant grid: configurable `fields`
 of type input / select / radio / color / toggle / embroidery / material, where
 a **material field** references Vendure-owned materials with a per-material
 price and a `color_count` (how many colors the buyer picks for that slot),
-plus product-level `banned_combinations`, a `length_based_pricing` mode
-(one product kind, fonott rácsvédő), and per-product % discounts. Buyers pick
+plus product-level `banned_combinations` and a `length_based_pricing` mode
+(one product kind, fonott rácsvédő). Buyers pick
 a material once per material field and then that field's number of colors;
-valid colors depend on the chosen material.
+valid colors depend on the chosen material. (The Tina collection's
+per-product % discount field is retired — unused in content — and is not
+absorbed; see decision 6.)
 
 ADR 0009 made Vendure the catalog owner side-by-side with Tina. Two spikes
 compared how to model products in Vendure, using babafeszek (size select ×3
@@ -89,13 +91,14 @@ an option → the missing variants appear; no manual variant work anywhere.
    follow-ups (the fallback chain: definition image → material-color image
    → product featured asset).
 6. **Collections and promotions stay native**: facets (Material, Color) on
-   variants for facet-based Collections; the per-product % discount maps to
-   stock promotions; the set (szett) discount's material+color multiset
-   matching stays in the pricing layer initially (spec: order-pricing,
-   product-sets), with a custom PromotionCondition as a later, optional
-   refactor. Group membership itself gets its Vendure home at the
-   promotions step — the canonical group schemas already exist in the
-   package and the seed validates group content against them.
+   variants for facet-based Collections; the set (szett) discount's
+   material+color multiset matching stays in the pricing layer initially
+   (spec: order-pricing, product-sets), with a custom PromotionCondition as a
+   later, optional refactor. Per-product % discounts are dropped (owner
+   decision: unused in content) — they get no Vendure home and the canonical
+   model carries no discount field. Group membership itself gets its Vendure
+   home at the promotions step — the canonical group schemas already exist in
+   the package and the seed validates group content against them.
 7. Seed/import direction stays one-way Tina → Vendure, temporary and
    preview-only (ADR 0009); prod is hand-migrated at cutover.
 8. **Tina never stores product information — at no point in the roadmap.** No
@@ -105,7 +108,7 @@ an option → the missing variants appear; no manual variant work anywhere.
    test data with exactly two uses: test data for the temporary preview
    seed, and the completeness yardstick — **Vendure's product model must
    support every field Tina products have today** (field kinds, banned
-   combinations, length-based pricing, discounts, product groups/related
+   combinations, length-based pricing, product groups/related
    products). The authoring-form plan on `refactor/vendure-preparation`
    (`docs/product-definition-authoring-plan.md`, Stages 4–10) is **shelved**:
    only its canonical zod model is absorbed into `packages/product-definition`;
@@ -131,6 +134,29 @@ an option → the missing variants appear; no manual variant work anywhere.
    removed; creation is an action-bar item on the stock products list,
    delete lives in the configurator block.
 
+## Display-field coverage gap (completeness yardstick audit)
+
+The decision 8 yardstick holds for configurator data: every order-form field
+in the Tina product collection maps 1:1 onto the canonical schema (field
+kinds, banned combinations, length-based pricing) — the mapping is
+recorded in the product-catalog spec's transition note. The audit found a
+gap on the display side. Editorial fields map to the native product at
+cutover (`title` → `name`, body → `description`, `thumbnail` → featured
+asset, `images` → assets), but these have no home yet — native Vendure has
+no slot and the canonical model does not carry them:
+
+- `shortDescription` — product-list search text and card body.
+- `categories` (the "Alcím" tagline) — list and detail display.
+- `date` — the "newest first" list sort.
+- `icon` — order-item/checkout item icon.
+- per-image gallery descriptions — Vendure `Asset` has only a `name`
+  (verified in @vendure/core 3.8.1).
+
+Resolution belongs to epic 3 (cutover) planning: Vendure custom fields on
+`Product` or entries in the canonical model, decided when the site reads
+Vendure. They must be resolved before the Vendure-complete gate (delivery
+plan step 6), which is what enforces the yardstick end-to-end.
+
 ## Delivery plan (non-spike work)
 
 Ordered; each step mergeable as a stacked PR against feat/vendure-materials.
@@ -152,9 +178,10 @@ Tina exactly as it is until step 7.
    generated products, delete/conflict policy.
 4. **Facets + Collections** — material/color facet values on variants,
    auto-managed collections, dashboard surfacing.
-5. **Promotions** — stock promotion for per-product % discounts; set
-   discount stays in the pricing layer (fed by Vendure data) until a native
-   PromotionCondition is justified.
+5. **Promotions** — set discount stays in the pricing layer (fed by Vendure
+   data) until a native PromotionCondition is justified. Per-product %
+   discounts are dropped (owner decision), so no stock promotion is built
+   for them.
 6. **Vendure-complete gate** — the catalog is fully manageable in the Vendure
    dashboard with nothing left that only Tina can do; verified end-to-end via
    seeds, API probes and dashboard e2e.

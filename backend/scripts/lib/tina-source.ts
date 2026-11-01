@@ -58,8 +58,6 @@ export const TinaProductSchema = z.object({
   hidden_in_product_list: z.boolean().nullish(),
   type: z.string(),
   price: z.number().nullish(),
-  discount: z.number().nullish(),
-  discount_valid_until: z.string().nullish(),
   length_based_pricing: z.object({ sourceField: z.string().nullish() }).nullish(),
   materials: z
     .object({
@@ -322,8 +320,6 @@ export function definitionFromTinaProduct(source: TinaProduct): TinaProductParse
   }
 
   const sourceFieldId = trimmed(source.length_based_pricing?.sourceField);
-  const discount = source.discount ?? 0;
-  const validUntil = trimmed(source.discount_valid_until);
 
   return {
     success: true,
@@ -335,9 +331,6 @@ export function definitionFromTinaProduct(source: TinaProduct): TinaProductParse
       hiddenInProductList: source.hidden_in_product_list ?? false,
       basePrice: source.price ?? 0,
       pricing: sourceFieldId === undefined ? { kind: "unit" } : { kind: "length", sourceFieldId },
-      ...(discount > 0 && validUntil !== undefined
-        ? { discount: { percent: discount, validUntil } }
-        : {}),
       fields,
       forbiddenMaterialCombinations: (source.materials?.banned_combinations ?? []).map(
         (combination) =>
