@@ -8,6 +8,9 @@
     // scripts from source, never from dist.
     "module": "esnext",
     "moduleResolution": "bundler",
+    // Node's type stripping resolves relative imports only with the literal
+    // .ts extension; tsc rewrites it back to .js for the dist emit.
+    "rewriteRelativeImportExtensions": true,
     "strict": true,
     "composite": true,
     "outDir": "dist",

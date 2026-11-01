@@ -26,12 +26,16 @@ import {
   productRevision,
   TinaProductSchema,
   type TinaProduct,
-} from "./lib/tina-source";
+} from "./lib/tina-source.ts";
 /** The definition shape sent to the admin API (server-side zod validates it). */
 type DefinitionPayload = z.input<typeof ProductDefinitionSchema>;
 
 const API_URL = `http://localhost:${process.env.PORT ?? "4000"}/admin-api`;
 const CONTENT_DIR = path.resolve(import.meta.dirname, "..", "..", "src", "content", "product");
+// Undici's own headersTimeout is 300s; ours must fire first to fail with a
+// clear message instead of UND_ERR_HEADERS_TIMEOUT.
+const REQUEST_TIMEOUT_MS = 240_000;
+const RUN_BUDGET_MS = 30 * 60_000;
 
 interface UpsertResult {
   kind: "created" | "updated";
@@ -58,7 +62,12 @@ async function adminRequest(body: string): Promise<AdminResult> {
     headers.Authorization = `Bearer ${authToken}`;
   }
 
-  const response = await fetch(API_URL, { method: "POST", headers, body });
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers,
+    body,
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
   const tokenHeader = response.headers.get("vendure-auth-token");
 
   if (tokenHeader !== null) {
@@ -164,6 +173,7 @@ async function upsert(definition: DefinitionPayload): Promise<UpsertResult | str
 async function main(): Promise<void> {
   const files = (await readdir(CONTENT_DIR)).filter((file) => file.endsWith(".md"));
   await authenticate();
+  const startedAt = Date.now();
 
   let created = 0;
   let updated = 0;
@@ -171,6 +181,12 @@ async function main(): Promise<void> {
   let skipped = 0;
 
   for (const file of files) {
+    if (Date.now() - startedAt > RUN_BUDGET_MS) {
+      throw new Error(
+        `futási időkeret túllépve (${Math.round(RUN_BUDGET_MS / 60_000)} perc) — ${file} lesz a következő`
+      );
+    }
+
     const raw = await readFile(path.join(CONTENT_DIR, file), "utf8");
     const frontmatter = parseFrontmatter(raw);
 
@@ -192,7 +208,20 @@ async function main(): Promise<void> {
       ...definition.definition,
       revision: productRevision(definition.definition),
     };
-    const outcome = await upsert(final);
+    console.log(`→ ${file}`);
+    const fileStartedAt = Date.now();
+
+    let outcome: UpsertResult | string;
+
+    try {
+      outcome = await upsert(final);
+    } catch (error: unknown) {
+      failed += 1;
+      console.error(
+        `✗ ${file}: ${(error instanceof Error ? error.message : String(error)).slice(0, 300)}`
+      );
+      continue;
+    }
 
     if (typeof outcome === "string") {
       failed += 1;
@@ -205,6 +234,10 @@ async function main(): Promise<void> {
     } else {
       updated += 1;
     }
+
+    console.log(
+      `✓ ${file}: ${outcome.kind} (${((Date.now() - fileStartedAt) / 1000).toFixed(1)}s)`
+    );
   }
 
   console.log(
@@ -212,6 +245,12 @@ async function main(): Promise<void> {
       `${failed} failed, ${skipped} skipped by schema`
   );
 }
+
+// ponytail: a fresh create of a huge variant matrix (hagyomanyos-racsvedo ~2700
+// variants) outlasts any fetch timeout we can set (undici's headersTimeout
+// caps at 300s without the undici package); the aborted mutation still
+// finishes server-side, so simply re-running the seed picks those products
+// up on the fast update path.
 
 try {
   await main();
