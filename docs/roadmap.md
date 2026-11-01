@@ -1,54 +1,72 @@
-# Vendure migration roadmap
+# Roadmap
 
-The governing plan for the Tina → Vendure catalog migration. The principles
-below are fixed — do not relitigate or re-plan them. The decisions behind each
-step live in [ADR 0009](adr/0009-side-by-side-vendure-catalog-migration.md)
-(side-by-side migration) and
-[ADR 0010](adr/0010-native-generated-product-model.md) (product model). Update
-the step statuses as work lands; change steps only via ADR.
+The top-level plan for the shop platform. One line per epic here; detailed
+plans live in the ADRs and specs they link to. Update statuses as epics
+progress; change the epic list or the principles only with the owner.
 
-## Principles (fixed)
+**Top-level goal: being ready to expand outside of Hungary.** Every epic is
+chosen with that in mind (tax/invoicing correctness, translations, multi-country
+ordering).
+
+## Principles (fixed — do not relitigate)
 
 1. **Product information is never stored in Tina — at no point in the
    roadmap.** No Tina product collections are added or extended, no Tina
    authoring forms are built for the catalog, and no work item ever resumes
    Tina-side catalog tooling.
-2. **The Astro site is untouched until cutover.** Nothing under `src/` or
-   `tina/` is modified for Vendure's benefit; the site keeps running on Tina
-   exactly as it is. The cutover (step 9) is separate, final work.
+2. **The Astro site is untouched by backend work until epic 3.** Nothing under
+   `src/` or `tina/` is modified for Vendure's benefit; the site keeps running
+   on Tina exactly as it is until the site cutover epic.
 3. **Vendure must support every product field Tina has today** (field kinds
    input/select/radio/color/toggle/embroidery/material, banned material
    combinations, length-based pricing, per-product discounts, product
    groups/related products). Existing Tina product content is read-only test
    data for the temporary preview seed and the completeness yardstick.
 4. **Length-based pricing is a hard requirement.** It is only phased out if it
-   proves to be a really big problem — and ADR 0010 shows it fits natively
+   proves to be a really big problem — ADR 0010 shows it fits natively
    (OrderLine length + per-material per-cm prices), including un-splitting the
    rácsvédő products.
 5. **Native Vendure as much as possible** unless product-management UX
    genuinely suffers (the structured model exists exactly because the stock
    variant editor cannot express this catalog).
-6. **The seed machinery is temporary and preview-only.** Prod cutover is a
-   hand-migration run directly from the repo; the automated path never runs
-   against prod.
+6. **The seed machinery is temporary and preview-only.** Prod migration at
+   cutover is a hand-migration run directly from the repo.
 7. **Embroidery per-word stays a special case** (a priced input field kind,
-   never a variant axis); the set (szett) discount's material+color multiset
-   matching stays in the pricing layer initially.
+   never a variant axis).
 
-## Steps
+## Epics
 
-| #   | Step                                                                                                                                                                                                                                                                     | Status                                              |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
-| 1   | **Materials ported** — Vendure entities with numeric ids + slug business key, dashboard CRUD, data-preserving migration, seed from Tina content (PR #76 / `feat/vendure-materials`)                                                                                      | done                                                |
-| 2   | **Product architecture decided** — native-with-generation per ADR 0010, proven by spikes A/B                                                                                                                                                                             | done                                                |
-| 3   | **Canonical product schema** — absorb the zod catalogue model (product, field kinds, product groups, thread colors) from `refactor/vendure-preparation` into `packages/product-definition`, reconciled with the material schema. Canonical model only — no Tina adapters | in progress (`feat/product-definition-unification`) |
-| 4   | **Products core** — Product plugin: structured definition storage (write-time zod), sync deriving native option groups/variants/prices (batched writes, drift detection), versioned migration, admin API; seed reads Tina product content as test data                   | not started                                         |
-| 5   | **Dashboard production pass** — configurator page block on the stock product page, fixing ADR 0010's four UX gaps, staleness indicator for material renames/deletes, delete/conflict policy                                                                              | not started                                         |
-| 6   | **Facets + Collections** — material/color facet values on variants, auto-managed collections, dashboard surfacing                                                                                                                                                        | not started                                         |
-| 7   | **Promotions** — stock promotion for per-product % discounts; set discount stays in the pricing layer                                                                                                                                                                    | not started                                         |
-| 8   | **Vendure-complete gate** — the catalog is fully manageable in the Vendure dashboard with nothing left that only Tina can do; verified via seeds, API probes and dashboard e2e                                                                                           | not started                                         |
-| 9   | **Cutover (separate work, last)** — the Astro site switches to reading Vendure (order-line custom fields for color/length/embroidery, client-quote handover, prod hand-migration). Once the site is happy on Vendure, the Tina product collections are deleted           | not started                                         |
+| #   | Epic                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Status      |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
+| 1   | **Deploy Vendure, use it exactly how we used web3forms** — self-hosted backend receiving order requests, nothing more                                                                                                                                                                                                                                                                                                                                              | done        |
+| 2   | **Implement the product catalog fully in Vendure with a good, manageable admin UX — this epic.** Includes set discounts. The delivery plan lives in [ADR 0010](adr/0010-native-generated-product-model.md) (product model: native-with-generation; dashboard configurator, facets/collections, promotions, set discounts) with the migration architecture in [ADR 0009](adr/0009-side-by-side-vendure-catalog-migration.md). Materials are already ported (PR #76) | in progress |
+| 3   | **Move the Astro site over to Vendure** — show products from Vendure, place orders the new way (order-line custom fields, quote/order handover)                                                                                                                                                                                                                                                                                                                    | not started |
+| 4   | **Remove the product Tina backend** — delete the product collections and their tooling once the site no longer reads them                                                                                                                                                                                                                                                                                                                                          | not started |
+| 5   | **Order resolution management** — the owner works orders in the Vendure dashboard: manual order-line stage changes (paid, order sent, fulfilled, …). Drives the later steps                                                                                                                                                                                                                                                                                        | not started |
+| 6   | **Native delivery methods** — replace the email/request-era delivery handling with Vendure-native shipping                                                                                                                                                                                                                                                                                                                                                         | not started |
+| 7   | **Barion payment provider on the site** — including proper tax setup and invoicing integration to the Hungarian tax entity (NAV)                                                                                                                                                                                                                                                                                                                                   | not started |
+| 8   | **English translation of the site**                                                                                                                                                                                                                                                                                                                                                                                                                                | not started |
+| 9   | **Expand to Slovakia** — accept orders from Slovakia (delivery, tax, translations as needed)                                                                                                                                                                                                                                                                                                                                                                       | not started |
 
-Every step 3–8 merges as a stacked PR against `feat/vendure-materials` (which
-is the migration base branch and is not merged to main until the structure is
-settled).
+## Epic 2 status detail
+
+Stacked PRs against `feat/vendure-materials` (the migration base branch, not
+merged to main until the backend structure is settled):
+
+- ✅ Materials ported — numeric ids, slug business keys, dashboard CRUD,
+  data-preserving migration, preview seed (PR #76)
+- ✅ Product architecture decided — native-with-generation (ADR 0010,
+  spike-proven)
+- 🔄 Canonical product schema in `packages/product-definition`
+  (`feat/product-definition-unification`)
+- ⬜ Products core (Product plugin: structured definition storage, batched
+  variant sync with drift detection, migration, admin API; seed reads Tina
+  product content as test data)
+- ⬜ Dashboard production pass (configurator page block, ADR 0010's four UX
+  gaps, staleness indicator, delete/conflict policy)
+- ⬜ Facets + Collections (material/color facets, auto-managed collections)
+- ⬜ Promotions (per-product % discounts; set discounts — see
+  [order-pricing](specs/order-pricing.md) and
+  [product-sets](specs/product-sets.md) specs)
+- ⬜ Vendure-complete gate — catalog fully manageable in the Vendure dashboard,
+  nothing left that only Tina can do

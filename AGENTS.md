@@ -4,12 +4,13 @@ Guidance for AI agents and contributors working in this repository.
 
 ## Roadmap read-gate (mandatory)
 
-Before doing ANY work on the Vendure migration — backend plugins, catalog
-modeling, seeds, migrations, dashboard extensions, or anything else that could
-touch how products/materials are stored — read
-[docs/roadmap.md](docs/roadmap.md) first. Its principles are fixed (notably:
-product information is never stored in Tina, and the Astro site is untouched
-until cutover); do not re-plan or relitigate them in briefs, PRs or docs.
+Before doing ANY work on the shop platform — backend plugins, catalog
+modeling, seeds, migrations, dashboard extensions, orders, payments,
+shipping, translations, or anything else covered by the roadmap — read
+[docs/roadmap.md](docs/roadmap.md) first to see which epic the work belongs
+to. Its principles are fixed (notably: product information is never stored
+in Tina, and the Astro site is untouched until the site-cutover epic); do
+not re-plan or relitigate them in briefs, PRs or docs.
 
 ## Core Values
 
