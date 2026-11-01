@@ -22,6 +22,8 @@ interface GeneratedVariantListGraph {
 interface ProductDefinitionListOptionsInput {
   skip?: number | null;
   take?: number | null;
+  sort?: unknown;
+  filter?: unknown;
 }
 
 interface ProductDefinitionListGraph {
@@ -208,6 +210,9 @@ export const productDefinitionSchema = gql`
     # types skip/take as plain numbers, so nullable fields fail its constraint.
     skip: Int! = 0
     take: Int! = 20
+    # The table always sends sort/filter keys; JSON keeps the input tolerant.
+    sort: JSON
+    filter: JSON
   }
 
   type ProductDefinitionList {

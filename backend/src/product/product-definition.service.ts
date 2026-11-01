@@ -24,6 +24,7 @@ import {
   type ProductDefinition as CanonicalProductDefinition,
 } from "@babasarok/product-definition";
 import { Material } from "../material/material.entity";
+import { sortDefinitions } from "./definition-sort";
 import { validateProductDefinition } from "./product-definition";
 import { ProductDefinition } from "./product.entity";
 import { nativeStateHash, type NativeProductState } from "./sync-state";
@@ -78,15 +79,22 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
   async productDefinitions(
     ctx: RequestContext,
-    options: { skip?: number | null; take?: number | null } | null
+    options: {
+      skip?: number | null;
+      take?: number | null;
+      sort?: unknown;
+      // ponytail: the table contract always sends filter, but no filter UI is configured for this table — ignored
+      filter?: unknown;
+    } | null
   ): Promise<{ items: ProductDefinition[]; totalItems: number }> {
     const rows = await this.connection
       .getRepository(ctx, ProductDefinition)
       .find({ order: { productId: "ASC" } });
+    const sorted = sortDefinitions(rows, options?.sort);
     const skip = Math.max(options?.skip ?? 0, 0);
     const take = Math.min(Math.max(options?.take ?? 20, 1), 100);
 
-    return { items: rows.slice(skip, skip + take), totalItems: rows.length };
+    return { items: sorted.slice(skip, skip + take), totalItems: rows.length };
   }
 
   async productDefinition(
