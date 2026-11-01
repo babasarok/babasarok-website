@@ -1,4 +1,8 @@
-import { ProductDefinitionSchema, type ProductDefinition } from "@babasarok/product-definition";
+import {
+  ProductDefinitionSchema,
+  type ProductDefinition,
+  type ProductDefinitionInput,
+} from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
 import { nativeStateHash } from "./sync-state";
 import { plannedNativeState, planVariantCombinations } from "./variant-plan";
@@ -266,7 +270,10 @@ describe("planVariantCombinations", () => {
   });
 
   it("qualifies a value repeated across three groups in every group it repeats in", () => {
-    const materialField = (id: string, label: string) => ({
+    const materialField = (
+      id: string,
+      label: string
+    ): Extract<ProductDefinitionInput["fields"][number], { kind: "material" }> => ({
       kind: "material",
       id,
       label,
@@ -290,7 +297,7 @@ describe("planVariantCombinations", () => {
     });
 
     const plan = planVariantCombinations(definition, labels);
-    const nameOf = (codes: readonly string[]) =>
+    const nameOf = (codes: readonly string[]): string | undefined =>
       plan.variants.find((variant) => variant.optionCodes.join("-") === codes.join("-"))?.name;
 
     expect(nameOf(["teddy", "teddy", "teddy"])).toBe(

@@ -134,9 +134,12 @@ const HUNGARIAN_FOLDS: Record<string, string> = {
 export function slugifyLabel(label: string): string {
   const folded = label
     .toLowerCase()
-    .replace(/[áéíóöőúüű]/g, (char) => HUNGARIAN_FOLDS[char] ?? char);
+    .replaceAll(/[áéíóöőúüű]/g, (char) => HUNGARIAN_FOLDS[char] ?? char);
 
-  return folded.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return folded
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
 }
 
 function uniqueCode(base: string, used: Set<string>): string {

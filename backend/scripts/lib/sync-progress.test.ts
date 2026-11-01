@@ -10,10 +10,10 @@ describe("formatSyncProgress", () => {
   });
 
   it("pads the clock below a minute and grows past an hour", () => {
-    expect(formatSyncProgress(["a"], 5_000, 0, 1)).toBe(
+    expect(formatSyncProgress(["a"], 5000, 0, 1)).toBe(
       "… várakozás: 1 függő (a) — 00:05 eltelt, 0 szinkronizálva, 1 sikertelen"
     );
-    expect(formatSyncProgress(["a"], 75 * 60_000, 3, 2)).toBe(
+    expect(formatSyncProgress(["a"], 4_500_000, 3, 2)).toBe(
       "… várakozás: 1 függő (a) — 75:00 eltelt, 3 szinkronizálva, 2 sikertelen"
     );
   });
