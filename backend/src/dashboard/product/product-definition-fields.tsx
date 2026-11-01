@@ -29,7 +29,7 @@ import {
 } from "./product-definition-editor";
 
 /** Numeric text input: types freely (Hungarian comma decimals accepted), and
- * commits on blur — an empty field means 0, an unparseable value reverts. */
+ * commits on blur — an empty or unparseable value reverts to the previous one. */
 export function NumberInput({
   value,
   onChange,
@@ -280,6 +280,7 @@ export function FieldEditor({
           <Button
             type="button"
             variant="ghost"
+            aria-label="Mező feljebb"
             disabled={index === 0}
             onClick={() => {
               moveField(row.key, -1);
@@ -290,6 +291,7 @@ export function FieldEditor({
           <Button
             type="button"
             variant="ghost"
+            aria-label="Mező lejjebb"
             disabled={index === count - 1}
             onClick={() => {
               moveField(row.key, 1);

@@ -8,7 +8,6 @@ import { describe, expect, test } from "vitest";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import {
   carryOver,
-  duplicates,
   hasEditableData,
   newDefinition,
   newField,
@@ -193,48 +192,3 @@ describe("newDefinition", () => {
   });
 });
 
-describe("duplicates", () => {
-  test("reports repeated option ids and repeated materials per field", () => {
-    const definition = newDefinition("e2e-x", "E2E X", "takaro");
-    const choice = newField("choice", "szin", "Szín");
-
-    if (choice.kind === "choice") {
-      choice.options = [
-        { id: "kek", label: "Kék", price: 0 },
-        { id: "kek", label: "Kék (másolat)", price: 0 },
-      ];
-    }
-
-    const material = newField("material", "anyag", "Anyag");
-
-    if (material.kind === "material") {
-      material.options = [
-        { materialId: "e2e-pamut", price: 0 },
-        { materialId: "e2e-pamut", price: 100 },
-      ];
-    }
-
-    definition.fields = [choice, material];
-
-    expect(duplicates(definition)).toEqual([
-      'Szín (szin): duplikált opciókód: "kek"',
-      'Anyag (anyag): duplikált anyag: "e2e-pamut"',
-    ]);
-  });
-
-  test("the same material in different fields is fine", () => {
-    const definition = newDefinition("e2e-x", "E2E X", "takaro");
-    const first = newField("material", "kulso", "Külső");
-    const second = newField("material", "belso", "Belső");
-
-    for (const field of [first, second]) {
-      if (field.kind === "material") {
-        field.options = [{ materialId: "e2e-pamut", price: 0 }];
-      }
-    }
-
-    definition.fields = [first, second];
-
-    expect(duplicates(definition)).toEqual([]);
-  });
-});

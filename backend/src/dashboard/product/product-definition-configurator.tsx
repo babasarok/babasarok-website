@@ -9,7 +9,7 @@
  * time the dashboard's vite pipeline bundles this file. The typed graphql
  * documents come from the backend's generated schema (src/gql).
  */
-import { useEffect, useRef, useState, type ReactElement } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactElement } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBlocker, useNavigate } from "@tanstack/react-router";
 import {
@@ -39,7 +39,6 @@ import { ErrorNotice, errorCodeOf, rowKey } from "../shared";
 import { FieldEditor, NumberInput } from "./product-definition-fields";
 import {
   carryOver,
-  duplicates,
   hasEditableData,
   newDefinition,
   newField,
@@ -147,7 +146,9 @@ function SyncBadge({ sync }: { sync: SyncInfo | null }): ReactElement {
         {stateLabel}
       </StatusBadge>
       {sync.stale && sync.state !== "pending" && (
-        <Badge variant="warning">Elavult — mentéskor újraszinkronizálódik</Badge>
+        <Badge variant="warning">
+          Elavult — a mentés a natív módosítások felülírása nélkül elutasított
+        </Badge>
       )}
     </span>
   );
@@ -490,29 +491,22 @@ export function ConfiguratorEditor({
       clientErrors.push('Az azonosító nem lehet "new".');
     }
 
-    clientErrors.push(...duplicates(payload));
-
-    let validated: ProductDefinitionInput;
-
-    try {
-      validated = ProductDefinitionSchema.parse(payload);
-    } catch (error: unknown) {
-      const issues =
-        typeof error === "object" && error !== null && "issues" in error
-          ? (error.issues as Array<{ path: Array<string | number | symbol>; message: string }>)
-          : [];
-
-      setErrors([
-        ...clientErrors,
-        ...issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`),
-      ]);
-      return;
-    }
-
     if (clientErrors.length > 0) {
       setErrors(clientErrors);
       return;
     }
+
+    // The canonical schema is the single validation authority; the server
+    // re-runs it (plus its own duplicate and price checks) and its errors
+    // render readably below.
+    const parsed = ProductDefinitionSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      setErrors(parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`));
+      return;
+    }
+
+    const validated = parsed.data;
 
     setPending(true);
 
@@ -635,7 +629,7 @@ export function ConfiguratorEditor({
                   void save(true);
                 }}
               >
-                Natív módosítások felülírása (force)
+                Natív módosítások felülírása
               </Button>
             </div>
           </Alert>
@@ -743,24 +737,55 @@ export function ConfiguratorEditor({
       >
         <div className="flex flex-col gap-4">
           {rows.map((row, index) => (
-            <FieldEditor
-              key={row.key}
-              row={row}
-              index={index}
-              count={rows.length}
-              materialOptions={materialOptions}
-              patchBase={patchBase}
-              patchChoice={patchChoice}
-              patchToggle={patchToggle}
-              patchMaterial={patchMaterial}
-              patchInputField={patchInputField}
-              patchEmbroidery={patchEmbroidery}
-              patchChoiceOptions={patchChoiceOptions}
-              patchMaterialOptions={patchMaterialOptions}
-              changeFieldKind={changeFieldKind}
-              removeField={removeField}
-              moveField={moveField}
-            />
+            <Fragment key={row.key}>
+              <FieldEditor
+                row={row}
+                index={index}
+                count={rows.length}
+                materialOptions={materialOptions}
+                patchBase={patchBase}
+                patchChoice={patchChoice}
+                patchToggle={patchToggle}
+                patchMaterial={patchMaterial}
+                patchInputField={patchInputField}
+                patchEmbroidery={patchEmbroidery}
+                patchChoiceOptions={patchChoiceOptions}
+                patchMaterialOptions={patchMaterialOptions}
+                changeFieldKind={changeFieldKind}
+                removeField={removeField}
+                moveField={moveField}
+              />
+              {kindSwitchKey?.key === row.key && (
+                <Alert variant="destructive">
+                  <AlertTitle>
+                    A(z) "{kindSwitchKey.label}" mezőhöz tartozó adatok (opciók, árak,
+                    beállítások) elvesznek a típusváltáskor.
+                  </AlertTitle>
+                  <div className="mt-2 flex gap-2">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => {
+                        const switching = kindSwitchKey;
+                        setKindSwitchKey(null);
+                        applyKindSwitch(switching.key, switching.kind);
+                      }}
+                    >
+                      Mégis cserélem
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setKindSwitchKey(null);
+                      }}
+                    >
+                      Mégse
+                    </Button>
+                  </div>
+                </Alert>
+              )}
+            </Fragment>
           ))}
           <div className="flex flex-wrap gap-2">
             {FIELD_KINDS.map((kind) => (
@@ -882,39 +907,5 @@ export function ConfiguratorEditor({
     </>
   );
 
-  return (
-    <PageLayout>
-      {editor}
-      {kindSwitchKey !== null && (
-        <Alert variant="destructive">
-          <AlertTitle>
-            A(z) "{kindSwitchKey.label}" mezőhöz tartozó adatok (opciók, árak, beállítások)
-            elvesznek a típusváltáskor.
-          </AlertTitle>
-          <div className="mt-2 flex gap-2">
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => {
-                const switching = kindSwitchKey;
-                setKindSwitchKey(null);
-                applyKindSwitch(switching.key, switching.kind);
-              }}
-            >
-              Mégis cserélem
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setKindSwitchKey(null);
-              }}
-            >
-              Mégse
-            </Button>
-          </div>
-        </Alert>
-      )}
-    </PageLayout>
-  );
+  return <PageLayout>{editor}</PageLayout>;
 }

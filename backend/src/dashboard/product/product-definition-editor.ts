@@ -172,31 +172,3 @@ export function newDefinition(
     forbiddenMaterialCombinations: [],
   };
 }
-
-/** Duplicates the server cannot catch yet: option ids within a choice field
- * and the same material twice in one material field. */
-export function duplicates(definition: ProductDefinitionInput): string[] {
-  const found: string[] = [];
-
-  for (const field of definition.fields) {
-    if (field.kind === "choice") {
-      const ids = field.options.map((option) => option.id.trim());
-
-      for (const id of new Set(ids.filter((candidate, at) => ids.indexOf(candidate) !== at))) {
-        found.push(`${field.label} (${field.id}): duplikált opciókód: "${id}"`);
-      }
-    }
-
-    if (field.kind === "material") {
-      const materials = field.options.map((option) => option.materialId.trim());
-
-      for (const materialId of new Set(
-        materials.filter((candidate, at) => materials.indexOf(candidate) !== at)
-      )) {
-        found.push(`${field.label} (${field.id}): duplikált anyag: "${materialId}"`);
-      }
-    }
-  }
-
-  return found;
-}
