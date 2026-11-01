@@ -23,6 +23,7 @@ import type { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { ProductGroupDefinitionSchema } from "@babasarok/product-definition";
 import { z } from "zod";
 import { parse } from "yaml";
+import { formatSyncProgress } from "./lib/sync-progress.ts";
 import {
   definitionFromTinaProduct,
   groupDefinitionFromTinaProductGroup,
@@ -46,6 +47,8 @@ const GROUPS_DIR = path.resolve(
 // clear message instead of UND_ERR_HEADERS_TIMEOUT.
 const REQUEST_TIMEOUT_MS = 240_000;
 const RUN_BUDGET_MS = (Number(process.env.IMPORT_PRODUCTS_SYNC_BUDGET_MINUTES) || 45) * 60_000;
+// Frequent enough that a slow big-matrix sync never reads as a hang.
+const SYNC_PROGRESS_INTERVAL_MS = 30_000;
 
 interface UpsertResult {
   kind: "created" | "updated";
@@ -379,6 +382,7 @@ async function waitForSyncs(
   const pending = new Map(targets.map((target) => [target.productId, target]));
   let synced = 0;
   const failed: string[] = [];
+  let lastProgressAt = startedAt;
 
   while (pending.size > 0) {
     if (Date.now() - startedAt > RUN_BUDGET_MS) {
@@ -420,6 +424,18 @@ async function waitForSyncs(
         failed.push(target.file);
         console.error(`✗ ${target.file}: szinkronizálás sikertelen — ${row.syncError ?? ""}`);
       }
+    }
+
+    if (pending.size > 0 && Date.now() - lastProgressAt >= SYNC_PROGRESS_INTERVAL_MS) {
+      lastProgressAt = Date.now();
+      console.log(
+        formatSyncProgress(
+          [...pending.values()].map((target) => target.file.replace(/\.md$/, "")),
+          Date.now() - startedAt,
+          synced,
+          failed.length
+        )
+      );
     }
   }
 
