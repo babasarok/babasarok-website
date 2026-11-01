@@ -60,12 +60,12 @@ function isBanned(
  * combinations are omitted, and each variant's total price. Pure — the service
  * only applies this against Vendure's services.
  *
- * Choice, toggle and material fields become option groups; input and
- * embroidery fields never do (ADR 0010: free text and per-word pricing are
- * carried on order lines, not variants). Length-priced products leave every
- * variant at 0 Ft: their price depends on the buyer-entered length and the
- * per-material per-cm prices, which the storefront quote path owns until the
- * server-side pricing integration lands.
+ * Choice, toggle and material fields become option groups; input, embroidery
+ * and color-presentation choice fields never do (ADR 0010: free text, per-word
+ * pricing and color selections are carried on order lines, not variants).
+ * Length-priced products leave every variant at 0 Ft: their price depends on
+ * the buyer-entered length and the per-material per-cm prices, which the
+ * storefront quote path owns until the server-side pricing integration lands.
  */
 export function planVariantCombinations(
   definition: ProductDefinition,
@@ -76,6 +76,11 @@ export function planVariantCombinations(
 
   for (const field of definition.fields) {
     if (field.kind === "choice") {
+      // ADR 0010 decision 5: colors are storefront selections, never variant axes.
+      if (field.presentation === "color") {
+        continue;
+      }
+
       optionGroups.push({
         code: field.id,
         name: field.label,

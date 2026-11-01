@@ -145,6 +145,42 @@ describe("planVariantCombinations", () => {
     ]);
   });
 
+  it("keeps color-presentation choice fields out of the variant matrix", () => {
+    const definition = ProductDefinitionSchema.parse({
+      ...babafeszek,
+      fields: [
+        ...babafeszek.fields,
+        {
+          kind: "choice",
+          id: "szin",
+          label: "Szín",
+          presentation: "color",
+          price: 0,
+          visibility: { kind: "always" },
+          options: [
+            { id: "piros", label: "Piros", price: 0 },
+            { id: "kek", label: "Kék", price: 500 },
+          ],
+        },
+      ],
+    });
+
+    const plan = planVariantCombinations(definition, labels);
+    const planned = plannedNativeState(definition, labels);
+
+    expect(plan.optionGroups.map((group) => group.code)).toEqual([
+      "meret",
+      "betet",
+      "fodor",
+      "anyag1",
+      "anyag2",
+    ]);
+    expect(plan.variants).toHaveLength(3 * 2 * 2 * 3 * 3 - 3 * 2 * 2);
+    expect(planned.optionGroups.map((group) => group.code)).toEqual(
+      plan.optionGroups.map((group) => group.code)
+    );
+  });
+
   it("leaves length-priced variants at 0 Ft — their price is length-dependent", () => {
     const definition = ProductDefinitionSchema.parse({
       ...babafeszek,
