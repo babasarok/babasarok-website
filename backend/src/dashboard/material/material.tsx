@@ -29,7 +29,7 @@ import {
   Textarea,
 } from "@vendure/dashboard";
 import { graphql } from "@/gql";
-import { ErrorNotice, rowKey } from "../shared";
+import { errorCodeOf, ErrorNotice, rowKey } from "../shared";
 
 const materialsQuery = graphql(`
   query Materials {
@@ -324,6 +324,13 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
       await navigate({ to: "/materials" });
     } catch (err: unknown) {
       setErrors(err instanceof Error ? err.message.split("\n") : [String(err)]);
+
+      // A refused delete (the material is referenced by product definitions)
+      // must not leave the confirmation armed for a blind second attempt.
+      if (errorCodeOf(err) === "MATERIAL_IN_USE") {
+        setConfirmDelete(false);
+      }
+
       setPending(false);
     }
   }
@@ -474,6 +481,7 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
                   <input
                     type="color"
                     className="h-9 w-14 cursor-pointer rounded border"
+                    aria-label="Színkód választása"
                     value={
                       row.asset === null && /^#[0-9a-fA-F]{6}$/.test(row.hex) ? row.hex : "#ffffff"
                     }
