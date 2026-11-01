@@ -73,6 +73,18 @@ function compose(args: string[], cwd: string = DIR, stream = false): string {
   return run("docker", ["compose", ...args], { cwd, stream });
 }
 
+function log(message: string): void {
+  console.log(`[deploy ${new Date().toISOString()}] ${message}`);
+}
+
+function dumpStackState(): void {
+  spawnSync("docker", ["compose", "ps", "-a"], { cwd: DIR, stdio: "inherit" });
+  spawnSync("docker", ["compose", "logs", "--no-color", "--tail", "50"], {
+    cwd: DIR,
+    stdio: "inherit",
+  });
+}
+
 try {
   // commit.txt is written only after the health gate passes, so a failed
   // deploy never records itself.
@@ -203,8 +215,15 @@ try {
       run("docker", ["rm", "-f", name.trim()]);
     }
   }
+  log(`compose up for ${stack} at commit ${commitSha}`);
   if (isPreview) {
-    compose(["up", "-d", "--build", "--wait", "--wait-timeout", "300"], DIR, true);
+    try {
+      compose(["up", "-d", "--build", "--wait", "--wait-timeout", "300"], DIR, true);
+    } catch (error) {
+      log("compose up failed; stack state follows");
+      dumpStackState();
+      throw error;
+    }
   } else {
     const oldId = compose(["ps", "-q", "vendure"]).trim();
     if (oldId) {
@@ -222,6 +241,7 @@ try {
       compose(["up", "-d", "--build", "--wait", "--wait-timeout", "300"], DIR, true);
     } catch {
       console.error("new stack failed to become healthy; rolling back to the previous image");
+      dumpStackState();
       if (existsSync(`${DIR}/docker-compose.rollback.yml`)) {
         rmSync(`${DIR}/docker-compose.rollback.yml`);
       }
@@ -335,7 +355,7 @@ try {
   rmSync(`${INFRA}/.crontab.new`);
 
   writeFileSync(commitFile, `${commitTs} ${commitSha}\n`);
-  console.log(`backend ${stack} deployed and healthy (commit ${commitSha})`);
+  log(`backend ${stack} deployed and healthy (commit ${commitSha})`);
 } finally {
   if (existsSync(tarfile)) {
     rmSync(tarfile, { force: true });
