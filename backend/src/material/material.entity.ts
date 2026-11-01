@@ -1,11 +1,16 @@
-import { Asset } from "@vendure/core";
+import { Asset, DeepPartial, VendureEntity } from "@vendure/core";
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from "typeorm";
 
 @Entity()
-export class Material {
-  /** The material code from the canonical model (`MaterialId`). */
-  @PrimaryColumn({ type: "varchar" })
-  id!: string;
+export class Material extends VendureEntity {
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor -- VendureEntity's constructor is protected; redeclaring it public is required for the plugin's `entities` array (Type<any>), and it forwards DeepPartial input to the base
+  constructor(input?: DeepPartial<Material>) {
+    super(input);
+  }
+
+  /** The Tina `material_id` — the business key the canonical model references. */
+  @Column({ type: "varchar", unique: true })
+  slug!: string;
 
   @Column({ type: "varchar" })
   label!: string;
@@ -39,8 +44,8 @@ export class MaterialColor {
   @ManyToOne(() => Asset, { nullable: true, eager: true, onDelete: "SET NULL" })
   asset!: Asset | null;
 
-  @PrimaryColumn({ type: "varchar" })
-  materialId!: string;
+  @PrimaryColumn({ type: "integer" })
+  materialId!: number;
 
   @ManyToOne(() => Material, (material) => material.colors, { onDelete: "CASCADE" })
   @JoinColumn({ name: "materialId" })

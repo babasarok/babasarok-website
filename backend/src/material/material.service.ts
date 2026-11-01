@@ -11,13 +11,13 @@ export class MaterialService {
 
   async materials(ctx: RequestContext): Promise<Material[]> {
     const materials = await this.connection.getRepository(ctx, Material).find({
-      order: { id: "ASC" },
+      order: { slug: "ASC" },
     });
 
     return materials.map((material) => this.sortColors(material));
   }
 
-  async material(ctx: RequestContext, id: string): Promise<Material | null> {
+  async material(ctx: RequestContext, id: number): Promise<Material | null> {
     const material = await this.connection.getRepository(ctx, Material).findOneBy({ id });
 
     if (material === null) {
@@ -31,40 +31,42 @@ export class MaterialService {
     const definition = await this.validated(input, ctx);
     const repo = this.connection.getRepository(ctx, Material);
 
-    if ((await repo.findOneBy({ id: input.id })) !== null) {
-      throw new UserInputError(`Már létezik anyag ezzel az azonosítóval: ${input.id}`);
+    if ((await repo.findOneBy({ slug: definition.id })) !== null) {
+      throw new UserInputError(`Már létezik anyag ezzel az azonosítóval: ${definition.id}`);
     }
 
     return this.connection.withTransaction(ctx, async (txCtx) => {
       const txRepo = this.connection.getRepository(txCtx, Material);
       await txRepo.insert({
-        id: definition.id,
+        slug: definition.id,
         label: definition.label,
         ...this.contentValues(definition),
       });
 
-      const material = await txRepo.findOneByOrFail({ id: definition.id });
+      const material = await txRepo.findOneByOrFail({ slug: definition.id });
       await this.replaceColors(txCtx, material, definition.colors);
 
-      return txRepo.findOneByOrFail({ id: definition.id });
+      return txRepo.findOneByOrFail({ slug: definition.id });
     });
   }
 
   async updateMaterial(
     ctx: RequestContext,
-    id: string,
+    id: number,
     input: MaterialInputData
   ): Promise<Material> {
-    if (input.id !== id) {
+    const repo = this.connection.getRepository(ctx, Material);
+    const existing = await repo.findOneBy({ id });
+
+    if (existing === null) {
+      throw new UserInputError(`Nincs anyag ezzel az azonosítóval: ${id}`);
+    }
+
+    if (input.slug !== existing.slug) {
       throw new UserInputError("Az anyag azonosítója nem módosítható.");
     }
 
     const definition = await this.validated(input, ctx);
-    const repo = this.connection.getRepository(ctx, Material);
-
-    if ((await repo.findOneBy({ id })) === null) {
-      throw new UserInputError(`Nincs anyag ezzel az azonosítóval: ${id}`);
-    }
 
     return this.connection.withTransaction(ctx, async (txCtx) => {
       const txRepo = this.connection.getRepository(txCtx, Material);
@@ -77,7 +79,7 @@ export class MaterialService {
     });
   }
 
-  async deleteMaterial(ctx: RequestContext, id: string): Promise<boolean> {
+  async deleteMaterial(ctx: RequestContext, id: number): Promise<boolean> {
     const repo = this.connection.getRepository(ctx, Material);
 
     if ((await repo.findOneBy({ id })) === null) {

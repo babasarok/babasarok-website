@@ -1,6 +1,6 @@
 import gql from "graphql-tag";
 import { Allow, Ctx, Permission, RequestContext } from "@vendure/core";
-import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
+import { Args, ID, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { Material, MaterialColor } from "./material.entity";
 import { MaterialService } from "./material.service";
 import type { MaterialInputData } from "./material-definition";
@@ -27,9 +27,7 @@ export class MaterialResolver {
   @Allow(Permission.UpdateCatalog)
   async material(
     @Ctx() ctx: RequestContext,
-    // String, not ID: Vendure's IdInterceptor decodes ID args through the
-    // EntityIdStrategy, which would turn non-numeric material ids into -1.
-    @Args("id", { type: () => String }) id: string
+    @Args("id", { type: () => ID }) id: number
   ): Promise<Material | null> {
     return this.materialService.material(ctx, id);
   }
@@ -47,7 +45,7 @@ export class MaterialResolver {
   @Allow(Permission.UpdateCatalog)
   async updateMaterial(
     @Ctx() ctx: RequestContext,
-    @Args("id", { type: () => String }) id: string,
+    @Args("id", { type: () => ID }) id: number,
     @Args("input") input: MaterialInputData
   ): Promise<Material> {
     return this.materialService.updateMaterial(ctx, id, input);
@@ -57,7 +55,7 @@ export class MaterialResolver {
   @Allow(Permission.UpdateCatalog)
   async deleteMaterial(
     @Ctx() ctx: RequestContext,
-    @Args("id", { type: () => String }) id: string
+    @Args("id", { type: () => ID }) id: number
   ): Promise<boolean> {
     return this.materialService.deleteMaterial(ctx, id);
   }
@@ -72,7 +70,8 @@ export const materialSchema = gql`
   }
 
   type Material {
-    id: String!
+    id: ID!
+    slug: String!
     label: String!
     subtitle: String
     description: String
@@ -88,7 +87,7 @@ export const materialSchema = gql`
   }
 
   input MaterialInput {
-    id: String!
+    slug: String!
     label: String!
     subtitle: String
     description: String
@@ -97,13 +96,13 @@ export const materialSchema = gql`
   }
 
   extend type Query {
-    material(id: String!): Material
+    material(id: ID!): Material
     materials: [Material!]!
   }
 
   extend type Mutation {
     createMaterial(input: MaterialInput!): Material!
-    updateMaterial(id: String!, input: MaterialInput!): Material!
-    deleteMaterial(id: String!): Boolean!
+    updateMaterial(id: ID!, input: MaterialInput!): Material!
+    deleteMaterial(id: ID!): Boolean!
   }
 `;

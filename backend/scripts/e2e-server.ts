@@ -20,7 +20,7 @@ interface SeedColor {
 }
 
 interface SeedMaterial {
-  id: string;
+  slug: string;
   label: string;
   colors: SeedColor[];
 }
@@ -29,11 +29,11 @@ interface SeedMaterial {
 // material through the UI.
 const SEED_MATERIALS: SeedMaterial[] = [
   {
-    id: "e2e-pamut",
+    slug: "e2e-pamut",
     label: "Pamut",
     colors: [{ id: "feher", label: "Fehér", hex: "#f5f5f5" }],
   },
-  { id: "e2e-vaszon", label: "Vászon", colors: [] },
+  { slug: "e2e-vaszon", label: "Vászon", colors: [] },
 ];
 
 function resolveDatabase(): { dbUrl: string; dbName: string } | null {
@@ -70,15 +70,16 @@ async function seedMaterials(dbUrl: string): Promise<void> {
 
   try {
     for (const material of SEED_MATERIALS) {
-      await pool.query("INSERT INTO material (id, label) VALUES ($1, $2)", [
-        material.id,
-        material.label,
-      ]);
+      const inserted = await pool.query<{ id: number }>(
+        'INSERT INTO material (slug, label) VALUES ($1, $2) RETURNING id',
+        [material.slug, material.label]
+      );
+      const materialId = inserted.rows[0].id;
 
       for (const [position, color] of material.colors.entries()) {
         await pool.query(
           'INSERT INTO material_color ("colorId", label, hex, "materialId", position) VALUES ($1, $2, $3, $4, $5)',
-          [color.id, color.label, color.hex, material.id, position]
+          [color.id, color.label, color.hex, materialId, position]
         );
       }
     }

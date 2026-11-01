@@ -34,6 +34,7 @@ const materialsQuery = graphql(`
   query Materials {
     materials {
       id
+      slug
       label
       thumbnail {
         preview
@@ -47,9 +48,10 @@ const materialsQuery = graphql(`
 `);
 
 const materialQuery = graphql(`
-  query Material($id: String!) {
+  query Material($id: ID!) {
     material(id: $id) {
       id
+      slug
       label
       subtitle
       description
@@ -81,7 +83,7 @@ const createMaterialMutation = graphql(`
 `);
 
 const updateMaterialMutation = graphql(`
-  mutation UpdateMaterial($id: String!, $input: MaterialInput!) {
+  mutation UpdateMaterial($id: ID!, $input: MaterialInput!) {
     updateMaterial(id: $id, input: $input) {
       id
     }
@@ -89,13 +91,14 @@ const updateMaterialMutation = graphql(`
 `);
 
 const deleteMaterialMutation = graphql(`
-  mutation DeleteMaterial($id: String!) {
+  mutation DeleteMaterial($id: ID!) {
     deleteMaterial(id: $id)
   }
 `);
 
 interface MaterialListRow {
   id: string;
+  slug: string;
   label: string;
   thumbnailPreview: string | null;
   colorCount: number;
@@ -150,6 +153,7 @@ function MaterialsListPage(): ReactElement {
         setMaterials(
           result.materials.map((material) => ({
             id: material.id,
+            slug: material.slug,
             label: material.label,
             thumbnailPreview: material.thumbnail?.preview ?? null,
             colorCount: material.colors.length,
@@ -186,7 +190,7 @@ function MaterialsListPage(): ReactElement {
               <tbody>
                 {materials.map((material) => (
                   <tr key={material.id} className="border-b">
-                    <td className="py-2 pr-4 font-mono text-xs">{material.id}</td>
+                    <td className="py-2 pr-4 font-mono text-xs">{material.slug}</td>
                     <td className="py-2 pr-4">
                       <DetailPageButton href={`/materials/${material.id}`} label={material.label} />
                     </td>
@@ -222,6 +226,7 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState<AssetRef | null>(null);
   const [newId, setNewId] = useState("");
+  const [slug, setSlug] = useState("");
   const [colors, setColors] = useState<ColorRow[]>([]);
   const [loadedId, setLoadedId] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -245,6 +250,7 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
         }
 
         setLabel(result.material.label);
+        setSlug(result.material.slug);
         setSubtitle(result.material.subtitle ?? "");
         setDescription(result.material.description ?? "");
         setThumbnail(result.material.thumbnail);
@@ -280,7 +286,7 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
     setSaved(false);
     setPending(true);
     const input = {
-      id: (creatingNew ? newId : materialId).trim(),
+      slug: creatingNew ? newId.trim() : slug,
       label: label.trim(),
       subtitle: subtitle.trim() || null,
       description: description.trim() || null,
@@ -375,7 +381,7 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
                   }}
                 />
               ) : (
-                <span className="font-mono text-xs">{materialId}</span>
+                <span className="font-mono text-xs">{slug}</span>
               )}
             </label>
             <label className="flex flex-col gap-1 text-sm">

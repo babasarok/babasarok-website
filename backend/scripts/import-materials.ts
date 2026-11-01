@@ -3,7 +3,7 @@
  * src/content/material/*.md, uploads color images as Vendure assets, then
  * creates or updates each material in the vendure-owned catalog. Tina stays
  * the live site's source until cutover; this script is re-runnable (upsert
- * by material id). Asset dedup is per-run only: every run (e.g. each preview
+ * by slug). Asset dedup is per-run only: every run (e.g. each preview
  * deploy) re-uploads every referenced image.
  *
  * TEMPORARY and preview-only: wired into preview deploys only; production
@@ -43,7 +43,7 @@ const TinaMaterialSchema = z.object({
 type TinaMaterial = z.output<typeof TinaMaterialSchema>;
 
 interface MaterialInput {
-  id: string;
+  slug: string;
   label: string;
   subtitle: string | null;
   description: string | null;
@@ -62,7 +62,7 @@ const CreateAssetsDataSchema = z.object({
 });
 
 const MaterialsDataSchema = z.object({
-  materials: z.array(z.object({ id: z.string() })).default([]),
+  materials: z.array(z.object({ id: z.string(), slug: z.string() })).default([]),
 });
 
 interface AdminResult {
@@ -240,7 +240,7 @@ async function main(): Promise<void> {
     }
 
     inputs.push({
-      id: material.material_id,
+      slug: material.material_id,
       label: material.label,
       subtitle: trimOrNull(material.categories),
       description: trimOrNull(material.shortDescription),
@@ -264,7 +264,7 @@ async function main(): Promise<void> {
           : { kind: "image" as const, assetId: color.assetId },
     }));
     const result = MaterialDefinitionSchema.safeParse({
-      id: input.id,
+      id: input.slug,
       label: input.label,
       subtitle: input.subtitle,
       description: input.description,
@@ -274,7 +274,7 @@ async function main(): Promise<void> {
 
     if (!result.success) {
       console.error(
-        `✗ ${input.id}: schema violations, skipping —`,
+        `✗ ${input.slug}: schema violations, skipping —`,
         result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ")
       );
       continue;
@@ -284,33 +284,36 @@ async function main(): Promise<void> {
   }
 
   const existing = MaterialsDataSchema.parse(
-    (await adminRequest(JSON.stringify({ query: "{ materials { id } }" }), "application/json")).data
+    (
+      await adminRequest(JSON.stringify({ query: "{ materials { id slug } }" }), "application/json")
+    ).data
   );
-  const existingIds = new Set(existing.materials.map((material) => material.id));
+  const existingIdBySlug = new Map(existing.materials.map((material) => [material.slug, material.id]));
 
   let created = 0;
   let updated = 0;
 
   for (const input of valid) {
-    const exists = existingIds.has(input.id);
-    const mutation = exists
-      ? `mutation Update($id: String!, $input: MaterialInput!) { updateMaterial(id: $id, input: $input) { id } }`
-      : `mutation Create($input: MaterialInput!) { createMaterial(input: $input) { id } }`;
-    const variables = exists ? { id: input.id, input } : { input };
+    const existingId = existingIdBySlug.get(input.slug);
+    const mutation =
+      existingId === undefined
+        ? `mutation Create($input: MaterialInput!) { createMaterial(input: $input) { id } }`
+        : `mutation Update($id: ID!, $input: MaterialInput!) { updateMaterial(id: $id, input: $input) { id } }`;
+    const variables = existingId === undefined ? { input } : { id: existingId, input };
     const result = await adminRequest(
       JSON.stringify({ query: mutation, variables }),
       "application/json"
     );
 
     if (result.errors.length > 0) {
-      console.error(`✗ ${input.id}:`, result.errors.join("; "));
+      console.error(`✗ ${input.slug}:`, result.errors.join("; "));
       continue;
     }
 
-    if (exists) {
-      updated += 1;
-    } else {
+    if (existingId === undefined) {
       created += 1;
+    } else {
+      updated += 1;
     }
   }
 

@@ -90,9 +90,10 @@ test("the Anyagok section handles the material lifecycle", async ({ page }) => {
     await page.getByRole("button", { name: "Létrehozás" }).click();
     await create;
 
-    // Creation navigates to the detail page; a reload proves the content
-    // fields and thumbnail round-tripped through the API.
-    await page.waitForURL(/\/materials\/e2e-filc/);
+    // Creation navigates to the detail page (whose URL carries the numeric
+    // material id); a reload proves the content fields and thumbnail
+    // round-tripped through the API.
+    await page.waitForURL(/\/materials\/\d+$/);
     await page.reload();
     await expect(page.getByLabel("Alcím")).toHaveValue("Puha, rugalmas");
     await expect(page.getByLabel("Leírás")).toHaveValue("Könnyű, jól varrható anyag.");

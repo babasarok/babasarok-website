@@ -8,7 +8,7 @@ export interface MaterialColorInputData {
 }
 
 export interface MaterialInputData {
-  id: string;
+  slug: string;
   label: string;
   subtitle?: string | null;
   description?: string | null;
@@ -108,7 +108,7 @@ export function validateMaterialInput(
   }
 
   const result = MaterialDefinitionSchema.safeParse({
-    id: input.id,
+    id: input.slug,
     label: input.label,
     subtitle: input.subtitle ?? null,
     description: input.description ?? null,

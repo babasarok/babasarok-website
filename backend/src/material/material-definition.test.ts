@@ -5,7 +5,7 @@ const KNOWN_ASSETS = new Set([1, 2]);
 
 function input(overrides: Partial<MaterialInputData> = {}): MaterialInputData {
   return {
-    id: "velur",
+    slug: "velur",
     label: "Velúr",
     colors: [{ id: "piros", label: "Piros", hex: "#FF0000", assetId: null }],
     ...overrides,
