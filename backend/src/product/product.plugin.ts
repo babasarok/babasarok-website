@@ -11,5 +11,6 @@ import { ProductDefinitionService } from "./product-definition.service";
     resolvers: [ProductDefinitionResolver],
   },
   providers: [ProductDefinitionService],
+  dashboard: "../dashboard/product-definition.tsx",
 })
 export class ProductPlugin {}
