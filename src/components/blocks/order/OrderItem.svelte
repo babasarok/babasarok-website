@@ -62,6 +62,6 @@
     <div class="w-full h-0.5 bg-brown-200"></div>
   {/if}
   <OrderItemFields {product} {threadColors} {onChange} />
-  <div class="w-full h-0.5 bg-brown-200"></div>
-  <OrderItemPrice {product} {onChange} />
+  <div class="w-full h-px bg-brown-200"></div>
+  <OrderItemPrice {product} />
 </div>
