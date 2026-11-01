@@ -47,3 +47,7 @@ the material color images all exist in Tina today.
   favor.
 - ADR 0007's placeholder catalog remains valid only until products are
   ported; the placeholder seam then disappears as 0007 anticipated.
+- Tina product collections are never extended, validated or synced during the
+  migration — existing content is read-only test data for the temporary seed
+  (see ADR 0010 decision 8) and the collections are deleted only after the
+  cutover work completes.

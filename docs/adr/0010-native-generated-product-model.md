@@ -91,6 +91,19 @@ an option → the missing variants appear; no manual variant work anywhere.
    refactor.
 7. Seed/import direction stays one-way Tina → Vendure, temporary and
    preview-only (ADR 0009); prod is hand-migrated at cutover.
+8. **Tina never stores product information — at no point in the roadmap.** No
+   Tina product collections are added or extended, no Tina authoring forms are
+   built for the catalog, and the Astro site (`src/`, `tina/`) is not modified
+   for Vendure's benefit. The existing Tina product content is read-only
+   legacy data with exactly two uses: test data for the temporary preview
+   seed, and the completeness yardstick — **Vendure's product model must
+   support every field Tina products have today** (field kinds, banned
+   combinations, length-based pricing, discounts, product groups/related
+   products). The authoring-form plan on `refactor/vendure-preparation`
+   (`docs/product-definition-authoring-plan.md`, Stages 4–10) is **shelved**:
+   only its canonical zod model is absorbed into `packages/product-definition`;
+   the Tina form/codec/compiler stages are never built. Product management
+   happens entirely in the Vendure dashboard.
 
 ## Known UX gaps from the spike click-through (and remedies)
 
@@ -114,19 +127,19 @@ an option → the missing variants appear; no manual variant work anywhere.
 ## Delivery plan (non-spike work)
 
 Ordered; each step mergeable as a stacked PR against feat/vendure-materials.
+Per decision 8, no step touches `src/` or `tina/` — the site keeps running on
+Tina exactly as it is until step 7.
 
-1. **Model unification** — make `packages/product-definition` the single
-   canonical home: absorb `refactor/vendure-preparation`'s
-   `src/product-definition/` fork (same schemas, older), resume its
-   authoring-form plan stages on top of the package (Tina forms generated
-   from schema + metadata), and add the product schema per this ADR. Tina
-   content gets build-time validation against the canonical schemas (the
-   compiler stage), making the 9 untrimmed materials build errors instead of
-   seed skips.
+1. **Canonical product schema** — absorb the canonical zod catalogue model
+   (product, field kinds, product groups, thread colors) from
+   `refactor/vendure-preparation`'s `src/product-definition/` fork into
+   `packages/product-definition`, reconciled with the package's current
+   material schema. Canonical model only — no Tina adapters, codecs or forms.
 2. **Products core** — production-grade Product plugin: entity + structured
    configurator storage, sync with batched variant writes (the spike's
    O(n²) creation is not shippable), drift detection, versioned migration,
-   Tina product seed (temporary/preview-only per ADR 0009).
+   admin API. Seed reads Tina product content as test data
+   (temporary/preview-only per ADR 0009; the site is untouched).
 3. **Dashboard production pass** — configurator page block fixing the four
    gaps above, staleness indicator for material renames/deletes affecting
    generated products, delete/conflict policy.
@@ -135,8 +148,11 @@ Ordered; each step mergeable as a stacked PR against feat/vendure-materials.
 5. **Promotions** — stock promotion for per-product % discounts; set
    discount stays in the pricing layer (fed by Vendure data) until a native
    PromotionCondition is justified.
-6. **Storefront configurator** — order-line custom fields for color
-   selections, length, word count; the client-side quote path remains the
-   pricing source until the cutover slice flips it.
-7. **Cutover** — site reads Vendure (ADR 0009's switch flip); hand-migration
-   from the repo; the real end-to-end proof.
+6. **Vendure-complete gate** — the catalog is fully manageable in the Vendure
+   dashboard with nothing left that only Tina can do; verified end-to-end via
+   seeds, API probes and dashboard e2e.
+7. **Cutover (separate work, last)** — the Astro site switches to reading
+   Vendure (ADR 0009's switch flip): order-line custom fields for color
+   selections/length/word count, the client-quote handover, prod
+   hand-migration. Once the site is happy on Vendure, the Tina product
+   collections are deleted.
