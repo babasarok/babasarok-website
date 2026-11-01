@@ -17,6 +17,7 @@ import {
   UserInputError,
 } from "@vendure/core";
 import type { JobQueue } from "@vendure/core";
+import type { UpdateProductVariantInput } from "@vendure/common/lib/generated-types";
 import { JobQueueService } from "@vendure/core";
 import { IsNull } from "typeorm";
 import {
@@ -28,12 +29,7 @@ import { sortDefinitions } from "./definition-sort";
 import { validateProductDefinition } from "./product-definition";
 import { ProductDefinition } from "./product.entity";
 import { nativeStateHash, type NativeProductState } from "./sync-state";
-import {
-  plannedNativeState,
-  planVariantCombinations,
-  type PlannedVariant,
-  type VariantPlan,
-} from "./variant-plan";
+import { plannedNativeState, planVariantCombinations, type VariantPlan } from "./variant-plan";
 
 function huTranslation<T extends { languageCode: LanguageCode }>(
   translations: readonly T[] | undefined
@@ -549,10 +545,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   }
 
   /**
-   * Batched variant writes: missing variants are created in chunks, changed
-   * prices updated in chunks, and variants the model no longer knows are
-   * soft-deleted (their sku can be re-created later — Vendure enforces no
-   * sku uniqueness).
+   * Batched variant writes: missing variants are created in chunks, drifted
+   * existing variants (price, name, option assignment) updated in chunks, and
+   * variants the model no longer knows are soft-deleted (their sku can be
+   * re-created later — Vendure enforces no sku uniqueness).
    */
   private async syncVariants(
     ctx: RequestContext,
@@ -575,9 +571,22 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       );
     }
 
+    const optionIdsFor = (variant: { optionCodes: string[] }): number[] =>
+      variant.optionCodes.map((code, groupIndex) => {
+        const optionId = optionIdsByGroupCode
+          .get(plan.optionGroups[groupIndex]?.code ?? "")
+          ?.get(code);
+
+        if (optionId === undefined) {
+          throw new Error(`Nem sikerült a natív opció előállítása: ${code}`);
+        }
+
+        return optionId;
+      });
+
     const existing = await this.connection.getRepository(ctx, ProductVariant).find({
       where: { product: { id: nativeProductId }, deletedAt: IsNull() },
-      relations: { options: true, productVariantPrices: true },
+      relations: { options: true, translations: true, productVariantPrices: true },
     });
     const plannedBySku = new Map(plan.variants.map((variant) => [variant.sku, variant]));
     const existingBySku = new Map(existing.map((variant) => [variant.sku, variant]));
@@ -593,32 +602,52 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
           productId: nativeProductId,
           sku: variant.sku,
           price: variant.price,
-          optionIds: variant.optionCodes.map((code, groupIndex) => {
-            const optionId = optionIdsByGroupCode
-              .get(plan.optionGroups[groupIndex]?.code ?? "")
-              ?.get(code);
-
-            if (optionId === undefined) {
-              throw new Error(`Nem sikerült a natív opció előállítása: ${code}`);
-            }
-
-            return optionId;
-          }),
+          optionIds: optionIdsFor(variant),
           translations: [{ languageCode: LanguageCode.hu, name: variant.name }],
         }))
       );
     }
 
-    const priceUpdates = existing
-      .map((variant) => ({ variant, planned: plannedBySku.get(variant.sku) }))
-      .filter(
-        (pair): pair is { variant: ProductVariant; planned: PlannedVariant } =>
-          pair.planned !== undefined && channelPrice(pair.variant) !== pair.planned.price
-      )
-      .map((pair) => ({ id: pair.variant.id, price: pair.planned.price }));
+    const updates: UpdateProductVariantInput[] = [];
 
-    for (let start = 0; start < priceUpdates.length; start += BATCH_SIZE) {
-      await this.variantService.update(ctx, priceUpdates.slice(start, start + BATCH_SIZE));
+    for (const variant of existing) {
+      const planned = plannedBySku.get(variant.sku);
+
+      if (planned === undefined) {
+        continue;
+      }
+
+      const plannedOptionIds = optionIdsFor(planned);
+      const actualOptionIds = new Set(variant.options.map((option) => Number(option.id)));
+      const optionsChanged =
+        actualOptionIds.size !== plannedOptionIds.length ||
+        plannedOptionIds.some((optionId) => !actualOptionIds.has(optionId));
+      const priceChanged = channelPrice(variant) !== planned.price;
+      const nameChanged = huName(variant.translations) !== planned.name;
+
+      if (!optionsChanged && !priceChanged && !nameChanged) {
+        continue;
+      }
+
+      const update: UpdateProductVariantInput = { id: variant.id };
+
+      if (priceChanged) {
+        update.price = planned.price;
+      }
+
+      if (nameChanged) {
+        update.translations = [{ languageCode: LanguageCode.hu, name: planned.name }];
+      }
+
+      if (optionsChanged) {
+        update.optionIds = plannedOptionIds;
+      }
+
+      updates.push(update);
+    }
+
+    for (let start = 0; start < updates.length; start += BATCH_SIZE) {
+      await this.variantService.update(ctx, updates.slice(start, start + BATCH_SIZE));
     }
 
     const stale = existing.filter((variant) => !plannedBySku.has(variant.sku));
