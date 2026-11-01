@@ -1,6 +1,6 @@
 /**
  * Dashboard extension for the ProductPlugin: a "Termékek" section under the
- * catalog nav (list + create + delete — the creation entry point) and a
+ * catalog nav (paged list + create + delete — the creation entry point) and a
  * configurator block embedded on the stock product-detail page for products
  * generated from a definition (ADR 0010 decision 3). The shared
  * ConfiguratorEditor edits the canonical definition in its input shape and
@@ -8,45 +8,60 @@
  * the native option groups/variants via the queued sync, whose state and
  * staleness the editor surfaces.
  *
+ * Prices are whole Forints end to end (the backend's ForintMoneyStrategy sets
+ * minor-unit precision 0), so no editor-side conversion happens.
+ *
  * Type-checked by src/dashboard/tsconfig.json (`check:dashboard`); at build
  * time the dashboard's vite pipeline bundles this file. The typed graphql
  * documents come from the backend's generated schema (src/gql).
  */
 import { useEffect, useRef, useState, type ReactElement } from "react";
-import { useNavigate, type AnyRoute } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { useBlocker, useNavigate, type AnyRoute } from "@tanstack/react-router";
 import {
   ActionBarItem,
   Alert,
   AlertTitle,
   api,
+  Badge,
   Button,
+  ConfirmationDialog,
   defineDashboardExtension,
   DetailPageButton,
   Input,
   NEW_ENTITY_PATH,
+  NativeSelect,
   PaginatedListDataTable,
   Page,
   PageActionBar,
   PageBlock,
   PageLayout,
   PageTitle,
+  StatusBadge,
 } from "@vendure/dashboard";
+import { defineStateEntries } from "@vendure/dashboard";
 import type { PageContextValue } from "@vendure/dashboard";
 import {
+  canonicalJson,
+  PRODUCT_TYPE_VALUES,
   ProductDefinitionSchema,
   type ProductDefinitionInput,
 } from "@babasarok/product-definition";
 import { graphql } from "@/gql";
+import { Switch } from "@/vdb/components/ui/switch.js";
 
 const productDefinitionsQuery = graphql(`
-  query ProductDefinitions {
-    productDefinitions {
-      productId
-      label
-      type
-      basePrice
-      syncState
-      stale
+  query ProductDefinitions($options: ProductDefinitionListOptions!) {
+    productDefinitions(options: $options) {
+      items {
+        productId
+        label
+        type
+        basePrice
+        syncState
+        stale
+      }
+      totalItems
     }
   }
 `);
@@ -165,6 +180,20 @@ const EMBROIDERY_PRICING_LABELS: Record<
 
 type FieldRow = { key: string; field: FieldInput };
 
+const NO_SORTING: Array<{ id: string; desc: boolean }> = [];
+
+interface SyncInfo {
+  state: string;
+  error: string | null;
+  stale: boolean;
+}
+
+const syncStateDictionary = defineStateEntries({
+  pending: { tone: "progress", defaultLabel: "Szinkronizálás…" },
+  synced: { tone: "success", defaultLabel: "Szinkronizálva" },
+  failed: { tone: "critical", defaultLabel: "Szinkronizálás sikertelen" },
+});
+
 function rowKey(): string {
   return crypto.randomUUID();
 }
@@ -209,6 +238,35 @@ function newField(kind: FieldKind, id: string, label: string): FieldInput {
   }
 }
 
+/** Whether the field holds anything beyond a fresh row's defaults — a kind
+ * switch would discard exactly that, so it is what the confirm asks about. */
+function hasEditableData(field: FieldInput): boolean {
+  const comparable = (candidate: FieldInput): FieldInput => ({ ...candidate, id: "", label: "" });
+
+  return (
+    canonicalJson(comparable(field)) !== canonicalJson(comparable(newField(field.kind, "", "")))
+  );
+}
+
+/** Carries the kind-independent pass-through fields across a kind switch.
+ * Material fields carry no tooltip or visibility, so they keep their own. */
+function carryOver(next: FieldInput, previous: FieldInput): FieldInput {
+  if (next.kind === "material") {
+    return next;
+  }
+
+  const carried = {
+    ...next,
+    visibility: previous.kind === "material" ? next.visibility : previous.visibility,
+  };
+
+  if (previous.tooltip !== undefined) {
+    carried.tooltip = previous.tooltip;
+  }
+
+  return carried;
+}
+
 /** Trims the values the editor can introduce untrimmed, so the canonical
  * schema rejects nothing on formatting alone. */
 function sanitize(definition: ProductDefinitionInput): ProductDefinitionInput {
@@ -245,6 +303,51 @@ function sanitize(definition: ProductDefinitionInput): ProductDefinitionInput {
       rule.map((materialId) => materialId.trim())
     ),
   };
+}
+
+function newDefinition(
+  id: string,
+  label: string,
+  type: ProductDefinitionInput["type"]
+): ProductDefinitionInput {
+  return {
+    id,
+    label,
+    type,
+    orderable: true,
+    basePrice: 0,
+    pricing: { kind: "unit" },
+    fields: [],
+    forbiddenMaterialCombinations: [],
+  };
+}
+
+/** Duplicates the server cannot catch yet: option ids within a choice field
+ * and the same material twice in one material field. */
+function duplicates(definition: ProductDefinitionInput): string[] {
+  const found: string[] = [];
+
+  for (const field of definition.fields) {
+    if (field.kind === "choice") {
+      const ids = field.options.map((option) => option.id.trim());
+
+      for (const id of new Set(ids.filter((candidate, at) => ids.indexOf(candidate) !== at))) {
+        found.push(`${field.label} (${field.id}): duplikált opciókód: "${id}"`);
+      }
+    }
+
+    if (field.kind === "material") {
+      const materials = field.options.map((option) => option.materialId.trim());
+
+      for (const materialId of new Set(
+        materials.filter((candidate, at) => materials.indexOf(candidate) !== at)
+      )) {
+        found.push(`${field.label} (${field.id}): duplikált anyag: "${materialId}"`);
+      }
+    }
+  }
+
+  return found;
 }
 
 // Extensions load for side effects only (the dashboard's virtual module
@@ -284,65 +387,33 @@ function ProductDefinitionDetailPage({ route }: { route: AnyRoute }): ReactEleme
 
   return (
     <Page pageId="product-definition-detail">
-      <ConfiguratorEditor definitionId={definitionId} mode="standalone" />
+      <ConfiguratorEditor key={definitionId} definitionId={definitionId} mode="standalone" />
     </Page>
   );
 }
 
-function SyncBadge({ state, stale }: { state: string; stale: boolean }): ReactElement {
-  const label =
-    state === "pending"
-      ? "Szinkronizálás…"
-      : state === "failed"
-        ? "Szinkronizálás sikertelen"
-        : "Szinkronizálva";
+function SyncBadge({ sync }: { sync: SyncInfo | null }): ReactElement {
+  if (sync === null) {
+    return <></>;
+  }
+
+  const stateLabel = syncStateDictionary.labelFor(sync.state);
 
   return (
-    <span className="flex items-center gap-2 text-xs">
-      <span
-        className={
-          "rounded px-2 py-0.5 " +
-          (state === "pending"
-            ? "bg-blue-100 text-blue-800"
-            : state === "failed"
-              ? "bg-red-100 text-red-800"
-              : "bg-green-100 text-green-800")
-        }
-      >
-        {label}
-      </span>
-      {stale && (
-        <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-800">
-          Elavult — mentéskor újraszinkronizálódik
-        </span>
+    <span className="flex items-center gap-2">
+      <StatusBadge tone={syncStateDictionary.toneFor(sync.state)} dot={sync.state === "pending"}>
+        {stateLabel}
+      </StatusBadge>
+      {sync.stale && sync.state !== "pending" && (
+        <Badge variant="warning">Elavult — mentéskor újraszinkronizálódik</Badge>
       )}
     </span>
   );
 }
 
 function ProductDefinitionsListPage(): ReactElement {
-  const [rows, setRows] = useState<
-    Array<{
-      productId: string;
-      label: string;
-      type: string;
-      basePrice: number;
-      syncState: string;
-      stale: boolean;
-    }>
-  >([]);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api
-      .query(productDefinitionsQuery, {})
-      .then((result) => {
-        setRows(result.productDefinitions);
-      })
-      .catch((err: unknown) => {
-        setError(String(err));
-      });
-  }, []);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   return (
     <Page pageId="product-definition-list">
@@ -359,44 +430,46 @@ function ProductDefinitionsListPage(): ReactElement {
           title="Termékek"
           description="A strukturált konfigurátorból generált termékek. Létrehozás és törlés itt történik; szerkesztés a termék oldalán."
         >
-          {error !== null && <ErrorNotice message={error} />}
-          {rows.length === 0 && <p className="text-sm">Még nincs egy termék sem.</p>}
-          {rows.length > 0 && (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-muted-foreground border-b text-left">
-                  <th className="py-2 pr-4 font-medium">Azonosító</th>
-                  <th className="py-2 pr-4 font-medium">Név</th>
-                  <th className="py-2 pr-4 font-medium">Alapár</th>
-                  <th className="py-2 pr-4 font-medium">Szinkron</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.productId} className="border-b">
-                    <td className="py-2 pr-4 font-mono text-xs">{row.productId}</td>
-                    <td className="py-2 pr-4">
-                      <DetailPageButton
-                        href={`/product-definitions/${row.productId}`}
-                        label={row.label}
-                      />
-                    </td>
-                    <td className="py-2 pr-4">{row.basePrice} Ft</td>
-                    <td className="py-2 pr-4">
-                      <SyncBadge state={row.syncState} stale={row.stale} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          <PaginatedListDataTable
+            listQuery={productDefinitionsQuery}
+            transformVariables={(variables) => ({
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- under the repo's TS 6 (eslint's parser) the PaginatedListDataTable generics fall back to `any`; tsc 5.9 (check:dashboard, the gate for dashboard extensions) type-checks this concretely and passes
+              options: variables.options,
+            })}
+            page={page}
+            itemsPerPage={pageSize}
+            sorting={NO_SORTING}
+            onSortChange={() => {}}
+            onPageChange={(_table, page, perPage) => {
+              setPage(page);
+              setPageSize(perPage);
+            }}
+            customizeColumns={{
+              productId: { header: "Azonosító" },
+              label: { header: "Név" },
+              basePrice: { header: "Alapár (Ft)" },
+              syncState: {
+                header: "Szinkron",
+                cell: ({ row }) => (
+                  <SyncBadge
+                    sync={{
+                      state: row.original.syncState,
+                      error: null,
+                      stale: row.original.stale,
+                    }}
+                  />
+                ),
+              },
+            }}
+          />
         </PageBlock>
       </PageLayout>
     </Page>
   );
 }
 
-/** Numeric text input: types freely, commits the parsed value. */
+/** Numeric text input: types freely (Hungarian comma decimals accepted), and
+ * commits on blur — an empty field means 0, an unparseable value reverts. */
 function NumberInput({
   value,
   onChange,
@@ -406,25 +479,34 @@ function NumberInput({
   onChange: (value: number) => void;
   className?: string;
 }): ReactElement {
+  const parse = (raw: string): number => {
+    const normalized = raw.trim().replace(",", ".");
+
+    if (normalized === "" || Number.isNaN(Number(normalized))) {
+      return value;
+    }
+
+    return Number(normalized);
+  };
   const [text, setText] = useState(String(value));
 
   useEffect(() => {
-    setText((current) => (Number(current) === value ? current : String(value)));
+    setText((current) => (parse(current) === value ? current : String(value)));
   }, [value]);
 
   return (
     <Input
-      type="number"
+      type="text"
+      inputMode="decimal"
       className={className}
       value={text}
       onChange={(e) => {
-        const raw = e.target.value;
-        setText(raw);
-        const parsed = Number(raw);
-
-        if (raw.trim() !== "" && !Number.isNaN(parsed)) {
-          onChange(parsed);
-        }
+        setText(e.target.value);
+      }}
+      onBlur={() => {
+        const parsed = parse(text);
+        setText(String(parsed));
+        onChange(parsed);
       }}
     />
   );
@@ -441,28 +523,34 @@ function ConfiguratorEditor({
   mode: "standalone" | "embedded";
 }): ReactElement {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const creatingNew =
     mode === "standalone" && (definitionId === "" || definitionId === NEW_ENTITY_PATH);
 
-  const [definition, setDefinition] = useState<ProductDefinitionInput | null>(null);
+  const [definition, setDefinition] = useState<ProductDefinitionInput | null>(() =>
+    creatingNew ? newDefinition("", "", PRODUCT_TYPE_VALUES[0]) : null
+  );
   const [rows, setRows] = useState<FieldRow[]>([]);
   const [banned, setBanned] = useState<string[][]>([]);
   const [materialOptions, setMaterialOptions] = useState<Array<{ slug: string; label: string }>>(
     []
   );
-  const [newId, setNewId] = useState("");
-  const [sync, setSync] = useState<{ state: string; error: string | null; stale: boolean } | null>(
-    null
-  );
+  const [sync, setSync] = useState<SyncInfo | null>(null);
   const [pending, setPending] = useState(false);
   const [errors, setErrors] = useState<string[] | null>(null);
   const [saved, setSaved] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [driftConflict, setDriftConflict] = useState(false);
+  const [kindSwitchKey, setKindSwitchKey] = useState<{
+    key: string;
+    kind: FieldKind;
+    label: string;
+  } | null>(null);
   const [variantPage, setVariantPage] = useState(1);
+  const [variantPageSize, setVariantPageSize] = useState(20);
   // Structural SortingState (the dashboard package doesn't re-export the type).
   const [variantSorting, setVariantSorting] = useState<Array<{ id: string; desc: boolean }>>([]);
   const pollRun = useRef(0);
+  const loadedSnapshot = useRef<string | null>(null);
 
   useEffect(() => {
     api
@@ -477,9 +565,6 @@ function ConfiguratorEditor({
 
   useEffect(() => {
     if (creatingNew) {
-      setDefinition(null);
-      setRows([]);
-      setBanned([]);
       return;
     }
 
@@ -492,6 +577,14 @@ function ConfiguratorEditor({
         }
 
         const parsed = ProductDefinitionSchema.parse(result.productDefinition.definition);
+        loadedSnapshot.current = JSON.stringify([
+          parsed.label,
+          parsed.basePrice,
+          parsed.orderable,
+          parsed.type,
+          parsed.fields,
+          parsed.forbiddenMaterialCombinations,
+        ]);
         setDefinition(parsed);
         setRows(parsed.fields.map((field) => ({ key: rowKey(), field })));
         setBanned(parsed.forbiddenMaterialCombinations.map((rule) => [...rule]));
@@ -508,7 +601,71 @@ function ConfiguratorEditor({
       .catch((err: unknown) => {
         setErrors([String(err)]);
       });
+
+    // Any in-flight poll belongs to the previous product.
+    pollRun.current += 1;
   }, [creatingNew, definitionId]);
+
+  // Leaving the editor (or switching products) must not leave a zombie poll
+  // writing one product's state onto another's badge.
+  useEffect(() => {
+    return () => {
+      pollRun.current += 1;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!saved) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setSaved(false);
+    }, 4000);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [saved]);
+
+  function snapshotCurrent(): string {
+    if (definition === null) {
+      return "";
+    }
+
+    return JSON.stringify([
+      definition.label,
+      definition.basePrice,
+      definition.orderable,
+      definition.type,
+      rows.map((row) => row.field),
+      banned,
+    ]);
+  }
+
+  const dirty =
+    definition !== null &&
+    (creatingNew
+      ? snapshotCurrent() !== JSON.stringify(["", "", true, definition.type, [], []])
+      : (loadedSnapshot.current !== null && snapshotCurrent() !== loadedSnapshot.current) || saved);
+
+  // Guards only the standalone route: the embedded block shares the stock
+  // product page's navigation, where blocking is too broad a blast radius.
+  useBlocker({
+    shouldBlockFn: () => {
+      if (mode !== "standalone" || pending || definition === null) {
+        return false;
+      }
+
+      if (creatingNew) {
+        return (
+          definition.id !== "" || definition.label !== "" || rows.length > 0 || banned.length > 0
+        );
+      }
+
+      return dirty;
+    },
+  });
 
   function patchBase(key: string, id: string, label: string): void {
     setRows((current) =>
@@ -601,13 +758,31 @@ function ConfiguratorEditor({
   }
 
   function changeFieldKind(key: string, kind: FieldKind): void {
+    const row = rows.find((candidate) => candidate.key === key);
+
+    if (row === undefined || row.field.kind === kind) {
+      return;
+    }
+
+    if (hasEditableData(row.field)) {
+      setKindSwitchKey({ key, kind, label: row.field.label });
+      return;
+    }
+
+    applyKindSwitch(key, kind);
+  }
+
+  function applyKindSwitch(key: string, kind: FieldKind): void {
     setRows((current) =>
       current.map((row) => {
         if (row.key !== key) {
           return row;
         }
 
-        return { key: rowKey(), field: newField(kind, row.field.id, row.field.label) };
+        return {
+          key: rowKey(),
+          field: carryOver(newField(kind, row.field.id, row.field.label), row.field),
+        };
       })
     );
   }
@@ -632,9 +807,13 @@ function ConfiguratorEditor({
     });
   }
 
-  /** Polls the definition until the queued sync settles. */
+  /** Polls the definition until the queued sync settles. Survives network
+   * hiccups (visible retrying note), never outlives the editor, and refreshes
+   * the generated-variants table when the sync settles. */
   async function pollSync(productId: string): Promise<void> {
     const run = ++pollRun.current;
+    let consecutiveFailures = 0;
+    let sawPending = false;
 
     while (pollRun.current === run) {
       await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -643,20 +822,44 @@ function ConfiguratorEditor({
         return;
       }
 
-      const result = await api.query(productDefinitionQuery, { productId });
+      try {
+        const result = await api.query(productDefinitionQuery, { productId });
 
-      if (result.productDefinition === null) {
-        return;
-      }
+        if (pollRun.current !== run) {
+          return;
+        }
 
-      setSync({
-        state: result.productDefinition.syncState,
-        error: result.productDefinition.syncError,
-        stale: result.productDefinition.stale,
-      });
+        if (result.productDefinition === null) {
+          return;
+        }
 
-      if (result.productDefinition.syncState !== "pending") {
-        return;
+        const next: SyncInfo = {
+          state: result.productDefinition.syncState,
+          error: result.productDefinition.syncError,
+          stale: result.productDefinition.stale,
+        };
+        setSync(next);
+
+        if (next.state !== "pending") {
+          if (sawPending) {
+            void queryClient.invalidateQueries({ queryKey: [productId] });
+          }
+
+          return;
+        }
+
+        sawPending = true;
+        consecutiveFailures = 0;
+      } catch {
+        consecutiveFailures += 1;
+
+        if (consecutiveFailures >= 3) {
+          setSync((current) =>
+            current === null
+              ? current
+              : { ...current, error: "Állapotlekérés nem sikerült — újrapróbálás…" }
+          );
+        }
       }
     }
   }
@@ -670,12 +873,18 @@ function ConfiguratorEditor({
     setSaved(false);
     setDriftConflict(false);
 
-    const payload = sanitize({
-      ...definition,
-      id: creatingNew ? newId.trim() : definition.id,
-      fields: rows.map((row) => row.field),
-      forbiddenMaterialCombinations: banned,
-    });
+    const payload = sanitize(definition);
+    const clientErrors: string[] = [];
+
+    if (creatingNew && (payload.id === "" || payload.label === "")) {
+      clientErrors.push("Az azonosító és a név is kötelező.");
+    }
+
+    if (creatingNew && payload.id === NEW_ENTITY_PATH) {
+      clientErrors.push('Az azonosító nem lehet "new".');
+    }
+
+    clientErrors.push(...duplicates(payload));
 
     let validated: ProductDefinitionInput;
 
@@ -687,7 +896,15 @@ function ConfiguratorEditor({
           ? (error.issues as Array<{ path: Array<string | number | symbol>; message: string }>)
           : [];
 
-      setErrors(issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`));
+      setErrors([
+        ...clientErrors,
+        ...issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`),
+      ]);
+      return;
+    }
+
+    if (clientErrors.length > 0) {
+      setErrors(clientErrors);
       return;
     }
 
@@ -718,7 +935,7 @@ function ConfiguratorEditor({
       const message = err instanceof Error ? err.message : String(err);
       setErrors(message.split("\n"));
 
-      if (message.includes("natív adatai")) {
+      if (errorCodeOf(err) === "PRODUCT_DEFINITION_NATIVE_DRIFT") {
         setDriftConflict(true);
       }
     } finally {
@@ -727,11 +944,6 @@ function ConfiguratorEditor({
   }
 
   async function remove(): Promise<void> {
-    if (!confirmDelete) {
-      setConfirmDelete(true);
-      return;
-    }
-
     setPending(true);
 
     try {
@@ -741,45 +953,6 @@ function ConfiguratorEditor({
       setErrors(err instanceof Error ? err.message.split("\n") : [String(err)]);
       setPending(false);
     }
-  }
-
-  if (creatingNew) {
-    return (
-      <>
-        <PageTitle>Új termék</PageTitle>
-        <PageLayout>
-          <PageBlock
-            column="main"
-            blockId="product-definition-create"
-            title="Új termék"
-            description="A mentés létrehozza a natív terméket, és a szinkronizálás a háttérben előállítja az opciócsoportokat és a variánsokat."
-          >
-            <label className="flex flex-col gap-1 text-sm">
-              <span>Azonosító</span>
-              <Input
-                className="w-64"
-                value={newId}
-                onChange={(e) => {
-                  setNewId(e.target.value);
-                }}
-              />
-            </label>
-            {errors !== null && <ErrorNotice message={errors.join("\n")} />}
-            <div>
-              <Button
-                type="button"
-                disabled={pending || newId.trim() === ""}
-                onClick={() => {
-                  void save(false);
-                }}
-              >
-                Létrehozás
-              </Button>
-            </div>
-          </PageBlock>
-        </PageLayout>
-      </>
-    );
   }
 
   if (definition === null) {
@@ -794,218 +967,265 @@ function ConfiguratorEditor({
     definition.pricing.kind === "length"
       ? `Méteráras árazás (mező: ${definition.pricing.sourceFieldId}) — a variánsok ára 0 Ft.`
       : null;
+  const discount =
+    definition.discount === undefined
+      ? null
+      : `Kedvezmény: ${definition.discount.percent}% — ${definition.discount.validUntil}sig.`;
 
-  return (
+  const editor = (
     <>
-      {mode === "standalone" && <PageTitle>{definition.label}</PageTitle>}
-      <PageLayout>
-        <PageBlock
-          column="main"
-          blockId="product-definition-form"
-          title="Termék"
-          description="A mentés után a natív termékszerkezet a háttérben újragenerálódik. A mezők kiegészítő tulajdonságai (megjelenítési függőségek, tippek, minták) változatlanul megőrződnek."
-        >
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              type="button"
-              disabled={pending}
-              onClick={() => {
-                void save(false);
+      <PageBlock
+        column="main"
+        blockId="product-definition-form"
+        title="Termék"
+        description="A mentés után a natív termékszerkezet a háttérben újragenerálódik. A mezők kiegészítő tulajdonságai (megjelenítési függőségek, tippek, minták) változatlanul megőrződnek."
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            disabled={pending}
+            onClick={() => {
+              void save(false);
+            }}
+          >
+            {creatingNew ? "Létrehozás" : "Mentés"}
+          </Button>
+          {mode === "standalone" && !creatingNew && (
+            <ConfirmationDialog
+              title="Termék törlése"
+              description={`Biztosan törlöd a terméket: ${definition.id}? A natív termék is törlődik.`}
+              destructive
+              onConfirm={() => {
+                void remove();
               }}
             >
-              Mentés
-            </Button>
-            {mode === "standalone" && (
+              <Button type="button" variant="destructive" disabled={pending}>
+                Törlés
+              </Button>
+            </ConfirmationDialog>
+          )}
+          <SyncBadge sync={sync} />
+        </div>
+        {errors !== null && <ErrorNotice message={errors.join("\n")} />}
+        {driftConflict && (
+          <Alert variant="destructive">
+            <AlertTitle>
+              A natív termék opciói, változatai vagy árai a szinkronizáláson kívül módosultak. A
+              mentés a szinkronizálással felülírja ezeket.
+            </AlertTitle>
+            <div className="mt-2">
               <Button
                 type="button"
                 variant="destructive"
                 disabled={pending}
                 onClick={() => {
-                  void remove();
+                  void save(true);
                 }}
               >
-                {confirmDelete ? "Biztos? Kattints újra" : "Törlés"}
+                Natív módosítások felülírása (force)
               </Button>
-            )}
-            {sync !== null && <SyncBadge state={sync.state} stale={sync.stale} />}
-          </div>
-          {errors !== null && <ErrorNotice message={errors.join("\n")} />}
-          {driftConflict && (
-            <Alert variant="destructive">
-              <AlertTitle>
-                A natív termék a szinkronizáláson kívül módosult (kézi ár- vagy névváltoztatás). A
-                mentés a szinkronizálással felülírja ezeket.
-              </AlertTitle>
-              <div className="mt-2">
-                <Button
-                  type="button"
-                  variant="destructive"
-                  disabled={pending}
-                  onClick={() => {
-                    void save(true);
-                  }}
-                >
-                  Natív módosítások felülírása (force)
-                </Button>
-              </div>
-            </Alert>
-          )}
-          {saved && (
-            <Alert>
-              <AlertTitle>Mentés sikeres — a szinkronizálás fut.</AlertTitle>
-            </Alert>
-          )}
-          {sync?.state === "failed" && sync.error !== null && (
-            <ErrorNotice message={`A szinkronizálás sikertelen: ${sync.error}`} />
-          )}
-
-          <div className="flex flex-col gap-4">
-            <label className="flex flex-col gap-1 text-sm">
-              <span>Azonosító</span>
-              <span className="font-mono text-xs">{definition.id}</span>
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span>Típus</span>
-              <span className="text-xs">{definition.type}</span>
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span>Név</span>
-              <Input
-                className="w-80"
-                value={definition.label}
-                onChange={(e) => {
-                  setDefinition({ ...definition, label: e.target.value });
-                }}
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span>Alapár (Ft)</span>
-              <NumberInput
-                className="w-40"
-                value={definition.basePrice}
-                onChange={(basePrice) => {
-                  setDefinition({ ...definition, basePrice });
-                }}
-              />
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={definition.orderable}
-                onChange={(e) => {
-                  setDefinition({ ...definition, orderable: e.target.checked });
-                }}
-              />
-              <span>Rendelhető</span>
-            </label>
-            {lengthPricing !== null && (
-              <p className="text-muted-foreground text-xs">{lengthPricing}</p>
-            )}
-          </div>
-        </PageBlock>
-        <PageBlock
-          column="main"
-          blockId="product-definition-fields"
-          title="Mezők"
-          description="Minden választó, kapcsoló és anyagmező natív opciócsoportot és variánsokat generál; a szabad szöveg és a hímzés a rendelési sorokon él tovább."
-        >
-          <div className="flex flex-col gap-4">
-            {rows.map((row, index) => (
-              <FieldEditor
-                key={row.key}
-                row={row}
-                index={index}
-                count={rows.length}
-                materialOptions={materialOptions}
-                patchBase={patchBase}
-                patchChoice={patchChoice}
-                patchToggle={patchToggle}
-                patchMaterial={patchMaterial}
-                patchInputField={patchInputField}
-                patchEmbroidery={patchEmbroidery}
-                patchChoiceOptions={patchChoiceOptions}
-                patchMaterialOptions={patchMaterialOptions}
-                changeFieldKind={changeFieldKind}
-                removeField={removeField}
-                moveField={moveField}
-              />
-            ))}
-            <div className="flex flex-wrap gap-2">
-              {FIELD_KINDS.map((kind) => (
-                <Button
-                  key={kind}
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    addField(kind);
-                  }}
-                >
-                  + {FIELD_KIND_LABELS[kind]} mező
-                </Button>
-              ))}
             </div>
-          </div>
-        </PageBlock>
-        <PageBlock
-          column="main"
-          blockId="product-definition-banned"
-          title="Tiltott anyagkombinációk"
-          description="Az itt felsorolt anyagpárok (akkor is, ha ugyanaz az anyag kétszer szerepel) nem fordulhatnak elő együtt egy választásban."
-        >
-          <div className="flex flex-col gap-2">
-            {banned.map((rule, index) => (
-              <div key={index} className="flex items-end gap-2">
-                {rule.map((materialId, memberIndex) => (
-                  <label key={memberIndex} className="flex flex-col gap-1 text-sm">
-                    <span>Anyag {memberIndex + 1}</span>
-                    <select
-                      className="h-9 w-52 rounded border bg-transparent px-2 text-sm"
-                      value={materialId}
-                      onChange={(e) => {
-                        setBanned((current) =>
-                          current.map((candidate, candidateIndex) =>
-                            candidateIndex === index
-                              ? candidate.map((member, memberAt) =>
-                                  memberAt === memberIndex ? e.target.value : member
-                                )
-                              : candidate
-                          )
-                        );
-                      }}
-                    >
-                      <option value="">Válassz anyagot…</option>
-                      {materialOptions.map((material) => (
-                        <option key={material.slug} value={material.slug}>
-                          {material.label} ({material.slug})
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                ))}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setBanned((current) => current.filter((_, at) => at !== index));
+          </Alert>
+        )}
+        {saved && (
+          <Alert>
+            <AlertTitle>Mentés sikeres — a szinkronizálás fut.</AlertTitle>
+          </Alert>
+        )}
+        {sync?.state === "failed" && (
+          <ErrorNotice
+            message={
+              (sync.error ?? "") +
+              "\nA szinkronizálás a következő mentéskor újra indul — javítsd az okát, majd mentsd újra."
+            }
+          />
+        )}
+
+        <div className="flex flex-col gap-4">
+          <label className="flex flex-col gap-1 text-sm">
+            <span>Azonosító</span>
+            {creatingNew ? (
+              <>
+                <Input
+                  className="w-64"
+                  value={definition.id}
+                  onChange={(e) => {
+                    setDefinition({ ...definition, id: e.target.value });
                   }}
-                >
-                  Sor törlése
-                </Button>
-              </div>
-            ))}
-            <div>
+                />
+                <span className="text-muted-foreground text-xs">
+                  Végleges: a natív termék slugja is ez lesz. Nem lehet "new".
+                </span>
+              </>
+            ) : (
+              <span className="font-mono text-xs">{definition.id}</span>
+            )}
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span>Típus</span>
+            {creatingNew ? (
+              <NativeSelect
+                className="w-64"
+                value={definition.type}
+                onChange={(e) => {
+                  const type = PRODUCT_TYPE_VALUES.find(
+                    (candidate) => candidate === e.target.value
+                  );
+
+                  if (type !== undefined) {
+                    setDefinition({ ...definition, type });
+                  }
+                }}
+              >
+                {PRODUCT_TYPE_VALUES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </NativeSelect>
+            ) : (
+              <span className="text-xs">{definition.type}</span>
+            )}
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span>Név</span>
+            <Input
+              className="w-80"
+              value={definition.label}
+              onChange={(e) => {
+                setDefinition({ ...definition, label: e.target.value });
+              }}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span>Alapár (Ft)</span>
+            <NumberInput
+              className="w-40"
+              value={definition.basePrice}
+              onChange={(basePrice) => {
+                setDefinition({ ...definition, basePrice });
+              }}
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <span>Rendelhető</span>
+            <Switch
+              checked={definition.orderable}
+              onCheckedChange={(checked) => {
+                setDefinition({ ...definition, orderable: checked });
+              }}
+            />
+          </label>
+          {lengthPricing !== null && (
+            <p className="text-muted-foreground text-xs">{lengthPricing}</p>
+          )}
+          {discount !== null && <p className="text-muted-foreground text-xs">{discount}</p>}
+        </div>
+      </PageBlock>
+      <PageBlock
+        column="main"
+        blockId="product-definition-fields"
+        title="Mezők"
+        description="Minden választó, kapcsoló és anyagmező natív opciócsoportot és variánsokat generál; a szabad szöveg és a hímzés a rendelési sorokon él tovább."
+      >
+        <div className="flex flex-col gap-4">
+          {rows.map((row, index) => (
+            <FieldEditor
+              key={row.key}
+              row={row}
+              index={index}
+              count={rows.length}
+              materialOptions={materialOptions}
+              patchBase={patchBase}
+              patchChoice={patchChoice}
+              patchToggle={patchToggle}
+              patchMaterial={patchMaterial}
+              patchInputField={patchInputField}
+              patchEmbroidery={patchEmbroidery}
+              patchChoiceOptions={patchChoiceOptions}
+              patchMaterialOptions={patchMaterialOptions}
+              changeFieldKind={changeFieldKind}
+              removeField={removeField}
+              moveField={moveField}
+            />
+          ))}
+          <div className="flex flex-wrap gap-2">
+            {FIELD_KINDS.map((kind) => (
               <Button
+                key={kind}
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  setBanned((current) => [...current, ["", ""]]);
+                  addField(kind);
                 }}
               >
-                + Kombináció hozzáadása
+                + {FIELD_KIND_LABELS[kind]} mező
+              </Button>
+            ))}
+          </div>
+        </div>
+      </PageBlock>
+      <PageBlock
+        column="main"
+        blockId="product-definition-banned"
+        title="Tiltott anyagkombinációk"
+        description="Az itt felsorolt anyagpárok (akkor is, ha ugyanaz az anyag kétszer szerepel) nem fordulhatnak elő együtt egy választásban."
+      >
+        <div className="flex flex-col gap-2">
+          {banned.map((rule, index) => (
+            <div key={index} className="flex items-end gap-2">
+              {rule.map((materialId, memberIndex) => (
+                <label key={memberIndex} className="flex flex-col gap-1 text-sm">
+                  <span>Anyag {memberIndex + 1}</span>
+                  <NativeSelect
+                    className="w-52"
+                    value={materialId}
+                    onChange={(e) => {
+                      setBanned((current) =>
+                        current.map((candidate, candidateIndex) =>
+                          candidateIndex === index
+                            ? candidate.map((member, memberAt) =>
+                                memberAt === memberIndex ? e.target.value : member
+                              )
+                            : candidate
+                        )
+                      );
+                    }}
+                  >
+                    <option value="">Válassz anyagot…</option>
+                    {materialOptions.map((material) => (
+                      <option key={material.slug} value={material.slug}>
+                        {material.label} ({material.slug})
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </label>
+              ))}
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setBanned((current) => current.filter((_, at) => at !== index));
+                }}
+              >
+                Sor törlése
               </Button>
             </div>
+          ))}
+          <div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setBanned((current) => [...current, ["", ""]]);
+              }}
+            >
+              + Kombináció hozzáadása
+            </Button>
           </div>
-        </PageBlock>
+        </div>
+      </PageBlock>
+      {!creatingNew && (
         <PageBlock
           column="main"
           blockId="product-definition-generated"
@@ -1016,17 +1236,18 @@ function ConfiguratorEditor({
             <PaginatedListDataTable
               listQuery={generatedVariantsQuery}
               // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment -- under the repo's TS 6 (eslint's parser) the PaginatedListDataTable generics fall back to `any`; tsc 5.9 (check:dashboard, the gate for dashboard extensions) type-checks this concretely and passes
-              transformQueryKey={(queryKey) => [...queryKey, definitionId]}
+              transformQueryKey={(queryKey) => [definitionId, ...queryKey]}
               transformVariables={(variables) => ({
                 productDefinitionId: definitionId,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- under the repo's TS 6 (eslint's parser) the PaginatedListDataTable generics fall back to `any`; tsc 5.9 (check:dashboard, the gate for dashboard extensions) type-checks this concretely and passes
                 options: variables.options,
               })}
               page={variantPage}
-              itemsPerPage={20}
+              itemsPerPage={variantPageSize}
               sorting={variantSorting}
-              onPageChange={(_table, page) => {
+              onPageChange={(_table, page, perPage) => {
                 setVariantPage(page);
+                setVariantPageSize(perPage);
               }}
               onSortChange={(_table, sorting) => {
                 setVariantSorting(sorting);
@@ -1035,14 +1256,71 @@ function ConfiguratorEditor({
                 id: { header: "ID", enableSorting: false },
                 name: { header: "Név", enableSorting: false },
                 sku: { header: "SKU", enableSorting: false },
-                price: { header: "Ár", enableSorting: false },
+                price: { header: "Ár (Ft)", enableSorting: false },
               }}
             />
           </div>
         </PageBlock>
+      )}
+    </>
+  );
+
+  return (
+    <>
+      {mode === "standalone" && (
+        <PageTitle>{creatingNew ? "Új termék" : definition.label}</PageTitle>
+      )}
+      <PageLayout>
+        {editor}
+        {kindSwitchKey !== null && (
+          <Alert variant="destructive">
+            <AlertTitle>
+              A(z) "{kindSwitchKey.label}" mezőhöz tartozó adatok (opciók, árak, beállítások)
+              elvesznek a típusváltáskor.
+            </AlertTitle>
+            <div className="mt-2 flex gap-2">
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => {
+                  const switching = kindSwitchKey;
+                  setKindSwitchKey(null);
+                  applyKindSwitch(switching.key, switching.kind);
+                }}
+              >
+                Mégis cserélem
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setKindSwitchKey(null);
+                }}
+              >
+                Mégse
+              </Button>
+            </div>
+          </Alert>
+        )}
       </PageLayout>
     </>
   );
+}
+
+/** Reads the GraphQL error code without assuming a client error shape. */
+function errorCodeOf(err: unknown): string | undefined {
+  if (!(err instanceof Error) || !("extensions" in err)) {
+    return undefined;
+  }
+
+  const extensions = err.extensions;
+
+  if (typeof extensions !== "object" || extensions === null || !("code" in extensions)) {
+    return undefined;
+  }
+
+  const code = extensions.code;
+  return typeof code === "string" ? code : undefined;
 }
 
 interface FieldEditorProps {
@@ -1097,8 +1375,7 @@ function FieldEditor({
       <div className="flex flex-wrap items-end gap-2">
         <label className="flex flex-col gap-1 text-sm">
           <span>Típus</span>
-          <select
-            className="h-9 rounded border bg-transparent px-2 text-sm"
+          <NativeSelect
             value={field.kind}
             onChange={(e) => {
               const kind = FIELD_KINDS.find((candidate) => candidate === e.target.value);
@@ -1113,7 +1390,7 @@ function FieldEditor({
                 {FIELD_KIND_LABELS[kind]}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
         <label className="flex flex-col gap-1 text-sm">
           <span>Kód</span>
@@ -1138,8 +1415,7 @@ function FieldEditor({
         {field.kind === "choice" && (
           <label className="flex flex-col gap-1 text-sm">
             <span>Megjelenés</span>
-            <select
-              className="h-9 rounded border bg-transparent px-2 text-sm"
+            <NativeSelect
               value={field.presentation}
               onChange={(e) => {
                 const presentation = PRESENTATIONS.find(
@@ -1156,7 +1432,7 @@ function FieldEditor({
                   {PRESENTATION_LABELS[presentation]}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </label>
         )}
         {field.kind === "toggle" && (
@@ -1174,11 +1450,10 @@ function FieldEditor({
         {field.kind === "input" && (
           <>
             <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
+              <Switch
                 checked={field.required}
-                onChange={(e) => {
-                  patchInputField(row.key, { required: e.target.checked });
+                onCheckedChange={(checked) => {
+                  patchInputField(row.key, { required: checked });
                 }}
               />
               <span>Kötelező</span>
@@ -1199,8 +1474,7 @@ function FieldEditor({
           <>
             <label className="flex flex-col gap-1 text-sm">
               <span>Árazás</span>
-              <select
-                className="h-9 rounded border bg-transparent px-2 text-sm"
+              <NativeSelect
                 value={field.pricing.kind}
                 onChange={(e) => {
                   const kind = EMBROIDERY_PRICINGS.find(
@@ -1211,11 +1485,17 @@ function FieldEditor({
                     return;
                   }
 
+                  // Carry the numeric across the pricing-mode switch.
+                  const amount =
+                    field.pricing.kind === "per-word"
+                      ? field.pricing.pricePerWord
+                      : field.pricing.price;
+
                   patchEmbroidery(row.key, {
                     pricing:
                       kind === "per-word"
-                        ? { kind: "per-word", pricePerWord: 0 }
-                        : { kind: "flat", price: 0 },
+                        ? { kind: "per-word", pricePerWord: amount }
+                        : { kind: "flat", price: amount },
                   });
                 }}
               >
@@ -1224,7 +1504,7 @@ function FieldEditor({
                     {EMBROIDERY_PRICING_LABELS[kind]}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </label>
             <label className="flex flex-col gap-1 text-sm">
               <span>{field.pricing.kind === "per-word" ? "Ár / szó (Ft)" : "Ár (Ft)"}</span>
@@ -1378,8 +1658,8 @@ function FieldEditor({
             <div key={entryIndex} className="flex items-end gap-2">
               <label className="flex flex-col gap-1 text-sm">
                 <span>Anyag</span>
-                <select
-                  className="h-9 w-52 rounded border bg-transparent px-2 text-sm"
+                <NativeSelect
+                  className="w-52"
                   value={entry.materialId}
                   onChange={(e) => {
                     patchMaterialOptions(row.key, (options) =>
@@ -1395,7 +1675,7 @@ function FieldEditor({
                       {material.label} ({material.slug})
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </label>
               <label className="flex flex-col gap-1 text-sm">
                 <span>Felár (Ft)</span>
@@ -1446,12 +1726,14 @@ function FieldEditor({
 
 /** The embedded block on the stock product-detail page: looks up whether the
  * current product was generated from a ProductDefinition and, if so, renders
- * the configurator editor in place. */
+ * the configurator editor in place. Definitions create their own native
+ * products — an existing product cannot gain one retroactively. */
 function ProductConfiguratorBlock({ context }: { context: PageContextValue }): ReactElement {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- PageContextValue.entity is typed `any` by the dashboard's own contract (page-provider.tsx); there is no typed alternative for extension blocks
   const nativeProductId = Number(context.entity?.id);
   const [definitionId, setDefinitionId] = useState<string | null>(null);
   const [lookedUp, setLookedUp] = useState(false);
+  const [lookupFailed, setLookupFailed] = useState(false);
 
   useEffect(() => {
     if (!Number.isInteger(nativeProductId) || nativeProductId <= 0) {
@@ -1464,14 +1746,20 @@ function ProductConfiguratorBlock({ context }: { context: PageContextValue }): R
         setDefinitionId(result.productDefinitionByNativeProduct?.productId ?? null);
         setLookedUp(true);
       })
-      .catch((err: unknown) => {
+      .catch(() => {
         setLookedUp(true);
-        console.error(err);
+        setLookupFailed(true);
       });
   }, [nativeProductId]);
 
   if (!Number.isInteger(nativeProductId) || nativeProductId <= 0) {
     return <></>;
+  }
+
+  if (lookupFailed) {
+    return (
+      <ErrorNotice message="A konfigurátor állapota most nem elérhető — töltsd újra a lapot." />
+    );
   }
 
   if (!lookedUp) {
@@ -1481,13 +1769,13 @@ function ProductConfiguratorBlock({ context }: { context: PageContextValue }): R
   if (definitionId === null) {
     return (
       <p className="text-muted-foreground text-sm">
-        Ez a termék nem strukturált konfigurátorból lett generálva — definíció a Termékek szekcióból
-        hozható létre hozzá.
+        Ehhez a termékhez nem tartozik strukturált konfigurátor. Definíció a Termékek szekcióban
+        hozható létre — meglévő termékhez utólag nem csatolható.
       </p>
     );
   }
 
-  return <ConfiguratorEditor definitionId={definitionId} mode="embedded" />;
+  return <ConfiguratorEditor key={definitionId} definitionId={definitionId} mode="embedded" />;
 }
 
 function ErrorNotice({ message }: { message: string }): ReactElement {
