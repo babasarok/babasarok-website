@@ -284,11 +284,12 @@ async function main(): Promise<void> {
   }
 
   const existing = MaterialsDataSchema.parse(
-    (
-      await adminRequest(JSON.stringify({ query: "{ materials { id slug } }" }), "application/json")
-    ).data
+    (await adminRequest(JSON.stringify({ query: "{ materials { id slug } }" }), "application/json"))
+      .data
   );
-  const existingIdBySlug = new Map(existing.materials.map((material) => [material.slug, material.id]));
+  const existingIdBySlug = new Map(
+    existing.materials.map((material) => [material.slug, material.id])
+  );
 
   let created = 0;
   let updated = 0;

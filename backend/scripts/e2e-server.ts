@@ -71,7 +71,7 @@ async function seedMaterials(dbUrl: string): Promise<void> {
   try {
     for (const material of SEED_MATERIALS) {
       const inserted = await pool.query<{ id: number }>(
-        'INSERT INTO material (slug, label) VALUES ($1, $2) RETURNING id',
+        "INSERT INTO material (slug, label) VALUES ($1, $2) RETURNING id",
         [material.slug, material.label]
       );
       const materialId = inserted.rows[0].id;

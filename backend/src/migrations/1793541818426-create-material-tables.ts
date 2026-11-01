@@ -65,9 +65,15 @@ export class CreateMaterialTables1793541818426 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<any> {
-    await queryRunner.query(`ALTER TABLE "material_color" DROP CONSTRAINT "FK_46cfb18f856e47e789bf9a33981"`);
-    await queryRunner.query(`ALTER TABLE "material_color" DROP CONSTRAINT "FK_b6488e2cd11d35741d9e693f6ce"`);
-    await queryRunner.query(`ALTER TABLE "material" DROP CONSTRAINT "FK_d03087a05d494fa76fb9e10892f"`);
+    await queryRunner.query(
+      `ALTER TABLE "material_color" DROP CONSTRAINT "FK_46cfb18f856e47e789bf9a33981"`
+    );
+    await queryRunner.query(
+      `ALTER TABLE "material_color" DROP CONSTRAINT "FK_b6488e2cd11d35741d9e693f6ce"`
+    );
+    await queryRunner.query(
+      `ALTER TABLE "material" DROP CONSTRAINT "FK_d03087a05d494fa76fb9e10892f"`
+    );
     await queryRunner.query(`DROP TABLE "material_color"`);
     await queryRunner.query(`DROP TABLE "material"`);
   }
