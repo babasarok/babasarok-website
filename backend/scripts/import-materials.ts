@@ -101,6 +101,16 @@ function trimOrNull(value: string | null | undefined): string | null {
 
 let authToken: string | null = null;
 
+const MIME_TYPES: Record<string, string> = {
+  ".avif": "image/avif",
+  ".gif": "image/gif",
+  ".jpeg": "image/jpeg",
+  ".jpg": "image/jpeg",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".webp": "image/webp",
+};
+
 async function adminRequest(body: FormData | string, contentType?: string): Promise<AdminResult> {
   const headers: Record<string, string> = { "Apollo-Require-Preflight": "true" };
 
@@ -171,7 +181,13 @@ async function uploadAsset(filePath: string): Promise<string> {
     })
   );
   form.append("map", JSON.stringify({ 0: ["variables.files.0.file"] }));
-  form.append("0", openAsBlob(filePath), fileName);
+  // openAsBlob returns a Promise — FormData.append rejects one, and the
+  // part's Content-Type (the Asset's stored mimeType) comes from the Blob
+  // type, which openAsBlob leaves empty unless told.
+  const blob = await openAsBlob(filePath, {
+    type: MIME_TYPES[path.extname(filePath).toLowerCase()] ?? "",
+  });
+  form.append("0", blob, fileName);
 
   const created = CreateAssetsDataSchema.parse((await adminRequest(form)).data).createAssets?.[0];
 
