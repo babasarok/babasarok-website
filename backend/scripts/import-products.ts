@@ -14,7 +14,8 @@
  * directly from the repo at cutover, never by this script.
  *
  * Run: pnpm -C backend run import-products
- * (requires the backend running locally and SUPERADMIN_* in backend/.env)
+ * (requires the backend running locally and SUPERADMIN_* in backend/.env;
+ * overall budget IMPORT_PRODUCTS_SYNC_BUDGET_MINUTES minutes, default 45)
  */
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
@@ -44,7 +45,8 @@ const GROUPS_DIR = path.resolve(
 // Undici's own headersTimeout is 300s; ours must fire first to fail with a
 // clear message instead of UND_ERR_HEADERS_TIMEOUT.
 const REQUEST_TIMEOUT_MS = 240_000;
-const RUN_BUDGET_MS = 30 * 60_000;
+const RUN_BUDGET_MS =
+  (Number(process.env.IMPORT_PRODUCTS_SYNC_BUDGET_MINUTES) || 45) * 60_000;
 
 interface UpsertResult {
   kind: "created" | "updated";
@@ -306,6 +308,10 @@ async function main(): Promise<void> {
       `syncs: ${syncs.synced} synced, ${syncs.failed.length} failed | ` +
       `groups: ${groups.validated} validated, ${groups.failed} failed`
   );
+
+  if (failed > 0 || syncs.failed.length > 0) {
+    process.exitCode = 1;
+  }
 }
 
 /**
