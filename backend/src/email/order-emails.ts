@@ -19,10 +19,9 @@ function onOrderPlaced(name: string) {
       const channel = await injector
         .get(TransactionalConnection)
         .getRepository(event.ctx, Channel)
-        .findOne({
-          select: { id: true, customFields: true },
-          where: { id: event.ctx.channelId },
-        });
+        // No `select`: TypeORM ignores an embedded selected as `true`
+        // (selects none of its columns), which silently emptied customFields.
+        .findOne({ where: { id: event.ctx.channelId } });
       return {
         orderEmailFrom:
           (channel?.customFields?.orderEmailFrom as string | null) ?? env.orderEmailFrom,
