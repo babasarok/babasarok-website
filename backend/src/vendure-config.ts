@@ -80,10 +80,15 @@ export const config: VendureConfig = {
     port: env.port,
     adminApiPath: "admin-api",
     shopApiPath: "shop-api",
-    // Without an allowlist (local dev), Nest's default CORS applies. No API
-    // needs credentialed CORS: the dashboard authenticates with a bearer token
-    // (ADR 0008), whose response header Vendure exposes automatically.
-    cors: env.allowedOrigins ? { origin: env.allowedOrigins } : true,
+    // Without an allowlist (local dev), the request origin is reflected. The
+    // dashboard client sends credentials: 'include' on every request, so the
+    // browser rejects any cross-origin response unless the origin is exact
+    // (never *) and Allow-Credentials is set — also what lets the login
+    // response's vendure-auth-token header reach the dashboard (Vendure adds
+    // the exposedHeaders entry only for object cors options).
+    cors: env.allowedOrigins
+      ? { origin: env.allowedOrigins, credentials: true }
+      : { origin: true, credentials: true },
     csrfPrevention: true,
     middleware: [
       {

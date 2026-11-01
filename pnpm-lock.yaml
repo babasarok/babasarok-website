@@ -477,6 +477,9 @@ importers:
       '@tanstack/react-router':
         specifier: 1.170.46
         version: 1.170.46(react-dom@18.3.1(react@19.3.1))(react@19.3.1)
+      '@types/pg':
+        specifier: ^8.23.1
+        version: 8.23.1
       gql.tada:
         specifier: ^1.11.4
         version: 1.11.4(graphql@16.14.2)(typescript@5.9.3)
@@ -4423,6 +4426,9 @@ packages:
 
   '@types/object-path@0.11.4':
     resolution: {integrity: sha512-4tgJ1Z3elF/tOMpA8JLVuR9spt9Ynsf7+JjqsQ2IqtiPJtcLoHoXcT6qU4E10cPFqyXX5HDm9QwIzZhBSkLxsw==}
+
+  '@types/pg@8.23.1':
+    resolution: {integrity: sha512-fKVHpikPdg4GKks3JuLEhvwSyvwzF23hnabPy6DD8ljVbC7+6J5dQzdv4arV6jqq57djnMgs1HKBxX4P8aBI3A==}
 
   '@types/prismjs@1.26.6':
     resolution: {integrity: sha512-vqlvI7qlMvcCBbVe0AKAb4f97//Hy0EBTaiW8AalRnG/xAN5zOiWWyrNqNXeq8+KAuvRewjCVY1+IPxk4RdNYw==}
@@ -16336,6 +16342,12 @@ snapshots:
       '@types/node': 25.9.9
 
   '@types/object-path@0.11.4': {}
+
+  '@types/pg@8.23.1':
+    dependencies:
+      '@types/node': 25.9.9
+      pg-protocol: 1.16.1
+      pg-types: 2.2.0
 
   '@types/prismjs@1.26.6': {}
 

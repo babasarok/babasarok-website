@@ -130,3 +130,44 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
       - run: pnpm run test:hydration
+
+  # Real-browser e2e for the Vendure dashboard (the custom "Anyagok" section).
+  # Reuses the build job's dist (the dashboard SPA ships inside the site build,
+  # ADR 0008), boots the site with `wrangler dev` like the hydration guard, and
+  # adds a Vendure API server on :4000 driven by backend/scripts/e2e-server.ts:
+  # it re-creates the babasarok_e2e database (dropped + created on the postgres
+  # service below, same credentials as backend/e2e.env), applies migrations,
+  # seeds two materials, then serves. Every run starts from that fixed state.
+  dashboard-e2e:
+    name: Dashboard E2E
+    needs: build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: babasarok
+          POSTGRES_PASSWORD: babasarok
+          POSTGRES_DB: babasarok_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      # e2e-server spawns backend/dist/{migrate,index}.js; the checkout has no
+      # build output. Backend tsc uses its own TypeScript 5 (the site build's
+      # product-definition step is why this job waits for `build`).
+      - run: pnpm -C backend run build
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - run: pnpm run test:dashboard-e2e

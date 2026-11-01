@@ -182,6 +182,12 @@ max-h-none`); `width: 100%` on a `position: fixed` element stops short of
   port 4321, so a running `astro dev` is tested instead of the dist — a stale-HMR
   dev server yields spurious island failures, so rule out the server before
   debugging the test.
+- **Dashboard e2e:** `pnpm run test:dashboard-e2e` (Playwright; needs a `dist/`
+  build via `pnpm run build:local` and the local postgres container). Boots the
+  Vendure API on :4000 via `pnpm -C backend run e2e:server` against a fresh
+  `babasarok_e2e` database (fixed credentials/seed in backend/e2e.env) and the
+  built site on :4100 — stop the dev backend first, ports must be free; the
+  servers are never reused.
 - **Behavior specs:** normative specs live in [docs/specs/](docs/specs/) (one
   file per capability: `product-catalog`, `order-pricing`, `order-basket`,
   `order-submission`, `product-sets`). Read the relevant spec before touching
