@@ -29,7 +29,7 @@ import {
   Textarea,
 } from "@vendure/dashboard";
 import { graphql } from "@/gql";
-import { ErrorNotice, rowKey } from "./shared";
+import { ErrorNotice, rowKey } from "../shared";
 
 const materialsQuery = graphql(`
   query Materials {

@@ -11,6 +11,6 @@ import { MaterialService } from "./material.service";
     resolvers: [MaterialResolver, MaterialColorResolver],
   },
   providers: [MaterialService],
-  dashboard: "../dashboard/material.tsx",
+  dashboard: "../dashboard/material/material.tsx",
 })
 export class MaterialPlugin {}

@@ -35,7 +35,7 @@ import {
 } from "@babasarok/product-definition";
 import { graphql } from "@/gql";
 import { Switch } from "@/vdb/components/ui/switch.js";
-import { ErrorNotice, errorCodeOf, rowKey } from "./shared";
+import { ErrorNotice, errorCodeOf, rowKey } from "../shared";
 import { FieldEditor, NumberInput } from "./product-definition-fields";
 import {
   carryOver,

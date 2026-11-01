@@ -27,7 +27,7 @@ import {
 import type { PageContextValue } from "@vendure/dashboard";
 import { graphql } from "@/gql";
 import { ConfiguratorEditor } from "./product-definition-configurator";
-import { ErrorNotice } from "./shared";
+import { ErrorNotice } from "../shared";
 
 const productDefinitionByNativeProductQuery = graphql(`
   query ProductDefinitionByNativeProduct($nativeProductId: Int!) {
