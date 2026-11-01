@@ -1,5 +1,9 @@
 import { z } from "zod";
-import type { FieldVisibilitySchema, ProductDefinitionSchema } from "@babasarok/product-definition";
+import type {
+  FieldVisibilitySchema,
+  ProductDefinitionSchema,
+  ProductGroupDefinitionSchema,
+} from "@babasarok/product-definition";
 import { ProductTypeSchema } from "@babasarok/product-definition";
 
 /**
@@ -73,6 +77,14 @@ export const TinaProductSchema = z.object({
 
 export type TinaProduct = z.output<typeof TinaProductSchema>;
 export type TinaProductField = z.output<typeof TinaFieldSchema>;
+
+export const TinaProductGroupSchema = z.object({
+  title: z.string(),
+  discount_amount: z.number().nullish(),
+  products: z.array(z.object({ product: z.string() }).nullable()).nullish(),
+});
+
+export type TinaProductGroup = z.output<typeof TinaProductGroupSchema>;
 
 /** The canonical definition shape before server-side parsing brands its ids. */
 type DefinitionInput = NonNullable<z.input<typeof ProductDefinitionSchema>["fields"]>[number];
@@ -334,5 +346,52 @@ export function definitionFromTinaProduct(source: TinaProduct): TinaProductParse
             .map((member) => slugFromPath(member.material_path).trim()) ?? []
       ),
     },
+  };
+}
+
+export type TinaProductGroupParseResult =
+  | { success: true; group: z.input<typeof ProductGroupDefinitionSchema> }
+  | { success: false; errors: string[] };
+
+/**
+ * Maps one Tina product-group frontmatter document onto the canonical group
+ * definition. The id is the content file's slug; member product paths resolve
+ * through the file→product-id map built from the product frontmatter, since
+ * filenames and product ids diverge in a few legacy files.
+ */
+export function groupDefinitionFromTinaProductGroup(
+  source: TinaProductGroup,
+  id: string,
+  productIdByFile: ReadonlyMap<string, string>
+): TinaProductGroupParseResult {
+  const errors: string[] = [];
+  const productIds = (source.products ?? []).flatMap((member) => {
+    if (member === null) {
+      return [];
+    }
+
+    const productId = productIdByFile.get(slugFromPath(member.product.trim()));
+
+    if (productId === undefined) {
+      errors.push(`Ismeretlen termék hivatkozás: ${member.product}`);
+      return [];
+    }
+
+    return [productId];
+  });
+
+  if (errors.length > 0) {
+    return { success: false, errors };
+  }
+
+  const label = source.title.trim();
+  const discount = source.discount_amount ?? 0;
+
+  return {
+    success: true,
+    group:
+      discount > 0
+        ? { kind: "discounted-set", id, label, discount, productIds }
+        : { kind: "related-items", id, label, productIds },
   };
 }

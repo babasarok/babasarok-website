@@ -19,18 +19,28 @@
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import type { ProductDefinitionSchema } from "@babasarok/product-definition";
+import { ProductGroupDefinitionSchema } from "@babasarok/product-definition";
 import { z } from "zod";
 import { parse } from "yaml";
 import {
   definitionFromTinaProduct,
+  groupDefinitionFromTinaProductGroup,
+  TinaProductGroupSchema,
   TinaProductSchema,
-  type TinaProduct,
 } from "./lib/tina-source.ts";
 /** The definition shape sent to the admin API (server-side zod validates it). */
 type DefinitionPayload = z.input<typeof ProductDefinitionSchema>;
 
 const API_URL = `http://localhost:${process.env.PORT ?? "4000"}/admin-api`;
 const CONTENT_DIR = path.resolve(import.meta.dirname, "..", "..", "src", "content", "product");
+const GROUPS_DIR = path.resolve(
+  import.meta.dirname,
+  "..",
+  "..",
+  "src",
+  "content",
+  "product_groups"
+);
 // Undici's own headersTimeout is 300s; ours must fire first to fail with a
 // clear message instead of UND_ERR_HEADERS_TIMEOUT.
 const REQUEST_TIMEOUT_MS = 240_000;
@@ -143,16 +153,17 @@ async function authenticate(): Promise<void> {
   }
 }
 
-function parseFrontmatter(
-  raw: string
-): { success: true; product: TinaProduct } | { success: false; error: string } {
+function parseFrontmatter<T extends z.ZodType>(
+  raw: string,
+  schema: T
+): { success: true; data: z.output<T> } | { success: false; error: string } {
   const match = /^---\n([\s\S]*?)\n---/.exec(raw);
 
   if (match === null) {
     return { success: false, error: "no frontmatter found" };
   }
 
-  const result = TinaProductSchema.safeParse(parse(match[1]));
+  const result = schema.safeParse(parse(match[1]));
 
   if (!result.success) {
     return {
@@ -163,7 +174,7 @@ function parseFrontmatter(
     };
   }
 
-  return { success: true, product: result.data };
+  return { success: true, data: result.data };
 }
 
 async function upsert(definition: DefinitionPayload): Promise<UpsertResult | string> {
@@ -224,6 +235,7 @@ async function main(): Promise<void> {
   let failed = 0;
   let skipped = 0;
   const syncTargets: SyncTarget[] = [];
+  const productIdByFile = new Map<string, string>();
 
   for (const file of files) {
     if (Date.now() - startedAt > RUN_BUDGET_MS) {
@@ -233,7 +245,7 @@ async function main(): Promise<void> {
     }
 
     const raw = await readFile(path.join(CONTENT_DIR, file), "utf8");
-    const frontmatter = parseFrontmatter(raw);
+    const frontmatter = parseFrontmatter(raw, TinaProductSchema);
 
     if (!frontmatter.success) {
       skipped += 1;
@@ -241,7 +253,8 @@ async function main(): Promise<void> {
       continue;
     }
 
-    const definition = definitionFromTinaProduct(frontmatter.product);
+    productIdByFile.set(file.replace(/\.md$/, ""), frontmatter.data.product_id.trim());
+    const definition = definitionFromTinaProduct(frontmatter.data);
 
     if (!definition.success) {
       skipped += 1;
@@ -285,12 +298,72 @@ async function main(): Promise<void> {
   }
 
   const syncs = await waitForSyncs(syncTargets, startedAt);
+  const groups = await reportGroups(productIdByFile);
 
   console.log(
     `products: ${created} created, ${updated} updated, ` +
       `${failed} failed, ${skipped} skipped by schema | ` +
-      `syncs: ${syncs.synced} synced, ${syncs.failed.length} failed`
+      `syncs: ${syncs.synced} synced, ${syncs.failed.length} failed | ` +
+      `groups: ${groups.validated} validated, ${groups.failed} failed`
   );
+}
+
+/**
+ * ponytail: parse-and-validate only — groups have no Vendure entity yet (their
+ * membership model is sequenced with the promotions step), so the seed reports
+ * what it would import instead of inventing a half-entity.
+ */
+async function reportGroups(
+  productIdByFile: ReadonlyMap<string, string>
+): Promise<{ validated: number; failed: number }> {
+  const files = (await readdir(GROUPS_DIR)).filter((file) => file.endsWith(".md"));
+  let validated = 0;
+  let failed = 0;
+
+  for (const file of files) {
+    const raw = await readFile(path.join(GROUPS_DIR, file), "utf8");
+    const frontmatter = parseFrontmatter(raw, TinaProductGroupSchema);
+
+    if (!frontmatter.success) {
+      failed += 1;
+      console.error(`✗ ${file}: ${frontmatter.error}`);
+      continue;
+    }
+
+    const id = file.replace(/\.md$/, "");
+    const group = groupDefinitionFromTinaProductGroup(frontmatter.data, id, productIdByFile);
+
+    if (!group.success) {
+      failed += 1;
+      console.error(`✗ ${file}: ${group.errors.join("; ")}`);
+      continue;
+    }
+
+    const result = ProductGroupDefinitionSchema.safeParse(group.group);
+
+    if (!result.success) {
+      failed += 1;
+      console.error(
+        `✗ ${file}: ${result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ")}`
+      );
+      continue;
+    }
+
+    validated += 1;
+    const definition = result.data;
+
+    if (definition.kind === "discounted-set") {
+      console.log(
+        `✓ ${file}: szett "${definition.label}" — ${definition.productIds.length} termék, kedvezmény ${definition.discount} Ft`
+      );
+    } else {
+      console.log(
+        `✓ ${file}: kapcsolódó termékek "${definition.label}" — ${definition.productIds.length} termék`
+      );
+    }
+  }
+
+  return { validated, failed };
 }
 
 /** Waits for the queued syncs to settle (the worker processes them serially). */

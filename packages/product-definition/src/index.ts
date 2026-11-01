@@ -72,3 +72,14 @@ export {
   type ProductPricing,
   type ProductType,
 } from "./product.js";
+export {
+  DiscountedProductSetSchema,
+  ProductGroupDefinitionSchema,
+  ProductGroupIdSchema,
+  RelatedItemsSchema,
+  type DiscountedProductSet,
+  type ProductGroupDefinition,
+  type ProductGroupId,
+  type RelatedItems,
+} from "./product-group.js";
+export { ProductCatalogSchema, type ProductCatalog } from "./catalog.js";

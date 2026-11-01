@@ -1,6 +1,16 @@
-import { ProductDefinitionSchema, productRevision } from "@babasarok/product-definition";
+import {
+  ProductDefinitionSchema,
+  ProductGroupDefinitionSchema,
+  productRevision,
+} from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
-import { definitionFromTinaProduct, slugFromPath, type TinaProduct } from "./tina-source";
+import {
+  definitionFromTinaProduct,
+  groupDefinitionFromTinaProductGroup,
+  slugFromPath,
+  type TinaProduct,
+  type TinaProductGroup,
+} from "./tina-source";
 
 const babafeszek: TinaProduct = {
   product_id: "babafeszek",
@@ -204,5 +214,70 @@ describe("definitionFromTinaProduct", () => {
     }
 
     expect(productRevision(repriced.definition)).not.toBe(productRevision(first.definition));
+  });
+});
+
+describe("groupDefinitionFromTinaProductGroup", () => {
+  const ovisSzett: TinaProductGroup = {
+    title: "Ovis szett",
+    discount_amount: 1300,
+    products: [
+      { product: "src/content/product/tornazsak.md" },
+      { product: "src/content/product/vallfas-zsak.md" },
+    ],
+  };
+  const productIdByFile = new Map([
+    ["tornazsak", "tornazsak"],
+    ["vallfas-zsak", "vallfas-zsak"],
+  ]);
+
+  it("maps a discounted set onto the canonical schema", () => {
+    const result = groupDefinitionFromTinaProductGroup(ovisSzett, "ovis-szett", productIdByFile);
+
+    if (!result.success) {
+      throw new Error(result.errors.join("; "));
+    }
+
+    expect(ProductGroupDefinitionSchema.safeParse(result.group).success).toBe(true);
+    expect(result.group).toEqual({
+      kind: "discounted-set",
+      id: "ovis-szett",
+      label: "Ovis szett",
+      discount: 1300,
+      productIds: ["tornazsak", "vallfas-zsak"],
+    });
+  });
+
+  it("maps a zero discount onto related items", () => {
+    const result = groupDefinitionFromTinaProductGroup(
+      { ...ovisSzett, discount_amount: 0 },
+      "ovis-felszereles",
+      productIdByFile
+    );
+
+    if (!result.success) {
+      throw new Error(result.errors.join("; "));
+    }
+
+    expect(result.group).toMatchObject({ kind: "related-items", id: "ovis-felszereles" });
+    expect("discount" in result.group).toBe(false);
+  });
+
+  it("rejects member references no seeded product file satisfies", () => {
+    const result = groupDefinitionFromTinaProductGroup(
+      { ...ovisSzett, products: [{ product: "src/content/product/hianyzik.md" }] },
+      "ovis-szett",
+      productIdByFile
+    );
+
+    expect(result.success).toBe(false);
+
+    if (result.success) {
+      return;
+    }
+
+    expect(result.errors).toEqual([
+      "Ismeretlen termék hivatkozás: src/content/product/hianyzik.md",
+    ]);
   });
 });
