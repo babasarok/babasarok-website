@@ -19,7 +19,15 @@
  * this commit).
  */
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { z } from "zod";
@@ -119,15 +127,27 @@ try {
   // src/assets tree. Prod never runs the seed (hand-migration at cutover);
   // drop this when the Tina catalog domains are removed at cutover.
   const seedAssets = new Set<string>();
+  const ASSET_REF = /\/src\/assets\/[^\s"'`)\]]+(?: \(\d+\)\.[^\s"'`)\]]+)?/g;
   for (const dirName of ["material", "product", "product_groups"]) {
     const contentDir = path.join(REPO_ROOT, "src", "content", dirName);
     for (const file of readdirSync(contentDir)) {
       if (!file.endsWith(".md")) continue;
       const text = readFileSync(path.join(contentDir, file), "utf8");
-      for (const match of text.matchAll(/\/src\/assets\/[^"'\n]+/g)) {
-        seedAssets.add(match[0].replace(/\/+$/, "").slice(1));
+      for (const match of text.matchAll(ASSET_REF)) {
+        // Product markdown embeds images in tables/prose; the reference ends
+        // at whitespace/paren/backtick, then trailing punctuation.
+        seedAssets.add(
+          match[0]
+            .replace(/[.,;:]+$/, "")
+            .replace(/\/+$/, "")
+            .slice(1)
+        );
       }
     }
+  }
+  const missing = [...seedAssets].filter((p) => !existsSync(path.join(REPO_ROOT, p)));
+  if (missing.length > 0) {
+    throw new Error(`Seed asset references point at missing files: ${missing.join(", ")}`);
   }
   const seedList = path.join(tmp, "seed-files.txt");
   writeFileSync(seedList, [...seedAssets].sort().join("\n") + "\n");

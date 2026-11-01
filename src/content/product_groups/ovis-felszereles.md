@@ -13,7 +13,6 @@ products:
 
 <!-- szett -->
 
-/src/assets/IMG_5626.jpeg - lepedo, takaro
 /src/assets/IMG_5637.jpeg - vallfas, ovizsak, takaro
 
 /src/assets/76B92F40-2B82-4FA7-AB83-0F23A81016AE.webp - takaro, huzat, vallfas zsak
