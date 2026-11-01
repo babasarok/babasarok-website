@@ -27,6 +27,7 @@
 </script>
 
 <div class="flex flex-col gap-1.5">
+  <div class="w-full h-px bg-brown-200"></div>
   {#if hasBreakdown}
     <div class="flex flex-col gap-1 text-xs text-brown-600">
       <div class="flex justify-between">
