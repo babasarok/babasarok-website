@@ -6,16 +6,26 @@ unit), and surface the formed set discounts to the buyer at basket level.
 
 > **Transition note (ADR 0009/0010).** Since the promotions step (roadmap
 > epic 2) the group content model and the set-discount application live in
-> Vendure: a `ProductGroup` entity keyed by the canonical group schemas
-> (`DiscountedProductSet`/`RelatedItems`), edited in the dashboard, and a
-> single Vendure Promotion — a custom basket condition computing the
-> allocation below plus an order-level action subtracting the formed
-> instances' clamped amounts. Until the cutover the site keeps rendering the
-> basket's set-discount section and related items from Tina, and order emails
-> record the client-computed summary; the per-line status surfacing (active /
-> pending-partner / pending-material with material sync), the related-items
-> presentation, and the email's per-instance provenance flip to the
-> Vendure-owned data at cutover.
+> Vendure: each group is a private Collection — the discounted sets are
+> children of the "Szettek" parent, the related-items groups of the
+> "Kapcsolódó termékek" parent — with membership in the native
+> `product-id-filter` and the flat set discount on the `setDiscount`
+> Collection custom field (positive whole Ft). A single Vendure Promotion
+> computes the allocation below: its condition takes no arguments, reads the
+> "Szettek" parent's children (label = collection name, discount = custom
+> field, members = filter), and derives each basket line's material picks
+> from the line's variant options (the authoritative material axes) with the
+> colors from the order-line `selections` — a line whose required colors are
+> missing or unprovable forms no instance. Degenerate groups (<2 members, no
+> discount) are ignored with a report, not thrown. The condition also refuses
+> to apply when more than one active promotion uses it, so the allocation is
+> never double-counted; exactly one such promotion must exist. Until the
+> cutover the site keeps rendering the basket's set-discount section and
+> related items from Tina, and order emails record the client-computed
+> summary; the per-line status surfacing (active / pending-partner /
+> pending-material with material sync), the related-items presentation, and
+> the email's per-instance provenance flip to the Vendure-owned data at
+> cutover.
 
 ## Requirements
 

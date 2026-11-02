@@ -101,9 +101,11 @@ an option → the missing variants appear; no manual variant work anywhere.
    `src/lib/pricing` stays untouched until the cutover, after which the
    backend is the single price authority. Per-product % discounts are dropped (owner
    decision: unused in content) — they get no Vendure home and the canonical
-   model carries no discount field. Group membership itself gets its Vendure
-   home at the promotions step — the canonical group schemas already exist in
-   the package and the seed validates group content against them.
+   model carries no discount field. Group membership lives in native
+   Collections: private children of the "Szettek" / "Kapcsolódó termékek"
+   parents, members via the `product-id-filter`, the set discount as a
+   Collection custom field — the canonical group schemas stay the seed's
+   content validation and the shape yardstick.
 7. Seed/import direction stays one-way Tina → Vendure, temporary and
    preview-only (ADR 0009); prod is hand-migrated at cutover.
 8. **Tina never stores product information — at no point in the roadmap.** No
@@ -187,8 +189,10 @@ Tina exactly as it is until step 7.
 5. **Server-side pricing + promotions** — order-line custom fields (length,
    embroidery word count, field selections), a custom
    `OrderItemPriceCalculationStrategy` for length/embroidery, and the set
-   discount as a Vendure Promotion; product groups get their Vendure home
-   here. Per-product % discounts are dropped (owner decision), so no stock
+   discount as a Vendure Promotion; product groups live on private
+   Collections (the "Szettek"/"Kapcsolódó termékek" parents with
+   `product-id-filter` children and a `setDiscount` custom field).
+   Per-product % discounts are dropped (owner decision), so no stock
    promotion is built for them.
 6. **Vendure-complete gate** — the catalog is fully manageable in the Vendure
    dashboard with nothing left that only Tina can do; verified end-to-end via
