@@ -30,6 +30,7 @@ import type { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { ProductGroupDefinitionSchema } from "@babasarok/product-definition";
 import { z } from "zod";
 import { parse } from "yaml";
+import { assignProductFacetValue, ensureFacetWithValues } from "./lib/facet-seed.ts";
 import { formatSyncProgress } from "./lib/sync-progress.ts";
 import {
   definitionFromTinaProduct,
@@ -59,6 +60,8 @@ const REPO_ROOT = path.resolve(import.meta.dirname, "..", "..");
 const PRODUCT_ID_FILTER_CODE = "product-id-filter";
 const PRODUCT_SET_CONDITION_CODE = "babasarok-product-set-basket";
 const PRODUCT_SET_ACTION_CODE = "babasarok-product-set-discount";
+// Also defined in backend/src/plugins/product/facet-plan.ts — keep in sync.
+const PRODUCT_TYPE_FACET_CODE = "babasarok-product-type";
 // Undici's own headersTimeout is 300s; ours must fire first to fail with a
 // clear message instead of UND_ERR_HEADERS_TIMEOUT.
 const REQUEST_TIMEOUT_MS = 240_000;
@@ -361,6 +364,7 @@ async function main(): Promise<void> {
   const syncTargets: SyncTarget[] = [];
   const productIdByFile = new Map<string, string>();
   const displayByProductId = new Map<string, TinaDisplayContent>();
+  const typeByProductId = new Map<string, string>();
 
   for (const file of files) {
     if (Date.now() - startedAt > RUN_BUDGET_MS) {
@@ -390,6 +394,8 @@ async function main(): Promise<void> {
       frontmatter.data.product_id.trim(),
       displayFromTinaProduct(frontmatter.data)
     );
+
+    typeByProductId.set(frontmatter.data.product_id.trim(), frontmatter.data.type.trim());
 
     const definition = definitionFromTinaProduct(frontmatter.data);
 
@@ -436,6 +442,7 @@ async function main(): Promise<void> {
 
   const syncs = await waitForSyncs(syncTargets, startedAt);
   const display = await applyDisplayContent(syncs.synced, displayByProductId);
+  const types = await applyProductTypes(syncs.synced, typeByProductId);
   const seededProductIds = new Set(syncTargets.map((target) => target.productId));
   const nativeProductIdByProductId = new Map(
     syncs.synced.flatMap((synced) =>
@@ -452,13 +459,62 @@ async function main(): Promise<void> {
       `${failed} failed, ${skipped} skipped (${files.length} files; preview subset) | ` +
       `syncs: ${syncs.synced.length} synced, ${syncs.failed.length} failed | ` +
       `display: ${display.applied} applied, ${display.failed} failed | ` +
+      `types: ${types.applied} applied, ${types.failed} failed | ` +
       `groups: ${groups.created} created, ${groups.unchanged} unchanged, ${groups.updated} updated, ` +
       `${groups.failed} failed, ${groups.unseeded} unseeded | promotion: ${promotion}`
   );
 
-  if (failed > 0 || syncs.failed.length > 0 || display.failed > 0) {
+  if (failed > 0 || syncs.failed.length > 0 || display.failed > 0 || types.failed > 0) {
     process.exitCode = 1;
   }
+}
+
+/**
+ * Assigns each synced product its Tina `type` as a value of the product-type
+ * facet (ADR 0011 decision 2); the facet and its values come from
+ * import-facets.
+ */
+async function applyProductTypes(
+  synced: ReadonlyArray<SyncedTarget>,
+  typeByProductId: ReadonlyMap<string, string>
+): Promise<{ applied: number; failed: number }> {
+  const facet = await ensureFacetWithValues(
+    adminRequest,
+    { code: PRODUCT_TYPE_FACET_CODE, name: "Terméktípus", isPrivate: false },
+    []
+  );
+  let applied = 0;
+  let failed = 0;
+
+  for (const { target, nativeProductId } of synced) {
+    const type = typeByProductId.get(target.productId);
+    const value = type === undefined ? undefined : facet.valuesByCode.get(type);
+
+    if (nativeProductId === null || value === undefined) {
+      failed += 1;
+      console.error(
+        `✗ ${target.file}: a(z) "${type ?? ""}" terméktípus nem rendelhető hozzá (futott az import-facets?)`
+      );
+      continue;
+    }
+
+    try {
+      await assignProductFacetValue(
+        adminRequest,
+        nativeProductId,
+        PRODUCT_TYPE_FACET_CODE,
+        value.id
+      );
+      applied += 1;
+    } catch (error: unknown) {
+      failed += 1;
+      console.error(
+        `✗ ${target.file}: ${(error instanceof Error ? error.message : String(error)).slice(0, 300)}`
+      );
+    }
+  }
+
+  return { applied, failed };
 }
 
 /**

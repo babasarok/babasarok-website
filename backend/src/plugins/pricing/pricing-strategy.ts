@@ -7,6 +7,7 @@ import type {
   RequestContext,
 } from "@vendure/core";
 import { TransactionalConnection } from "@vendure/core";
+import { nativeProductNames } from "../product/native-names";
 import { ProductDefinition } from "../product/product.entity";
 import { computeLineUnitPrice, LinePricingError } from "./line-price";
 import { parseLineSelections } from "./line-selection";
@@ -51,11 +52,16 @@ export class ServerPricingStrategy implements OrderItemPriceCalculationStrategy 
     const optionCodes = new Map(
       productVariant.options.map((option) => [option.group.code, option.code])
     );
+    const productId = Number(productVariant.productId);
+    const productName =
+      (await nativeProductNames(this.connection, ctx, [productId])).get(productId) ||
+      definitionRow.productId;
     const rawLengthCm = orderLineCustomFields.lengthCm;
 
     try {
       const price = computeLineUnitPrice({
         definition: definitionRow.definition,
+        productName,
         variantListPrice: productVariant.listPrice,
         optionCodes,
         selections: parseLineSelections(orderLineCustomFields.selections),
@@ -65,7 +71,7 @@ export class ServerPricingStrategy implements OrderItemPriceCalculationStrategy 
       return { price, priceIncludesTax: productVariant.listPriceIncludesTax };
     } catch (error) {
       if (error instanceof LinePricingError) {
-        throw new Error(`Árazási hiba (${definitionRow.definition.id}): ${error.message}`);
+        throw new Error(`Árazási hiba (${productName}): ${error.message}`);
       }
 
       throw error;

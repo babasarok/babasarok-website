@@ -255,6 +255,7 @@ try {
     // the deploy. Drop this block at cutover.
     try {
       compose(["exec", "-T", "vendure", "node", "scripts/import-materials.ts"], DIR, true);
+      compose(["exec", "-T", "vendure", "node", "scripts/import-facets.ts"], DIR, true);
       compose(["exec", "-T", "vendure", "node", "scripts/import-products.ts"], DIR, true);
     } catch (error) {
       log("catalog import failed; preview stack stays up");

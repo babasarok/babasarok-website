@@ -4,6 +4,10 @@ import type { VariantPlan } from "./variant-plan";
 export const MATERIAL_FACET_CODE = "babasarok-material";
 export const COLOR_FACET_CODE = "babasarok-color";
 
+/** The owner-maintained facets (ADR 0011 decisions 2 and 3): never written by a sync. */
+export const PRODUCT_TYPE_FACET_CODE = "babasarok-product-type";
+export const THREAD_COLOR_FACET_CODE = "babasarok-thread-color";
+
 /** The auto-managed per-material collections are found by this slug prefix (Collection has no code). */
 export const MATERIAL_COLLECTION_SLUG_PREFIX = "material-";
 

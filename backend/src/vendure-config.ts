@@ -25,6 +25,7 @@ import {
   productSetDiscountAction,
 } from "./plugins/product-set/promotion";
 import { ProductPlugin } from "./plugins/product/product.plugin";
+import { hexColorError } from "./plugins/product/thread-color";
 import { QuoteOrderPlugin } from "./plugins/quote-order/quote-order.plugin";
 import { ChannelSetupPlugin } from "./plugins/setup/channel-setup.plugin";
 
@@ -305,6 +306,36 @@ export const config: VendureConfig = {
             return "A szett-kedvezmény pozitív egész forint lehet.";
           }
         },
+      },
+    ],
+    FacetValue: [
+      {
+        name: "hex",
+        type: "string",
+        label: [{ languageCode: LanguageCode.hu, value: "Színkód (hex)" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value:
+              "#rrggbb formátumban (pl. #9caf88). A cérnaszínek facetnél a minta képe elsőbbséget élvez.",
+          },
+        ],
+        nullable: true,
+        validate: hexColorError,
+      },
+      {
+        name: "swatch",
+        type: "relation",
+        entity: Asset,
+        onDelete: "SET NULL",
+        label: [{ languageCode: LanguageCode.hu, value: "Minta (kép)" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value: "A cérnaszín képe; ha nincs, a színkód látszik.",
+          },
+        ],
+        nullable: true,
       },
     ],
     Asset: [

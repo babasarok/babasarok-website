@@ -139,7 +139,7 @@ describe("carryOver", () => {
 
 describe("sanitize", () => {
   test("trims ids, labels, material references and forbidden pairs", () => {
-    const definition = newDefinition("  e2e-x  ", "takaro");
+    const definition = newDefinition("  e2e-x  ");
     definition.fields = [
       newField("choice", " szin ", " Szín "),
       newField("material", " anyag ", " Anyag "),
@@ -174,7 +174,7 @@ describe("sanitize", () => {
   });
 
   test("a sanitized fresh definition passes the canonical schema", () => {
-    const definition = sanitize(newDefinition("e2e-x", "takaro"));
+    const definition = sanitize(newDefinition("e2e-x"));
 
     expect(ProductDefinitionSchema.safeParse(definition).success).toBe(true);
   });
@@ -182,9 +182,8 @@ describe("sanitize", () => {
 
 describe("newDefinition", () => {
   test("starts orderable, unit-priced and empty", () => {
-    expect(newDefinition("e2e-x", "parna")).toEqual({
+    expect(newDefinition("e2e-x")).toEqual({
       id: "e2e-x",
-      type: "parna",
       orderable: true,
       basePrice: 0,
       pricing: { kind: "unit" },
@@ -221,7 +220,7 @@ describe("assignGeneratedIds", () => {
 
   test("derives field and option codes from the labels", () => {
     const definition = assignGeneratedIds({
-      ...newDefinition("p", "parna"),
+      ...newDefinition("p"),
       fields: [
         choiceField("", "Szín", [
           { id: "", label: "Kék", price: 0 },
@@ -242,7 +241,7 @@ describe("assignGeneratedIds", () => {
 
   test("deduplicates generated codes and keeps explicit ones untouched", () => {
     const definition = assignGeneratedIds({
-      ...newDefinition("p", "parna"),
+      ...newDefinition("p"),
       fields: [
         newField("toggle", "meret", "Első"),
         newField("toggle", "", "Méret"),
@@ -272,7 +271,7 @@ describe("assignGeneratedIds", () => {
   test("the output still satisfies the canonical schema", () => {
     const definition = assignGeneratedIds(
       sanitize({
-        ...newDefinition("p", "parna"),
+        ...newDefinition("p"),
         fields: [choiceField("", "Szín", [{ id: "", label: "Kék", price: 0 }])],
       })
     );

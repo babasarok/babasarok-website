@@ -9,7 +9,6 @@ const field = (
 ): Field[] =>
   ProductDefinitionSchema.parse({
     id: "termek",
-    type: "parna",
     orderable: true,
     basePrice: 9000,
     pricing: { kind: "unit" },
@@ -75,7 +74,6 @@ describe("materialPicks", () => {
   it("matches trivially without material fields", () => {
     const plain = ProductDefinitionSchema.parse({
       id: "termek",
-      type: "parna",
       orderable: true,
       basePrice: 9000,
       pricing: { kind: "unit" },

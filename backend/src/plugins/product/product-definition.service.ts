@@ -49,19 +49,8 @@ import {
   type NativeProductState,
   type NativeStateDiff,
 } from "./sync-state";
+import { huName, nativeProductNames } from "./native-names";
 import { plannedNativeState, planVariantCombinations, type VariantPlan } from "./variant-plan";
-
-function huTranslation<T extends { languageCode: LanguageCode }>(
-  translations: readonly T[] | undefined
-): T | undefined {
-  return translations?.find((translation) => translation.languageCode === LanguageCode.hu);
-}
-
-function huName(
-  translations: Array<{ languageCode: LanguageCode; name: string }> | undefined
-): string | undefined {
-  return huTranslation(translations)?.name;
-}
 
 /** The variant writes per ProductVariantService call — the spike's per-variant loop is not shippable. */
 const BATCH_SIZE = 100;
@@ -968,18 +957,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   ): Promise<Map<number, string>> {
     const ids = rows.flatMap((row) => (row.nativeProductId === null ? [] : [row.nativeProductId]));
 
-    if (ids.length === 0) {
-      return new Map();
-    }
-
-    const products = await this.connection.getRepository(ctx, Product).find({
-      where: { id: In(ids), deletedAt: IsNull() },
-      relations: { translations: true },
-    });
-
-    return new Map(
-      products.map((product) => [Number(product.id), huName(product.translations) ?? ""])
-    );
+    return nativeProductNames(this.connection, ctx, ids);
   }
 
   /** Fills the definitions' transient `label` from their native products' hu

@@ -4,6 +4,8 @@ import type { LineSelections } from "./line-selection";
 
 export interface LinePricingInput {
   definition: ProductDefinition;
+  /** The native product's name, which buyer-facing messages call it by. */
+  productName: string;
   /**
    * The variant's channel list price: base price plus every visible variant-axis
    * option (choices, toggles, material picks) as synced from the definition.
@@ -22,12 +24,14 @@ export class LinePricingError extends Error {}
 /**
  * The rejection for ordering a non-orderable (browse-only) product: the
  * interceptor returns it at the mutation boundary, the pricing walk throws it
- * as the backstop (ADR 0011 decision 5). The definition is named by its id:
- * the display name lives on the native Product (ADR 0011 decision 1), which
- * this pure check does not read.
+ * as the backstop (ADR 0011 decision 5).
  */
-export function nonOrderableRejection(definition: ProductDefinition): string {
-  return `A(z) "${definition.id}" termék jelenleg nem rendelhető.`;
+export function nonOrderableRejection(productName: string): string {
+  return `A(z) "${productName}" termék jelenleg nem rendelhető.`;
+}
+
+export function lengthMissingRejection(productName: string): string {
+  return `A(z) "${productName}" méteráru — a hossz (cm) megadása kötelező.`;
 }
 
 function countWords(text: string): number {
@@ -109,10 +113,10 @@ function variantAxisPrice(field: ProductField, optionCode: string | undefined): 
  * custom value on a field the variant matrix carries.
  */
 export function computeLineUnitPrice(input: LinePricingInput): number {
-  const { definition, variantListPrice, optionCodes, selections } = input;
+  const { definition, productName, variantListPrice, optionCodes, selections } = input;
 
   if (!definition.orderable) {
-    throw new LinePricingError(nonOrderableRejection(definition));
+    throw new LinePricingError(nonOrderableRejection(productName));
   }
 
   for (const [fieldId, selection] of Object.entries(selections)) {
@@ -248,9 +252,7 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
     const lengthCm = input.lengthCm;
 
     if (lengthCm === null || !Number.isInteger(lengthCm) || lengthCm <= 0) {
-      throw new LinePricingError(
-        `A(z) "${definition.id}" méteráru, de a rendelési soron nincs hossz megadva.`
-      );
+      throw new LinePricingError(lengthMissingRejection(productName));
     }
 
     const perMeter =

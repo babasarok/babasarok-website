@@ -6,10 +6,9 @@ import { materialInUseError } from "./material.service";
 function definition(
   id: string,
   overrides: Partial<z.input<typeof ProductDefinitionSchema>> = {}
-): ProductDefinition {
-  return ProductDefinitionSchema.parse({
+): { name: string; definition: ProductDefinition } {
+  const parsed = ProductDefinitionSchema.parse({
     id,
-    type: "parna",
     orderable: true,
     basePrice: 1000,
     pricing: { kind: "unit" },
@@ -17,6 +16,8 @@ function definition(
     forbiddenMaterialCombinations: [],
     ...overrides,
   });
+
+  return { name: `Név ${id}`, definition: parsed };
 }
 
 function materialField(
@@ -32,15 +33,15 @@ function materialField(
 }
 
 describe("materialInUseError", () => {
-  it("refuses deletion with the MATERIAL_IN_USE code and the referencing definition id", () => {
+  it("refuses deletion with the MATERIAL_IN_USE code and the referencing product name", () => {
     const error = materialInUseError("pamut", [
       definition("parna", { fields: [materialField("pamut")] }),
       definition("zsak"),
     ]);
 
     expect(error?.extensions.code).toBe("MATERIAL_IN_USE");
-    expect(error?.message).toContain("parna");
-    expect(error?.message).not.toContain("zsak");
+    expect(error?.message).toContain("Név parna");
+    expect(error?.message).not.toContain("Név zsak");
   });
 
   it("allows deletion when nothing references the material", () => {
@@ -51,7 +52,7 @@ describe("materialInUseError", () => {
     expect(error).toBeNull();
   });
 
-  it("refuses when two definitions reference the material, listing both ids", () => {
+  it("refuses when two definitions reference the material, listing both names", () => {
     const error = materialInUseError("pamut", [
       definition("parna", { fields: [materialField("pamut")] }),
       definition("racsvedo", {
@@ -61,7 +62,7 @@ describe("materialInUseError", () => {
     ]);
 
     expect(error?.extensions.code).toBe("MATERIAL_IN_USE");
-    expect(error?.message).toContain("parna");
-    expect(error?.message).toContain("racsvedo");
+    expect(error?.message).toContain("Név parna");
+    expect(error?.message).toContain("Név racsvedo");
   });
 });

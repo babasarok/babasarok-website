@@ -13,6 +13,7 @@ import type {
   MaterialDefinition,
   ProductDefinition as CanonicalProductDefinition,
 } from "@babasarok/product-definition";
+import { nativeProductNames } from "../product/native-names";
 import { ProductDefinition } from "../product/product.entity";
 import { Material, MaterialColor } from "./material.entity";
 import { MaterialEvent } from "./material.event";
@@ -50,23 +51,21 @@ export function materialReferenceSlugs(definition: CanonicalProductDefinition): 
 }
 
 /** The refusal for deleting a material referenced by the given definitions,
- * or null when nothing references it. The definitions are named by their id —
- * the canonical reference (ADR 0011 decision 1: the name lives on the native
- * product, which this pure check does not read). */
+ * or null when nothing references it. Products are named by their native name. */
 export function materialInUseError(
   slug: string,
-  definitions: CanonicalProductDefinition[]
+  definitions: Array<{ name: string; definition: CanonicalProductDefinition }>
 ): MaterialInUseError | null {
   const labels = definitions
-    .filter((definition) => materialReferenceSlugs(definition).has(slug))
-    .map((definition) => definition.id);
+    .filter(({ definition }) => materialReferenceSlugs(definition).has(slug))
+    .map(({ name }) => name);
 
   if (labels.length === 0) {
     return null;
   }
 
   return new MaterialInUseError(
-    `Az anyag nem törölhető, mert ezek a termékdefiníciók hivatkoznak rá: ${labels.join(", ")}`
+    `Az anyag nem törölhető, mert ezek a termékek hivatkoznak rá: ${labels.join(", ")}`
   );
 }
 
@@ -168,9 +167,19 @@ export class MaterialService {
 
     await this.connection.withTransaction(ctx, async (txCtx) => {
       const definitions = await this.connection.getRepository(txCtx, ProductDefinition).find();
+      const names = await nativeProductNames(
+        this.connection,
+        txCtx,
+        definitions.flatMap((row) => (row.nativeProductId === null ? [] : [row.nativeProductId]))
+      );
       const error = materialInUseError(
         material.slug,
-        definitions.map((definition) => definition.definition)
+        definitions.map((row) => ({
+          name:
+            (row.nativeProductId === null ? undefined : names.get(row.nativeProductId)) ||
+            row.productId,
+          definition: row.definition,
+        }))
       );
 
       if (error !== null) {

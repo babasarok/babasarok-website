@@ -121,7 +121,12 @@ then sell for 0 Ft). Non-orderable (browse-only) products are exempt.
 > the order form cannot offer (the length walk's per-meter price obeys the
 > same rule). A basket add or adjust for a non-orderable (`orderable: false`)
 > product is likewise rejected at the mutation boundary, with the strategy
-> refusing to price it as the backstop (ADR 0011 decision 5). Until the cutover
+> refusing to price it as the backstop (ADR 0011 decision 5). These
+> rejections are Hungarian and name the product by its native name. An
+> embroidery selection whose `colorId` is not a value code of the private
+> `babasarok-thread-color` facet is rejected at the same boundary (ADR 0011
+> decision 3; one lookup per add/adjust, only when the line carries an
+> embroidery selection). Until the cutover
 > the site keeps quoting client-side; server-side pricing applies to orders
 > that carry those fields. An open owner question: a `customValue` choice
 > field used as a variant axis cannot select a generated variant, and the

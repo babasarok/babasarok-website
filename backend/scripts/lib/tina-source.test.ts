@@ -173,10 +173,9 @@ describe("definitionFromTinaProduct", () => {
     expect(result.definition.forbiddenMaterialCombinations).toEqual([]);
   });
 
-  it("rejects unknown product and field types with issues", () => {
+  it("rejects unknown field types with issues", () => {
     const result = definitionFromTinaProduct({
       ...babafeszek,
-      type: "ismeretlen",
       fields: [
         ...(babafeszek.fields ?? []),
         { name: "idegen", label: "Idegen", type: "idegen", price: 0 },
@@ -189,10 +188,7 @@ describe("definitionFromTinaProduct", () => {
       return;
     }
 
-    expect(result.errors).toEqual([
-      'babafeszek: Ismeretlen termék típus: "ismeretlen".',
-      'idegen: Ismeretlen mező típus: "idegen".',
-    ]);
+    expect(result.errors).toEqual(['idegen: Ismeretlen mező típus: "idegen".']);
   });
 
   it("derives a stable revision from the commerce-relevant facts", () => {
