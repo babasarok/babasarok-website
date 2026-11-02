@@ -1,0 +1,16 @@
+{
+  "threadColors": [
+    {
+      "id": "zsalyazold",
+      "label": "Zsályazöld",
+      "hex": "#9caf88",
+      "swatch": null
+    },
+    {
+      "id": "babakek",
+      "label": "Babakék",
+      "hex": "#a7c7e7",
+      "swatch": null
+    }
+  ]
+}

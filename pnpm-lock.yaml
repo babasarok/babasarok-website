@@ -226,6 +226,9 @@ importers:
       '@astrojs/svelte':
         specifier: ^9.0.1
         version: 9.1.1(@types/node@25.9.9)(astro@7.4.2(@astrojs/markdown-remark@7.3.4(supports-color@10.2.2))(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(less@4.2.2)(sass@1.85.0)(terser@5.39.0)(tsx@4.23.15)(yaml@2.9.1))(esbuild@0.28.2)(jiti@2.7.0)(less@4.2.2)(sass@1.85.0)(svelte@5.57.2(@typescript-eslint/types@8.72.0))(terser@5.39.0)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
+      '@babasarok/product-definition':
+        specifier: workspace:*
+        version: link:packages/product-definition
       '@fontsource-variable/inter':
         specifier: ^5.2.8
         version: 5.3.0
