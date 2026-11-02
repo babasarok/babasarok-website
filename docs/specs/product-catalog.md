@@ -225,6 +225,14 @@ Material writes SHALL propagate automatically, without a definition save:
   - THEN the material's color facet values follow, and every product
     definition referencing the material re-syncs, so its variants carry the
     correct color facets
+- **Scenario: Automatic sync meets native edits**
+  - WHEN a sync triggered by a material change or a stock product rename
+    (not by a definition save) finds the native options, variants or prices
+    edited outside the sync
+  - THEN it writes nothing and marks the definition's sync failed with the
+    drift message; stock product updates that carry no name never trigger a
+    sync, and an automatic sync whose plan already equals the native state
+    writes nothing
 - **Scenario: Material deleted**
   - WHEN a material that no definition references is deleted
   - THEN its facet values and its collection are deleted with it
