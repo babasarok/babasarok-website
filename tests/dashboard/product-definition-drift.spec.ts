@@ -108,8 +108,8 @@ test("a natively hand-edited variant price is refused until the force re-sync", 
     await page.reload();
 
     const generated = generatedTable(page);
-    await expect(generated.getByRole("row", { name: /E2E D1 \(Kék\)/ })).toContainText("15000");
-    await expect(generated.getByRole("row", { name: /E2E D1 \(Piros\)/ })).toContainText("15700");
+    await expect(generated.getByRole("row", { name: /Szín: Kék/ })).toContainText("15000");
+    await expect(generated.getByRole("row", { name: /Szín: Piros/ })).toContainText("15700");
   });
 
   await test.step("hand-edit a variant price through the admin API", async () => {
@@ -119,10 +119,10 @@ test("a natively hand-edited variant price is refused until the force re-sync", 
       { productDefinitionId: "e2e-d1", options: { skip: 0, take: 10 } },
       GeneratedVariants
     );
-    const kek = variants.generatedVariants.items.find((variant) => variant.name.endsWith("(Kék)"));
+    const kek = variants.generatedVariants.items.find((variant) => variant.name === "Szín: Kék");
 
     if (kek === undefined) {
-      throw new Error("Nincs (Kék) változat — a szinkronizálás nem futott le?");
+      throw new Error("Nincs „Szín: Kék” változat — a szinkronizálás nem futott le?");
     }
 
     await adminApi(page, HAND_EDIT_VARIANT, { input: { id: kek.id, price: 999 } }, UpdatedVariant);
@@ -165,7 +165,7 @@ test("a natively hand-edited variant price is refused until the force re-sync", 
     await page.reload();
 
     const generated = generatedTable(page);
-    const kek = generated.getByRole("row", { name: /E2E D1 \(Kék\)/ });
+    const kek = generated.getByRole("row", { name: /Szín: Kék/ });
     await expect(kek).toContainText("15000");
     await expect(kek).not.toContainText("999");
   });

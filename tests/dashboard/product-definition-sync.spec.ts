@@ -87,13 +87,13 @@ test("the async sync settles and the generated-variants table follows it", async
     await page.reload();
 
     const generated = generatedTable(page);
-    await expect(generated.getByRole("row", { name: /E2E S1 \(/ })).toHaveCount(15);
+    await expect(generated.getByRole("row", { name: /Szín: / })).toHaveCount(15);
 
-    const elso = generated.getByRole("row", { name: /E2E S1 \(1\. változat\)/ });
+    const elso = generated.getByRole("row", { name: /Szín: 1\. változat/ });
     await expect(elso).toContainText("e2e-s1--k01");
     await expect(elso).toContainText("15000");
 
-    const tizenotodik = generated.getByRole("row", { name: /E2E S1 \(15\. változat\)/ });
+    const tizenotodik = generated.getByRole("row", { name: /Szín: 15\. változat/ });
     await expect(tizenotodik).toContainText("e2e-s1--k15");
     await expect(tizenotodik).toContainText("16400");
   });
@@ -128,8 +128,8 @@ test("the async sync settles and the generated-variants table follows it", async
 
     await generated.getByRole("button", { name: "Go to next page" }).click();
     await expect(generated.getByText("11–15 of 15")).toBeVisible();
-    await expect(generated.getByRole("row", { name: /E2E S1 \(/ })).toHaveCount(5);
-    await expect(generated.getByRole("row", { name: /E2E S1 \(11\. változat\)/ })).toBeVisible();
-    await expect(generated.getByRole("row", { name: /E2E S1 \(1\. változat\)/ })).toHaveCount(0);
+    await expect(generated.getByRole("row", { name: /Szín: / })).toHaveCount(5);
+    await expect(generated.getByRole("row", { name: /Szín: 11\. változat/ })).toBeVisible();
+    await expect(generated.getByRole("row", { name: /Szín: 1\. változat/ })).toHaveCount(0);
   });
 });
