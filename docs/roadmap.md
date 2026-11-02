@@ -140,8 +140,7 @@ merged to main until the backend structure is settled):
   fails every recalculation until removed — price or flag it instead; material
   delete checks references without a lock, so a concurrent definition save can
   slip through; the variant sync runs the whole matrix in one transaction —
-  commit per batch; `ConfiguredOrderLineInterceptor`, `ServerPricingStrategy`
-  and the set condition's group parsing have no tests
+  commit per batch; `ServerPricingStrategy` has no tests
 
 ## Epic 9 design notes (multi-market tax & pricing)
 
