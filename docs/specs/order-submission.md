@@ -106,8 +106,20 @@ physically cannot email a buyer.
     prices, and the order is not kept in a re-submittable failed state
 - **Scenario: Submission failure**
   - WHEN the backend rejects the payload or the network request fails
-  - THEN the buyer sees a generic error message and can retry; the order
-    details remain intact
+  - THEN the buyer sees a generic error message followed by the failure reason
+    (network error, server error with its HTTP status, or the backend's own
+    rejection message) and a reference code (the first 8 characters of the
+    transaction identifier); the buyer can retry and the order details remain
+    intact
+  - AND an error report of kind `order` carrying the reference code is sent to
+    the site's own `/client-errors` endpoint, which logs it to Workers Logs
+
+### Browser error reporting
+
+The system SHALL report uncaught browser errors and unhandled promise
+rejections on every page to the site's own `/client-errors` endpoint (kind
+`uncaught`), never to the API host, so reports arrive when the API is
+unreachable. Reporting SHALL never break the page.
 
 ### Conversion tracking
 
