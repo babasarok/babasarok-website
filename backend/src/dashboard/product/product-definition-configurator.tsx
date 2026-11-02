@@ -12,7 +12,7 @@
  */
 import { Fragment, useEffect, useRef, useState, type ReactElement } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useBlocker, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import {
   Alert,
   AlertTitle,
@@ -36,6 +36,7 @@ import {
 } from "@babasarok/product-definition";
 import { graphql } from "@/gql";
 import { Switch } from "@/vdb/components/ui/switch.js";
+import { UnsavedChangesGuard } from "./unsaved-changes-guard";
 import { ErrorNotice, errorCodeOf, rowKey } from "../shared";
 import "./stock-image-sizes.css";
 import { FieldEditor, NumberInput } from "./product-definition-fields";
@@ -315,11 +316,6 @@ export function ConfiguratorEditor({
     (definition.id !== "" || (creatingNew && name !== "") || rows.length > 0 || banned.length > 0);
 
   const blocksLeaving = (): boolean => !pending && (creatingNew ? dirty : configuratorDirty);
-
-  useBlocker({
-    shouldBlockFn: blocksLeaving,
-    enableBeforeUnload: blocksLeaving,
-  });
 
   useEffect(() => {
     if (creatingNew) {
@@ -991,10 +987,20 @@ export function ConfiguratorEditor({
   );
 
   if (mode === "create") {
-    return <PageLayout>{editor}</PageLayout>;
+    return (
+      <>
+        <UnsavedChangesGuard blocks={blocksLeaving} />
+        <PageLayout>{editor}</PageLayout>
+      </>
+    );
   }
 
   // The embedded block sits in the stock page's full-width row; a nested
   // PageLayout would re-grid its cards into a 3/4-width main column.
-  return <div className="space-y-4">{editor}</div>;
+  return (
+    <div className="space-y-4">
+      <UnsavedChangesGuard blocks={blocksLeaving} />
+      {editor}
+    </div>
+  );
 }

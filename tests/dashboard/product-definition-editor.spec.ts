@@ -193,6 +193,14 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await toggleAr.fill("1200");
     await toggleAr.blur();
 
+    const productUrl = page.url();
+    await page.getByRole("link", { name: "Products", exact: true }).first().click();
+    const leaveDialog = page.getByRole("dialog", { name: "Elhagyod az oldalt?" });
+    await expect(leaveDialog).toBeVisible();
+    await leaveDialog.getByRole("button", { name: "Mégse" }).click();
+    await expect(leaveDialog).toHaveCount(0);
+    expect(page.url()).toBe(productUrl);
+
     await page.getByRole("button", { name: "+ Választó mező" }).click();
     const meret = fieldBlock(page, 6);
     await meret.getByLabel("Név").first().fill("Méret");
