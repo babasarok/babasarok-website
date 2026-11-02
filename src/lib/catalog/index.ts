@@ -28,23 +28,30 @@ import {
 } from "./schemas";
 
 export { byPopularity } from "./mappers";
-export type { CatalogMaterial, CatalogProduct, CatalogProductDetail } from "./mappers";
+export type {
+  CatalogMaterial,
+  CatalogProduct,
+  CatalogProductDetail,
+  CatalogProductGroup,
+} from "./mappers";
 
 const PAGE_SIZE = 100;
 
 export async function getProducts(run: ShopQuery = shopQuery): Promise<CatalogProduct[]> {
   const products: CatalogProduct[] = [];
+  let fetched = 0;
 
   for (;;) {
     const { products: page } = await run({
       query: PRODUCTS_QUERY,
-      variables: { skip: products.length, take: PAGE_SIZE },
+      variables: { skip: fetched, take: PAGE_SIZE },
       schema: ProductsResponseSchema,
     });
 
-    products.push(...page.items.map(toProduct));
+    fetched += page.items.length;
+    products.push(...page.items.flatMap((row) => toProduct(row) ?? []));
 
-    if (page.items.length === 0 || products.length >= page.totalItems) {
+    if (page.items.length === 0 || fetched >= page.totalItems) {
       return products;
     }
   }
@@ -60,7 +67,11 @@ export async function getProduct(
     schema: ProductResponseSchema,
   });
 
-  return product === null ? null : toProductDetail(product);
+  if (product === null) {
+    return null;
+  }
+
+  return toProductDetail(product);
 }
 
 export async function getMaterials(run: ShopQuery = shopQuery): Promise<CatalogMaterial[]> {

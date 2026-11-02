@@ -1,0 +1,22 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { ASSET_BASE } from "@/lib/vendure/client";
+import { imageSrcSet, imageUrl, type ImagePreset } from "@/lib/vendure/imageUrl";
+
+interface Props extends Omit<HTMLAttributes<"img">, "src" | "srcset" | "alt"> {
+  src: string;
+  alt: string;
+  presets: readonly [ImagePreset, ...ImagePreset[]];
+}
+
+const { src, alt, presets, ...attributes } = Astro.props;
+const largest = presets.at(-1) ?? presets[0];
+---
+
+<img
+  src={imageUrl(src, largest, ASSET_BASE)}
+  srcset={imageSrcSet(src, presets, ASSET_BASE)}
+  alt={alt}
+  decoding="async"
+  {...attributes}
+/>

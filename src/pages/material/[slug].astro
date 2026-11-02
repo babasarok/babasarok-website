@@ -1,38 +1,27 @@
 ---
-import type { GetStaticPaths } from "astro";
-import { getCollection, render } from "astro:content";
-import { Image } from "astro:assets";
 import { Icon } from "astro-icon/components";
 import Base from "../../layouts/Base.astro";
 import FloatingShapes from "../../components/ui/FloatingShapes.astro";
+import VendureImage from "../../components/ui/VendureImage.astro";
+import { getMaterials } from "@/lib/catalog";
 
-export const getStaticPaths = (async () => {
-  const materials = (await getCollection("material")).toSorted((a, b) =>
-    a.data.label.localeCompare(b.data.label)
-  );
+export const prerender = false;
 
-  return materials.map((material, i) => ({
-    params: { id: material.id },
-    props: {
-      material,
-      prev: materials[i - 1] ?? null,
-      next: materials[i + 1] ?? null,
-    },
-  }));
-}) satisfies GetStaticPaths;
+const materials = (await getMaterials()).toSorted((a, b) => a.label.localeCompare(b.label, "hu"));
+const slug = Astro.params.slug;
+const index = materials.findIndex((candidate) => candidate.slug === slug);
+const material = materials.find((candidate) => candidate.slug === slug);
 
-const { material, prev, next } = Astro.props;
-const { Content } = await render(material);
+if (material === undefined) {
+  Astro.cache.set(false);
 
-const { label, shortDescription } = material.data;
+  return new Response(null, { status: 404 });
+}
+
+const prev = materials.slice(0, index).at(-1);
+const next = materials.slice(index + 1).at(0);
+const { label, subtitle, description, thumbnailUrl, colors } = material;
 const heading = label;
-
-const thumb = material.data.thumbnail;
-const colors = (material.data.colors ?? []).map((color) => ({
-  label: color.label,
-  hex: color.hex,
-  image: color.image,
-}));
 
 const shareUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;
 const shareLinks = [
@@ -51,12 +40,7 @@ const shareLinks = [
 ];
 ---
 
-<Base
-  title={heading}
-  description={shortDescription}
-  isArticle
-  data-pagefind-meta={`section:material`}
->
+<Base title={heading} description={subtitle} isArticle>
   <section class="relative overflow-hidden pt-30 pb-25 sm:pt-50">
     <FloatingShapes
       figureClass="top-[30%] left-[-7%]"
@@ -67,16 +51,16 @@ const shareLinks = [
     <div class="container">
       <div class="relative z-1 mb-12 text-center lg:mx-auto lg:w-10/12">
         <h1 class="text-h1 text-headings mb-6">{heading}</h1>
-        {shortDescription && <p>{shortDescription}</p>}
+        {subtitle && <p>{subtitle}</p>}
 
         {
-          thumb && (
+          thumbnailUrl && (
             <div class="mt-7.5 mb-12 flex flex-col items-center">
               <div class="overflow-hidden rounded-[20px]">
-                <Image
-                  src={thumb}
+                <VendureImage
+                  src={thumbnailUrl}
                   alt={heading}
-                  widths={[480, 768, 1000]}
+                  presets={["hero-sm", "hero-md", "hero-lg"]}
                   sizes="(min-width: 768px) 1000px, 100vw"
                   class="w-full object-cover lg:max-w-1000"
                 />
@@ -98,10 +82,11 @@ const shareLinks = [
               <div class="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] items-start gap-5">
                 {colors.map((color) => (
                   <div class="flex flex-col items-center">
-                    {color.image ? (
-                      <Image
-                        src={color.image}
-                        alt={color.label ?? ""}
+                    {color.imageUrl ? (
+                      <VendureImage
+                        src={color.imageUrl}
+                        alt={color.label}
+                        presets={["card-sm"]}
                         width={150}
                         height={150}
                         class="size-37.5 rounded-[25%] object-cover"
@@ -109,7 +94,7 @@ const shareLinks = [
                     ) : (
                       <div
                         class="size-37.5 rounded-[25%]"
-                        style={`background-color: ${color.hex};`}
+                        style={`background-color: ${color.hex ?? "transparent"};`}
                       />
                     )}
                     <div class="mt-2 text-sm">{color.label}</div>
@@ -120,16 +105,18 @@ const shareLinks = [
           )
         }
 
-        <div class="prose mx-auto max-w-none text-center">
-          <Content />
-        </div>
+        {
+          description && (
+            <p class="mx-auto max-w-none text-center whitespace-pre-line">{description}</p>
+          )
+        }
       </div>
 
       <div class="relative z-1 lg:mx-auto lg:w-10/12">
         <nav class="flex items-center justify-between gap-4 sm:gap-8">
           {
             prev ? (
-              <a class="group flex items-center" href={`/material/${prev.id}/`}>
+              <a class="group flex items-center" href={`/material/${prev.slug}/`}>
                 <span class="text-dark mr-3 leading-none">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -145,7 +132,7 @@ const shareLinks = [
                 <span class="text-left">
                   <span class="text-body block text-sm">Előző</span>
                   <span class="font-heading text-dark group-hover:text-sand-300 block text-xl">
-                    {prev.data.label}
+                    {prev.label}
                   </span>
                 </span>
               </a>
@@ -173,11 +160,11 @@ const shareLinks = [
 
           {
             next ? (
-              <a class="group flex items-center" href={`/material/${next.id}/`}>
+              <a class="group flex items-center" href={`/material/${next.slug}/`}>
                 <span class="text-right">
                   <span class="text-body block text-sm">Következő</span>
                   <span class="font-heading text-dark group-hover:text-sand-300 block text-xl">
-                    {next.data.label}
+                    {next.label}
                   </span>
                 </span>
                 <span class="text-dark ml-3 leading-none">

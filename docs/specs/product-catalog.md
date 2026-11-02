@@ -63,14 +63,21 @@ with descriptions), a base price, and a `can_be_ordered` flag.
 ### Product list: search, filtering, and sorting
 
 The system SHALL provide a single product list page showing all non-hidden
-products (no pagination), each entry linking to the product detail page, with:
+products (no pagination), each entry linking to the product detail page, with
+its tagline as the category line. A product is hidden when its canonical
+definition sets `hiddenInProductList`; a product without a known type is
+listed and only drops out of type filters. A product without a definition
+(e.g. a quote-order placeholder) is not a storefront product: it appears in no
+list, search, sitemap or home block, and its detail page is a 404. The page is
+rendered on demand and cached at the edge (60 s, 300 s stale-while-revalidate),
+and an unreachable backend shows the error page instead of partial data. With:
 
 - **Text search** over product title and short description.
 - **Filtering by product type**: multiple selections within the type
   dimension are OR-combined.
 - **Filtering by product set**: a product matches the set filter when it is
   a member of a selected set; multiple set selections are OR-combined.
-- **Sorting**: by the CMS-curated popularity order (default), newest first,
+- **Sorting**: by the `popularityRank` order (default), newest first,
   or by name (title, ascending). Products without a curated popularity
   position follow the ordered ones, name-ascending among themselves.
 
@@ -101,8 +108,8 @@ filtering, and sorting inert.
 - **Scenario: Sorting by popularity**
   - WHEN a visitor opens the product list without an explicit sort parameter,
     or selects popularity sorting
-  - THEN the list is ordered by the curated popularity sequence managed in
-    the CMS, with uncurated products following it, alphabetically
+  - THEN the list is ordered by ascending `popularityRank`, with unranked
+    products following it, alphabetically
 - **Scenario: Sorting by name**
   - WHEN a visitor selects name sorting
   - THEN the list is ordered alphabetically by title, ascending
@@ -117,6 +124,29 @@ filtering, and sorting inert.
   - WHEN the product list is rendered without JavaScript
   - THEN the full product list is shown and search, filtering, and sorting
     are inert
+
+### Material pages and home product block
+
+The material list is one on-demand page (no pagination; the former
+`/material/page/N/` URLs redirect to `/material`) of all materials ordered by
+label, each linking to `/material/<slug>/`. A material page shows the label,
+subtitle, thumbnail, colors, the plain-text description and previous/next
+links; an unknown slug answers 404 uncached. The home page's product block is
+a server island showing the `itemCount` (from `product.json`) most popular
+listed products; its title and button stay prerendered. Catalog images come
+from the asset server's presets as webp (`card-sm`, `card-lg`, `hero-sm`,
+`hero-md`, `hero-lg`; plain asset URLs still serve the original, any other
+preset or size is rejected).
+
+### Catalog sitemap and search
+
+`/sitemap-catalog.xml` (on demand, cached 1 h; 503 when the backend is
+unreachable, never an empty sitemap) lists the product and material detail
+pages and is referenced from `/sitemap-index.xml`. The header search dialog
+merges Pagefind results (blog, static pages) with matches from
+`/search-index.json` (on demand, cached 60 s: listed products and materials,
+searched client-side ignoring case and accents), products first, then
+materials; a catalog hit replaces a Pagefind hit for the same URL.
 
 ### Product detail page
 

@@ -1,11 +1,11 @@
 ---
-import type { ImageMetadata } from "astro";
-import { Image } from "astro:assets";
+import VendureImage from "./VendureImage.astro";
 
 interface Props {
   href: string;
   title: string;
-  image?: ImageMetadata | undefined;
+  /** Vendure asset source (see `imageUrl`). */
+  image?: string | undefined;
   category?: string | undefined;
   /** Square, uniform-height variant used by the landing product grid. */
   square?: boolean;
@@ -20,10 +20,10 @@ const { href, title, image, category, square = false } = Astro.props;
 >
   {
     image && (
-      <Image
+      <VendureImage
         src={image}
         alt={title}
-        widths={[300, 700]}
+        presets={["card-sm", "card-lg"]}
         sizes="(max-width: 575px) 50vw, 300px"
         class:list={[
           "mx-auto w-full max-w-[50vw] rounded-[20px] transition-all duration-300 group-hover:shadow-[0_20px_40px_0_rgba(0,0,0,0.12)] sm:mx-0 sm:max-w-75",
