@@ -16,7 +16,9 @@ filterable product list with a detail page per product.
 > slug is seeded from the definition's `id` at creation only, and a rename on
 > the stock product form propagates to the generated variant names
 > ("`<name> (<option values>)`") — the definition sync never writes the
-> product's name or slug. Editorial content still maps to the native product
+> product's name or slug. The product type is a value of the public
+> `babasarok-product-type` facet on the native product (ADR 0011 decision 2),
+> not a definition field. Editorial content still maps to the native product
 > at cutover: body → `description`, `thumbnail` → featured asset, `images` →
 > assets. The remaining display fields are native Vendure custom fields (the
 > display-field
@@ -159,7 +161,8 @@ as the backstop (ADR 0011 decision 5).
 - **Scenario: Non-orderable product rejected at the basket**
   - WHEN a basket add or adjust targets a product whose `orderable` flag is
     not set
-  - THEN the mutation is rejected with a clear error naming the product
+  - THEN the mutation is rejected with a clear Hungarian error naming the
+    product by its native name
 
 ### Product page order configurator
 
@@ -244,6 +247,33 @@ or skipping.
   - WHEN a product sync cannot resolve a facet value it should assign
   - THEN the sync fails with an error naming the value and the convergence
     step, and the dashboard shows the failed sync state
+
+### Owner-maintained facets (product type, thread colors)
+
+The Vendure catalog SHALL carry two facets the owner maintains on stock
+dashboard pages (ADR 0011 decisions 2 and 3); no sync writes them.
+
+- **Terméktípus** (`babasarok-product-type`, public): one value per product
+  type, code = the type id (`racsvedo`, `takaro`, `lepedo`, `parna`,
+  `babafeszek`, `zsak`, `kiegeszito`). A product's type is its value on the
+  stock product page's Facet Values block (product level, not variants);
+  new types are added on the stock Facets page without a deploy. The
+  canonical definition carries no `type`.
+- **Cérna színek** (`babasarok-thread-color`, private): one value per
+  embroidery thread color, code = the color id, name (translatable) = label.
+  Each value has the custom fields `hex` (nullable, `#rrggbb`) and `swatch`
+  (nullable Asset relation), edited on the stock facet-value page. A value
+  with neither is rendered as a neutral chip and reported by the seed.
+
+The seed (`import-facets`, then `import-products` for the assignment) creates
+both facets idempotently from the Tina `type` values and
+`src/content/config/embroidery.json`; existing facets/values are left as the
+owner edited them. Production runs the same scripts once by hand.
+
+- **Scenario: Owner adds a product type**
+  - WHEN the owner creates a value in the product-type facet
+  - THEN it can be assigned to products on the stock product page, with no
+    deploy
 
 ### Definition lifecycle with the native product
 

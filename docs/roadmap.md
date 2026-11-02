@@ -118,6 +118,14 @@ merged to main until the backend structure is settled):
   the slug is seeded from the definition id at creation only, generated
   variant names read the native name (a stock rename's `ProductEvent`
   re-enqueues the sync), and name/slug left the drift hash
+- ✅ Native product type and thread colors —
+  [ADR 0011](adr/0011-native-ownership-and-translatable-catalog.md)
+  decisions 2 and 3: product type is the public `babasarok-product-type`
+  facet (product level, owner-assigned), thread colors the private
+  `babasarok-thread-color` facet with `hex`/`swatch` custom fields; `type`
+  left the canonical definition (data migration) and `ThreadColorPaletteSchema`
+  was retired; the order-line interceptor rejects unknown thread colors;
+  `import-facets` seeds both
 - ⬜ Vendure-complete gate — catalog fully manageable in the Vendure dashboard,
   nothing left that only Tina can do
 
