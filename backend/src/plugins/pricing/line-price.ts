@@ -100,6 +100,10 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
   const { definition, variantListPrice, optionCodes, selections } = input;
 
   for (const [fieldId, selection] of Object.entries(selections)) {
+    if (selection === undefined) {
+      continue;
+    }
+
     const field = fieldById(definition.fields, fieldId);
 
     if (field === undefined) {
