@@ -119,7 +119,9 @@ then sell for 0 Ft). Non-orderable (browse-only) products are exempt.
 > visible given the variant's own picks — a field hidden by `depends_on` rides
 > the matrix but contributes nothing, so no variant charges for a selection
 > the order form cannot offer (the length walk's per-meter price obeys the
-> same rule). Until the cutover
+> same rule). A basket add or adjust for a non-orderable (`orderable: false`)
+> product is likewise rejected at the mutation boundary, with the strategy
+> refusing to price it as the backstop (ADR 0011 decision 5). Until the cutover
 > the site keeps quoting client-side; server-side pricing applies to orders
 > that carry those fields. An open owner question: a `customValue` choice
 > field used as a variant axis cannot select a generated variant, and the

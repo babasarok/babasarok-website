@@ -285,6 +285,20 @@ describe("computeLineUnitPrice", () => {
       })
     ).toThrow(LinePricingError);
   });
+
+  it("refuses to price a non-orderable product even with valid selections", () => {
+    const browseOnly = ProductDefinitionSchema.parse({ ...unitProduct, orderable: false });
+
+    expect(() =>
+      computeLineUnitPrice({
+        definition: browseOnly,
+        variantListPrice: 9000,
+        optionCodes: unitCodes("40", "nem", "minky"),
+        selections: {},
+        lengthCm: null,
+      })
+    ).toThrow(/Párna.*nem rendelhető/);
+  });
 });
 
 describe("parseLineSelections", () => {
