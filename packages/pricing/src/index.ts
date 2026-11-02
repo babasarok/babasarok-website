@@ -24,3 +24,4 @@ export {
   type LinePricingInput,
   type LineValuation,
 } from "./line-price.js";
+export { completesForbiddenCombination, forbiddenMaterialFieldIds } from "./banned-combinations.js";

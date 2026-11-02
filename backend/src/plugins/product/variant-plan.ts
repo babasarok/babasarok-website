@@ -7,7 +7,7 @@ import {
 import { plannedVariantFacetCodes } from "./facet-plan";
 import type { MaterialFacetData } from "./facet-plan";
 import type { NativeProductState } from "./sync-state";
-import { dependencyOrder, isVisible } from "@babasarok/pricing";
+import { completesForbiddenCombination, dependencyOrder, isVisible } from "@babasarok/pricing";
 
 export interface PlannedOption {
   code: string;
@@ -33,34 +33,6 @@ export interface VariantPlan {
   optionGroups: PlannedOptionGroup[];
   variants: PlannedVariant[];
   bannedOmitted: number;
-}
-
-/** Whether `rule`'s material multiset is fully coverable by `chosen`'s. */
-function ruleCoveredBy(rule: readonly string[], chosen: readonly string[]): boolean {
-  const available = new Map<string, number>();
-
-  for (const materialId of chosen) {
-    available.set(materialId, (available.get(materialId) ?? 0) + 1);
-  }
-
-  for (const materialId of rule) {
-    const left = available.get(materialId) ?? 0;
-
-    if (left === 0) {
-      return false;
-    }
-
-    available.set(materialId, left - 1);
-  }
-
-  return true;
-}
-
-function isBanned(
-  chosenMaterialIds: readonly string[],
-  forbidden: readonly (readonly string[])[]
-): boolean {
-  return forbidden.some((rule) => ruleCoveredBy(rule, chosenMaterialIds));
 }
 
 /**
@@ -201,7 +173,7 @@ export function planVariantCombinations(
   for (const combo of combinations) {
     const materialSlugs = materialGroupIndexes.map((index) => combo[index].code);
 
-    if (isBanned(materialSlugs, definition.forbiddenMaterialCombinations)) {
+    if (completesForbiddenCombination(materialSlugs, definition.forbiddenMaterialCombinations)) {
       bannedOmitted += 1;
       continue;
     }
