@@ -96,7 +96,7 @@ test("a natively hand-edited variant price is refused until the force re-sync", 
     await pirosAr.blur();
 
     const update = waitForMutation(page, "mutation UpdateProductDefinition");
-    await page.getByRole("button", { name: "Mentés", exact: true }).click();
+    await page.getByRole("button", { name: "Frissítés", exact: true }).click();
     await update;
 
     await expect(page.getByText("Mentés sikeres — a szinkronizálás fut.")).toBeVisible();
@@ -137,8 +137,12 @@ test("a natively hand-edited variant price is refused until the force re-sync", 
   });
 
   await test.step("a save is refused with the drift alert and the force button", async () => {
+    const pirosAr = page.locator(".rounded.border.p-3").first().getByLabel("Ár (Ft)").nth(1);
+    await pirosAr.fill("800");
+    await pirosAr.blur();
+
     const refused = waitForMutation(page, "mutation UpdateProductDefinition");
-    await page.getByRole("button", { name: "Mentés", exact: true }).click();
+    await page.getByRole("button", { name: "Frissítés", exact: true }).click();
     await refused;
 
     await expect(

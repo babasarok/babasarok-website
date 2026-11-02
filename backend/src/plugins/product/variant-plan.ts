@@ -85,6 +85,17 @@ function variantName(
 }
 
 /**
+ * True when some variant is named after the product: every variant-axis field
+ * is a toggle (or there is none), so the all-off variant has no parts to name.
+ */
+export function variantNamesUseProductName(definition: ProductDefinition): boolean {
+  return definition.fields.every(
+    (field) =>
+      field.kind !== "material" && (field.kind !== "choice" || field.presentation === "color")
+  );
+}
+
+/**
  * The decision core of the native sync: which option groups/options the
  * structured model demands, which variant combinations exist after forbidden
  * combinations are omitted, and each variant's total price. Pure — the service

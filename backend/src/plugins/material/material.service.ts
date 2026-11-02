@@ -28,6 +28,7 @@ import {
   MaterialTranslation,
 } from "./material.entity";
 import { MaterialEvent } from "./material.event";
+import { variantRelevantChange } from "./variant-relevant";
 import { MaterialFacetSync } from "./material-facet-sync";
 import { lockMaterials } from "./material-lock";
 import { validateMaterialInput, type MaterialInputData } from "./material-definition";
@@ -203,7 +204,10 @@ export class MaterialService {
       return updated;
     });
 
-    await this.eventBus.publish(new MaterialEvent(ctx, "updated", material.slug));
+    if (variantRelevantChange(existing, material)) {
+      await this.eventBus.publish(new MaterialEvent(ctx, "updated", material.slug));
+    }
+
     return material;
   }
 
