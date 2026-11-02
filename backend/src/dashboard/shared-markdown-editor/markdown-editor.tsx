@@ -15,6 +15,7 @@ import {
 } from "@vendure/dashboard";
 import { z } from "zod";
 import { createAssetImage } from "./asset-image";
+import "./markdown-editor.css";
 import { assetIdOfUrl, displayUrlOf, loadAssetUrls } from "./asset-lookup";
 import { assetIdsIn, isBlankMarkdown } from "./markdown-assets";
 
@@ -22,23 +23,6 @@ const storedMarkdown = z
   .string()
   .nullish()
   .transform((value) => value ?? "");
-
-const contentClasses = [
-  "min-h-32 max-h-[500px] overflow-y-auto px-3 py-2 text-sm outline-none",
-  "[&_h1]:my-3 [&_h1]:text-2xl [&_h1]:font-bold",
-  "[&_h2]:my-3 [&_h2]:text-xl [&_h2]:font-semibold",
-  "[&_h3]:my-3 [&_h3]:text-lg [&_h3]:font-semibold",
-  "[&_p]:my-2",
-  "[&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-6",
-  "[&_blockquote]:my-2 [&_blockquote]:border-l-4 [&_blockquote]:pl-3 [&_blockquote]:italic",
-  "[&_a]:text-primary [&_a]:underline",
-  "[&_img]:my-2 [&_img]:inline-block [&_img]:max-w-full [&_img]:rounded",
-  "[&_code]:rounded [&_code]:bg-muted [&_code]:px-1",
-  "[&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-muted [&_pre]:p-3",
-  "[&_hr]:my-4",
-  "[&_table]:my-2 [&_table]:w-full [&_table]:border-collapse",
-  "[&_td]:border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:bg-muted [&_th]:px-2 [&_th]:py-1",
-].join(" ");
 
 function createExtensions(): Extensions {
   return [
@@ -104,7 +88,7 @@ function MarkdownEditorBody({
     content: isBlankMarkdown(markdown) ? "" : markdown,
     contentType: isBlankMarkdown(markdown) ? undefined : "markdown",
     editable: !disabled,
-    editorProps: { attributes: { class: contentClasses } },
+    editorProps: { attributes: { class: "markdown-editor-content" } },
     onUpdate: ({ editor: updated }) => {
       linkImagesToAssets(updated);
       lastEmitted.current = updated.getMarkdown();
