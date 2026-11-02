@@ -11,6 +11,8 @@ import {
 import type { Injector, Order, RequestContext } from "@vendure/core";
 import type { ProductDefinition as CanonicalProductDefinition } from "@babasarok/product-definition";
 import { parseLineSelections, type LineSelections } from "../pricing/line-selection";
+import { IsNull, In } from "typeorm";
+import { countActivePromotionsUsing } from "./active-promotions";
 import { ProductDefinition } from "../product/product.entity";
 import { materialPicks } from "./material-picks";
 import { allocateSetDiscounts, type AllocationLine, type SetInstance } from "./set-allocation";
@@ -159,18 +161,18 @@ function setGroups(
  */
 async function isTheOnlyActiveSetPromotion(ctx: RequestContext): Promise<boolean> {
   const promotions = await connection.getRepository(ctx, Promotion).find({
-    where: { enabled: true },
+    where: { enabled: true, deletedAt: IsNull() },
+    relations: { channels: true },
   });
-  const active = promotions.filter(
-    (promotion) =>
-      (promotion.endsAt === null || promotion.endsAt > new Date()) &&
-      promotion.conditions.some((condition) => condition.code === PRODUCT_SET_CONDITION_CODE)
+  const active = countActivePromotionsUsing(
+    promotions,
+    PRODUCT_SET_CONDITION_CODE,
+    ctx.channelId,
+    new Date()
   );
 
-  if (active.length > 1) {
-    Logger.error(
-      `${active.length} aktív szett-kedvezmény promóció létezik — egyik sem lép érvénybe.`
-    );
+  if (active > 1) {
+    Logger.error(`${active} aktív szett-kedvezmény promóció létezik — egyik sem lép érvénybe.`);
 
     return false;
   }
@@ -225,9 +227,20 @@ export const productSetBasketCondition = new PromotionCondition({
       ],
     });
 
-    const definitionRows = await connection
-      .getRepository(ctx, ProductDefinition)
-      .find({ select: { nativeProductId: true, definition: true } });
+    const nativeProductIds = new Set<number>(
+      order.lines.map((line) => Number(line.productVariant.productId))
+    );
+
+    for (const child of children) {
+      for (const nativeId of memberIds(child.filters) ?? []) {
+        nativeProductIds.add(Number(nativeId));
+      }
+    }
+
+    const definitionRows = await connection.getRepository(ctx, ProductDefinition).find({
+      select: { nativeProductId: true, definition: true },
+      where: { nativeProductId: In([...nativeProductIds]) },
+    });
     const productIdByNativeId = new Map<number, string>();
 
     for (const row of definitionRows) {
