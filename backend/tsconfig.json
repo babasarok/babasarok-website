@@ -22,6 +22,7 @@
   // whole dashboard source graph, which does not type-check under plain tsc.
   "references": [
     { "path": "../packages/product-definition" },
+    { "path": "../packages/pricing" },
     { "path": "./tsconfig.scripts.json" }
   ]
 }

@@ -5,6 +5,25 @@ field options, selected materials, and quantity. A
 price is only surfaced once it can be fully computed; an unpriced part is
 treated as contributing nothing rather than producing a partial price.
 
+## Where the rules live
+
+The line-pricing rules (price composition, length scaling, field visibility,
+selection validation, forbidden material combinations) are implemented once, in
+the pure workspace package `packages/pricing` (`@babasarok/pricing`, depending
+only on zod and `@babasarok/product-definition`). The backend pricing strategy
+and the order-line boundary call it; it prices a canonical `ProductDefinition`
+plus the line's selections and variant options. The site's configurator still
+runs its own Tina-shaped copy in `src/lib/pricing` until it is rewired to the
+package (roadmap S3), and the set discount is unaffected (a server promotion).
+
+Selection problems are structured (`field`, `code`, detail) and rendered by one
+formatter; a selection is also refused when a material field carries fewer
+colours than its `colorCount` requires (a `from-field` count is checked only
+once the source field has a numeric answer). A forbidden material combination is
+a multiset of material ids (`[X, X]` bans X on two fields; `[X, Y]` bans the pair
+wherever they sit); variant generation omits every variant whose materials
+cover a rule, and the package exposes the same rule to the configurator.
+
 ## Requirements
 
 ### Price part composition

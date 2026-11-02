@@ -42,13 +42,54 @@ ordering).
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
 | 1   | **Deploy Vendure, use it exactly how we used web3forms** — self-hosted backend receiving order requests, nothing more                                                                                                                                                                                                                                                                                                                                              | done        |
 | 2   | **Implement the product catalog fully in Vendure with a good, manageable admin UX — this epic.** Includes set discounts. The delivery plan lives in [ADR 0010](adr/0010-native-generated-product-model.md) (product model: native-with-generation; dashboard configurator, facets/collections, promotions, set discounts) with the migration architecture in [ADR 0009](adr/0009-side-by-side-vendure-catalog-migration.md). Materials are already ported (PR #76) | in progress |
-| 3   | **Move the Astro site over to Vendure** — show products from Vendure, place orders the new way against the epic-2 order-line fields and server pricing (quote/order handover)                                                                                                                                                                                                                                                                                      | not started |
+| 3   | **Move the Astro site over to Vendure** — show products from Vendure, place orders the new way against the epic-2 order-line fields and server pricing (quote/order handover). Plan: [Epic 3 plan](#epic-3-plan-site-cutover)                                                                                                                                                                                                                                      | not started |
 | 4   | **Remove the product Tina backend** — delete the product collections and their tooling once the site no longer reads them                                                                                                                                                                                                                                                                                                                                          | not started |
 | 5   | **Order resolution management** — the owner works orders in the Vendure dashboard: manual order-line stage changes (paid, order sent, fulfilled, …). Drives the later steps                                                                                                                                                                                                                                                                                        | not started |
 | 6   | **Native delivery methods** — replace the email/request-era delivery handling with Vendure-native shipping                                                                                                                                                                                                                                                                                                                                                         | not started |
 | 7   | **Barion payment provider on the site** — including proper tax setup and invoicing integration to the Hungarian tax entity (NAV). Tax note: the channel is `pricesIncludeTax` (stored prices are gross — `ChannelSetupPlugin`); this step adds the 27% HU `TaxRate` so invoices show the extracted ÁFA without changing any stored price                                                                                                                           | not started |
 | 8   | **English translation of the site**                                                                                                                                                                                                                                                                                                                                                                                                                                | not started |
 | 9   | **Expand to Slovakia** — accept orders from Slovakia (delivery, tax, translations as needed)                                                                                                                                                                                                                                                                                                                                                                       | not started |
+
+## Epic 3 plan (site cutover)
+
+Architecture: [ADR 0012](adr/0012-site-reads-vendure-at-request-time.md)
+(catalog pages render on demand in the Worker, islands ship from `dist`,
+shared pricing package, basket is the Vendure active order). Principle 2
+ends here: epic 3 changes `src/`. Tina product collections stay until epic 4.
+Slices are PRs against `feat/vendure-materials`:
+
+- ⬜ **S1 Shop-API catalog surface + site data layer** — the shop API exposes
+  what the site renders (product definitions, materials and colors, thread
+  colors, product groups, display fields, assets); the site gets a typed,
+  zod-validated shop-API client used from Astro frontmatter
+- 🟡 **S2 Shared pricing package** (package and backend done; the site is wired in S3) — one pure workspace package used by the
+  backend pricing strategy and the configurator; replaces the backend's own
+  copy and the site's `src/lib/pricing` configurator pricing (ADR 0002)
+- ⬜ **S3 Product page from Vendure** (needs S1, S2) — on-demand product
+  detail page, configurator fed by the canonical definition, Vendure asset
+  images, edge caching
+- ⬜ **S4 Catalog list, materials, search, sitemap** (needs S1) — on-demand
+  product list (ADR 0004 dataset per request) and material pages; catalog
+  sitemap and search replacements for the prerender-only integrations
+- ⬜ **S5 Vendure basket and checkout** (needs S1, S2) — the basket is the
+  active order; checkout carries contact, address, delivery and message;
+  `submitQuoteOrder` and client basket pricing retired; emails built from
+  `selections`
+  Stale-page UX (owner requirement, catalog pages are cached ~60 s): a
+  changed price shows the server price on the line with a visible notice; a
+  line whose option is no longer offered is marked with the reason and can be
+  edited or removed, and checkout is blocked until it is resolved (never
+  silently changed); a refused add-to-basket explains why and offers a reload
+- ⬜ **S7 Markdown descriptions** (after S1; parallel with S3/S4) — product
+  and material long descriptions are stored as markdown so the site drives
+  their styling; a dashboard markdown editor (Vendure's exported rich-text
+  toolbar/image dialog + TipTap's markdown extension) replaces
+  `Product.description` and edits a new translatable material description;
+  images reference Vendure assets host-independently (`asset:<id>`) and the
+  site renders them as asset-server preset URLs; raw HTML is disabled; the
+  preview import carries the Tina bodies
+- ⬜ **S6 Prod cutover** — hand migration of the catalog into prod
+  (`converge-facets`, `import-facets`, products), switch, verify
 
 ## Post-cutover follow-ups
 

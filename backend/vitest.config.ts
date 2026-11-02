@@ -11,6 +11,7 @@ export default defineConfig({
         "../packages/product-definition/src/node.ts",
         import.meta.url
       ).pathname,
+      "@babasarok/pricing": new URL("../packages/pricing/src/index.ts", import.meta.url).pathname,
       "@babasarok/product-definition": new URL(
         "../packages/product-definition/src/index.ts",
         import.meta.url

@@ -1,6 +1,5 @@
 import type { ProductDefinition } from "@babasarok/product-definition";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
-import { LanguageCode } from "@vendure/core";
 import { describe, expect, it } from "vitest";
 import { LineSelectionsError, parseLineSelections } from "./line-selection";
 import { computeLineUnitPrice, LinePricingError, valueConfiguredLine } from "./line-price";
@@ -241,6 +240,26 @@ describe("computeLineUnitPrice", () => {
     expect(price).toBe(Math.round((14_000 + 400 + 2500) * 3.8));
   });
 
+  it("rounds a length product's unit price once, to whole forints", () => {
+    const perMetre995 = ProductDefinitionSchema.parse({
+      ...lengthProduct,
+      basePrice: 995,
+      fields: lengthProduct.fields.filter((field) => field.id === "sizes"),
+    });
+
+    expect(
+      computeLineUnitPrice({
+        productName: "Termék",
+        definition: perMetre995,
+        variantListPrice: 0,
+        optionCodes: new Map([["sizes", "380"]]),
+        selections: {},
+        lengthCm: 335,
+        languageCode: "hu",
+      })
+    ).toBe(3333);
+  });
+
   it("throws when a length-priced line has no length", () => {
     expect(() =>
       computeLineUnitPrice({
@@ -466,7 +485,7 @@ describe("valueConfiguredLine", () => {
     optionCodes: new Map<string, string>(),
     selections: {},
     lengthCm: null,
-    languageCode: LanguageCode.hu,
+    languageCode: "hu",
   };
 
   it("prices an orderable definition", () => {

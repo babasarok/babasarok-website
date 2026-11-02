@@ -1,10 +1,12 @@
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
-import type { LineSelections } from "./line-selection";
+import type { LineSelectionRecord, LineSelections } from "./line-selection.js";
 import {
   MAX_SELECTION_TEXT_LENGTH,
   referencedMaterialIds,
+  formatSelectionProblem,
   selectionsRejection,
+  validateSelections,
 } from "./selection-validation";
 
 const definition = ProductDefinitionSchema.parse({
@@ -112,5 +114,85 @@ describe("referencedMaterialIds", () => {
         c: { kind: "input", value: "" },
       })
     ).toEqual(["len"]);
+  });
+});
+
+describe("validateSelections", () => {
+  it("reports every problem with a structured code, not only the first", () => {
+    const problems = validateSelections({
+      definition,
+      selections: {
+        ismeretlen: { kind: "input", value: "x" },
+        meret: { kind: "input", value: "x" },
+        nev: { kind: "input", value: "ÁÉ" },
+      },
+      materialColors,
+    });
+
+    expect(problems).toEqual([
+      { code: "unknown-field", fieldId: "ismeretlen" },
+      { code: "wrong-kind", fieldId: "meret" },
+      { code: "invalid", fieldId: "nev", reason: "bad-format", subject: "value" },
+    ]);
+  });
+
+  it("formats a problem in Hungarian", () => {
+    const [problem] = validateSelections({
+      definition,
+      selections: { nev: { kind: "input", value: "ÁÉ" } },
+      materialColors,
+    });
+
+    expect(
+      formatSelectionProblem(problem, { definition, productName: "Párna", languageCode: "hu" })
+    ).toBe('A(z) "Párna" "Név" mezőjének választása érvénytelen: az érték formátuma érvénytelen.');
+  });
+
+  it("requires as many colours as the material field's fixed colour count", () => {
+    expect(reject({ anyag: { kind: "material", materialId: "len", colors: ["piros"] } })).toContain(
+      "legalább 2 színt"
+    );
+    expect(
+      reject({ anyag: { kind: "material", materialId: "len", colors: ["piros", "kek"] } })
+    ).toBeUndefined();
+  });
+
+  it("requires the colour count another field supplies, once that field is answered", () => {
+    const fromField = ProductDefinitionSchema.parse({
+      ...definition,
+      fields: [
+        {
+          kind: "choice",
+          id: "fonas",
+          label: { hu: "Fonás" },
+          presentation: "radio",
+          visibility: { kind: "always" },
+          options: [{ id: "2", label: { hu: "Kettő" }, price: 0 }],
+        },
+        {
+          kind: "material",
+          id: "anyag",
+          label: { hu: "Anyag" },
+          options: [{ materialId: "len", price: 0 }],
+          colorCount: { kind: "from-field", fieldId: "fonas" },
+        },
+      ],
+    });
+    const material = {
+      kind: "material",
+      materialId: "len",
+      colors: ["piros"],
+    } satisfies LineSelectionRecord;
+
+    expect(
+      validateSelections({
+        definition: fromField,
+        selections: { fonas: { kind: "option", value: "2" }, anyag: material },
+        materialColors,
+      })
+    ).toEqual([{ code: "invalid", fieldId: "anyag", reason: "too-few-colors", required: 2 }]);
+    expect(
+      validateSelections({ definition: fromField, selections: { anyag: material }, materialColors })
+    ).toEqual([]);
   });
 });

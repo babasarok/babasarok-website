@@ -1,6 +1,11 @@
 # ADR 0002: Pure, runtime-agnostic pricing & validation core
 
-- **Status:** accepted (partially implemented — see open tasks)
+- **Status:** accepted (partially implemented — see open tasks). Decision 4's
+  boundary is now met for the server side by `packages/pricing`, a separate
+  workspace package whose manifest (zod and the product-definition package, no
+  DOM or node types) enforces it by construction instead of an ESLint rule; the
+  site-side core in `src/lib/` is replaced when the configurator is rewired
+  (roadmap S3).
 - **Date:** 2026-08-31
 
 ## Context

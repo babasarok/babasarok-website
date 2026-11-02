@@ -33,12 +33,14 @@ export function vendureDashboard(): AstroIntegration {
         logger.info(`building the vendure dashboard → ${outDir}`);
         // The vendureDashboardPlugin introspects vendure-config.ts by loading
         // it, which requires the shared package's compiled output.
-        const pkg = spawnSync("pnpm", ["-C", "packages/product-definition", "run", "build"], {
-          stdio: "inherit",
-        });
+        for (const name of ["product-definition", "pricing"]) {
+          const pkg = spawnSync("pnpm", ["-C", `packages/${name}`, "run", "build"], {
+            stdio: "inherit",
+          });
 
-        if (pkg.status !== 0) {
-          throw new Error(`product-definition build failed with exit code ${pkg.status}`);
+          if (pkg.status !== 0) {
+            throw new Error(`${name} build failed with exit code ${pkg.status}`);
+          }
         }
 
         const result = spawnSync(

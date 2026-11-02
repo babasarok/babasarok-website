@@ -1,6 +1,6 @@
 import { Logger } from "@vendure/core";
 import type { ProductDefinition as CanonicalProductDefinition } from "@babasarok/product-definition";
-import { parseLineSelections, type LineSelections } from "../pricing/line-selection";
+import { parseLineSelections, type LineSelections } from "@babasarok/pricing";
 import { countActivePromotionsUsing, type PromotionWindow } from "./active-promotions";
 import { materialPicks } from "./material-picks";
 import { allocateSetDiscounts, type AllocationLine, type SetInstance } from "./set-allocation";

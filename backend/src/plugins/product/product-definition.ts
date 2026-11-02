@@ -3,7 +3,7 @@ import {
   type ProductDefinition,
   type ProductField,
 } from "@babasarok/product-definition";
-import { dependencyOrder, isVisible } from "./field-visibility";
+import { dependencyOrder, isVisible } from "@babasarok/pricing";
 
 export type ProductDefinitionValidationResult =
   { success: true; definition: ProductDefinition } | { success: false; errors: string[] };
