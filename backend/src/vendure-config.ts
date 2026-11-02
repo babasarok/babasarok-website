@@ -294,6 +294,20 @@ export const config: VendureConfig = {
         ],
         nullable: true,
       },
+      {
+        name: "popularityRank",
+        type: "int",
+        min: 1,
+        label: [{ languageCode: LanguageCode.hu, value: "Népszerűségi sorrend" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value:
+              "A „Népszerű” rendezés sorrendje (1 = legelöl). Az üresen hagyott termékek a rangsoroltak után kerülnek.",
+          },
+        ],
+        nullable: true,
+      },
     ],
     Collection: [
       {
