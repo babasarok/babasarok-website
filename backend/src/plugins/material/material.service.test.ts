@@ -4,12 +4,11 @@ import type { z } from "zod";
 import { materialInUseError } from "./material.service";
 
 function definition(
-  label: string,
+  id: string,
   overrides: Partial<z.input<typeof ProductDefinitionSchema>> = {}
 ): ProductDefinition {
   return ProductDefinitionSchema.parse({
-    id: "teszt-termek",
-    label,
+    id,
     type: "parna",
     orderable: true,
     basePrice: 1000,
@@ -33,36 +32,36 @@ function materialField(
 }
 
 describe("materialInUseError", () => {
-  it("refuses deletion with the MATERIAL_IN_USE code and the referencing label", () => {
+  it("refuses deletion with the MATERIAL_IN_USE code and the referencing definition id", () => {
     const error = materialInUseError("pamut", [
-      definition("Párna", { fields: [materialField("pamut")] }),
-      definition("Zsák"),
+      definition("parna", { fields: [materialField("pamut")] }),
+      definition("zsak"),
     ]);
 
     expect(error?.extensions.code).toBe("MATERIAL_IN_USE");
-    expect(error?.message).toContain("Párna");
-    expect(error?.message).not.toContain("Zsák");
+    expect(error?.message).toContain("parna");
+    expect(error?.message).not.toContain("zsak");
   });
 
   it("allows deletion when nothing references the material", () => {
     const error = materialInUseError("pamut", [
-      definition("Zsák", { fields: [materialField("velur")] }),
+      definition("zsak", { fields: [materialField("velur")] }),
     ]);
 
     expect(error).toBeNull();
   });
 
-  it("refuses when two definitions reference the material, listing both labels", () => {
+  it("refuses when two definitions reference the material, listing both ids", () => {
     const error = materialInUseError("pamut", [
-      definition("Párna", { fields: [materialField("pamut")] }),
-      definition("Rácsvédő", {
+      definition("parna", { fields: [materialField("pamut")] }),
+      definition("racsvedo", {
         fields: [materialField("velur")],
         forbiddenMaterialCombinations: [["velur", "pamut"]],
       }),
     ]);
 
     expect(error?.extensions.code).toBe("MATERIAL_IN_USE");
-    expect(error?.message).toContain("Párna");
-    expect(error?.message).toContain("Rácsvédő");
+    expect(error?.message).toContain("parna");
+    expect(error?.message).toContain("racsvedo");
   });
 });

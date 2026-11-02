@@ -37,4 +37,9 @@ export class ProductDefinition extends VendureEntity {
   /** Why the last sync attempt failed, for the dashboard's status display. */
   @Column({ type: "text", nullable: true })
   syncError!: string | null;
+
+  /** The native product's hu name, filled at read time by the service (ADR
+   * 0011 decision 1: the native Product owns the name) — a projection, never
+   * persisted. */
+  label!: string;
 }

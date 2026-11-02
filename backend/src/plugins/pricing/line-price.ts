@@ -247,7 +247,7 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
 
     if (lengthCm === null || !Number.isInteger(lengthCm) || lengthCm <= 0) {
       throw new LinePricingError(
-        `A(z) "${definition.label}" méteráru, de a rendelési soron nincs hossz megadva.`
+        `A(z) "${definition.id}" méteráru, de a rendelési soron nincs hossz megadva.`
       );
     }
 

@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import { nativeStateDiff, nativeStateHash, type NativeProductState } from "./sync-state";
 
 const nativeState: NativeProductState = {
-  slug: "babafeszek",
-  name: "Babafészek",
   optionGroups: [
     {
       code: "meret",
@@ -35,8 +33,6 @@ const nativeState: NativeProductState = {
 describe("nativeStateHash", () => {
   it("is stable under option-group, option, variant and facet-value ordering", () => {
     const reordered: NativeProductState = {
-      slug: "babafeszek",
-      name: "Babafészek",
       optionGroups: [
         {
           code: "meret",
@@ -109,15 +105,6 @@ describe("nativeStateDiff", () => {
     };
 
     expect(nativeStateDiff(reordered, nativeState)).toEqual([]);
-  });
-
-  it("reports renamed product name and slug", () => {
-    const drifted: NativeProductState = { ...nativeState, name: "Más", slug: "mas" };
-
-    expect(nativeStateDiff(nativeState, drifted)).toEqual([
-      { kind: "rename", label: 'Slug eltér: "mas" → "babafeszek"' },
-      { kind: "rename", label: 'Terméknév eltér: "Más" → "Babafészek"' },
-    ]);
   });
 
   it("reports created and removed option groups and options", () => {

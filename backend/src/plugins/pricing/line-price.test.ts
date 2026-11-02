@@ -6,7 +6,6 @@ import { computeLineUnitPrice, LinePricingError } from "./line-price";
 
 const unitProduct = ProductDefinitionSchema.parse({
   id: "parna",
-  label: "Párna",
   type: "parna",
   orderable: true,
   basePrice: 9000,
@@ -80,7 +79,6 @@ const unitProduct = ProductDefinitionSchema.parse({
 
 const lengthProduct = ProductDefinitionSchema.parse({
   id: "fonott-racsvedo",
-  label: "Fonott Rácsvédő",
   type: "racsvedo",
   orderable: true,
   basePrice: 0,

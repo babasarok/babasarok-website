@@ -31,7 +31,8 @@ interface ProductDefinitionListGraph {
   totalItems: number;
 }
 
-/** The admin-API projection of a definition row (the list fields come from the definition itself). */
+/** The admin-API projection of a definition row; `label` is the native
+ * product's hu name (ADR 0011 decision 1), the rest comes from the definition. */
 export interface ProductDefinitionGraph {
   id: ID;
   productId: string;
@@ -60,7 +61,7 @@ function toGraph(
   return {
     id: row.id,
     productId: row.productId,
-    label: row.definition.label,
+    label: row.label,
     type: row.definition.type,
     orderable: row.definition.orderable,
     basePrice: row.definition.basePrice,
@@ -134,9 +135,10 @@ export class ProductDefinitionResolver {
   @Allow(Permission.UpdateCatalog)
   async createProductDefinition(
     @Ctx() ctx: RequestContext,
-    @Args("definition") definition: unknown
+    @Args("definition") definition: unknown,
+    @Args("name") name: string
   ): Promise<ProductDefinitionGraph> {
-    const row = await this.productDefinitionService.createProductDefinition(ctx, definition);
+    const row = await this.productDefinitionService.createProductDefinition(ctx, definition, name);
     const staleness = await this.productDefinitionService.staleness(ctx, [row]);
 
     return toGraph(row, staleness.get(row.productId) ?? false);
@@ -275,7 +277,7 @@ export const productDefinitionSchema = gql`
   }
 
   extend type Mutation {
-    createProductDefinition(definition: JSON!): ProductDefinition!
+    createProductDefinition(definition: JSON!, name: String!): ProductDefinition!
     updateProductDefinition(
       productId: String!
       definition: JSON!
