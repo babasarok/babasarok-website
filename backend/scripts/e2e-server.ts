@@ -83,15 +83,23 @@ async function seedMaterials(dbUrl: string): Promise<void> {
   try {
     for (const material of SEED_MATERIALS) {
       const inserted = await pool.query<{ id: number }>(
-        "INSERT INTO material (slug, label) VALUES ($1, $2) RETURNING id",
-        [material.slug, material.label]
+        "INSERT INTO material (slug) VALUES ($1) RETURNING id",
+        [material.slug]
       );
       const materialId = inserted.rows[0].id;
+      await pool.query(
+        'INSERT INTO material_translation ("languageCode", label, "baseId") VALUES ($1, $2, $3)',
+        ["hu", material.label, materialId]
+      );
 
       for (const [position, color] of material.colors.entries()) {
+        const insertedColor = await pool.query<{ id: number }>(
+          'INSERT INTO material_color ("colorId", hex, "materialId", position) VALUES ($1, $2, $3, $4) RETURNING id',
+          [color.id, color.hex, materialId, position]
+        );
         await pool.query(
-          'INSERT INTO material_color ("colorId", label, hex, "materialId", position) VALUES ($1, $2, $3, $4, $5)',
-          [color.id, color.label, color.hex, materialId, position]
+          'INSERT INTO material_color_translation ("languageCode", label, "baseId") VALUES ($1, $2, $3)',
+          ["hu", color.label, insertedColor.rows[0].id]
         );
       }
     }

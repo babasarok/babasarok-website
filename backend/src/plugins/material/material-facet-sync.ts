@@ -23,10 +23,25 @@ import { Material } from "./material.entity";
 /** Vendure's built-in facet-value collection filter (default-collection-filters). */
 const FACET_VALUE_FILTER_CODE = "facet-value-filter";
 
-function huName(
-  translations: Array<{ languageCode: LanguageCode; name: string }>
-): string | undefined {
-  return translations.find((translation) => translation.languageCode === LanguageCode.hu)?.name;
+interface TranslatedName {
+  languageCode: LanguageCode;
+  name: string;
+}
+
+function namesOf(
+  translations: Array<{ languageCode: LanguageCode; label: string }>
+): TranslatedName[] {
+  return translations
+    .filter((translation) => translation.label !== "")
+    .map((translation) => ({ languageCode: translation.languageCode, name: translation.label }));
+}
+
+function namesUpToDate(existing: TranslatedName[], desired: TranslatedName[]): boolean {
+  return desired.every((name) =>
+    existing.some(
+      (candidate) => candidate.languageCode === name.languageCode && candidate.name === name.name
+    )
+  );
 }
 
 /** Facet values keyed by `<facetId>/<code>`; duplicate codes within a facet are a broken state. */
@@ -71,13 +86,13 @@ export class MaterialFacetSync {
     const byKey = facetValuesByKey(values);
     const materialValue = await this.upsertValue(ctx, materialFacet, byKey, {
       code: material.slug,
-      name: material.label,
+      names: namesOf(material.translations),
     });
 
     for (const color of material.colors) {
       await this.upsertValue(ctx, colorFacet, byKey, {
         code: colorFacetValueCode(material.slug, color.colorId),
-        name: color.label,
+        names: namesOf(color.translations),
       });
     }
 
@@ -170,21 +185,21 @@ export class MaterialFacetSync {
     ctx: RequestContext,
     facet: Facet,
     byKey: ReadonlyMap<string, FacetValue>,
-    desired: { code: string; name: string }
+    desired: { code: string; names: TranslatedName[] }
   ): Promise<FacetValue> {
     const existing = byKey.get(`${Number(facet.id)}/${desired.code}`);
 
     if (existing === undefined) {
       return this.facetValueService.create(ctx, facet, {
         code: desired.code,
-        translations: [{ languageCode: LanguageCode.hu, name: desired.name }],
+        translations: desired.names,
       });
     }
 
-    if (huName(existing.translations) !== desired.name) {
+    if (!namesUpToDate(existing.translations, desired.names)) {
       return this.facetValueService.update(ctx, {
         id: existing.id,
-        translations: [{ languageCode: LanguageCode.hu, name: desired.name }],
+        translations: desired.names,
       });
     }
 
@@ -201,9 +216,11 @@ export class MaterialFacetSync {
 
     if (existing === null) {
       await this.collectionService.create(ctx, {
-        translations: [
-          { languageCode: LanguageCode.hu, name: material.label, slug, description: "" },
-        ],
+        translations: namesOf(material.translations).map((name) => ({
+          ...name,
+          slug,
+          description: "",
+        })),
         filters: [
           {
             code: FACET_VALUE_FILTER_CODE,
@@ -217,10 +234,12 @@ export class MaterialFacetSync {
       return;
     }
 
-    if (huName(existing.translations) !== material.label) {
+    const desired = namesOf(material.translations);
+
+    if (!namesUpToDate(existing.translations, desired)) {
       await this.collectionService.update(ctx, {
         id: existing.id,
-        translations: [{ languageCode: LanguageCode.hu, name: material.label }],
+        translations: desired.map((name) => ({ ...name, slug })),
       });
     }
   }

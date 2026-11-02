@@ -2,6 +2,11 @@
 
 Status: accepted
 
+Decision 6 is implemented. `MaterialColor` gained a surrogate `id` (unique per
+material + color code) in place of its composite primary key, because
+`TranslatableSaver` and `Translation<T>` require a single `id` on the
+translatable entity.
+
 ## Context
 
 A review of epic 2 against "the Vendure way" (owner maintainability first)

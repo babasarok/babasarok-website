@@ -20,6 +20,12 @@ export {
   type ProductRevision,
 } from "./model.js";
 export {
+  DEFAULT_TEXT_LANGUAGE,
+  LocalizedTextSchema,
+  resolveText,
+  type LocalizedText,
+} from "./localized-text.js";
+export {
   ColorAppearanceSchema,
   MaterialColorDefinitionSchema,
   MaterialColorIdSchema,

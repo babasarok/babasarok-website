@@ -1,3 +1,4 @@
+import type { LocalizedText } from "@babasarok/product-definition";
 import type { VariantPlan } from "./variant-plan";
 
 /** The sync-owned facets: namespaced codes so admin-created facets can never collide. */
@@ -12,14 +13,14 @@ export const THREAD_COLOR_FACET_CODE = "babasarok-thread-color";
 export const MATERIAL_COLLECTION_SLUG_PREFIX = "material-";
 
 export interface MaterialFacetData {
-  label: string;
-  colors: ReadonlyArray<{ id: string; label: string }>;
+  label: LocalizedText;
+  colors: ReadonlyArray<{ id: string; label: LocalizedText }>;
 }
 
 export interface PlannedFacetValue {
   facetCode: string;
   code: string;
-  name: string;
+  name: LocalizedText;
 }
 
 export function colorFacetValueCode(materialSlug: string, colorId: string): string {
@@ -29,7 +30,7 @@ export function colorFacetValueCode(materialSlug: string, colorId: string): stri
 /** The facet values a material demands: its material value plus one per color. */
 export function materialFacetValues(material: {
   slug: string;
-  label: string;
+  label: LocalizedText;
   colors: MaterialFacetData["colors"];
 }): PlannedFacetValue[] {
   return [

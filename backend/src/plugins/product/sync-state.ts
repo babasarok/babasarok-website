@@ -1,14 +1,14 @@
-import { canonicalJson } from "@babasarok/product-definition";
+import { canonicalJson, type LocalizedText } from "@babasarok/product-definition";
 import { createHash } from "node:crypto";
 
 export interface NativeOptionState {
   code: string;
-  name: string;
+  name: LocalizedText;
 }
 
 export interface NativeOptionGroupState {
   code: string;
-  name: string;
+  name: LocalizedText;
   options: NativeOptionState[];
 }
 
@@ -20,7 +20,7 @@ export interface NativeVariantOptionState {
 
 export interface NativeVariantState {
   sku: string;
-  name: string;
+  name: LocalizedText;
   price: number;
   options: NativeVariantOptionState[];
   facetValues: string[];
@@ -62,6 +62,10 @@ export function nativeStateDiff(
   return diffs;
 }
 
+function sameText(a: LocalizedText, b: LocalizedText): boolean {
+  return canonicalJson(a) === canonicalJson(b);
+}
+
 function byCode(a: [string, unknown], b: [string, unknown]): number {
   return a[0].localeCompare(b[0]);
 }
@@ -80,15 +84,15 @@ function optionGroupDiffs(
     if (existing === undefined) {
       diffs.push({
         kind: "presence",
-        label: `Opciócsoport "${code}" (${group.name}) létrehozásra vár`,
+        label: `Opciócsoport "${code}" (${group.name.hu}) létrehozásra vár`,
       });
       continue;
     }
 
-    if (group.name !== existing.name) {
+    if (!sameText(group.name, existing.name)) {
       diffs.push({
         kind: "rename",
-        label: `Opciócsoport "${code}" átnevezve: "${existing.name}" → "${group.name}"`,
+        label: `Opciócsoport "${code}" átnevezve: "${existing.name.hu}" → "${group.name.hu}"`,
       });
     }
 
@@ -99,7 +103,7 @@ function optionGroupDiffs(
     if (!plannedByCode.has(code)) {
       diffs.push({
         kind: "presence",
-        label: `Opciócsoport "${code}" (${group.name}) törlésre vár`,
+        label: `Opciócsoport "${code}" (${group.name.hu}) törlésre vár`,
       });
     }
   }
@@ -122,12 +126,12 @@ function optionDiffs(
     if (existing === undefined) {
       diffs.push({
         kind: "presence",
-        label: `Opció "${groupCode}/${code}" (${option.name}) létrehozásra vár`,
+        label: `Opció "${groupCode}/${code}" (${option.name.hu}) létrehozásra vár`,
       });
-    } else if (option.name !== existing.name) {
+    } else if (!sameText(option.name, existing.name)) {
       diffs.push({
         kind: "rename",
-        label: `Opció "${groupCode}/${code}" átnevezve: "${existing.name}" → "${option.name}"`,
+        label: `Opció "${groupCode}/${code}" átnevezve: "${existing.name.hu}" → "${option.name.hu}"`,
       });
     }
   }
@@ -136,7 +140,7 @@ function optionDiffs(
     if (!plannedByCode.has(code)) {
       diffs.push({
         kind: "presence",
-        label: `Opció "${groupCode}/${code}" (${option.name}) törlésre vár`,
+        label: `Opció "${groupCode}/${code}" (${option.name.hu}) törlésre vár`,
       });
     }
   }
@@ -158,15 +162,15 @@ function variantDiffs(
     if (existing === undefined) {
       diffs.push({
         kind: "presence",
-        label: `Változat "${sku}" (${variant.name}) létrehozásra vár`,
+        label: `Változat "${sku}" (${variant.name.hu}) létrehozásra vár`,
       });
       continue;
     }
 
-    if (variant.name !== existing.name) {
+    if (!sameText(variant.name, existing.name)) {
       diffs.push({
         kind: "rename",
-        label: `Változat "${sku}" átnevezve: "${existing.name}" → "${variant.name}"`,
+        label: `Változat "${sku}" átnevezve: "${existing.name.hu}" → "${variant.name.hu}"`,
       });
     }
 
@@ -190,7 +194,7 @@ function variantDiffs(
     if (!plannedBySku.has(sku)) {
       diffs.push({
         kind: "presence",
-        label: `Változat "${sku}" (${variant.name}) törlésre vár`,
+        label: `Változat "${sku}" (${variant.name.hu}) törlésre vár`,
       });
     }
   }

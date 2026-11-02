@@ -21,27 +21,33 @@ const babafeszek: ProductDefinition = ProductDefinitionSchema.parse({
     {
       kind: "choice",
       id: "meret",
-      label: "Méret",
+      label: { hu: "Méret" },
       presentation: "radio",
       visibility: { kind: "always" },
       options: [
-        { id: "35x65", label: "Normál", price: 0 },
-        { id: "40x75", label: "Közepes", price: 1500 },
-        { id: "50x90", label: "XXL", price: 5000 },
+        { id: "35x65", label: { hu: "Normál" }, price: 0 },
+        { id: "40x75", label: { hu: "Közepes" }, price: 1500 },
+        { id: "50x90", label: { hu: "XXL" }, price: 5000 },
       ],
     },
-    { kind: "toggle", id: "betet", label: "Betét", visibility: { kind: "always" }, price: 3700 },
+    {
+      kind: "toggle",
+      id: "betet",
+      label: { hu: "Betét" },
+      visibility: { kind: "always" },
+      price: 3700,
+    },
     {
       kind: "toggle",
       id: "fodor",
-      label: "Fodorral kérem",
+      label: { hu: "Fodorral kérem" },
       visibility: { kind: "always" },
       price: 4000,
     },
     {
       kind: "material",
       id: "anyag1",
-      label: "Anyag 1",
+      label: { hu: "Anyag 1" },
       colorCount: { kind: "fixed", count: 1 },
       options: [
         { materialId: "teddy", price: 0 },
@@ -52,7 +58,7 @@ const babafeszek: ProductDefinition = ProductDefinitionSchema.parse({
     {
       kind: "material",
       id: "anyag2",
-      label: "Anyag 2",
+      label: { hu: "Anyag 2" },
       colorCount: { kind: "fixed", count: 1 },
       options: [
         { materialId: "teddy", price: 0 },
@@ -65,14 +71,14 @@ const babafeszek: ProductDefinition = ProductDefinitionSchema.parse({
 });
 
 const materials: ReadonlyMap<string, MaterialFacetData> = new Map([
-  ["teddy", { label: "Teddy", colors: [{ id: "barna", label: "Barna" }] }],
-  ["wellsoft", { label: "Wellsoft", colors: [] }],
-  ["waffle", { label: "Waffle", colors: [{ id: "kek", label: "Kék" }] }],
+  ["teddy", { label: { hu: "Teddy" }, colors: [{ id: "barna", label: { hu: "Barna" } }] }],
+  ["wellsoft", { label: { hu: "Wellsoft" }, colors: [] }],
+  ["waffle", { label: { hu: "Waffle" }, colors: [{ id: "kek", label: { hu: "Kék" } }] }],
 ]);
 
 describe("planVariantCombinations", () => {
   it("generates one option group per variant-carrying field", () => {
-    const plan = planVariantCombinations(babafeszek, materials, "Babafészek");
+    const plan = planVariantCombinations(babafeszek, materials, { hu: "Babafészek" });
 
     expect(plan.optionGroups.map((group) => group.code)).toEqual([
       "meret",
@@ -82,14 +88,14 @@ describe("planVariantCombinations", () => {
       "anyag2",
     ]);
     expect(plan.optionGroups.find((group) => group.code === "anyag1")?.options).toEqual([
-      { code: "teddy", name: "Teddy", price: 0 },
-      { code: "wellsoft", name: "Wellsoft", price: 0 },
-      { code: "waffle", name: "Waffle", price: 0 },
+      { code: "teddy", name: { hu: "Teddy" }, price: 0 },
+      { code: "wellsoft", name: { hu: "Wellsoft" }, price: 0 },
+      { code: "waffle", name: { hu: "Waffle" }, price: 0 },
     ]);
   });
 
   it("enumerates the full product minus the forbidden combinations", () => {
-    const plan = planVariantCombinations(babafeszek, materials, "Babafészek");
+    const plan = planVariantCombinations(babafeszek, materials, { hu: "Babafészek" });
 
     expect(plan.variants).toHaveLength(3 * 2 * 2 * 3 * 3 - 3 * 2 * 2);
     expect(plan.bannedOmitted).toBe(3 * 2 * 2);
@@ -103,7 +109,7 @@ describe("planVariantCombinations", () => {
   });
 
   it("prices a variant as base plus every chosen option's price", () => {
-    const plan = planVariantCombinations(babafeszek, materials, "Babafészek");
+    const plan = planVariantCombinations(babafeszek, materials, { hu: "Babafészek" });
     const priced = plan.variants.find(
       (variant) =>
         variant.optionCodes.includes("40x75") &&
@@ -123,7 +129,7 @@ describe("planVariantCombinations", () => {
         {
           kind: "input",
           id: "szoveg",
-          label: "Szöveg",
+          label: { hu: "Szöveg" },
           visibility: { kind: "always" },
           required: true,
           price: 0,
@@ -131,7 +137,7 @@ describe("planVariantCombinations", () => {
         {
           kind: "embroidery",
           id: "himzes",
-          label: "Hímzés",
+          label: { hu: "Hímzés" },
           visibility: { kind: "always" },
           pricing: { kind: "per-word", pricePerWord: 500 },
         },
@@ -139,11 +145,11 @@ describe("planVariantCombinations", () => {
       forbiddenMaterialCombinations: [],
     });
 
-    const plan = planVariantCombinations(definition, materials, "Egyéb");
+    const plan = planVariantCombinations(definition, materials, { hu: "Egyéb" });
 
     expect(plan.optionGroups).toEqual([]);
     expect(plan.variants).toEqual([
-      { sku: "egyeb", name: "Egyéb", price: 15_000, optionCodes: [], materialSlugs: [] },
+      { sku: "egyeb", name: { hu: "Egyéb" }, price: 15_000, optionCodes: [], materialSlugs: [] },
     ]);
   });
 
@@ -155,19 +161,19 @@ describe("planVariantCombinations", () => {
         {
           kind: "choice",
           id: "szin",
-          label: "Szín",
+          label: { hu: "Szín" },
           presentation: "color",
           visibility: { kind: "always" },
           options: [
-            { id: "piros", label: "Piros", price: 0 },
-            { id: "kek", label: "Kék", price: 500 },
+            { id: "piros", label: { hu: "Piros" }, price: 0 },
+            { id: "kek", label: { hu: "Kék" }, price: 500 },
           ],
         },
       ],
     });
 
-    const plan = planVariantCombinations(definition, materials, "Babafészek");
-    const planned = plannedNativeState(definition, materials, "Babafészek");
+    const plan = planVariantCombinations(definition, materials, { hu: "Babafészek" });
+    const planned = plannedNativeState(definition, materials, { hu: "Babafészek" });
 
     expect(plan.optionGroups.map((group) => group.code)).toEqual([
       "meret",
@@ -191,7 +197,7 @@ describe("planVariantCombinations", () => {
       forbiddenMaterialCombinations: [],
     });
 
-    const plan = planVariantCombinations(definition, materials, "Rácsvédő");
+    const plan = planVariantCombinations(definition, materials, { hu: "Rácsvédő" });
 
     expect(plan.variants).toHaveLength(3 * 2 * 2 * 3 * 3);
     expect(plan.variants.every((variant) => variant.price === 0)).toBe(true);
@@ -205,14 +211,14 @@ describe("planVariantCombinations", () => {
         {
           kind: "toggle",
           id: "gumiskoto",
-          label: "Gumis átkötő",
+          label: { hu: "Gumis átkötő" },
           visibility: { kind: "always" },
           price: 800,
         },
         {
           kind: "toggle",
           id: "masni",
-          label: "Masni",
+          label: { hu: "Masni" },
           visibility: { kind: "when-equal", fieldId: "gumiskoto", value: true },
           price: 500,
         },
@@ -220,7 +226,7 @@ describe("planVariantCombinations", () => {
       forbiddenMaterialCombinations: [],
     });
 
-    const plan = planVariantCombinations(definition, materials, "Pólya");
+    const plan = planVariantCombinations(definition, materials, { hu: "Pólya" });
     const priceOf = (codes: readonly string[]): number | undefined =>
       plan.variants.find((variant) => variant.optionCodes.join("-") === codes.join("-"))?.price;
 
@@ -239,15 +245,15 @@ describe("planVariantCombinations", () => {
         {
           kind: "choice",
           id: "meret",
-          label: "Méret",
+          label: { hu: "Méret" },
           presentation: "radio",
           visibility: { kind: "always" },
-          options: [{ id: "35x65", label: "Normál", price: 0 }],
+          options: [{ id: "35x65", label: { hu: "Normál" }, price: 0 }],
         },
         {
           kind: "material",
           id: "anyag",
-          label: "Anyag",
+          label: { hu: "Anyag" },
           colorCount: { kind: "fixed", count: 1 },
           options: [{ materialId: "teddy", price: 0 }],
         },
@@ -255,9 +261,9 @@ describe("planVariantCombinations", () => {
       forbiddenMaterialCombinations: [],
     });
 
-    const plan = planVariantCombinations(definition, materials, "Egyedi");
+    const plan = planVariantCombinations(definition, materials, { hu: "Egyedi" });
 
-    expect(plan.variants.map((variant) => variant.name)).toEqual(["Egyedi (Normál, Teddy)"]);
+    expect(plan.variants.map((variant) => variant.name.hu)).toEqual(["Egyedi (Normál, Teddy)"]);
   });
 
   it("qualifies only the values that repeat across groups in the same variant", () => {
@@ -268,7 +274,7 @@ describe("planVariantCombinations", () => {
         {
           kind: "material",
           id: "kulso",
-          label: "Külső anyag",
+          label: { hu: "Külső anyag" },
           colorCount: { kind: "fixed", count: 1 },
           options: [
             { materialId: "teddy", price: 0 },
@@ -278,7 +284,7 @@ describe("planVariantCombinations", () => {
         {
           kind: "material",
           id: "belso",
-          label: "Belső anyag",
+          label: { hu: "Belső anyag" },
           colorCount: { kind: "fixed", count: 1 },
           options: [
             { materialId: "teddy", price: 0 },
@@ -289,9 +295,9 @@ describe("planVariantCombinations", () => {
       forbiddenMaterialCombinations: [],
     });
 
-    const plan = planVariantCombinations(definition, materials, "Keverék");
+    const plan = planVariantCombinations(definition, materials, { hu: "Keverék" });
 
-    expect(plan.variants.map((variant) => variant.name)).toEqual([
+    expect(plan.variants.map((variant) => variant.name.hu)).toEqual([
       "Keverék (Külső anyag: Teddy, Belső anyag: Teddy)",
       "Keverék (Teddy, Wellsoft)",
       "Keverék (Waffle, Teddy)",
@@ -306,7 +312,7 @@ describe("planVariantCombinations", () => {
     ): Extract<ProductDefinitionInput["fields"][number], { kind: "material" }> => ({
       kind: "material",
       id,
-      label,
+      label: { hu: label },
       colorCount: { kind: "fixed", count: 1 },
       options: [
         { materialId: "teddy", price: 0 },
@@ -325,9 +331,9 @@ describe("planVariantCombinations", () => {
       forbiddenMaterialCombinations: [],
     });
 
-    const plan = planVariantCombinations(definition, materials, "Három");
+    const plan = planVariantCombinations(definition, materials, { hu: "Három" });
     const nameOf = (codes: readonly string[]): string | undefined =>
-      plan.variants.find((variant) => variant.optionCodes.join("-") === codes.join("-"))?.name;
+      plan.variants.find((variant) => variant.optionCodes.join("-") === codes.join("-"))?.name.hu;
 
     expect(nameOf(["teddy", "teddy", "teddy"])).toBe(
       "Három (Külső: Teddy, Középső: Teddy, Belső: Teddy)"
@@ -340,7 +346,7 @@ describe("planVariantCombinations", () => {
 
 describe("plannedNativeState", () => {
   it("produces exactly the native state a sync writes, hashable for staleness", () => {
-    const planned = plannedNativeState(babafeszek, materials, "Babafészek");
+    const planned = plannedNativeState(babafeszek, materials, { hu: "Babafészek" });
 
     // The sync derives the variant names from the native product's name and
     // the groups/variants from the plan; the staleness flag compares hashes
@@ -358,7 +364,7 @@ describe("plannedNativeState", () => {
   });
 
   it("carries the materials' facet values on every variant, and none without material fields", () => {
-    const planned = plannedNativeState(babafeszek, materials, "Babafészek");
+    const planned = plannedNativeState(babafeszek, materials, { hu: "Babafészek" });
 
     expect(
       planned.variants.find((variant) => variant.sku === "babafeszek--35x65-nem-nem-wellsoft-teddy")
@@ -373,14 +379,14 @@ describe("plannedNativeState", () => {
         forbiddenMaterialCombinations: [],
       }),
       materials,
-      "Egyéb"
+      { hu: "Egyéb" }
     );
 
     expect(choiceOnly.variants[0]?.facetValues).toEqual([]);
   });
 
   it("reads facet drift into the hash", () => {
-    const planned = plannedNativeState(babafeszek, materials, "Babafészek");
+    const planned = plannedNativeState(babafeszek, materials, { hu: "Babafészek" });
     const refaceted: NativeProductState = {
       ...planned,
       variants: planned.variants.map((variant) => ({ ...variant, facetValues: [] })),

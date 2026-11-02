@@ -16,30 +16,30 @@ import { productRevision } from "./revision";
 
 const inputFixture: z.input<typeof InputFieldSchema> = {
   id: "szoveg",
-  label: "Szöveg",
+  label: { hu: "Szöveg" },
   kind: "input",
   visibility: { kind: "always" },
   required: true,
   price: 0,
-  placeholder: "Név",
+  placeholder: { hu: "Név" },
   pattern: "^[a-z]+$",
-  suggestions: [{ value: "Nez", label: "Nez" }],
+  suggestions: [{ value: "Nez", label: { hu: "Nez" } }],
 };
 
 const choiceFixture = (
   presentation: z.input<typeof ChoiceFieldSchema>["presentation"]
 ): z.input<typeof ChoiceFieldSchema> => ({
   id: "szin",
-  label: "Szín",
+  label: { hu: "Szín" },
   kind: "choice",
   presentation,
   visibility: { kind: "when-present", fieldId: "szin" },
-  options: [{ id: "feher", label: "Fehér", price: 100 }],
+  options: [{ id: "feher", label: { hu: "Fehér" }, price: 100 }],
 });
 
 const toggleFixture: z.input<typeof ToggleFieldSchema> = {
   id: "varr",
-  label: "Varrás",
+  label: { hu: "Varrás" },
   kind: "toggle",
   visibility: { kind: "when-equal", fieldId: "szin", value: true },
   price: 500,
@@ -47,7 +47,7 @@ const toggleFixture: z.input<typeof ToggleFieldSchema> = {
 
 const materialFixture: z.input<typeof MaterialFieldSchema> = {
   id: "anyag",
-  label: "Anyag",
+  label: { hu: "Anyag" },
   kind: "material",
   options: [{ materialId: "pamut", price: 0 }],
   colorCount: { kind: "fixed", count: 2 },
@@ -55,11 +55,11 @@ const materialFixture: z.input<typeof MaterialFieldSchema> = {
 
 const embroideryFixture: z.input<typeof EmbroideryFieldSchema> = {
   id: "varrascikksz",
-  label: "Varráscikk",
+  label: { hu: "Varráscikk" },
   kind: "embroidery",
   visibility: { kind: "always" },
   pricing: { kind: "flat", price: 2000 },
-  placeholder: "Üzenet",
+  placeholder: { hu: "Üzenet" },
   pattern: String.raw`^\S+$`,
 };
 
@@ -248,7 +248,13 @@ describe("productRevision", () => {
     basePrice: 15_000,
     pricing: { kind: "unit" },
     fields: [
-      { kind: "toggle", id: "betet", label: "Betét", visibility: { kind: "always" }, price: 3700 },
+      {
+        kind: "toggle",
+        id: "betet",
+        label: { hu: "Betét" },
+        visibility: { kind: "always" },
+        price: 3700,
+      },
     ],
     forbiddenMaterialCombinations: [],
   });
@@ -260,7 +266,7 @@ describe("productRevision", () => {
         {
           price: 3700,
           visibility: { kind: "always" },
-          label: "Betét",
+          label: { hu: "Betét" },
           id: "betet",
           kind: "toggle",
         },

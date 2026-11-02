@@ -1,4 +1,9 @@
-import type { ProductDefinition, ProductField } from "@babasarok/product-definition";
+import {
+  resolveText,
+  type LocalizedText,
+  type ProductDefinition,
+  type ProductField,
+} from "@babasarok/product-definition";
 import { plannedVariantFacetCodes } from "./facet-plan";
 import type { MaterialFacetData } from "./facet-plan";
 import type { NativeProductState } from "./sync-state";
@@ -6,19 +11,19 @@ import { dependencyOrder, isVisible } from "./field-visibility";
 
 export interface PlannedOption {
   code: string;
-  name: string;
+  name: LocalizedText;
   price: number;
 }
 
 export interface PlannedOptionGroup {
   code: string;
-  name: string;
+  name: LocalizedText;
   options: PlannedOption[];
 }
 
 export interface PlannedVariant {
   sku: string;
-  name: string;
+  name: LocalizedText;
   price: number;
   optionCodes: string[];
   materialSlugs: string[];
@@ -64,7 +69,8 @@ function isBanned(
  * two material fields both offering wool read "Külső anyag: Gyapjú, Belső
  * anyag: Gyapjú" instead of an ambiguous "Gyapjú, Gyapjú".
  */
-function variantName(
+function variantNameIn(
+  language: string,
   productName: string,
   combo: readonly PlannedOption[],
   groups: readonly PlannedOptionGroup[]
@@ -76,15 +82,40 @@ function variantName(
   const occurrences = new Map<string, number>();
 
   for (const option of combo) {
-    occurrences.set(option.name, (occurrences.get(option.name) ?? 0) + 1);
+    const name = resolveText(option.name, language);
+    occurrences.set(name, (occurrences.get(name) ?? 0) + 1);
   }
 
   const values = groups.map((group, index) => {
-    const option = combo[index];
-    return (occurrences.get(option.name) ?? 0) > 1 ? `${group.name}: ${option.name}` : option.name;
+    const optionName = resolveText(combo[index].name, language);
+
+    return (occurrences.get(optionName) ?? 0) > 1
+      ? `${resolveText(group.name, language)}: ${optionName}`
+      : optionName;
   });
 
   return `${productName} (${values.join(", ")})`;
+}
+
+function variantName(
+  productNames: LocalizedText,
+  combo: readonly PlannedOption[],
+  groups: readonly PlannedOptionGroup[]
+): LocalizedText {
+  const languages = new Set([
+    ...Object.keys(productNames),
+    ...groups.flatMap((group) => Object.keys(group.name)),
+    ...combo.flatMap((option) => Object.keys(option.name)),
+  ]);
+  const name: LocalizedText = {
+    hu: variantNameIn("hu", productNames.hu, combo, groups),
+  };
+
+  for (const language of languages) {
+    name[language] = variantNameIn(language, resolveText(productNames, language), combo, groups);
+  }
+
+  return name;
 }
 
 /**
@@ -92,7 +123,7 @@ function variantName(
  * structured model demands, which variant combinations exist after forbidden
  * combinations are omitted, and each variant's total price. Pure — the service
  * only applies this against Vendure's services. `productName` is the native
- * product's (hu) name, which the sync reads from the native product itself
+ * product's per-language names, which the sync reads from the native product itself
  * (ADR 0011 decision 1: the native Product owns the name).
  *
  * Choice, toggle and material fields become option groups; input, embroidery
@@ -109,7 +140,7 @@ function variantName(
 export function planVariantCombinations(
   definition: ProductDefinition,
   materialDataBySlug: ReadonlyMap<string, MaterialFacetData>,
-  productName: string
+  productName: LocalizedText
 ): VariantPlan {
   const optionGroups: PlannedOptionGroup[] = [];
   const groupFields: ProductField[] = [];
@@ -142,8 +173,8 @@ export function planVariantCombinations(
         code: field.id,
         name: field.label,
         options: [
-          { code: "nem", name: "Nem", price: 0 },
-          { code: "igen", name: "Igen", price: field.price },
+          { code: "nem", name: { hu: "Nem" }, price: 0 },
+          { code: "igen", name: { hu: "Igen" }, price: field.price },
         ],
       });
       groupFields.push(field);
@@ -157,7 +188,7 @@ export function planVariantCombinations(
         name: field.label,
         options: field.options.map((option) => ({
           code: option.materialId,
-          name: materialDataBySlug.get(option.materialId)?.label ?? option.materialId,
+          name: materialDataBySlug.get(option.materialId)?.label ?? { hu: option.materialId },
           price: option.price,
         })),
       });
@@ -225,7 +256,7 @@ export function planVariantCombinations(
 export function plannedNativeState(
   definition: ProductDefinition,
   materialDataBySlug: ReadonlyMap<string, MaterialFacetData>,
-  productName: string
+  productName: LocalizedText
 ): NativeProductState {
   const plan = planVariantCombinations(definition, materialDataBySlug, productName);
   const facetCodesBySku = plannedVariantFacetCodes(plan, materialDataBySlug);

@@ -25,12 +25,15 @@ import type { UpdateProductVariantInput } from "@vendure/common/lib/generated-ty
 import { GlobalFlag } from "@vendure/common/lib/generated-types";
 import { JobQueueService } from "@vendure/core";
 import { In, IsNull } from "typeorm";
-import type { ProductDefinition as CanonicalProductDefinition } from "@babasarok/product-definition";
-import { LabelSchema } from "@babasarok/product-definition";
+import type {
+  LocalizedText,
+  ProductDefinition as CanonicalProductDefinition,
+} from "@babasarok/product-definition";
+import { canonicalJson, LabelSchema } from "@babasarok/product-definition";
 // The node-only entry: productRevision needs node:crypto, which must not reach
 // the dashboard's browser bundle through the main barrel.
 import { productRevision } from "@babasarok/product-definition/node";
-import { materialReferenceSlugs } from "../material/material.service";
+import { materialReferenceSlugs, toLanguageCode } from "../material/material.service";
 import { MaterialEvent } from "../material/material.event";
 import { Material } from "../material/material.entity";
 import { sortDefinitions } from "./definition-sort";
@@ -49,8 +52,28 @@ import {
   type NativeProductState,
   type NativeStateDiff,
 } from "./sync-state";
-import { huName, nativeProductNames } from "./native-names";
+import { huName, nativeProductTexts, textOf } from "./native-names";
 import { plannedNativeState, planVariantCombinations, type VariantPlan } from "./variant-plan";
+
+function labelAsName(translation: { languageCode: LanguageCode; label: string }): {
+  languageCode: LanguageCode;
+  name: string;
+} {
+  return { languageCode: translation.languageCode, name: translation.label };
+}
+
+function nameTranslations(
+  text: LocalizedText
+): Array<{ languageCode: LanguageCode; name: string }> {
+  return Object.entries(text).map(([language, name]) => ({
+    languageCode: toLanguageCode(language),
+    name,
+  }));
+}
+
+function sameText(a: LocalizedText, b: LocalizedText): boolean {
+  return canonicalJson(a) === canonicalJson(b);
+}
 
 /** The variant writes per ProductVariantService call — the spike's per-variant loop is not shippable. */
 const BATCH_SIZE = 100;
@@ -339,7 +362,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       const planned = plannedNativeState(
         row.definition,
         materialData,
-        names.get(row.nativeProductId) ?? ""
+        names.get(row.nativeProductId) ?? { hu: "" }
       );
       const current = await this.currentNativeState(ctx, row.nativeProductId);
       const stale = nativeStateHash(planned) !== nativeStateHash(current);
@@ -567,9 +590,9 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
     // The variant names read the native product's hu name (ADR 0011
     // decision 1); the sync never writes the product's own name or slug.
-    const productName = huName(product.translations);
+    const productName = textOf(product.translations, "");
 
-    if (productName === undefined) {
+    if (huName(product.translations) === undefined) {
       throw new Error(`A natív terméknek nincs magyar nyelvű neve: ${nativeProductId}`);
     }
 
@@ -625,10 +648,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         continue;
       }
 
-      if (huName(group.translations) !== planned.name) {
+      if (!sameText(textOf(group.translations, group.code), planned.name)) {
         await this.optionGroupService.update(ctx, {
           id: group.id,
-          translations: [{ languageCode: LanguageCode.hu, name: planned.name }],
+          translations: nameTranslations(planned.name),
         });
       }
 
@@ -650,10 +673,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         plannedOptions.delete(option.code);
         optionIds.set(option.code, Number(option.id));
 
-        if (huName(option.translations) !== plannedOption.name) {
+        if (!sameText(textOf(option.translations, option.code), plannedOption.name)) {
           await this.optionService.update(ctx, {
             id: option.id,
-            translations: [{ languageCode: LanguageCode.hu, name: plannedOption.name }],
+            translations: nameTranslations(plannedOption.name),
           });
         }
       }
@@ -661,7 +684,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       for (const [code, plannedOption] of plannedOptions) {
         const created = await this.optionService.create(ctx, group.id, {
           code,
-          translations: [{ languageCode: LanguageCode.hu, name: plannedOption.name }],
+          translations: nameTranslations(plannedOption.name),
         });
 
         optionIds.set(code, Number(created.id));
@@ -675,7 +698,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
       const createdGroup = await this.optionGroupService.create(ctx, {
         code: planned.code,
-        translations: [{ languageCode: LanguageCode.hu, name: planned.name }],
+        translations: nameTranslations(planned.name),
       });
 
       await this.productService.addOptionGroupToProduct(ctx, nativeProductId, createdGroup.id);
@@ -686,7 +709,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       for (const plannedOption of planned.options) {
         const created = await this.optionService.create(ctx, createdGroup.id, {
           code: plannedOption.code,
-          translations: [{ languageCode: LanguageCode.hu, name: plannedOption.name }],
+          translations: nameTranslations(plannedOption.name),
         });
 
         optionIds.set(plannedOption.code, Number(created.id));
@@ -780,7 +803,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
           optionIds: optionIdsFor(variant),
           facetValueIds: facetValueIdsFor(variant.sku),
           trackInventory: GlobalFlag.FALSE,
-          translations: [{ languageCode: LanguageCode.hu, name: variant.name }],
+          translations: nameTranslations(variant.name),
         }))
       );
     }
@@ -805,7 +828,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         actualFacetIds.size !== plannedFacetIds.length ||
         plannedFacetIds.some((facetValueId) => !actualFacetIds.has(facetValueId));
       const priceChanged = channelPrice(variant) !== planned.price;
-      const nameChanged = huName(variant.translations) !== planned.name;
+      const nameChanged = !sameText(textOf(variant.translations, variant.sku), planned.name);
       const inventoryChanged = variant.trackInventory !== GlobalFlag.FALSE;
 
       if (!optionsChanged && !priceChanged && !nameChanged && !facetsChanged && !inventoryChanged) {
@@ -823,7 +846,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       }
 
       if (nameChanged) {
-        update.translations = [{ languageCode: LanguageCode.hu, name: planned.name }];
+        update.translations = nameTranslations(planned.name);
       }
 
       if (optionsChanged) {
@@ -928,15 +951,15 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     return {
       optionGroups: product.optionGroups.map((group) => ({
         code: group.code,
-        name: huName(group.translations) ?? group.code,
+        name: textOf(group.translations, group.code),
         options: group.options.map((option) => ({
           code: option.code,
-          name: huName(option.translations) ?? option.code,
+          name: textOf(option.translations, option.code),
         })),
       })),
       variants: variants.map((variant) => ({
         sku: variant.sku,
-        name: huName(variant.translations) ?? variant.sku,
+        name: textOf(variant.translations, variant.sku),
         price:
           variant.productVariantPrices.find((price) => price.channelId === ctx.channelId)?.price ??
           0,
@@ -954,10 +977,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   private async nativeNames(
     ctx: RequestContext,
     rows: ProductDefinition[]
-  ): Promise<Map<number, string>> {
+  ): Promise<Map<number, LocalizedText>> {
     const ids = rows.flatMap((row) => (row.nativeProductId === null ? [] : [row.nativeProductId]));
 
-    return nativeProductNames(this.connection, ctx, ids);
+    return nativeProductTexts(this.connection, ctx, ids);
   }
 
   /** Fills the definitions' transient `label` from their native products' hu
@@ -968,7 +991,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     for (const row of rows) {
       const nativeName = row.nativeProductId === null ? undefined : names.get(row.nativeProductId);
 
-      row.label = nativeName ?? row.productId;
+      row.label = nativeName?.hu ?? row.productId;
     }
   }
 
@@ -980,8 +1003,11 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       materials.map((material) => [
         material.slug,
         {
-          label: material.label,
-          colors: material.colors.map((color) => ({ id: color.colorId, label: color.label })),
+          label: textOf(material.translations.map(labelAsName), material.slug),
+          colors: material.colors.map((color) => ({
+            id: color.colorId,
+            label: textOf(color.translations.map(labelAsName), color.colorId),
+          })),
         },
       ])
     );

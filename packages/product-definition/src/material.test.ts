@@ -2,12 +2,16 @@ import { describe, expect, it } from "vitest";
 import { MaterialDefinitionSchema } from "./material";
 
 describe("MaterialDefinitionSchema", () => {
-  const color = { id: "feher", label: "Fehér", appearance: { kind: "hex", value: "#FFFFFF" } };
+  const color = {
+    id: "feher",
+    label: { hu: "Fehér" },
+    appearance: { kind: "hex", value: "#FFFFFF" },
+  };
   const validMaterial = {
     id: "pamut",
-    label: "Pamut",
-    subtitle: "Pamut alapanyag",
-    description: "Puha pamut anyag",
+    label: { hu: "Pamut" },
+    subtitle: { hu: "Pamut alapanyag" },
+    description: { hu: "Puha pamut anyag" },
     thumbnail: { assetId: "/pamut.webp" },
     colors: [color],
   };
@@ -18,7 +22,8 @@ describe("MaterialDefinitionSchema", () => {
 
   it("accepts a material without the optional presentation fields", () => {
     expect(
-      MaterialDefinitionSchema.safeParse({ id: "pamut", label: "Pamut", colors: [color] }).success
+      MaterialDefinitionSchema.safeParse({ id: "pamut", label: { hu: "Pamut" }, colors: [color] })
+        .success
     ).toBe(true);
   });
 
@@ -44,7 +49,7 @@ describe("MaterialDefinitionSchema", () => {
       },
     ],
     ["zero colors", { ...validMaterial, colors: [] }],
-    ["an untrimmed label", { ...validMaterial, label: " Pamut " }],
+    ["an untrimmed label", { ...validMaterial, label: { hu: " Pamut " } }],
     [
       "an invalid hex value",
       { ...validMaterial, colors: [{ ...color, appearance: { kind: "hex", value: "red" } }] },

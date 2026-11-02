@@ -27,6 +27,7 @@ import {
   PageBlock,
   PageLayout,
   StatusBadge,
+  useUserSettings,
 } from "@vendure/dashboard";
 import { defineStateEntries } from "@vendure/dashboard";
 import {
@@ -44,6 +45,7 @@ import {
   hasEditableData,
   newDefinition,
   newField,
+  type TextInput,
   sanitize,
   FIELD_KINDS,
   FIELD_KIND_LABELS,
@@ -177,6 +179,7 @@ export function ConfiguratorEditor({
   // The native Product's name (ADR 0011 decision 1): asked for at creation,
   // afterwards edited on the stock product form, never in this editor.
   const [name, setName] = useState("");
+  const language = useUserSettings().settings.contentLanguage;
   const [rows, setRows] = useState<FieldRow[]>([]);
   const [banned, setBanned] = useState<string[][]>([]);
   const [materialOptions, setMaterialOptions] = useState<Array<{ slug: string; label: string }>>(
@@ -277,7 +280,7 @@ export function ConfiguratorEditor({
     shouldBlockFn: () => mode === "create" && !pending && dirty,
   });
 
-  function patchBase(key: string, label: string): void {
+  function patchBase(key: string, label: TextInput): void {
     setRows((current) =>
       current.map((row) => (row.key === key ? { ...row, field: { ...row.field, label } } : row))
     );
@@ -364,7 +367,7 @@ export function ConfiguratorEditor({
   }
 
   function addField(kind: FieldKind): void {
-    setRows((current) => [...current, { key: rowKey(), field: newField(kind, "", "") }]);
+    setRows((current) => [...current, { key: rowKey(), field: newField(kind, "", { hu: "" }) }]);
   }
 
   function changeFieldKind(key: string, kind: FieldKind): void {
@@ -375,7 +378,7 @@ export function ConfiguratorEditor({
     }
 
     if (hasEditableData(row.field)) {
-      setKindSwitchKey({ key, kind, label: row.field.label });
+      setKindSwitchKey({ key, kind, label: row.field.label.hu });
       return;
     }
 
@@ -748,6 +751,7 @@ export function ConfiguratorEditor({
                 index={index}
                 count={rows.length}
                 materialOptions={materialOptions}
+                language={language}
                 patchBase={patchBase}
                 patchChoice={patchChoice}
                 patchToggle={patchToggle}

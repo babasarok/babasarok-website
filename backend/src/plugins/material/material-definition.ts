@@ -1,17 +1,27 @@
 import { MaterialDefinitionSchema, type MaterialDefinition } from "@babasarok/product-definition";
 
+export interface MaterialTranslationInputData {
+  languageCode: string;
+  label: string;
+  subtitle?: string | null;
+  description?: string | null;
+}
+
+export interface MaterialColorTranslationInputData {
+  languageCode: string;
+  label: string;
+}
+
 export interface MaterialColorInputData {
   id: string;
-  label: string;
+  translations: MaterialColorTranslationInputData[];
   hex?: string | null;
   assetId?: string | null;
 }
 
 export interface MaterialInputData {
   slug: string;
-  label: string;
-  subtitle?: string | null;
-  description?: string | null;
+  translations: MaterialTranslationInputData[];
   thumbnailAssetId?: string | null;
   colors: MaterialColorInputData[];
 }
@@ -22,8 +32,38 @@ export type MaterialValidationResult =
 /** Unbranded color shape handed to the canonical schema for parsing. */
 interface RawColor {
   id: string;
-  label: string;
+  label: Record<string, string>;
   appearance: { kind: "hex"; value: string } | { kind: "image"; assetId: string };
+}
+
+function localizedText<T extends { languageCode: string }>(
+  translations: T[],
+  pick: (translation: T) => string | null | undefined
+): Record<string, string> {
+  const text: Record<string, string> = {};
+
+  for (const translation of translations) {
+    const value = pick(translation)?.trim() ?? "";
+
+    if (value !== "") {
+      text[translation.languageCode] = value;
+    }
+  }
+
+  return text;
+}
+
+function optionalLocalizedText<T extends { languageCode: string }>(
+  translations: T[],
+  pick: (translation: T) => string | null | undefined
+): Record<string, string> | null {
+  const text = localizedText(translations, pick);
+
+  if (Object.keys(text).length === 0) {
+    return null;
+  }
+
+  return text;
 }
 
 function appearanceIssue(
@@ -78,7 +118,7 @@ export function validateMaterialInput(
 
     colors.push({
       id: color.id,
-      label: color.label,
+      label: localizedText(color.translations, (translation) => translation.label),
       appearance:
         hex === null ? { kind: "image", assetId: String(assetId) } : { kind: "hex", value: hex },
     });
@@ -109,9 +149,12 @@ export function validateMaterialInput(
 
   const result = MaterialDefinitionSchema.safeParse({
     id: input.slug,
-    label: input.label,
-    subtitle: input.subtitle ?? null,
-    description: input.description ?? null,
+    label: localizedText(input.translations, (translation) => translation.label),
+    subtitle: optionalLocalizedText(input.translations, (translation) => translation.subtitle),
+    description: optionalLocalizedText(
+      input.translations,
+      (translation) => translation.description
+    ),
     thumbnail: thumbnailAssetId === null ? null : { assetId: String(thumbnailAssetId) },
     colors,
   });

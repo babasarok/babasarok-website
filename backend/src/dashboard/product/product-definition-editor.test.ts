@@ -14,50 +14,53 @@ import {
   newField,
   sanitize,
   slugifyLabel,
+  textPlaceholder,
+  textValue,
+  withText,
   type ChoiceFieldInput,
   type ChoiceOptionInput,
 } from "./product-definition-editor";
 
 describe("newField", () => {
   test("choice fields default to a select with one empty option", () => {
-    const field = newField("choice", "szin", "Szín");
+    const field = newField("choice", "szin", { hu: "Szín" });
 
     expect(field).toEqual({
       id: "szin",
-      label: "Szín",
+      label: { hu: "Szín" },
       kind: "choice",
       presentation: "select",
       visibility: { kind: "always" },
-      options: [{ id: "", label: "", price: 0 }],
+      options: [{ id: "", label: { hu: "" }, price: 0 }],
     });
   });
 
   test("every kind starts from its canonical defaults", () => {
-    expect(newField("toggle", "a", "A")).toEqual({
+    expect(newField("toggle", "a", { hu: "A" })).toEqual({
       id: "a",
-      label: "A",
+      label: { hu: "A" },
       kind: "toggle",
       visibility: { kind: "always" },
       price: 0,
     });
-    expect(newField("material", "a", "A")).toEqual({
+    expect(newField("material", "a", { hu: "A" })).toEqual({
       id: "a",
-      label: "A",
+      label: { hu: "A" },
       kind: "material",
       options: [],
       colorCount: { kind: "fixed", count: 1 },
     });
-    expect(newField("input", "a", "A")).toEqual({
+    expect(newField("input", "a", { hu: "A" })).toEqual({
       id: "a",
-      label: "A",
+      label: { hu: "A" },
       kind: "input",
       visibility: { kind: "always" },
       required: true,
       price: 0,
     });
-    expect(newField("embroidery", "a", "A")).toEqual({
+    expect(newField("embroidery", "a", { hu: "A" })).toEqual({
       id: "a",
-      label: "A",
+      label: { hu: "A" },
       kind: "embroidery",
       visibility: { kind: "always" },
       pricing: { kind: "per-word", pricePerWord: 0 },
@@ -68,30 +71,30 @@ describe("newField", () => {
 describe("hasEditableData", () => {
   test("a fresh row is bare defaults regardless of kind", () => {
     for (const kind of ["choice", "toggle", "material", "input", "embroidery"] as const) {
-      expect(hasEditableData(newField(kind, "", ""))).toBe(false);
+      expect(hasEditableData(newField(kind, "", { hu: "" }))).toBe(false);
     }
   });
 
   test("id and label alone are not editable data — they survive a kind switch", () => {
-    expect(hasEditableData(newField("choice", "szin", "Szín"))).toBe(false);
+    expect(hasEditableData(newField("choice", "szin", { hu: "Szín" }))).toBe(false);
   });
 
   test("any edited value counts as data a kind switch would discard", () => {
-    const pricedOption = newField("choice", "", "");
+    const pricedOption = newField("choice", "", { hu: "" });
 
     if (pricedOption.kind === "choice") {
       pricedOption.options[0].price = 500;
       expect(hasEditableData(pricedOption)).toBe(true);
     }
 
-    const optionalInput = newField("input", "", "");
+    const optionalInput = newField("input", "", { hu: "" });
 
     if (optionalInput.kind === "input") {
       optionalInput.required = false;
       expect(hasEditableData(optionalInput)).toBe(true);
     }
 
-    const extraMaterial = newField("material", "", "");
+    const extraMaterial = newField("material", "", { hu: "" });
 
     if (extraMaterial.kind === "material") {
       extraMaterial.options.push({ materialId: "e2e-pamut", price: 0 });
@@ -102,17 +105,17 @@ describe("hasEditableData", () => {
 
 describe("carryOver", () => {
   test("passes tooltip and visibility across a non-material switch", () => {
-    const previous = newField("choice", "szin", "Szín");
+    const previous = newField("choice", "szin", { hu: "Szín" });
 
     if (previous.kind === "choice") {
-      previous.tooltip = "Válassz színt";
+      previous.tooltip = { hu: "Válassz színt" };
       previous.visibility = { kind: "when-present", fieldId: "ajandek" };
     }
 
-    const next = carryOver(newField("toggle", "szin", "Szín"), previous);
+    const next = carryOver(newField("toggle", "szin", { hu: "Szín" }), previous);
 
     expect(next.kind).toBe("toggle");
-    expect(next.tooltip).toBe("Válassz színt");
+    expect(next.tooltip).toEqual({ hu: "Válassz színt" });
 
     if (next.kind === "toggle") {
       expect(next.visibility).toEqual({ kind: "when-present", fieldId: "ajandek" });
@@ -120,16 +123,19 @@ describe("carryOver", () => {
   });
 
   test("a material target keeps its own (empty) tooltip and visibility", () => {
-    const previous = newField("toggle", "a", "A");
-    previous.tooltip = "Kapcsold be";
+    const previous = newField("toggle", "a", { hu: "A" });
+    previous.tooltip = { hu: "Kapcsold be" };
 
-    const next = carryOver(newField("material", "a", "A"), previous);
+    const next = carryOver(newField("material", "a", { hu: "A" }), previous);
 
-    expect(next).toEqual(newField("material", "a", "A"));
+    expect(next).toEqual(newField("material", "a", { hu: "A" }));
   });
 
   test("switching from a material keeps the target's own visibility", () => {
-    const next = carryOver(newField("input", "a", "A"), newField("material", "a", "A"));
+    const next = carryOver(
+      newField("input", "a", { hu: "A" }),
+      newField("material", "a", { hu: "A" })
+    );
 
     if (next.kind === "input") {
       expect(next.visibility).toEqual({ kind: "always" });
@@ -141,13 +147,13 @@ describe("sanitize", () => {
   test("trims ids, labels, material references and forbidden pairs", () => {
     const definition = newDefinition("  e2e-x  ");
     definition.fields = [
-      newField("choice", " szin ", " Szín "),
-      newField("material", " anyag ", " Anyag "),
+      newField("choice", " szin ", { hu: " Szín " }),
+      newField("material", " anyag ", { hu: " Anyag " }),
     ];
 
     const choice = definition.fields[0];
     if (choice.kind === "choice") {
-      choice.options = [{ id: " kek ", label: " Kék ", price: 0 }];
+      choice.options = [{ id: " kek ", label: { hu: " Kék " }, price: 0 }];
     }
 
     const material = definition.fields[1];
@@ -160,10 +166,10 @@ describe("sanitize", () => {
     const cleaned = sanitize(definition);
 
     expect(cleaned.fields[0].id).toBe("szin");
-    expect(cleaned.fields[0].label).toBe("Szín");
+    expect(cleaned.fields[0].label).toEqual({ hu: "Szín" });
 
     if (cleaned.fields[0].kind === "choice") {
-      expect(cleaned.fields[0].options[0]).toEqual({ id: "kek", label: "Kék", price: 0 });
+      expect(cleaned.fields[0].options[0]).toEqual({ id: "kek", label: { hu: "Kék" }, price: 0 });
     }
 
     if (cleaned.fields[1].kind === "material") {
@@ -211,7 +217,7 @@ describe("assignGeneratedIds", () => {
     options: ChoiceOptionInput[]
   ): ChoiceFieldInput => ({
     id,
-    label,
+    label: { hu: label },
     kind: "choice",
     presentation: "select",
     visibility: { kind: "always" },
@@ -223,10 +229,10 @@ describe("assignGeneratedIds", () => {
       ...newDefinition("p"),
       fields: [
         choiceField("", "Szín", [
-          { id: "", label: "Kék", price: 0 },
-          { id: "", label: "Piros", price: 0 },
+          { id: "", label: { hu: "Kék" }, price: 0 },
+          { id: "", label: { hu: "Piros" }, price: 0 },
         ]),
-        newField("toggle", "", "Ajándék csomagolás"),
+        newField("toggle", "", { hu: "Ajándék csomagolás" }),
       ],
     });
 
@@ -243,13 +249,13 @@ describe("assignGeneratedIds", () => {
     const definition = assignGeneratedIds({
       ...newDefinition("p"),
       fields: [
-        newField("toggle", "meret", "Első"),
-        newField("toggle", "", "Méret"),
-        newField("toggle", "", "Méret"),
+        newField("toggle", "meret", { hu: "Első" }),
+        newField("toggle", "", { hu: "Méret" }),
+        newField("toggle", "", { hu: "Méret" }),
         choiceField("szin", "Szín", [
-          { id: "kek", label: "Kék", price: 0 },
-          { id: "", label: "Kék", price: 0 },
-          { id: "", label: "", price: 0 },
+          { id: "kek", label: { hu: "Kék" }, price: 0 },
+          { id: "", label: { hu: "Kék" }, price: 0 },
+          { id: "", label: { hu: "" }, price: 0 },
         ]),
       ],
     });
@@ -272,10 +278,27 @@ describe("assignGeneratedIds", () => {
     const definition = assignGeneratedIds(
       sanitize({
         ...newDefinition("p"),
-        fields: [choiceField("", "Szín", [{ id: "", label: "Kék", price: 0 }])],
+        fields: [choiceField("", "Szín", [{ id: "", label: { hu: "Kék" }, price: 0 }])],
       })
     );
 
     expect(ProductDefinitionSchema.safeParse(definition).success).toBe(true);
+  });
+});
+
+describe("text helpers", () => {
+  test("a non-default language edits its own entry and shows hu as placeholder", () => {
+    const text = withText({ hu: "Méret" }, "en", "Size");
+
+    expect(text).toEqual({ hu: "Méret", en: "Size" });
+    expect(textValue(text, "en")).toBe("Size");
+    expect(textPlaceholder({ hu: "Méret" }, "en")).toBe("Méret");
+    expect(textPlaceholder(text, "en")).toBeUndefined();
+    expect(textPlaceholder({ hu: "Méret" }, "hu")).toBeUndefined();
+  });
+
+  test("emptying a non-default language removes it, hu stays", () => {
+    expect(withText({ hu: "Méret", en: "Size" }, "en", "")).toEqual({ hu: "Méret" });
+    expect(withText({ hu: "Méret" }, "hu", "")).toEqual({ hu: "" });
   });
 });

@@ -275,6 +275,42 @@ owner edited them. Production runs the same scripts once by hand.
   - THEN it can be assigned to products on the stock product page, with no
     deploy
 
+### Translatable catalog text
+
+Owner-entered catalog text SHALL be translatable (ADR 0011 decision 6):
+
+- Material and color text (label, subtitle, description; color label) is
+  stored per language in Vendure translation entities. The materials page
+  edits the dashboard's current content language and shows the Hungarian text
+  as the placeholder for an untranslated field. A material needs a Hungarian
+  label; other languages are optional.
+- Definition text (field labels, tooltips, placeholders, suggestion labels,
+  choice option labels) is a `LocalizedText`: an object keyed by language code
+  with `hu` required and other languages optional. Ids, codes and patterns are
+  not text. The configurator edits the current content language and shows the
+  Hungarian text as the placeholder; saving a definition without `hu` is
+  rejected.
+- Generated option groups, options and variants, and the facet values and
+  per-material collections mirrored from materials, are written with one
+  translation per language present. A variant's name uses the native
+  product's name in that language.
+- Server messages that name a definition field or option use the request
+  language.
+
+- **Scenario: Untranslated text falls back to Hungarian**
+  - WHEN text is resolved for a language that has no entry for it
+  - THEN the Hungarian text is used
+- **Scenario: Editing a non-default content language**
+  - WHEN the owner switches the content language to English and edits a field
+    label
+  - THEN only the English entry changes, the Hungarian text shows as the
+    placeholder while English is empty, and clearing the English entry
+    removes it
+- **Scenario: Material translated**
+  - WHEN a material is saved with an English label
+  - THEN its material facet value, its collection and its generated option
+    carry the English name next to the Hungarian one
+
 ### Definition lifecycle with the native product
 
 The system SHALL delete a product's canonical definition when the native

@@ -76,8 +76,8 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await page.getByRole("button", { name: "+ Választó mező" }).click();
     await page.getByRole("button", { name: "Létrehozás" }).click();
 
-    await expect(page.getByText("fields.0.label:")).toBeVisible();
-    await expect(page.getByText("fields.0.options.0.label:")).toBeVisible();
+    await expect(page.getByText("fields.0.label.hu:")).toBeVisible();
+    await expect(page.getByText("fields.0.options.0.label.hu:")).toBeVisible();
     await expect(
       page.getByText("Nem lehet üres, és nem kezdődhet vagy végződhet szóközzel").first()
     ).toBeVisible();

@@ -39,7 +39,7 @@ const REFERENCING_FIXTURE = {
     {
       kind: "material",
       id: "anyag",
-      label: "Anyag",
+      label: { hu: "Anyag" },
       options: [{ materialId: "e2e-vaszon", price: 0 }],
       colorCount: { kind: "fixed", count: 1 },
     },

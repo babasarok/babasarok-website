@@ -1,4 +1,8 @@
-import type { ProductDefinition, ProductField } from "@babasarok/product-definition";
+import {
+  resolveText,
+  type ProductDefinition,
+  type ProductField,
+} from "@babasarok/product-definition";
 import { dependencyOrder, isVisible } from "../product/field-visibility";
 import type { LineSelections } from "./line-selection";
 
@@ -17,6 +21,8 @@ export interface LinePricingInput {
   selections: LineSelections;
   /** The buyer-entered length in centimetres; null when not entered. */
   lengthCm: number | null;
+  /** The request language the rejection messages name fields in. */
+  languageCode: string;
 }
 
 export class LinePricingError extends Error {}
@@ -44,13 +50,14 @@ function fieldById(fields: readonly ProductField[], id: string): ProductField | 
 
 function choiceOptionPrice(
   field: Extract<ProductField, { kind: "choice" }>,
-  optionId: string
+  optionId: string,
+  languageCode: string
 ): number {
   const option = field.options.find((candidate) => candidate.id === optionId);
 
   if (option === undefined) {
     throw new LinePricingError(
-      `A(z) "${field.label}" mező nem kínálja ezt az értéket: ${optionId}`
+      `A(z) "${resolveText(field.label, languageCode)}" mező nem kínálja ezt az értéket: ${optionId}`
     );
   }
 
@@ -62,7 +69,11 @@ function choiceOptionPrice(
  * for the variant's chosen option. Every generated variant carries an option per
  * such field, so a missing code means native drift.
  */
-function variantAxisPrice(field: ProductField, optionCode: string | undefined): number {
+function variantAxisPrice(
+  field: ProductField,
+  optionCode: string | undefined,
+  languageCode: string
+): number {
   if (optionCode === undefined) {
     throw new LinePricingError(
       `A(z) "${field.id}" választása nincs rajta a kiválasztott változaton.`
@@ -78,7 +89,7 @@ function variantAxisPrice(field: ProductField, optionCode: string | undefined): 
 
     if (option === undefined) {
       throw new LinePricingError(
-        `A(z) "${field.label}" mező nem kínálja ezt az anyagot: ${optionCode}`
+        `A(z) "${resolveText(field.label, languageCode)}" mező nem kínálja ezt az anyagot: ${optionCode}`
       );
     }
 
@@ -86,7 +97,7 @@ function variantAxisPrice(field: ProductField, optionCode: string | undefined): 
   }
 
   if (field.kind === "choice") {
-    return choiceOptionPrice(field, optionCode);
+    return choiceOptionPrice(field, optionCode, languageCode);
   }
 
   return 0;
@@ -113,7 +124,8 @@ function variantAxisPrice(field: ProductField, optionCode: string | undefined): 
  * custom value on a field the variant matrix carries.
  */
 export function computeLineUnitPrice(input: LinePricingInput): number {
-  const { definition, productName, variantListPrice, optionCodes, selections } = input;
+  const { definition, productName, variantListPrice, optionCodes, selections, languageCode } =
+    input;
 
   if (!definition.orderable) {
     throw new LinePricingError(nonOrderableRejection(productName));
@@ -155,7 +167,7 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
       // A custom value cannot select a generated variant: the matrix only
       // carries the listed options. Refuse to price rather than sell it.
       throw new LinePricingError(
-        `A(z) "${field.label}" mező választása nem egyezik a kiválasztott változattal, az egyedi értéket a változat-mátrix nem tudja árazni.`
+        `A(z) "${resolveText(field.label, languageCode)}" mező választása nem egyezik a kiválasztott változattal, az egyedi értéket a változat-mátrix nem tudja árazni.`
       );
     }
   }
@@ -241,7 +253,7 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
       const selection = selections[field.id];
 
       if (selection?.kind === "option") {
-        lineParts.push(choiceOptionPrice(field, selection.value));
+        lineParts.push(choiceOptionPrice(field, selection.value, languageCode));
       }
 
       continue;
@@ -263,7 +275,7 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
           !isVariantAxis(field) ||
           !isVisible(field, cyclic, knownFieldIds, values)
             ? sum
-            : sum + variantAxisPrice(field, optionCodes.get(field.id)),
+            : sum + variantAxisPrice(field, optionCodes.get(field.id), languageCode),
         0
       );
 

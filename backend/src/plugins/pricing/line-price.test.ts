@@ -14,25 +14,25 @@ const unitProduct = ProductDefinitionSchema.parse({
     {
       kind: "choice",
       id: "meret",
-      label: "Méret",
+      label: { hu: "Méret" },
       presentation: "radio",
       visibility: { kind: "always" },
       options: [
-        { id: "40", label: "40x40", price: 0 },
-        { id: "50", label: "50x50", price: 2000 },
+        { id: "40", label: { hu: "40x40" }, price: 0 },
+        { id: "50", label: { hu: "50x50" }, price: 2000 },
       ],
     },
     {
       kind: "toggle",
       id: "fodor",
-      label: "Fodorral",
+      label: { hu: "Fodorral" },
       visibility: { kind: "always" },
       price: 1800,
     },
     {
       kind: "material",
       id: "anyag",
-      label: "Anyag",
+      label: { hu: "Anyag" },
       colorCount: { kind: "fixed", count: 1 },
       options: [
         { materialId: "wellsoft", price: 3000 },
@@ -42,18 +42,18 @@ const unitProduct = ProductDefinitionSchema.parse({
     {
       kind: "choice",
       id: "szin",
-      label: "Szín",
+      label: { hu: "Szín" },
       presentation: "color",
       visibility: { kind: "when-equal", fieldId: "fodor", value: true },
       options: [
-        { id: "piros", label: "Piros", price: 500 },
-        { id: "kek", label: "Kék", price: 0 },
+        { id: "piros", label: { hu: "Piros" }, price: 500 },
+        { id: "kek", label: { hu: "Kék" }, price: 0 },
       ],
     },
     {
       kind: "input",
       id: "felirat",
-      label: "Felirat",
+      label: { hu: "Felirat" },
       visibility: { kind: "always" },
       required: false,
       price: 0,
@@ -61,7 +61,7 @@ const unitProduct = ProductDefinitionSchema.parse({
     {
       kind: "input",
       id: "extra",
-      label: "Extra",
+      label: { hu: "Extra" },
       visibility: { kind: "when-present", fieldId: "felirat" },
       required: false,
       price: 1500,
@@ -69,7 +69,7 @@ const unitProduct = ProductDefinitionSchema.parse({
     {
       kind: "embroidery",
       id: "hímzés",
-      label: "Hímzés",
+      label: { hu: "Hímzés" },
       visibility: { kind: "always" },
       pricing: { kind: "per-word", pricePerWord: 700 },
     },
@@ -86,30 +86,30 @@ const lengthProduct = ProductDefinitionSchema.parse({
     {
       kind: "choice",
       id: "sizes",
-      label: "Méret",
+      label: { hu: "Méret" },
       presentation: "radio",
       visibility: { kind: "always" },
       options: [
-        { id: "200", label: "200cm", price: 0 },
-        { id: "380", label: "380cm", price: 0 },
+        { id: "200", label: { hu: "200cm" }, price: 0 },
+        { id: "380", label: { hu: "380cm" }, price: 0 },
       ],
       customValue: {},
     },
     {
       kind: "choice",
       id: "fonas",
-      label: "Fonás",
+      label: { hu: "Fonás" },
       presentation: "radio",
       visibility: { kind: "always" },
       options: [
-        { id: "3", label: "Hármas", price: 8000 },
-        { id: "6", label: "Hatos", price: 14_000 },
+        { id: "3", label: { hu: "Hármas" }, price: 8000 },
+        { id: "6", label: { hu: "Hatos" }, price: 14_000 },
       ],
     },
     {
       kind: "material",
       id: "anyag",
-      label: "Anyag",
+      label: { hu: "Anyag" },
       colorCount: { kind: "from-field", fieldId: "fonas" },
       options: [
         { materialId: "velur", price: 0 },
@@ -119,7 +119,7 @@ const lengthProduct = ProductDefinitionSchema.parse({
     {
       kind: "embroidery",
       id: "hímzés",
-      label: "Hímzés",
+      label: { hu: "Hímzés" },
       visibility: { kind: "always" },
       pricing: { kind: "flat", price: 2500 },
     },
@@ -146,6 +146,7 @@ describe("computeLineUnitPrice", () => {
       optionCodes: unitCodes("50", "igen", "wellsoft"),
       selections: {},
       lengthCm: null,
+      languageCode: "hu",
     });
 
     expect(price).toBe(15_800);
@@ -159,6 +160,7 @@ describe("computeLineUnitPrice", () => {
       optionCodes: unitCodes("40", "igen", "minky"),
       selections: { szin: { kind: "option", value: "piros" } },
       lengthCm: null,
+      languageCode: "hu",
     });
 
     expect(withPick).toBe(9500);
@@ -170,6 +172,7 @@ describe("computeLineUnitPrice", () => {
       optionCodes: unitCodes("40", "igen", "minky"),
       selections: {},
       lengthCm: null,
+      languageCode: "hu",
     });
 
     expect(withoutPick).toBe(9000);
@@ -183,6 +186,7 @@ describe("computeLineUnitPrice", () => {
       optionCodes: unitCodes("40", "nem", "minky"),
       selections: { felirat: { kind: "input", value: "" } },
       lengthCm: null,
+      languageCode: "hu",
     });
 
     expect(price).toBe(10_500);
@@ -198,6 +202,7 @@ describe("computeLineUnitPrice", () => {
         hímzés: { kind: "embroidery", text: "  kis  Ana ", colorId: "piros" },
       },
       lengthCm: null,
+      languageCode: "hu",
     });
 
     expect(price).toBe(9000 + 1400);
@@ -211,6 +216,7 @@ describe("computeLineUnitPrice", () => {
       optionCodes: unitCodes("40", "nem", "minky"),
       selections: {},
       lengthCm: null,
+      languageCode: "hu",
     });
 
     expect(price).toBe(9000);
@@ -228,6 +234,7 @@ describe("computeLineUnitPrice", () => {
       ]),
       selections: { hímzés: { kind: "embroidery", text: "Ana", colorId: "piros" } },
       lengthCm: 380,
+      languageCode: "hu",
     });
 
     expect(price).toBe(Math.round((14_000 + 400 + 2500) * 3.8));
@@ -246,6 +253,7 @@ describe("computeLineUnitPrice", () => {
         ]),
         selections: {},
         lengthCm: null,
+        languageCode: "hu",
       })
     ).toThrow(LinePricingError);
   });
@@ -263,6 +271,7 @@ describe("computeLineUnitPrice", () => {
         ]),
         selections: { fonas: { kind: "custom", value: "7" } },
         lengthCm: 200,
+        languageCode: "hu",
       })
     ).toThrow(LinePricingError);
   });
@@ -276,6 +285,7 @@ describe("computeLineUnitPrice", () => {
         optionCodes: unitCodes("40", "nem", "minky"),
         selections: { anyag: { kind: "material", materialId: "wellsoft", colors: [] } },
         lengthCm: null,
+        languageCode: "hu",
       })
     ).toThrow(LinePricingError);
   });
@@ -289,6 +299,7 @@ describe("computeLineUnitPrice", () => {
         optionCodes: unitCodes("40", "nem", "minky"),
         selections: { nincs: { kind: "input", value: "x" } },
         lengthCm: null,
+        languageCode: "hu",
       })
     ).toThrow(LinePricingError);
   });
@@ -306,6 +317,7 @@ describe("computeLineUnitPrice", () => {
         ]),
         selections: {},
         lengthCm: null,
+        languageCode: "hu",
       })
     ).toThrow(/Fonott rácsvédő.*hossz/);
   });
@@ -321,6 +333,7 @@ describe("computeLineUnitPrice", () => {
         optionCodes: unitCodes("40", "nem", "minky"),
         selections: {},
         lengthCm: null,
+        languageCode: "hu",
       })
     ).toThrow(/Párna.*nem rendelhető/);
   });
@@ -355,14 +368,14 @@ describe("length per-material pricing", () => {
         {
           kind: "toggle",
           id: "gumiparositas",
-          label: "Gumírozás",
+          label: { hu: "Gumírozás" },
           visibility: { kind: "always" },
           price: 800,
         },
         {
           kind: "toggle",
           id: "masni",
-          label: "Masni",
+          label: { hu: "Masni" },
           visibility: { kind: "when-equal", fieldId: "gumiparositas", value: true },
           price: 500,
         },
@@ -382,6 +395,7 @@ describe("length per-material pricing", () => {
       ]),
       selections: {},
       lengthCm: 200,
+      languageCode: "hu",
     });
     const visible = computeLineUnitPrice({
       productName: "Termék",
@@ -396,6 +410,7 @@ describe("length per-material pricing", () => {
       ]),
       selections: {},
       lengthCm: 200,
+      languageCode: "hu",
     });
 
     expect(hidden).toBe(2 * 8000);
@@ -414,6 +429,7 @@ describe("length per-material pricing", () => {
       ]),
       selections: {},
       lengthCm: 200,
+      languageCode: "hu",
     });
     const velur = computeLineUnitPrice({
       productName: "Termék",
@@ -426,6 +442,7 @@ describe("length per-material pricing", () => {
       ]),
       selections: {},
       lengthCm: 200,
+      languageCode: "hu",
     });
 
     expect(teddy).toBe(2 * (8000 + 400));
