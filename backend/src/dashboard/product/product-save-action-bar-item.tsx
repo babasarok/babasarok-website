@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useReducer, type ReactElement } from "react";
 import { Button } from "@vendure/dashboard";
 import type { PageContextValue } from "@vendure/dashboard";
 import { Switch } from "@/vdb/components/ui/switch.js";
@@ -8,55 +8,37 @@ import { getConfiguratorSave, useConfiguratorDirty } from "./product-definition-
 /** Replaces the stock product page's save button: the stock Enabled switch
  * and one Update button that saves the page form and, on generated products,
  * the configurator block together. Behaves like the stock button elsewhere. */
-export function ProductSaveActionBarItem({ context }: { context: PageContextValue }): ReactElement {
+export function ProductSaveActionBarItem({
+  context,
+  definitionId,
+}: {
+  context: PageContextValue;
+  definitionId: string | null;
+}): ReactElement {
   const { form } = context;
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- PageContextValue.entity is typed `any` by the dashboard's own contract (page-provider.tsx)
   const entityId: unknown = context.entity?.id;
   const creating = typeof entityId !== "string";
-  const configuratorDirty = useConfiguratorDirty(creating ? "" : entityId);
-  const [pageState, setPageState] = useState({ dirty: false, valid: false });
-  const [enabled, setEnabled] = useState<boolean>(false);
+  const configuratorDirty = useConfiguratorDirty(definitionId ?? "");
+  const [, rerender] = useReducer((tick: number) => tick + 1, 0);
 
+  // Partial notifications omit unchanged keys, so they only trigger a re-read
+  // of the full form state below.
   useEffect(() => {
     if (form === undefined) {
       return;
     }
 
-    const stop = form.subscribe({
-      formState: { isDirty: true, isValid: true },
-      callback: (state) => {
-        setPageState({
-          dirty: state.isDirty ?? false,
-          valid: state.isValid ?? false,
-        });
-      },
+    return form.subscribe({
+      formState: { isDirty: true, isValid: true, values: true },
+      callback: rerender,
     });
-    const watch = form.subscribe({
-      formState: { values: true },
-      callback: () => {
-        const value: unknown = form.getValues("enabled");
-
-        setEnabled(value === true);
-      },
-    });
-
-    const initial: unknown = form.getValues("enabled");
-
-    setEnabled(initial === true);
-    setPageState({
-      dirty: form.formState.isDirty,
-      valid: form.formState.isValid,
-    });
-
-    return () => {
-      stop();
-      watch();
-    };
   }, [form]);
 
+  const enabled: unknown = form?.getValues("enabled");
   const state = {
-    pageDirty: pageState.dirty,
-    pageValid: pageState.valid,
+    pageDirty: form?.formState.isDirty ?? false,
+    pageValid: form?.formState.isValid ?? false,
     configuratorDirty,
   };
 
@@ -72,7 +54,7 @@ export function ProductSaveActionBarItem({ context }: { context: PageContextValu
         </label>
         <Switch
           id="product-enabled-switch-input"
-          checked={enabled}
+          checked={enabled === true}
           onCheckedChange={(checked) => {
             form?.setValue("enabled", checked, { shouldDirty: true, shouldValidate: true });
           }}
@@ -88,8 +70,8 @@ export function ProductSaveActionBarItem({ context }: { context: PageContextValu
             event.currentTarget.form?.requestSubmit();
           }
 
-          if (plan.saveConfigurator && !creating) {
-            void getConfiguratorSave(entityId)?.save();
+          if (plan.saveConfigurator && definitionId !== null) {
+            void getConfiguratorSave(definitionId)?.save();
           }
         }}
       >

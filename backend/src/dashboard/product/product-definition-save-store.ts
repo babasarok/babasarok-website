@@ -16,23 +16,26 @@ function notify(): void {
 
 /** Publishes a product's configurator save handle for the page's Update
  * button. */
-export function publishConfiguratorSave(productId: string, handle: ConfiguratorSaveHandle): void {
-  const previous = handles.get(productId);
+export function publishConfiguratorSave(
+  definitionId: string,
+  handle: ConfiguratorSaveHandle
+): void {
+  const previous = handles.get(definitionId);
 
-  handles.set(productId, handle);
+  handles.set(definitionId, handle);
 
   if (previous?.dirty !== handle.dirty) {
     notify();
   }
 }
 
-export function unpublishConfiguratorSave(productId: string): void {
-  handles.delete(productId);
+export function unpublishConfiguratorSave(definitionId: string): void {
+  handles.delete(definitionId);
   notify();
 }
 
-export function getConfiguratorSave(productId: string): ConfiguratorSaveHandle | undefined {
-  return handles.get(productId);
+export function getConfiguratorSave(definitionId: string): ConfiguratorSaveHandle | undefined {
+  return handles.get(definitionId);
 }
 
 function subscribe(listener: () => void): () => void {
@@ -43,6 +46,6 @@ function subscribe(listener: () => void): () => void {
   };
 }
 
-export function useConfiguratorDirty(productId: string): boolean {
-  return useSyncExternalStore(subscribe, () => handles.get(productId)?.dirty ?? false);
+export function useConfiguratorDirty(definitionId: string): boolean {
+  return useSyncExternalStore(subscribe, () => handles.get(definitionId)?.dirty ?? false);
 }

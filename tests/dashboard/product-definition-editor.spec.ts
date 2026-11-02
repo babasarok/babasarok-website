@@ -198,7 +198,7 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await meret.getByLabel("Név").first().fill("Méret");
     await meret.getByLabel("Név").nth(1).fill("S");
 
-    await page.getByLabel("Terméknév", { exact: true }).fill("E2E F1 átnevezve");
+    await page.getByLabel("Product name", { exact: true }).fill("E2E F1 átnevezve");
 
     const update = waitForMutation(page, "mutation UpdateProductDefinition");
     await page.getByRole("button", { name: "Frissítés", exact: true }).click();
@@ -210,7 +210,7 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
 
     await page.reload();
 
-    await expect(page.getByLabel("Terméknév", { exact: true })).toHaveValue("E2E F1 átnevezve");
+    await expect(page.getByLabel("Product name", { exact: true })).toHaveValue("E2E F1 átnevezve");
 
     const generated = generatedTable(page);
     await expect(generated.getByRole("row", { name: /Szín: / })).toHaveCount(8);

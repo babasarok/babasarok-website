@@ -125,7 +125,9 @@ defineDashboardExtension({
       pageId: "product-detail",
       id: "unified-product-save",
       position: { itemId: "save-button", order: "replace" },
-      component: ProductSaveActionBarItem,
+      component: ({ context }) => (
+        <ProductSaveActionBarItem context={context} definitionId={definitionIdOf(context)} />
+      ),
       requiresPermission: ["UpdateProduct", "UpdateCatalog"],
     },
     {
