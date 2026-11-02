@@ -1,81 +1,92 @@
-import { EntityHydrator, type PriceCalculationResult } from "@vendure/core";
+import { EntityHydrator, idsAreEqual, type PriceCalculationResult } from "@vendure/core";
 import type {
   Injector,
   Order,
   OrderItemPriceCalculationStrategy,
+  OrderLine,
   ProductVariant,
   RequestContext,
 } from "@vendure/core";
 import { TransactionalConnection } from "@vendure/core";
-import { nativeProductNames } from "../product/native-names";
-import { ProductDefinition } from "../product/product.entity";
-import { computeLineUnitPrice, LinePricingError } from "./line-price";
-import { parseLineSelections } from "./line-selection";
+import { lineValuationDeps, valueVariantLine, type LineValuationDeps } from "./line-valuation";
+
+function sameConfiguration(
+  line: OrderLine,
+  variant: ProductVariant,
+  customFields: { [key: string]: unknown }
+): boolean {
+  return (
+    idsAreEqual(line.productVariantId, variant.id) &&
+    line.customFields.selections === customFields.selections &&
+    (line.customFields.lengthCm ?? null) === (customFields.lengthCm ?? null)
+  );
+}
+
+export async function calculateUnitPrice(
+  deps: LineValuationDeps,
+  ctx: RequestContext,
+  productVariant: ProductVariant,
+  orderLineCustomFields: { [key: string]: unknown },
+  order: Order
+): Promise<PriceCalculationResult> {
+  const valuation = await valueVariantLine(
+    deps,
+    ctx,
+    productVariant,
+    orderLineCustomFields,
+    productVariant.listPrice
+  );
+
+  if (valuation.kind === "passThrough") {
+    return {
+      price: productVariant.listPrice,
+      priceIncludesTax: productVariant.listPriceIncludesTax,
+    };
+  }
+
+  if (valuation.kind === "priced") {
+    return { price: valuation.price, priceIncludesTax: productVariant.listPriceIncludesTax };
+  }
+
+  const existingLine = order.lines.find((line) =>
+    sameConfiguration(line, productVariant, orderLineCustomFields)
+  );
+
+  if (existingLine === undefined) {
+    throw new Error(valuation.message);
+  }
+
+  return {
+    price: existingLine.listPrice,
+    priceIncludesTax: existingLine.listPriceIncludesTax,
+  };
+}
 
 /**
  * The order item price strategy for the generated catalog (ADR 0010 decision
  * 6): configured lines price from the canonical definition and the line's
  * selections, everything else passes the variant's price through — the
- * quote-order placeholders keep their client-quoted totals.
+ * quote-order placeholders keep their client-quoted totals. A line already on
+ * the order that its definition can no longer price keeps its last price, so
+ * unrelated recalculations work; the transition guard refuses to place it.
  */
 export class ServerPricingStrategy implements OrderItemPriceCalculationStrategy {
-  private connection!: TransactionalConnection;
-  private entityHydrator!: EntityHydrator;
+  private deps!: LineValuationDeps;
 
   init(injector: Injector): void {
-    this.connection = injector.get(TransactionalConnection);
-    this.entityHydrator = injector.get(EntityHydrator);
+    this.deps = lineValuationDeps(
+      injector.get(TransactionalConnection),
+      injector.get(EntityHydrator)
+    );
   }
 
-  async calculateUnitPrice(
+  calculateUnitPrice(
     ctx: RequestContext,
     productVariant: ProductVariant,
     orderLineCustomFields: { [key: string]: unknown },
-    _order: Order,
+    order: Order,
     _quantity: number
   ): Promise<PriceCalculationResult> {
-    const definitionRow = await this.connection
-      .getRepository(ctx, ProductDefinition)
-      .findOne({ where: { nativeProductId: Number(productVariant.productId) } });
-
-    if (definitionRow === null) {
-      return {
-        price: productVariant.listPrice,
-        priceIncludesTax: productVariant.listPriceIncludesTax,
-      };
-    }
-
-    await this.entityHydrator.hydrate(ctx, productVariant, {
-      relations: ["options", "options.group"],
-    });
-
-    const optionCodes = new Map(
-      productVariant.options.map((option) => [option.group.code, option.code])
-    );
-    const productId = Number(productVariant.productId);
-    const productName =
-      (await nativeProductNames(this.connection, ctx, [productId])).get(productId) ||
-      definitionRow.productId;
-    const rawLengthCm = orderLineCustomFields.lengthCm;
-
-    try {
-      const price = computeLineUnitPrice({
-        definition: definitionRow.definition,
-        productName,
-        variantListPrice: productVariant.listPrice,
-        optionCodes,
-        selections: parseLineSelections(orderLineCustomFields.selections),
-        lengthCm: typeof rawLengthCm === "number" ? rawLengthCm : null,
-        languageCode: ctx.languageCode,
-      });
-
-      return { price, priceIncludesTax: productVariant.listPriceIncludesTax };
-    } catch (error) {
-      if (error instanceof LinePricingError) {
-        throw new Error(`Árazási hiba (${productName}): ${error.message}`);
-      }
-
-      throw error;
-    }
+    return calculateUnitPrice(this.deps, ctx, productVariant, orderLineCustomFields, order);
   }
 }

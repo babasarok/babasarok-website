@@ -286,3 +286,21 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
 
   return Math.round(variantListPrice + lineParts.reduce((sum, part) => sum + part, 0));
 }
+
+export type LineValuation =
+  { kind: "priced"; price: number } | { kind: "invalid"; message: string };
+
+export function valueConfiguredLine(input: LinePricingInput): LineValuation {
+  try {
+    return { kind: "priced", price: computeLineUnitPrice(input) };
+  } catch (error) {
+    if (error instanceof LinePricingError) {
+      return {
+        kind: "invalid",
+        message: `Árazási hiba (${input.productName}): ${error.message}`,
+      };
+    }
+
+    throw error;
+  }
+}
