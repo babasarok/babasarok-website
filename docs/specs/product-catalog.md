@@ -179,3 +179,55 @@ validated against the product's options like normal selections.
 - **Scenario: Unknown or invalid prefilled values**
   - WHEN a query parameter references an unknown field, option, or material
   - THEN it is ignored and the configurator starts unselected for that part
+
+### Facets and collections (Vendure catalog)
+
+> Transition note (ADR 0010 delivery step 4). The Vendure-native catalog
+> owns browsing facets and collections. Colors are order-line selections,
+> not variant axes — the Color facet describes the colors a variant can be
+> ordered in, derived from the variant's chosen materials.
+
+The Vendure catalog SHALL expose two sync-owned facets on generated product
+variants: **Anyag** (`babasarok-material`, one value per material, code =
+material slug) and **Szín** (`babasarok-color`, one value per
+material-color, code = `<material-slug>--<color-id>`). Facet value names
+follow the material/color labels.
+
+Every generated variant SHALL carry the facet values of the materials its
+configuration picks, plus every color facet value of those materials. The
+facet assignment is part of the definition sync: native-side facet edits
+count as drift and are overwritten by the next sync.
+
+Material writes SHALL propagate automatically, without a definition save:
+
+- **Scenario: Material created or renamed**
+  - WHEN a material is created or its label changes
+  - THEN its facet values and the per-material collection follow (created or
+    renamed to the material's label)
+- **Scenario: Material colors change**
+  - WHEN colors are added to, renamed on, or removed from a material
+  - THEN the material's color facet values follow, and every product
+    definition referencing the material re-syncs, so its variants carry the
+    correct color facets
+- **Scenario: Material deleted**
+  - WHEN a material that no definition references is deleted
+  - THEN its facet values and its collection are deleted with it
+
+For every material the catalog SHALL maintain an auto-managed collection
+(slug `material-<material-slug>`, named after the material) containing the
+variants that carry that material's facet value (facet-value filter,
+containsAny). Its filter is written at creation and not overwritten
+afterwards; renames propagate, manual content edits are the owner's.
+
+Convergence for databases that predate the facet sync SHALL be idempotent
+and re-run safe: the `convergeMaterialFacets` admin mutation (or
+`pnpm -C backend run converge-facets` against a running server + worker)
+brings every material's facet values and collection in line and re-syncs
+every referencing product. A missing facet value fails a product sync with a
+clear error pointing at the convergence step, rather than silently creating
+or skipping.
+
+- **Scenario: Facet value missing at sync time**
+  - WHEN a product sync cannot resolve a facet value it should assign
+  - THEN the sync fails with an error naming the value and the convergence
+    step, and the dashboard shows the failed sync state

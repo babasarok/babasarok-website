@@ -183,6 +183,22 @@ export class MaterialService {
     return true;
   }
 
+  /**
+   * Idempotent convergence for databases predating the facet sync: brings
+   * every material's facet values and auto-managed collection up to date and
+   * re-syncs every product referencing a material. Re-run safe.
+   */
+  async convergeFacets(ctx: RequestContext): Promise<number> {
+    const materials = await this.connection.getRepository(ctx, Material).find();
+
+    for (const material of materials) {
+      await this.facetSync.upsert(ctx, material);
+      await this.eventBus.publish(new MaterialEvent(ctx, "updated", material.slug));
+    }
+
+    return materials.length;
+  }
+
   private contentValues(definition: MaterialDefinition): {
     subtitle: string | null;
     description: string | null;

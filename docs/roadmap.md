@@ -87,8 +87,11 @@ merged to main until the backend structure is settled):
   full-width block + conditionally hiding the stock variants grid (both
   `pnpm patch` candidates), drift-detail display, validation-message
   localization
-- ⬜ Facets + Collections (material/color facets auto-synced from
-  definitions and material changes, auto-managed collections)
+- ✅ Facets + Collections — material/color facet values on generated variants,
+  auto-managed per-material collections, and event-driven re-sync of affected
+  products on material (create/rename/color/delete) changes; facets and
+  collections live in the stock dashboard, `convergeMaterialFacets` /
+  `pnpm -C backend run converge-facets` converges pre-facet databases
 - ⬜ Server-side pricing + promotions — length/embroidery via a custom
   `OrderItemPriceCalculationStrategy` on order-line custom fields, set
   discounts as a Vendure Promotion (see [order-pricing](specs/order-pricing.md)

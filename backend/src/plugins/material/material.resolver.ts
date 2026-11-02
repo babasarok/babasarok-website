@@ -59,6 +59,12 @@ export class MaterialResolver {
   ): Promise<boolean> {
     return this.materialService.deleteMaterial(ctx, id);
   }
+
+  @Mutation()
+  @Allow(Permission.UpdateCatalog)
+  async convergeMaterialFacets(@Ctx() ctx: RequestContext): Promise<number> {
+    return this.materialService.convergeFacets(ctx);
+  }
 }
 
 export const materialSchema = gql`
@@ -104,5 +110,6 @@ export const materialSchema = gql`
     createMaterial(input: MaterialInput!): Material!
     updateMaterial(id: ID!, input: MaterialInput!): Material!
     deleteMaterial(id: ID!): Boolean!
+    convergeMaterialFacets: Int!
   }
 `;
