@@ -17,11 +17,9 @@ import {
   type BasketLine,
 } from "./set-basket";
 import type { SetInstance } from "./set-allocation";
+import { SET_PARENT_SLUG } from "./group-parents";
 
 export { PRODUCT_SET_CONDITION_CODE };
-
-/** The private parent collection whose children are the discounted sets. */
-const SET_PARENT_SLUG = "szettek";
 
 /**
  * `extends Record<string, unknown>` satisfies Vendure's

@@ -556,8 +556,8 @@ const RELATED_PARENT: GroupCollectionInput = {
   nativeIds: [],
   setDiscount: null,
 };
-// The "szettek" slug is also read by backend/src/plugins/product-set/
-// promotion.ts (the condition reads that parent's children); keep in sync.
+// Both slugs are also read by backend/src/plugins/product-set/
+// group-parents.ts (the set promotion and the shop's productGroups); keep in sync.
 
 function productFilterArguments(
   nativeIds: number[]
