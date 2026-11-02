@@ -64,55 +64,49 @@ function isBanned(
 }
 
 /**
- * `"<product name> (<values joined by ', ')>", except a value that appears in
- * more than one group of the same variant gets its group's label prefixed —
- * two material fields both offering wool read "Külső anyag: Gyapjú, Belső
- * anyag: Gyapjú" instead of an ambiguous "Gyapjú, Gyapjú".
+ * `"<field>: <value> · <field>: <value>"`; a toggle reads as its bare field
+ * label when on and is left out when off. Falls back to the product name when
+ * nothing remains.
  */
 function variantNameIn(
   language: string,
   productName: string,
   combo: readonly PlannedOption[],
-  groups: readonly PlannedOptionGroup[]
+  fields: readonly ProductField[]
 ): string {
-  if (combo.length === 0) {
+  const parts = fields.flatMap((field, index) => {
+    const label = resolveText(field.label, language);
+
+    if (field.kind === "toggle") {
+      return combo[index].code === "igen" ? [label] : [];
+    }
+
+    return [`${label}: ${resolveText(combo[index].name, language)}`];
+  });
+
+  if (parts.length === 0) {
     return productName;
   }
 
-  const occurrences = new Map<string, number>();
-
-  for (const option of combo) {
-    const name = resolveText(option.name, language);
-    occurrences.set(name, (occurrences.get(name) ?? 0) + 1);
-  }
-
-  const values = groups.map((group, index) => {
-    const optionName = resolveText(combo[index].name, language);
-
-    return (occurrences.get(optionName) ?? 0) > 1
-      ? `${resolveText(group.name, language)}: ${optionName}`
-      : optionName;
-  });
-
-  return `${productName} (${values.join(", ")})`;
+  return parts.join(" · ");
 }
 
 function variantName(
   productNames: LocalizedText,
   combo: readonly PlannedOption[],
-  groups: readonly PlannedOptionGroup[]
+  fields: readonly ProductField[]
 ): LocalizedText {
   const languages = new Set([
     ...Object.keys(productNames),
-    ...groups.flatMap((group) => Object.keys(group.name)),
+    ...fields.flatMap((field) => Object.keys(field.label)),
     ...combo.flatMap((option) => Object.keys(option.name)),
   ]);
   const name: LocalizedText = {
-    hu: variantNameIn("hu", productNames.hu, combo, groups),
+    hu: variantNameIn("hu", productNames.hu, combo, fields),
   };
 
   for (const language of languages) {
-    name[language] = variantNameIn(language, resolveText(productNames, language), combo, groups);
+    name[language] = variantNameIn(language, resolveText(productNames, language), combo, fields);
   }
 
   return name;
@@ -224,7 +218,7 @@ export function planVariantCombinations(
 
     variants.push({
       sku: optionCodes.length === 0 ? definition.id : `${definition.id}--${optionCodes.join("-")}`,
-      name: variantName(productName, combo, optionGroups),
+      name: variantName(productName, combo, groupFields),
       price:
         definition.pricing.kind === "length"
           ? 0

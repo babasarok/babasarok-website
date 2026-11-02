@@ -13,10 +13,12 @@ filterable product list with a detail page per product.
 > `embroidery`, and `banned_combinations` ↔ `forbiddenMaterialCombinations`.
 > The native Product owns its name and slug (ADR 0011 decision 1): the
 > preview seed writes the Tina `title` into the native product's name, the
-> slug is seeded from the definition's `id` at creation only, and a rename on
-> the stock product form propagates to the generated variant names
-> ("`<name> (<option values>)`") — the definition sync never writes the
-> product's name or slug. The product type is a value of the public
+> slug is seeded from the definition's `id` at creation only, and the definition
+> sync never writes the product's name or slug. Generated variant names list
+> the labelled field values ("`Anyag: Pamut · Méret: Nagy · Masni`"): a toggle
+> shows its bare label when on and is omitted when off; a variant with nothing
+> to list carries the product's name, so a rename on the stock product form
+> propagates to those variants. The product type is a value of the public
 > `babasarok-product-type` facet on the native product (ADR 0011 decision 2),
 > not a definition field. Editorial content still maps to the native product
 > at cutover: body → `description`, `thumbnail` → featured asset, `images` →

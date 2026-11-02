@@ -304,12 +304,12 @@ export const config: VendureConfig = {
           },
         ],
         nullable: true,
-        validate: (value) => {
+        validate: (value: unknown) => {
           if (value === null || value === undefined) {
             return;
           }
 
-          if (!Number.isInteger(value) || value <= 0) {
+          if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
             return "A szett-kedvezmény pozitív egész forint lehet.";
           }
         },

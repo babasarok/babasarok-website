@@ -1,8 +1,4 @@
-import {
-  ProductDefinitionSchema,
-  type ProductDefinition,
-  type ProductDefinitionInput,
-} from "@babasarok/product-definition";
+import { ProductDefinitionSchema, type ProductDefinition } from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
 import { nativeStateHash, type NativeProductState } from "./sync-state";
 import { plannedNativeState, planVariantCombinations } from "./variant-plan";
@@ -237,7 +233,7 @@ describe("planVariantCombinations", () => {
     expect(priceOf(["igen", "igen"])).toBe(16_300);
   });
 
-  it("keeps the short name while every value in a variant is unique", () => {
+  it("labels every value with its field", () => {
     const definition = ProductDefinitionSchema.parse({
       ...babafeszek,
       id: "egyedi",
@@ -263,84 +259,30 @@ describe("planVariantCombinations", () => {
 
     const plan = planVariantCombinations(definition, materials, { hu: "Egyedi" });
 
-    expect(plan.variants.map((variant) => variant.name.hu)).toEqual(["Egyedi (Normál, Teddy)"]);
-  });
-
-  it("qualifies only the values that repeat across groups in the same variant", () => {
-    const definition = ProductDefinitionSchema.parse({
-      ...babafeszek,
-      id: "keverek",
-      fields: [
-        {
-          kind: "material",
-          id: "kulso",
-          label: { hu: "Külső anyag" },
-          colorCount: { kind: "fixed", count: 1 },
-          options: [
-            { materialId: "teddy", price: 0 },
-            { materialId: "waffle", price: 0 },
-          ],
-        },
-        {
-          kind: "material",
-          id: "belso",
-          label: { hu: "Belső anyag" },
-          colorCount: { kind: "fixed", count: 1 },
-          options: [
-            { materialId: "teddy", price: 0 },
-            { materialId: "wellsoft", price: 0 },
-          ],
-        },
-      ],
-      forbiddenMaterialCombinations: [],
-    });
-
-    const plan = planVariantCombinations(definition, materials, { hu: "Keverék" });
-
     expect(plan.variants.map((variant) => variant.name.hu)).toEqual([
-      "Keverék (Külső anyag: Teddy, Belső anyag: Teddy)",
-      "Keverék (Teddy, Wellsoft)",
-      "Keverék (Waffle, Teddy)",
-      "Keverék (Waffle, Wellsoft)",
+      "Méret: Normál · Anyag: Teddy",
     ]);
   });
 
-  it("qualifies a value repeated across three groups in every group it repeats in", () => {
-    const materialField = (
-      id: string,
-      label: string
-    ): Extract<ProductDefinitionInput["fields"][number], { kind: "material" }> => ({
-      kind: "material",
-      id,
-      label: { hu: label },
-      colorCount: { kind: "fixed", count: 1 },
-      options: [
-        { materialId: "teddy", price: 0 },
-        { materialId: "waffle", price: 0 },
-      ],
-    });
-
+  it("names a toggle by its label when on, omits it when off and falls back to the product name", () => {
     const definition = ProductDefinitionSchema.parse({
       ...babafeszek,
-      id: "harom",
+      id: "masnis",
       fields: [
-        materialField("kulso", "Külső"),
-        materialField("kozep", "Középső"),
-        materialField("belso", "Belső"),
+        {
+          kind: "toggle",
+          id: "masni",
+          label: { hu: "Masni" },
+          visibility: { kind: "always" },
+          price: 300,
+        },
       ],
       forbiddenMaterialCombinations: [],
     });
 
-    const plan = planVariantCombinations(definition, materials, { hu: "Három" });
-    const nameOf = (codes: readonly string[]): string | undefined =>
-      plan.variants.find((variant) => variant.optionCodes.join("-") === codes.join("-"))?.name.hu;
+    const plan = planVariantCombinations(definition, materials, { hu: "Masnis" });
 
-    expect(nameOf(["teddy", "teddy", "teddy"])).toBe(
-      "Három (Külső: Teddy, Középső: Teddy, Belső: Teddy)"
-    );
-    expect(nameOf(["teddy", "waffle", "waffle"])).toBe(
-      "Három (Teddy, Középső: Waffle, Belső: Waffle)"
-    );
+    expect(plan.variants.map((variant) => variant.name.hu)).toEqual(["Masnis", "Masni"]);
   });
 });
 
