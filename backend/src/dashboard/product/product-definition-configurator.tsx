@@ -30,7 +30,6 @@ import {
 } from "@vendure/dashboard";
 import { defineStateEntries } from "@vendure/dashboard";
 import {
-  PRODUCT_TYPE_VALUES,
   ProductDefinitionSchema,
   type ProductDefinitionInput,
 } from "@babasarok/product-definition";
@@ -63,7 +62,6 @@ const productDefinitionQuery = graphql(`
   query ProductDefinition($productId: String!) {
     productDefinition(productId: $productId) {
       productId
-      type
       orderable
       basePrice
       nativeProductId
@@ -174,7 +172,7 @@ export function ConfiguratorEditor({
   const creatingNew = mode === "create";
 
   const [definition, setDefinition] = useState<ProductDefinitionInput | null>(() =>
-    creatingNew ? newDefinition("", PRODUCT_TYPE_VALUES[0]) : null
+    creatingNew ? newDefinition("") : null
   );
   // The native Product's name (ADR 0011 decision 1): asked for at creation,
   // afterwards edited on the stock product form, never in this editor.
@@ -695,32 +693,6 @@ export function ConfiguratorEditor({
               </>
             ) : (
               <span className="font-mono text-xs">{definition.id}</span>
-            )}
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            <span>Típus</span>
-            {creatingNew ? (
-              <NativeSelect
-                className="w-64"
-                value={definition.type}
-                onChange={(e) => {
-                  const type = PRODUCT_TYPE_VALUES.find(
-                    (candidate) => candidate === e.target.value
-                  );
-
-                  if (type !== undefined) {
-                    setDefinition({ ...definition, type });
-                  }
-                }}
-              >
-                {PRODUCT_TYPE_VALUES.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </NativeSelect>
-            ) : (
-              <span className="text-xs">{definition.type}</span>
             )}
           </label>
           {creatingNew && (

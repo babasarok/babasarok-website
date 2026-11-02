@@ -84,8 +84,6 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
   });
 
   await test.step("fill fields of every kind and create the product", async () => {
-    await page.getByLabel("Típus").first().selectOption("parna");
-
     const alapar = page.getByLabel("Alapár (Ft)");
     await alapar.fill("15000");
     await alapar.blur();

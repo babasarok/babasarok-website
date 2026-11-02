@@ -235,13 +235,9 @@ export function sanitize(definition: ProductDefinitionInput): ProductDefinitionI
   };
 }
 
-export function newDefinition(
-  id: string,
-  type: ProductDefinitionInput["type"]
-): ProductDefinitionInput {
+export function newDefinition(id: string): ProductDefinitionInput {
   return {
     id,
-    type,
     orderable: true,
     basePrice: 0,
     pricing: { kind: "unit" },

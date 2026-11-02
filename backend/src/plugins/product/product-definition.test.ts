@@ -7,7 +7,6 @@ const MATERIALS = new Set(["wellsoft", "velur"]);
 function definition(overrides: Partial<ProductDefinitionInput> = {}): ProductDefinitionInput {
   return {
     id: "teszt-termek",
-    type: "kiegeszito",
     orderable: true,
     basePrice: 1000,
     pricing: { kind: "unit" },

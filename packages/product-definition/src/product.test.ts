@@ -10,7 +10,6 @@ import {
   ForbiddenMaterialCombinationSchema,
   ProductDefinitionSchema,
   ProductPricingSchema,
-  PRODUCT_TYPE_VALUES,
   type ProductDefinition,
 } from "./product";
 import { productRevision } from "./revision";
@@ -69,7 +68,6 @@ const productFixture = (
 ): z.input<typeof ProductDefinitionSchema> => ({
   id: "pamut-lepedo",
   revision: "2f8a1c",
-  type: "lepedo",
   orderable: true,
   basePrice: 20_000,
   pricing: { kind: "unit" },
@@ -81,23 +79,6 @@ const productFixture = (
     embroideryFixture,
   ],
   forbiddenMaterialCombinations: [["pamut", "szunyok"]],
-});
-
-describe("PRODUCT_TYPE_VALUES", () => {
-  it("covers every product type the schema accepts", () => {
-    for (const value of PRODUCT_TYPE_VALUES) {
-      expect(productFixture("select").type).toBeDefined();
-      expect([
-        "racsvedo",
-        "takaro",
-        "lepedo",
-        "parna",
-        "babafeszek",
-        "zsak",
-        "kiegeszito",
-      ]).toContain(value);
-    }
-  });
 });
 
 describe("ProductDefinitionSchema", () => {
@@ -263,7 +244,6 @@ describe("productRevision", () => {
   const definition: ProductDefinition = ProductDefinitionSchema.parse({
     id: "babafeszek",
     revision: "rev-1",
-    type: "babafeszek",
     orderable: true,
     basePrice: 15_000,
     pricing: { kind: "unit" },
@@ -288,7 +268,6 @@ describe("productRevision", () => {
       pricing: { kind: "unit" },
       basePrice: 15_000,
       orderable: true,
-      type: "babafeszek",
       revision: "rev-1",
       id: "babafeszek",
     });

@@ -37,7 +37,6 @@ export interface ProductDefinitionGraph {
   id: ID;
   productId: string;
   label: string;
-  type: string;
   orderable: boolean;
   basePrice: number;
   nativeProductId: number | null;
@@ -62,7 +61,6 @@ function toGraph(
     id: row.id,
     productId: row.productId,
     label: row.label,
-    type: row.definition.type,
     orderable: row.definition.orderable,
     basePrice: row.definition.basePrice,
     nativeProductId: row.nativeProductId,
@@ -208,7 +206,6 @@ export const productDefinitionSchema = gql`
     id: ID!
     productId: String!
     label: String!
-    type: String!
     orderable: Boolean!
     basePrice: Int!
     nativeProductId: Int

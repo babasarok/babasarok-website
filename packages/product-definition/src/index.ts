@@ -50,25 +50,14 @@ export { ToggleFieldSchema, type ToggleField } from "./field-kinds/toggle.js";
 export { MaterialFieldSchema, type MaterialField } from "./field-kinds/material.js";
 export { EmbroideryFieldSchema, type EmbroideryField } from "./field-kinds/embroidery.js";
 export {
-  ThreadColorDefinitionSchema,
-  ThreadColorIdSchema,
-  ThreadColorPaletteSchema,
-  type ThreadColorDefinition,
-  type ThreadColorId,
-  type ThreadColorPalette,
-} from "./thread-color.js";
-export {
   ForbiddenMaterialCombinationSchema,
-  PRODUCT_TYPE_VALUES,
   ProductDefinitionSchema,
   ProductFieldSchema,
   ProductPricingSchema,
-  ProductTypeSchema,
   type ProductDefinition,
   type ProductDefinitionInput,
   type ProductField,
   type ProductPricing,
-  type ProductType,
 } from "./product.js";
 export { canonicalJson } from "./canonical-json.js";
 export {
