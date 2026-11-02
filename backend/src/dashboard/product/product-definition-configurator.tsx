@@ -327,7 +327,13 @@ export function ConfiguratorEditor({
 
     publishConfiguratorSave(definitionId, {
       dirty: configuratorDirty,
-      save: () => save(false),
+      save: async () => {
+        if (pending) {
+          return;
+        }
+
+        await save(false);
+      },
     });
   });
 
