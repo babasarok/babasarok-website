@@ -21,6 +21,7 @@ import {
 } from "@vendure/core";
 import type { JobQueue } from "@vendure/core";
 import type { UpdateProductVariantInput } from "@vendure/common/lib/generated-types";
+import { GlobalFlag } from "@vendure/common/lib/generated-types";
 import { JobQueueService } from "@vendure/core";
 import { In, IsNull } from "typeorm";
 import type { ProductDefinition as CanonicalProductDefinition } from "@babasarok/product-definition";
@@ -710,6 +711,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
           price: variant.price,
           optionIds: optionIdsFor(variant),
           facetValueIds: facetValueIdsFor(variant.sku),
+          trackInventory: GlobalFlag.FALSE,
           translations: [{ languageCode: LanguageCode.hu, name: variant.name }],
         }))
       );
@@ -736,12 +738,17 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         plannedFacetIds.some((facetValueId) => !actualFacetIds.has(facetValueId));
       const priceChanged = channelPrice(variant) !== planned.price;
       const nameChanged = huName(variant.translations) !== planned.name;
+      const inventoryChanged = variant.trackInventory !== GlobalFlag.FALSE;
 
-      if (!optionsChanged && !priceChanged && !nameChanged && !facetsChanged) {
+      if (!optionsChanged && !priceChanged && !nameChanged && !facetsChanged && !inventoryChanged) {
         continue;
       }
 
       const update: UpdateProductVariantInput = { id: variant.id };
+
+      if (inventoryChanged) {
+        update.trackInventory = GlobalFlag.FALSE;
+      }
 
       if (priceChanged) {
         update.price = planned.price;
