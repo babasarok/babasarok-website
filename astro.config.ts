@@ -14,9 +14,11 @@ import { devProxy } from "./integrations/dev-proxy";
 import { vendureDashboard } from "./integrations/vendure-dashboard";
 import { previewApiUrl } from "./src/lib/preview-url";
 
+const site = process.env.SITE_URL || "https://babasarok.net";
+
 // https://astro.build/config
 export default defineConfig({
-  site: process.env.SITE_URL || "https://babasarok.net",
+  site,
   output: "static",
   adapter: cloudflare({
     // Build-time work (filesystem reads in prerendered endpoints, sharp image
@@ -38,13 +40,16 @@ export default defineConfig({
     "/material": { maxAge: 60, swr: 300 },
     "/material/[slug]": { maxAge: 60, swr: 300 },
     "/_server-islands/[name]": { maxAge: 60, swr: 300 },
+    "/search-index.json": { maxAge: 60, swr: 300 },
+    "/sitemap-catalog.xml": { maxAge: 3600 },
   },
   prefetch: true,
   integrations: [
     devProxy(),
     // Builds the vendure dashboard into dist/dashboard on every build.
     vendureDashboard(),
-    sitemap(),
+    // Catalog pages are on demand, so the integration cannot see their urls.
+    sitemap({ customSitemaps: [`${site}/sitemap-catalog.xml`] }),
     icon(),
     tina(),
     svelte(),
