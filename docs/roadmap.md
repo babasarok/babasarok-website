@@ -75,6 +75,11 @@ Slices are PRs against `feat/vendure-materials`:
   active order; checkout carries contact, address, delivery and message;
   `submitQuoteOrder` and client basket pricing retired; emails built from
   `selections`
+  Stale-page UX (owner requirement, catalog pages are cached ~60 s): a
+  changed price shows the server price on the line with a visible notice; a
+  line whose option is no longer offered is marked with the reason and can be
+  edited or removed, and checkout is blocked until it is resolved (never
+  silently changed); a refused add-to-basket explains why and offers a reload
 - ⬜ **S7 Markdown descriptions** (after S1; parallel with S3/S4) — product
   and material long descriptions are stored as markdown so the site drives
   their styling; a dashboard markdown editor (Vendure's exported rich-text
