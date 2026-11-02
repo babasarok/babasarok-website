@@ -7,7 +7,7 @@ import {
 import { plannedVariantFacetCodes } from "./facet-plan";
 import type { MaterialFacetData } from "./facet-plan";
 import type { NativeProductState } from "./sync-state";
-import { dependencyOrder, isVisible } from "./field-visibility";
+import { dependencyOrder, isVisible } from "@babasarok/pricing";
 
 export interface PlannedOption {
   code: string;

@@ -3,7 +3,7 @@ import {
   type ProductDefinition,
   type ProductField,
 } from "@babasarok/product-definition";
-import type { LineSelectionRecord, LineSelections } from "./line-selection";
+import type { LineSelectionRecord, LineSelections } from "./line-selection.js";
 
 /**
  * The site's configurator sets no text limits; this keeps a buyer-entered value

@@ -1,6 +1,6 @@
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
-import type { LineSelections } from "./line-selection";
+import type { LineSelections } from "./line-selection.js";
 import {
   MAX_SELECTION_TEXT_LENGTH,
   referencedMaterialIds,
