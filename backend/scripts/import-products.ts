@@ -417,14 +417,17 @@ async function main(): Promise<void> {
 
   const syncs = await waitForSyncs(syncTargets, startedAt);
   const display = await applyDisplayContent(syncs.synced, displayByProductId);
-  const groups = await reportGroups(productIdByFile);
+  const seededProductIds = new Set(syncTargets.map((target) => target.productId));
+  const groups = await upsertGroups(productIdByFile, seededProductIds);
+  const promotion = await upsertSetPromotion(groups.setGroupIds);
 
   console.log(
     `products: ${created} created, ${updated} updated, ` +
       `${failed} failed, ${skipped} skipped (${files.length} files; preview subset) | ` +
       `syncs: ${syncs.synced.length} synced, ${syncs.failed.length} failed | ` +
       `display: ${display.applied} applied, ${display.failed} failed | ` +
-      `groups: ${groups.validated} validated, ${groups.failed} failed`
+      `groups: ${groups.created} created, ${groups.updated} updated, ${groups.failed} failed, ` +
+      `${groups.unseeded} unseeded | promotion: ${promotion}`
   );
 
   if (failed > 0 || syncs.failed.length > 0 || display.failed > 0) {
@@ -433,16 +436,29 @@ async function main(): Promise<void> {
 }
 
 /**
- * ponytail: parse-and-validate only — groups have no Vendure entity yet (their
- * membership model is sequenced with the promotions step), so the seed reports
- * what it would import instead of inventing a half-entity.
+ * Upserts every product group (discounted sets and related-items groups) and
+ * returns the group ids of the upserted discounted sets, for the promotion.
+ * Idempotent (upsert by group id): the same script serves the prod
+ * hand-migration. Groups whose members are not among the seeded products are
+ * skipped — the curated preview subset does not seed every member — and
+ * listed, never half-imported.
  */
-async function reportGroups(
-  productIdByFile: ReadonlyMap<string, string>
-): Promise<{ validated: number; failed: number }> {
+async function upsertGroups(
+  productIdByFile: ReadonlyMap<string, string>,
+  seededProductIds: ReadonlySet<string>
+): Promise<{
+  created: number;
+  updated: number;
+  failed: number;
+  unseeded: number;
+  setGroupIds: string[];
+}> {
   const files = (await readdir(GROUPS_DIR)).filter((file) => file.endsWith(".md"));
-  let validated = 0;
+  let created = 0;
+  let updated = 0;
   let failed = 0;
+  let unseeded = 0;
+  const setGroupIds: string[] = [];
 
   for (const file of files) {
     const raw = await readFile(path.join(GROUPS_DIR, file), "utf8");
@@ -473,21 +489,196 @@ async function reportGroups(
       continue;
     }
 
-    validated += 1;
     const definition = result.data;
+    const unseededMembers = definition.productIds.filter((id) => !seededProductIds.has(id));
+
+    if (unseededMembers.length > 0) {
+      unseeded += 1;
+      console.error(`⚠ ${file}: tag nincs importálva, kihagyva — ${unseededMembers.join(", ")}`);
+      continue;
+    }
+
+    const outcome = await upsertGroup(definition);
+
+    if (typeof outcome === "string") {
+      failed += 1;
+      console.error(`✗ ${file}: ${outcome}`);
+      continue;
+    }
+
+    if (outcome.kind === "created") {
+      created += 1;
+    } else {
+      updated += 1;
+    }
 
     if (definition.kind === "discounted-set") {
+      setGroupIds.push(definition.id);
       console.log(
-        `✓ ${file}: szett "${definition.label}" — ${definition.productIds.length} termék, kedvezmény ${definition.discount} Ft`
+        `✓ ${file}: szett "${definition.label}" — ${definition.productIds.length} termék, kedvezmény ${definition.discount} Ft (${outcome.kind})`
       );
     } else {
       console.log(
-        `✓ ${file}: kapcsolódó termékek "${definition.label}" — ${definition.productIds.length} termék`
+        `✓ ${file}: kapcsolódó termékek "${definition.label}" — ${definition.productIds.length} termék (${outcome.kind})`
       );
     }
   }
 
-  return { validated, failed };
+  return { created, updated, failed, unseeded, setGroupIds };
+}
+
+async function upsertGroup(
+  definition: z.output<typeof ProductGroupDefinitionSchema>
+): Promise<UpsertResult | string> {
+  const input = {
+    label: definition.label,
+    kind: definition.kind,
+    discount: definition.kind === "discounted-set" ? definition.discount : null,
+    productIds: [...definition.productIds],
+  };
+  const existing = z
+    .object({
+      productGroups: z.array(z.object({ groupId: z.string() })).default([]),
+    })
+    .parse((await adminRequest(JSON.stringify({ query: `{ productGroups { groupId } }` }))).data);
+  const isExisting = existing.productGroups.some((row) => row.groupId === definition.id);
+  const mutation = isExisting
+    ? `mutation Update($groupId: String!, $input: ProductGroupInput!) { updateProductGroup(groupId: $groupId, input: $input) { groupId } }`
+    : `mutation Create($groupId: String!, $input: ProductGroupInput!) { createProductGroup(groupId: $groupId, input: $input) { groupId } }`;
+  const result = await adminRequest(
+    JSON.stringify({
+      query: mutation,
+      variables: { groupId: definition.id, input },
+    })
+  );
+
+  if (result.errors.length > 0) {
+    return result.errors.join("; ");
+  }
+
+  return { kind: isExisting ? "updated" : "created" };
+}
+
+/**
+ * Upserts the single "Szett kedvezmény" promotion (the set-discount condition
+ * plus action) idempotently, keyed by its condition code: found by code, its
+ * group list refreshed when it differs, created when absent.
+ */
+/** Returns a status word, or the error message on failure. */
+async function upsertSetPromotion(groupIds: string[]): Promise<string> {
+  if (groupIds.length === 0) {
+    return "skipped";
+  }
+
+  const promotions = z
+    .object({
+      promotions: z
+        .object({
+          items: z
+            .array(
+              z.object({
+                id: z.union([z.string(), z.number()]).transform(String),
+                name: z.string(),
+                enabled: z.boolean(),
+                endsAt: z.string().nullish(),
+                conditions: z.array(
+                  z.object({
+                    code: z.string(),
+                    args: z.array(z.object({ name: z.string(), value: z.string() })),
+                  })
+                ),
+              })
+            )
+            .default([]),
+        })
+        .default({ items: [] }),
+    })
+    .parse(
+      (
+        await adminRequest(
+          JSON.stringify({
+            query: `{ promotions(options: { skip: 0, take: 100 }) { items { id name enabled endsAt conditions { code args { name value } } } } }`,
+          })
+        )
+      ).data
+    ).promotions.items;
+
+  const conditions = [
+    {
+      code: "babasarok-product-set-basket",
+      arguments: [{ name: "groupIds", value: JSON.stringify(groupIds) }],
+    },
+  ];
+  const actions = [{ code: "babasarok-product-set-discount", arguments: [] }];
+  const existing = promotions.find(
+    (promotion) =>
+      promotion.endsAt === null &&
+      promotion.conditions.some((condition) => condition.code === "babasarok-product-set-basket")
+  );
+
+  if (existing !== undefined) {
+    const current = existing.conditions.find(
+      (condition) => condition.code === "babasarok-product-set-basket"
+    );
+    const currentIds = promotionGroupIdsFromArgs(
+      current?.args.find((argument) => argument.name === "groupIds")?.value
+    );
+
+    if (JSON.stringify(currentIds) === JSON.stringify(groupIds)) {
+      return "unchanged";
+    }
+
+    const result = await adminRequest(
+      JSON.stringify({
+        query: `mutation Update($input: UpdatePromotionInput!) { updatePromotion(input: $input) { id } }`,
+        variables: {
+          input: { id: existing.id, enabled: true, conditions, actions },
+        },
+      })
+    );
+
+    if (result.errors.length > 0) {
+      return result.errors.join("; ");
+    }
+
+    console.log(`→ ${existing.name}: szett-csoportok frissítve`);
+
+    return "updated";
+  }
+
+  const result = await adminRequest(
+    JSON.stringify({
+      query: `mutation Create($input: CreatePromotionInput!) { createPromotion(input: $input) { id } }`,
+      variables: {
+        input: {
+          enabled: true,
+          conditions,
+          actions,
+          translations: [{ languageCode: "hu", name: "Szett kedvezmény" }],
+        },
+      },
+    })
+  );
+
+  if (result.errors.length > 0) {
+    return result.errors.join("; ");
+  }
+
+  return "created";
+}
+
+function promotionGroupIdsFromArgs(raw: string | undefined): string[] {
+  if (raw === undefined) {
+    return [];
+  }
+
+  try {
+    const value: unknown = JSON.parse(raw);
+
+    return Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
 }
 
 /** Waits for the queued syncs to settle (the worker processes them serially). */

@@ -4,12 +4,18 @@ Lets the shop group products into sets that carry a single flat forint discount,
 detect which basket lines form a set (material-gated, globally allocated per
 unit), and surface the formed set discounts to the buyer at basket level.
 
-> **Transition note (ADR 0009/0010).** During the migration this capability
-> stays Tina-owned until the promotions step: the canonical group schemas
-> (`DiscountedProductSet`/`RelatedItems`) already exist in
-> `packages/product-definition` and the preview seed validates group content
-> against them, but Vendure-side membership storage and the set-discount
-> application land with the promotions step (roadmap epic 2).
+> **Transition note (ADR 0009/0010).** Since the promotions step (roadmap
+> epic 2) the group content model and the set-discount application live in
+> Vendure: a `ProductGroup` entity keyed by the canonical group schemas
+> (`DiscountedProductSet`/`RelatedItems`), edited in the dashboard, and a
+> single Vendure Promotion — a custom basket condition computing the
+> allocation below plus an order-level action subtracting the formed
+> instances' clamped amounts. Until the cutover the site keeps rendering the
+> basket's set-discount section and related items from Tina, and order emails
+> record the client-computed summary; the per-line status surfacing (active /
+> pending-partner / pending-material with material sync), the related-items
+> presentation, and the email's per-instance provenance flip to the
+> Vendure-owned data at cutover.
 
 ## Requirements
 

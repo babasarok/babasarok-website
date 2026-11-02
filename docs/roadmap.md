@@ -95,14 +95,15 @@ merged to main until the backend structure is settled):
   products on material (create/rename/color/delete) changes; facets and
   collections live in the stock dashboard, `convergeMaterialFacets` /
   `pnpm -C backend run converge-facets` converges pre-facet databases
-- ⬜ Server-side pricing + promotions — length/embroidery via a custom
-  `OrderItemPriceCalculationStrategy` on order-line custom fields, set
-  discounts as a Vendure Promotion (see [order-pricing](specs/order-pricing.md)
-  and [product-sets](specs/product-sets.md) specs), product groups/related
-  products in Vendure. The backend keeps its own copy of the pricing logic;
-  `src/lib/pricing` is untouched until cutover (supersedes the price-authority
-  part of issue #71). Per-product % discounts are dropped (owner decision:
-  unused); they get no Vendure home
+- ✅ Server-side pricing + promotions — a custom `OrderItemPriceCalculationStrategy`
+  prices length/embroidery from order-line custom fields (`lengthCm`,
+  `selections`), with an order interceptor rejecting unpriceable lines (no
+  0 Ft lines); the szett discount is a Vendure Promotion (custom condition +
+  order action) over a `ProductGroup` entity with dashboard CRUD; the seed
+  upserts groups and the promotion idempotently. The backend keeps its own
+  copy of the pricing logic; `src/lib/pricing` is untouched until cutover
+  (supersedes the price-authority part of issue #71). Per-product %
+  discounts are dropped (owner decision: unused); they get no Vendure home
 - ✅ Display fields — `shortDescription`, `tagline` (the Tina `categories`),
   `date` and `icon` as `Product` custom fields and gallery descriptions as an
   `Asset` custom field, editable in the stock dashboard and populated by the

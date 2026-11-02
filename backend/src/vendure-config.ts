@@ -18,6 +18,13 @@ import { HandlebarsHtmlGenerator } from "./plugins/email/handlebars-html-generat
 import { CloudflareEmailSender } from "./plugins/email/cloudflare-email-sender";
 import { orderConfirmationHandler, orderNotificationHandler } from "./plugins/email/order-emails";
 import { MaterialPlugin } from "./plugins/material/material.plugin";
+import { PricingPlugin } from "./plugins/pricing/pricing.plugin";
+import { ServerPricingStrategy } from "./plugins/pricing/pricing-strategy";
+import { ProductGroupPlugin } from "./plugins/product-group/product-group.plugin";
+import {
+  productSetBasketCondition,
+  productSetDiscountAction,
+} from "./plugins/product-group/promotion";
 import { ProductPlugin } from "./plugins/product/product.plugin";
 import { QuoteOrderPlugin } from "./plugins/quote-order/quote-order.plugin";
 import { ChannelSetupPlugin } from "./plugins/setup/channel-setup.plugin";
@@ -137,6 +144,7 @@ export const config: VendureConfig = {
   orderOptions: {
     process: [configureDefaultOrderProcess({ arrangingPaymentRequiresShipping: false })],
     orderPlacedStrategy: new QuoteOrderPlacedStrategy(),
+    orderItemPriceCalculationStrategy: new ServerPricingStrategy(),
   },
   // Prices are whole Forints everywhere (definitions, seed, sync, order lines);
   // the default precision 2 would make the stock dashboard read a stored
@@ -145,6 +153,10 @@ export const config: VendureConfig = {
     moneyStrategy: new ForintMoneyStrategy(),
   },
   paymentOptions: { paymentMethodHandlers: [] },
+  promotionOptions: {
+    promotionConditions: [productSetBasketCondition],
+    promotionActions: [productSetDiscountAction],
+  },
   dbConnectionOptions: {
     type: "postgres",
     url: env.databaseUrl,
@@ -157,6 +169,8 @@ export const config: VendureConfig = {
     QuoteOrderPlugin,
     MaterialPlugin,
     ProductPlugin,
+    PricingPlugin,
+    ProductGroupPlugin,
     ChannelSetupPlugin,
     // Owns the material/product imagery (ADR 0009): uploads and previews are
     // stored on local disk (a docker volume in deploys) and served at /assets.
@@ -186,13 +200,21 @@ export const config: VendureConfig = {
       { name: "submissionTransactionId", type: "string" },
     ],
     // The quoted* names keep these apart from Vendure's native unitPrice /
-    // lineTotal columns, which stay 0 until the server-side re-pricing
-    // integration moves price authority into Vendure.
+    // lineTotal columns, which stay 0 until the site's cutover stops quoting
+    // client-side. The pricing fields carry what the server's own pricing
+    // needs (ADR 0010 delivery step 5); keep the OrderLine array contiguous —
+    // gql regeneration diffs against the other branch's field edits.
     OrderLine: [
       { name: "title", type: "string" },
       { name: "configText", type: "text" },
       { name: "quotedUnitPrice", type: "int" },
       { name: "quotedLineTotal", type: "int" },
+      {
+        name: "lengthCm",
+        type: "int",
+        label: [{ languageCode: LanguageCode.hu, value: "Hossz (cm)" }],
+      },
+      { name: "selections", type: "text" },
     ],
     // Email addresses editable in the dashboard's channel settings; the env
     // values are the fallback (and what exists before this field is filled).
