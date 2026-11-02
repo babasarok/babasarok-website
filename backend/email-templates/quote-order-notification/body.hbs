@@ -69,7 +69,7 @@
               </div>
             {{/if}}
             <p style="margin:0 0 4px 0; font-size:13px;">Szállítás:
-              {{order.customFields.deliveryMethodName}}
+              {{deliveryMethodName}}
               ({{#if
                 order.customFields.deliveryFree
               }}ingyenes{{else}}{{order.customFields.deliveryPrice}} Ft{{/if}})</p>

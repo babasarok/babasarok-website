@@ -3,6 +3,7 @@ import { Channel } from "@vendure/core/dist/entity/channel/channel.entity";
 import { EmailEventListener } from "@vendure/email-plugin";
 import { parseProductDetails } from "../quote-order/quote-order.input";
 import { env } from "../env";
+import { plainDeliveryName } from "./delivery-name";
 
 // "Order placed" for a quote shop: the submission transitions AddingItems ->
 // ArrangingPayment and there is no payment step.
@@ -36,6 +37,7 @@ function onOrderPlaced(name: string) {
       // their own host provisioned at first deploy), so one env var serves
       // every stack correctly.
       adminOrderUrl: `${env.adminUrl.replace(/\/$/, "")}/orders/${event.order.id}`,
+      deliveryMethodName: plainDeliveryName(event.order.customFields.deliveryMethodName ?? ""),
       // 1-based numbering keeps the per-product blocks aligned with the
       // "1. termék: …" labels inside the client-generated set-discount summary.
       products: event.order.lines.map((line, index) => ({
