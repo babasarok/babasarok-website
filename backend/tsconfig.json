@@ -10,6 +10,8 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    // TypeORM entities are hydrated through VendureEntity's constructor; ES2022+ field semantics would reset decorated fields to undefined after it.
+    "useDefineForClassFields": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "sourceMap": true

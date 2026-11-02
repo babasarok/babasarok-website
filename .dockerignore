@@ -3,6 +3,7 @@
 !package.json
 !pnpm-workspace.yaml
 !pnpm-lock.yaml
+!patches
 !Dockerfile
 !backend
 !packages

@@ -4,6 +4,29 @@ Lets the shop group products into sets that carry a single flat forint discount,
 detect which basket lines form a set (material-gated, globally allocated per
 unit), and surface the formed set discounts to the buyer at basket level.
 
+> **Transition note (ADR 0009/0010).** Since the promotions step (roadmap
+> epic 2) the group content model and the set-discount application live in
+> Vendure: each group is a private Collection — the discounted sets are
+> children of the "Szettek" parent, the related-items groups of the
+> "Kapcsolódó termékek" parent — with membership in the native
+> `product-id-filter` and the flat set discount on the `setDiscount`
+> Collection custom field (positive whole Ft). A single Vendure Promotion
+> computes the allocation below: its condition takes no arguments, reads the
+> "Szettek" parent's children (label = collection name, discount = custom
+> field, members = filter), and derives each basket line's material picks
+> from the line's variant options (the authoritative material axes) with the
+> colors from the order-line `selections` — a line whose required colors are
+> missing or unprovable forms no instance. Degenerate groups (<2 members, no
+> discount) are ignored with a report, not thrown. The condition also refuses
+> to apply when more than one active promotion uses it, so the allocation is
+> never double-counted; exactly one such promotion must exist. Until the
+> cutover the site keeps rendering the basket's set-discount section and
+> related items from Tina, and order emails record the client-computed
+> summary; the per-line status surfacing (active / pending-partner /
+> pending-material with material sync), the related-items presentation, and
+> the email's per-instance provenance flip to the Vendure-owned data at
+> cutover.
+
 ## Requirements
 
 ### Product set content model
@@ -35,7 +58,7 @@ of no discounted set earns no set discount.
   - THEN only the set with the larger amount is applied to that product
 - **Scenario: Product in no set**
   - WHEN a product in the basket is a member of no discounted set
-  - THEN it earns no set discount (its standalone discount, if any, still applies)
+  - THEN it earns no set discount
 
 ### Material-gated set detection
 
@@ -67,13 +90,14 @@ A **set discount instance** is one unit each of two or more distinct set
 members whose materials are pairwise compatible. The system SHALL allocate
 set units across the whole basket in one greedy pass, processing sets biggest
 discount amount first: for a set, it repeatedly forms a maximal instance
-(one available unit from each distinct compatible member, basket order),
+(one available unit from each distinct compatible member; among
+interchangeable units it prefers the one leaving the most members joinable,
+then the most valuable unit, then basket order),
 consuming units globally — each basket unit is consumed at most once, so a
 partner line covers no more sets than it has units. Leftover units earn no
 set discount. A unit consumed by a higher-amount set is unavailable to
 lower-amount sets. Each formed instance removes its set's flat forint amount
-once, clamped so it never exceeds the covered units' charged subtotal (after
-any standalone discount on those units).
+once, clamped so it never exceeds the covered units' charged subtotal.
 
 - **Scenario: Partner line cap**
   - WHEN the basket holds two lines of set member A and one line of set

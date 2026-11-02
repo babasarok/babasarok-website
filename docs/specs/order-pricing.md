@@ -1,7 +1,7 @@
 # Order pricing
 
 Computes the price of an order item from its base price, selected configurable
-field options, selected materials, quantity, and any applicable discount. A
+field options, selected materials, and quantity. A
 price is only surfaced once it can be fully computed; an unpriced part is
 treated as contributing nothing rather than producing a partial price.
 
@@ -10,9 +10,11 @@ treated as contributing nothing rather than producing a partial price.
 ### Price part composition
 
 The system SHALL compute an item's unit price as the sum of the product's base
-price, the prices of all visible and selected priced configurable fields, and
-the price of each selected `material` field. Each part's price MUST be rounded
-to whole units before summing.
+price, the prices of all visible priced configurable fields, and the price of
+each selected `material` field. A choice or toggle option's price counts only
+when that option is selected; an input field's price applies while the field is
+visible even when left empty. Each part's price MUST be rounded to whole units
+before summing.
 
 - **Scenario: Base price plus options**
   - WHEN a buyer selects priced options (e.g. a fabric variant, an extra
@@ -37,32 +39,23 @@ item's total price.
 
 ### Standalone product discount
 
-A product MAY carry a discount percentage and a `discount_valid_until` date.
-The system SHALL apply the discount as a multiplier (`1 - percent/100`) on the
-item's total price only while the current date is on or before
-`discount_valid_until`; otherwise no standalone discount applies. A standalone
-discount applies to every unit of the line, including units that also belong to
-a set instance (set and standalone discounts stack).
-
-- **Scenario: Discount within validity**
-  - WHEN a product has a discount and its `discount_valid_until` is in the
-    future
-  - THEN the item total is reduced by the discount percentage and the
-    discount is surfaced in the price breakdown
-- **Scenario: Expired discount**
-  - WHEN a product's `discount_valid_until` date has passed
-  - THEN no standalone discount is applied to the item
-- **Scenario: Stacks with a set discount**
-  - WHEN a set-covered item also has a valid standalone discount
-  - THEN the standalone discount reduces the whole line and the set discount
-    is deducted from the already-discounted subtotal on top of it
+**Dropped.** Per-product % discounts are retired (owner decision; no Tina
+content ever sets `discount`, so behavior is unchanged). The dormant site
+code goes away at cutover without a Vendure replacement, and the canonical
+product model carries no discount field. Set discounts (below) are
+unaffected.
 
 ### Length-based pricing
 
 A product MAY be priced by length: a designated source field holds a length in
 centimetres and the computed unit price is the per-meter price. The system
 SHALL compute the unit price and total price scaled by the length in meters
-when the length is known, and leave them undefined when it is not.
+when the length is known, and leave them undefined when it is not. The length
+is a whole number of centimetres (the order line carries it as an integer); a
+fractional length is not quotable. Prices are whole forints: the unit price of
+a length-priced item is the per-meter price times the length in centimetres
+divided by 100, rounded to whole forints once, and the line total is that unit
+price times the quantity — no further rounding.
 
 - **Scenario: Priced by length**
   - WHEN a length-priced product's source field holds a length value
@@ -73,6 +66,12 @@ when the length is known, and leave them undefined when it is not.
   - WHEN a length-priced product's source field has no valid length value
   - THEN the unit price and total price are not determined and no price is
     shown until a length is entered
+- **Scenario: Whole-forint rounding**
+  - WHEN the per-meter price times the length does not come out even
+    (e.g. 995 Ft/m × 335 cm)
+  - THEN the unit price is that product rounded to whole forints once
+    (995 × 335 ÷ 100 → 3333 Ft) and the line total is that unit price times
+    the quantity
 
 ### No product may be sold for 0 Ft
 
@@ -103,17 +102,71 @@ then sell for 0 Ft). Non-orderable (browse-only) products are exempt.
     above 0 Ft
   - THEN the build succeeds
 
+> **Transition note (ADR 0009/0010).** During the transition this rule is
+> enforced twice with the same enumeration: by the site build (today) and by
+> Vendure's product-definition validation on every definition save
+> (`backend/src/plugins/product/`). The 0 Ft native variant prices on
+> length-priced products are not buyer-reachable since the pricing step: the
+> server prices configured order lines itself — a custom
+> `OrderItemPriceCalculationStrategy` computes the unit price from the
+> canonical product definition and the order line's selections (a length in
+> cm plus per-field picks — materials with their colors, embroidery text and
+> thread color, input texts, color picks) — and a length-priced line without
+> a length is rejected when the item is added or adjusted, with the strategy
+> refusing to price it as the backstop. Never a 0 Ft line. The generated
+> native variant list prices follow the same visibility rule: a variant's
+> price is the base price plus only the option prices of variant-axis fields
+> visible given the variant's own picks — a field hidden by `depends_on` rides
+> the matrix but contributes nothing, so no variant charges for a selection
+> the order form cannot offer (the length walk's per-meter price obeys the
+> same rule). A basket add or adjust for a non-orderable (`orderable: false`)
+> product is likewise rejected at the mutation boundary, with the strategy
+> refusing to price it as the backstop (ADR 0011 decision 5). These
+> rejections are Hungarian and name the product by its native name. An
+> embroidery selection whose `colorId` is not a value code of the private
+> `babasarok-thread-color` facet is rejected at the same boundary (ADR 0011
+> decision 3; one lookup per add/adjust, only when the line carries an
+> embroidery selection). Until the cutover
+> the site keeps quoting client-side; server-side pricing applies to orders
+> that carry those fields. An open owner question: a `customValue` choice
+> field used as a variant axis cannot select a generated variant, and the
+> server refuses to price such a line — whether such fields may exist outside
+> length source fields is undecided; none exist in current content.
+
+### Lines whose definition changed after they were added
+
+#### Scenario: a stale line keeps its price
+
+- **WHEN** a line already on the order can no longer be priced from its
+  product's current definition (made non-orderable, field/option/material
+  removed)
+- **THEN** every recalculation keeps the line's last unit price instead of
+  failing, so unrelated mutations keep working
+- **AND** adding a new line that cannot be priced is still refused
+
+#### Scenario: a stale line blocks placing the order
+
+- **WHEN** the order moves from `AddingItems` to `ArrangingPayment` while any
+  line cannot be priced from its current definition
+- **THEN** the transition is refused with a Hungarian message naming the
+  product by its native name
+- **AND** removing or adjusting the line clears the refusal
+
 ### Set discount application
 
 Set discounts are flat forint deductions applied at basket level, not per line.
 Each formed set instance (see the product-sets capability) removes its set's
 flat amount once from the order total, clamped so it never exceeds the covered
-units' charged subtotal (after any standalone discount on those units). Line
-prices themselves reflect only the standalone discount; the set deductions are
-summed and subtracted from the order total. Set discounts are surfaced at basket
+units' charged subtotal. The allocation is computed in one global greedy pass
+per basket: the single "Szett kedvezmény" promotion's condition reads all
+discounted-set collections itself and takes no arguments, and exactly one such
+promotion must exist — the condition refuses when more than one active
+promotion uses it, so overlapping copies cannot double-count. Set deductions
+are summed and subtracted from the order total. Set discounts are surfaced at
+basket
 level (the "set discounts" section listing each formed instance and the forint
-it removes), not as per-line labels. The order email records each line's
-standalone discount and, per formed instance, the set title, its members, and
+it removes), not as per-line labels. The order email records, per formed
+instance, the set title, its members, and
 both the nominal and the actually applied (clamped) forint amount.
 
 - **Scenario: Flat deduction**

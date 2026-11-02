@@ -1,0 +1,300 @@
+/**
+ * Pure editor logic for the product-definition dashboard extension: the
+ * canonical field types in their input shape (plain, unbranded strings, which
+ * is what text inputs naturally produce), the field-kind label maps, and the
+ * transforms the configurator editor applies to that state. No React, no API
+ * access — unit-tested by product-definition-editor.test.ts.
+ *
+ * Prices are whole Forints end to end (the backend's ForintMoneyStrategy sets
+ * minor-unit precision 0), so no editor-side conversion happens.
+ */
+import {
+  DEFAULT_TEXT_LANGUAGE,
+  canonicalJson,
+  type ProductDefinitionInput,
+} from "@babasarok/product-definition";
+
+export type FieldInput = ProductDefinitionInput["fields"][number];
+export type ChoiceFieldInput = Extract<FieldInput, { kind: "choice" }>;
+export type ChoiceOptionInput = ChoiceFieldInput["options"][number];
+export type ToggleFieldInput = Extract<FieldInput, { kind: "toggle" }>;
+export type MaterialFieldInput = Extract<FieldInput, { kind: "material" }>;
+export type MaterialOptionInput = MaterialFieldInput["options"][number];
+export type InputFieldInput = Extract<FieldInput, { kind: "input" }>;
+export type EmbroideryFieldInput = Extract<FieldInput, { kind: "embroidery" }>;
+
+export const FIELD_KINDS = ["choice", "toggle", "material", "input", "embroidery"] as const;
+export type FieldKind = (typeof FIELD_KINDS)[number];
+
+export const FIELD_KIND_LABELS: Record<FieldKind, string> = {
+  choice: "Választó",
+  toggle: "Kapcsoló",
+  material: "Anyag",
+  input: "Szabad szöveg",
+  embroidery: "Hímzés",
+};
+
+export const PRESENTATIONS = ["select", "radio", "color"] as const;
+
+export const PRESENTATION_LABELS: Record<ChoiceFieldInput["presentation"], string> = {
+  select: "Legördülő",
+  radio: "Rádiógomb",
+  color: "Színminta",
+};
+
+export const EMBROIDERY_PRICINGS = ["per-word", "flat"] as const;
+
+export const EMBROIDERY_PRICING_LABELS: Record<
+  Extract<FieldInput, { kind: "embroidery" }>["pricing"]["kind"],
+  string
+> = {
+  "per-word": "Szavanként",
+  flat: "Egyszeri",
+};
+
+export type TextInput = FieldInput["label"];
+
+export function textValue(text: TextInput | undefined, language: string): string {
+  return text?.[language] ?? "";
+}
+
+/** The value a non-default language's empty input shows instead: the hu text. */
+export function textPlaceholder(text: TextInput | undefined, language: string): string | undefined {
+  if (language === DEFAULT_TEXT_LANGUAGE || textValue(text, language) !== "") {
+    return undefined;
+  }
+
+  return text?.[DEFAULT_TEXT_LANGUAGE];
+}
+
+/** The text with `language`'s entry replaced; hu stays present (blank until
+ * filled — the canonical schema rejects a blank hu on save), other languages
+ * are removed when emptied. */
+export function withText(text: TextInput, language: string, value: string): TextInput {
+  if (language === DEFAULT_TEXT_LANGUAGE) {
+    return { ...text, [DEFAULT_TEXT_LANGUAGE]: value };
+  }
+
+  if (value === "") {
+    const { [language]: _removed, ...rest } = text;
+
+    return { ...rest, [DEFAULT_TEXT_LANGUAGE]: text[DEFAULT_TEXT_LANGUAGE] };
+  }
+
+  return { ...text, [language]: value };
+}
+
+export type FieldRow = { key: string; field: FieldInput };
+
+export function newField(kind: FieldKind, id: string, label: TextInput): FieldInput {
+  const base = { id, label };
+
+  switch (kind) {
+    case "choice":
+      return {
+        ...base,
+        kind: "choice",
+        presentation: "select",
+        visibility: { kind: "always" },
+        options: [{ id: "", label: { hu: "" }, price: 0 }],
+      };
+    case "toggle":
+      return { ...base, kind: "toggle", visibility: { kind: "always" }, price: 0 };
+    case "material":
+      return {
+        ...base,
+        kind: "material",
+        options: [],
+        colorCount: { kind: "fixed", count: 1 },
+      };
+    case "input":
+      return {
+        ...base,
+        kind: "input",
+        visibility: { kind: "always" },
+        required: true,
+        price: 0,
+      };
+    case "embroidery":
+      return {
+        ...base,
+        kind: "embroidery",
+        visibility: { kind: "always" },
+        pricing: { kind: "per-word", pricePerWord: 0 },
+      };
+  }
+}
+
+/** Whether the field holds anything beyond a fresh row's defaults — a kind
+ * switch would discard exactly that, so it is what the confirm asks about. */
+export function hasEditableData(field: FieldInput): boolean {
+  const comparable = (candidate: FieldInput): FieldInput => ({
+    ...candidate,
+    id: "",
+    label: { hu: "" },
+  });
+
+  return (
+    canonicalJson(comparable(field)) !==
+    canonicalJson(comparable(newField(field.kind, "", { hu: "" })))
+  );
+}
+
+/** Carries the kind-independent pass-through fields across a kind switch.
+ * Material fields carry no tooltip or visibility, so they keep their own. */
+export function carryOver(next: FieldInput, previous: FieldInput): FieldInput {
+  if (next.kind === "material") {
+    return next;
+  }
+
+  const carried = {
+    ...next,
+    visibility: previous.kind === "material" ? next.visibility : previous.visibility,
+  };
+
+  if (previous.tooltip !== undefined) {
+    carried.tooltip = previous.tooltip;
+  }
+
+  return carried;
+}
+
+const HUNGARIAN_FOLDS: Record<string, string> = {
+  á: "a",
+  é: "e",
+  í: "i",
+  ó: "o",
+  ö: "o",
+  ő: "o",
+  ú: "u",
+  ü: "u",
+  ű: "u",
+};
+
+/** ASCII slug of a label, in the shape the canonical ids use. */
+export function slugifyLabel(label: string): string {
+  const folded = label
+    .toLowerCase()
+    .replaceAll(/[áéíóöőúüű]/g, (char) => HUNGARIAN_FOLDS[char] ?? char);
+
+  return folded
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
+}
+
+function uniqueCode(base: string, used: Set<string>): string {
+  if (!used.has(base)) {
+    return base;
+  }
+
+  let n = 2;
+
+  while (used.has(`${base}-${n}`)) {
+    n += 1;
+  }
+
+  return `${base}-${n}`;
+}
+
+/** Fills in the codes the editor leaves blank (there are no manual code
+ * inputs): the slug of the label, deduplicated within the scopes the server
+ * validates — field ids product-wide, choice-option ids per field. Explicit
+ * (seeded) codes are never rewritten, so saved codes are stable across
+ * renames. */
+export function assignGeneratedIds(definition: ProductDefinitionInput): ProductDefinitionInput {
+  const fieldIds = new Set(definition.fields.map((field) => field.id).filter((id) => id !== ""));
+
+  return {
+    ...definition,
+    fields: definition.fields.map((field) => {
+      let id = field.id;
+
+      if (id === "") {
+        id = uniqueCode(slugifyLabel(field.label.hu) || "mezo", fieldIds);
+        fieldIds.add(id);
+      }
+
+      if (field.kind !== "choice") {
+        return id === field.id ? field : { ...field, id };
+      }
+
+      const optionIds = new Set(field.options.map((option) => option.id).filter((id) => id !== ""));
+
+      return {
+        ...field,
+        id,
+        options: field.options.map((option) => {
+          if (option.id !== "") {
+            return option;
+          }
+
+          const optionId = uniqueCode(slugifyLabel(option.label.hu) || "opcio", optionIds);
+          optionIds.add(optionId);
+
+          return { ...option, id: optionId };
+        }),
+      };
+    }),
+  };
+}
+
+/** Trims the values the editor can introduce untrimmed, so the canonical
+ * schema rejects nothing on formatting alone. */
+function trimText(text: TextInput): TextInput {
+  const trimmed: TextInput = { hu: text.hu.trim() };
+
+  for (const [language, value] of Object.entries(text)) {
+    if (language !== DEFAULT_TEXT_LANGUAGE && value.trim() !== "") {
+      trimmed[language] = value.trim();
+    }
+  }
+
+  return trimmed;
+}
+
+export function sanitize(definition: ProductDefinitionInput): ProductDefinitionInput {
+  return {
+    ...definition,
+    fields: definition.fields.map((field) => {
+      const trimmed = { ...field, id: field.id.trim(), label: trimText(field.label) };
+
+      if (trimmed.kind === "choice") {
+        return {
+          ...trimmed,
+          options: trimmed.options.map((option) => ({
+            ...option,
+            id: option.id.trim(),
+            label: trimText(option.label),
+          })),
+        };
+      }
+
+      if (trimmed.kind === "material") {
+        return {
+          ...trimmed,
+          options: trimmed.options.map((option) => ({
+            ...option,
+            materialId: option.materialId.trim(),
+          })),
+        };
+      }
+
+      return trimmed;
+    }),
+    forbiddenMaterialCombinations: definition.forbiddenMaterialCombinations.map((rule) =>
+      rule.map((materialId) => materialId.trim())
+    ),
+  };
+}
+
+export function newDefinition(id: string): ProductDefinitionInput {
+  return {
+    id,
+    orderable: true,
+    basePrice: 0,
+    pricing: { kind: "unit" },
+    fields: [],
+    forbiddenMaterialCombinations: [],
+  };
+}

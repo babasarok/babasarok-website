@@ -246,14 +246,19 @@ try {
       throw error;
     }
 
-    // Seed the vendure-owned catalog from the Tina content in this commit
-    // (ADR 0009): previews get the one-way material import on every deploy,
-    // against their own fresh DB and assets volume. Production is seeded
-    // once, manually, at cutover — never by the deploy.
+    // TEMPORARY, preview-only (ADR 0009/0010): seed the vendure-owned
+    // catalog from the Tina content in this commit. Previews get the one-way
+    // material + product import on every deploy, against their own fresh DB
+    // and assets volume. The product import waits for every definition to
+    // finish syncing (budget default 45 min) and exits non-zero on sync
+    // failures. Production is seeded once, manually, at cutover — never by
+    // the deploy. Drop this block at cutover.
     try {
       compose(["exec", "-T", "vendure", "node", "scripts/import-materials.ts"], DIR, true);
+      compose(["exec", "-T", "vendure", "node", "scripts/import-facets.ts"], DIR, true);
+      compose(["exec", "-T", "vendure", "node", "scripts/import-products.ts"], DIR, true);
     } catch (error) {
-      log("material import failed; preview stack stays up");
+      log("catalog import failed; preview stack stays up");
       console.error(error);
     }
   } else {

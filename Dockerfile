@@ -6,6 +6,7 @@ WORKDIR /workspace
 
 # Workspace manifests first so dependency install is a cached layer.
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY patches ./patches
 COPY backend/package.json ./backend/
 COPY packages/product-definition/package.json packages/product-definition/tsconfig.json ./packages/product-definition/
 
@@ -18,13 +19,15 @@ RUN npm install -g pnpm@12.15.0 \
 
 WORKDIR /app/backend
 COPY backend/ ./
-# The preview seed reads the Tina material content from the repo tree;
-# the deploy tar ships the content dir plus exactly the assets the
-# materials reference (a local build of the full tree copies all of
-# src/assets). TEMPORARY and preview-only — prod never runs the seed
-# (hand-migration at cutover); drop these COPYs then.
-COPY src/content/material /app/src/content/material
-COPY src/assets /app/src/assets
+# TEMPORARY, preview-only (ADR 0009/0010): the preview seed reads the Tina
+# catalog content baked into the image. The deploy tar ships the content
+# dirs plus exactly the assets the content references (a local build of the
+# full tree copies all of src/assets). The content lands in the final image
+# only when the build sets SEED_CONTENT=1 (the preview compose does; prod
+# builds exclude it). Prod never runs the seed (hand-migration at cutover);
+# drop this COPY pair and the SEED_CONTENT RUN below then.
+COPY src/content /tmp/seed/content
+COPY src/assets /tmp/seed/assets
 # The shared package must exist at the reference path backend's tsconfig
 # points to, and its runtime import must resolve: the packed copy from
 # `pnpm deploy` has no dist, so it is replaced by a symlink to the copied
@@ -38,5 +41,9 @@ RUN pnpm -C /app/packages/product-definition install --ignore-scripts \
   && rm -rf node_modules/@babasarok/product-definition \
   && ln -s /app/packages/product-definition node_modules/@babasarok/product-definition \
   && ./node_modules/.bin/tsc -b
+ARG SEED_CONTENT=0
+RUN if [ "$SEED_CONTENT" = "1" ]; then \
+      mkdir -p /app/src && mv /tmp/seed/content /app/src/content && mv /tmp/seed/assets /app/src/assets; \
+    else rm -rf /tmp/seed; fi
 
 CMD ["node", "dist/index.js"]

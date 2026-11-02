@@ -1,0 +1,12 @@
+diff --git a/src/app/routes/_authenticated/_assets/assets_.$id.tsx b/src/app/routes/_authenticated/_assets/assets_.$id.tsx
+index b21dbc9100f0a16faf5420c7762a97bd8d90e3b7..46b259f431bc036f9862d3229369214c05363b72 100644
+--- a/src/app/routes/_authenticated/_assets/assets_.$id.tsx
++++ b/src/app/routes/_authenticated/_assets/assets_.$id.tsx
+@@ -79,6 +79,7 @@ function AssetDetailPage() {
+                           id: t.id,
+                           languageCode: t.languageCode,
+                           name: t.name,
++                          customFields: (t as any).customFields,
+                       }))
+                     : [
+                           {

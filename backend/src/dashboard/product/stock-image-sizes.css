@@ -1,0 +1,9 @@
+/* The stock dashboard's list thumbnails (product list "Image" column and the
+   other preset-tiny spots) render VendureImage with no size class, so the img
+   falls back to the 50px tiny preset's width/height attributes. Enlarge them.
+   ponytail: selects on the tiny preset's width="50" attribute — a Vendure
+   dashboard upgrade that changes the preset size silently reverts this. */
+img[width="50"][height="50"] {
+  width: 4rem;
+  height: 4rem;
+}

@@ -13,14 +13,13 @@
  * Run: pnpm -C backend run import-materials
  * (requires the backend running locally and SUPERADMIN_* in backend/.env)
  */
-import { openAsBlob } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { MaterialDefinitionSchema } from "@babasarok/product-definition";
 import { parse } from "yaml";
 import { z } from "zod";
+import { adminRequest, authenticate, uploadAsset } from "./lib/admin-client.ts";
 
-const API_URL = `http://localhost:${process.env.PORT ?? "4000"}/admin-api`;
 const CONTENT_DIR = path.resolve(import.meta.dirname, "..", "..", "src", "content", "material");
 const REPO_ROOT = path.resolve(import.meta.dirname, "..", "..");
 
@@ -51,24 +50,9 @@ interface MaterialInput {
   colors: Array<{ id: string; label: string; hex: string | null; assetId: string | null }>;
 }
 
-const AuthenticateDataSchema = z.object({
-  authenticate: z.object({ message: z.string().optional() }).optional(),
-});
-
-const CreateAssetsDataSchema = z.object({
-  createAssets: z
-    .array(z.object({ id: z.string().optional(), message: z.string().optional() }))
-    .optional(),
-});
-
 const MaterialsDataSchema = z.object({
   materials: z.array(z.object({ id: z.string(), slug: z.string() })).default([]),
 });
-
-interface AdminResult {
-  data: unknown;
-  errors: string[];
-}
 
 function parseFrontmatter(raw: string, file: string): TinaMaterial {
   const match = /^---\n([\s\S]*?)\n---/.exec(raw);
@@ -97,105 +81,6 @@ function trimOrNull(value: string | null | undefined): string | null {
   }
 
   return trimmed;
-}
-
-let authToken: string | null = null;
-
-const MIME_TYPES: Record<string, string> = {
-  ".avif": "image/avif",
-  ".gif": "image/gif",
-  ".jpeg": "image/jpeg",
-  ".jpg": "image/jpeg",
-  ".png": "image/png",
-  ".svg": "image/svg+xml",
-  ".webp": "image/webp",
-};
-
-async function adminRequest(body: FormData | string, contentType?: string): Promise<AdminResult> {
-  const headers: Record<string, string> = { "Apollo-Require-Preflight": "true" };
-
-  if (authToken !== null) {
-    headers.Authorization = `Bearer ${authToken}`;
-  }
-
-  if (contentType !== undefined) {
-    headers["Content-Type"] = contentType;
-  }
-
-  const response = await fetch(API_URL, { method: "POST", headers, body });
-  const tokenHeader = response.headers.get("vendure-auth-token");
-
-  if (tokenHeader !== null) {
-    authToken = tokenHeader;
-  }
-
-  const result = z
-    .object({
-      data: z.unknown().optional(),
-      errors: z.array(z.object({ message: z.string() })).optional(),
-    })
-    .parse(await response.json());
-
-  return { data: result.data, errors: result.errors?.map((error) => error.message) ?? [] };
-}
-
-async function authenticate(): Promise<void> {
-  // ponytail: the fallbacks duplicate vendure-config's superadmin defaults;
-  // sharing them needs an import of ../src/env, which node's type stripping
-  // only resolves with a .ts extension that tsc's emit rules reject.
-  const email = process.env.SUPERADMIN_EMAIL ?? "admin@babasarok.local";
-  const password = process.env.SUPERADMIN_PASSWORD ?? "superadmin";
-  const result = await adminRequest(
-    JSON.stringify({
-      query: `mutation Login($username: String!, $password: String!) {
-        authenticate(input: { native: { username: $username, password: $password } }) {
-          ... on CurrentUser { id }
-          ... on ErrorResult { errorCode message }
-        }
-      }`,
-      variables: { username: email, password },
-    }),
-    "application/json"
-  );
-  const parsed = AuthenticateDataSchema.safeParse(result.data);
-  const message = parsed.success ? parsed.data.authenticate?.message : undefined;
-
-  if (authToken === null) {
-    throw new Error(`login failed: ${message ?? JSON.stringify(result.errors)}`);
-  }
-}
-
-async function uploadAsset(filePath: string): Promise<string> {
-  const fileName = path.basename(filePath);
-  const form = new FormData();
-  form.append(
-    "operations",
-    JSON.stringify({
-      query: `mutation UploadAsset($files: [CreateAssetInput!]!) {
-        createAssets(input: $files) {
-          ... on Asset { id name }
-          ... on MimeTypeError { errorCode message }
-        }
-      }`,
-      variables: { files: [{ file: null }] },
-    })
-  );
-  form.append("map", JSON.stringify({ 0: ["variables.files.0.file"] }));
-  // openAsBlob returns a Promise — FormData.append rejects one, and the
-  // part's Content-Type (the Asset's stored mimeType) comes from the Blob
-  // type, which openAsBlob leaves empty unless told.
-  const blob = await openAsBlob(filePath, {
-    type: MIME_TYPES[path.extname(filePath).toLowerCase()] ?? "",
-  });
-  form.append("0", blob, fileName);
-
-  const created = CreateAssetsDataSchema.parse((await adminRequest(form)).data).createAssets?.[0];
-
-  if (created?.id === undefined) {
-    throw new Error(`asset upload failed for ${filePath}: ${created?.message ?? "unknown error"}`);
-  }
-
-  return created.id;
 }
 
 async function main(): Promise<void> {
@@ -257,7 +142,7 @@ async function main(): Promise<void> {
   for (const input of inputs) {
     const colors = input.colors.map((color) => ({
       id: color.id,
-      label: color.label,
+      label: { hu: color.label },
       appearance:
         color.assetId === null
           ? { kind: "hex" as const, value: color.hex ?? "" }
@@ -265,9 +150,9 @@ async function main(): Promise<void> {
     }));
     const result = MaterialDefinitionSchema.safeParse({
       id: input.slug,
-      label: input.label,
-      subtitle: input.subtitle,
-      description: input.description,
+      label: { hu: input.label },
+      subtitle: input.subtitle === null ? null : { hu: input.subtitle },
+      description: input.description === null ? null : { hu: input.description },
       thumbnail: input.thumbnailAssetId === null ? null : { assetId: input.thumbnailAssetId },
       colors,
     });
@@ -284,8 +169,7 @@ async function main(): Promise<void> {
   }
 
   const existing = MaterialsDataSchema.parse(
-    (await adminRequest(JSON.stringify({ query: "{ materials { id slug } }" }), "application/json"))
-      .data
+    (await adminRequest(JSON.stringify({ query: "{ materials { id slug } }" }))).data
   );
   const existingIdBySlug = new Map(
     existing.materials.map((material) => [material.slug, material.id])
@@ -300,11 +184,27 @@ async function main(): Promise<void> {
       existingId === undefined
         ? `mutation Create($input: MaterialInput!) { createMaterial(input: $input) { id } }`
         : `mutation Update($id: ID!, $input: MaterialInput!) { updateMaterial(id: $id, input: $input) { id } }`;
-    const variables = existingId === undefined ? { input } : { id: existingId, input };
-    const result = await adminRequest(
-      JSON.stringify({ query: mutation, variables }),
-      "application/json"
-    );
+    const apiInput = {
+      slug: input.slug,
+      translations: [
+        {
+          languageCode: "hu",
+          label: input.label,
+          subtitle: input.subtitle,
+          description: input.description,
+        },
+      ],
+      thumbnailAssetId: input.thumbnailAssetId,
+      colors: input.colors.map((color) => ({
+        id: color.id,
+        translations: [{ languageCode: "hu", label: color.label }],
+        hex: color.hex,
+        assetId: color.assetId,
+      })),
+    };
+    const variables =
+      existingId === undefined ? { input: apiInput } : { id: existingId, input: apiInput };
+    const result = await adminRequest(JSON.stringify({ query: mutation, variables }));
 
     if (result.errors.length > 0) {
       console.error(`✗ ${input.slug}:`, result.errors.join("; "));

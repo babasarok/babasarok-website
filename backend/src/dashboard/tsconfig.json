@@ -21,5 +21,5 @@
   // type-check closure includes the vendure dashboard's own sources (the
   // package ships source as its types), whose ~26 internal type errors are
   // why this project is not part of the plain `check`.
-  "include": ["*", "../gql/**/*.ts"]
+  "include": ["**/*", "../gql/**/*.ts"]
 }

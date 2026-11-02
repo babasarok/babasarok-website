@@ -36,6 +36,7 @@ export default defineConfig({
       url: "http://localhost:4000/health",
       timeout: 120_000,
       reuseExistingServer: false,
+      stdout: "pipe",
     },
     {
       command: `npx wrangler dev --config dist/server/wrangler.json --port ${PORT}`,
