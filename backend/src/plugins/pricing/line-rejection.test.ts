@@ -1,8 +1,10 @@
-import { ProductDefinitionSchema } from "@babasarok/product-definition";
+import { ProductDefinitionSchema, type ProductDefinition } from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
 import { lineRejection, type LineFacts } from "./line-rejection";
 
-function define(orderable: boolean, pricing: unknown) {
+type Definition = ProductDefinition;
+
+function define(orderable: boolean, pricing: unknown): Definition {
   return ProductDefinitionSchema.parse({
     id: "parna",
     orderable,
@@ -21,10 +23,7 @@ function define(orderable: boolean, pricing: unknown) {
   });
 }
 
-function factsFor(
-  definition: ReturnType<typeof define> | undefined,
-  threadColors: string[] = ["piros"]
-): LineFacts {
+function factsFor(definition?: Definition, threadColors: string[] = ["piros"]): LineFacts {
   return {
     generatedDefinition: async () => definition,
     productName: async () => "Párna",
@@ -41,26 +40,26 @@ function selected(colorId: string): string {
 
 function check(
   facts: LineFacts,
-  customFields: { lengthCm?: unknown; selections?: unknown } | undefined,
+  customFields?: { lengthCm?: unknown; selections?: unknown },
   storedLengthCm?: unknown
-) {
+): Promise<string | undefined> {
   return lineRejection(facts, { productId: 1, languageCode: "hu", customFields, storedLengthCm });
 }
 
 describe("lineRejection", () => {
   it("passes non-generated products through, even without selections", async () => {
-    expect(await check(factsFor(undefined), undefined)).toBeUndefined();
-    expect(await check(factsFor(undefined), { selections: selected("piros") })).toBeUndefined();
+    expect(await check(factsFor())).toBeUndefined();
+    expect(await check(factsFor(), { selections: selected("piros") })).toBeUndefined();
   });
 
   it("still rejects unknown thread colors on non-generated products", async () => {
-    const rejection = await check(factsFor(undefined), { selections: selected("lila") });
+    const rejection = await check(factsFor(), { selections: selected("lila") });
 
     expect(rejection).toContain("lila");
   });
 
   it("refuses a non-orderable product by name", async () => {
-    const rejection = await check(factsFor(define(false, { kind: "unit" })), undefined);
+    const rejection = await check(factsFor(define(false, { kind: "unit" })));
 
     expect(rejection).toContain("Párna");
     expect(rejection).toContain("nem rendelhető");
@@ -69,11 +68,11 @@ describe("lineRejection", () => {
   it("requires a positive integer length for length-priced products", async () => {
     const facts = factsFor(length);
 
-    for (const lengthCm of [undefined, 0, -5, 1.5, "100"]) {
+    for (const lengthCm of [0, -5, 1.5, "100"]) {
       expect(await check(facts, { lengthCm })).toContain("hossz");
     }
 
-    expect(await check(facts, undefined)).toContain("hossz");
+    expect(await check(facts)).toContain("hossz");
     expect(await check(facts, { lengthCm: 120 })).toBeUndefined();
   });
 
@@ -82,11 +81,11 @@ describe("lineRejection", () => {
 
     expect(await check(facts, {}, 80)).toBeUndefined();
     expect(await check(facts, { lengthCm: 0 }, 80)).toContain("hossz");
-    expect(await check(facts, {}, undefined)).toContain("hossz");
+    expect(await check(facts, {})).toContain("hossz");
   });
 
   it("does not require a length for unit-priced products", async () => {
-    expect(await check(factsFor(unit), undefined)).toBeUndefined();
+    expect(await check(factsFor(unit))).toBeUndefined();
   });
 
   it("returns the parse error of malformed selections", async () => {

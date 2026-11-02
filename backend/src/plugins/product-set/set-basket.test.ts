@@ -1,4 +1,5 @@
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
+import type { PromotionWindow } from "./active-promotions";
 import { describe, expect, it } from "vitest";
 import {
   PRODUCT_SET_CONDITION_CODE,
@@ -11,7 +12,7 @@ import {
   type SetCollection,
 } from "./set-basket";
 
-function filterOf(value: string | undefined): SetCollection["filters"] {
+function filterOf(value?: string): SetCollection["filters"] {
   return [
     {
       code: "product-id-filter",
@@ -47,7 +48,7 @@ describe("memberIds", () => {
   it("is undefined without the filter, the argument, or with unusable values", () => {
     expect(memberIds([])).toBeUndefined();
     expect(memberIds([{ code: "other", args: [] }])).toBeUndefined();
-    expect(memberIds(filterOf(undefined))).toBeUndefined();
+    expect(memberIds(filterOf())).toBeUndefined();
     expect(memberIds(filterOf("nem json"))).toBeUndefined();
     expect(memberIds(filterOf('{"a":1}'))).toBeUndefined();
     expect(memberIds(filterOf("[1,null]"))).toBeUndefined();
@@ -113,7 +114,9 @@ function line(id: number, nativeProductId: number, quantity = 1): BasketLine {
 
 const rows = [definitionRow(1, "parna"), definitionRow(2, "pelenka")];
 
-function promotion(overrides: { deletedAt?: Date | null; channelId?: number } = {}) {
+function promotion(
+  overrides: { deletedAt?: Date | null; channelId?: number } = {}
+): PromotionWindow {
   return {
     deletedAt: overrides.deletedAt ?? null,
     startsAt: null,
@@ -123,7 +126,10 @@ function promotion(overrides: { deletedAt?: Date | null; channelId?: number } = 
   };
 }
 
-function evaluate(promotions: ReturnType<typeof promotion>[], lines: BasketLine[]) {
+function evaluate(
+  promotions: PromotionWindow[],
+  lines: BasketLine[]
+): ReturnType<typeof setBasketState> {
   return setBasketState({
     promotions,
     channelId: 1,
@@ -136,7 +142,9 @@ function evaluate(promotions: ReturnType<typeof promotion>[], lines: BasketLine[
 
 describe("relevantNativeProductIds", () => {
   it("unions basket products with set members", () => {
-    expect(relevantNativeProductIds([line(1, 7)], [collection()]).sort()).toEqual([1, 2, 7]);
+    expect(
+      relevantNativeProductIds([line(1, 7)], [collection()]).toSorted((a, b) => a - b)
+    ).toEqual([1, 2, 7]);
   });
 });
 
