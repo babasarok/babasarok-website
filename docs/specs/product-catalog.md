@@ -350,3 +350,20 @@ status SHALL show it next to the pending label.
 - **Scenario: No progress reported yet**
   - WHEN a sync is pending but its job has not started or reported
   - THEN the configurator shows the plain pending label
+
+### Sync recovery
+
+The worker SHALL, on start, fail the sync jobs a previous worker left
+running and re-queue every definition whose sync is pending without a queued
+job. The re-queued sync restarts from zero (the interrupted transaction rolled
+back) and runs as an automatic sync, so it never overwrites native drift.
+This assumes a single worker. The worker's stop grace period SHALL exceed
+Vendure's 20 s shutdown wait so a redeploy defers the running job.
+
+- **Scenario: Worker killed mid-sync**
+  - WHEN the worker dies while a sync runs and a worker starts again
+  - THEN the leftover running job is marked failed and the definition syncs
+    again without a new save
+- **Scenario: Pending sync already queued**
+  - WHEN a worker starts and a pending definition has a queued job
+  - THEN no second job is queued

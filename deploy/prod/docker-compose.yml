@@ -84,6 +84,7 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/babasarok
     command: ["node", "dist/index-worker.js"]
+    stop_grace_period: 30s
     # The worker has no HTTP listener (it polls the DB job queue), so probe
     # its one critical dependency instead: a DB round-trip with its own
     # credentials. Process death is already covered by restart: unless-stopped.
