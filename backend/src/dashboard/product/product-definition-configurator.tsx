@@ -498,8 +498,9 @@ export function ConfiguratorEditor({
       })
     );
     const clientErrors: string[] = [];
+    const productName = name.trim();
 
-    if (creatingNew && (payload.id === "" || name === "")) {
+    if (creatingNew && (payload.id === "" || productName === "")) {
       clientErrors.push("Az azonosító és a név is kötelező.");
     }
 
@@ -530,7 +531,7 @@ export function ConfiguratorEditor({
       if (creatingNew) {
         const result = await api.query(createProductDefinitionMutation, {
           definition: validated,
-          name,
+          name: productName,
         });
         const created = result.createProductDefinition;
 
