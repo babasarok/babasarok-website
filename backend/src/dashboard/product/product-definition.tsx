@@ -28,6 +28,8 @@ import type { PageContextValue } from "@vendure/dashboard";
 import { z } from "zod";
 import { ConfiguratorEditor } from "./product-definition-configurator";
 
+import "../shared-markdown-editor/markdown-editor-extension";
+
 // The editor re-validates the definition client-side with the canonical zod
 // schema; its built-in messages are English, and the dashboard's UI language
 // is Hungarian.
