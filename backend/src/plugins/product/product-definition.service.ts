@@ -20,8 +20,11 @@ import {
   TransactionalConnection,
   UserInputError,
 } from "@vendure/core";
-import type { JobQueue } from "@vendure/core";
-import type { UpdateProductVariantInput } from "@vendure/common/lib/generated-types";
+import type { InspectableJobQueueStrategy, Job, JobQueue } from "@vendure/core";
+import type {
+  JobFilterParameter,
+  UpdateProductVariantInput,
+} from "@vendure/common/lib/generated-types";
 import { GlobalFlag } from "@vendure/common/lib/generated-types";
 import {
   ConfigService,
@@ -106,6 +109,23 @@ class NativeDriftError extends I18nError {
  * so a re-save while a sync is running simply queues a second pass. */
 const SYNC_QUEUE_NAME = "product-definition-sync";
 
+/** Every job matching `filter`, paged within Vendure's list-query limit. */
+async function allJobs(
+  strategy: InspectableJobQueueStrategy,
+  filter: JobFilterParameter
+): Promise<Job[]> {
+  const jobs: Job[] = [];
+
+  for (;;) {
+    const page = await strategy.findMany({ filter, skip: jobs.length, take: BATCH_SIZE });
+    jobs.push(...page.items);
+
+    if (page.items.length < BATCH_SIZE) {
+      return jobs;
+    }
+  }
+}
+
 @Injectable()
 export class ProductDefinitionService implements OnApplicationBootstrap {
   private syncQueue: JobQueue<SyncJobData> | null = null;
@@ -149,7 +169,13 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     });
 
     if (this.processContext.isWorker) {
-      await this.recoverInterruptedSyncs();
+      try {
+        await this.recoverInterruptedSyncs();
+      } catch (error: unknown) {
+        Logger.error(
+          `A megszakadt szinkronizálások helyreállítása nem sikerült: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
     }
   }
 
@@ -172,19 +198,19 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     }
 
     // ponytail: assumes a single worker, so every RUNNING job is orphaned; overlapping workers would need a heartbeat to tell live syncs from dead ones
-    const running = await strategy.findMany({
-      filter: { queueName: { eq: SYNC_QUEUE_NAME }, state: { eq: "RUNNING" } },
-      take: 1000,
+    const running = await allJobs(strategy, {
+      queueName: { eq: SYNC_QUEUE_NAME },
+      state: { eq: "RUNNING" },
     });
 
-    for (const job of running.items) {
+    for (const job of running) {
       job.fail(new Error("Worker stopped while the sync was running."));
       await strategy.update(job);
     }
 
-    const queued = await strategy.findMany({
-      filter: { queueName: { eq: SYNC_QUEUE_NAME }, state: { in: ["PENDING", "RETRYING"] } },
-      take: 1000,
+    const queued = await allJobs(strategy, {
+      queueName: { eq: SYNC_QUEUE_NAME },
+      state: { in: ["PENDING", "RETRYING"] },
     });
     const pending = await this.connection.rawConnection
       .getRepository(ProductDefinition)
@@ -192,7 +218,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
     const productIds = definitionsToRequeue(
       pending.map((row) => row.productId),
-      queued.items.map((job): unknown => job.data)
+      queued.map((job): unknown => job.data)
     );
 
     for (const productId of productIds) {
