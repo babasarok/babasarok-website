@@ -14,6 +14,7 @@ import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "../d
 import { isFieldVisible } from "../product/field";
 import { FIELD_BEHAVIORS } from "../product/behavior";
 import { PUBLIC_VENDURE_API_URL } from "astro:env/client";
+import { errorDetails, reportClientError } from "@/lib/errorReport";
 
 const VENDURE_API_URL = PUBLIC_VENDURE_API_URL;
 
@@ -209,14 +210,12 @@ interface SubmitQuoteOrderResponse {
   errors?: Array<{ message: string }>;
 }
 
-export async function submitOrder(
-  order: OrderDetails,
-  options: SubmitOrderOptions
-): Promise<SubmitOrderResult> {
-  const input = buildQuoteOrderInput(order, options);
+type Failure = { reason: string; detail: string; stack?: string | undefined };
 
+async function sendOrder(input: Record<string, unknown>): Promise<Failure | undefined> {
+  let res: Response;
   try {
-    const res = await fetch(`${VENDURE_API_URL}/shop-api`, {
+    res = await fetch(`${VENDURE_API_URL}/shop-api`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -224,20 +223,45 @@ export async function submitOrder(
         variables: { input },
       }),
     });
-    const result = (await res.json()) as SubmitQuoteOrderResponse;
-
-    const submitted = result.data?.submitQuoteOrder;
-    if (submitted?.__typename === "SubmitQuoteOrderError") {
-      return { ok: false, message: `${GENERIC_ERROR} (${submitted.message})` };
-    }
-    if (submitted?.__typename !== "SubmitQuoteOrderSuccess") {
-      console.log("Failed to submit order", result.errors ?? result);
-      return { ok: false, message: GENERIC_ERROR };
-    }
   } catch (e) {
-    console.log("Failed to submit order", e);
-    return { ok: false, message: GENERIC_ERROR };
+    return { reason: "hálózati hiba", ...asDetail(e) };
   }
 
-  return { ok: true };
+  let result: SubmitQuoteOrderResponse;
+  try {
+    result = (await res.json()) as SubmitQuoteOrderResponse;
+  } catch (e) {
+    return { reason: `szerverhiba ${res.status.toString()}`, ...asDetail(e) };
+  }
+
+  const submitted = result.data?.submitQuoteOrder;
+  if (submitted?.__typename === "SubmitQuoteOrderError") {
+    return { reason: submitted.message, detail: `${submitted.errorCode}: ${submitted.message}` };
+  }
+
+  if (submitted?.__typename !== "SubmitQuoteOrderSuccess") {
+    const detail = result.errors?.map((e) => e.message).join("; ") ?? JSON.stringify(result);
+    return { reason: `szerverhiba ${res.status.toString()}`, detail };
+  }
+
+  return undefined;
+}
+
+function asDetail(error: unknown): { detail: string; stack?: string | undefined } {
+  const { message, stack } = errorDetails(error);
+  return { detail: message, stack };
+}
+
+export async function submitOrder(
+  order: OrderDetails,
+  options: SubmitOrderOptions
+): Promise<SubmitOrderResult> {
+  const failure = await sendOrder(buildQuoteOrderInput(order, options));
+  if (!failure) {
+    return { ok: true };
+  }
+
+  const reference = options.transactionId.slice(0, 8);
+  reportClientError({ kind: "order", message: failure.detail, stack: failure.stack, reference });
+  return { ok: false, message: `${GENERIC_ERROR} (${failure.reason}, kód: ${reference})` };
 }
