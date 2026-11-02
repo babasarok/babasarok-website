@@ -20,18 +20,20 @@ const nativeState: NativeProductState = {
       name: "Babafészek (Kicsi)",
       price: 15_000,
       options: [{ groupCode: "meret", optionCode: "kicsi" }],
+      facetValues: ["wellsoft"],
     },
     {
       sku: "babafeszek--nagy",
       name: "Babafészek (Nagy)",
       price: 16_000,
       options: [{ groupCode: "meret", optionCode: "nagy" }],
+      facetValues: ["velur", "velur--barna"],
     },
   ],
 };
 
 describe("nativeStateHash", () => {
-  it("is stable under option-group, option and variant ordering", () => {
+  it("is stable under option-group, option, variant and facet-value ordering", () => {
     const reordered: NativeProductState = {
       slug: "babafeszek",
       name: "Babafészek",
@@ -45,7 +47,11 @@ describe("nativeStateHash", () => {
           ],
         },
       ],
-      variants: [...nativeState.variants].toSorted((a, b) => b.sku.localeCompare(a.sku)),
+      variants: nativeState.variants.map((variant) =>
+        variant.sku === "babafeszek--nagy"
+          ? { ...variant, facetValues: ["velur--barna", "velur"] }
+          : variant
+      ),
     };
 
     expect(nativeStateHash(reordered)).toBe(nativeStateHash(nativeState));
@@ -72,9 +78,16 @@ describe("nativeStateHash", () => {
           : variant
       ),
     };
+    const refaceted: NativeProductState = {
+      ...nativeState,
+      variants: nativeState.variants.map((variant) =>
+        variant.sku === "babafeszek--nagy" ? { ...variant, facetValues: [] } : variant
+      ),
+    };
 
     expect(nativeStateHash(repriced)).not.toBe(nativeStateHash(nativeState));
     expect(nativeStateHash(renamed)).not.toBe(nativeStateHash(nativeState));
     expect(nativeStateHash(reassigned)).not.toBe(nativeStateHash(nativeState));
+    expect(nativeStateHash(refaceted)).not.toBe(nativeStateHash(nativeState));
   });
 });

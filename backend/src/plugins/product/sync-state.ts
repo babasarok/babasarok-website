@@ -23,6 +23,7 @@ export interface NativeVariantState {
   name: string;
   price: number;
   options: NativeVariantOptionState[];
+  facetValues: string[];
 }
 
 /** The sync-owned slice of the native Vendure product, hashed for drift detection. */
@@ -39,8 +40,9 @@ function sha256(value: string): string {
 
 /**
  * Hash of the native state the sync owns (product name/slug, option groups
- * with their options, variant skus/names/prices and option assignments).
- * Canonicalized so presentation-order changes alone never read as drift.
+ * with their options, variant skus/names/prices, option assignments and
+ * facet values). Canonicalized so presentation-order changes alone never
+ * read as drift.
  */
 export function nativeStateHash(state: NativeProductState): string {
   const canonical = {
@@ -63,6 +65,7 @@ export function nativeStateHash(state: NativeProductState): string {
           (a, b) =>
             a.groupCode.localeCompare(b.groupCode) || a.optionCode.localeCompare(b.optionCode)
         ),
+        facetValues: [...variant.facetValues].toSorted((a, b) => a.localeCompare(b)),
       })),
   };
 

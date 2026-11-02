@@ -14,7 +14,7 @@ interface GeneratedVariantListOptionsInput {
 }
 
 interface GeneratedVariantListGraph {
-  items: Array<{ id: string; name: string; code: string; price: number }>;
+  items: Array<{ id: string; name: string; code: string; price: number; facets: string }>;
   totalItems: number;
 }
 
@@ -206,6 +206,7 @@ export const productDefinitionSchema = gql`
     # table's minimal-query rewrite stops fetching it.
     code: String!
     price: Int!
+    facets: String!
   }
 
   type GeneratedVariantList implements PaginatedList {
