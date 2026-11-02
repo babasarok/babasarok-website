@@ -1,8 +1,17 @@
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
-import type { Order, OrderLine, ProductVariant, RequestContext } from "@vendure/core";
-import { LanguageCode, type Injector } from "@vendure/core";
+import {
+  Channel,
+  LanguageCode,
+  Order,
+  OrderLine,
+  ProductVariant,
+  RequestContext,
+} from "@vendure/core";
 import { describe, expect, it } from "vitest";
-import { ServerPricingStrategy } from "./pricing-strategy";
+import type { LineValuationDeps } from "./line-valuation";
+import { refuseInvalidLines, type LineValidityDeps } from "./line-validity-process";
+import { calculateUnitPrice } from "./pricing-strategy";
+import { ProductDefinition } from "../product/product.entity";
 
 const definition = ProductDefinitionSchema.parse({
   id: "parna",
@@ -13,73 +22,74 @@ const definition = ProductDefinitionSchema.parse({
   fields: [],
 });
 
-const ctx = { languageCode: LanguageCode.hu } as RequestContext;
+const ctx = new RequestContext({
+  apiType: "shop",
+  isAuthorized: false,
+  authorizedAsOwnerOnly: false,
+  channel: new Channel(),
+  languageCode: LanguageCode.hu,
+});
 
-function strategyFor(
-  row: { definition: unknown; productId: string } | null
-): ServerPricingStrategy {
-  const connection = {
-    getRepository: () => ({
-      findOne: async () => row,
-      find: async () => [{ id: 3, translations: [] }],
-    }),
+function depsFor(row: ProductDefinition | null): LineValuationDeps {
+  return {
+    findDefinition: async () => row,
+    productName: async () => "",
+    hydrateOptions: () => Promise.resolve(),
   };
-  const entityHydrator = { hydrate: () => Promise.resolve() };
-  const strategy = new ServerPricingStrategy();
-
-  strategy.init({
-    get: (type: { name: string }) => (type.name === "EntityHydrator" ? entityHydrator : connection),
-  } as unknown as Injector);
-
-  return strategy;
 }
 
-const variant = {
+const variant = new ProductVariant({
   id: 7,
   productId: 3,
   listPrice: 9000,
   listPriceIncludesTax: false,
   options: [],
-} as unknown as ProductVariant;
+});
 
-function orderWith(lines: Array<Partial<OrderLine>>): Order {
-  return { lines } as unknown as Order;
-}
+const definitionRow = new ProductDefinition({ definition, productId: "parna" });
+const stale = new ProductDefinition({
+  definition: { ...definition, orderable: false },
+  productId: "parna",
+});
 
-describe("ServerPricingStrategy", () => {
+describe("calculateUnitPrice", () => {
   it("passes the variant price through for a product without a definition", async () => {
-    const result = await strategyFor(null).calculateUnitPrice(ctx, variant, {}, orderWith([]), 1);
+    const result = await calculateUnitPrice(
+      depsFor(null),
+      ctx,
+      variant,
+      {},
+      new Order({ lines: [] })
+    );
 
     expect(result).toEqual({ price: 9000, priceIncludesTax: false });
   });
 
   it("prices a generated product from its definition", async () => {
-    const result = await strategyFor({ definition, productId: "parna" }).calculateUnitPrice(
+    const result = await calculateUnitPrice(
+      depsFor(definitionRow),
       ctx,
       variant,
       {},
-      orderWith([]),
-      1
+      new Order({ lines: [] })
     );
 
     expect(result.price).toBe(9000);
   });
 
-  const stale = { definition: { ...definition, orderable: false }, productId: "parna" };
-
   it("keeps the last price of a stale line already on the order", async () => {
-    const line = {
+    const line = new OrderLine({
       productVariantId: 7,
       customFields: {},
       listPrice: 8500,
       listPriceIncludesTax: false,
-    };
-    const result = await strategyFor(stale).calculateUnitPrice(
+    });
+    const result = await calculateUnitPrice(
+      depsFor(stale),
       ctx,
       variant,
       {},
-      orderWith([line]),
-      1
+      new Order({ lines: [line] })
     );
 
     expect(result).toEqual({ price: 8500, priceIncludesTax: false });
@@ -87,7 +97,52 @@ describe("ServerPricingStrategy", () => {
 
   it("refuses a new invalid line", async () => {
     await expect(
-      strategyFor(stale).calculateUnitPrice(ctx, variant, {}, orderWith([]), 1)
+      calculateUnitPrice(depsFor(stale), ctx, variant, {}, new Order({ lines: [] }))
     ).rejects.toThrow("Árazási hiba");
+  });
+});
+
+describe("refuseInvalidLines", () => {
+  const order = new Order({ id: 1 });
+  const data = { ctx, order };
+
+  function validityDeps(row: ProductDefinition | null): LineValidityDeps {
+    return {
+      ...depsFor(row),
+      findLines: async () => [new OrderLine({ productVariant: variant, customFields: {} })],
+    };
+  }
+
+  it("refuses leaving AddingItems while a line is invalid", async () => {
+    const message = await refuseInvalidLines(
+      validityDeps(stale),
+      "AddingItems",
+      "ArrangingPayment",
+      data
+    );
+
+    expect(message).toContain("Árazási hiba");
+  });
+
+  it("allows the transition when every line prices", async () => {
+    const message = await refuseInvalidLines(
+      validityDeps(definitionRow),
+      "AddingItems",
+      "ArrangingPayment",
+      data
+    );
+
+    expect(message).toBeUndefined();
+  });
+
+  it("ignores other transitions", async () => {
+    const message = await refuseInvalidLines(
+      validityDeps(stale),
+      "ArrangingPayment",
+      "Cancelled",
+      data
+    );
+
+    expect(message).toBeUndefined();
   });
 });

@@ -8,8 +8,28 @@ import { parseLineSelections } from "./line-selection";
 export type VariantLineValuation = LineValuation | { kind: "passThrough" };
 
 export interface LineValuationDeps {
-  connection: TransactionalConnection;
-  entityHydrator: EntityHydrator;
+  findDefinition(ctx: RequestContext, productId: number): Promise<ProductDefinition | null>;
+  productName(ctx: RequestContext, productId: number): Promise<string | undefined>;
+  hydrateOptions(ctx: RequestContext, productVariant: ProductVariant): Promise<void>;
+}
+
+export function lineValuationDeps(
+  connection: TransactionalConnection,
+  entityHydrator: EntityHydrator
+): LineValuationDeps {
+  return {
+    findDefinition: (ctx, productId) =>
+      connection
+        .getRepository(ctx, ProductDefinition)
+        .findOne({ where: { nativeProductId: productId } }),
+    productName: async (ctx, productId) =>
+      (await nativeProductNames(connection, ctx, [productId])).get(productId),
+    hydrateOptions: async (ctx, productVariant) => {
+      await entityHydrator.hydrate(ctx, productVariant, {
+        relations: ["options", "options.group"],
+      });
+    },
+  };
 }
 
 /**
@@ -18,28 +38,22 @@ export interface LineValuationDeps {
  * order-transition guard. Variants without a definition pass through.
  */
 export async function valueVariantLine(
-  { connection, entityHydrator }: LineValuationDeps,
+  deps: LineValuationDeps,
   ctx: RequestContext,
   productVariant: ProductVariant,
   orderLineCustomFields: { [key: string]: unknown },
   variantListPrice: number
 ): Promise<VariantLineValuation> {
   const productId = Number(productVariant.productId);
-  const definitionRow = await connection
-    .getRepository(ctx, ProductDefinition)
-    .findOne({ where: { nativeProductId: productId } });
+  const definitionRow = await deps.findDefinition(ctx, productId);
 
   if (definitionRow === null) {
     return { kind: "passThrough" };
   }
 
-  await entityHydrator.hydrate(ctx, productVariant, {
-    relations: ["options", "options.group"],
-  });
+  await deps.hydrateOptions(ctx, productVariant);
 
-  const productName =
-    (await nativeProductNames(connection, ctx, [productId])).get(productId) ||
-    definitionRow.productId;
+  const productName = (await deps.productName(ctx, productId)) || definitionRow.productId;
   const rawLengthCm = orderLineCustomFields.lengthCm;
 
   return valueConfiguredLine({

@@ -8,7 +8,7 @@ import type {
   RequestContext,
 } from "@vendure/core";
 import { TransactionalConnection } from "@vendure/core";
-import { valueVariantLine } from "./line-valuation";
+import { lineValuationDeps, valueVariantLine, type LineValuationDeps } from "./line-valuation";
 
 function sameConfiguration(
   line: OrderLine,
@@ -22,6 +22,46 @@ function sameConfiguration(
   );
 }
 
+export async function calculateUnitPrice(
+  deps: LineValuationDeps,
+  ctx: RequestContext,
+  productVariant: ProductVariant,
+  orderLineCustomFields: { [key: string]: unknown },
+  order: Order
+): Promise<PriceCalculationResult> {
+  const valuation = await valueVariantLine(
+    deps,
+    ctx,
+    productVariant,
+    orderLineCustomFields,
+    productVariant.listPrice
+  );
+
+  if (valuation.kind === "passThrough") {
+    return {
+      price: productVariant.listPrice,
+      priceIncludesTax: productVariant.listPriceIncludesTax,
+    };
+  }
+
+  if (valuation.kind === "priced") {
+    return { price: valuation.price, priceIncludesTax: productVariant.listPriceIncludesTax };
+  }
+
+  const existingLine = order.lines.find((line) =>
+    sameConfiguration(line, productVariant, orderLineCustomFields)
+  );
+
+  if (existingLine === undefined) {
+    throw new Error(valuation.message);
+  }
+
+  return {
+    price: existingLine.listPrice,
+    priceIncludesTax: existingLine.listPriceIncludesTax,
+  };
+}
+
 /**
  * The order item price strategy for the generated catalog (ADR 0010 decision
  * 6): configured lines price from the canonical definition and the line's
@@ -31,51 +71,22 @@ function sameConfiguration(
  * unrelated recalculations work; the transition guard refuses to place it.
  */
 export class ServerPricingStrategy implements OrderItemPriceCalculationStrategy {
-  private connection!: TransactionalConnection;
-  private entityHydrator!: EntityHydrator;
+  private deps!: LineValuationDeps;
 
   init(injector: Injector): void {
-    this.connection = injector.get(TransactionalConnection);
-    this.entityHydrator = injector.get(EntityHydrator);
+    this.deps = lineValuationDeps(
+      injector.get(TransactionalConnection),
+      injector.get(EntityHydrator)
+    );
   }
 
-  async calculateUnitPrice(
+  calculateUnitPrice(
     ctx: RequestContext,
     productVariant: ProductVariant,
     orderLineCustomFields: { [key: string]: unknown },
     order: Order,
     _quantity: number
   ): Promise<PriceCalculationResult> {
-    const valuation = await valueVariantLine(
-      { connection: this.connection, entityHydrator: this.entityHydrator },
-      ctx,
-      productVariant,
-      orderLineCustomFields,
-      productVariant.listPrice
-    );
-
-    if (valuation.kind === "passThrough") {
-      return {
-        price: productVariant.listPrice,
-        priceIncludesTax: productVariant.listPriceIncludesTax,
-      };
-    }
-
-    if (valuation.kind === "priced") {
-      return { price: valuation.price, priceIncludesTax: productVariant.listPriceIncludesTax };
-    }
-
-    const existingLine = order.lines.find((line) =>
-      sameConfiguration(line, productVariant, orderLineCustomFields)
-    );
-
-    if (existingLine === undefined) {
-      throw new Error(valuation.message);
-    }
-
-    return {
-      price: existingLine.listPrice,
-      priceIncludesTax: existingLine.listPriceIncludesTax,
-    };
+    return calculateUnitPrice(this.deps, ctx, productVariant, orderLineCustomFields, order);
   }
 }
