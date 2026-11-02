@@ -3,6 +3,7 @@ import {
   adminApi,
   CREATE_DEFINITION,
   CreatedDefinition,
+  createManualProduct,
   DEFINITION_STATE,
   DefinitionState,
   deleteDefinitionIfPresent,
@@ -104,11 +105,18 @@ test("the async sync settles and the generated-variants table follows it", async
     // (whole Forints), never the two-decimal 154.00 a default strategy would
     // render. The fresh browser context uses the dashboard's default English
     // locale with the e2e channel's USD currency, so 15400 renders grouped as
-    // "$15,400". The stock table pages at 10, so the asserted variant must be
-    // one of the first ten.
-    const otodik = stockTable(page).getByRole("row", { name: /E2E S1 \(5\. változat\)/ });
-    await expect(otodik).toContainText(/15[,\u00A0 ]?400/);
-    await expect(otodik).not.toContainText("154.00");
+    // "$15,400". The generated product hides the stock variants grid (the
+    // configurator owns the page), so the check uses a manually created
+    // product.
+    // product. The e2e database is fresh every run, so a fixed slug is safe.
+    const manualProductId = await createManualProduct(page, "e2e-manual");
+    await page.goto(`/dashboard/products/${manualProductId}`);
+
+    const varianta = stockTable(page).getByRole("row", { name: /e2e-manual--variant/ });
+    await expect(varianta).toContainText(/15[,\u00A0 ]?400/);
+    await expect(varianta).not.toContainText("154.00");
+
+    await page.goto(`/dashboard/products/${nativeProductId}`);
   });
 
   await test.step("the generated-variants table pages server-side", async () => {

@@ -8,16 +8,16 @@
  * The editor itself lives in product-definition-configurator.tsx (with its
  * per-field editors in product-definition-fields.tsx and the pure editor
  * logic in product-definition-editor.ts). This entry file keeps only the
- * registration, the create route and page, and the embedded block's lookup.
+ * registration, the create route and page, the page query extension that
+ * carries the generated flag, and the stock blocks hidden on generated
+ * products.
  *
  * Type-checked by src/dashboard/tsconfig.json (`check:dashboard`); at build
- * time the dashboard's vite pipeline bundles this file. The typed graphql
- * documents come from the backend's generated schema (src/gql).
+ * time the dashboard's vite pipeline bundles this file.
  */
-import { useEffect, useState, type ReactElement } from "react";
+import type { ReactElement } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
-  api,
   Button,
   defineDashboardExtension,
   NEW_ENTITY_PATH,
@@ -25,17 +25,7 @@ import {
   PageTitle,
 } from "@vendure/dashboard";
 import type { PageContextValue } from "@vendure/dashboard";
-import { graphql } from "@/gql";
 import { ConfiguratorEditor } from "./product-definition-configurator";
-import { ErrorNotice } from "../shared";
-
-const productDefinitionByNativeProductQuery = graphql(`
-  query ProductDefinitionByNativeProduct($nativeProductId: Int!) {
-    productDefinitionByNativeProduct(nativeProductId: $nativeProductId) {
-      productId
-    }
-  }
-`);
 
 // Extensions load for side effects only (the dashboard's virtual module
 // dynamic-imports this file); the registration call must run on import.
@@ -44,6 +34,23 @@ defineDashboardExtension({
     {
       path: "/product-definitions/new",
       component: () => <NewProductDefinitionPage />,
+    },
+  ],
+  detailForms: [
+    {
+      pageId: "product-detail",
+      // The stock page's own query carries the generated flag, so the page
+      // blocks' synchronous shouldRender can read it (the block API has no
+      // async visibility hook).
+      extendDetailDocument: `
+        query ProductDefinitionByNativeProduct {
+          product {
+            productDefinition {
+              productId
+            }
+          }
+        }
+      `,
     },
   ],
   pageBlocks: [
@@ -57,6 +64,41 @@ defineDashboardExtension({
         position: { blockId: "main-form", order: "after" },
       },
       component: ProductConfiguratorBlock,
+      shouldRender: isGeneratedProduct,
+    },
+    // The native variant machinery is sync-owned: hand edits there are
+    // overwritten (or read as drift), so the stock variants grid, the
+    // generate-variants prompt and the option-group editor hide on generated
+    // products via empty replacement blocks.
+    {
+      id: "hide-product-variants-table",
+      location: {
+        pageId: "product-detail",
+        column: "full",
+        position: { blockId: "product-variants-table", order: "replace" },
+      },
+      component: EmptyBlock,
+      shouldRender: isGeneratedProduct,
+    },
+    {
+      id: "hide-generate-variants",
+      location: {
+        pageId: "product-detail",
+        column: "full",
+        position: { blockId: "generate-variants", order: "replace" },
+      },
+      component: EmptyBlock,
+      shouldRender: isGeneratedProduct,
+    },
+    {
+      id: "hide-option-groups",
+      location: {
+        pageId: "product-detail",
+        column: "full",
+        position: { blockId: "option-groups", order: "replace" },
+      },
+      component: EmptyBlock,
+      shouldRender: isGeneratedProduct,
     },
   ],
   actionBarItems: [
@@ -67,6 +109,23 @@ defineDashboardExtension({
     },
   ],
 });
+
+/** Suppresses the stock block it replaces; rendered inside FullWidthPageBlock,
+ * an empty component leaves no visible trace. */
+function EmptyBlock(): ReactElement {
+  return <></>;
+}
+
+function isGeneratedProduct(context: PageContextValue): boolean {
+  return definitionIdOf(context) !== null;
+}
+
+function definitionIdOf(context: PageContextValue): string | null {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- PageContextValue.entity is typed `any` by the dashboard's own contract (page-provider.tsx); there is no typed alternative for extension blocks
+  const productId: unknown = context.entity?.productDefinition?.productId;
+
+  return typeof productId === "string" ? productId : null;
+}
 
 /** The stock products list's entry point for creating a configurator product. */
 function NewProductDefinitionActionBarItem(): ReactElement {
@@ -93,56 +152,15 @@ function NewProductDefinitionPage(): ReactElement {
   );
 }
 
-/** The embedded block on the stock product-detail page: looks up whether the
- * current product was generated from a ProductDefinition and, if so, renders
- * the configurator editor in place. Definitions create their own native
- * products — an existing product cannot gain one retroactively. */
+/** The embedded block on the stock product-detail page: renders the
+ * configurator editor for products generated from a ProductDefinition.
+ * Definitions create their own native products — an existing product cannot
+ * gain one retroactively. */
 function ProductConfiguratorBlock({ context }: { context: PageContextValue }): ReactElement {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- PageContextValue.entity is typed `any` by the dashboard's own contract (page-provider.tsx); there is no typed alternative for extension blocks
-  const nativeProductId = Number(context.entity?.id);
-  const [definitionId, setDefinitionId] = useState<string | null>(null);
-  const [lookedUp, setLookedUp] = useState(false);
-  const [lookupFailed, setLookupFailed] = useState(false);
-
-  useEffect(() => {
-    if (!Number.isInteger(nativeProductId) || nativeProductId <= 0) {
-      return;
-    }
-
-    api
-      .query(productDefinitionByNativeProductQuery, { nativeProductId })
-      .then((result) => {
-        setDefinitionId(result.productDefinitionByNativeProduct?.productId ?? null);
-        setLookedUp(true);
-      })
-      .catch(() => {
-        setLookedUp(true);
-        setLookupFailed(true);
-      });
-  }, [nativeProductId]);
-
-  if (!Number.isInteger(nativeProductId) || nativeProductId <= 0) {
-    return <></>;
-  }
-
-  if (lookupFailed) {
-    return (
-      <ErrorNotice message="A konfigurátor állapota most nem elérhető — töltsd újra a lapot." />
-    );
-  }
-
-  if (!lookedUp) {
-    return <></>;
-  }
+  const definitionId = definitionIdOf(context);
 
   if (definitionId === null) {
-    return (
-      <p className="text-muted-foreground text-sm">
-        Ehhez a termékhez nem tartozik strukturált konfigurátor. Konfigurátor termék a Termékek
-        listában hozható létre (Új konfigurátor termék gomb) — meglévő termékhez utólag nem
-        csatolható.
-      </p>
-    );
+    return <></>;
   }
 
   return <ConfiguratorEditor key={definitionId} definitionId={definitionId} mode="embedded" />;

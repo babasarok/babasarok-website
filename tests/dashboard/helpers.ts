@@ -72,6 +72,64 @@ const DELETE_DEFINITION = `mutation DeleteProductDefinitionE2E($productId: Strin
   deleteProductDefinition(productId: $productId)
 }`;
 
+const CREATE_PRODUCT = `mutation CreateProductE2E($input: CreateProductInput!) {
+  createProduct(input: $input) {
+    id
+  }
+}`;
+
+const CREATE_PRODUCT_VARIANTS = `mutation CreateProductVariantsE2E($productId: ID!, $input: [CreateProductVariantInput!]!) {
+  createProductVariants(productId: $productId, input: $input) {
+    id
+  }
+}`;
+
+const CreatedProduct = z.object({
+  createProduct: z.object({ id: z.string() }),
+});
+
+const CreatedVariants = z.object({
+  createProductVariants: z.array(z.object({ id: z.string() })),
+});
+
+/** Creates a plain (non-generated) product with a single variant, for specs
+ * that need the stock variants grid — generated products hide it in favor of
+ * the configurator's own table. */
+export async function createManualProduct(page: Page, slug: string): Promise<string> {
+  const product = await adminApi(
+    page,
+    CREATE_PRODUCT,
+    {
+      input: {
+        translations: [{ languageCode: "en", name: "E2E Manual Product", slug, description: "" }],
+      },
+    },
+    CreatedProduct
+  );
+
+  const variants = await adminApi(
+    page,
+    CREATE_PRODUCT_VARIANTS,
+    {
+      productId: product.createProduct.id,
+      input: [
+        {
+          sku: `${slug}--variant`,
+          price: 15_400,
+          translations: [{ languageCode: "en", name: "E2E Manual Variant" }],
+        },
+      ],
+    },
+    CreatedVariants
+  );
+
+  if (variants.createProductVariants.length !== 1) {
+    throw new Error("A manuális terméket nem sikerült változattal ellátni.");
+  }
+
+  return product.createProduct.id;
+}
+
 /** Creates a definition fixture; the mutation returns before the queued sync
  * produced the native structure (that is what the sync spec asserts). */
 export const CREATE_DEFINITION = `mutation CreateProductDefinitionE2E($definition: JSON!) {

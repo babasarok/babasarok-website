@@ -1,7 +1,7 @@
 import gql from "graphql-tag";
-import { Allow, Ctx, Permission, RequestContext, UserInputError } from "@vendure/core";
+import { Allow, Ctx, Permission, Product, RequestContext, UserInputError } from "@vendure/core";
 import type { ID } from "@vendure/core";
-import { Args, Int, Mutation, Query, Resolver } from "@nestjs/graphql";
+import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { ProductDefinition } from "./product.entity";
 import { ProductDefinitionService } from "./product-definition.service";
 
@@ -103,26 +103,6 @@ export class ProductDefinitionResolver {
 
   @Query()
   @Allow(Permission.UpdateCatalog)
-  async productDefinitionByNativeProduct(
-    @Ctx() ctx: RequestContext,
-    @Args("nativeProductId", { type: () => Int }) nativeProductId: number
-  ): Promise<ProductDefinitionGraph | null> {
-    const row = await this.productDefinitionService.productDefinitionByNativeProduct(
-      ctx,
-      nativeProductId
-    );
-
-    if (row === null) {
-      return null;
-    }
-
-    const staleness = await this.productDefinitionService.staleness(ctx, [row]);
-
-    return toGraph(row, staleness.get(row.productId) ?? false);
-  }
-
-  @Query()
-  @Allow(Permission.UpdateCatalog)
   async generatedVariants(
     @Ctx() ctx: RequestContext,
     @Args("productDefinitionId") productDefinitionId: string,
@@ -175,6 +155,28 @@ export class ProductDefinitionResolver {
     @Args("productId") productId: string
   ): Promise<boolean> {
     return this.productDefinitionService.deleteProductDefinition(ctx, productId);
+  }
+}
+
+/** Exposes the definition that generated a native product on the stock
+ * Product type, so the dashboard's product-detail query can carry the
+ * generated flag (and the definition id) to its page blocks synchronously. */
+@Resolver(() => Product)
+export class ProductFieldResolver {
+  constructor(private productDefinitionService: ProductDefinitionService) {}
+
+  @ResolveField(() => ProductDefinition, { nullable: true, name: "productDefinition" })
+  @Allow(Permission.ReadCatalog)
+  async productDefinition(
+    @Ctx() ctx: RequestContext,
+    @Parent() product: Product
+  ): Promise<ProductDefinitionGraph | null> {
+    const row = await this.productDefinitionService.productDefinitionByNativeProduct(
+      ctx,
+      Number(product.id)
+    );
+
+    return row === null ? null : toGraph(row, false);
   }
 }
 
@@ -243,11 +245,14 @@ export const productDefinitionSchema = gql`
   extend type Query {
     productDefinition(productId: String!): ProductDefinition
     productDefinitions(options: ProductDefinitionListOptions!): ProductDefinitionList!
-    productDefinitionByNativeProduct(nativeProductId: Int!): ProductDefinition
     generatedVariants(
       productDefinitionId: String!
       options: GeneratedVariantListOptions!
     ): GeneratedVariantList!
+  }
+
+  extend type Product {
+    productDefinition: ProductDefinition
   }
 
   extend type Mutation {
