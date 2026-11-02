@@ -6,7 +6,6 @@ import { computeLineUnitPrice, LinePricingError } from "./line-price";
 
 const unitProduct = ProductDefinitionSchema.parse({
   id: "parna",
-  type: "parna",
   orderable: true,
   basePrice: 9000,
   pricing: { kind: "unit" },
@@ -79,7 +78,6 @@ const unitProduct = ProductDefinitionSchema.parse({
 
 const lengthProduct = ProductDefinitionSchema.parse({
   id: "fonott-racsvedo",
-  type: "racsvedo",
   orderable: true,
   basePrice: 0,
   pricing: { kind: "length", sourceFieldId: "sizes" },
@@ -142,6 +140,7 @@ const unitCodes = (
 describe("computeLineUnitPrice", () => {
   it("reproduces the variant's synced price for a plain option combination", () => {
     const price = computeLineUnitPrice({
+      productName: "Termék",
       definition: unitProduct,
       variantListPrice: 9000 + 2000 + 1800 + 3000,
       optionCodes: unitCodes("50", "igen", "wellsoft"),
@@ -154,6 +153,7 @@ describe("computeLineUnitPrice", () => {
 
   it("adds a color-choice pick, but nothing when unselected", () => {
     const withPick = computeLineUnitPrice({
+      productName: "Termék",
       definition: unitProduct,
       variantListPrice: 9000,
       optionCodes: unitCodes("40", "igen", "minky"),
@@ -164,6 +164,7 @@ describe("computeLineUnitPrice", () => {
     expect(withPick).toBe(9500);
 
     const withoutPick = computeLineUnitPrice({
+      productName: "Termék",
       definition: unitProduct,
       variantListPrice: 9000,
       optionCodes: unitCodes("40", "igen", "minky"),
@@ -176,6 +177,7 @@ describe("computeLineUnitPrice", () => {
 
   it("adds a visible input's price even while empty, and hides dependents", () => {
     const price = computeLineUnitPrice({
+      productName: "Termék",
       definition: unitProduct,
       variantListPrice: 9000,
       optionCodes: unitCodes("40", "nem", "minky"),
@@ -188,6 +190,7 @@ describe("computeLineUnitPrice", () => {
 
   it("prices per-word embroidery by the word count of the entered text", () => {
     const price = computeLineUnitPrice({
+      productName: "Termék",
       definition: unitProduct,
       variantListPrice: 9000,
       optionCodes: unitCodes("40", "nem", "minky"),
@@ -202,6 +205,7 @@ describe("computeLineUnitPrice", () => {
 
   it("ignores an unenabled embroidery", () => {
     const price = computeLineUnitPrice({
+      productName: "Termék",
       definition: unitProduct,
       variantListPrice: 9000,
       optionCodes: unitCodes("40", "nem", "minky"),
@@ -214,6 +218,7 @@ describe("computeLineUnitPrice", () => {
 
   it("prices a length product per metre, including embroidery", () => {
     const price = computeLineUnitPrice({
+      productName: "Termék",
       definition: lengthProduct,
       variantListPrice: 0,
       optionCodes: new Map([
@@ -231,6 +236,7 @@ describe("computeLineUnitPrice", () => {
   it("throws when a length-priced line has no length", () => {
     expect(() =>
       computeLineUnitPrice({
+        productName: "Termék",
         definition: lengthProduct,
         variantListPrice: 0,
         optionCodes: new Map([
@@ -247,6 +253,7 @@ describe("computeLineUnitPrice", () => {
   it("refuses a custom value on a field the variant matrix carries", () => {
     expect(() =>
       computeLineUnitPrice({
+        productName: "Termék",
         definition: lengthProduct,
         variantListPrice: 0,
         optionCodes: new Map([
@@ -263,6 +270,7 @@ describe("computeLineUnitPrice", () => {
   it("refuses selections that disagree with the variant", () => {
     expect(() =>
       computeLineUnitPrice({
+        productName: "Termék",
         definition: unitProduct,
         variantListPrice: 9000,
         optionCodes: unitCodes("40", "nem", "minky"),
@@ -275,6 +283,7 @@ describe("computeLineUnitPrice", () => {
   it("refuses records for fields the definition does not know", () => {
     expect(() =>
       computeLineUnitPrice({
+        productName: "Termék",
         definition: unitProduct,
         variantListPrice: 9000,
         optionCodes: unitCodes("40", "nem", "minky"),
@@ -284,18 +293,36 @@ describe("computeLineUnitPrice", () => {
     ).toThrow(LinePricingError);
   });
 
+  it("names the product in the missing-length refusal", () => {
+    expect(() =>
+      computeLineUnitPrice({
+        productName: "Fonott rácsvédő",
+        definition: lengthProduct,
+        variantListPrice: 0,
+        optionCodes: new Map([
+          ["sizes", "200"],
+          ["fonas", "3"],
+          ["anyag", "teddy"],
+        ]),
+        selections: {},
+        lengthCm: null,
+      })
+    ).toThrow(/Fonott rácsvédő.*hossz/);
+  });
+
   it("refuses to price a non-orderable product even with valid selections", () => {
     const browseOnly = ProductDefinitionSchema.parse({ ...unitProduct, orderable: false });
 
     expect(() =>
       computeLineUnitPrice({
+        productName: "Párna",
         definition: browseOnly,
         variantListPrice: 9000,
         optionCodes: unitCodes("40", "nem", "minky"),
         selections: {},
         lengthCm: null,
       })
-    ).toThrow(/parna.*nem rendelhető/);
+    ).toThrow(/Párna.*nem rendelhető/);
   });
 });
 
@@ -343,6 +370,7 @@ describe("length per-material pricing", () => {
     });
 
     const hidden = computeLineUnitPrice({
+      productName: "Termék",
       definition,
       variantListPrice: 0,
       optionCodes: new Map([
@@ -356,6 +384,7 @@ describe("length per-material pricing", () => {
       lengthCm: 200,
     });
     const visible = computeLineUnitPrice({
+      productName: "Termék",
       definition,
       variantListPrice: 0,
       optionCodes: new Map([
@@ -375,6 +404,7 @@ describe("length per-material pricing", () => {
 
   it("scales each material's price with the length", () => {
     const teddy = computeLineUnitPrice({
+      productName: "Termék",
       definition: lengthProduct,
       variantListPrice: 0,
       optionCodes: new Map([
@@ -386,6 +416,7 @@ describe("length per-material pricing", () => {
       lengthCm: 200,
     });
     const velur = computeLineUnitPrice({
+      productName: "Termék",
       definition: lengthProduct,
       variantListPrice: 0,
       optionCodes: new Map([
