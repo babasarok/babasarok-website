@@ -89,12 +89,23 @@ then sell for 0 Ft). Non-orderable (browse-only) products are exempt.
     above 0 Ft
   - THEN the build succeeds
 
-During the transition this rule is enforced twice with the same enumeration:
-by the site build (today) and by Vendure's product-definition validation on
-every definition save (`backend/src/plugins/product/`). The 0 Ft native
-variant prices on length-priced products are not buyer-reachable until the
-storefront orders through Vendure with per-meter repricing in place
-(issue #71).
+> **Transition note (ADR 0009/0010).** During the transition this rule is
+> enforced twice with the same enumeration: by the site build (today) and by
+> Vendure's product-definition validation on every definition save
+> (`backend/src/plugins/product/`). The 0 Ft native variant prices on
+> length-priced products are not buyer-reachable since the pricing step: the
+> server prices configured order lines itself — a custom
+> `OrderItemPriceCalculationStrategy` computes the unit price from the
+> canonical product definition and the order line's selections (a length in
+> cm plus per-field picks — materials with their colors, embroidery text and
+> thread color, input texts, color picks) — and a length-priced line without
+> a length is rejected when the item is added or adjusted, with the strategy
+> refusing to price it as the backstop. Never a 0 Ft line. Until the cutover
+> the site keeps quoting client-side; server-side pricing applies to orders
+> that carry those fields. An open owner question: a `customValue` choice
+> field used as a variant axis cannot select a generated variant, and the
+> server refuses to price such a line — whether such fields may exist outside
+> length source fields is undecided; none exist in current content.
 
 ### Set discount application
 
