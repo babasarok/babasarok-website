@@ -126,6 +126,13 @@ merged to main until the backend structure is settled):
   left the canonical definition (data migration) and `ThreadColorPaletteSchema`
   was retired; the order-line interceptor rejects unknown thread colors;
   `import-facets` seeds both
+- ✅ Translatable catalog text — material/color labels, subtitle and
+  description are Vendure translation entities and definition text is a
+  `LocalizedText` (`hu` required, others optional, hu fallback), edited in the
+  dashboard's content language; generated options, variants and mirrored
+  facet values carry every language
+  ([ADR 0011](adr/0011-native-ownership-and-translatable-catalog.md)
+  decision 6)
 - ⬜ Vendure-complete gate — catalog fully manageable in the Vendure dashboard,
   nothing left that only Tina can do
 
