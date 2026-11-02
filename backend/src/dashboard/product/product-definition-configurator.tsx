@@ -69,6 +69,10 @@ const productDefinitionQuery = graphql(`
       nativeProductId
       syncState
       syncError
+      syncProgress {
+        done
+        total
+      }
       stale
       driftDetails {
         kind
@@ -133,6 +137,7 @@ interface SyncInfo {
   error: string | null;
   stale: boolean;
   details: Array<{ kind: string; label: string }>;
+  progress: { done: number; total: number } | null;
 }
 
 const syncStateDictionary = defineStateEntries({
@@ -146,7 +151,11 @@ function SyncBadge({ sync }: { sync: SyncInfo | null }): ReactElement {
     return <></>;
   }
 
-  const stateLabel = syncStateDictionary.labelFor(sync.state);
+  const baseLabel = syncStateDictionary.labelFor(sync.state);
+  const stateLabel =
+    sync.state === "pending" && sync.progress !== null
+      ? `${baseLabel} ${sync.progress.done} / ${sync.progress.total}`
+      : baseLabel;
 
   return (
     <span className="flex items-center gap-2">
@@ -234,6 +243,7 @@ export function ConfiguratorEditor({
           error: result.productDefinition.syncError,
           stale: result.productDefinition.stale,
           details: result.productDefinition.driftDetails ?? [],
+          progress: result.productDefinition.syncProgress,
         });
 
         if (result.productDefinition.syncState === "pending") {
@@ -451,6 +461,7 @@ export function ConfiguratorEditor({
           error: result.productDefinition.syncError,
           stale: result.productDefinition.stale,
           details: result.productDefinition.driftDetails ?? [],
+          progress: result.productDefinition.syncProgress,
         };
         setSync(next);
 
@@ -556,6 +567,7 @@ export function ConfiguratorEditor({
           error: result.updateProductDefinition.syncError,
           stale: false,
           details: [],
+          progress: null,
         });
         // Adopt the saved payload (with the generated codes filled in) so the
         // next save keeps them stable instead of regenerating from labels.

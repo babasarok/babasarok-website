@@ -23,7 +23,7 @@ import {
 import type { JobQueue } from "@vendure/core";
 import type { UpdateProductVariantInput } from "@vendure/common/lib/generated-types";
 import { GlobalFlag } from "@vendure/common/lib/generated-types";
-import { JobQueueService } from "@vendure/core";
+import { ConfigService, isInspectableJobQueueStrategy, JobQueueService } from "@vendure/core";
 import { In, IsNull } from "typeorm";
 import type {
   LocalizedText,
@@ -60,6 +60,7 @@ import {
   type NativeProductState,
   type NativeStateDiff,
 } from "./sync-state";
+import { createProgressCounter, progressOfJobData, type SyncProgress } from "./sync-progress";
 import { huName, nativeProductTexts, textOf } from "./native-names";
 import { plannedNativeState, planVariantCombinations, type VariantPlan } from "./variant-plan";
 
@@ -110,6 +111,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     private optionService: ProductOptionService,
     private variantService: ProductVariantService,
     private jobQueueService: JobQueueService,
+    private configService: ConfigService,
     private requestContextService: RequestContextService,
     private channelService: ChannelService,
     private eventBus: EventBus
@@ -120,7 +122,13 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     this.syncQueue = await this.jobQueueService.createQueue({
       name: SYNC_QUEUE_NAME,
       process: async (job) => {
-        await this.processSyncJob(SyncJobDataSchema.parse(job.data));
+        const data = SyncJobDataSchema.parse(job.data);
+
+        await this.processSyncJob(data, (progress) => {
+          // Persisted by the job queue on its own connection, outside the sync transaction.
+          Object.assign(job.data, { progress });
+          job.setProgress(progress.total === 0 ? 100 : (progress.done / progress.total) * 100);
+        });
       },
     });
 
@@ -169,6 +177,28 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     await this.withNativeLabels(ctx, [row]);
 
     return row;
+  }
+
+  /** The latest progress a running sync job of this definition reported. */
+  async syncProgress(productId: string): Promise<SyncProgress | null> {
+    const strategy = this.configService.jobQueueOptions.jobQueueStrategy;
+
+    if (!isInspectableJobQueueStrategy(strategy)) {
+      return null;
+    }
+
+    const { items } = await strategy.findMany({
+      filter: { queueName: { eq: SYNC_QUEUE_NAME }, state: { eq: "RUNNING" } },
+    });
+    const job = items.find(
+      (candidate) => SyncJobDataSchema.parse(candidate.data).productId === productId
+    );
+
+    if (job === undefined) {
+      return null;
+    }
+
+    return progressOfJobData(job.data);
   }
 
   async createProductDefinition(
@@ -475,7 +505,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   }
 
   /** The worker-side sync of a definition's current stored state. */
-  private async processSyncJob({ productId, origin }: SyncJobData): Promise<void> {
+  private async processSyncJob(
+    { productId, origin }: SyncJobData,
+    reportProgress: (progress: SyncProgress) => void
+  ): Promise<void> {
     const ctx = await this.jobContext();
     const repo = this.connection.getRepository(ctx, ProductDefinition);
     const row = await repo.findOneBy({ productId });
@@ -536,7 +569,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
             .update({ productId }, { nativeProductId });
         }
 
-        await this.sync(txCtx, nativeProductId, row.definition);
+        await this.sync(txCtx, nativeProductId, row.definition, reportProgress);
 
         const state = await this.currentNativeState(txCtx, nativeProductId);
         await this.connection.getRepository(txCtx, ProductDefinition).update(
@@ -648,7 +681,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   private async sync(
     ctx: RequestContext,
     nativeProductId: number,
-    definition: CanonicalProductDefinition
+    definition: CanonicalProductDefinition,
+    reportProgress: (progress: SyncProgress) => void
   ): Promise<void> {
     const materialData = await this.materialData(ctx);
     const product = await this.connection.getRepository(ctx, Product).findOne({
@@ -679,7 +713,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       plan,
       optionIdsByGroupCode,
       facetCodesBySku,
-      facetValueIdsByCode
+      facetValueIdsByCode,
+      reportProgress
     );
   }
 
@@ -803,7 +838,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     plan: VariantPlan,
     optionIdsByGroupCode: ReadonlyMap<string, ReadonlyMap<string, number>>,
     facetCodesBySku: ReadonlyMap<string, string[]>,
-    facetValueIdsByCode: ReadonlyMap<string, number>
+    facetValueIdsByCode: ReadonlyMap<string, number>,
+    reportProgress: (progress: SyncProgress) => void
   ): Promise<void> {
     const missingOption = plan.variants
       .flatMap((variant) =>
@@ -865,21 +901,6 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
     const missing = plan.variants.filter((variant) => !existingBySku.has(variant.sku));
 
-    for (let start = 0; start < missing.length; start += BATCH_SIZE) {
-      await this.variantService.create(
-        ctx,
-        missing.slice(start, start + BATCH_SIZE).map((variant) => ({
-          productId: nativeProductId,
-          sku: variant.sku,
-          price: variant.price,
-          optionIds: optionIdsFor(variant),
-          facetValueIds: facetValueIdsFor(variant.sku),
-          trackInventory: GlobalFlag.FALSE,
-          translations: nameTranslations(variant.name),
-        }))
-      );
-    }
-
     const updates: UpdateProductVariantInput[] = [];
 
     for (const variant of existing) {
@@ -932,17 +953,39 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       updates.push(update);
     }
 
-    for (let start = 0; start < updates.length; start += BATCH_SIZE) {
-      await this.variantService.update(ctx, updates.slice(start, start + BATCH_SIZE));
+    const stale = existing.filter((variant) => !plannedBySku.has(variant.sku));
+    const progress = createProgressCounter(
+      missing.length + updates.length + stale.length,
+      reportProgress
+    );
+
+    for (let start = 0; start < missing.length; start += BATCH_SIZE) {
+      await this.variantService.create(
+        ctx,
+        missing.slice(start, start + BATCH_SIZE).map((variant) => ({
+          productId: nativeProductId,
+          sku: variant.sku,
+          price: variant.price,
+          optionIds: optionIdsFor(variant),
+          facetValueIds: facetValueIdsFor(variant.sku),
+          trackInventory: GlobalFlag.FALSE,
+          translations: nameTranslations(variant.name),
+        }))
+      );
+      progress.advance(Math.min(BATCH_SIZE, missing.length - start));
     }
 
-    const stale = existing.filter((variant) => !plannedBySku.has(variant.sku));
+    for (let start = 0; start < updates.length; start += BATCH_SIZE) {
+      await this.variantService.update(ctx, updates.slice(start, start + BATCH_SIZE));
+      progress.advance(Math.min(BATCH_SIZE, updates.length - start));
+    }
 
     if (stale.length > 0) {
       await this.variantService.softDelete(
         ctx,
         stale.map((variant) => variant.id)
       );
+      progress.advance(stale.length);
     }
   }
 
