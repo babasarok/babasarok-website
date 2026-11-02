@@ -19,6 +19,15 @@ export interface LinePricingInput {
 
 export class LinePricingError extends Error {}
 
+/**
+ * The rejection for ordering a non-orderable (browse-only) product: the
+ * interceptor returns it at the mutation boundary, the pricing walk throws it
+ * as the backstop (ADR 0011 decision 5).
+ */
+export function nonOrderableRejection(definition: ProductDefinition): string {
+  return `A(z) "${definition.label}" termék jelenleg nem rendelhető.`;
+}
+
 function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
@@ -92,13 +101,17 @@ function variantAxisPrice(field: ProductField, optionCode: string | undefined): 
  * skipped — it carries no price, it scales — and the sum multiplied by the
  * length in metres.
  *
- * Throws {@link LinePricingError} for an unpriced line: a missing length,
- * selections that reference unknown fields or disagree with the variant's
- * options (drift or a buggy storefront), or a custom value on a field the
- * variant matrix carries.
+ * Throws {@link LinePricingError} for an unpriced line: a non-orderable
+ * product, a missing length, selections that reference unknown fields or
+ * disagree with the variant's options (drift or a buggy storefront), or a
+ * custom value on a field the variant matrix carries.
  */
 export function computeLineUnitPrice(input: LinePricingInput): number {
   const { definition, variantListPrice, optionCodes, selections } = input;
+
+  if (!definition.orderable) {
+    throw new LinePricingError(nonOrderableRejection(definition));
+  }
 
   for (const [fieldId, selection] of Object.entries(selections)) {
     if (selection === undefined) {

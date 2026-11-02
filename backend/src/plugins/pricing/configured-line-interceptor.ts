@@ -10,13 +10,15 @@ import type {
 } from "@vendure/core";
 import type { ProductDefinition as CanonicalProductDefinition } from "@babasarok/product-definition";
 import { ProductDefinition } from "../product/product.entity";
+import { nonOrderableRejection } from "./line-price";
 import { parseLineSelections, LineSelectionsError } from "./line-selection";
 
 /**
  * Rejects unpriceable configured lines at the mutation boundary with a clear
  * error result (OrderInterceptorError) instead of a thrown price calculation:
- * a length-priced product requires the line's length, and the selections must
- * parse. The pricing strategy re-checks both as the backstop.
+ * a non-orderable product cannot be ordered, a length-priced product requires
+ * the line's length, and the selections must parse. The pricing strategy
+ * re-checks all three as the backstop.
  */
 export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
   private connection!: TransactionalConnection;
@@ -30,9 +32,13 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
     order: Order,
     input: WillAddItemToOrderInput
   ): Promise<string | undefined> {
-    const definition = await this.lengthPricingDefinition(ctx, input.productVariant);
+    const definition = await this.generatedDefinition(ctx, input.productVariant);
 
-    if (definition === undefined) {
+    if (definition !== undefined && !definition.orderable) {
+      return nonOrderableRejection(definition);
+    }
+
+    if (definition === undefined || definition.pricing.kind !== "length") {
       return this.selectionsError(input.customFields?.selections);
     }
 
@@ -50,9 +56,13 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
     order: Order,
     input: WillAdjustOrderLineInput
   ): Promise<string | undefined> {
-    const definition = await this.lengthPricingDefinition(ctx, input.orderLine.productVariant);
+    const definition = await this.generatedDefinition(ctx, input.orderLine.productVariant);
 
-    if (definition === undefined) {
+    if (definition !== undefined && !definition.orderable) {
+      return nonOrderableRejection(definition);
+    }
+
+    if (definition === undefined || definition.pricing.kind !== "length") {
       return this.selectionsError(input.customFields?.selections);
     }
 
@@ -69,8 +79,8 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
     return this.selectionsError(input.customFields?.selections);
   }
 
-  /** The canonical definition when the variant belongs to a length-priced generated product. */
-  private async lengthPricingDefinition(
+  /** The canonical definition when the variant belongs to a generated product. */
+  private async generatedDefinition(
     ctx: RequestContext,
     productVariant: ProductVariant
   ): Promise<CanonicalProductDefinition | undefined> {
@@ -79,11 +89,7 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
       select: { id: true, definition: true },
     });
 
-    if (row === null || row.definition.pricing.kind !== "length") {
-      return undefined;
-    }
-
-    return row.definition;
+    return row?.definition;
   }
 
   private selectionsError(raw: unknown): string | undefined {
