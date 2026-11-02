@@ -18,6 +18,12 @@ declare module "@vendure/core/dist/entity/custom-entity-fields" {
     tagline: string | null;
   }
 
+  interface CustomFacetValueFields {
+    hex: string | null;
+    swatch: Asset | null;
+    swatchId: number | null;
+  }
+
   interface CustomAssetFieldsTranslation {
     galleryDescription: string | null;
   }
