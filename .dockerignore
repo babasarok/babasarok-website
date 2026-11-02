@@ -19,5 +19,5 @@ backend/dist
 backend/email-out
 backend/.env
 backend/.env.*
-packages/product-definition/dist
-packages/product-definition/node_modules
+packages/*/dist
+packages/*/node_modules
