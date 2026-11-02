@@ -6,6 +6,7 @@ WORKDIR /workspace
 
 # Workspace manifests first so dependency install is a cached layer.
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY patches ./patches
 COPY backend/package.json ./backend/
 COPY packages/product-definition/package.json packages/product-definition/tsconfig.json ./packages/product-definition/
 

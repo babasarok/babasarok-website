@@ -169,6 +169,7 @@ try {
       "package.json",
       "pnpm-workspace.yaml",
       "pnpm-lock.yaml",
+      "patches",
       "Dockerfile",
       ".dockerignore",
       "backend",
