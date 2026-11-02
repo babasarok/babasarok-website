@@ -53,88 +53,123 @@ function matchesPattern(pattern: string | undefined, value: string): boolean {
   return pattern === undefined || new RegExp(pattern).test(value);
 }
 
+type ProblemReason =
+  | { reason: "unknown-material" }
+  | { reason: "duplicate-color" }
+  | { reason: "foreign-color" }
+  | { reason: "too-few-colors"; required: number }
+  | { reason: "text-too-long"; subject: "text" | "value" }
+  | { reason: "bad-format"; subject: "text" | "value" }
+  | { reason: "unoffered-value" }
+  | { reason: "custom-not-accepted" };
+
+export type SelectionProblem =
+  | { code: "unknown-field"; fieldId: string }
+  | { code: "wrong-kind"; fieldId: string }
+  | ({ code: "invalid"; fieldId: string } & ProblemReason);
+
+function requiredColorCount(
+  field: Extract<ProductField, { kind: "material" }>,
+  selections: LineSelections
+): number | undefined {
+  if (field.colorCount.kind === "fixed") {
+    return field.colorCount.count;
+  }
+
+  const source = selections[field.colorCount.fieldId];
+
+  if (source === undefined || source.kind === "material" || source.kind === "embroidery") {
+    return undefined;
+  }
+
+  const count = Number.parseFloat(source.value);
+
+  return Number.isNaN(count) ? undefined : count;
+}
+
+function textProblem(
+  pattern: string | undefined,
+  value: string,
+  subject: "text" | "value"
+): ProblemReason | undefined {
+  if (value.length > MAX_SELECTION_TEXT_LENGTH) {
+    return { reason: "text-too-long", subject };
+  }
+
+  if (value === "" && subject === "value") {
+    return undefined;
+  }
+
+  return matchesPattern(pattern, value) ? undefined : { reason: "bad-format", subject };
+}
+
 function fieldProblem(
   field: ProductField,
   selection: LineSelectionRecord,
+  selections: LineSelections,
   materialColors: ReadonlyMap<string, ReadonlySet<string>>
-): string | undefined {
+): ProblemReason | undefined {
   if (selection.kind === "material" && field.kind === "material") {
     const offered = materialColors.get(selection.materialId);
 
     if (offered === undefined) {
-      return "ismeretlen anyagot tartalmaz";
+      return { reason: "unknown-material" };
     }
 
     if (new Set(selection.colors).size !== selection.colors.length) {
-      return "ugyanazt a színt többször tartalmazza";
+      return { reason: "duplicate-color" };
     }
 
     if (selection.colors.some((color) => !offered.has(color))) {
-      return "az anyag által nem kínált színt tartalmaz";
+      return { reason: "foreign-color" };
+    }
+
+    const required = requiredColorCount(field, selections);
+
+    if (required !== undefined && selection.colors.length < required) {
+      return { reason: "too-few-colors", required };
     }
 
     return undefined;
   }
 
   if (selection.kind === "embroidery" && field.kind === "embroidery") {
-    if (selection.text.length > MAX_SELECTION_TEXT_LENGTH) {
-      return `a szöveg legfeljebb ${MAX_SELECTION_TEXT_LENGTH} karakter lehet`;
-    }
-
-    return matchesPattern(field.pattern, selection.text)
-      ? undefined
-      : "a szöveg formátuma érvénytelen";
+    return textProblem(field.pattern, selection.text, "text");
   }
 
   if (selection.kind === "input" && field.kind === "input") {
-    if (selection.value.length > MAX_SELECTION_TEXT_LENGTH) {
-      return `az érték legfeljebb ${MAX_SELECTION_TEXT_LENGTH} karakter lehet`;
-    }
-
-    if (selection.value === "") {
-      return undefined;
-    }
-
-    return matchesPattern(field.pattern, selection.value)
-      ? undefined
-      : "az érték formátuma érvénytelen";
+    return textProblem(field.pattern, selection.value, "value");
   }
 
   if (selection.kind === "option" && field.kind === "choice") {
     return field.options.some((option) => option.id === selection.value)
       ? undefined
-      : "nem kínált értéket tartalmaz";
+      : { reason: "unoffered-value" };
   }
 
   if (selection.kind === "option" && field.kind === "toggle") {
     return selection.value === "igen" || selection.value === "nem"
       ? undefined
-      : "nem kínált értéket tartalmaz";
+      : { reason: "unoffered-value" };
   }
 
   if (selection.kind === "custom" && field.kind === "choice") {
     if (field.customValue === undefined) {
-      return "egyedi értéket nem fogad el";
+      return { reason: "custom-not-accepted" };
     }
 
-    if (selection.value.length > MAX_SELECTION_TEXT_LENGTH) {
-      return `az érték legfeljebb ${MAX_SELECTION_TEXT_LENGTH} karakter lehet`;
-    }
-
-    return matchesPattern(field.customValue.pattern, selection.value)
-      ? undefined
-      : "az érték formátuma érvénytelen";
+    return textProblem(field.customValue.pattern, selection.value, "value");
   }
 
   return undefined;
 }
 
-/**
- * The buyer-facing refusal for the first selection the product's own fields
- * cannot accept, or undefined when every record fits its field.
- */
-export function selectionsRejection(input: SelectionValidationInput): string | undefined {
-  const { definition, productName, selections, materialColors, languageCode } = input;
+/** Every selection the product's own fields cannot accept, in selection order. */
+export function validateSelections(
+  input: Pick<SelectionValidationInput, "definition" | "selections" | "materialColors">
+): SelectionProblem[] {
+  const { definition, selections, materialColors } = input;
+  const problems: SelectionProblem[] = [];
 
   for (const [fieldId, selection] of Object.entries(selections)) {
     if (selection === undefined) {
@@ -144,21 +179,74 @@ export function selectionsRejection(input: SelectionValidationInput): string | u
     const field = definition.fields.find((candidate) => candidate.id === fieldId);
 
     if (field === undefined) {
-      return `A(z) "${productName}" termék nem ismeri ezt a mezőt: ${fieldId}`;
+      problems.push({ code: "unknown-field", fieldId });
+      continue;
     }
-
-    const label = resolveText(field.label, languageCode);
 
     if (!acceptedKinds(field).includes(selection.kind)) {
-      return `A(z) "${productName}" "${label}" mezőjének választása nem a mező fajtájának megfelelő.`;
+      problems.push({ code: "wrong-kind", fieldId });
+      continue;
     }
 
-    const problem = fieldProblem(field, selection, materialColors);
+    const problem = fieldProblem(field, selection, selections, materialColors);
 
     if (problem !== undefined) {
-      return `A(z) "${productName}" "${label}" mezőjének választása érvénytelen: ${problem}.`;
+      problems.push({ code: "invalid", fieldId, ...problem });
     }
   }
 
-  return undefined;
+  return problems;
+}
+
+const SUBJECT_HU = { text: "a szöveg", value: "az érték" } as const;
+
+function reasonMessage(problem: Extract<SelectionProblem, { code: "invalid" }>): string {
+  switch (problem.reason) {
+    case "unknown-material":
+      return "ismeretlen anyagot tartalmaz";
+    case "duplicate-color":
+      return "ugyanazt a színt többször tartalmazza";
+    case "foreign-color":
+      return "az anyag által nem kínált színt tartalmaz";
+    case "too-few-colors":
+      return `legalább ${problem.required} színt kell választani`;
+    case "text-too-long":
+      return `${SUBJECT_HU[problem.subject]} legfeljebb ${MAX_SELECTION_TEXT_LENGTH} karakter lehet`;
+    case "bad-format":
+      return `${SUBJECT_HU[problem.subject]} formátuma érvénytelen`;
+    case "unoffered-value":
+      return "nem kínált értéket tartalmaz";
+    case "custom-not-accepted":
+      return "egyedi értéket nem fogad el";
+  }
+}
+
+export function formatSelectionProblem(
+  problem: SelectionProblem,
+  context: Pick<SelectionValidationInput, "definition" | "productName" | "languageCode">
+): string {
+  const { definition, productName, languageCode } = context;
+
+  if (problem.code === "unknown-field") {
+    return `A(z) "${productName}" termék nem ismeri ezt a mezőt: ${problem.fieldId}`;
+  }
+
+  const field = definition.fields.find((candidate) => candidate.id === problem.fieldId);
+  const label = field === undefined ? problem.fieldId : resolveText(field.label, languageCode);
+
+  if (problem.code === "wrong-kind") {
+    return `A(z) "${productName}" "${label}" mezőjének választása nem a mező fajtájának megfelelő.`;
+  }
+
+  return `A(z) "${productName}" "${label}" mezőjének választása érvénytelen: ${reasonMessage(problem)}.`;
+}
+
+/**
+ * The buyer-facing refusal for the first selection the product's own fields
+ * cannot accept, or undefined when every record fits its field.
+ */
+export function selectionsRejection(input: SelectionValidationInput): string | undefined {
+  const [first] = validateSelections(input);
+
+  return first === undefined ? undefined : formatSelectionProblem(first, input);
 }

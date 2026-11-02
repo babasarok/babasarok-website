@@ -12,7 +12,10 @@ export {
   MAX_LINE_LENGTH_CM,
   MAX_SELECTION_TEXT_LENGTH,
   referencedMaterialIds,
+  formatSelectionProblem,
   selectionsRejection,
+  validateSelections,
+  type SelectionProblem,
   type SelectionValidationInput,
 } from "./selection-validation.js";
 export {
