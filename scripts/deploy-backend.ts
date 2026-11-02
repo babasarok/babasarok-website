@@ -174,6 +174,7 @@ try {
       "backend",
       "packages",
       "deploy",
+      "src/content/config",
       "src/content/material",
       "src/content/product",
       "src/content/product_groups",

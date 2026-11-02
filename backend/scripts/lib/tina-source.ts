@@ -4,7 +4,6 @@ import type {
   ProductDefinitionSchema,
   ProductGroupDefinitionSchema,
 } from "@babasarok/product-definition";
-import { ProductTypeSchema } from "@babasarok/product-definition";
 
 /**
  * The read-only Tina product-content adapter for the preview seed
@@ -342,12 +341,6 @@ export type TinaProductParseResult =
  */
 export function definitionFromTinaProduct(source: TinaProduct): TinaProductParseResult {
   const errors: string[] = [];
-  const productType = ProductTypeSchema.safeParse(source.type);
-
-  if (!productType.success) {
-    errors.push(`${source.product_id}: Ismeretlen termék típus: "${source.type}".`);
-  }
-
   const fields: DefinitionInput[] = [];
 
   for (const field of source.fields ?? []) {
@@ -365,7 +358,7 @@ export function definitionFromTinaProduct(source: TinaProduct): TinaProductParse
     fields.push(canonical);
   }
 
-  if (errors.length > 0 || !productType.success) {
+  if (errors.length > 0) {
     return { success: false, errors };
   }
 
@@ -376,7 +369,6 @@ export function definitionFromTinaProduct(source: TinaProduct): TinaProductParse
     name: source.title.trim(),
     definition: {
       id: source.product_id.trim(),
-      type: productType.data,
       orderable: source.can_be_ordered ?? false,
       hiddenInProductList: source.hidden_in_product_list ?? false,
       basePrice: source.price ?? 0,
