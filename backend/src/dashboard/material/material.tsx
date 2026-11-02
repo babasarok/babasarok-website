@@ -136,6 +136,13 @@ interface MaterialTexts {
 
 const EMPTY_TEXTS: MaterialTexts = { label: "", subtitle: "", description: "" };
 
+function textsFor(
+  texts: Record<string, MaterialTexts>,
+  language: string
+): MaterialTexts | undefined {
+  return Object.hasOwn(texts, language) ? texts[language] : undefined;
+}
+
 /** What the open asset picker writes into. */
 type PickerTarget = { kind: "color"; key: string } | { kind: "thumbnail" };
 
@@ -306,7 +313,7 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
   function patchTexts(patch: Partial<MaterialTexts>): void {
     setTexts((current) => ({
       ...current,
-      [language]: { ...(current[language] ?? EMPTY_TEXTS), ...patch },
+      [language]: { ...(textsFor(current, language) ?? EMPTY_TEXTS), ...patch },
     }));
   }
 
@@ -378,9 +385,10 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
     }
   }
 
-  const current = texts[language] ?? EMPTY_TEXTS;
-  const fallback = language === DEFAULT_TEXT_LANGUAGE ? undefined : texts[DEFAULT_TEXT_LANGUAGE];
-  const title = current.label || (texts[DEFAULT_TEXT_LANGUAGE]?.label ?? slug);
+  const current = textsFor(texts, language) ?? EMPTY_TEXTS;
+  const fallback =
+    language === DEFAULT_TEXT_LANGUAGE ? undefined : textsFor(texts, DEFAULT_TEXT_LANGUAGE);
+  const title = current.label || (textsFor(texts, DEFAULT_TEXT_LANGUAGE)?.label ?? slug);
 
   return (
     <Page pageId="material-detail">

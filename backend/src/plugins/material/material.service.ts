@@ -14,6 +14,7 @@ import {
   UserInputError,
 } from "@vendure/core";
 import { In } from "typeorm";
+import { z } from "zod";
 import type {
   MaterialDefinition,
   ProductDefinition as CanonicalProductDefinition,
@@ -30,14 +31,16 @@ import { MaterialEvent } from "./material.event";
 import { MaterialFacetSync } from "./material-facet-sync";
 import { validateMaterialInput, type MaterialInputData } from "./material-definition";
 
-export function toLanguageCode(code: string): LanguageCode {
-  const language = Object.values(LanguageCode).find((candidate) => candidate === code);
+const LanguageCodeSchema = z.enum(LanguageCode);
 
-  if (language === undefined) {
+export function toLanguageCode(code: string): LanguageCode {
+  const language = LanguageCodeSchema.safeParse(code);
+
+  if (!language.success) {
     throw new UserInputError(`Ismeretlen nyelvkód: ${code}`);
   }
 
-  return language;
+  return language.data;
 }
 
 /** Deletion refusal with a machine-readable code: the dashboard keys its
@@ -274,12 +277,12 @@ export class MaterialService {
     id: number,
     translations: Array<TranslationInput<Material>>
   ): Promise<void> {
-    const kept = translations.map((translation) => translation.languageCode);
+    const kept = new Set(translations.map((translation) => translation.languageCode));
     const repo = this.connection.getRepository(ctx, MaterialTranslation);
     const stale = await repo.find({ where: { base: { id } } });
 
     for (const translation of stale) {
-      if (!kept.includes(translation.languageCode)) {
+      if (!kept.has(translation.languageCode)) {
         await repo.delete({ id: translation.id });
       }
     }

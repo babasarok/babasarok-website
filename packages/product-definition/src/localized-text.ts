@@ -18,7 +18,9 @@ export const LocalizedTextSchema = z
 export type LocalizedText = z.output<typeof LocalizedTextSchema>;
 
 export function resolveText(text: LocalizedText, languageCode: string): string {
-  const requested: string | undefined = text[languageCode];
+  if (!Object.hasOwn(text, languageCode)) {
+    return text.hu;
+  }
 
-  return requested ?? text.hu;
+  return text[languageCode];
 }

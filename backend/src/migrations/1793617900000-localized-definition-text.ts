@@ -1,5 +1,6 @@
 import { canonicalJson } from "@babasarok/product-definition";
 import { createHash } from "node:crypto";
+import { z } from "zod";
 import type { MigrationInterface, QueryRunner } from "typeorm";
 
 type Json = Record<string, unknown>;
@@ -9,8 +10,12 @@ function isJson(value: unknown): value is Json {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function isArray(value: unknown): value is unknown[] {
+  return Array.isArray(value);
+}
+
 function mapEach(items: unknown, map: (item: Json) => Json): unknown {
-  if (!Array.isArray(items)) {
+  if (!isArray(items)) {
     return items;
   }
 
@@ -71,15 +76,19 @@ function unwrap(value: unknown): unknown {
   return value.hu;
 }
 
-interface Row {
-  id: number;
-  definition: Json;
-  syncedDefinitionHash: string | null;
-}
+const RowsSchema = z.array(
+  z.object({
+    id: z.number(),
+    definition: z.record(z.string(), z.unknown()),
+    syncedDefinitionHash: z.string().nullable(),
+  })
+);
 
 async function rewrite(queryRunner: QueryRunner, mapText: TextMapper): Promise<void> {
-  const rows: Row[] = await queryRunner.query(
-    `SELECT "id", "definition", "syncedDefinitionHash" FROM "product_definition"`
+  const rows = RowsSchema.parse(
+    await queryRunner.query(
+      `SELECT "id", "definition", "syncedDefinitionHash" FROM "product_definition"`
+    )
   );
 
   for (const row of rows) {

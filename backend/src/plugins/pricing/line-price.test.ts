@@ -317,6 +317,7 @@ describe("computeLineUnitPrice", () => {
         ]),
         selections: {},
         lengthCm: null,
+        languageCode: "hu",
       })
     ).toThrow(/Fonott rácsvédő.*hossz/);
   });
