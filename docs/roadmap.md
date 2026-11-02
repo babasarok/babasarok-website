@@ -75,6 +75,14 @@ Slices are PRs against `feat/vendure-materials`:
   active order; checkout carries contact, address, delivery and message;
   `submitQuoteOrder` and client basket pricing retired; emails built from
   `selections`
+- ⬜ **S7 Markdown descriptions** (after S1; parallel with S3/S4) — product
+  and material long descriptions are stored as markdown so the site drives
+  their styling; a dashboard markdown editor (Vendure's exported rich-text
+  toolbar/image dialog + TipTap's markdown extension) replaces
+  `Product.description` and edits a new translatable material description;
+  images reference Vendure assets host-independently (`asset:<id>`) and the
+  site renders them as asset-server preset URLs; raw HTML is disabled; the
+  preview import carries the Tina bodies
 - ⬜ **S6 Prod cutover** — hand migration of the catalog into prod
   (`converge-facets`, `import-facets`, products), switch, verify
 
