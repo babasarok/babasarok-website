@@ -39,6 +39,13 @@ import { Material } from "../material/material.entity";
 import { sortDefinitions } from "./definition-sort";
 import { deletedNativeProductId, updatedNativeProductId } from "./product-event";
 import {
+  type AutomaticSyncDecision,
+  automaticSyncDecision,
+  SyncJobDataSchema,
+  updateInputCarriesName,
+  type SyncJobData,
+} from "./sync-decision";
+import {
   COLOR_FACET_CODE,
   MATERIAL_FACET_CODE,
   plannedVariantFacetCodes,
@@ -92,7 +99,7 @@ const SYNC_QUEUE_NAME = "product-definition-sync";
 
 @Injectable()
 export class ProductDefinitionService implements OnApplicationBootstrap {
-  private syncQueue: JobQueue<{ productId: string }> | null = null;
+  private syncQueue: JobQueue<SyncJobData> | null = null;
   private readonly slugStrategy = new DefaultSlugStrategy();
 
   constructor(
@@ -112,7 +119,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     this.syncQueue = await this.jobQueueService.createQueue({
       name: SYNC_QUEUE_NAME,
       process: async (job) => {
-        await this.processSyncJob(job.data.productId);
+        await this.processSyncJob(SyncJobDataSchema.parse(job.data));
       },
     });
 
@@ -195,7 +202,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     });
 
     row.label = parsedName.data;
-    await this.enqueueSync(ctx, row.productId);
+    await this.enqueueSync(ctx, row.productId, "owner-save");
 
     return row;
   }
@@ -241,7 +248,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     });
 
     await this.withNativeLabels(ctx, [row]);
-    await this.enqueueSync(ctx, row.productId);
+    await this.enqueueSync(ctx, row.productId, "owner-save");
 
     return row;
   }
@@ -385,7 +392,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     const affected = rows.filter((row) => materialReferenceSlugs(row.definition).has(materialSlug));
 
     for (const row of affected) {
-      await this.enqueueSync(ctx, row.productId);
+      await this.enqueueSync(ctx, row.productId, "automatic");
     }
 
     return affected.length;
@@ -416,6 +423,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       return;
     }
 
+    if (event.type === "updated" && !updateInputCarriesName(event.input)) {
+      return;
+    }
+
     try {
       if (event.type === "deleted") {
         await this.connection.getRepository(event.ctx, ProductDefinition).delete({
@@ -429,7 +440,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         .findOneBy({ nativeProductId });
 
       if (row !== null) {
-        await this.enqueueSync(event.ctx, row.productId);
+        await this.enqueueSync(event.ctx, row.productId, "automatic");
       }
     } catch (error: unknown) {
       Logger.error(
@@ -440,13 +451,17 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   }
 
   /** Queues a sync after the definition write committed. */
-  private async enqueueSync(ctx: RequestContext, productId: string): Promise<void> {
+  private async enqueueSync(
+    ctx: RequestContext,
+    productId: string,
+    origin: SyncJobData["origin"]
+  ): Promise<void> {
     if (this.syncQueue === null) {
       throw new Error("A termékszinkronizáló sor még nem áll rendelkezésre.");
     }
 
     try {
-      await this.syncQueue.add({ productId });
+      await this.syncQueue.add({ productId, origin });
     } catch (error: unknown) {
       await this.connection
         .getRepository(ctx, ProductDefinition)
@@ -457,7 +472,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   }
 
   /** The worker-side sync of a definition's current stored state. */
-  private async processSyncJob(productId: string): Promise<void> {
+  private async processSyncJob({ productId, origin }: SyncJobData): Promise<void> {
     const ctx = await this.jobContext();
     const repo = this.connection.getRepository(ctx, ProductDefinition);
     const row = await repo.findOneBy({ productId });
@@ -468,6 +483,39 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     }
 
     try {
+      if (origin === "automatic" && row.nativeProductId !== null) {
+        const decision = await this.automaticDecision(ctx, row, row.nativeProductId);
+
+        if (decision === "drift") {
+          await repo.update(
+            { productId },
+            {
+              syncState: "failed",
+              syncError:
+                `A(z) "${productId}" termék natív adatai (opciók, változatok, árak) a ` +
+                "szinkronizáláson kívül módosultak, ezért az automatikus szinkronizálás nem írta felül őket. " +
+                "A felülírásukhoz mentsd újra a terméket a konfigurátorban, és hagyd jóvá a szinkronizálást.",
+            }
+          );
+          return;
+        }
+
+        if (decision === "skip") {
+          await repo.update(
+            { productId },
+            {
+              syncedDefinitionHash: productRevision(row.definition),
+              syncedNativeStateHash: nativeStateHash(
+                await this.currentNativeState(ctx, row.nativeProductId)
+              ),
+              syncState: "synced",
+              syncError: null,
+            }
+          );
+          return;
+        }
+      }
+
       await this.connection.withTransaction(ctx, async (txCtx) => {
         let nativeProductId = row.nativeProductId;
 
@@ -509,6 +557,27 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
       throw error;
     }
+  }
+
+  private async automaticDecision(
+    ctx: RequestContext,
+    row: ProductDefinition,
+    nativeProductId: number
+  ): Promise<AutomaticSyncDecision> {
+    const materialData = await this.materialData(ctx);
+    const names = await this.nativeNames(ctx, [row]);
+    const planned = plannedNativeState(
+      row.definition,
+      materialData,
+      names.get(nativeProductId) ?? { hu: "" }
+    );
+    const current = await this.currentNativeState(ctx, nativeProductId);
+
+    return automaticSyncDecision({
+      planned: nativeStateHash(planned),
+      current: nativeStateHash(current),
+      synced: row.syncedNativeStateHash,
+    });
   }
 
   /** Job handlers run outside any request; the sync needs the default channel. */
