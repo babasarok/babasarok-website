@@ -829,7 +829,7 @@ async function upsertSetPromotion(): Promise<string> {
 
     const result = await adminRequest(
       JSON.stringify({
-        query: `mutation Update($input: UpdatePromotionInput!) { updatePromotion(input: $input) { id } }`,
+        query: `mutation Update($input: UpdatePromotionInput!) { updatePromotion(input: $input) { ... on Promotion { id } } }`,
         variables: {
           input: {
             id: existing.id,
@@ -852,7 +852,7 @@ async function upsertSetPromotion(): Promise<string> {
 
   const result = await adminRequest(
     JSON.stringify({
-      query: `mutation Create($input: CreatePromotionInput!) { createPromotion(input: $input) { id } }`,
+      query: `mutation Create($input: CreatePromotionInput!) { createPromotion(input: $input) { ... on Promotion { id } } }`,
       variables: {
         input: {
           enabled: true,
