@@ -20,7 +20,7 @@
     "converge-facets": "node --env-file-if-exists=.env scripts/converge-facets.ts",
     "e2e:server": "node --env-file=e2e.env scripts/e2e-server.ts",
     "check": "tsc -b",
-    "check:dashboard": "node scripts/check-dashboard-types.ts",
+    "check:dashboard": "pnpm -C ../packages/product-definition run build && node scripts/check-dashboard-types.ts",
     "test": "vitest run"
   },
   "dependencies": {
