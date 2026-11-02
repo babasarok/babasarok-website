@@ -60,11 +60,17 @@ export const quoteOrderSchema = gql`
 
   union SubmitQuoteOrderResult = SubmitQuoteOrderSuccess | SubmitQuoteOrderError
 
+  input QuoteOrderDetailInput {
+    label: String!
+    value: String!
+    depth: Int!
+  }
   input QuoteOrderProductInput {
     slug: String!
     title: String!
     count: Int!
-    configText: String!
+    configText: String
+    details: [QuoteOrderDetailInput!]
     unitPrice: Int!
     lineTotal: Int!
   }

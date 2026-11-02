@@ -56,7 +56,12 @@ Architecture: [ADR 0012](adr/0012-site-reads-vendure-at-request-time.md)
 (catalog pages render on demand in the Worker, islands ship from `dist`,
 shared pricing package, basket is the Vendure active order). Principle 2
 ends here: epic 3 changes `src/`. Tina product collections stay until epic 4.
-Slices are PRs against `feat/vendure-materials`:
+Merge strategy (owner decision): backend and other invisible changes are PRs
+against `feat/vendure-materials` (PR #76); customer-facing site changes are
+PRs against `feat/site-cutover`, which branches from it. Order: merge #76 to
+`main` → one-off prod migration of all products with full-size assets →
+merge `feat/site-cutover` (which also removes the preview importers) →
+cleanups as follow-ups. A slice with both kinds splits into two PRs.
 
 - ✅ **S1 Shop-API catalog surface + site data layer** — the shop API exposes
   what the site renders (product definitions, materials and colors, thread
@@ -94,6 +99,13 @@ Slices are PRs against `feat/vendure-materials`:
   (`converge-facets`, `import-facets`, products), switch, verify
 
 ## Post-cutover follow-ups
+
+- **Edge-cache verification** — on the deployed site, request a catalog page
+  (`/product`), a material page and an asset preset URL twice: the second
+  response shows `CF-Cache-Status: HIT`; after 60 s a request is served stale
+  (`UPDATING`/`STALE`) and refreshed; after 360 s with the backend stopped the
+  page shows the error page. Record whether asset URLs are edge-cached at all
+  (they are served by the VPS); if not, decide on a cache rule for `/assets`.
 
 - **Popularity from real past orders** — derive `popularityRank` from actual
   order history instead of the curated Tina ordering (owner: nice to have, not

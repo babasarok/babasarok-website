@@ -12,6 +12,8 @@ import { AssetServerPlugin } from "@vendure/asset-server-plugin";
 import { DashboardPlugin } from "@vendure/dashboard/plugin";
 import { EmailPlugin, FileBasedTemplateLoader } from "@vendure/email-plugin";
 import type { EmailPluginDevModeOptions, EmailPluginOptions } from "@vendure/email-plugin";
+import { ASSET_PRESETS, ASSET_QUALITY } from "./asset-presets";
+import { PresetOrOriginalStrategy } from "./preset-or-original-strategy";
 import { env } from "./env";
 import { z } from "zod";
 import { HandlebarsHtmlGenerator } from "./plugins/email/handlebars-html-generator";
@@ -180,7 +182,16 @@ export const config: VendureConfig = {
     ChannelSetupPlugin,
     // Owns the material/product imagery (ADR 0009): uploads and previews are
     // stored on local disk (a docker volume in deploys) and served at /assets.
-    AssetServerPlugin.init({ route: "assets", assetUploadDir: "assets" }),
+    AssetServerPlugin.init({
+      route: "assets",
+      assetUploadDir: "assets",
+      presets: [...ASSET_PRESETS],
+      imageTransformStrategy: new PresetOrOriginalStrategy({
+        defaultPreset: "card-lg",
+        permittedQuality: [ASSET_QUALITY],
+        permittedFormats: ["webp"],
+      }),
+    }),
     DefaultJobQueuePlugin.init({}),
     // Ships in core; keeps the Admin UI's search views functional. Search
     // quality (boosting, facets) is a later milestone.
@@ -213,6 +224,7 @@ export const config: VendureConfig = {
     OrderLine: [
       { name: "title", type: "string" },
       { name: "configText", type: "text" },
+      { name: "detailsJson", type: "text", nullable: true },
       { name: "quotedUnitPrice", type: "int" },
       { name: "quotedLineTotal", type: "int" },
       {

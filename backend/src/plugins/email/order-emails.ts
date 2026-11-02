@@ -6,6 +6,8 @@ import {
   type EventWithAsyncData,
 } from "@vendure/email-plugin";
 import { env } from "../../env";
+import { parseProductDetails } from "../quote-order/quote-order.input";
+import { plainDeliveryName } from "./delivery-name";
 
 // "Order placed" for a quote shop: the submission transitions AddingItems ->
 // ArrangingPayment and there is no payment step.
@@ -43,12 +45,19 @@ function onOrderPlaced(
       // their own host provisioned at first deploy), so one env var serves
       // every stack correctly.
       adminOrderUrl: `${env.adminUrl.replace(/\/$/, "")}/orders/${event.order.id}`,
+      deliveryMethodName: plainDeliveryName(event.order.customFields.deliveryMethodName ?? ""),
       // 1-based numbering keeps the per-product blocks aligned with the
       // "1. termék: …" labels inside the client-generated set-discount summary.
       products: event.order.lines.map((line, index) => ({
         number: index + 1,
         // eslint-disable-next-line @typescript-eslint/no-misused-spread -- customFields is a plain column bag at runtime; its class typing is a Vendure artifact
         ...line.customFields,
+        quantity: line.quantity,
+        details: parseProductDetails(line.customFields.detailsJson)?.map((d) => ({
+          ...d,
+          paddingLeft: 14 + d.depth * 14,
+          indent: d.depth * 14,
+        })),
       })),
     }));
 }

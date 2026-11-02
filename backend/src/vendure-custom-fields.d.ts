@@ -7,6 +7,10 @@ declare module "@vendure/core/dist/entity/custom-entity-fields" {
     shopOwnerEmail: string | null;
   }
 
+  interface CustomOrderFields {
+    deliveryMethodName: string | null;
+  }
+
   interface CustomProductFields {
     date: Date | null;
     icon: Asset | null;
@@ -39,6 +43,7 @@ declare module "@vendure/core/dist/entity/custom-entity-fields" {
     quotedLineTotal?: number | null;
     lengthCm?: number | null;
     selections?: string | null;
+    detailsJson?: string | null;
   }
 }
 
