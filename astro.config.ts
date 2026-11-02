@@ -35,6 +35,9 @@ export default defineConfig({
   cache: { provider: cacheCloudflare() },
   routeRules: {
     "/product": { maxAge: 60, swr: 300 },
+    "/material": { maxAge: 60, swr: 300 },
+    "/material/[slug]": { maxAge: 60, swr: 300 },
+    "/_server-islands/[name]": { maxAge: 60, swr: 300 },
   },
   prefetch: true,
   integrations: [

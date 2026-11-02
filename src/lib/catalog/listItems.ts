@@ -27,17 +27,19 @@ export function cardImage(source: string, assetBase: string): SlimImage {
   };
 }
 
+export function listedByPopularity(products: readonly CatalogProduct[]): CatalogProduct[] {
+  return byPopularity(
+    products.filter((product) => product.definition?.hiddenInProductList !== true)
+  );
+}
+
 export function toProductListData(
   products: readonly CatalogProduct[],
   groups: readonly CatalogProductGroup[],
   assetBase: string
 ): ProductListData {
   const sets = groups.filter((group) => group.kind === "set");
-  const visible = byPopularity(
-    products.filter((product) => product.definition?.hiddenInProductList !== true)
-  );
-
-  const items = visible.map((product): ProductListItem => {
+  const items = listedByPopularity(products).map((product): ProductListItem => {
     const id = product.definition?.id ?? product.slug;
     const typeCode = product.type?.code;
 

@@ -169,6 +169,14 @@ export default defineConfig([
     },
   },
   {
+    files: ["src/pages/**/*.astro"],
+    rules: {
+      // Astro frontmatter is a function body: `return` is how a page hands
+      // back a Response (404, redirect).
+      "unicorn/prefer-module": "off",
+    },
+  },
+  {
     files: ["backend/scripts/**/*.ts"],
     rules: {
       // Process entry points: exiting with a status code is the contract.
