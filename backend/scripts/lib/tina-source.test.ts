@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import {
   definitionFromTinaProduct,
   displayFromTinaProduct,
+  popularityRanks,
   groupDefinitionFromTinaProductGroup,
   slugFromPath,
   type TinaProduct,
@@ -216,21 +217,26 @@ describe("definitionFromTinaProduct", () => {
 
 describe("displayFromTinaProduct", () => {
   it("maps the display frontmatter onto the custom-field payload", () => {
-    const display = displayFromTinaProduct({
-      ...babafeszek,
-      date: "2025-04-20T12:07:16.000Z",
-      thumbnail: "/src/assets/Noémi-41.webp",
-      images: [
-        { image: "/src/assets/IMG_6490.jpeg", description: " Hamvas rózsa " },
-        { image: "/src/assets/IMG_6601.jpeg", description: null },
-        null,
-      ],
-      categories: " A nyugodt alvás titka ",
-      shortDescription: "Univerzális takaró és párna minden évszakra ",
-      icon: null,
-    });
+    const display = displayFromTinaProduct(
+      {
+        ...babafeszek,
+        date: "2025-04-20T12:07:16.000Z",
+        thumbnail: "/src/assets/Noémi-41.webp",
+        images: [
+          { image: "/src/assets/IMG_6490.jpeg", description: " Hamvas rózsa " },
+          { image: "/src/assets/IMG_6601.jpeg", description: null },
+          null,
+        ],
+        categories: " A nyugodt alvás titka ",
+        shortDescription: "Univerzális takaró és párna minden évszakra ",
+        icon: null,
+      },
+      { slug: "babafeszek", popularityRank: 2 }
+    );
 
     expect(display).toEqual({
+      slug: "babafeszek",
+      popularityRank: 2,
       shortDescription: "Univerzális takaró és párna minden évszakra",
       tagline: "A nyugodt alvás titka",
       date: "2025-04-20T12:07:16.000Z",
@@ -244,7 +250,11 @@ describe("displayFromTinaProduct", () => {
   });
 
   it("nulls absent display content", () => {
-    expect(displayFromTinaProduct(babafeszek)).toEqual({
+    expect(
+      displayFromTinaProduct(babafeszek, { slug: "babafeszek", popularityRank: null })
+    ).toEqual({
+      slug: "babafeszek",
+      popularityRank: null,
       shortDescription: null,
       tagline: null,
       date: null,
@@ -252,6 +262,24 @@ describe("displayFromTinaProduct", () => {
       gallery: [],
       iconPath: null,
     });
+  });
+});
+
+describe("popularityRanks", () => {
+  it("ranks product file slugs by their position, 1-based", () => {
+    const ranks = popularityRanks({
+      product_popular_ordering: [
+        { product: "src/content/product/babafeszek.md" },
+        { product: "src/content/product/pelenka.md" },
+      ],
+    });
+
+    expect(ranks.get("babafeszek")).toBe(1);
+    expect(ranks.get("pelenka")).toBe(2);
+  });
+
+  it("ranks nothing when the section has no ordering", () => {
+    expect(popularityRanks({}).size).toBe(0);
   });
 });
 
