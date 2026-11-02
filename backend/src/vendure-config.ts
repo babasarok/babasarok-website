@@ -1,6 +1,7 @@
 import path from "node:path";
 import type { OrderPlacedStrategy, RequestContext, VendureConfig } from "@vendure/core";
 import {
+  Asset,
   configureDefaultOrderProcess,
   DefaultJobQueuePlugin,
   DefaultMoneyStrategy,
@@ -213,6 +214,60 @@ export const config: VendureConfig = {
             value:
               "Ide megy az értesítés minden új rendelésről. Üresen hagyva a kiszolgálón beállított cím marad érvényben.",
           },
+        ],
+        nullable: true,
+      },
+    ],
+    Product: [
+      {
+        name: "shortDescription",
+        type: "localeText",
+        label: [{ languageCode: LanguageCode.hu, value: "Rövid leírás" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value: "Rövid szöveg a terméklistához (keresés és kártyaszöveg).",
+          },
+        ],
+        nullable: true,
+      },
+      {
+        name: "tagline",
+        type: "localeString",
+        label: [{ languageCode: LanguageCode.hu, value: "Alcím" }],
+        description: [
+          { languageCode: LanguageCode.hu, value: "A lista és a részletező oldal alcíme." },
+        ],
+        nullable: true,
+      },
+      {
+        name: "date",
+        type: "datetime",
+        label: [{ languageCode: LanguageCode.hu, value: "Dátum" }],
+        description: [
+          { languageCode: LanguageCode.hu, value: "A „legújabb elöl” lista rendezéséhez." },
+        ],
+        nullable: true,
+      },
+      {
+        name: "icon",
+        type: "relation",
+        entity: Asset,
+        onDelete: "SET NULL",
+        label: [{ languageCode: LanguageCode.hu, value: "Termék ikon" }],
+        description: [
+          { languageCode: LanguageCode.hu, value: "Opcionális ikon a rendelési felülethez." },
+        ],
+        nullable: true,
+      },
+    ],
+    Asset: [
+      {
+        name: "galleryDescription",
+        type: "localeText",
+        label: [{ languageCode: LanguageCode.hu, value: "Képleírás" }],
+        description: [
+          { languageCode: LanguageCode.hu, value: "A termék galériájában a kép alatti leírás." },
         ],
         nullable: true,
       },

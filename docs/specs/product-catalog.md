@@ -12,15 +12,15 @@ filterable product list with a detail page per product.
 > `choice` (presentation `select`/`radio`/`color`), `toggle`, `material` and
 > `embroidery`, and `banned_combinations` ↔ `forbiddenMaterialCombinations`.
 > Editorial content maps to the native product at cutover: `title` → `name`,
-> body → `description`, `thumbnail` → featured asset, `images` → assets.
-> Four display fields have no home yet (native Vendure has no slot and the
-> canonical model does not carry them): `shortDescription` (list search and
-> card text), `categories` (the "Alcím" tagline), `date` ("newest first"
-> sorting), and `icon` (order-item/checkout icon) — plus per-image gallery
-> descriptions, since Vendure `Asset` has only a `name`. Tracked as the
-> display-field gap in ADR 0010; must be resolved (custom fields on
-> `Product` or canonical-model entries) before the Vendure-complete gate.
-> "Configurator" in this spec means the
+> body → `description`, `thumbnail` → featured asset, `images` → assets. The
+> remaining display fields are native Vendure custom fields (the display-field
+> gap of ADR 0010, resolved): `shortDescription`, `tagline` (the Tina
+> `categories` "Alcím"), `date` ("newest first" sorting) and `icon` (an Asset
+> relation) on `Product`, plus a `galleryDescription` custom field on `Asset`
+> for the per-image gallery text — all editable in the stock dashboard, and
+> the preview seed populates them from Tina content (thumbnails and gallery
+> images upload as real assets). They stay outside the canonical
+> configurator model. "Configurator" in this spec means the
 > buyer-facing order form; the admin-side editor is the dashboard's product
 > configurator editor.
 

@@ -6,6 +6,7 @@ import { productRevision } from "@babasarok/product-definition/node";
 import { describe, expect, it } from "vitest";
 import {
   definitionFromTinaProduct,
+  displayFromTinaProduct,
   groupDefinitionFromTinaProductGroup,
   slugFromPath,
   type TinaProduct,
@@ -212,6 +213,47 @@ describe("definitionFromTinaProduct", () => {
     }
 
     expect(productRevision(repriced.definition)).not.toBe(productRevision(first.definition));
+  });
+});
+
+describe("displayFromTinaProduct", () => {
+  it("maps the display frontmatter onto the custom-field payload", () => {
+    const display = displayFromTinaProduct({
+      ...babafeszek,
+      date: "2025-04-20T12:07:16.000Z",
+      thumbnail: "/src/assets/Noémi-41.webp",
+      images: [
+        { image: "/src/assets/IMG_6490.jpeg", description: " Hamvas rózsa " },
+        { image: "/src/assets/IMG_6601.jpeg", description: null },
+        null,
+      ],
+      categories: " A nyugodt alvás titka ",
+      shortDescription: "Univerzális takaró és párna minden évszakra ",
+      icon: null,
+    });
+
+    expect(display).toEqual({
+      shortDescription: "Univerzális takaró és párna minden évszakra",
+      tagline: "A nyugodt alvás titka",
+      date: "2025-04-20T12:07:16.000Z",
+      thumbnailPath: "/src/assets/Noémi-41.webp",
+      gallery: [
+        { imagePath: "/src/assets/IMG_6490.jpeg", description: "Hamvas rózsa" },
+        { imagePath: "/src/assets/IMG_6601.jpeg", description: null },
+      ],
+      iconPath: null,
+    });
+  });
+
+  it("nulls absent display content", () => {
+    expect(displayFromTinaProduct(babafeszek)).toEqual({
+      shortDescription: null,
+      tagline: null,
+      date: null,
+      thumbnailPath: null,
+      gallery: [],
+      iconPath: null,
+    });
   });
 });
 
