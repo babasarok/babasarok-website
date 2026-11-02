@@ -70,7 +70,7 @@ Slices are PRs against `feat/vendure-materials`:
 - ⬜ **S3 Product page from Vendure** (needs S1, S2) — on-demand product
   detail page, configurator fed by the canonical definition, Vendure asset
   images, edge caching
-- ⬜ **S4 Catalog list, materials, search, sitemap** (needs S1) — on-demand
+- ✅ **S4 Catalog list, materials, search, sitemap** (needs S1) — on-demand
   product list (ADR 0004 dataset per request) and material pages; catalog
   sitemap and search replacements for the prerender-only integrations
 - ⬜ **S5 Vendure basket and checkout** (needs S1, S2) — the basket is the
