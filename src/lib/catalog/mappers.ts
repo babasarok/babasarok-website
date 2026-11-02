@@ -24,7 +24,7 @@ export interface CatalogProduct {
   popularityRank: number | null;
   thumbnailUrl: string | null;
   type: { code: string; name: string } | null;
-  definition: ProductDefinition | null;
+  definition: ProductDefinition;
 }
 
 export type CatalogProductGroup = z.output<
@@ -44,7 +44,12 @@ export interface CatalogMaterial {
   colors: Array<{ id: string; label: string; hex: string | null; imageUrl: string | null }>;
 }
 
-export function toProduct(row: ProductRow): CatalogProduct {
+/** Null for products without a configurator definition (e.g. quote-order placeholders): not storefront products. */
+export function toProduct(row: ProductRow): CatalogProduct | null {
+  if (row.productDefinition === null) {
+    return null;
+  }
+
   const type = row.facetValues.find((value) => value.facet.code === PRODUCT_TYPE_FACET_CODE);
 
   return {
@@ -61,9 +66,15 @@ export function toProduct(row: ProductRow): CatalogProduct {
   };
 }
 
-export function toProductDetail(row: DetailRow): CatalogProductDetail {
+export function toProductDetail(row: DetailRow): CatalogProductDetail | null {
+  const product = toProduct(row);
+
+  if (product === null) {
+    return null;
+  }
+
   return {
-    ...toProduct(row),
+    ...product,
     gallery: row.assets.map((asset) => ({
       url: asset.source,
       description: asset.customFields?.galleryDescription ?? null,

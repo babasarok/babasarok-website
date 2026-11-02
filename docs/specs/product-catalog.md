@@ -65,8 +65,10 @@ with descriptions), a base price, and a `can_be_ordered` flag.
 The system SHALL provide a single product list page showing all non-hidden
 products (no pagination), each entry linking to the product detail page, with
 its tagline as the category line. A product is hidden when its canonical
-definition sets `hiddenInProductList`; a product without a definition or
-without a known type is listed and only drops out of type filters. The page is
+definition sets `hiddenInProductList`; a product without a known type is
+listed and only drops out of type filters. A product without a definition
+(e.g. a quote-order placeholder) is not a storefront product: it appears in no
+list, search, sitemap or home block, and its detail page is a 404. The page is
 rendered on demand and cached at the edge (60 s, 300 s stale-while-revalidate),
 and an unreachable backend shows the error page instead of partial data. With:
 

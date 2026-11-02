@@ -28,9 +28,7 @@ export function cardImage(source: string, assetBase: string): SlimImage {
 }
 
 export function listedByPopularity(products: readonly CatalogProduct[]): CatalogProduct[] {
-  return byPopularity(
-    products.filter((product) => product.definition?.hiddenInProductList !== true)
-  );
+  return byPopularity(products.filter((product) => !product.definition.hiddenInProductList));
 }
 
 export function toProductListData(
@@ -40,7 +38,7 @@ export function toProductListData(
 ): ProductListData {
   const sets = groups.filter((group) => group.kind === "set");
   const items = listedByPopularity(products).map((product): ProductListItem => {
-    const id = product.definition?.id ?? product.slug;
+    const { id } = product.definition;
     const typeCode = product.type?.code;
 
     return {

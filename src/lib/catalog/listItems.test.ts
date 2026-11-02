@@ -1,3 +1,4 @@
+import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
 import { toProductListData } from "./listItems";
 import { toProduct, type CatalogProduct } from "./mappers";
@@ -6,9 +7,18 @@ import products from "./__fixtures__/products.json";
 import { ProductGroupsResponseSchema, ProductsResponseSchema } from "./schemas";
 
 const BASE = "https://api.example/assets/";
+const fixtureProducts = ProductsResponseSchema.parse(products).products.items.flatMap(
+  (row) => toProduct(row) ?? []
+);
+const baseProduct = fixtureProducts.at(0);
 
 function product(overrides: Partial<CatalogProduct> & { slug: string }): CatalogProduct {
+  if (baseProduct === undefined) {
+    throw new Error("fixture has no products");
+  }
+
   return {
+    ...baseProduct,
     id: overrides.slug,
     name: overrides.slug,
     tagline: null,
@@ -17,20 +27,13 @@ function product(overrides: Partial<CatalogProduct> & { slug: string }): Catalog
     popularityRank: null,
     thumbnailUrl: null,
     type: null,
-    definition: null,
+    definition: ProductDefinitionSchema.parse({ ...baseProduct.definition, id: overrides.slug }),
     ...overrides,
   };
 }
 
 describe("toProductListData", () => {
-  it("keys items by definition id, falling back to the slug", () => {
-    const { items } = toProductListData([product({ slug: "native" })], [], BASE);
-
-    expect(items.map((item) => item.id)).toEqual(["native"]);
-  });
-
   it("computes set membership through definition ids and lists only sets as options", () => {
-    const fixtureProducts = ProductsResponseSchema.parse(products).products.items.map(toProduct);
     const groups = ProductGroupsResponseSchema.parse(productGroups).productGroups;
     const { items, sets } = toProductListData(fixtureProducts, groups, BASE);
 
@@ -43,12 +46,10 @@ describe("toProductListData", () => {
   });
 
   it("omits products the definition hides from the list", () => {
-    const hidden = ProductsResponseSchema.parse(products)
-      .products.items.map(toProduct)
-      .map((row) => ({
-        ...row,
-        definition: row.definition && { ...row.definition, hiddenInProductList: true },
-      }));
+    const hidden = fixtureProducts.map((row) => ({
+      ...row,
+      definition: { ...row.definition, hiddenInProductList: true },
+    }));
 
     expect(toProductListData(hidden, [], BASE).items).toEqual([]);
   });

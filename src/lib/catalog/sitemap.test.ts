@@ -5,7 +5,9 @@ import { toMaterial, toProduct } from "./mappers";
 import { MaterialsResponseSchema, ProductsResponseSchema } from "./schemas";
 import { buildCatalogSitemap } from "./sitemap";
 
-const catalogProducts = ProductsResponseSchema.parse(products).products.items.map(toProduct);
+const catalogProducts = ProductsResponseSchema.parse(products).products.items.flatMap(
+  (row) => toProduct(row) ?? []
+);
 const catalogMaterials = MaterialsResponseSchema.parse(materials).materials.map(toMaterial);
 
 describe("buildCatalogSitemap", () => {
