@@ -62,7 +62,7 @@ Slices are PRs against `feat/vendure-materials`:
   what the site renders (product definitions, materials and colors, thread
   colors, product groups, display fields, assets); the site gets a typed,
   zod-validated shop-API client used from Astro frontmatter
-- ⬜ **S2 Shared pricing package** — one pure workspace package used by the
+- 🟡 **S2 Shared pricing package** (package and backend done; the site is wired in S3) — one pure workspace package used by the
   backend pricing strategy and the configurator; replaces the backend's own
   copy and the site's `src/lib/pricing` configurator pricing (ADR 0002)
 - ⬜ **S3 Product page from Vendure** (needs S1, S2) — on-demand product

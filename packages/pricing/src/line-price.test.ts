@@ -240,6 +240,26 @@ describe("computeLineUnitPrice", () => {
     expect(price).toBe(Math.round((14_000 + 400 + 2500) * 3.8));
   });
 
+  it("rounds a length product's unit price once, to whole forints", () => {
+    const perMetre995 = ProductDefinitionSchema.parse({
+      ...lengthProduct,
+      basePrice: 995,
+      fields: lengthProduct.fields.filter((field) => field.id === "sizes"),
+    });
+
+    expect(
+      computeLineUnitPrice({
+        productName: "Termék",
+        definition: perMetre995,
+        variantListPrice: 0,
+        optionCodes: new Map([["sizes", "380"]]),
+        selections: {},
+        lengthCm: 335,
+        languageCode: "hu",
+      })
+    ).toBe(3333);
+  });
+
   it("throws when a length-priced line has no length", () => {
     expect(() =>
       computeLineUnitPrice({
