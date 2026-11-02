@@ -29,6 +29,7 @@ import {
 } from "./material.entity";
 import { MaterialEvent } from "./material.event";
 import { MaterialFacetSync } from "./material-facet-sync";
+import { lockMaterials } from "./material-lock";
 import { validateMaterialInput, type MaterialInputData } from "./material-definition";
 
 const LanguageCodeSchema = z.enum(LanguageCode);
@@ -205,6 +206,8 @@ export class MaterialService {
     }
 
     await this.connection.withTransaction(ctx, async (txCtx) => {
+      await lockMaterials(this.connection, txCtx, [material.slug], "exclusive");
+
       const definitions = await this.connection.getRepository(txCtx, ProductDefinition).find();
       const names = await nativeProductNames(
         this.connection,
