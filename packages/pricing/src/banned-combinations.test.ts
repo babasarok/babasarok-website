@@ -25,7 +25,10 @@ describe("forbiddenMaterialFieldIds", () => {
       three: { kind: "material", materialId: "c", colors: [] },
     } as const;
 
-    expect([...forbiddenMaterialFieldIds([["a", "b"]], selections)].sort()).toEqual(["one", "two"]);
+    expect([...forbiddenMaterialFieldIds([["a", "b"]], selections)].toSorted()).toEqual([
+      "one",
+      "two",
+    ]);
     expect(forbiddenMaterialFieldIds([["a", "c", "c"]], selections).size).toBe(0);
   });
 });

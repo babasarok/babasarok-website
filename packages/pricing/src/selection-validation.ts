@@ -246,7 +246,7 @@ export function formatSelectionProblem(
  * cannot accept, or undefined when every record fits its field.
  */
 export function selectionsRejection(input: SelectionValidationInput): string | undefined {
-  const [first] = validateSelections(input);
+  const first = validateSelections(input).at(0);
 
   return first === undefined ? undefined : formatSelectionProblem(first, input);
 }
