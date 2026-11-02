@@ -2,6 +2,7 @@ import { Injectable, OnApplicationBootstrap } from "@nestjs/common";
 import {
   ChannelService,
   DefaultSlugStrategy,
+  FacetValue,
   I18nError,
   LanguageCode,
   LogLevel,
@@ -19,16 +20,21 @@ import {
 import type { JobQueue } from "@vendure/core";
 import type { UpdateProductVariantInput } from "@vendure/common/lib/generated-types";
 import { JobQueueService } from "@vendure/core";
-import { IsNull } from "typeorm";
+import { In, IsNull } from "typeorm";
 import type { ProductDefinition as CanonicalProductDefinition } from "@babasarok/product-definition";
 // The node-only entry: productRevision needs node:crypto, which must not reach
 // the dashboard's browser bundle through the main barrel.
 import { productRevision } from "@babasarok/product-definition/node";
 import { Material } from "../material/material.entity";
 import { sortDefinitions } from "./definition-sort";
+import {
+  COLOR_FACET_CODE,
+  MATERIAL_FACET_CODE,
+  plannedVariantFacetCodes,
+  type MaterialFacetData,
+} from "./facet-plan";
 import { validateProductDefinition } from "./product-definition";
 import { ProductDefinition } from "./product.entity";
-import type { MaterialFacetData } from "./facet-plan";
 import { nativeStateHash, type NativeProductState } from "./sync-state";
 import { plannedNativeState, planVariantCombinations, type VariantPlan } from "./variant-plan";
 
@@ -210,7 +216,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     row: ProductDefinition,
     options: { skip?: number | null; take?: number | null } | null
   ): Promise<{
-    items: Array<{ id: string; name: string; code: string; price: number }>;
+    items: Array<{ id: string; name: string; code: string; price: number; facets: string }>;
     totalItems: number;
   }> {
     const skip = Math.max(options?.skip ?? 0, 0);
@@ -224,7 +230,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       .getRepository(ctx, ProductVariant)
       .findAndCount({
         where: { product: { id: row.nativeProductId }, deletedAt: IsNull() },
-        relations: { translations: true, productVariantPrices: true },
+        relations: { translations: true, productVariantPrices: true, facetValues: true },
         order: { id: "ASC" },
         skip,
         take,
@@ -239,6 +245,9 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         price:
           variant.productVariantPrices.find((price) => price.channelId === ctx.channelId)?.price ??
           0,
+        facets: [
+          ...new Set(variant.facetValues.map((value) => huName(value.translations) ?? value.code)),
+        ].join(", "),
       })),
     };
   }
@@ -398,10 +407,20 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     nativeProductId: number,
     definition: CanonicalProductDefinition
   ): Promise<void> {
-    const plan = planVariantCombinations(definition, await this.materialData(ctx));
+    const materialData = await this.materialData(ctx);
+    const plan = planVariantCombinations(definition, materialData);
+    const facetCodesBySku = plannedVariantFacetCodes(plan, materialData);
     const optionIdsByGroupCode = await this.syncOptionGroups(ctx, nativeProductId, plan);
+    const facetValueIdsByCode = await this.facetValueIdsByCode(ctx, facetCodesBySku);
 
-    await this.syncVariants(ctx, nativeProductId, plan, optionIdsByGroupCode);
+    await this.syncVariants(
+      ctx,
+      nativeProductId,
+      plan,
+      optionIdsByGroupCode,
+      facetCodesBySku,
+      facetValueIdsByCode
+    );
 
     // The native product's own name/slug are sync-owned too: restoring them
     // here is what makes a forced re-sync converge with the stored hash.
@@ -555,7 +574,9 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     ctx: RequestContext,
     nativeProductId: number,
     plan: VariantPlan,
-    optionIdsByGroupCode: ReadonlyMap<string, ReadonlyMap<string, number>>
+    optionIdsByGroupCode: ReadonlyMap<string, ReadonlyMap<string, number>>,
+    facetCodesBySku: ReadonlyMap<string, string[]>,
+    facetValueIdsByCode: ReadonlyMap<string, number>
   ): Promise<void> {
     const missingOption = plan.variants
       .flatMap((variant) =>
@@ -585,9 +606,30 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         return optionId;
       });
 
+    const facetValueIdsFor = (sku: string): number[] => {
+      const ids: number[] = [];
+
+      for (const code of facetCodesBySku.get(sku) ?? []) {
+        const id = facetValueIdsByCode.get(code);
+
+        if (id === undefined) {
+          throw new Error(`Nem sikerült a facet érték feloldása: ${code}`);
+        }
+
+        ids.push(id);
+      }
+
+      return ids;
+    };
+
     const existing = await this.connection.getRepository(ctx, ProductVariant).find({
       where: { product: { id: nativeProductId }, deletedAt: IsNull() },
-      relations: { options: true, translations: true, productVariantPrices: true },
+      relations: {
+        options: true,
+        translations: true,
+        productVariantPrices: true,
+        facetValues: true,
+      },
     });
     const plannedBySku = new Map(plan.variants.map((variant) => [variant.sku, variant]));
     const existingBySku = new Map(existing.map((variant) => [variant.sku, variant]));
@@ -604,6 +646,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
           sku: variant.sku,
           price: variant.price,
           optionIds: optionIdsFor(variant),
+          facetValueIds: facetValueIdsFor(variant.sku),
           translations: [{ languageCode: LanguageCode.hu, name: variant.name }],
         }))
       );
@@ -623,10 +666,15 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       const optionsChanged =
         actualOptionIds.size !== plannedOptionIds.length ||
         plannedOptionIds.some((optionId) => !actualOptionIds.has(optionId));
+      const plannedFacetIds = facetValueIdsFor(variant.sku);
+      const actualFacetIds = new Set(variant.facetValues.map((value) => Number(value.id)));
+      const facetsChanged =
+        actualFacetIds.size !== plannedFacetIds.length ||
+        plannedFacetIds.some((facetValueId) => !actualFacetIds.has(facetValueId));
       const priceChanged = channelPrice(variant) !== planned.price;
       const nameChanged = huName(variant.translations) !== planned.name;
 
-      if (!optionsChanged && !priceChanged && !nameChanged) {
+      if (!optionsChanged && !priceChanged && !nameChanged && !facetsChanged) {
         continue;
       }
 
@@ -644,6 +692,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         update.optionIds = plannedOptionIds;
       }
 
+      if (facetsChanged) {
+        update.facetValueIds = plannedFacetIds;
+      }
+
       updates.push(update);
     }
 
@@ -659,6 +711,53 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         stale.map((variant) => variant.id)
       );
     }
+  }
+
+  /**
+   * Resolves the native facet value ids the sync needs, up front: a missing
+   * or duplicated code is a broken facet state, not something to paper over.
+   */
+  private async facetValueIdsByCode(
+    ctx: RequestContext,
+    facetCodesBySku: ReadonlyMap<string, string[]>
+  ): Promise<Map<string, number>> {
+    const codes = [...new Set([...facetCodesBySku.values()].flat())];
+
+    if (codes.length === 0) {
+      return new Map();
+    }
+
+    const values = await this.connection.getRepository(ctx, FacetValue).find({
+      where: { code: In(codes) },
+      relations: { facet: true },
+    });
+    const syncFacetCodes = new Set([MATERIAL_FACET_CODE, COLOR_FACET_CODE]);
+    const byCode = new Map<string, FacetValue>();
+
+    for (const value of values) {
+      if (byCode.has(value.code)) {
+        throw new Error(`Több facet érték ugyanazzal a kóddal: ${value.code}`);
+      }
+
+      if (!syncFacetCodes.has(value.facet.code)) {
+        throw new Error(
+          `A(z) "${value.code}" facet érték nem a szinkronizált facetekhez tartozik: ${value.facet.code}`
+        );
+      }
+
+      byCode.set(value.code, value);
+    }
+
+    const missing = codes.filter((code) => !byCode.has(code));
+
+    if (missing.length > 0) {
+      throw new Error(
+        `Hiányzó facet érték: ${missing.join(", ")}. Futtasd a facet-egyeztetést ` +
+          "(convergeMaterialFacets vagy pnpm -C backend run converge-facets)."
+      );
+    }
+
+    return new Map([...byCode].map(([code, value]) => [code, Number(value.id)]));
   }
 
   /** The native state as it exists right now, for drift hashing. */
