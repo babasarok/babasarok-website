@@ -316,8 +316,11 @@ export function ConfiguratorEditor({
 
   // Guards only the create route: the embedded block shares the stock
   // product page's navigation, where blocking is too broad a blast radius.
+  const blocksLeaving = (): boolean => mode === "create" && !pending && dirty;
+
   useBlocker({
-    shouldBlockFn: () => mode === "create" && !pending && dirty,
+    shouldBlockFn: blocksLeaving,
+    enableBeforeUnload: blocksLeaving,
   });
 
   useEffect(() => {
