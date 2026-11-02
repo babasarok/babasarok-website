@@ -20,11 +20,10 @@ import { orderConfirmationHandler, orderNotificationHandler } from "./plugins/em
 import { MaterialPlugin } from "./plugins/material/material.plugin";
 import { PricingPlugin } from "./plugins/pricing/pricing.plugin";
 import { ServerPricingStrategy } from "./plugins/pricing/pricing-strategy";
-import { ProductGroupPlugin } from "./plugins/product-group/product-group.plugin";
 import {
   productSetBasketCondition,
   productSetDiscountAction,
-} from "./plugins/product-group/promotion";
+} from "./plugins/product-set/promotion";
 import { ProductPlugin } from "./plugins/product/product.plugin";
 import { QuoteOrderPlugin } from "./plugins/quote-order/quote-order.plugin";
 import { ChannelSetupPlugin } from "./plugins/setup/channel-setup.plugin";
@@ -170,7 +169,6 @@ export const config: VendureConfig = {
     MaterialPlugin,
     ProductPlugin,
     PricingPlugin,
-    ProductGroupPlugin,
     ChannelSetupPlugin,
     // Owns the material/product imagery (ADR 0009): uploads and previews are
     // stored on local disk (a docker volume in deploys) and served at /assets.
@@ -287,6 +285,26 @@ export const config: VendureConfig = {
           { languageCode: LanguageCode.hu, value: "Opcionális ikon a rendelési felülethez." },
         ],
         nullable: true,
+      },
+    ],
+    Collection: [
+      {
+        name: "setDiscount",
+        type: "int",
+        label: [{ languageCode: LanguageCode.hu, value: "Szett-kedvezmény (Ft)" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value:
+              "Egy képződött szett-példány által levont fix forint. Csak a Szettek alatti gyűjteményeken használatos; üresen a gyűjtemény nem szett.",
+          },
+        ],
+        nullable: true,
+        validate: (value) => {
+          if (!Number.isInteger(value) || value <= 0) {
+            return "A szett-kedvezmény pozitív egész forint lehet.";
+          }
+        },
       },
     ],
     Asset: [
