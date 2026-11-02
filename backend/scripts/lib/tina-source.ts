@@ -29,6 +29,11 @@ const TinaMaterialEntrySchema = z.object({
   price: z.number().nullish(),
 });
 
+const TinaProductImageSchema = z.object({
+  image: z.string(),
+  description: z.string().nullish(),
+});
+
 const TinaFieldSchema = z.object({
   name: z.string(),
   label: z.string(),
@@ -58,6 +63,12 @@ export const TinaProductSchema = z.object({
   hidden_in_product_list: z.boolean().nullish(),
   type: z.string(),
   price: z.number().nullish(),
+  date: z.string().nullish(),
+  thumbnail: z.string().nullish(),
+  images: z.array(TinaProductImageSchema.nullable()).nullish(),
+  categories: z.string().nullish(),
+  shortDescription: z.string().nullish(),
+  icon: z.string().nullish(),
   length_based_pricing: z.object({ sourceField: z.string().nullish() }).nullish(),
   materials: z
     .object({
@@ -97,6 +108,42 @@ export function slugFromPath(contentPath: string): string {
 function trimmed(value: string | null | undefined): string | undefined {
   const result = value?.trim();
   return result === "" || result === undefined ? undefined : result;
+}
+
+function trimmedOrNull(value: string | null | undefined): string | null {
+  const result = value?.trim();
+  return result === undefined || result === "" ? null : result;
+}
+
+/**
+ * The editorial display fields of the display-field gap (ADR 0010), mapped
+ * onto the native Product/Asset custom fields by the preview seed. Kept
+ * outside the canonical definition: the configurator model carries none of
+ * them.
+ */
+export interface TinaDisplayContent {
+  shortDescription: string | null;
+  tagline: string | null;
+  date: string | null;
+  thumbnailPath: string | null;
+  gallery: Array<{ imagePath: string; description: string | null }>;
+  iconPath: string | null;
+}
+
+/** Maps the Tina display frontmatter onto the custom-field payload the seed sends. */
+export function displayFromTinaProduct(source: TinaProduct): TinaDisplayContent {
+  return {
+    shortDescription: trimmedOrNull(source.shortDescription),
+    tagline: trimmedOrNull(source.categories),
+    date: trimmedOrNull(source.date),
+    thumbnailPath: trimmedOrNull(source.thumbnail),
+    gallery: (source.images ?? []).flatMap((entry) =>
+      entry === null
+        ? []
+        : [{ imagePath: entry.image.trim(), description: trimmedOrNull(entry.description) }]
+    ),
+    iconPath: trimmedOrNull(source.icon),
+  };
 }
 
 function visibility(field: TinaProductField): FieldVisibilityInput {
