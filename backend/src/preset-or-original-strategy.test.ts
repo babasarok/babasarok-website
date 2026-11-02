@@ -17,7 +17,7 @@ const base = {
   fpy: undefined,
   backgroundColor: undefined,
 } as const;
-const run = (preset: string | undefined) =>
+const run = (preset?: string): ReturnType<typeof strategy.getImageTransformParameters> =>
   strategy.getImageTransformParameters({
     req: {} as never,
     availablePresets: [...ASSET_PRESETS],
@@ -26,7 +26,7 @@ const run = (preset: string | undefined) =>
 
 describe("PresetOrOriginalStrategy", () => {
   it("serves the original when no preset is given", async () => {
-    expect(await run(undefined)).toMatchObject({
+    expect(await run()).toMatchObject({
       width: undefined,
       height: undefined,
       format: undefined,

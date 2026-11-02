@@ -28,7 +28,12 @@ import {
 } from "./schemas";
 
 export { byPopularity } from "./mappers";
-export type { CatalogMaterial, CatalogProduct, CatalogProductDetail } from "./mappers";
+export type {
+  CatalogMaterial,
+  CatalogProduct,
+  CatalogProductDetail,
+  CatalogProductGroup,
+} from "./mappers";
 
 const PAGE_SIZE = 100;
 

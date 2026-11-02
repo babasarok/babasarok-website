@@ -27,6 +27,10 @@ export interface CatalogProduct {
   definition: ProductDefinition | null;
 }
 
+export type CatalogProductGroup = z.output<
+  typeof ProductGroupsResponseSchema
+>["productGroups"][number];
+
 export interface CatalogProductDetail extends CatalogProduct {
   gallery: Array<{ url: string; description: string | null }>;
 }

@@ -2,7 +2,9 @@ import { PresetOnlyStrategy } from "@vendure/asset-server-plugin";
 import type { GetImageTransformParametersArgs } from "@vendure/asset-server-plugin";
 
 export class PresetOrOriginalStrategy extends PresetOnlyStrategy {
-  override getImageTransformParameters(args: GetImageTransformParametersArgs) {
+  override getImageTransformParameters(
+    args: GetImageTransformParametersArgs
+  ): ReturnType<PresetOnlyStrategy["getImageTransformParameters"]> {
     if (args.input.preset === undefined) {
       return {
         width: undefined,

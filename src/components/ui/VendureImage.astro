@@ -10,7 +10,7 @@ interface Props extends Omit<HTMLAttributes<"img">, "src" | "srcset" | "alt"> {
 }
 
 const { src, alt, presets, ...attributes } = Astro.props;
-const largest = presets[presets.length - 1] ?? presets[0];
+const largest = presets.at(-1) ?? presets[0];
 ---
 
 <img
