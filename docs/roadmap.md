@@ -19,8 +19,8 @@ ordering).
    on Tina exactly as it is until the site cutover epic.
 3. **Vendure must support every product field Tina has today** (field kinds
    input/select/radio/color/toggle/embroidery/material, banned material
-   combinations, length-based pricing, per-product discounts, product
-   groups/related products). Existing Tina product content is test data for
+   combinations, length-based pricing, product groups/related products;
+   per-product discounts are dropped by owner decision, see epic 2 status). Existing Tina product content is test data for
    the temporary preview seed and the completeness yardstick; **trimming
    content files for schema validity is allowed** (both products and
    materials, minimal frontmatter edits — site code/tooling stays untouched).
