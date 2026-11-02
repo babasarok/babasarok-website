@@ -1,7 +1,8 @@
-import type { ProductDefinition } from "@babasarok/product-definition";
+import type { ProductDefinition, ProductField } from "@babasarok/product-definition";
 import { plannedVariantFacetCodes } from "./facet-plan";
 import type { MaterialFacetData } from "./facet-plan";
 import type { NativeProductState } from "./sync-state";
+import { dependencyOrder, isVisible } from "./field-visibility";
 
 export interface PlannedOption {
   code: string;
@@ -95,8 +96,12 @@ function variantName(
  * Choice, toggle and material fields become option groups; input, embroidery
  * and color-presentation choice fields never do (ADR 0010: free text, per-word
  * pricing and color selections are carried on order lines, not variants).
- * Length-priced products leave every variant at 0 Ft: their price depends on
- * the buyer-entered length and the per-material per-cm prices, which the
+ * Each variant's price counts only the option groups the order form could have
+ * selected for that combination: a variant-axis field hidden by its
+ * `visibility` given the variant's own picks contributes nothing, mirroring the
+ * form and the 0-Ft walk — the group still rides the matrix, the price does
+ * not. Length-priced products leave every variant at 0 Ft: their price depends
+ * on the buyer-entered length and the per-material per-cm prices, which the
  * storefront quote path owns until the server-side pricing integration lands.
  */
 export function planVariantCombinations(
@@ -104,7 +109,10 @@ export function planVariantCombinations(
   materialDataBySlug: ReadonlyMap<string, MaterialFacetData>
 ): VariantPlan {
   const optionGroups: PlannedOptionGroup[] = [];
+  const groupFields: ProductField[] = [];
   const materialGroupIndexes: number[] = [];
+  const { cyclic } = dependencyOrder(definition.fields);
+  const knownFieldIds = new Set(definition.fields.map((field) => field.id));
 
   for (const field of definition.fields) {
     if (field.kind === "choice") {
@@ -122,6 +130,7 @@ export function planVariantCombinations(
           price: option.price,
         })),
       });
+      groupFields.push(field);
       continue;
     }
 
@@ -134,6 +143,7 @@ export function planVariantCombinations(
           { code: "igen", name: "Igen", price: field.price },
         ],
       });
+      groupFields.push(field);
       continue;
     }
 
@@ -148,6 +158,7 @@ export function planVariantCombinations(
           price: option.price,
         })),
       });
+      groupFields.push(field);
     }
   }
 
@@ -167,6 +178,14 @@ export function planVariantCombinations(
       continue;
     }
 
+    const values = new Map<string, string | boolean>();
+
+    for (const [index, field] of groupFields.entries()) {
+      const code = combo[index].code;
+
+      values.set(field.id, field.kind === "toggle" ? code === "igen" : code);
+    }
+
     const optionCodes = combo.map((option) => option.code);
 
     variants.push({
@@ -175,7 +194,14 @@ export function planVariantCombinations(
       price:
         definition.pricing.kind === "length"
           ? 0
-          : definition.basePrice + combo.reduce((sum, option) => sum + option.price, 0),
+          : definition.basePrice +
+            combo.reduce(
+              (sum, option, index) =>
+                isVisible(groupFields[index], cyclic, knownFieldIds, values)
+                  ? sum + option.price
+                  : sum,
+              0
+            ),
       optionCodes,
       materialSlugs,
     });

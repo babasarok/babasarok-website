@@ -5,7 +5,7 @@ import type { LineSelections } from "./line-selection";
 export interface LinePricingInput {
   definition: ProductDefinition;
   /**
-   * The variant's channel list price: base price plus every variant-axis
+   * The variant's channel list price: base price plus every visible variant-axis
    * option (choices, toggles, material picks) as synced from the definition.
    * Zero on length-priced products, whose price the walk derives instead.
    */
@@ -82,14 +82,15 @@ function variantAxisPrice(field: ProductField, optionCode: string | undefined): 
  * the product definition and the line's selections (order-pricing spec).
  *
  * Non-length products start from the variant's synced list price — base price
- * plus every variant-axis option — and add what never becomes a variant axis:
- * color-choice picks, visible input fields (their price applies even while
+ * plus every visible variant-axis option — and add what never becomes a variant
+ * axis: color-choice picks, visible input fields (their price applies even while
  * empty), and embroidery (flat, or per word of the entered text).
  *
  * Length-priced products walk the definition instead (their variants sit at
- * 0 Ft): base price plus every variant-axis option price by matching option
- * codes, with the length source field skipped — it carries no price, it
- * scales — and the sum multiplied by the length in metres.
+ * 0 Ft): base price plus every variant-axis option price visible given the
+ * variant's picks — matching the synced matrix — with the length source field
+ * skipped — it carries no price, it scales — and the sum multiplied by the
+ * length in metres.
  *
  * Throws {@link LinePricingError} for an unpriced line: a missing length,
  * selections that reference unknown fields or disagree with the variant's
@@ -241,7 +242,9 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
       definition.basePrice +
       order.reduce(
         (sum, field) =>
-          field.id === sourceFieldId || !isVariantAxis(field)
+          field.id === sourceFieldId ||
+          !isVariantAxis(field) ||
+          !isVisible(field, cyclic, knownFieldIds, values)
             ? sum
             : sum + variantAxisPrice(field, optionCodes.get(field.id)),
         0
