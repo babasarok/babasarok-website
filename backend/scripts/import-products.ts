@@ -53,6 +53,12 @@ const GROUPS_DIR = path.resolve(
   "product_groups"
 );
 const REPO_ROOT = path.resolve(import.meta.dirname, "..", "..");
+// Vendure's built-in product-id collection filter and the set-discount
+// promotion operations; the codes also live in
+// backend/src/plugins/product-set/promotion.ts — keep in sync.
+const PRODUCT_ID_FILTER_CODE = "product-id-filter";
+const PRODUCT_SET_CONDITION_CODE = "babasarok-product-set-basket";
+const PRODUCT_SET_ACTION_CODE = "babasarok-product-set-discount";
 // Undici's own headersTimeout is 300s; ours must fire first to fail with a
 // clear message instead of UND_ERR_HEADERS_TIMEOUT.
 const REQUEST_TIMEOUT_MS = 240_000;
@@ -60,12 +66,17 @@ const RUN_BUDGET_MS = (Number(process.env.IMPORT_PRODUCTS_SYNC_BUDGET_MINUTES) |
 // Frequent enough that a slow big-matrix sync never reads as a hang.
 const SYNC_PROGRESS_INTERVAL_MS = 30_000;
 // TEMPORARY, preview-only (ADR 0009/0010): the preview seed imports a curated
-// subset — one product per implemented feature — so the deploy fits inside
-// Cloudflare's 30-minute build limit. Covers: input + depends_on
-// (cumi-ragcsalanc), choice/select (bella-taska), toggle (kismama-parna),
-// embroidery + hiddenInProductList (diszparna), banned combinations
-// (babatakaro-szett), length pricing + from-field colorCount + choice/radio
-// (fonott-racsvedo), material-only (egyben-moshato-takaro-lapos-parna).
+// subset so the deploy fits inside Cloudflare's 30-minute build limit. The
+// first eight entries cover one product per implemented feature: input +
+// depends_on (cumi-ragcsalanc), choice/select (bella-taska), toggle
+// (kismama-parna), embroidery + hiddenInProductList (diszparna), banned
+// combinations (babatakaro-szett), length pricing + from-field colorCount +
+// choice/radio (fonott-racsvedo), material-only
+// (egyben-moshato-takaro-lapos-parna). The remaining eight complete the
+// product groups: tornazsak + vallfas-zsak finish the ovis-szett set
+// (discounted sets need every member), and the six ovis-felszereles members
+// fill the related-items group — every one of them is a one-variant product,
+// so the extension costs seconds of sync and stays well inside the limit.
 // Choice presentation "color" has no real content yet (e2e covers it).
 // At cutover prod is hand-migrated from the full content; drop this filter.
 const PREVIEW_PRODUCT_IDS = new Set([
@@ -76,6 +87,14 @@ const PREVIEW_PRODUCT_IDS = new Set([
   "egyben-moshato-takaro-lapos-parna",
   "fonott-racsvedo",
   "kismama-parna",
+  "paplan-parnahuzat",
+  "pufi-parna",
+  "pufi-parna-huzat",
+  "sima-takaro-lapos-parna",
+  "tornazsak",
+  "vallfas-zsak",
+  "vizhatlan-lepedo",
+  "vizhatlan-lepedo-ketretegu",
 ]);
 
 interface UpsertResult {
@@ -418,16 +437,27 @@ async function main(): Promise<void> {
   const syncs = await waitForSyncs(syncTargets, startedAt);
   const display = await applyDisplayContent(syncs.synced, displayByProductId);
   const seededProductIds = new Set(syncTargets.map((target) => target.productId));
-  const groups = await upsertGroups(productIdByFile, seededProductIds);
-  const promotion = await upsertSetPromotion(groups.setGroupIds);
+  const nativeProductIdByProductId = new Map(
+    syncs.synced.flatMap((synced) =>
+      synced.nativeProductId === null
+        ? []
+        : [[synced.target.productId, synced.nativeProductId] as const]
+    )
+  );
+  const groups = await upsertGroups(
+    productIdByFile,
+    seededProductIds,
+    nativeProductIdByProductId
+  );
+  const promotion = await upsertSetPromotion();
 
   console.log(
     `products: ${created} created, ${updated} updated, ` +
       `${failed} failed, ${skipped} skipped (${files.length} files; preview subset) | ` +
       `syncs: ${syncs.synced.length} synced, ${syncs.failed.length} failed | ` +
       `display: ${display.applied} applied, ${display.failed} failed | ` +
-      `groups: ${groups.created} created, ${groups.updated} updated, ${groups.failed} failed, ` +
-      `${groups.unseeded} unseeded | promotion: ${promotion}`
+      `groups: ${groups.created} created, ${groups.unchanged} unchanged, ${groups.updated} updated, ` +
+      `${groups.failed} failed, ${groups.unseeded} unseeded | promotion: ${promotion}`
   );
 
   if (failed > 0 || syncs.failed.length > 0 || display.failed > 0) {
@@ -436,29 +466,26 @@ async function main(): Promise<void> {
 }
 
 /**
- * Upserts every product group (discounted sets and related-items groups) and
- * returns the group ids of the upserted discounted sets, for the promotion.
- * Idempotent (upsert by group id): the same script serves the prod
- * hand-migration. Groups whose members are not among the seeded products are
- * skipped — the curated preview subset does not seed every member — and
- * listed, never half-imported.
+ * Upserts every product group as a private child collection of its kind's
+ * parent ("Szettek" / "Kapcsolódó termékek"): members into the native
+ * product-id-filter (native product ids), the discounted set's flat amount
+ * into the setDiscount custom field. Idempotent (upsert by slug): the same
+ * script serves the prod hand-migration. Discounted sets need every member
+ * among the seeded products and are skipped otherwise; related-items groups
+ * seed with the seeded subset when at least two members remain.
  */
 async function upsertGroups(
   productIdByFile: ReadonlyMap<string, string>,
-  seededProductIds: ReadonlySet<string>
-): Promise<{
-  created: number;
-  updated: number;
-  failed: number;
-  unseeded: number;
-  setGroupIds: string[];
-}> {
+  seededProductIds: ReadonlySet<string>,
+  nativeProductIdByProductId: ReadonlyMap<string, number>
+): Promise<{ created: number; unchanged: number; updated: number; failed: number; unseeded: number }> {
   const files = (await readdir(GROUPS_DIR)).filter((file) => file.endsWith(".md"));
+  const parents = await ensureGroupParents();
   let created = 0;
+  let unchanged = 0;
   let updated = 0;
   let failed = 0;
   let unseeded = 0;
-  const setGroupIds: string[] = [];
 
   for (const file of files) {
     const raw = await readFile(path.join(GROUPS_DIR, file), "utf8");
@@ -490,86 +517,311 @@ async function upsertGroups(
     }
 
     const definition = result.data;
-    const unseededMembers = definition.productIds.filter((id) => !seededProductIds.has(id));
+    const isSet = definition.kind === "discounted-set";
+    const memberIds = isSet
+      ? [...definition.productIds]
+      : definition.productIds.filter((productId) => seededProductIds.has(productId));
+    const missing = definition.productIds.filter((productId) => !seededProductIds.has(productId));
 
-    if (unseededMembers.length > 0) {
+    if (isSet ? missing.length > 0 : memberIds.length < 2) {
       unseeded += 1;
-      console.error(`⚠ ${file}: tag nincs importálva, kihagyva — ${unseededMembers.join(", ")}`);
+      console.error(`⚠ ${file}: tag nincs importálva, kihagyva — ${missing.join(", ")}`);
       continue;
     }
 
-    const outcome = await upsertGroup(definition);
+    const nativeIds: number[] = [];
 
-    if (typeof outcome === "string") {
+    for (const productId of memberIds) {
+      const nativeProductId = nativeProductIdByProductId.get(productId);
+
+      if (nativeProductId === undefined) {
+        failed += 1;
+        console.error(`✗ ${file}: ${productId} natív terméke nem ismert`);
+        break;
+      }
+
+      nativeIds.push(nativeProductId);
+    }
+
+    if (nativeIds.length !== memberIds.length) {
+      continue;
+    }
+
+    const parent = isSet ? parents.szettek : parents.kapcsolodoTermekek;
+    const outcome = await upsertGroupCollection(parent, {
+      slug: definition.id,
+      name: definition.label,
+      nativeIds,
+      setDiscount: isSet ? definition.discount : null,
+    });
+
+    if (!outcome.ok) {
       failed += 1;
-      console.error(`✗ ${file}: ${outcome}`);
+      console.error(`✗ ${file}: ${outcome.error}`);
       continue;
     }
 
-    if (outcome.kind === "created") {
+    if (outcome.status === "created") {
       created += 1;
+    } else if (outcome.status === "unchanged") {
+      unchanged += 1;
     } else {
       updated += 1;
     }
 
-    if (definition.kind === "discounted-set") {
-      setGroupIds.push(definition.id);
+    if (isSet) {
       console.log(
-        `✓ ${file}: szett "${definition.label}" — ${definition.productIds.length} termék, kedvezmény ${definition.discount} Ft (${outcome.kind})`
+        `✓ ${file}: szett "${definition.label}" — ${nativeIds.length} termék, kedvezmény ${definition.discount} Ft (${outcome.status})`
       );
     } else {
       console.log(
-        `✓ ${file}: kapcsolódó termékek "${definition.label}" — ${definition.productIds.length} termék (${outcome.kind})`
+        `✓ ${file}: kapcsolódó termékek "${definition.label}" — ${nativeIds.length} termék (${outcome.status})`
       );
     }
   }
 
-  return { created, updated, failed, unseeded, setGroupIds };
+  return { created, unchanged, updated, failed, unseeded };
 }
 
-async function upsertGroup(
-  definition: z.output<typeof ProductGroupDefinitionSchema>
-): Promise<UpsertResult | string> {
-  const input = {
-    label: definition.label,
-    kind: definition.kind,
-    discount: definition.kind === "discounted-set" ? definition.discount : null,
-    productIds: [...definition.productIds],
-  };
-  const existing = z
+interface GroupCollectionInput {
+  slug: string;
+  name: string;
+  nativeIds: number[];
+  setDiscount: number | null;
+}
+
+interface GroupParentIds {
+  szettek: string;
+  kapcsolodoTermekek: string;
+}
+
+/** A collection upsert's result: a status word, or the error message on failure. */
+type CollectionUpsert = { ok: true; status: "created" | "unchanged" | "updated" } | { ok: false; error: string };
+
+const SET_PARENT: GroupCollectionInput = {
+  slug: "szettek",
+  name: "Szettek",
+  nativeIds: [],
+  setDiscount: null,
+};
+const RELATED_PARENT: GroupCollectionInput = {
+  slug: "kapcsolodo-termekek",
+  name: "Kapcsolódó termékek",
+  nativeIds: [],
+  setDiscount: null,
+};
+// The "szettek" slug is also read by backend/src/plugins/product-set/
+// promotion.ts (the condition reads that parent's children); keep in sync.
+
+function productFilterArguments(
+  nativeIds: number[]
+): { code: string; arguments: { name: string; value: string }[] }[] {
+  return [
+    {
+      code: PRODUCT_ID_FILTER_CODE,
+      arguments: [
+        { name: "productIds", value: JSON.stringify(nativeIds) },
+        { name: "combineWithAnd", value: JSON.stringify(true) },
+      ],
+    },
+  ];
+}
+
+/**
+ * The existing group collections, keyed by their (hu) slug. The translations
+ * are read explicitly, so the response is independent of the admin request's
+ * context language.
+ */
+async function listGroupCollections(): Promise<
+  Map<
+    string,
+    {
+      id: string;
+      name: string | null;
+      parentId: string | null;
+      isPrivate: boolean | null;
+      filterProductIds: string | null;
+      setDiscount: number | null;
+    }
+  >
+> {
+  const collections = z
     .object({
-      productGroups: z.array(z.object({ groupId: z.string() })).default([]),
+      collections: z
+        .object({
+          items: z
+            .array(
+              z.object({
+                id: z.union([z.string(), z.number()]).transform(String),
+                isPrivate: z.boolean().nullish(),
+                parentId: z.union([z.string(), z.number()]).nullish().transform((v) => (v == null ? null : String(v))),
+                translations: z
+                  .array(z.object({ languageCode: z.string(), name: z.string().nullable(), slug: z.string() }))
+                  .default([]),
+                filters: z
+                  .array(
+                    z.object({
+                      code: z.string(),
+                      args: z.array(z.object({ name: z.string(), value: z.string() })),
+                    })
+                  )
+                  .default([]),
+                customFields: z.object({ setDiscount: z.number().nullish() }).nullish(),
+              })
+            )
+            .default([]),
+        })
+        .default({ items: [] }),
     })
-    .parse((await adminRequest(JSON.stringify({ query: `{ productGroups { groupId } }` }))).data);
-  const isExisting = existing.productGroups.some((row) => row.groupId === definition.id);
-  const mutation = isExisting
-    ? `mutation Update($groupId: String!, $input: ProductGroupInput!) { updateProductGroup(groupId: $groupId, input: $input) { groupId } }`
-    : `mutation Create($groupId: String!, $input: ProductGroupInput!) { createProductGroup(groupId: $groupId, input: $input) { groupId } }`;
+    .parse(
+      (
+        await adminRequest(
+          JSON.stringify({
+            query: `{ collections(options: { skip: 0, take: 250 }) { items { id isPrivate parentId translations { languageCode name slug } filters { code args { name value } } customFields { setDiscount } } } }`,
+          })
+        )
+      ).data
+    ).collections.items;
+
+  const bySlug = new Map<
+    string,
+    {
+      id: string;
+      name: string | null;
+      parentId: string | null;
+      isPrivate: boolean | null;
+      filterProductIds: string | null;
+      setDiscount: number | null;
+    }
+  >();
+
+  for (const collection of collections) {
+    const hu = collection.translations.find((t) => t.languageCode === "hu");
+
+    if (hu === undefined) {
+      continue;
+    }
+
+    const filter = collection.filters.find((f) => f.code === PRODUCT_ID_FILTER_CODE);
+
+    bySlug.set(hu.slug, {
+      id: collection.id,
+      name: hu.name,
+      parentId: collection.parentId,
+      isPrivate: collection.isPrivate ?? null,
+      filterProductIds: filter?.args.find((a) => a.name === "productIds")?.value ?? null,
+      setDiscount: collection.customFields?.setDiscount ?? null,
+    });
+  }
+
+  return bySlug;
+}
+
+/**
+ * Upserts both private parents. The parents carry no members and no discount;
+ * they only classify the group children.
+ */
+async function ensureGroupParents(): Promise<GroupParentIds> {
+  const existing = await listGroupCollections();
+
+  for (const parent of [SET_PARENT, RELATED_PARENT]) {
+    const outcome = await upsertGroupCollection(null, parent, existing);
+
+    if (!outcome.ok) {
+      throw new Error(`A(z) "${parent.name}" szülő gyűjtemény nem upsertelhető: ${outcome.error}`);
+    }
+  }
+
+  const ids = await listGroupCollections();
+  const szettek = ids.get(SET_PARENT.slug)?.id;
+  const kapcsolodoTermekek = ids.get(RELATED_PARENT.slug)?.id;
+
+  if (szettek === undefined || kapcsolodoTermekek === undefined) {
+    throw new Error("A csoport-szülő gyűjtemények hiányoznak az upsert után.");
+  }
+
+  return { szettek, kapcsolodoTermekek };
+}
+
+/**
+ * Creates the collection when its slug is unknown, and updates only the
+ * fields that differ otherwise.
+ */
+async function upsertGroupCollection(
+  parentId: string | null,
+  group: GroupCollectionInput,
+  existingBySlug?: Awaited<ReturnType<typeof listGroupCollections>>
+): Promise<CollectionUpsert> {
+  const existing = (existingBySlug ?? (await listGroupCollections())).get(group.slug);
+  const filters = productFilterArguments(group.nativeIds);
+
+  if (existing === undefined) {
+    const result = await adminRequest(
+      JSON.stringify({
+        query: `mutation Create($input: CreateCollectionInput!) { createCollection(input: $input) { id } }`,
+        variables: {
+          input: {
+            isPrivate: true,
+            parentId,
+            filters,
+            translations: [{ languageCode: "hu", name: group.name, slug: group.slug, description: "" }],
+            customFields: { setDiscount: group.setDiscount },
+          },
+        },
+      })
+    );
+
+    if (result.errors.length > 0) {
+      return { ok: false, error: result.errors.join("; ") };
+    }
+
+    return { ok: true, status: "created" };
+  }
+
+  const input: Record<string, unknown> = { id: existing.id };
+
+  if (existing.name !== group.name) {
+    input.translations = [{ languageCode: "hu", name: group.name }];
+  }
+
+  const desiredFilterValue = filters[0]?.arguments.find((a) => a.name === "productIds")?.value;
+
+  if (existing.filterProductIds !== desiredFilterValue) {
+    input.filters = filters;
+  }
+
+  if (existing.setDiscount !== group.setDiscount) {
+    input.customFields = { setDiscount: group.setDiscount };
+  }
+
+  if (Object.keys(input).length === 1) {
+    return { ok: true, status: "unchanged" };
+  }
+
   const result = await adminRequest(
     JSON.stringify({
-      query: mutation,
-      variables: { groupId: definition.id, input },
+      query: `mutation Update($input: UpdateCollectionInput!) { updateCollection(input: $input) { id } }`,
+      variables: { input },
     })
   );
 
   if (result.errors.length > 0) {
-    return result.errors.join("; ");
+    return { ok: false, error: result.errors.join("; ") };
   }
 
-  return { kind: isExisting ? "updated" : "created" };
+  return { ok: true, status: "updated" };
 }
 
 /**
  * Upserts the single "Szett kedvezmény" promotion (the set-discount condition
- * plus action) idempotently, keyed by its condition code: found by code, its
- * group list refreshed when it differs, created when absent.
+ * plus action) idempotently, keyed by its condition code: created when
+ * absent, enabled when disabled. The condition takes no arguments — it reads
+ * the "Szettek" parent's children itself — and refuses to apply when more
+ * than one active promotion uses it, so the seed reports a duplicate instead
+ * of creating a second copy.
  */
 /** Returns a status word, or the error message on failure. */
-async function upsertSetPromotion(groupIds: string[]): Promise<string> {
-  if (groupIds.length === 0) {
-    return "skipped";
-  }
-
+async function upsertSetPromotion(): Promise<string> {
   const promotions = z
     .object({
       promotions: z
@@ -603,28 +855,18 @@ async function upsertSetPromotion(groupIds: string[]): Promise<string> {
       ).data
     ).promotions.items;
 
-  const conditions = [
-    {
-      code: "babasarok-product-set-basket",
-      arguments: [{ name: "groupIds", value: JSON.stringify(groupIds) }],
-    },
-  ];
-  const actions = [{ code: "babasarok-product-set-discount", arguments: [] }];
-  const existing = promotions.find(
-    (promotion) =>
-      promotion.endsAt === null &&
-      promotion.conditions.some((condition) => condition.code === "babasarok-product-set-basket")
+  const withCondition = promotions.filter((promotion) =>
+    promotion.conditions.some((condition) => condition.code === PRODUCT_SET_CONDITION_CODE)
   );
 
-  if (existing !== undefined) {
-    const current = existing.conditions.find(
-      (condition) => condition.code === "babasarok-product-set-basket"
-    );
-    const currentIds = promotionGroupIdsFromArgs(
-      current?.args.find((argument) => argument.name === "groupIds")?.value
-    );
+  if (withCondition.length > 1) {
+    return `több szett-kedvezmény promóció létezik: ${withCondition.map((p) => p.name).join(", ")}`;
+  }
 
-    if (JSON.stringify(currentIds) === JSON.stringify(groupIds)) {
+  if (withCondition.length === 1) {
+    const existing = withCondition[0];
+
+    if (existing.enabled) {
       return "unchanged";
     }
 
@@ -632,7 +874,12 @@ async function upsertSetPromotion(groupIds: string[]): Promise<string> {
       JSON.stringify({
         query: `mutation Update($input: UpdatePromotionInput!) { updatePromotion(input: $input) { id } }`,
         variables: {
-          input: { id: existing.id, enabled: true, conditions, actions },
+          input: {
+            id: existing.id,
+            enabled: true,
+            conditions: [{ code: PRODUCT_SET_CONDITION_CODE, arguments: [] }],
+            actions: [{ code: PRODUCT_SET_ACTION_CODE, arguments: [] }],
+          },
         },
       })
     );
@@ -641,7 +888,7 @@ async function upsertSetPromotion(groupIds: string[]): Promise<string> {
       return result.errors.join("; ");
     }
 
-    console.log(`→ ${existing.name}: szett-csoportok frissítve`);
+    console.log(`→ ${existing.name}: engedélyezve`);
 
     return "updated";
   }
@@ -652,8 +899,8 @@ async function upsertSetPromotion(groupIds: string[]): Promise<string> {
       variables: {
         input: {
           enabled: true,
-          conditions,
-          actions,
+          conditions: [{ code: PRODUCT_SET_CONDITION_CODE, arguments: [] }],
+          actions: [{ code: PRODUCT_SET_ACTION_CODE, arguments: [] }],
           translations: [{ languageCode: "hu", name: "Szett kedvezmény" }],
         },
       },
@@ -665,20 +912,6 @@ async function upsertSetPromotion(groupIds: string[]): Promise<string> {
   }
 
   return "created";
-}
-
-function promotionGroupIdsFromArgs(raw: string | undefined): string[] {
-  if (raw === undefined) {
-    return [];
-  }
-
-  try {
-    const value: unknown = JSON.parse(raw);
-
-    return Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : [];
-  } catch {
-    return [];
-  }
 }
 
 /** Waits for the queued syncs to settle (the worker processes them serially). */
