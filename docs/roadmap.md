@@ -83,10 +83,13 @@ merged to main until the backend structure is settled):
   returns in ~130ms with background convergence; configurator page block on
   the stock product page; creation folded into the stock products list
   action bar, standalone section removed; UI review pass fixed a real
-  data-loss bug in save; dashboard e2e 4 specs green — PR #77). Still open:
-  full-width block + conditionally hiding the stock variants grid (both
-  `pnpm patch` candidates), drift-detail display, validation-message
-  localization
+  data-loss bug in save; dashboard e2e 4 specs green — PR #77). Polish pass
+  closed the four spike leftovers: the configurator block spans the full
+  page width (dashboard-native `column: "full"`), the stock variants
+  grid / generate-variants prompt / option-group editor hide on generated
+  products (the generated flag rides the stock page's own extended query —
+  no `pnpm patch` needed), drift details are listed under the stale badge,
+  and zod validation messages are localized to Hungarian
 - ✅ Facets + Collections — material/color facet values on generated variants,
   auto-managed per-material collections, and event-driven re-sync of affected
   products on material (create/rename/color/delete) changes; facets and

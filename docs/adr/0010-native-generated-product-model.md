@@ -124,16 +124,17 @@ an option → the missing variants appear; no manual variant work anywhere.
 
 1. **Generated preview list rendered empty** — spike-grade defect; resolved
    in PR #77 with a paged `generatedVariants` query.
-2. **The block does not span the full page width** — the stock page's
-   column layout constrains blocks; needs a full-width block or layout
-   override (`pnpm patch` candidate; still open).
-3. **Stock blocks (variants grid) cannot be conditionally hidden** — the
-   block API's `shouldRender` is synchronous while "is this product
-   generated?" is asynchronous (spike-verified). Remedies, in order of
-   preference: fold the definition lookup into the product page's own data
-   query; a small `pnpm patch` to the dashboard package in our build (we
-   already build the dashboard SPA ourselves) allowing async block
-   visibility; or an upstream contribution. (Still open.)
+2. **The block does not span the full page width** — resolved: the block
+   API's `column: "full"` (dashboard-native since 3.8, no patch needed) and
+   the embedded editor rendering its cards bare inside the full-width row.
+3. **Stock blocks (variants grid) cannot be conditionally hidden** — resolved
+   via the first remedy: a `detailForms` `extendDetailDocument` adds
+   `Product.productDefinition` (a ReadCatalog-gated resolver field on the
+   stock Product type) to the product-detail page's own query, so the blocks'
+   synchronous `shouldRender` sees the generated flag; the configurator block
+   renders only for generated products, and the stock variants grid, the
+   generate-variants prompt and the option-group editor are suppressed via
+   empty replacement blocks. No `pnpm patch`, no upstream change.
 4. **A separate Termékek section still exists** — resolved in PR #77
    (pulled forward at the owner's request): the standalone section is
    removed; creation is an action-bar item on the stock products list,
@@ -178,8 +179,9 @@ Tina exactly as it is until step 7.
    admin API. Seed reads Tina product content as test data
    (temporary/preview-only per ADR 0009; the site is untouched).
 3. **Dashboard production pass** — configurator page block fixing the four
-   gaps above, staleness indicator for material renames/deletes affecting
-   generated products, delete/conflict policy.
+   gaps above (all resolved), staleness indicator for material renames/deletes
+   affecting generated products (with a drift-detail list), delete/conflict
+   policy.
 4. **Facets + Collections** — material/color facet values on variants,
    auto-managed collections, dashboard surfacing.
 5. **Server-side pricing + promotions** — order-line custom fields (length,
