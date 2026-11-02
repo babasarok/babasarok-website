@@ -137,9 +137,10 @@ merged to main until the backend structure is settled):
   nothing left that only Tina can do
 - ⬜ Hardening follow-ups (from the epic 2 branch review): an order line whose
   definition changed after it was added (made non-orderable, option removed)
-  fails every recalculation until removed — price or flag it instead; the variant sync runs the whole matrix in one transaction —
-  commit per batch; `ConfiguredOrderLineInterceptor`, `ServerPricingStrategy`
-  and the set condition's group parsing have no tests
+  fails every recalculation until removed — price or flag it instead; the
+  variant sync stays atomic but shows no progress and does not resume after a
+  redeploy — report job progress and make it self-healing;
+  `ServerPricingStrategy` has no tests
 
 ## Epic 9 design notes (multi-market tax & pricing)
 

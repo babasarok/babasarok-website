@@ -3,7 +3,6 @@ import type {
   Injector,
   Order,
   OrderInterceptor,
-  ProductVariant,
   RequestContext,
   WillAddItemToOrderInput,
   WillAdjustOrderLineInput,
@@ -12,12 +11,9 @@ import type { ProductDefinition as CanonicalProductDefinition } from "@babasarok
 import { THREAD_COLOR_FACET_CODE } from "../product/facet-plan";
 import { nativeProductNames } from "../product/native-names";
 import { ProductDefinition } from "../product/product.entity";
-import { unknownThreadColorRejection } from "../product/thread-color";
 import { In } from "typeorm";
 import { MaterialColor } from "../material/material.entity";
-import { lengthMissingRejection, nonOrderableRejection } from "./line-price";
-import { referencedMaterialIds, selectionsRejection } from "./selection-validation";
-import { parseLineSelections, LineSelectionsError, type LineSelections } from "./line-selection";
+import { lineRejection, type LineFacts } from "./line-rejection";
 
 /**
  * Rejects unpriceable configured lines at the mutation boundary with a clear
@@ -34,89 +30,47 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
     this.connection = injector.get(TransactionalConnection);
   }
 
-  async willAddItemToOrder(
+  willAddItemToOrder(
     ctx: RequestContext,
     order: Order,
     input: WillAddItemToOrderInput
   ): Promise<string | undefined> {
-    const definition = await this.generatedDefinition(ctx, input.productVariant);
-
-    if (definition !== undefined && !definition.orderable) {
-      return nonOrderableRejection(await this.productName(ctx, input.productVariant, definition));
-    }
-
-    if (definition === undefined || definition.pricing.kind !== "length") {
-      return this.selectionsError(
-        ctx,
-        input.productVariant,
-        definition,
-        input.customFields?.selections
-      );
-    }
-
-    const lengthCm = input.customFields?.lengthCm;
-
-    if (typeof lengthCm !== "number" || !Number.isInteger(lengthCm) || lengthCm <= 0) {
-      return lengthMissingRejection(await this.productName(ctx, input.productVariant, definition));
-    }
-
-    return this.selectionsError(
-      ctx,
-      input.productVariant,
-      definition,
-      input.customFields?.selections
-    );
+    return lineRejection(this.facts(ctx), {
+      productId: Number(input.productVariant.productId),
+      languageCode: ctx.languageCode,
+      customFields: input.customFields,
+    });
   }
 
-  async willAdjustOrderLine(
+  willAdjustOrderLine(
     ctx: RequestContext,
     order: Order,
     input: WillAdjustOrderLineInput
   ): Promise<string | undefined> {
-    const definition = await this.generatedDefinition(ctx, input.orderLine.productVariant);
+    return lineRejection(this.facts(ctx), {
+      productId: Number(input.orderLine.productVariant.productId),
+      languageCode: ctx.languageCode,
+      customFields: input.customFields,
+      storedLengthCm: input.orderLine.customFields.lengthCm,
+    });
+  }
 
-    if (definition !== undefined && !definition.orderable) {
-      return nonOrderableRejection(
-        await this.productName(ctx, input.orderLine.productVariant, definition)
-      );
-    }
-
-    if (definition === undefined || definition.pricing.kind !== "length") {
-      return this.selectionsError(
-        ctx,
-        input.orderLine.productVariant,
-        definition,
-        input.customFields?.selections
-      );
-    }
-
-    // The mutation merges the provided custom fields over the line's own, so
-    // the effective length is the incoming one when given, else the stored one.
-    const provided = input.customFields?.lengthCm;
-    const lengthCm =
-      typeof provided === "number" ? provided : input.orderLine.customFields.lengthCm;
-
-    if (typeof lengthCm !== "number" || !Number.isInteger(lengthCm) || lengthCm <= 0) {
-      return lengthMissingRejection(
-        await this.productName(ctx, input.orderLine.productVariant, definition)
-      );
-    }
-
-    return this.selectionsError(
-      ctx,
-      input.orderLine.productVariant,
-      definition,
-      input.customFields?.selections
-    );
+  private facts(ctx: RequestContext): LineFacts {
+    return {
+      generatedDefinition: (productId) => this.generatedDefinition(ctx, productId),
+      productName: (productId, definition) => this.productName(ctx, productId, definition),
+      materialColors: (slugs) => this.materialColors(ctx, slugs),
+      knownThreadColors: (colorIds) => this.knownThreadColors(ctx, colorIds),
+    };
   }
 
   /** The canonical definition when the variant belongs to a generated product. */
   private async generatedDefinition(
     ctx: RequestContext,
-    productVariant: ProductVariant
+    productId: number
   ): Promise<CanonicalProductDefinition | undefined> {
     const row = await this.connection.getRepository(ctx, ProductDefinition).findOne({
-      where: { nativeProductId: Number(productVariant.productId) },
+      where: { nativeProductId: productId },
       select: { id: true, definition: true },
     });
 
@@ -125,69 +79,21 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
 
   private async productName(
     ctx: RequestContext,
-    productVariant: ProductVariant,
+    productId: number,
     definition: CanonicalProductDefinition
   ): Promise<string> {
-    const productId = Number(productVariant.productId);
     const names = await nativeProductNames(this.connection, ctx, [productId]);
 
     return names.get(productId) || definition.id;
   }
 
-  private async selectionsError(
-    ctx: RequestContext,
-    productVariant: ProductVariant,
-    definition: CanonicalProductDefinition | undefined,
-    raw: unknown
-  ): Promise<string | undefined> {
-    let selections: LineSelections;
-
-    try {
-      selections = parseLineSelections(raw);
-    } catch (error) {
-      if (error instanceof LineSelectionsError) {
-        return error.message;
-      }
-
-      throw error;
-    }
-
-    if (definition !== undefined) {
-      const rejection = selectionsRejection({
-        definition,
-        productName: await this.productName(ctx, productVariant, definition),
-        selections,
-        materialColors: await this.materialColors(ctx, referencedMaterialIds(selections)),
-        languageCode: ctx.languageCode,
-      });
-
-      if (rejection !== undefined) {
-        return rejection;
-      }
-    }
-
-    const colorIds = new Set(
-      Object.values(selections).flatMap((selection) =>
-        selection?.kind === "embroidery" ? [selection.colorId] : []
-      )
-    );
-
-    if (colorIds.size === 0) {
-      return undefined;
-    }
-
+  private async knownThreadColors(ctx: RequestContext, colorIds: string[]): Promise<Set<string>> {
     const known = await this.connection.getRepository(ctx, FacetValue).find({
-      where: { code: In([...colorIds]), facet: { code: THREAD_COLOR_FACET_CODE } },
+      where: { code: In(colorIds), facet: { code: THREAD_COLOR_FACET_CODE } },
       select: { code: true },
     });
-    const knownCodes = new Set(known.map((value) => value.code));
-    const unknown = [...colorIds].filter((colorId) => !knownCodes.has(colorId));
 
-    if (unknown.length > 0) {
-      return unknownThreadColorRejection(unknown);
-    }
-
-    return undefined;
+    return new Set(known.map((value) => value.code));
   }
 
   private async materialColors(
