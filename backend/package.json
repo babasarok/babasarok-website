@@ -24,6 +24,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@babasarok/pricing": "workspace:*",
     "@babasarok/product-definition": "workspace:*",
     "@nestjs/common": "^12.0.1",
     "@nestjs/graphql": "~14.0.0",

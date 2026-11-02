@@ -1,6 +1,7 @@
 packages:
   - backend
   - packages/product-definition
+  - packages/pricing
 
 # pnpm >=11 build-script approvals. true = run (all prebuilt-binary
 # downloads or harmless postinstalls — no native compilation happens on the

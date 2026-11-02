@@ -40,7 +40,7 @@ jobs:
       # type declarations; the backend tree's node10 module resolution cannot
       # follow the package's node16-style source imports.
       - if: matrix.name == 'Lint'
-        run: pnpm -C packages/product-definition run build
+        run: pnpm -C packages/product-definition run build && pnpm -C packages/pricing run build
       - run: ${{ matrix.run }}
 
   # Fast unit tests for the order-form domain logic (pricing, validation,

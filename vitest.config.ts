@@ -32,6 +32,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("src", import.meta.url)),
+      "@babasarok/product-definition": fileURLToPath(
+        new URL("packages/product-definition/src/index.ts", import.meta.url)
+      ),
     },
   },
   test: {
@@ -40,6 +43,7 @@ export default defineConfig({
       // The shared package's schema tests run in the same fast suite; they are
       // excluded from the package's own tsc build (see its tsconfig.json).
       "packages/product-definition/src/**/*.test.ts",
+      "packages/pricing/src/**/*.test.ts",
     ],
     exclude: ["tests/**", "node_modules/**", "dist/**"],
     environment: "node",

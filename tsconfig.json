@@ -10,6 +10,7 @@
     "tests/**/*",
     "tina/**/*",
     "packages/product-definition/src/**/*",
+    "packages/pricing/src/**/*",
     "*.ts",
     "stylelint.config.mjs",
     "astro.config.ts",
