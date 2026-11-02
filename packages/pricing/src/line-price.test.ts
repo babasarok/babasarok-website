@@ -1,8 +1,7 @@
 import type { ProductDefinition } from "@babasarok/product-definition";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
-import { LanguageCode } from "@vendure/core";
 import { describe, expect, it } from "vitest";
-import { LineSelectionsError, parseLineSelections } from "@babasarok/pricing";
+import { LineSelectionsError, parseLineSelections } from "./line-selection";
 import { computeLineUnitPrice, LinePricingError, valueConfiguredLine } from "./line-price";
 
 const unitProduct = ProductDefinitionSchema.parse({
@@ -466,7 +465,7 @@ describe("valueConfiguredLine", () => {
     optionCodes: new Map<string, string>(),
     selections: {},
     lengthCm: null,
-    languageCode: LanguageCode.hu,
+    languageCode: "hu",
   };
 
   it("prices an orderable definition", () => {

@@ -2,8 +2,7 @@ import type { EntityHydrator, ProductVariant, RequestContext } from "@vendure/co
 import type { TransactionalConnection } from "@vendure/core";
 import { nativeProductNames } from "../product/native-names";
 import { ProductDefinition } from "../product/product.entity";
-import { valueConfiguredLine, type LineValuation } from "./line-price";
-import { parseLineSelections } from "@babasarok/pricing";
+import { parseLineSelections, valueConfiguredLine, type LineValuation } from "@babasarok/pricing";
 
 export type VariantLineValuation = LineValuation | { kind: "passThrough" };
 

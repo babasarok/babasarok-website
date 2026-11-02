@@ -1,8 +1,10 @@
 import type { ProductDefinition } from "@babasarok/product-definition";
 import { unknownThreadColorRejection } from "../product/thread-color";
-import { lengthMissingRejection, nonOrderableRejection } from "./line-price";
+
 import {
   LineSelectionsError,
+  lengthMissingRejection,
+  nonOrderableRejection,
   parseLineSelections,
   referencedMaterialIds,
   selectionsRejection,

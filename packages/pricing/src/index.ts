@@ -15,3 +15,12 @@ export {
   selectionsRejection,
   type SelectionValidationInput,
 } from "./selection-validation.js";
+export {
+  computeLineUnitPrice,
+  lengthMissingRejection,
+  LinePricingError,
+  nonOrderableRejection,
+  valueConfiguredLine,
+  type LinePricingInput,
+  type LineValuation,
+} from "./line-price.js";
