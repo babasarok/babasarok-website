@@ -32,7 +32,6 @@ import {
 /** A definition referencing e2e-vaszon, for the delete-refusal step below. */
 const REFERENCING_FIXTURE = {
   id: "e2e-mat",
-  label: "E2E Anyaghív",
   type: "kiegeszito",
   orderable: true,
   basePrice: 10_000,
@@ -230,7 +229,12 @@ test("the Anyagok section handles the material lifecycle", async ({ page }) => {
     // Retry-safety and cleanup in one: the fixture definition is removed if a
     // previous attempt left it behind, and again after this step.
     await deleteDefinitionIfPresent(page, "e2e-mat");
-    await adminApi(page, CREATE_DEFINITION, { definition: REFERENCING_FIXTURE }, CreatedDefinition);
+    await adminApi(
+      page,
+      CREATE_DEFINITION,
+      { definition: REFERENCING_FIXTURE, name: "E2E Anyaghív" },
+      CreatedDefinition
+    );
 
     await page.goto(`${DASHBOARD}/materials`);
     await page.getByRole("button", { name: "Vászon" }).click();
