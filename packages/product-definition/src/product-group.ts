@@ -1,8 +1,11 @@
 import { z } from "zod";
 import { LabelSchema, PositiveMoneySchema, ProductIdSchema, TrimmedTextSchema } from "./model";
 
-// Membership has no Vendure entity yet — its storage model is sequenced with
-// the promotions step (docs/roadmap.md epic 2).
+// Membership lives in native Vendure Collections (a private child of the
+// "Szettek" / "Kapcsolódó termékek" parents, members via the product-id
+// filter; the set discount is a Collection custom field) — the canonical
+// schemas remain the seed's Tina-content validation and the group-shape
+// yardstick.
 export const ProductGroupIdSchema = TrimmedTextSchema.brand<"ProductGroupId">();
 
 export const DiscountedProductSetSchema = z.strictObject({

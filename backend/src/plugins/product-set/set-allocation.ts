@@ -4,7 +4,9 @@
  * decision 6). One formed instance is one unit each of two or more distinct
  * set members whose material selections are pairwise compatible; sets are
  * processed by descending flat amount, and each basket unit is consumed at
- * most once. Leftover units earn nothing. See docs/specs/product-sets.md.
+ * most once. Leftover units earn nothing. Groups come from the "Szettek"
+ * collection's children (the product-set promotion). See
+ * docs/specs/product-sets.md.
  */
 export interface AllocationLine {
   /** The order line the units belong to. */

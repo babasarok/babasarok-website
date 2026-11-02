@@ -99,8 +99,11 @@ merged to main until the backend structure is settled):
   prices length/embroidery from order-line custom fields (`lengthCm`,
   `selections`), with an order interceptor rejecting unpriceable lines (no
   0 Ft lines); the szett discount is a Vendure Promotion (custom condition +
-  order action) over a `ProductGroup` entity with dashboard CRUD; the seed
-  upserts groups and the promotion idempotently. The backend keeps its own
+  order action) whose argless condition reads the private "Szettek"
+  collection's children — groups are private Collections (members via the
+  native `product-id-filter`, the set discount a `setDiscount` custom field
+  edited in the stock dashboard); the seed upserts the collections and the
+  promotion idempotently. The backend keeps its own
   copy of the pricing logic; `src/lib/pricing` is untouched until cutover
   (supersedes the price-authority part of issue #71). Per-product %
   discounts are dropped (owner decision: unused); they get no Vendure home

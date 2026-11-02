@@ -131,8 +131,13 @@ then sell for 0 Ft). Non-orderable (browse-only) products are exempt.
 Set discounts are flat forint deductions applied at basket level, not per line.
 Each formed set instance (see the product-sets capability) removes its set's
 flat amount once from the order total, clamped so it never exceeds the covered
-units' charged subtotal. Set deductions are summed and subtracted from the
-order total. Set discounts are surfaced at basket
+units' charged subtotal. The allocation is computed in one global greedy pass
+per basket: the single "Szett kedvezmény" promotion's condition reads all
+discounted-set collections itself and takes no arguments, and exactly one such
+promotion must exist — the condition refuses when more than one active
+promotion uses it, so overlapping copies cannot double-count. Set deductions
+are summed and subtracted from the order total. Set discounts are surfaced at
+basket
 level (the "set discounts" section listing each formed instance and the forint
 it removes), not as per-line labels. The order email records, per formed
 instance, the set title, its members, and
