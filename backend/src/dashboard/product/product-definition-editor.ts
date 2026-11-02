@@ -8,7 +8,11 @@
  * Prices are whole Forints end to end (the backend's ForintMoneyStrategy sets
  * minor-unit precision 0), so no editor-side conversion happens.
  */
-import { canonicalJson, type ProductDefinitionInput } from "@babasarok/product-definition";
+import {
+  DEFAULT_TEXT_LANGUAGE,
+  canonicalJson,
+  type ProductDefinitionInput,
+} from "@babasarok/product-definition";
 
 export type FieldInput = ProductDefinitionInput["fields"][number];
 export type ChoiceFieldInput = Extract<FieldInput, { kind: "choice" }>;
@@ -48,9 +52,41 @@ export const EMBROIDERY_PRICING_LABELS: Record<
   flat: "Egyszeri",
 };
 
+export type TextInput = FieldInput["label"];
+
+export function textValue(text: TextInput | undefined, language: string): string {
+  return text?.[language] ?? "";
+}
+
+/** The value a non-default language's empty input shows instead: the hu text. */
+export function textPlaceholder(text: TextInput | undefined, language: string): string | undefined {
+  if (language === DEFAULT_TEXT_LANGUAGE || textValue(text, language) !== "") {
+    return undefined;
+  }
+
+  return text?.[DEFAULT_TEXT_LANGUAGE];
+}
+
+/** The text with `language`'s entry replaced; hu stays present (blank until
+ * filled — the canonical schema rejects a blank hu on save), other languages
+ * are removed when emptied. */
+export function withText(text: TextInput, language: string, value: string): TextInput {
+  if (language === DEFAULT_TEXT_LANGUAGE) {
+    return { ...text, [DEFAULT_TEXT_LANGUAGE]: value };
+  }
+
+  if (value === "") {
+    const { [language]: _removed, ...rest } = text;
+
+    return { ...rest, [DEFAULT_TEXT_LANGUAGE]: text[DEFAULT_TEXT_LANGUAGE] };
+  }
+
+  return { ...text, [language]: value };
+}
+
 export type FieldRow = { key: string; field: FieldInput };
 
-export function newField(kind: FieldKind, id: string, label: string): FieldInput {
+export function newField(kind: FieldKind, id: string, label: TextInput): FieldInput {
   const base = { id, label };
 
   switch (kind) {
@@ -60,7 +96,7 @@ export function newField(kind: FieldKind, id: string, label: string): FieldInput
         kind: "choice",
         presentation: "select",
         visibility: { kind: "always" },
-        options: [{ id: "", label: "", price: 0 }],
+        options: [{ id: "", label: { hu: "" }, price: 0 }],
       };
     case "toggle":
       return { ...base, kind: "toggle", visibility: { kind: "always" }, price: 0 };
@@ -92,10 +128,15 @@ export function newField(kind: FieldKind, id: string, label: string): FieldInput
 /** Whether the field holds anything beyond a fresh row's defaults — a kind
  * switch would discard exactly that, so it is what the confirm asks about. */
 export function hasEditableData(field: FieldInput): boolean {
-  const comparable = (candidate: FieldInput): FieldInput => ({ ...candidate, id: "", label: "" });
+  const comparable = (candidate: FieldInput): FieldInput => ({
+    ...candidate,
+    id: "",
+    label: { hu: "" },
+  });
 
   return (
-    canonicalJson(comparable(field)) !== canonicalJson(comparable(newField(field.kind, "", "")))
+    canonicalJson(comparable(field)) !==
+    canonicalJson(comparable(newField(field.kind, "", { hu: "" })))
   );
 }
 
@@ -170,7 +211,7 @@ export function assignGeneratedIds(definition: ProductDefinitionInput): ProductD
       let id = field.id;
 
       if (id === "") {
-        id = uniqueCode(slugifyLabel(field.label) || "mezo", fieldIds);
+        id = uniqueCode(slugifyLabel(field.label.hu) || "mezo", fieldIds);
         fieldIds.add(id);
       }
 
@@ -188,7 +229,7 @@ export function assignGeneratedIds(definition: ProductDefinitionInput): ProductD
             return option;
           }
 
-          const optionId = uniqueCode(slugifyLabel(option.label) || "opcio", optionIds);
+          const optionId = uniqueCode(slugifyLabel(option.label.hu) || "opcio", optionIds);
           optionIds.add(optionId);
 
           return { ...option, id: optionId };
@@ -200,11 +241,23 @@ export function assignGeneratedIds(definition: ProductDefinitionInput): ProductD
 
 /** Trims the values the editor can introduce untrimmed, so the canonical
  * schema rejects nothing on formatting alone. */
+function trimText(text: TextInput): TextInput {
+  const trimmed: TextInput = { hu: text.hu.trim() };
+
+  for (const [language, value] of Object.entries(text)) {
+    if (language !== DEFAULT_TEXT_LANGUAGE && value.trim() !== "") {
+      trimmed[language] = value.trim();
+    }
+  }
+
+  return trimmed;
+}
+
 export function sanitize(definition: ProductDefinitionInput): ProductDefinitionInput {
   return {
     ...definition,
     fields: definition.fields.map((field) => {
-      const trimmed = { ...field, id: field.id.trim(), label: field.label.trim() };
+      const trimmed = { ...field, id: field.id.trim(), label: trimText(field.label) };
 
       if (trimmed.kind === "choice") {
         return {
@@ -212,7 +265,7 @@ export function sanitize(definition: ProductDefinitionInput): ProductDefinitionI
           options: trimmed.options.map((option) => ({
             ...option,
             id: option.id.trim(),
-            label: option.label.trim(),
+            label: trimText(option.label),
           })),
         };
       }

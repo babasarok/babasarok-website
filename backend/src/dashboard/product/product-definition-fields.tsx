@@ -25,7 +25,11 @@ import {
   type InputFieldInput,
   type MaterialFieldInput,
   type MaterialOptionInput,
+  type TextInput,
   type ToggleFieldInput,
+  textPlaceholder,
+  textValue,
+  withText,
 } from "./product-definition-editor";
 
 /** Numeric text input: types freely (Hungarian comma decimals accepted), and
@@ -77,7 +81,8 @@ export interface FieldEditorProps {
   index: number;
   count: number;
   materialOptions: Array<{ slug: string; label: string }>;
-  patchBase: (key: string, label: string) => void;
+  language: string;
+  patchBase: (key: string, label: TextInput) => void;
   patchChoice: (key: string, patch: Partial<ChoiceFieldInput>) => void;
   patchToggle: (key: string, patch: Partial<ToggleFieldInput>) => void;
   patchMaterial: (key: string, patch: Partial<MaterialFieldInput>) => void;
@@ -101,6 +106,7 @@ export function FieldEditor({
   index,
   count,
   materialOptions,
+  language,
   patchBase,
   patchChoice,
   patchToggle,
@@ -141,9 +147,10 @@ export function FieldEditor({
           <span>Név</span>
           <Input
             className="w-44"
-            value={field.label}
+            value={textValue(field.label, language)}
+            placeholder={textPlaceholder(field.label, language)}
             onChange={(e) => {
-              patchBase(row.key, e.target.value);
+              patchBase(row.key, withText(field.label, language, e.target.value));
             }}
           />
         </label>
@@ -305,11 +312,17 @@ export function FieldEditor({
                 <span>Név</span>
                 <Input
                   className="w-40"
-                  value={option.label}
+                  value={textValue(option.label, language)}
+                  placeholder={textPlaceholder(option.label, language)}
                   onChange={(e) => {
                     patchChoiceOptions(row.key, (options) =>
                       options.map((candidate, at) =>
-                        at === optionIndex ? { ...candidate, label: e.target.value } : candidate
+                        at === optionIndex
+                          ? {
+                              ...candidate,
+                              label: withText(candidate.label, language, e.target.value),
+                            }
+                          : candidate
                       )
                     );
                   }}
@@ -349,7 +362,7 @@ export function FieldEditor({
               onClick={() => {
                 patchChoiceOptions(row.key, (options) => [
                   ...options,
-                  { id: "", label: "", price: 0 },
+                  { id: "", label: { hu: "" }, price: 0 },
                 ]);
               }}
             >
