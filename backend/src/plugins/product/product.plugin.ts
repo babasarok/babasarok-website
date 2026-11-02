@@ -1,6 +1,10 @@
 import { PluginCommonModule, VendurePlugin } from "@vendure/core";
 import { ProductDefinition } from "./product.entity";
-import { ProductDefinitionResolver, productDefinitionSchema } from "./product.resolver";
+import {
+  ProductDefinitionResolver,
+  ProductFieldResolver,
+  productDefinitionSchema,
+} from "./product.resolver";
 import { ProductDefinitionService } from "./product-definition.service";
 
 @VendurePlugin({
@@ -8,7 +12,7 @@ import { ProductDefinitionService } from "./product-definition.service";
   entities: [ProductDefinition],
   adminApiExtensions: {
     schema: productDefinitionSchema,
-    resolvers: [ProductDefinitionResolver],
+    resolvers: [ProductDefinitionResolver, ProductFieldResolver],
   },
   providers: [ProductDefinitionService],
   dashboard: "../../dashboard/product/product-definition.tsx",

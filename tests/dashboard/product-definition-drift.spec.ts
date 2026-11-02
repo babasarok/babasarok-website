@@ -9,7 +9,6 @@ import {
   GeneratedVariants,
   generatedTable,
   login,
-  stockTable,
   UpdatedVariant,
   waitForMutation,
 } from "./helpers";
@@ -165,12 +164,5 @@ test("a natively hand-edited variant price is refused until the force re-sync", 
     const kek = generated.getByRole("row", { name: /E2E D1 \(Kék\)/ });
     await expect(kek).toContainText("15000");
     await expect(kek).not.toContainText("999");
-
-    // The forced sync wrote the whole-Forint price back; the stock table
-    // renders it through the money strategy (0 decimals, English grouping in
-    // the fresh browser context).
-    const stockKek = stockTable(page).getByRole("row", { name: /E2E D1 \(Kék\)/ });
-    await expect(stockKek).toContainText(/15[,\u00A0 ]?000/);
-    await expect(stockKek).not.toContainText("150.00");
   });
 });

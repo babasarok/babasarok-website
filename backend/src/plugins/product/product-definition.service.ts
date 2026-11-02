@@ -39,7 +39,12 @@ import {
 } from "./facet-plan";
 import { validateProductDefinition } from "./product-definition";
 import { ProductDefinition } from "./product.entity";
-import { nativeStateHash, type NativeProductState } from "./sync-state";
+import {
+  nativeStateHash,
+  nativeStateDiff,
+  type NativeProductState,
+  type NativeStateDiff,
+} from "./sync-state";
 import { plannedNativeState, planVariantCombinations, type VariantPlan } from "./variant-plan";
 
 function huTranslation<T extends { languageCode: LanguageCode }>(
@@ -267,12 +272,31 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
    * sync. Pure planned-vs-actual comparison, so it needs no stored hashes.
    */
   async staleness(ctx: RequestContext, rows: ProductDefinition[]): Promise<Map<string, boolean>> {
-    const materialData = await this.materialData(ctx);
+    const analysis = await this.driftAnalysis(ctx, rows);
     const flags = new Map<string, boolean>();
+
+    for (const [productId, result] of analysis) {
+      flags.set(productId, result.stale);
+    }
+
+    return flags;
+  }
+
+  /**
+   * Staleness plus the drift-detail entries behind it (the drift-detail
+   * display): what a sync would change on the native product right now.
+   * Details are empty when the state is not stale.
+   */
+  async driftAnalysis(
+    ctx: RequestContext,
+    rows: ProductDefinition[]
+  ): Promise<Map<string, { stale: boolean; details: NativeStateDiff[] }>> {
+    const materialData = await this.materialData(ctx);
+    const analysis = new Map<string, { stale: boolean; details: NativeStateDiff[] }>();
 
     for (const row of rows) {
       if (row.nativeProductId === null) {
-        flags.set(row.productId, false);
+        analysis.set(row.productId, { stale: false, details: [] });
         continue;
       }
 
@@ -280,11 +304,15 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         this.slugStrategy.generate(ctx, { value: id })
       );
       const current = await this.currentNativeState(ctx, row.nativeProductId);
+      const stale = nativeStateHash(planned) !== nativeStateHash(current);
 
-      flags.set(row.productId, nativeStateHash(planned) !== nativeStateHash(current));
+      analysis.set(row.productId, {
+        stale,
+        details: stale ? nativeStateDiff(planned, current) : [],
+      });
     }
 
-    return flags;
+    return analysis;
   }
 
   /**

@@ -2,8 +2,9 @@
  * The shared configurator editor: edits the canonical definition in its input
  * shape and re-validates it with the canonical schema on save; the server
  * re-derives the native option groups/variants via the queued sync, whose
- * state and staleness the SyncBadge surfaces. Renders PageLayout content
- * only; the create page supplies the page title and framing.
+ * state and staleness the SyncBadge surfaces. Create mode renders a PageLayout;
+ * embedded mode renders its blocks bare so the stock page's full-width block
+ * row sizes them.
  *
  * Type-checked by src/dashboard/tsconfig.json (`check:dashboard`); at build
  * time the dashboard's vite pipeline bundles this file. The typed graphql
@@ -70,6 +71,10 @@ const productDefinitionQuery = graphql(`
       syncState
       syncError
       stale
+      driftDetails {
+        kind
+        label
+      }
       definition
     }
   }
@@ -128,6 +133,7 @@ interface SyncInfo {
   state: string;
   error: string | null;
   stale: boolean;
+  details: Array<{ kind: string; label: string }>;
 }
 
 const syncStateDictionary = defineStateEntries({
@@ -224,6 +230,7 @@ export function ConfiguratorEditor({
           state: result.productDefinition.syncState,
           error: result.productDefinition.syncError,
           stale: result.productDefinition.stale,
+          details: result.productDefinition.driftDetails ?? [],
         });
 
         if (result.productDefinition.syncState === "pending") {
@@ -440,6 +447,7 @@ export function ConfiguratorEditor({
           state: result.productDefinition.syncState,
           error: result.productDefinition.syncError,
           stale: result.productDefinition.stale,
+          details: result.productDefinition.driftDetails ?? [],
         };
         setSync(next);
 
@@ -540,6 +548,7 @@ export function ConfiguratorEditor({
           state: result.updateProductDefinition.syncState,
           error: result.updateProductDefinition.syncError,
           stale: false,
+          details: [],
         });
         // Adopt the saved payload (with the generated codes filled in) so the
         // next save keeps them stable instead of regenerating from labels.
@@ -620,6 +629,13 @@ export function ConfiguratorEditor({
           )}
           <SyncBadge sync={sync} />
         </div>
+        {sync?.stale === true && sync.details.length > 0 && (
+          <ul className="text-muted-foreground max-h-40 space-y-1 overflow-y-auto text-xs">
+            {sync.details.map((drift) => (
+              <li key={drift.label}>{drift.label}</li>
+            ))}
+          </ul>
+        )}
         {errors !== null && <ErrorNotice message={errors.join("\n")} />}
         {driftConflict && (
           <Alert variant="destructive">
@@ -914,5 +930,11 @@ export function ConfiguratorEditor({
     </>
   );
 
-  return <PageLayout>{editor}</PageLayout>;
+  if (mode === "create") {
+    return <PageLayout>{editor}</PageLayout>;
+  }
+
+  // The embedded block sits in the stock page's full-width row; a nested
+  // PageLayout would re-grid its cards into a 3/4-width main column.
+  return <div className="space-y-4">{editor}</div>;
 }

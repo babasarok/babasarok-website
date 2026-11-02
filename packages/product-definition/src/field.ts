@@ -26,7 +26,7 @@ export const PatternSchema = z
         return false;
       }
     },
-    { message: "Must be a valid regular expression" }
+    { message: "Nem érvényes reguláris kifejezés" }
   );
 
 export const fieldBaseShape = {

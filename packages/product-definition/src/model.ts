@@ -5,7 +5,7 @@ export const PositiveMoneySchema = z.int().positive();
 
 export const TrimmedTextSchema = z
   .string()
-  .regex(/^\S(?:.*\S)?$/, "Must be non-empty without leading or trailing whitespace");
+  .regex(/^\S(?:.*\S)?$/, "Nem lehet üres, és nem kezdődhet vagy végződhet szóközzel");
 
 export const LabelSchema = TrimmedTextSchema;
 
