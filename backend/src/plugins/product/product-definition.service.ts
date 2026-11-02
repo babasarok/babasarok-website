@@ -36,6 +36,7 @@ import { productRevision } from "@babasarok/product-definition/node";
 import { materialReferenceSlugs, toLanguageCode } from "../material/material.service";
 import { MaterialEvent } from "../material/material.event";
 import { Material } from "../material/material.entity";
+import { lockMaterials } from "../material/material-lock";
 import { sortDefinitions } from "./definition-sort";
 import { deletedNativeProductId, updatedNativeProductId } from "./product-event";
 import {
@@ -181,14 +182,15 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       throw new UserInputError("A terméknév megadása kötelező.");
     }
 
-    const definition = await this.validated(input, ctx);
+    const preliminary = await this.validated(input, ctx);
     const repo = this.connection.getRepository(ctx, ProductDefinition);
 
-    if ((await repo.findOneBy({ productId: definition.id })) !== null) {
-      throw new UserInputError(`Már létezik termék ezzel az azonosítóval: ${definition.id}`);
+    if ((await repo.findOneBy({ productId: preliminary.id })) !== null) {
+      throw new UserInputError(`Már létezik termék ezzel az azonosítóval: ${preliminary.id}`);
     }
 
     const row = await this.connection.withTransaction(ctx, async (txCtx) => {
+      const definition = await this.validatedUnderMaterialLocks(input, txCtx, preliminary);
       const txRepo = this.connection.getRepository(txCtx, ProductDefinition);
       const nativeProductId = await this.createNativeProduct(txCtx, definition.id, parsedName.data);
       await txRepo.insert({
@@ -220,9 +222,9 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       throw new UserInputError(`Nincs termék ezzel az azonosítóval: ${productId}`);
     }
 
-    const definition = await this.validated(input, ctx);
+    const preliminary = await this.validated(input, ctx);
 
-    if (definition.id !== productId) {
+    if (preliminary.id !== productId) {
       throw new UserInputError("A termékazonosító nem módosítható.");
     }
 
@@ -233,6 +235,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     }
 
     const row = await this.connection.withTransaction(ctx, async (txCtx) => {
+      const definition = await this.validatedUnderMaterialLocks(input, txCtx, preliminary);
       const txRepo = this.connection.getRepository(txCtx, ProductDefinition);
       await txRepo.update({ productId }, { definition, syncState: "pending", syncError: null });
 
@@ -1080,6 +1083,16 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         },
       ])
     );
+  }
+
+  private async validatedUnderMaterialLocks(
+    input: unknown,
+    txCtx: RequestContext,
+    preliminary: CanonicalProductDefinition
+  ): Promise<CanonicalProductDefinition> {
+    await lockMaterials(this.connection, txCtx, materialReferenceSlugs(preliminary), "shared");
+
+    return this.validated(input, txCtx);
   }
 
   private async validated(
