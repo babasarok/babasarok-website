@@ -90,7 +90,9 @@ A **set discount instance** is one unit each of two or more distinct set
 members whose materials are pairwise compatible. The system SHALL allocate
 set units across the whole basket in one greedy pass, processing sets biggest
 discount amount first: for a set, it repeatedly forms a maximal instance
-(one available unit from each distinct compatible member, basket order),
+(one available unit from each distinct compatible member; among
+interchangeable units it prefers the one leaving the most members joinable,
+then the most valuable unit, then basket order),
 consuming units globally — each basket unit is consumed at most once, so a
 partner line covers no more sets than it has units. Leftover units earn no
 set discount. A unit consumed by a higher-amount set is unavailable to
