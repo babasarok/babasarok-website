@@ -14,7 +14,9 @@ import { nativeProductNames } from "../product/native-names";
 import { ProductDefinition } from "../product/product.entity";
 import { unknownThreadColorRejection } from "../product/thread-color";
 import { In } from "typeorm";
+import { MaterialColor } from "../material/material.entity";
 import { lengthMissingRejection, nonOrderableRejection } from "./line-price";
+import { referencedMaterialIds, selectionsRejection } from "./selection-validation";
 import { parseLineSelections, LineSelectionsError, type LineSelections } from "./line-selection";
 
 /**
@@ -44,7 +46,12 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
     }
 
     if (definition === undefined || definition.pricing.kind !== "length") {
-      return this.selectionsError(ctx, input.customFields?.selections);
+      return this.selectionsError(
+        ctx,
+        input.productVariant,
+        definition,
+        input.customFields?.selections
+      );
     }
 
     const lengthCm = input.customFields?.lengthCm;
@@ -53,7 +60,12 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
       return lengthMissingRejection(await this.productName(ctx, input.productVariant, definition));
     }
 
-    return this.selectionsError(ctx, input.customFields?.selections);
+    return this.selectionsError(
+      ctx,
+      input.productVariant,
+      definition,
+      input.customFields?.selections
+    );
   }
 
   async willAdjustOrderLine(
@@ -70,7 +82,12 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
     }
 
     if (definition === undefined || definition.pricing.kind !== "length") {
-      return this.selectionsError(ctx, input.customFields?.selections);
+      return this.selectionsError(
+        ctx,
+        input.orderLine.productVariant,
+        definition,
+        input.customFields?.selections
+      );
     }
 
     // The mutation merges the provided custom fields over the line's own, so
@@ -85,7 +102,12 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
       );
     }
 
-    return this.selectionsError(ctx, input.customFields?.selections);
+    return this.selectionsError(
+      ctx,
+      input.orderLine.productVariant,
+      definition,
+      input.customFields?.selections
+    );
   }
 
   /** The canonical definition when the variant belongs to a generated product. */
@@ -112,7 +134,12 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
     return names.get(productId) || definition.id;
   }
 
-  private async selectionsError(ctx: RequestContext, raw: unknown): Promise<string | undefined> {
+  private async selectionsError(
+    ctx: RequestContext,
+    productVariant: ProductVariant,
+    definition: CanonicalProductDefinition | undefined,
+    raw: unknown
+  ): Promise<string | undefined> {
     let selections: LineSelections;
 
     try {
@@ -123,6 +150,20 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
       }
 
       throw error;
+    }
+
+    if (definition !== undefined) {
+      const rejection = selectionsRejection({
+        definition,
+        productName: await this.productName(ctx, productVariant, definition),
+        selections,
+        materialColors: await this.materialColors(ctx, referencedMaterialIds(selections)),
+        languageCode: ctx.languageCode,
+      });
+
+      if (rejection !== undefined) {
+        return rejection;
+      }
     }
 
     const colorIds = new Set(
@@ -147,5 +188,30 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
     }
 
     return undefined;
+  }
+
+  private async materialColors(
+    ctx: RequestContext,
+    materialSlugs: string[]
+  ): Promise<Map<string, Set<string>>> {
+    const byMaterial = new Map<string, Set<string>>();
+
+    if (materialSlugs.length === 0) {
+      return byMaterial;
+    }
+
+    const colors = await this.connection.getRepository(ctx, MaterialColor).find({
+      where: { material: { slug: In(materialSlugs) } },
+      relations: { material: true },
+    });
+
+    for (const color of colors) {
+      const offered = byMaterial.get(color.material.slug) ?? new Set<string>();
+
+      offered.add(color.colorId);
+      byMaterial.set(color.material.slug, offered);
+    }
+
+    return byMaterial;
   }
 }
