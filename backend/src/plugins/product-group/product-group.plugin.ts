@@ -15,5 +15,6 @@ import { ProductGroupService } from "./product-group.service";
     resolvers: [ProductGroupResolver],
   },
   providers: [ProductGroupService],
+  dashboard: "../../dashboard/product-group/product-group.tsx",
 })
 export class ProductGroupPlugin {}
