@@ -19,6 +19,7 @@ import { orderConfirmationHandler, orderNotificationHandler } from "./plugins/em
 import { MaterialPlugin } from "./plugins/material/material.plugin";
 import { PricingPlugin } from "./plugins/pricing/pricing.plugin";
 import { ServerPricingStrategy } from "./plugins/pricing/pricing-strategy";
+import { ProductGroupPlugin } from "./plugins/product-group/product-group.plugin";
 import { ProductPlugin } from "./plugins/product/product.plugin";
 import { QuoteOrderPlugin } from "./plugins/quote-order/quote-order.plugin";
 import { ChannelSetupPlugin } from "./plugins/setup/channel-setup.plugin";
@@ -155,6 +156,7 @@ export const config: VendureConfig = {
     MaterialPlugin,
     ProductPlugin,
     PricingPlugin,
+    ProductGroupPlugin,
     ChannelSetupPlugin,
     // Owns the material/product imagery (ADR 0009): uploads and previews are
     // stored on local disk (a docker volume in deploys) and served at /assets.
