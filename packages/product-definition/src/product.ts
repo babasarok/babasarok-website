@@ -5,12 +5,7 @@ import { InputFieldSchema } from "./field-kinds/input";
 import { MaterialFieldSchema } from "./field-kinds/material";
 import { MaterialIdSchema } from "./material";
 import { ToggleFieldSchema } from "./field-kinds/toggle";
-import {
-  MoneySchema,
-  ProductFieldIdSchema,
-  ProductIdSchema,
-  ProductRevisionSchema,
-} from "./model";
+import { MoneySchema, ProductFieldIdSchema, ProductIdSchema, ProductRevisionSchema } from "./model";
 
 // ponytail: duplicates the site's src/lib/product/productTypes.ts values; the
 // site keeps its own copy (with labels) until the cutover flips it to this
