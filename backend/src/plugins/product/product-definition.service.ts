@@ -23,7 +23,13 @@ import {
 import type { JobQueue } from "@vendure/core";
 import type { UpdateProductVariantInput } from "@vendure/common/lib/generated-types";
 import { GlobalFlag } from "@vendure/common/lib/generated-types";
-import { ConfigService, isInspectableJobQueueStrategy, JobQueueService } from "@vendure/core";
+import {
+  ConfigService,
+  isInspectableJobQueueStrategy,
+  JobQueueService,
+  PollingJobQueueStrategy,
+  ProcessContext,
+} from "@vendure/core";
 import { In, IsNull } from "typeorm";
 import type {
   LocalizedText,
@@ -60,6 +66,7 @@ import {
   type NativeProductState,
   type NativeStateDiff,
 } from "./sync-state";
+import { definitionsToRequeue } from "./sync-recovery";
 import { createProgressCounter, progressOfJobData, type SyncProgress } from "./sync-progress";
 import { huName, nativeProductTexts, textOf } from "./native-names";
 import { plannedNativeState, planVariantCombinations, type VariantPlan } from "./variant-plan";
@@ -114,7 +121,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     private configService: ConfigService,
     private requestContextService: RequestContextService,
     private channelService: ChannelService,
-    private eventBus: EventBus
+    private eventBus: EventBus,
+    private processContext: ProcessContext
   ) {}
 
   /** The server process only enqueues; the worker process runs the syncs. */
@@ -139,6 +147,57 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     this.eventBus.ofType(ProductEvent).subscribe((event) => {
       void this.onProductEvent(event);
     });
+
+    if (this.processContext.isWorker) {
+      await this.recoverInterruptedSyncs();
+    }
+  }
+
+  /**
+   * Heals syncs a crashed or killed worker left behind: its RUNNING jobs are
+   * failed and every pending definition without a queued job is re-queued.
+   * The interrupted transaction rolled back, so a fresh run restarts from zero.
+   * Re-queued as "automatic": it never overwrites native drift, and an
+   * interrupted owner save already passed its save-time drift check.
+   */
+  private async recoverInterruptedSyncs(): Promise<void> {
+    const strategy = this.configService.jobQueueOptions.jobQueueStrategy;
+
+    if (
+      !(strategy instanceof PollingJobQueueStrategy) ||
+      !isInspectableJobQueueStrategy(strategy) ||
+      this.syncQueue === null
+    ) {
+      return;
+    }
+
+    // ponytail: assumes a single worker, so every RUNNING job is orphaned; overlapping workers would need a heartbeat to tell live syncs from dead ones
+    const running = await strategy.findMany({
+      filter: { queueName: { eq: SYNC_QUEUE_NAME }, state: { eq: "RUNNING" } },
+      take: 1000,
+    });
+
+    for (const job of running.items) {
+      job.fail(new Error("Worker stopped while the sync was running."));
+      await strategy.update(job);
+    }
+
+    const queued = await strategy.findMany({
+      filter: { queueName: { eq: SYNC_QUEUE_NAME }, state: { in: ["PENDING", "RETRYING"] } },
+      take: 1000,
+    });
+    const pending = await this.connection.rawConnection
+      .getRepository(ProductDefinition)
+      .find({ where: { syncState: "pending" }, select: { productId: true } });
+
+    const productIds = definitionsToRequeue(
+      pending.map((row) => row.productId),
+      queued.items.map((job): unknown => job.data)
+    );
+
+    for (const productId of productIds) {
+      await this.syncQueue.add({ productId, origin: "automatic" });
+    }
   }
 
   async productDefinitions(
