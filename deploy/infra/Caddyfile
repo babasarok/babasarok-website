@@ -3,6 +3,10 @@
 }
 
 api.babasarok.net {
+	log {
+		output stdout
+		format json
+	}
 	reverse_proxy vendure-prod:4000
 }
 

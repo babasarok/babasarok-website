@@ -53,10 +53,22 @@
                 style="border:1px solid #e0c0a3; border-radius:6px; padding:10px 14px; margin:0 0 10px 0;"
               >
                 <p
-                  style="margin:0; font-size:13px; line-height:1.5; white-space:pre-line;"
-                >{{number}}. termék
-
-                  {{configText}}</p>
+                  style="margin:0 0 4px 0; font-size:13px; font-weight:bold; color:#6f5447;"
+                >{{number}}.
+                  {{title}}
+                  ({{quantity}}
+                  db)</p>
+                {{#if details}}
+                  {{#each details}}
+                    <p
+                      style="margin:0; padding-left:{{indent}}px; font-size:13px; line-height:1.5;"
+                    >{{label}}: <strong>{{value}}</strong></p>
+                  {{/each}}
+                {{else}}
+                  <p
+                    style="margin:0; font-size:13px; line-height:1.5; white-space:pre-line;"
+                  >{{configText}}</p>
+                {{/if}}
               </div>
             {{/each}}
             {{#if order.customFields.setDiscountSummary}}
@@ -69,7 +81,7 @@
               </div>
             {{/if}}
             <p style="margin:0 0 4px 0; font-size:13px;">Szállítás:
-              {{order.customFields.deliveryMethodName}}
+              {{deliveryMethodName}}
               ({{#if
                 order.customFields.deliveryFree
               }}ingyenes{{else}}{{order.customFields.deliveryPrice}} Ft{{/if}})</p>

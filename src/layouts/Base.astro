@@ -96,6 +96,17 @@ const themeColor = config.themeColor ?? "#F1D3B2";
     <Font cssVariable="--font-base" preload />
     <Font cssVariable="--font-heading" preload />
     <ClientRouter />
+    <script>
+      import { errorDetails, reportClientError } from "@/lib/errorReport";
+
+      globalThis.addEventListener("error", (event) => {
+        reportClientError({ kind: "uncaught", ...errorDetails(event.error ?? event.message) });
+      });
+
+      globalThis.addEventListener("unhandledrejection", (event) => {
+        reportClientError({ kind: "uncaught", ...errorDetails(event.reason) });
+      });
+    </script>
   </head>
   <body>
     <Header />
