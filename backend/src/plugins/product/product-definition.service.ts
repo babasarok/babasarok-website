@@ -9,6 +9,7 @@ import {
   Logger,
   LogLevel,
   Product,
+  ProductEvent,
   ProductOptionGroupService,
   ProductOptionService,
   ProductService,
@@ -32,6 +33,7 @@ import { materialReferenceSlugs } from "../material/material.service";
 import { MaterialEvent } from "../material/material.event";
 import { Material } from "../material/material.entity";
 import { sortDefinitions } from "./definition-sort";
+import { deletedNativeProductId } from "./product-event";
 import {
   COLOR_FACET_CODE,
   MATERIAL_FACET_CODE,
@@ -103,6 +105,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
     this.eventBus.ofType(MaterialEvent).subscribe((event) => {
       void this.onMaterialEvent(event);
+    });
+
+    this.eventBus.ofType(ProductEvent).subscribe((event) => {
+      void this.onProductEvent(event);
     });
   }
 
@@ -337,6 +343,29 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     } catch (error: unknown) {
       Logger.error(
         `Az anyag-módosulás utáni termékszinkronizálás sikertelen (${event.materialSlug}): ` +
+          (error instanceof Error ? error.message : String(error))
+      );
+    }
+  }
+
+  /**
+   * A stock delete of a generated product cascades to its definition
+   * (ADR 0011 decision 4), so the next sync cannot trip over the orphan.
+   * The configurator's own delete removes the definition first, so this finds
+   * nothing to do there.
+   */
+  private async onProductEvent(event: ProductEvent): Promise<void> {
+    const nativeProductId = deletedNativeProductId(event);
+
+    if (nativeProductId === undefined) {
+      return;
+    }
+
+    try {
+      await this.connection.getRepository(event.ctx, ProductDefinition).delete({ nativeProductId });
+    } catch (error: unknown) {
+      Logger.error(
+        `A natív termék törlése utáni definíció-törlés sikertelen (${nativeProductId}): ` +
           (error instanceof Error ? error.message : String(error))
       );
     }
