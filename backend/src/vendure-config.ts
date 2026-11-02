@@ -20,6 +20,10 @@ import { MaterialPlugin } from "./plugins/material/material.plugin";
 import { PricingPlugin } from "./plugins/pricing/pricing.plugin";
 import { ServerPricingStrategy } from "./plugins/pricing/pricing-strategy";
 import { ProductGroupPlugin } from "./plugins/product-group/product-group.plugin";
+import {
+  productSetBasketCondition,
+  productSetDiscountAction,
+} from "./plugins/product-group/promotion";
 import { ProductPlugin } from "./plugins/product/product.plugin";
 import { QuoteOrderPlugin } from "./plugins/quote-order/quote-order.plugin";
 import { ChannelSetupPlugin } from "./plugins/setup/channel-setup.plugin";
@@ -143,6 +147,10 @@ export const config: VendureConfig = {
     moneyStrategy: new ForintMoneyStrategy(),
   },
   paymentOptions: { paymentMethodHandlers: [] },
+  promotionOptions: {
+    promotionConditions: [productSetBasketCondition],
+    promotionActions: [productSetDiscountAction],
+  },
   dbConnectionOptions: {
     type: "postgres",
     url: env.databaseUrl,
