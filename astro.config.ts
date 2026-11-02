@@ -1,6 +1,7 @@
 import { defineConfig, envField, fontProviders } from "astro/config";
 import svelte from "@astrojs/svelte";
 import cloudflare from "@astrojs/cloudflare";
+import { cacheCloudflare } from "@astrojs/cloudflare/cache";
 import sitemap from "@astrojs/sitemap";
 import icon from "astro-icon";
 import tina from "@tinacms/astro/integration";
@@ -29,6 +30,12 @@ export default defineConfig({
   // No Astro sessions; the adapter would otherwise provision a KV namespace.
   session: false,
   redirects: { "/home": "/" },
+  // On-demand catalog pages (ADR 0012): an edit is live within maxAge, and a
+  // failing backend is hidden behind stale copies for up to swr more seconds.
+  cache: { provider: cacheCloudflare() },
+  routeRules: {
+    "/product": { maxAge: 60, swr: 300 },
+  },
   prefetch: true,
   integrations: [
     devProxy(),
