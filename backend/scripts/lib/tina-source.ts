@@ -329,6 +329,9 @@ export type TinaProductParseResult =
   | {
       success: true;
       definition: Omit<z.input<typeof ProductDefinitionSchema>, "revision">;
+      /** The Tina `title` — the native Product's name (ADR 0011 decision 1),
+       * which the definition no longer carries. */
+      name: string;
     }
   | { success: false; errors: string[] };
 
@@ -370,9 +373,9 @@ export function definitionFromTinaProduct(source: TinaProduct): TinaProductParse
 
   return {
     success: true,
+    name: source.title.trim(),
     definition: {
       id: source.product_id.trim(),
-      label: source.title.trim(),
       type: productType.data,
       orderable: source.can_be_ordered ?? false,
       hiddenInProductList: source.hidden_in_product_list ?? false,

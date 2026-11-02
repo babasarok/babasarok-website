@@ -45,7 +45,7 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
     const lengthCm = input.customFields?.lengthCm;
 
     if (typeof lengthCm !== "number" || !Number.isInteger(lengthCm) || lengthCm <= 0) {
-      return `A(z) "${definition.label}" méteráru — a hossz (cm) megadása kötelező.`;
+      return `A(z) "${definition.id}" méteráru — a hossz (cm) megadása kötelező.`;
     }
 
     return this.selectionsError(input.customFields?.selections);
@@ -73,7 +73,7 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
       typeof provided === "number" ? provided : input.orderLine.customFields.lengthCm;
 
     if (typeof lengthCm !== "number" || !Number.isInteger(lengthCm) || lengthCm <= 0) {
-      return `A(z) "${definition.label}" méteráru — a hossz (cm) megadása kötelező.`;
+      return `A(z) "${definition.id}" méteráru — a hossz (cm) megadása kötelező.`;
     }
 
     return this.selectionsError(input.customFields?.selections);

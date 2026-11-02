@@ -111,6 +111,13 @@ merged to main until the backend structure is settled):
   `date` and `icon` as `Product` custom fields and gallery descriptions as an
   `Asset` custom field, editable in the stock dashboard and populated by the
   preview seed ([ADR 0010](adr/0010-native-generated-product-model.md))
+- ✅ Native ownership of product identity — the native Product owns its name
+  and slug ([ADR 0011](adr/0011-native-ownership-and-translatable-catalog.md)
+  decision 1): the canonical definition dropped its `label` (data migration
+  deletes the stored key), the configurator's create flow asks for the name,
+  the slug is seeded from the definition id at creation only, generated
+  variant names read the native name (a stock rename's `ProductEvent`
+  re-enqueues the sync), and name/slug left the drift hash
 - ⬜ Vendure-complete gate — catalog fully manageable in the Vendure dashboard,
   nothing left that only Tina can do
 

@@ -68,7 +68,6 @@ const productFixture = (
   presentation: z.input<typeof ChoiceFieldSchema>["presentation"]
 ): z.input<typeof ProductDefinitionSchema> => ({
   id: "pamut-lepedo",
-  label: "Pamut lepedő",
   revision: "2f8a1c",
   type: "lepedo",
   orderable: true,
@@ -139,6 +138,13 @@ describe("ProductDefinitionSchema", () => {
         pricing: { kind: "per-word", pricePerWord: 500 },
       }).success
     ).toBe(true);
+  });
+
+  it("rejects a label — the native Product owns the name (ADR 0011 decision 1)", () => {
+    expect(
+      ProductDefinitionSchema.safeParse({ ...productFixture("select"), label: "Pamut lepedő" })
+        .success
+    ).toBe(false);
   });
 });
 
@@ -256,7 +262,6 @@ describe("ForbiddenMaterialCombinationSchema", () => {
 describe("productRevision", () => {
   const definition: ProductDefinition = ProductDefinitionSchema.parse({
     id: "babafeszek",
-    label: "Babafészek",
     revision: "rev-1",
     type: "babafeszek",
     orderable: true,
@@ -285,7 +290,6 @@ describe("productRevision", () => {
       orderable: true,
       type: "babafeszek",
       revision: "rev-1",
-      label: "Babafészek",
       id: "babafeszek",
     });
 

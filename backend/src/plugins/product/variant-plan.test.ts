@@ -9,10 +9,10 @@ import { plannedNativeState, planVariantCombinations } from "./variant-plan";
 import type { MaterialFacetData } from "./facet-plan";
 
 // The specimen product's shape (src/content/product/babafeszek.md), parsed
-// through the canonical schema so ids carry their brands.
+// through the canonical schema so ids carry their brands. The product's name
+// is a planner parameter (ADR 0011 decision 1: the native Product owns it).
 const babafeszek: ProductDefinition = ProductDefinitionSchema.parse({
   id: "babafeszek",
-  label: "Babafészek",
   revision: "rev-1",
   type: "babafeszek",
   orderable: true,
@@ -73,7 +73,7 @@ const materials: ReadonlyMap<string, MaterialFacetData> = new Map([
 
 describe("planVariantCombinations", () => {
   it("generates one option group per variant-carrying field", () => {
-    const plan = planVariantCombinations(babafeszek, materials);
+    const plan = planVariantCombinations(babafeszek, materials, "Babafészek");
 
     expect(plan.optionGroups.map((group) => group.code)).toEqual([
       "meret",
@@ -90,7 +90,7 @@ describe("planVariantCombinations", () => {
   });
 
   it("enumerates the full product minus the forbidden combinations", () => {
-    const plan = planVariantCombinations(babafeszek, materials);
+    const plan = planVariantCombinations(babafeszek, materials, "Babafészek");
 
     expect(plan.variants).toHaveLength(3 * 2 * 2 * 3 * 3 - 3 * 2 * 2);
     expect(plan.bannedOmitted).toBe(3 * 2 * 2);
@@ -104,7 +104,7 @@ describe("planVariantCombinations", () => {
   });
 
   it("prices a variant as base plus every chosen option's price", () => {
-    const plan = planVariantCombinations(babafeszek, materials);
+    const plan = planVariantCombinations(babafeszek, materials, "Babafészek");
     const priced = plan.variants.find(
       (variant) =>
         variant.optionCodes.includes("40x75") &&
@@ -120,7 +120,6 @@ describe("planVariantCombinations", () => {
     const definition = ProductDefinitionSchema.parse({
       ...babafeszek,
       id: "egyeb",
-      label: "Egyéb",
       fields: [
         {
           kind: "input",
@@ -141,7 +140,7 @@ describe("planVariantCombinations", () => {
       forbiddenMaterialCombinations: [],
     });
 
-    const plan = planVariantCombinations(definition, materials);
+    const plan = planVariantCombinations(definition, materials, "Egyéb");
 
     expect(plan.optionGroups).toEqual([]);
     expect(plan.variants).toEqual([
@@ -168,8 +167,8 @@ describe("planVariantCombinations", () => {
       ],
     });
 
-    const plan = planVariantCombinations(definition, materials);
-    const planned = plannedNativeState(definition, materials);
+    const plan = planVariantCombinations(definition, materials, "Babafészek");
+    const planned = plannedNativeState(definition, materials, "Babafészek");
 
     expect(plan.optionGroups.map((group) => group.code)).toEqual([
       "meret",
@@ -188,13 +187,12 @@ describe("planVariantCombinations", () => {
     const definition = ProductDefinitionSchema.parse({
       ...babafeszek,
       id: "racsvedo",
-      label: "Rácsvédő",
       basePrice: 0,
       pricing: { kind: "length", sourceFieldId: "meret" },
       forbiddenMaterialCombinations: [],
     });
 
-    const plan = planVariantCombinations(definition, materials);
+    const plan = planVariantCombinations(definition, materials, "Rácsvédő");
 
     expect(plan.variants).toHaveLength(3 * 2 * 2 * 3 * 3);
     expect(plan.variants.every((variant) => variant.price === 0)).toBe(true);
@@ -204,7 +202,6 @@ describe("planVariantCombinations", () => {
     const definition = ProductDefinitionSchema.parse({
       ...babafeszek,
       id: "polya",
-      label: "Pólya",
       fields: [
         {
           kind: "toggle",
@@ -224,7 +221,7 @@ describe("planVariantCombinations", () => {
       forbiddenMaterialCombinations: [],
     });
 
-    const plan = planVariantCombinations(definition, materials);
+    const plan = planVariantCombinations(definition, materials, "Pólya");
     const priceOf = (codes: readonly string[]): number | undefined =>
       plan.variants.find((variant) => variant.optionCodes.join("-") === codes.join("-"))?.price;
 
@@ -239,7 +236,6 @@ describe("planVariantCombinations", () => {
     const definition = ProductDefinitionSchema.parse({
       ...babafeszek,
       id: "egyedi",
-      label: "Egyedi",
       fields: [
         {
           kind: "choice",
@@ -260,7 +256,7 @@ describe("planVariantCombinations", () => {
       forbiddenMaterialCombinations: [],
     });
 
-    const plan = planVariantCombinations(definition, materials);
+    const plan = planVariantCombinations(definition, materials, "Egyedi");
 
     expect(plan.variants.map((variant) => variant.name)).toEqual(["Egyedi (Normál, Teddy)"]);
   });
@@ -269,7 +265,6 @@ describe("planVariantCombinations", () => {
     const definition = ProductDefinitionSchema.parse({
       ...babafeszek,
       id: "keverek",
-      label: "Keverék",
       fields: [
         {
           kind: "material",
@@ -295,7 +290,7 @@ describe("planVariantCombinations", () => {
       forbiddenMaterialCombinations: [],
     });
 
-    const plan = planVariantCombinations(definition, materials);
+    const plan = planVariantCombinations(definition, materials, "Keverék");
 
     expect(plan.variants.map((variant) => variant.name)).toEqual([
       "Keverék (Külső anyag: Teddy, Belső anyag: Teddy)",
@@ -323,7 +318,6 @@ describe("planVariantCombinations", () => {
     const definition = ProductDefinitionSchema.parse({
       ...babafeszek,
       id: "harom",
-      label: "Három",
       fields: [
         materialField("kulso", "Külső"),
         materialField("kozep", "Középső"),
@@ -332,7 +326,7 @@ describe("planVariantCombinations", () => {
       forbiddenMaterialCombinations: [],
     });
 
-    const plan = planVariantCombinations(definition, materials);
+    const plan = planVariantCombinations(definition, materials, "Három");
     const nameOf = (codes: readonly string[]): string | undefined =>
       plan.variants.find((variant) => variant.optionCodes.join("-") === codes.join("-"))?.name;
 
@@ -347,12 +341,12 @@ describe("planVariantCombinations", () => {
 
 describe("plannedNativeState", () => {
   it("produces exactly the native state a sync writes, hashable for staleness", () => {
-    const planned = plannedNativeState(babafeszek, materials);
+    const planned = plannedNativeState(babafeszek, materials, "Babafészek");
 
-    // The sync derives slug/name from the definition and the groups/variants
-    // from the plan; the staleness flag compares hashes of the two states.
-    expect(planned.slug).toBe("babafeszek");
-    expect(planned.name).toBe("Babafészek");
+    // The sync derives the variant names from the native product's name and
+    // the groups/variants from the plan; the staleness flag compares hashes
+    // of the two states. The product's own name and slug are not part of the
+    // state (ADR 0011 decision 1).
     expect(planned.optionGroups.map((group) => group.code)).toEqual([
       "meret",
       "betet",
@@ -362,11 +356,10 @@ describe("plannedNativeState", () => {
     ]);
     expect(planned.variants).toHaveLength(3 * 2 * 2 * 3 * 3 - 3 * 2 * 2);
     expect(planned.variants.every((variant) => variant.options.length === 5)).toBe(true);
-    expect(nativeStateHash(planned)).not.toBe(nativeStateHash({ ...planned, name: "Más" }));
   });
 
   it("carries the materials' facet values on every variant, and none without material fields", () => {
-    const planned = plannedNativeState(babafeszek, materials);
+    const planned = plannedNativeState(babafeszek, materials, "Babafészek");
 
     expect(
       planned.variants.find((variant) => variant.sku === "babafeszek--35x65-nem-nem-wellsoft-teddy")
@@ -377,18 +370,18 @@ describe("plannedNativeState", () => {
       ProductDefinitionSchema.parse({
         ...babafeszek,
         id: "egyeb",
-        label: "Egyéb",
         fields: [babafeszek.fields[0]],
         forbiddenMaterialCombinations: [],
       }),
-      materials
+      materials,
+      "Egyéb"
     );
 
     expect(choiceOnly.variants[0]?.facetValues).toEqual([]);
   });
 
   it("reads facet drift into the hash", () => {
-    const planned = plannedNativeState(babafeszek, materials);
+    const planned = plannedNativeState(babafeszek, materials, "Babafészek");
     const refaceted: NativeProductState = {
       ...planned,
       variants: planned.variants.map((variant) => ({ ...variant, facetValues: [] })),

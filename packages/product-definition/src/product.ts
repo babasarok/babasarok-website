@@ -5,13 +5,7 @@ import { InputFieldSchema } from "./field-kinds/input";
 import { MaterialFieldSchema } from "./field-kinds/material";
 import { MaterialIdSchema } from "./material";
 import { ToggleFieldSchema } from "./field-kinds/toggle";
-import {
-  LabelSchema,
-  MoneySchema,
-  ProductFieldIdSchema,
-  ProductIdSchema,
-  ProductRevisionSchema,
-} from "./model";
+import { MoneySchema, ProductFieldIdSchema, ProductIdSchema, ProductRevisionSchema } from "./model";
 
 // ponytail: duplicates the site's src/lib/product/productTypes.ts values; the
 // site keeps its own copy (with labels) until the cutover flips it to this
@@ -43,9 +37,10 @@ export const ProductFieldSchema = z.discriminatedUnion("kind", [
   EmbroideryFieldSchema,
 ]);
 
+// The product's name and slug live on the native Vendure Product (ADR 0011
+// decision 1), not here; `id` stays the immutable business key.
 export const ProductDefinitionSchema = z.strictObject({
   id: ProductIdSchema,
-  label: LabelSchema,
   revision: ProductRevisionSchema.optional(),
   type: ProductTypeSchema,
   orderable: z.boolean(),

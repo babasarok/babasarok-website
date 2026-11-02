@@ -11,9 +11,15 @@ filterable product list with a detail page per product.
 > `productId`), `can_be_ordered` ↔ `orderable`, field kinds map to `input`,
 > `choice` (presentation `select`/`radio`/`color`), `toggle`, `material` and
 > `embroidery`, and `banned_combinations` ↔ `forbiddenMaterialCombinations`.
-> Editorial content maps to the native product at cutover: `title` → `name`,
-> body → `description`, `thumbnail` → featured asset, `images` → assets. The
-> remaining display fields are native Vendure custom fields (the display-field
+> The native Product owns its name and slug (ADR 0011 decision 1): the
+> preview seed writes the Tina `title` into the native product's name, the
+> slug is seeded from the definition's `id` at creation only, and a rename on
+> the stock product form propagates to the generated variant names
+> ("`<name> (<option values>)`") — the definition sync never writes the
+> product's name or slug. Editorial content still maps to the native product
+> at cutover: body → `description`, `thumbnail` → featured asset, `images` →
+> assets. The remaining display fields are native Vendure custom fields (the
+> display-field
 > gap of ADR 0010, resolved): `shortDescription`, `tagline` (the Tina
 > `categories` "Alcím"), `date` ("newest first" sorting) and `icon` (an Asset
 > relation) on `Product`, plus a `galleryDescription` custom field on `Asset`

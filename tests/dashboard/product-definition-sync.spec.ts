@@ -29,7 +29,6 @@ import {
 
 const SYNC_FIXTURE = {
   id: "e2e-s1",
-  label: "E2E S1",
   type: "takaro",
   orderable: true,
   basePrice: 15_000,
@@ -60,7 +59,7 @@ test("the async sync settles and the generated-variants table follows it", async
     const created = await adminApi(
       page,
       CREATE_DEFINITION,
-      { definition: SYNC_FIXTURE },
+      { definition: SYNC_FIXTURE, name: "E2E S1" },
       CreatedDefinition
     );
 

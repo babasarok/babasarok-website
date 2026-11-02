@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { sortDefinitions } from "./definition-sort";
 
-type Row = { productId: string; definition: { label: string; basePrice: number } };
+type Row = { productId: string; label: string; definition: { basePrice: number } };
 
 function row(productId: string, label: string, basePrice: number): Row {
-  return { productId, definition: { label, basePrice } };
+  return { productId, label, definition: { basePrice } };
 }
 
 const rows = [row("p2", "Éva", 200), row("p1", "Alfa", 300), row("p3", "Zoltán", 100)];

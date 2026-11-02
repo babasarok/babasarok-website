@@ -131,9 +131,10 @@ export async function createManualProduct(page: Page, slug: string): Promise<str
 }
 
 /** Creates a definition fixture; the mutation returns before the queued sync
- * produced the native structure (that is what the sync spec asserts). */
-export const CREATE_DEFINITION = `mutation CreateProductDefinitionE2E($definition: JSON!) {
-  createProductDefinition(definition: $definition) {
+ * produced the native structure (that is what the sync spec asserts). The
+ * `name` is the native Product's name (ADR 0011 decision 1). */
+export const CREATE_DEFINITION = `mutation CreateProductDefinitionE2E($definition: JSON!, $name: String!) {
+  createProductDefinition(definition: $definition, name: $name) {
     productId
     syncState
   }

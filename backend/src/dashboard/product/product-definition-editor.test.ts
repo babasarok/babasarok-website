@@ -139,7 +139,7 @@ describe("carryOver", () => {
 
 describe("sanitize", () => {
   test("trims ids, labels, material references and forbidden pairs", () => {
-    const definition = newDefinition("  e2e-x  ", " E2E X ", "takaro");
+    const definition = newDefinition("  e2e-x  ", "takaro");
     definition.fields = [
       newField("choice", " szin ", " Szín "),
       newField("material", " anyag ", " Anyag "),
@@ -159,7 +159,6 @@ describe("sanitize", () => {
 
     const cleaned = sanitize(definition);
 
-    expect(cleaned.label).toBe("E2E X");
     expect(cleaned.fields[0].id).toBe("szin");
     expect(cleaned.fields[0].label).toBe("Szín");
 
@@ -175,7 +174,7 @@ describe("sanitize", () => {
   });
 
   test("a sanitized fresh definition passes the canonical schema", () => {
-    const definition = sanitize(newDefinition("e2e-x", "E2E X", "takaro"));
+    const definition = sanitize(newDefinition("e2e-x", "takaro"));
 
     expect(ProductDefinitionSchema.safeParse(definition).success).toBe(true);
   });
@@ -183,9 +182,8 @@ describe("sanitize", () => {
 
 describe("newDefinition", () => {
   test("starts orderable, unit-priced and empty", () => {
-    expect(newDefinition("e2e-x", "E2E X", "parna")).toEqual({
+    expect(newDefinition("e2e-x", "parna")).toEqual({
       id: "e2e-x",
-      label: "E2E X",
       type: "parna",
       orderable: true,
       basePrice: 0,
@@ -223,7 +221,7 @@ describe("assignGeneratedIds", () => {
 
   test("derives field and option codes from the labels", () => {
     const definition = assignGeneratedIds({
-      ...newDefinition("p", "P", "parna"),
+      ...newDefinition("p", "parna"),
       fields: [
         choiceField("", "Szín", [
           { id: "", label: "Kék", price: 0 },
@@ -244,7 +242,7 @@ describe("assignGeneratedIds", () => {
 
   test("deduplicates generated codes and keeps explicit ones untouched", () => {
     const definition = assignGeneratedIds({
-      ...newDefinition("p", "P", "parna"),
+      ...newDefinition("p", "parna"),
       fields: [
         newField("toggle", "meret", "Első"),
         newField("toggle", "", "Méret"),
@@ -274,7 +272,7 @@ describe("assignGeneratedIds", () => {
   test("the output still satisfies the canonical schema", () => {
     const definition = assignGeneratedIds(
       sanitize({
-        ...newDefinition("p", "P", "parna"),
+        ...newDefinition("p", "parna"),
         fields: [choiceField("", "Szín", [{ id: "", label: "Kék", price: 0 }])],
       })
     );

@@ -6,15 +6,17 @@ const SORTABLE_KEYS = new Set(["productId", "label", "basePrice"]);
 /** The dashboard's PaginatedListDataTable sends sort as `{ [column]: "ASC" | "DESC" }`. */
 const definitionSortSchema = z.record(z.string(), z.enum(["ASC", "DESC"]));
 
-/** The fields the sort acts on; ProductDefinition rows are structurally compatible. */
+/** The fields the sort acts on; `label` is the row's native product name
+ * (ADR 0011 decision 1), which the service fills before sorting. */
 interface SortableDefinitionRow {
   productId: string;
-  definition: { label: string; basePrice: number };
+  label: string;
+  definition: { basePrice: number };
 }
 
 function definitionValue(row: SortableDefinitionRow, key: string): string | number {
   if (key === "label") {
-    return row.definition.label;
+    return row.label;
   }
 
   if (key === "basePrice") {

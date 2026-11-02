@@ -26,6 +26,7 @@ import { GlobalFlag } from "@vendure/common/lib/generated-types";
 import { JobQueueService } from "@vendure/core";
 import { In, IsNull } from "typeorm";
 import type { ProductDefinition as CanonicalProductDefinition } from "@babasarok/product-definition";
+import { LabelSchema } from "@babasarok/product-definition";
 // The node-only entry: productRevision needs node:crypto, which must not reach
 // the dashboard's browser bundle through the main barrel.
 import { productRevision } from "@babasarok/product-definition/node";
@@ -33,7 +34,7 @@ import { materialReferenceSlugs } from "../material/material.service";
 import { MaterialEvent } from "../material/material.event";
 import { Material } from "../material/material.entity";
 import { sortDefinitions } from "./definition-sort";
-import { deletedNativeProductId } from "./product-event";
+import { deletedNativeProductId, updatedNativeProductId } from "./product-event";
 import {
   COLOR_FACET_CODE,
   MATERIAL_FACET_CODE,
@@ -125,6 +126,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     const rows = await this.connection
       .getRepository(ctx, ProductDefinition)
       .find({ order: { productId: "ASC" } });
+    await this.withNativeLabels(ctx, rows);
     const sorted = sortDefinitions(rows, options?.sort);
     const skip = Math.max(options?.skip ?? 0, 0);
     const take = Math.min(Math.max(options?.take ?? 20, 1), 100);
@@ -136,10 +138,30 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     ctx: RequestContext,
     productId: string
   ): Promise<ProductDefinition | null> {
-    return this.connection.getRepository(ctx, ProductDefinition).findOneBy({ productId });
+    const row = await this.connection
+      .getRepository(ctx, ProductDefinition)
+      .findOneBy({ productId });
+
+    if (row === null) {
+      return null;
+    }
+
+    await this.withNativeLabels(ctx, [row]);
+
+    return row;
   }
 
-  async createProductDefinition(ctx: RequestContext, input: unknown): Promise<ProductDefinition> {
+  async createProductDefinition(
+    ctx: RequestContext,
+    input: unknown,
+    name: string
+  ): Promise<ProductDefinition> {
+    const parsedName = LabelSchema.safeParse(name);
+
+    if (!parsedName.success) {
+      throw new UserInputError("A terméknév megadása kötelező.");
+    }
+
     const definition = await this.validated(input, ctx);
     const repo = this.connection.getRepository(ctx, ProductDefinition);
 
@@ -149,7 +171,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
     const row = await this.connection.withTransaction(ctx, async (txCtx) => {
       const txRepo = this.connection.getRepository(txCtx, ProductDefinition);
-      const nativeProductId = await this.createNativeProduct(txCtx, definition);
+      const nativeProductId = await this.createNativeProduct(txCtx, definition.id, parsedName.data);
       await txRepo.insert({
         productId: definition.id,
         definition,
@@ -160,7 +182,9 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       return txRepo.findOneByOrFail({ productId: definition.id });
     });
 
+    row.label = parsedName.data;
     await this.enqueueSync(ctx, row.productId);
+
     return row;
   }
 
@@ -194,14 +218,19 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       await txRepo.update({ productId }, { definition, syncState: "pending", syncError: null });
 
       if (existing.nativeProductId === null) {
-        const nativeProductId = await this.createNativeProduct(txCtx, definition);
+        // Recovery path for a definition that lost its native product: no
+        // stored name exists, so the id seeds the name too — rename it on
+        // the stock product form.
+        const nativeProductId = await this.createNativeProduct(txCtx, definition.id, definition.id);
         await txRepo.update({ productId }, { nativeProductId });
       }
 
       return txRepo.findOneByOrFail({ productId });
     });
 
+    await this.withNativeLabels(ctx, [row]);
     await this.enqueueSync(ctx, row.productId);
+
     return row;
   }
 
@@ -228,7 +257,17 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     ctx: RequestContext,
     nativeProductId: number
   ): Promise<ProductDefinition | null> {
-    return this.connection.getRepository(ctx, ProductDefinition).findOneBy({ nativeProductId });
+    const row = await this.connection
+      .getRepository(ctx, ProductDefinition)
+      .findOneBy({ nativeProductId });
+
+    if (row === null) {
+      return null;
+    }
+
+    await this.withNativeLabels(ctx, [row]);
+
+    return row;
   }
 
   /** The native variants a sync generates, paged for the dashboard's variant table. */
@@ -299,6 +338,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     rows: ProductDefinition[]
   ): Promise<Map<string, { stale: boolean; details: NativeStateDiff[] }>> {
     const materialData = await this.materialData(ctx);
+    const names = await this.nativeNames(ctx, rows);
     const analysis = new Map<string, { stale: boolean; details: NativeStateDiff[] }>();
 
     for (const row of rows) {
@@ -307,8 +347,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         continue;
       }
 
-      const planned = plannedNativeState(row.definition, materialData, (id) =>
-        this.slugStrategy.generate(ctx, { value: id })
+      const planned = plannedNativeState(
+        row.definition,
+        materialData,
+        names.get(row.nativeProductId) ?? ""
       );
       const current = await this.currentNativeState(ctx, row.nativeProductId);
       const stale = nativeStateHash(planned) !== nativeStateHash(current);
@@ -349,23 +391,37 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   }
 
   /**
-   * A stock delete of a generated product cascades to its definition
-   * (ADR 0011 decision 4), so the next sync cannot trip over the orphan.
-   * The configurator's own delete removes the definition first, so this finds
-   * nothing to do there.
+   * Stock product writes find their generated definition: a delete cascades
+   * to it (ADR 0011 decision 4 — the configurator's own delete removes the
+   * definition first, so this finds nothing to do there), and an update
+   * re-enqueues its sync so the variant names follow a rename (ADR 0011
+   * decision 1: the native Product owns the name; the sync only reads it).
    */
   private async onProductEvent(event: ProductEvent): Promise<void> {
-    const nativeProductId = deletedNativeProductId(event);
+    const nativeProductId = deletedNativeProductId(event) ?? updatedNativeProductId(event);
 
     if (nativeProductId === undefined) {
       return;
     }
 
     try {
-      await this.connection.getRepository(event.ctx, ProductDefinition).delete({ nativeProductId });
+      if (event.type === "deleted") {
+        await this.connection.getRepository(event.ctx, ProductDefinition).delete({
+          nativeProductId,
+        });
+        return;
+      }
+
+      const row = await this.connection
+        .getRepository(event.ctx, ProductDefinition)
+        .findOneBy({ nativeProductId });
+
+      if (row !== null) {
+        await this.enqueueSync(event.ctx, row.productId);
+      }
     } catch (error: unknown) {
       Logger.error(
-        `A natív termék törlése utáni definíció-törlés sikertelen (${nativeProductId}): ` +
+        `A natív termék eseménye utáni definíció-frissítés sikertelen (${nativeProductId}): ` +
           (error instanceof Error ? error.message : String(error))
       );
     }
@@ -404,7 +460,14 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         let nativeProductId = row.nativeProductId;
 
         if (nativeProductId === null) {
-          nativeProductId = await this.createNativeProduct(txCtx, row.definition);
+          // Recovery path for a definition that lost its native product: no
+          // stored name exists, so the id seeds the name too — rename it on
+          // the stock product form.
+          nativeProductId = await this.createNativeProduct(
+            txCtx,
+            row.definition.id,
+            row.definition.id
+          );
           await this.connection
             .getRepository(txCtx, ProductDefinition)
             .update({ productId }, { nativeProductId });
@@ -468,10 +531,13 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     }
   }
 
-  /** Creates the native Vendure Product the definition generates. */
+  /** Creates the native Vendure Product the definition generates. The slug is
+   * seeded from the definition id at creation only (ADR 0011 decision 1) —
+   * afterwards the stock form owns name and slug. */
   private async createNativeProduct(
     ctx: RequestContext,
-    definition: CanonicalProductDefinition
+    id: string,
+    name: string
   ): Promise<number> {
     const product = await this.productService.create(ctx, {
       // description: "" — the column is NOT NULL and the admin UI always
@@ -479,8 +545,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       translations: [
         {
           languageCode: LanguageCode.hu,
-          name: definition.label,
-          slug: definition.id,
+          name,
+          slug: this.slugStrategy.generate(ctx, { value: id }),
           description: "",
         },
       ],
@@ -501,7 +567,24 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     definition: CanonicalProductDefinition
   ): Promise<void> {
     const materialData = await this.materialData(ctx);
-    const plan = planVariantCombinations(definition, materialData);
+    const product = await this.connection.getRepository(ctx, Product).findOne({
+      where: { id: nativeProductId, deletedAt: IsNull() },
+      relations: { translations: true },
+    });
+
+    if (product === null) {
+      throw new Error(`A szinkronizált natív termék eltűnt: ${nativeProductId}`);
+    }
+
+    // The variant names read the native product's hu name (ADR 0011
+    // decision 1); the sync never writes the product's own name or slug.
+    const productName = huName(product.translations);
+
+    if (productName === undefined) {
+      throw new Error(`A natív terméknek nincs magyar nyelvű neve: ${nativeProductId}`);
+    }
+
+    const plan = planVariantCombinations(definition, materialData, productName);
     const facetCodesBySku = plannedVariantFacetCodes(plan, materialData);
     const optionIdsByGroupCode = await this.syncOptionGroups(ctx, nativeProductId, plan);
     const facetValueIdsByCode = await this.facetValueIdsByCode(ctx, facetCodesBySku);
@@ -514,39 +597,6 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       facetCodesBySku,
       facetValueIdsByCode
     );
-
-    // The native product's own name/slug are sync-owned too: restoring them
-    // here is what makes a forced re-sync converge with the stored hash.
-    const product = await this.connection.getRepository(ctx, Product).findOne({
-      where: { id: nativeProductId, deletedAt: IsNull() },
-      relations: { translations: true },
-    });
-
-    if (product === null) {
-      throw new Error(`A szinkronizált natív termék eltűnt: ${nativeProductId}`);
-    }
-
-    const translation = huTranslation(product.translations);
-    const name = translation?.name;
-    const slug = translation?.slug;
-
-    // Vendure normalizes slugs (DefaultSlugStrategy), so the comparison and
-    // the written value use the normalized form — ids like "Eu borito" can
-    // never be stored verbatim.
-    const expectedSlug = this.slugStrategy.generate(ctx, { value: definition.id });
-
-    if (name !== definition.label || slug !== expectedSlug) {
-      await this.productService.update(ctx, {
-        id: nativeProductId,
-        translations: [
-          {
-            languageCode: LanguageCode.hu,
-            name: definition.label,
-            slug: definition.id,
-          },
-        ],
-      });
-    }
   }
 
   /**
@@ -876,9 +926,6 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       throw new Error(`A natív termék eltűnt: ${nativeProductId}`);
     }
 
-    const huTranslation = product.translations.find(
-      (translation) => translation.languageCode === LanguageCode.hu
-    );
     const variants = await this.connection.getRepository(ctx, ProductVariant).find({
       where: { product: { id: nativeProductId }, deletedAt: IsNull() },
       relations: {
@@ -890,8 +937,6 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     });
 
     return {
-      slug: huTranslation?.slug ?? "",
-      name: huName(product.translations) ?? "",
       optionGroups: product.optionGroups.map((group) => ({
         code: group.code,
         name: huName(group.translations) ?? group.code,
@@ -913,6 +958,40 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         facetValues: variant.facetValues.map((value) => value.code),
       })),
     };
+  }
+
+  /** The native products' hu names keyed by their id, batched — the list and
+   * the drift analysis must not query per row. */
+  private async nativeNames(
+    ctx: RequestContext,
+    rows: ProductDefinition[]
+  ): Promise<Map<number, string>> {
+    const ids = rows.flatMap((row) => (row.nativeProductId === null ? [] : [row.nativeProductId]));
+
+    if (ids.length === 0) {
+      return new Map();
+    }
+
+    const products = await this.connection.getRepository(ctx, Product).find({
+      where: { id: In(ids), deletedAt: IsNull() },
+      relations: { translations: true },
+    });
+
+    return new Map(
+      products.map((product) => [Number(product.id), huName(product.translations) ?? ""])
+    );
+  }
+
+  /** Fills the definitions' transient `label` from their native products' hu
+   * names (ADR 0011 decision 1) — the table column's value and the sort key. */
+  private async withNativeLabels(ctx: RequestContext, rows: ProductDefinition[]): Promise<void> {
+    const names = await this.nativeNames(ctx, rows);
+
+    for (const row of rows) {
+      const nativeName = row.nativeProductId === null ? undefined : names.get(row.nativeProductId);
+
+      row.label = nativeName ?? row.productId;
+    }
   }
 
   /** The materials' labels and colors, the two inputs the facet/variant plan reads. */

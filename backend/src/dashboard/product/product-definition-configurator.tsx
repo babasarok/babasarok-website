@@ -63,7 +63,6 @@ const productDefinitionQuery = graphql(`
   query ProductDefinition($productId: String!) {
     productDefinition(productId: $productId) {
       productId
-      label
       type
       orderable
       basePrice
@@ -90,8 +89,8 @@ const materialOptionsQuery = graphql(`
 `);
 
 const createProductDefinitionMutation = graphql(`
-  mutation CreateProductDefinition($definition: JSON!) {
-    createProductDefinition(definition: $definition) {
+  mutation CreateProductDefinition($definition: JSON!, $name: String!) {
+    createProductDefinition(definition: $definition, name: $name) {
       productId
       nativeProductId
     }
@@ -175,8 +174,11 @@ export function ConfiguratorEditor({
   const creatingNew = mode === "create";
 
   const [definition, setDefinition] = useState<ProductDefinitionInput | null>(() =>
-    creatingNew ? newDefinition("", "", PRODUCT_TYPE_VALUES[0]) : null
+    creatingNew ? newDefinition("", PRODUCT_TYPE_VALUES[0]) : null
   );
+  // The native Product's name (ADR 0011 decision 1): asked for at creation,
+  // afterwards edited on the stock product form, never in this editor.
+  const [name, setName] = useState("");
   const [rows, setRows] = useState<FieldRow[]>([]);
   const [banned, setBanned] = useState<string[][]>([]);
   const [materialOptions, setMaterialOptions] = useState<Array<{ slug: string; label: string }>>(
@@ -269,7 +271,7 @@ export function ConfiguratorEditor({
 
   const dirty =
     definition !== null &&
-    (definition.id !== "" || definition.label !== "" || rows.length > 0 || banned.length > 0);
+    (definition.id !== "" || (creatingNew && name !== "") || rows.length > 0 || banned.length > 0);
 
   // Guards only the create route: the embedded block shares the stock
   // product page's navigation, where blocking is too broad a blast radius.
@@ -496,8 +498,9 @@ export function ConfiguratorEditor({
       })
     );
     const clientErrors: string[] = [];
+    const productName = name.trim();
 
-    if (creatingNew && (payload.id === "" || payload.label === "")) {
+    if (creatingNew && (payload.id === "" || productName === "")) {
       clientErrors.push("Az azonosító és a név is kötelező.");
     }
 
@@ -526,7 +529,10 @@ export function ConfiguratorEditor({
 
     try {
       if (creatingNew) {
-        const result = await api.query(createProductDefinitionMutation, { definition: validated });
+        const result = await api.query(createProductDefinitionMutation, {
+          definition: validated,
+          name: productName,
+        });
         const created = result.createProductDefinition;
 
         if (created.nativeProductId === null) {
@@ -684,7 +690,7 @@ export function ConfiguratorEditor({
                   }}
                 />
                 <span className="text-muted-foreground text-xs">
-                  Végleges: a natív termék slugja is ez lesz. Nem lehet "new".
+                  Végleges: a natív termék slugja létrehozáskor ebből készül. Nem lehet "new".
                 </span>
               </>
             ) : (
@@ -717,16 +723,21 @@ export function ConfiguratorEditor({
               <span className="text-xs">{definition.type}</span>
             )}
           </label>
-          <label className="flex flex-col gap-1 text-sm">
-            <span>Név</span>
-            <Input
-              className="w-80"
-              value={definition.label}
-              onChange={(e) => {
-                setDefinition({ ...definition, label: e.target.value });
-              }}
-            />
-          </label>
+          {creatingNew && (
+            <label className="flex flex-col gap-1 text-sm">
+              <span>Név</span>
+              <Input
+                className="w-80"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                }}
+              />
+              <span className="text-muted-foreground text-xs">
+                A natív termék neve; a mentés után a stock termékformában szerkeszthető.
+              </span>
+            </label>
+          )}
           <label className="flex flex-col gap-1 text-sm">
             <span>Alapár (Ft)</span>
             <NumberInput

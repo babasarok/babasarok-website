@@ -301,7 +301,7 @@ async function assetId(imagePath: string, uploadedByPath: Map<string, string>): 
   return id;
 }
 
-async function upsert(definition: DefinitionPayload): Promise<UpsertResult | string> {
+async function upsert(definition: DefinitionPayload, name: string): Promise<UpsertResult | string> {
   const existing = DefinitionsDataSchema.parse(
     (
       await adminRequest(
@@ -318,8 +318,8 @@ async function upsert(definition: DefinitionPayload): Promise<UpsertResult | str
   if (!isExisting) {
     const result = await adminRequest(
       JSON.stringify({
-        query: `mutation Create($definition: JSON!) { createProductDefinition(definition: $definition) { productId } }`,
-        variables: { definition },
+        query: `mutation Create($definition: JSON!, $name: String!) { createProductDefinition(definition: $definition, name: $name) { productId } }`,
+        variables: { definition, name },
       })
     );
 
@@ -407,7 +407,7 @@ async function main(): Promise<void> {
     let outcome: UpsertResult | string;
 
     try {
-      outcome = await upsert(final);
+      outcome = await upsert(final, definition.name);
     } catch (error: unknown) {
       failed += 1;
       console.error(

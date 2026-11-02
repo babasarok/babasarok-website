@@ -72,7 +72,9 @@ an option → the missing variants appear; no manual variant work anywhere.
    generated products' option groups, variants and prices are overwritten by
    the next sync. The production sync must detect native-side drift
    (e.g. a hash of last-synced state) and refuse-or-confirm instead of
-   silently overwriting.
+   silently overwriting. (Since [ADR 0011](0011-native-ownership-and-translatable-catalog.md)
+   decision 1 the product's name and slug are excepted: the native Product
+   owns them and the sync never writes them.)
 3. **The configurator is edited on the stock product page** via a dashboard
    page block on `pageId: 'product-detail'` (spike-verified mechanism); no
    separate section exists — creation happens via an action-bar item on the

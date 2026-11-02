@@ -84,7 +84,7 @@ describe("definitionFromTinaProduct", () => {
     expect(
       ProductDefinitionSchema.safeParse({ ...result.definition, revision: "rev" }).success
     ).toBe(true);
-    expect(result.definition.label).toBe("Babafészek");
+    expect(result.name).toBe("Babafészek");
     expect(result.definition.pricing).toEqual({ kind: "unit" });
     expect(result.definition.orderable).toBe(true);
     expect(result.definition.hiddenInProductList).toBe(false);
@@ -109,11 +109,13 @@ describe("definitionFromTinaProduct", () => {
   });
 
   it("trims untrimmed labels and maps field kinds onto canonical members", () => {
-    const result = definitionFromTinaProduct(babafeszek);
+    const result = definitionFromTinaProduct({ ...babafeszek, title: "  Babafészek  " });
 
     if (!result.success) {
       throw new Error(JSON.stringify(result.errors));
     }
+
+    expect(result.name).toBe("Babafészek");
 
     const [meret, betet, himzes, fodor, anyag1, nev] = result.definition.fields;
 

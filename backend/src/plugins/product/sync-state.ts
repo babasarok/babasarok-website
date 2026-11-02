@@ -26,10 +26,10 @@ export interface NativeVariantState {
   facetValues: string[];
 }
 
-/** The sync-owned slice of the native Vendure product, hashed for drift detection. */
+/** The sync-owned slice of the native Vendure product, hashed for drift detection.
+ * The product's own name and slug are not sync-owned (ADR 0011 decision 1:
+ * the native Product owns them) and therefore not part of the state. */
 export interface NativeProductState {
-  slug: string;
-  name: string;
   optionGroups: NativeOptionGroupState[];
   variants: NativeVariantState[];
 }
@@ -53,17 +53,6 @@ export function nativeStateDiff(
   current: NativeProductState
 ): NativeStateDiff[] {
   const diffs: NativeStateDiff[] = [];
-
-  if (planned.slug !== current.slug) {
-    diffs.push({ kind: "rename", label: `Slug eltér: "${current.slug}" → "${planned.slug}"` });
-  }
-
-  if (planned.name !== current.name) {
-    diffs.push({
-      kind: "rename",
-      label: `Terméknév eltér: "${current.name}" → "${planned.name}"`,
-    });
-  }
 
   diffs.push(
     ...optionGroupDiffs(planned.optionGroups, current.optionGroups),
@@ -225,15 +214,13 @@ function sha256(value: string): string {
 }
 
 /**
- * Hash of the native state the sync owns (product name/slug, option groups
- * with their options, variant skus/names/prices, option assignments and
- * facet values). Canonicalized so presentation-order changes alone never
- * read as drift.
+ * Hash of the native state the sync owns (option groups with their options,
+ * variant skus/names/prices, option assignments and facet values). The
+ * product's own name and slug are the native Product's (ADR 0011 decision 1).
+ * Canonicalized so presentation-order changes alone never read as drift.
  */
 export function nativeStateHash(state: NativeProductState): string {
   const canonical = {
-    slug: state.slug,
-    name: state.name,
     optionGroups: [...state.optionGroups]
       .toSorted((a, b) => a.code.localeCompare(b.code))
       .map((group) => ({

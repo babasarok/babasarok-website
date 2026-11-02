@@ -50,14 +50,16 @@ export function materialReferenceSlugs(definition: CanonicalProductDefinition): 
 }
 
 /** The refusal for deleting a material referenced by the given definitions,
- * or null when nothing references it. */
+ * or null when nothing references it. The definitions are named by their id —
+ * the canonical reference (ADR 0011 decision 1: the name lives on the native
+ * product, which this pure check does not read). */
 export function materialInUseError(
   slug: string,
   definitions: CanonicalProductDefinition[]
 ): MaterialInUseError | null {
   const labels = definitions
     .filter((definition) => materialReferenceSlugs(definition).has(slug))
-    .map((definition) => definition.label);
+    .map((definition) => definition.id);
 
   if (labels.length === 0) {
     return null;

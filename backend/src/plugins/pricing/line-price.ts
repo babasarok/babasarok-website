@@ -22,10 +22,12 @@ export class LinePricingError extends Error {}
 /**
  * The rejection for ordering a non-orderable (browse-only) product: the
  * interceptor returns it at the mutation boundary, the pricing walk throws it
- * as the backstop (ADR 0011 decision 5).
+ * as the backstop (ADR 0011 decision 5). The definition is named by its id:
+ * the display name lives on the native Product (ADR 0011 decision 1), which
+ * this pure check does not read.
  */
 export function nonOrderableRejection(definition: ProductDefinition): string {
-  return `A(z) "${definition.label}" termék jelenleg nem rendelhető.`;
+  return `A(z) "${definition.id}" termék jelenleg nem rendelhető.`;
 }
 
 function countWords(text: string): number {
@@ -247,7 +249,7 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
 
     if (lengthCm === null || !Number.isInteger(lengthCm) || lengthCm <= 0) {
       throw new LinePricingError(
-        `A(z) "${definition.label}" méteráru, de a rendelési soron nincs hossz megadva.`
+        `A(z) "${definition.id}" méteráru, de a rendelési soron nincs hossz megadva.`
       );
     }
 

@@ -203,7 +203,6 @@ export function assignGeneratedIds(definition: ProductDefinitionInput): ProductD
 export function sanitize(definition: ProductDefinitionInput): ProductDefinitionInput {
   return {
     ...definition,
-    label: definition.label.trim(),
     fields: definition.fields.map((field) => {
       const trimmed = { ...field, id: field.id.trim(), label: field.label.trim() };
 
@@ -238,12 +237,10 @@ export function sanitize(definition: ProductDefinitionInput): ProductDefinitionI
 
 export function newDefinition(
   id: string,
-  label: string,
   type: ProductDefinitionInput["type"]
 ): ProductDefinitionInput {
   return {
     id,
-    label,
     type,
     orderable: true,
     basePrice: 0,

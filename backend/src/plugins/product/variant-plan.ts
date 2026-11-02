@@ -59,18 +59,18 @@ function isBanned(
 }
 
 /**
- * `"<label> (<values joined by ', ')>", except a value that appears in more
- * than one group of the same variant gets its group's label prefixed — two
- * material fields both offering wool read "Külső anyag: Gyapjú, Belső anyag:
- * Gyapjú" instead of an ambiguous "Gyapjú, Gyapjú".
+ * `"<product name> (<values joined by ', ')>", except a value that appears in
+ * more than one group of the same variant gets its group's label prefixed —
+ * two material fields both offering wool read "Külső anyag: Gyapjú, Belső
+ * anyag: Gyapjú" instead of an ambiguous "Gyapjú, Gyapjú".
  */
 function variantName(
-  label: string,
+  productName: string,
   combo: readonly PlannedOption[],
   groups: readonly PlannedOptionGroup[]
 ): string {
   if (combo.length === 0) {
-    return label;
+    return productName;
   }
 
   const occurrences = new Map<string, number>();
@@ -84,14 +84,16 @@ function variantName(
     return (occurrences.get(option.name) ?? 0) > 1 ? `${group.name}: ${option.name}` : option.name;
   });
 
-  return `${label} (${values.join(", ")})`;
+  return `${productName} (${values.join(", ")})`;
 }
 
 /**
  * The decision core of the native sync: which option groups/options the
  * structured model demands, which variant combinations exist after forbidden
  * combinations are omitted, and each variant's total price. Pure — the service
- * only applies this against Vendure's services.
+ * only applies this against Vendure's services. `productName` is the native
+ * product's (hu) name, which the sync reads from the native product itself
+ * (ADR 0011 decision 1: the native Product owns the name).
  *
  * Choice, toggle and material fields become option groups; input, embroidery
  * and color-presentation choice fields never do (ADR 0010: free text, per-word
@@ -106,7 +108,8 @@ function variantName(
  */
 export function planVariantCombinations(
   definition: ProductDefinition,
-  materialDataBySlug: ReadonlyMap<string, MaterialFacetData>
+  materialDataBySlug: ReadonlyMap<string, MaterialFacetData>,
+  productName: string
 ): VariantPlan {
   const optionGroups: PlannedOptionGroup[] = [];
   const groupFields: ProductField[] = [];
@@ -190,7 +193,7 @@ export function planVariantCombinations(
 
     variants.push({
       sku: optionCodes.length === 0 ? definition.id : `${definition.id}--${optionCodes.join("-")}`,
-      name: variantName(definition.label, combo, optionGroups),
+      name: variantName(productName, combo, optionGroups),
       price:
         definition.pricing.kind === "length"
           ? 0
@@ -211,24 +214,23 @@ export function planVariantCombinations(
 }
 
 /**
- * The native state a sync of `definition` against the current materials would
- * produce. Pure — the staleness indicator hashes this against the native
- * product's actual state ("would a sync change anything?"), which covers
- * edited definitions, renamed/deleted materials and native-side hand edits
- * alike. `slugifyId` models how Vendure normalizes the sync-written slug
- * (definition ids are not always valid slugs); it defaults to the identity.
+ * The native state a sync of `definition` against the current materials and
+ * the native product's current name would produce. Pure — the staleness
+ * indicator hashes this against the native product's actual state ("would a
+ * sync change anything?"), which covers edited definitions,
+ * renamed/deleted materials and native-side hand edits alike. The product's
+ * own name and slug are not sync-owned (ADR 0011 decision 1), so they are not
+ * part of the state.
  */
 export function plannedNativeState(
   definition: ProductDefinition,
   materialDataBySlug: ReadonlyMap<string, MaterialFacetData>,
-  slugifyId: (id: string) => string = (id) => id
+  productName: string
 ): NativeProductState {
-  const plan = planVariantCombinations(definition, materialDataBySlug);
+  const plan = planVariantCombinations(definition, materialDataBySlug, productName);
   const facetCodesBySku = plannedVariantFacetCodes(plan, materialDataBySlug);
 
   return {
-    slug: slugifyId(definition.id),
-    name: definition.label,
     optionGroups: plan.optionGroups.map((group) => ({
       code: group.code,
       name: group.name,

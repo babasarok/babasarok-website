@@ -23,13 +23,13 @@ import {
  * admin API (helpers.ts).
  *
  * The hand edit targets a variant price because that is what the sync owns
- * end to end; a renamed product label would leave the definition stale for
- * reasons the sync cannot fix.
+ * end to end; a renamed product name is not drift at all (ADR 0011 decision
+ * 1: the name left the sync-owned state, and the rename's own ProductEvent
+ * re-enqueues the sync for the variant names).
  */
 
 const DRIFT_FIXTURE = {
   id: "e2e-d1",
-  label: "E2E D1",
   type: "kiegeszito",
   orderable: true,
   basePrice: 15_000,
@@ -73,7 +73,12 @@ test("a natively hand-edited variant price is refused until the force re-sync", 
   await test.step("login and create the fixture through the admin API", async () => {
     await login(page, "/products");
     await deleteDefinitionIfPresent(page, "e2e-d1");
-    await adminApi(page, CREATE_DEFINITION, { definition: DRIFT_FIXTURE }, CreatedDefinition);
+    await adminApi(
+      page,
+      CREATE_DEFINITION,
+      { definition: DRIFT_FIXTURE, name: "E2E D1" },
+      CreatedDefinition
+    );
   });
 
   await test.step("a saved option-price edit re-syncs into the variant prices", async () => {
