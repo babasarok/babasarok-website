@@ -20,7 +20,8 @@ filterable product list with a detail page per product.
 > the labelled field values ("`Anyag: Pamut · Méret: Nagy · Masni`"): a toggle
 > shows its bare label when on and is omitted when off; a variant with nothing
 > to list carries the product's name, so a rename on the stock product form
-> propagates to those variants. The product type is a value of the public
+> propagates to those variants; a stock product save re-syncs only when such
+> a variant exists. The product type is a value of the public
 > `babasarok-product-type` facet on the native product (ADR 0011 decision 2),
 > not a definition field. Editorial content still maps to the native product
 > at cutover: body → `description`, `thumbnail` → featured asset, `images` →
@@ -230,6 +231,10 @@ Material writes SHALL propagate automatically, without a definition save:
   - THEN the material's color facet values follow, and every product
     definition referencing the material re-syncs, so its variants carry the
     correct color facets
+- **Scenario: Material edit the sync does not read**
+  - WHEN a material update leaves its label and its colors' ids and labels
+    unchanged (e.g. only the description or images change)
+  - THEN no product definition re-syncs
 - **Scenario: Automatic sync meets native edits**
   - WHEN a sync triggered by a material change or a stock product rename
     (not by a definition save) finds the native options, variants or prices
