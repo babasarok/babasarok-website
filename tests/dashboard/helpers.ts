@@ -191,8 +191,15 @@ export async function ensureMaterials(page: Page, materials: FixtureMaterial[]):
       CREATE_MATERIAL,
       {
         input: {
-          ...material,
-          colors: material.colors ?? [{ id: "alap", label: "Alap", hex: "#f5f5f5" }],
+          slug: material.slug,
+          translations: [{ languageCode: "hu", label: material.label }],
+          colors: (material.colors ?? [{ id: "alap", label: "Alap", hex: "#f5f5f5" }]).map(
+            (color) => ({
+              id: color.id,
+              translations: [{ languageCode: "hu", label: color.label }],
+              hex: color.hex,
+            })
+          ),
         },
       },
       CreatedMaterial
@@ -239,6 +246,11 @@ export async function deleteDefinitionIfPresent(page: Page, productId: string): 
 /** Deep-links to a dashboard route and signs in on the redirect; the router
  * returns to the requested path after signing in. */
 export async function login(page: Page, path: string): Promise<void> {
+  await page.addInitScript(() => {
+    if (localStorage.getItem("vendure-user-settings") === null) {
+      localStorage.setItem("vendure-user-settings", JSON.stringify({ contentLanguage: "hu" }));
+    }
+  });
   await page.goto(`${DASHBOARD}${path}`);
   await page.locator("#field-username").fill(EMAIL);
   await page.locator("#field-password").fill(PASSWORD);

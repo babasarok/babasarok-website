@@ -36,12 +36,12 @@ const SYNC_FIXTURE = {
     {
       kind: "choice",
       id: "szin",
-      label: "Szín",
+      label: { hu: "Szín" },
       presentation: "select",
       visibility: { kind: "always" },
       options: Array.from({ length: 15 }, (_, index) => ({
         id: `k${String(index + 1).padStart(2, "0")}`,
-        label: `${index + 1}. változat`,
+        label: { hu: `${index + 1}. változat` },
         price: index * 100,
       })),
     },

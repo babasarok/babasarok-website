@@ -37,12 +37,12 @@ const DRIFT_FIXTURE = {
     {
       kind: "choice",
       id: "szin",
-      label: "Szín",
+      label: { hu: "Szín" },
       presentation: "select",
       visibility: { kind: "always" },
       options: [
-        { id: "kek", label: "Kék", price: 0 },
-        { id: "piros", label: "Piros", price: 500 },
+        { id: "kek", label: { hu: "Kék" }, price: 0 },
+        { id: "piros", label: { hu: "Piros" }, price: 500 },
       ],
     },
   ],
