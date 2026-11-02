@@ -2,27 +2,51 @@ import { MarkdownManager } from "@tiptap/markdown";
 import StarterKit from "@tiptap/starter-kit";
 import { describe, expect, test } from "vitest";
 import { createAssetImage } from "./asset-image";
-import { assetIdsIn, assetRef, isBlankMarkdown, parseAssetRef } from "./markdown-assets";
+import {
+  assetPrefixOf,
+  isBlankMarkdown,
+  toDisplaySrc,
+  toStoredSrc,
+  type AssetPaths,
+} from "./markdown-assets";
 
-const urls = new Map([["7", "https://assets.test/source/7.png"]]);
+const prefix = "https://api.test/assets/";
+const paths: AssetPaths = {
+  toDisplaySrc: (href) => toDisplaySrc(href, prefix),
+  toStoredSrc: (src) => toStoredSrc(src, prefix),
+};
 
 function manager(): MarkdownManager {
   return new MarkdownManager({
-    extensions: [
-      StarterKit.configure({ link: { openOnClick: false } }),
-      createAssetImage((id) => urls.get(id)),
-    ],
+    extensions: [StarterKit.configure({ link: { openOnClick: false } }), createAssetImage(paths)],
   });
 }
 
-describe("asset refs", () => {
-  test("round-trip and extraction", () => {
-    expect(parseAssetRef(assetRef("12"))).toBe("12");
-    expect(parseAssetRef("https://x.test/a.png")).toBeNull();
-    expect(parseAssetRef("asset:")).toBeNull();
-    expect(assetIdsIn('![a](asset:1) text ![b](asset:2 "t") ![c](asset:1) ![d](http://x)')).toEqual(
-      ["1", "2"]
+describe("asset paths", () => {
+  test("derives the prefix from an API source url", () => {
+    expect(assetPrefixOf("https://api.test/assets/source/c3/foo.jpg")).toBe(prefix);
+    expect(assetPrefixOf("https://x.test/a.png")).toBeNull();
+  });
+
+  test("strips only the known prefix", () => {
+    expect(toStoredSrc("https://api.test/assets/source/c3/foo.jpg", prefix)).toBe(
+      "source/c3/foo.jpg"
     );
+    expect(toStoredSrc("https://other.test/assets/source/c3/foo.jpg", prefix)).toBe(
+      "https://other.test/assets/source/c3/foo.jpg"
+    );
+    expect(toStoredSrc("https://api.test/assets/preview/c3/foo.jpg", prefix)).toBe(
+      "https://api.test/assets/preview/c3/foo.jpg"
+    );
+    expect(toStoredSrc("https://api.test/assets/source/c3/foo.jpg")).toBe(
+      "https://api.test/assets/source/c3/foo.jpg"
+    );
+  });
+
+  test("prefixes only relative asset paths for display", () => {
+    expect(toDisplaySrc("source/c3/foo.jpg", prefix)).toBe(`${prefix}source/c3/foo.jpg`);
+    expect(toDisplaySrc("https://x.test/a.png", prefix)).toBe("https://x.test/a.png");
+    expect(toDisplaySrc("source/c3/foo.jpg")).toBe("source/c3/foo.jpg");
   });
 
   test("blank detection", () => {
@@ -32,19 +56,12 @@ describe("asset refs", () => {
 });
 
 describe("markdown <-> editor document", () => {
-  test("asset images show the resolved url and serialize back to asset:<id>", () => {
+  test("relative asset images display with the prefix and serialize back relative", () => {
     const md = manager();
-    const doc = md.parse("![Logo](asset:7)");
-    const image = doc.content?.[0];
+    const doc = md.parse("![Logo](source/c3/foo.jpg)");
 
-    expect(image?.attrs).toMatchObject({ src: urls.get("7"), assetId: "7", alt: "Logo" });
-    expect(md.serialize(doc)).toBe("![Logo](asset:7)");
-  });
-
-  test("an unresolvable asset keeps its id", () => {
-    const md = manager();
-
-    expect(md.serialize(md.parse("![](asset:99)"))).toBe("![](asset:99)");
+    expect(doc.content?.[0].attrs).toMatchObject({ src: `${prefix}source/c3/foo.jpg` });
+    expect(md.serialize(doc)).toBe("![Logo](source/c3/foo.jpg)");
   });
 
   test("external images, headings, lists and links survive", () => {

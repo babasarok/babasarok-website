@@ -1,20 +1,36 @@
-const ASSET_REF_PREFIX = "asset:";
-const IMAGE_ASSET_REF = /!\[[^\]]*\]\(asset:([^\s)]+)/g;
+const ASSET_PATH = /^source\/[^/]{2}\/[^/]+$/;
+const ASSET_PATH_TAIL = /source\/[^/]{2}\/[^/]+$/;
 
-export function assetRef(assetId: string): string {
-  return `${ASSET_REF_PREFIX}${assetId}`;
+export interface AssetPaths {
+  toDisplaySrc: (href: string) => string;
+  toStoredSrc: (src: string) => string;
 }
 
-export function parseAssetRef(href: string): string | null {
-  if (!href.startsWith(ASSET_REF_PREFIX)) {
+export function assetPrefixOf(url: string): string | null {
+  const match = ASSET_PATH_TAIL.exec(url);
+
+  if (!match) {
     return null;
   }
 
-  return href.slice(ASSET_REF_PREFIX.length) || null;
+  return url.slice(0, match.index);
 }
 
-export function assetIdsIn(markdown: string): string[] {
-  return [...new Set([...markdown.matchAll(IMAGE_ASSET_REF)].map((match) => match[1]))];
+export function toStoredSrc(src: string, prefix?: string): string {
+  if (!prefix || !src.startsWith(prefix)) {
+    return src;
+  }
+
+  const path = src.slice(prefix.length);
+  return ASSET_PATH.test(path) ? path : src;
+}
+
+export function toDisplaySrc(href: string, prefix?: string): string {
+  if (!prefix || !ASSET_PATH.test(href)) {
+    return href;
+  }
+
+  return `${prefix}${href}`;
 }
 
 export function isBlankMarkdown(markdown: string): boolean {

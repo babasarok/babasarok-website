@@ -16,8 +16,8 @@ import {
 import { z } from "zod";
 import { createAssetImage } from "./asset-image";
 import "./markdown-editor.css";
-import { assetIdOfUrl, displayUrlOf, loadAssetUrls } from "./asset-lookup";
-import { assetIdsIn, isBlankMarkdown } from "./markdown-assets";
+import { assetPaths, loadAssetPrefix } from "./asset-prefix";
+import { isBlankMarkdown } from "./markdown-assets";
 
 const storedMarkdown = z
   .string()
@@ -33,7 +33,7 @@ function createExtensions(): Extensions {
     // Markdown has no underline; the toolbar button needs the command, so the
     // mark stays and serializes as plain text.
     Underline.extend({ renderMarkdown: (node, helpers) => helpers.renderChildren(node) }),
-    createAssetImage(displayUrlOf),
+    createAssetImage(assetPaths),
     TableKit,
     Markdown,
   ];
@@ -46,28 +46,6 @@ function setMarkdown(editor: Editor, markdown: string): void {
   }
 
   editor.commands.setContent(markdown, { contentType: "markdown", emitUpdate: false });
-}
-
-function linkImagesToAssets(editor: Editor): void {
-  editor.state.doc.descendants((node, pos) => {
-    const { src, assetId } = node.attrs;
-
-    if (node.type.name !== "image" || assetId || typeof src !== "string") {
-      return;
-    }
-
-    void assetIdOfUrl(src).then((resolved) => {
-      if (!resolved || editor.isDestroyed) {
-        return;
-      }
-
-      if (editor.state.doc.nodeAt(pos)?.attrs.src !== src) {
-        return;
-      }
-
-      editor.view.dispatch(editor.state.tr.setNodeAttribute(pos, "assetId", resolved));
-    });
-  });
 }
 
 function MarkdownEditorBody({
@@ -90,7 +68,6 @@ function MarkdownEditorBody({
     editable: !disabled,
     editorProps: { attributes: { class: "markdown-editor-content" } },
     onUpdate: ({ editor: updated }) => {
-      linkImagesToAssets(updated);
       lastEmitted.current = updated.getMarkdown();
       onChange(lastEmitted.current);
     },
@@ -105,20 +82,8 @@ function MarkdownEditorBody({
       return;
     }
 
-    let cancelled = false;
-
-    void loadAssetUrls(assetIdsIn(markdown)).then(() => {
-      if (cancelled || editor.isDestroyed) {
-        return;
-      }
-
-      lastEmitted.current = markdown;
-      setMarkdown(editor, markdown);
-    });
-
-    return () => {
-      cancelled = true;
-    };
+    lastEmitted.current = markdown;
+    setMarkdown(editor, markdown);
   }, [markdown, editor]);
 
   const requestLinkEdit = (): void => {
@@ -146,16 +111,15 @@ function MarkdownEditorBody({
 }
 
 /**
- * Visual editor that stores markdown. Images are stored as `asset:<id>`
- * references and shown through the asset server.
+ * Visual editor that stores markdown. Images served by the asset server are
+ * stored as their host-relative source path (`source/ab/name.jpg`).
  */
 export const MarkdownEditor: DashboardFormComponent = ({ value, onChange, disabled }) => {
   const markdown = storedMarkdown.parse(value);
-  const initialMarkdown = useRef(markdown);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    void loadAssetUrls(assetIdsIn(initialMarkdown.current)).finally(() => {
+    void loadAssetPrefix().finally(() => {
       setReady(true);
     });
   }, []);
