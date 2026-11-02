@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import {
   Asset,
+  EventBus,
   I18nError,
   LogLevel,
   RequestContext,
@@ -14,6 +15,7 @@ import type {
 } from "@babasarok/product-definition";
 import { ProductDefinition } from "../product/product.entity";
 import { Material, MaterialColor } from "./material.entity";
+import { MaterialEvent } from "./material.event";
 import { MaterialFacetSync } from "./material-facet-sync";
 import { validateMaterialInput, type MaterialInputData } from "./material-definition";
 
@@ -27,7 +29,7 @@ class MaterialInUseError extends I18nError {
 
 /** The material slugs a product definition references: material-field options
  * and forbidden combinations. */
-function materialReferenceSlugs(definition: CanonicalProductDefinition): Set<string> {
+export function materialReferenceSlugs(definition: CanonicalProductDefinition): Set<string> {
   const slugs = new Set<string>();
 
   for (const field of definition.fields) {
@@ -70,6 +72,7 @@ export function materialInUseError(
 export class MaterialService {
   constructor(
     private connection: TransactionalConnection,
+    private eventBus: EventBus,
     private facetSync: MaterialFacetSync
   ) {}
 
@@ -99,7 +102,7 @@ export class MaterialService {
       throw new UserInputError(`Már létezik anyag ezzel az azonosítóval: ${definition.id}`);
     }
 
-    return this.connection.withTransaction(ctx, async (txCtx) => {
+    const material = await this.connection.withTransaction(ctx, async (txCtx) => {
       const txRepo = this.connection.getRepository(txCtx, Material);
       await txRepo.insert({
         slug: definition.id,
@@ -114,6 +117,9 @@ export class MaterialService {
 
       return updated;
     });
+
+    await this.eventBus.publish(new MaterialEvent(ctx, "created", material.slug));
+    return material;
   }
 
   async updateMaterial(
@@ -134,7 +140,7 @@ export class MaterialService {
 
     const definition = await this.validated(input, ctx);
 
-    return this.connection.withTransaction(ctx, async (txCtx) => {
+    const material = await this.connection.withTransaction(ctx, async (txCtx) => {
       const txRepo = this.connection.getRepository(txCtx, Material);
       await txRepo.update({ id }, { label: definition.label, ...this.contentValues(definition) });
 
@@ -145,6 +151,9 @@ export class MaterialService {
 
       return updated;
     });
+
+    await this.eventBus.publish(new MaterialEvent(ctx, "updated", material.slug));
+    return material;
   }
 
   async deleteMaterial(ctx: RequestContext, id: number): Promise<boolean> {
@@ -155,7 +164,7 @@ export class MaterialService {
       throw new UserInputError(`Nincs anyag ezzel az azonosítóval: ${id}`);
     }
 
-    return this.connection.withTransaction(ctx, async (txCtx) => {
+    await this.connection.withTransaction(ctx, async (txCtx) => {
       const definitions = await this.connection.getRepository(txCtx, ProductDefinition).find();
       const error = materialInUseError(
         material.slug,
@@ -168,8 +177,10 @@ export class MaterialService {
 
       await this.facetSync.remove(txCtx, material);
       await this.connection.getRepository(txCtx, Material).delete({ id });
-      return true;
     });
+
+    await this.eventBus.publish(new MaterialEvent(ctx, "deleted", material.slug));
+    return true;
   }
 
   private contentValues(definition: MaterialDefinition): {

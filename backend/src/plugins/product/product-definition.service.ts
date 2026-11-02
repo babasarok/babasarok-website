@@ -2,9 +2,11 @@ import { Injectable, OnApplicationBootstrap } from "@nestjs/common";
 import {
   ChannelService,
   DefaultSlugStrategy,
+  EventBus,
   FacetValue,
   I18nError,
   LanguageCode,
+  Logger,
   LogLevel,
   Product,
   ProductOptionGroupService,
@@ -25,6 +27,8 @@ import type { ProductDefinition as CanonicalProductDefinition } from "@babasarok
 // The node-only entry: productRevision needs node:crypto, which must not reach
 // the dashboard's browser bundle through the main barrel.
 import { productRevision } from "@babasarok/product-definition/node";
+import { materialReferenceSlugs } from "../material/material.service";
+import { MaterialEvent } from "../material/material.event";
 import { Material } from "../material/material.entity";
 import { sortDefinitions } from "./definition-sort";
 import {
@@ -78,7 +82,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     private variantService: ProductVariantService,
     private jobQueueService: JobQueueService,
     private requestContextService: RequestContextService,
-    private channelService: ChannelService
+    private channelService: ChannelService,
+    private eventBus: EventBus
   ) {}
 
   /** The server process only enqueues; the worker process runs the syncs. */
@@ -88,6 +93,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       process: async (job) => {
         await this.processSyncJob(job.data.productId);
       },
+    });
+
+    this.eventBus.ofType(MaterialEvent).subscribe((event) => {
+      void this.onMaterialEvent(event);
     });
   }
 
@@ -276,6 +285,32 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     }
 
     return flags;
+  }
+
+  /**
+   * Re-syncs every definition referencing the material: renames, color
+   * changes and facet upkeep propagate to the affected native products.
+   */
+  async enqueueSyncsForMaterial(ctx: RequestContext, materialSlug: string): Promise<number> {
+    const rows = await this.connection.getRepository(ctx, ProductDefinition).find();
+    const affected = rows.filter((row) => materialReferenceSlugs(row.definition).has(materialSlug));
+
+    for (const row of affected) {
+      await this.enqueueSync(ctx, row.productId);
+    }
+
+    return affected.length;
+  }
+
+  private async onMaterialEvent(event: MaterialEvent): Promise<void> {
+    try {
+      await this.enqueueSyncsForMaterial(event.ctx, event.materialSlug);
+    } catch (error: unknown) {
+      Logger.error(
+        `Az anyag-módosulás utáni termékszinkronizálás sikertelen (${event.materialSlug}): ` +
+          (error instanceof Error ? error.message : String(error))
+      );
+    }
   }
 
   /** Queues a sync after the definition write committed. */
