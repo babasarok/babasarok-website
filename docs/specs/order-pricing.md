@@ -133,6 +133,25 @@ then sell for 0 Ft). Non-orderable (browse-only) products are exempt.
 > server refuses to price such a line — whether such fields may exist outside
 > length source fields is undecided; none exist in current content.
 
+### Lines whose definition changed after they were added
+
+#### Scenario: a stale line keeps its price
+
+- **WHEN** a line already on the order can no longer be priced from its
+  product's current definition (made non-orderable, field/option/material
+  removed)
+- **THEN** every recalculation keeps the line's last unit price instead of
+  failing, so unrelated mutations keep working
+- **AND** adding a new line that cannot be priced is still refused
+
+#### Scenario: a stale line blocks placing the order
+
+- **WHEN** the order moves from `AddingItems` to `ArrangingPayment` while any
+  line cannot be priced from its current definition
+- **THEN** the transition is refused with a Hungarian message naming the
+  product by its native name
+- **AND** removing or adjusting the line clears the refusal
+
 ### Set discount application
 
 Set discounts are flat forint deductions applied at basket level, not per line.

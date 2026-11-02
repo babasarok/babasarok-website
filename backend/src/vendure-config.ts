@@ -20,6 +20,7 @@ import { orderConfirmationHandler, orderNotificationHandler } from "./plugins/em
 import { MaterialPlugin } from "./plugins/material/material.plugin";
 import { PricingPlugin } from "./plugins/pricing/pricing.plugin";
 import { MAX_LINE_LENGTH_CM } from "./plugins/pricing/selection-validation";
+import { LineValidityProcess } from "./plugins/pricing/line-validity-process";
 import { ServerPricingStrategy } from "./plugins/pricing/pricing-strategy";
 import {
   productSetBasketCondition,
@@ -143,7 +144,10 @@ export const config: VendureConfig = {
     },
   },
   orderOptions: {
-    process: [configureDefaultOrderProcess({ arrangingPaymentRequiresShipping: false })],
+    process: [
+      configureDefaultOrderProcess({ arrangingPaymentRequiresShipping: false }),
+      new LineValidityProcess(),
+    ],
     orderPlacedStrategy: new QuoteOrderPlacedStrategy(),
     orderItemPriceCalculationStrategy: new ServerPricingStrategy(),
   },

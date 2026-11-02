@@ -1,8 +1,9 @@
 import type { ProductDefinition } from "@babasarok/product-definition";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
+import { LanguageCode } from "@vendure/core";
 import { describe, expect, it } from "vitest";
 import { LineSelectionsError, parseLineSelections } from "./line-selection";
-import { computeLineUnitPrice, LinePricingError } from "./line-price";
+import { computeLineUnitPrice, LinePricingError, valueConfiguredLine } from "./line-price";
 
 const unitProduct = ProductDefinitionSchema.parse({
   id: "parna",
@@ -455,5 +456,45 @@ describe("definition sanity", () => {
     const definitions: ProductDefinition[] = [unitProduct, lengthProduct];
 
     expect(definitions.every((definition) => definition.fields.length > 0)).toBe(true);
+  });
+});
+
+describe("valueConfiguredLine", () => {
+  const input = {
+    productName: "Párna",
+    variantListPrice: 9000,
+    optionCodes: new Map<string, string>(),
+    selections: {},
+    lengthCm: null,
+    languageCode: LanguageCode.hu,
+  };
+
+  it("prices an orderable definition", () => {
+    expect(valueConfiguredLine({ ...input, definition: { ...unitProduct, fields: [] } })).toEqual({
+      kind: "priced",
+      price: 9000,
+    });
+  });
+
+  it("marks a non-orderable definition invalid, naming the product", () => {
+    const result = valueConfiguredLine({
+      ...input,
+      definition: { ...unitProduct, orderable: false },
+    });
+
+    expect(result).toEqual({
+      kind: "invalid",
+      message: 'Árazási hiba (Párna): A(z) "Párna" termék jelenleg nem rendelhető.',
+    });
+  });
+
+  it("marks a selection of a removed field invalid", () => {
+    const result = valueConfiguredLine({
+      ...input,
+      definition: unitProduct,
+      selections: { torolt: { kind: "input", value: "x" } },
+    });
+
+    expect(result.kind).toBe("invalid");
   });
 });

@@ -135,9 +135,7 @@ merged to main until the backend structure is settled):
   decision 6)
 - ⬜ Vendure-complete gate — catalog fully manageable in the Vendure dashboard,
   nothing left that only Tina can do
-- ⬜ Hardening follow-ups (from the epic 2 branch review): an order line whose
-  definition changed after it was added (made non-orderable, option removed)
-  fails every recalculation until removed — price or flag it instead; material
+- ⬜ Hardening follow-ups (from the epic 2 branch review): material
   delete checks references without a lock, so a concurrent definition save can
   slip through; the variant sync runs the whole matrix in one transaction —
   commit per batch; `ConfiguredOrderLineInterceptor`, `ServerPricingStrategy`

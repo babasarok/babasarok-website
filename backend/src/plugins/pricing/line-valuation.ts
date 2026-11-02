@@ -1,0 +1,54 @@
+import type { EntityHydrator, ProductVariant, RequestContext } from "@vendure/core";
+import type { TransactionalConnection } from "@vendure/core";
+import { nativeProductNames } from "../product/native-names";
+import { ProductDefinition } from "../product/product.entity";
+import { valueConfiguredLine, type LineValuation } from "./line-price";
+import { parseLineSelections } from "./line-selection";
+
+export type VariantLineValuation = LineValuation | { kind: "passThrough" };
+
+export interface LineValuationDeps {
+  connection: TransactionalConnection;
+  entityHydrator: EntityHydrator;
+}
+
+/**
+ * The one decision on whether a variant plus line custom fields is priceable
+ * from its current definition; shared by the pricing strategy and the
+ * order-transition guard. Variants without a definition pass through.
+ */
+export async function valueVariantLine(
+  { connection, entityHydrator }: LineValuationDeps,
+  ctx: RequestContext,
+  productVariant: ProductVariant,
+  orderLineCustomFields: { [key: string]: unknown },
+  variantListPrice: number
+): Promise<VariantLineValuation> {
+  const productId = Number(productVariant.productId);
+  const definitionRow = await connection
+    .getRepository(ctx, ProductDefinition)
+    .findOne({ where: { nativeProductId: productId } });
+
+  if (definitionRow === null) {
+    return { kind: "passThrough" };
+  }
+
+  await entityHydrator.hydrate(ctx, productVariant, {
+    relations: ["options", "options.group"],
+  });
+
+  const productName =
+    (await nativeProductNames(connection, ctx, [productId])).get(productId) ||
+    definitionRow.productId;
+  const rawLengthCm = orderLineCustomFields.lengthCm;
+
+  return valueConfiguredLine({
+    definition: definitionRow.definition,
+    productName,
+    variantListPrice,
+    optionCodes: new Map(productVariant.options.map((option) => [option.group.code, option.code])),
+    selections: parseLineSelections(orderLineCustomFields.selections),
+    lengthCm: typeof rawLengthCm === "number" ? rawLengthCm : null,
+    languageCode: ctx.languageCode,
+  });
+}
