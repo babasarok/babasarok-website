@@ -14,6 +14,7 @@ import type {
 } from "@babasarok/product-definition";
 import { ProductDefinition } from "../product/product.entity";
 import { Material, MaterialColor } from "./material.entity";
+import { MaterialFacetSync } from "./material-facet-sync";
 import { validateMaterialInput, type MaterialInputData } from "./material-definition";
 
 /** Deletion refusal with a machine-readable code: the dashboard keys its
@@ -67,7 +68,10 @@ export function materialInUseError(
 
 @Injectable()
 export class MaterialService {
-  constructor(private connection: TransactionalConnection) {}
+  constructor(
+    private connection: TransactionalConnection,
+    private facetSync: MaterialFacetSync
+  ) {}
 
   async materials(ctx: RequestContext): Promise<Material[]> {
     const materials = await this.connection.getRepository(ctx, Material).find({
@@ -105,8 +109,10 @@ export class MaterialService {
 
       const material = await txRepo.findOneByOrFail({ slug: definition.id });
       await this.replaceColors(txCtx, material, definition.colors);
+      const updated = await txRepo.findOneByOrFail({ slug: definition.id });
+      await this.facetSync.upsert(txCtx, updated);
 
-      return txRepo.findOneByOrFail({ slug: definition.id });
+      return updated;
     });
   }
 
@@ -134,8 +140,10 @@ export class MaterialService {
 
       const material = await txRepo.findOneByOrFail({ id });
       await this.replaceColors(txCtx, material, definition.colors);
+      const updated = await txRepo.findOneByOrFail({ id });
+      await this.facetSync.upsert(txCtx, updated);
 
-      return txRepo.findOneByOrFail({ id });
+      return updated;
     });
   }
 
@@ -158,6 +166,7 @@ export class MaterialService {
         throw error;
       }
 
+      await this.facetSync.remove(txCtx, material);
       await this.connection.getRepository(txCtx, Material).delete({ id });
       return true;
     });
