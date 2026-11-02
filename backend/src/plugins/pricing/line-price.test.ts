@@ -295,7 +295,7 @@ describe("computeLineUnitPrice", () => {
         selections: {},
         lengthCm: null,
       })
-    ).toThrow(/Párna.*nem rendelhető/);
+    ).toThrow(/parna.*nem rendelhető/);
   });
 });
 
