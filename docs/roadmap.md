@@ -42,7 +42,7 @@ ordering).
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
 | 1   | **Deploy Vendure, use it exactly how we used web3forms** — self-hosted backend receiving order requests, nothing more                                                                                                                                                                                                                                                                                                                                              | done        |
 | 2   | **Implement the product catalog fully in Vendure with a good, manageable admin UX — this epic.** Includes set discounts. The delivery plan lives in [ADR 0010](adr/0010-native-generated-product-model.md) (product model: native-with-generation; dashboard configurator, facets/collections, promotions, set discounts) with the migration architecture in [ADR 0009](adr/0009-side-by-side-vendure-catalog-migration.md). Materials are already ported (PR #76) | in progress |
-| 3   | **Move the Astro site over to Vendure** — show products from Vendure, place orders the new way (order-line custom fields, quote/order handover)                                                                                                                                                                                                                                                                                                                    | not started |
+| 3   | **Move the Astro site over to Vendure** — show products from Vendure, place orders the new way against the epic-2 order-line fields and server pricing (quote/order handover)                                                                                                                                                                                                                                                                                      | not started |
 | 4   | **Remove the product Tina backend** — delete the product collections and their tooling once the site no longer reads them                                                                                                                                                                                                                                                                                                                                          | not started |
 | 5   | **Order resolution management** — the owner works orders in the Vendure dashboard: manual order-line stage changes (paid, order sent, fulfilled, …). Drives the later steps                                                                                                                                                                                                                                                                                        | not started |
 | 6   | **Native delivery methods** — replace the email/request-era delivery handling with Vendure-native shipping                                                                                                                                                                                                                                                                                                                                                         | not started |
@@ -87,14 +87,19 @@ merged to main until the backend structure is settled):
   full-width block + conditionally hiding the stock variants grid (both
   `pnpm patch` candidates), drift-detail display, validation-message
   localization
-- ⬜ Facets + Collections (material/color facets, auto-managed collections)
-- ⬜ Promotions (set discounts — see [order-pricing](specs/order-pricing.md)
-  and [product-sets](specs/product-sets.md) specs). Per-product % discounts
-  are dropped (owner decision: unused); they get no Vendure home
-- ⚠ Display-field gap — `shortDescription`, `categories` (tagline), `date`,
-  `icon` and per-image gallery descriptions have no Vendure home yet
-  ([ADR 0010](adr/0010-native-generated-product-model.md)); resolve by the
-  Vendure-complete gate
+- ⬜ Facets + Collections (material/color facets auto-synced from
+  definitions and material changes, auto-managed collections)
+- ⬜ Server-side pricing + promotions — length/embroidery via a custom
+  `OrderItemPriceCalculationStrategy` on order-line custom fields, set
+  discounts as a Vendure Promotion (see [order-pricing](specs/order-pricing.md)
+  and [product-sets](specs/product-sets.md) specs), product groups/related
+  products in Vendure. The backend keeps its own copy of the pricing logic;
+  `src/lib/pricing` is untouched until cutover (supersedes the price-authority
+  part of issue #71). Per-product % discounts are dropped (owner decision:
+  unused); they get no Vendure home
+- ⬜ Display fields — `shortDescription`, `categories` (tagline), `date`,
+  `icon` as `Product` custom fields and gallery descriptions as an `Asset`
+  custom field ([ADR 0010](adr/0010-native-generated-product-model.md))
 - ⬜ Vendure-complete gate — catalog fully manageable in the Vendure dashboard,
   nothing left that only Tina can do
 

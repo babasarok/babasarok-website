@@ -91,10 +91,15 @@ an option → the missing variants appear; no manual variant work anywhere.
    follow-ups (the fallback chain: definition image → material-color image
    → product featured asset).
 6. **Collections and promotions stay native**: facets (Material, Color) on
-   variants for facet-based Collections; the set (szett) discount's
-   material+color multiset matching stays in the pricing layer initially
-   (spec: order-pricing, product-sets), with a custom PromotionCondition as a
-   later, optional refactor. Per-product % discounts are dropped (owner
+   variants for facet-based Collections, auto-synced from definitions and
+   material changes. Pricing is server-side in Vendure within epic 2:
+   length-based and embroidery prices via a custom
+   `OrderItemPriceCalculationStrategy` reading order-line custom fields, and
+   the set (szett) discount as a Vendure Promotion (custom
+   PromotionCondition/Action; spec: order-pricing, product-sets). The backend
+   carries its own copy of the pricing logic — the Astro site's
+   `src/lib/pricing` stays untouched until the cutover, after which the
+   backend is the single price authority. Per-product % discounts are dropped (owner
    decision: unused in content) — they get no Vendure home and the canonical
    model carries no discount field. Group membership itself gets its Vendure
    home at the promotions step — the canonical group schemas already exist in
@@ -152,10 +157,9 @@ no slot and the canonical model does not carry them:
 - per-image gallery descriptions — Vendure `Asset` has only a `name`
   (verified in @vendure/core 3.8.1).
 
-Resolution belongs to epic 3 (cutover) planning: Vendure custom fields on
-`Product` or entries in the canonical model, decided when the site reads
-Vendure. They must be resolved before the Vendure-complete gate (delivery
-plan step 6), which is what enforces the yardstick end-to-end.
+Resolution (owner decision): native Vendure custom fields on `Product`
+(`shortDescription`, tagline, `date`, `icon`) and `Asset` (gallery
+description), edited in the stock dashboard — not the canonical model.
 
 ## Delivery plan (non-spike work)
 
@@ -178,15 +182,17 @@ Tina exactly as it is until step 7.
    generated products, delete/conflict policy.
 4. **Facets + Collections** — material/color facet values on variants,
    auto-managed collections, dashboard surfacing.
-5. **Promotions** — set discount stays in the pricing layer (fed by Vendure
-   data) until a native PromotionCondition is justified. Per-product %
-   discounts are dropped (owner decision), so no stock promotion is built
-   for them.
+5. **Server-side pricing + promotions** — order-line custom fields (length,
+   embroidery word count, field selections), a custom
+   `OrderItemPriceCalculationStrategy` for length/embroidery, and the set
+   discount as a Vendure Promotion; product groups get their Vendure home
+   here. Per-product % discounts are dropped (owner decision), so no stock
+   promotion is built for them.
 6. **Vendure-complete gate** — the catalog is fully manageable in the Vendure
    dashboard with nothing left that only Tina can do; verified end-to-end via
    seeds, API probes and dashboard e2e.
 7. **Cutover (separate work, last)** — the Astro site switches to reading
-   Vendure (ADR 0009's switch flip): order-line custom fields for color
-   selections/length/word count, the client-quote handover, prod
+   Vendure (ADR 0009's switch flip): the site places real orders against the
+   step-5 order-line fields and server pricing, the client-quote handover, prod
    hand-migration. Once the site is happy on Vendure, the Tina product
    collections are deleted.
