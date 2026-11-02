@@ -314,9 +314,7 @@ export function ConfiguratorEditor({
     definition !== null &&
     (definition.id !== "" || (creatingNew && name !== "") || rows.length > 0 || banned.length > 0);
 
-  // Guards only the create route: the embedded block shares the stock
-  // product page's navigation, where blocking is too broad a blast radius.
-  const blocksLeaving = (): boolean => mode === "create" && !pending && dirty;
+  const blocksLeaving = (): boolean => !pending && (creatingNew ? dirty : configuratorDirty);
 
   useBlocker({
     shouldBlockFn: blocksLeaving,

@@ -353,8 +353,8 @@ and valid, and the configurator editor when it has unsaved changes; each
 shows its own errors, and one failing does not stop the other. The
 configurator block has no save button of its own (delete, the sync status and
 the drift-conflict force-save remain); on a non-generated product the button
-behaves as the stock one. Navigating away with only configurator changes
-gives no unsaved-changes warning.
+behaves as the stock one. Navigating away or reloading with unsaved
+configurator changes asks for confirmation, like the stock form does.
 
 - **Scenario: Rename and configurator edit**
   - WHEN a generated product's name and a configurator field are both
@@ -363,6 +363,10 @@ gives no unsaved-changes warning.
 - **Scenario: Nothing changed**
   - WHEN neither the page form nor the configurator has changes
   - THEN the Update button is disabled
+- **Scenario: Leaving with configurator changes**
+  - WHEN a configurator field is edited and not saved
+  - AND the user navigates away or reloads the page
+  - THEN a confirmation is asked before the changes are discarded
 
 ### Variant sync progress
 
