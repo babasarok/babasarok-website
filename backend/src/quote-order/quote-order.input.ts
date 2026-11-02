@@ -1,10 +1,17 @@
 import { z } from "zod";
 
+export const QuoteOrderDetailSchema = z.object({
+  label: z.string().max(300),
+  value: z.string().max(2000),
+  depth: z.number().int().min(0).max(10),
+});
+
 export const QuoteOrderProductSchema = z.object({
   slug: z.string().min(1).max(200),
   title: z.string().min(1).max(300),
   count: z.number().int().min(1).max(99),
   configText: z.string().max(10_000),
+  details: z.array(QuoteOrderDetailSchema).max(100).optional(),
   unitPrice: z.number().int().min(0),
   lineTotal: z.number().int().min(0),
 });
@@ -35,6 +42,15 @@ export const QuoteOrderSchema = z
       });
     }
   });
+
+/** Reads the stored details; undefined for lines submitted without them. */
+export function parseProductDetails(json: string | null | undefined) {
+  if (!json) {
+    return undefined;
+  }
+  const result = z.array(QuoteOrderDetailSchema).safeParse(JSON.parse(json));
+  return result.success ? result.data : undefined;
+}
 
 export type QuoteOrderInput = z.infer<typeof QuoteOrderSchema>;
 export type QuoteOrderProductInput = z.infer<typeof QuoteOrderProductSchema>;

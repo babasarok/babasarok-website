@@ -1,6 +1,7 @@
 import { EntityHydrator, OrderStateTransitionEvent, TransactionalConnection } from "@vendure/core";
 import { Channel } from "@vendure/core/dist/entity/channel/channel.entity";
 import { EmailEventListener } from "@vendure/email-plugin";
+import { parseProductDetails } from "../quote-order/quote-order.input";
 import { env } from "../env";
 
 // "Order placed" for a quote shop: the submission transitions AddingItems ->
@@ -40,6 +41,11 @@ function onOrderPlaced(name: string) {
       products: event.order.lines.map((line, index) => ({
         number: index + 1,
         ...line.customFields,
+        quantity: line.quantity,
+        details: parseProductDetails(line.customFields.detailsJson)?.map((d) => ({
+          ...d,
+          paddingLeft: 14 + d.depth * 14,
+        })),
       })),
     }));
 }

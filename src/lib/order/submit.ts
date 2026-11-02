@@ -53,6 +53,33 @@ function fieldIndentDepth(field: Field, fields: Field[]): number {
   return depth;
 }
 
+interface ProductDetailLine {
+  label: string;
+  value: string;
+  depth: number;
+}
+
+/** The buyer-visible configuration of a product, without any prices. */
+function productDetailLines(
+  product: IProduct,
+  threadColors: CmsEnhancedEmbroideryColor[]
+): ProductDetailLine[] {
+  return (
+    product.fields
+      // Drop fields hidden by an unmet `depends_on` condition — they're not
+      // part of the order.
+      .filter((f) => isFieldVisible(f, product.fields))
+      // Hide only *empty* optional fields; a filled-in optional answer (e.g. a
+      // custom note) must still reach the email.
+      .filter((f) => FIELD_BEHAVIORS[f.type].includeInEmail(f))
+      .map((f) => ({
+        label: f.label,
+        value: FIELD_BEHAVIORS[f.type].formatForEmail(f, { fields: product.fields, threadColors }),
+        depth: fieldIndentDepth(f, product.fields),
+      }))
+  );
+}
+
 /** Render a single product into the plain-text block stored on the order line. */
 function formatProductString(
   product: IProduct,
@@ -72,17 +99,9 @@ function formatProductString(
   const lines = [
     `${product.title} (${product.count.toString()}db)`,
 
-    ...product.fields
-      // Drop fields hidden by an unmet `depends_on` condition — they're not
-      // part of the order.
-      .filter((f) => isFieldVisible(f, product.fields))
-      // Hide only *empty* optional fields; a filled-in optional answer (e.g. a
-      // custom note) must still reach the email.
-      .filter((f) => FIELD_BEHAVIORS[f.type].includeInEmail(f))
-      .map(
-        (f) =>
-          `${"  ".repeat(fieldIndentDepth(f, product.fields) + 1)}${f.label}: ${FIELD_BEHAVIORS[f.type].formatForEmail(f, { fields: product.fields, threadColors })}`
-      ),
+    ...productDetailLines(product, threadColors).map(
+      (d) => `${"  ".repeat(d.depth + 1)}${d.label}: ${d.value}`
+    ),
 
     "",
     `Alapár: ${price.basePrice.price?.toString() ?? ""} Ft`,
@@ -175,6 +194,7 @@ function buildQuoteOrderInput(
         title: product.title,
         count: product.count,
         configText: formatProductString(product, order.threadColors),
+        details: productDetailLines(product, order.threadColors),
         unitPrice: price.unitPrice ?? 0,
         lineTotal: price.totalPrice ?? 0,
       };

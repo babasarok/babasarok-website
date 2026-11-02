@@ -158,6 +158,7 @@ export const config: VendureConfig = {
     OrderLine: [
       { name: "title", type: "string" },
       { name: "configText", type: "text" },
+      { name: "detailsJson", type: "text", nullable: true },
       { name: "quotedUnitPrice", type: "int" },
       { name: "quotedLineTotal", type: "int" },
     ],

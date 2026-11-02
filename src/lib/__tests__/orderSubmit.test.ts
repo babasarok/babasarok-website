@@ -74,6 +74,28 @@ function productTexts(input: QuoteOrderInput): string[] {
   return (input.products as Array<{ configText: string }>).map((p) => p.configText);
 }
 
+describe("price-free product details", () => {
+  it("lists visible field label/value pairs without any price", async () => {
+    const product = makeProduct({
+      title: "Cumilánc",
+      price: 3500,
+      fields: [
+        makeField({
+          name: "nev",
+          label: "Név",
+          type: "input",
+          price: 700,
+          value: { value: "Anna" },
+        }),
+      ],
+    });
+    const input = await captureInput(baseOrder([product]));
+    const [line] = input.products as Array<{ details: unknown[] }>;
+
+    expect(line?.details).toEqual([{ label: "Név", value: "Anna", depth: 0 }]);
+  });
+});
+
 describe("order envelope", () => {
   it("includes buyer, delivery, message, terms, total and transaction id", async () => {
     const product = makeProduct({ title: "Pólya", price: 8000 });

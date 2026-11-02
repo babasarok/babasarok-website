@@ -100,6 +100,16 @@ summary, the order code, and the transaction identifier. Email delivery goes
 through Cloudflare Email Sending (REST); previews/dev run file transport and
 physically cannot email a buyer.
 
+The payload SHALL carry, per product, both the preformatted `configText`
+(including the price breakdown; shown in the owner notification) and an
+optional price-free `details` list of `{label, value, depth}` lines. The
+buyer confirmation SHALL render each product as a heading (number, title,
+quantity) over a label: value list built from `details`, with no option
+prices or subtotals; delivery SHALL be its own row (method and price, or
+"ingyenes" when free), and the only price in the email is the final total.
+A product submitted without `details` (an older site build) falls back to
+`configText` in the confirmation.
+
 - **Scenario: Successful submission**
   - WHEN a valid order is submitted and the backend accepts it
   - THEN the buyer sees a confirmation, the order is stored with its quoted
