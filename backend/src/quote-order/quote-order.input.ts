@@ -6,15 +6,20 @@ export const QuoteOrderDetailSchema = z.object({
   depth: z.number().int().min(0).max(10),
 });
 
-export const QuoteOrderProductSchema = z.object({
-  slug: z.string().min(1).max(200),
-  title: z.string().min(1).max(300),
-  count: z.number().int().min(1).max(99),
-  configText: z.string().max(10_000),
-  details: z.array(QuoteOrderDetailSchema).max(100).optional(),
-  unitPrice: z.number().int().min(0),
-  lineTotal: z.number().int().min(0),
-});
+export const QuoteOrderProductSchema = z
+  .object({
+    slug: z.string().min(1).max(200),
+    title: z.string().min(1).max(300),
+    count: z.number().int().min(1).max(99),
+    configText: z.string().max(10_000).optional(),
+    details: z.array(QuoteOrderDetailSchema).max(100).optional(),
+    unitPrice: z.number().int().min(0),
+    lineTotal: z.number().int().min(0),
+  })
+  .refine((product) => product.configText !== undefined || product.details !== undefined, {
+    path: ["details"],
+    message: "A product needs details or configText (a termékhez részletek szükségesek)",
+  });
 
 export const QuoteOrderSchema = z
   .object({

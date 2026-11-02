@@ -2,7 +2,7 @@
  * Regression guard for the exact order payload sent to the Vendure shop API.
  *
  * These tests pin the *content* of the submitted order (the per-product
- * configText blocks and the surrounding fields) so any accidental change to
+ * details lists and the surrounding fields) so any accidental change to
  * wording, ordering, or formatting in `submit.ts` shows up as a failing
  * assertion.
  *
@@ -69,9 +69,14 @@ const baseOrder = (products: OrderDetails["products"], address?: string): OrderD
   termsAccepted: true,
 });
 
-/** The joined per-product config text blocks of a captured input. */
-function productTexts(input: QuoteOrderInput): string[] {
-  return (input.products as Array<{ configText: string }>).map((p) => p.configText);
+interface DetailLine {
+  label: string;
+  value: string;
+  depth: number;
+}
+
+function productDetails(input: QuoteOrderInput): DetailLine[][] {
+  return (input.products as Array<{ details: DetailLine[] }>).map((p) => p.details);
 }
 
 describe("price-free product details", () => {
@@ -93,6 +98,7 @@ describe("price-free product details", () => {
     const [line] = input.products as Array<{ details: unknown[] }>;
 
     expect(line?.details).toEqual([{ label: "Név", value: "Anna", depth: 0 }]);
+    expect(line).not.toHaveProperty("configText");
   });
 });
 
@@ -134,7 +140,7 @@ describe("order envelope", () => {
   });
 });
 
-describe("product string content", () => {
+describe("product details content", () => {
   it("formats a radio + toggle product with material fields", async () => {
     const materialPool = [
       makeMaterial({
@@ -200,23 +206,34 @@ describe("product string content", () => {
       ],
     });
 
-    expect(productTexts(await captureInput(baseOrder([product])))[0]).toMatchInlineSnapshot(`
-      "Babafészek (2db)
-        Méret: Közepes
-        Babatakaró és párna: Igen
-        Betét: Nem
-        Anyag 1: Teddy (Bézs, Szürke)
-        Anyag 2: Minky (Rózsaszín)
-
-      Alapár: 15000 Ft
-      Méret: 1500Ft
-      Babatakaró és párna: 6500Ft
-      Betét: 0Ft
-      Anyag 1: 2000Ft
-      Anyag 2: 2500Ft
-
-        Egységár: 27500Ft
-      Összár: 55000Ft"
+    expect(productDetails(await captureInput(baseOrder([product])))[0]).toMatchInlineSnapshot(`
+      [
+        {
+          "depth": 0,
+          "label": "Méret",
+          "value": "Közepes",
+        },
+        {
+          "depth": 0,
+          "label": "Babatakaró és párna",
+          "value": "Igen",
+        },
+        {
+          "depth": 0,
+          "label": "Betét",
+          "value": "Nem",
+        },
+        {
+          "depth": 0,
+          "label": "Anyag 1",
+          "value": "Teddy (Bézs, Szürke)",
+        },
+        {
+          "depth": 0,
+          "label": "Anyag 2",
+          "value": "Minky (Rózsaszín)",
+        },
+      ]
     `);
   });
 
@@ -235,15 +252,14 @@ describe("product string content", () => {
       ],
     });
 
-    expect(productTexts(await captureInput(baseOrder([product])))[0]).toMatchInlineSnapshot(`
-      "Baldachin (1db)
-        Szín: Egyedi: mályva
-
-      Alapár: 12000 Ft
-      Szín: ??Ft
-
-        Egységár: 12000Ft
-      Összár: 12000Ft"
+    expect(productDetails(await captureInput(baseOrder([product])))[0]).toMatchInlineSnapshot(`
+      [
+        {
+          "depth": 0,
+          "label": "Szín",
+          "value": "Egyedi: mályva",
+        },
+      ]
     `);
   });
 
@@ -292,13 +308,10 @@ describe("product string content", () => {
       ],
     });
 
-    const text = productTexts(await captureInput(baseOrder([product])))[0];
-    expect(text).toContain("  Név: Anna");
-    // The filled-in optional note now reaches the email's answers block …
-    expect(text).toContain("  Egyéb megjegyzés: Sürgős, kérlek!");
-    // … while an empty optional field stays out of the answers block (the
-    // 2-space indent distinguishes answer lines from the price breakdown).
-    expect(text).not.toContain("  Üres megjegyzés:");
+    expect(productDetails(await captureInput(baseOrder([product])))[0]).toEqual([
+      { label: "Név", value: "Anna", depth: 0 },
+      { label: "Egyéb megjegyzés", value: "Sürgős, kérlek!", depth: 0 },
+    ]);
   });
 
   it("renders a length-priced (méteráru) product", async () => {
@@ -350,19 +363,24 @@ describe("product string content", () => {
       ],
     });
 
-    expect(productTexts(await captureInput(baseOrder([product])))[0]).toMatchInlineSnapshot(`
-      "Fonott rácsvédő (1db)
-        Méret: 300cm
-        Fonás: Négyes
-        Anyag: Pamutjersey (Fehér, Kék, Zöld, Piros)
-
-      Alapár: 0 Ft
-      Fonás: 8000Ft
-      Anyag: 0Ft
-
-        Egységár: 24000Ft
-        Méterár: 8000Ft/m
-      Összár: 24000Ft"
+    expect(productDetails(await captureInput(baseOrder([product])))[0]).toMatchInlineSnapshot(`
+      [
+        {
+          "depth": 0,
+          "label": "Méret",
+          "value": "300cm",
+        },
+        {
+          "depth": 0,
+          "label": "Fonás",
+          "value": "Négyes",
+        },
+        {
+          "depth": 0,
+          "label": "Anyag",
+          "value": "Pamutjersey (Fehér, Kék, Zöld, Piros)",
+        },
+      ]
     `);
   });
 
@@ -395,14 +413,10 @@ describe("product string content", () => {
         { color_id: "fekete", label: "Fekete", hex: undefined, image: undefined },
       ],
     });
-    const text = productTexts(input)[0];
-    expect(text).toContain("  Hímzés: Anna (Ekrü)");
-    expect(text).toContain("Hímzés: 1500Ft");
-    expect(text).not.toContain("Másik hímzés");
-    expect(text).not.toContain("Bori");
+    expect(productDetails(input)[0]).toEqual([{ label: "Hímzés", value: "Anna (Ekrü)", depth: 0 }]);
   });
 
-  it("applies an active discount to the product total but not the line prices", async () => {
+  it("keeps discounts and prices out of the details", async () => {
     const product = makeProduct({
       title: "Akciós pólya",
       price: 10_000,
@@ -412,12 +426,9 @@ describe("product string content", () => {
     });
 
     const input = await captureInput(baseOrder([product]));
-    const text = productTexts(input)[0];
-    expect(text).toContain("Alapár: 10000 Ft");
-    // 20% off 20000 = 4000 Ft, recorded as both percent and forint.
-    expect(text).toContain("Kedvezmény: 20% (-4000 Ft) (2 db)");
-    // 10000 * 2 * 0.8 = 16000
-    expect(text).toContain("Összár: 16000Ft");
+    const [line] = input.products as Array<{ details: unknown[]; lineTotal: number }>;
+    expect(line?.details).toEqual([]);
+    expect(line?.lineTotal).toBe(16_000);
   });
 });
 
@@ -443,10 +454,10 @@ describe("dependent fields (depends_on)", () => {
       ],
     });
 
-    const text = productTexts(await captureInput(baseOrder([product])))[0];
-    // Parent stays at the normal 2-space indent, the dependent field gets 4.
-    expect(text).toContain("  Hímzés: Igen");
-    expect(text).toContain("    Hímzés szövege: Anna");
+    expect(productDetails(await captureInput(baseOrder([product])))[0]).toEqual([
+      { label: "Hímzés", value: "Igen", depth: 0 },
+      { label: "Hímzés szövege", value: "Anna", depth: 1 },
+    ]);
   });
 
   it("indents a chained dependency two levels deep", async () => {
@@ -472,10 +483,11 @@ describe("dependent fields (depends_on)", () => {
       ],
     });
 
-    const text = productTexts(await captureInput(baseOrder([product])))[0];
-    expect(text).toContain("  A: Igen");
-    expect(text).toContain("    B: Igen");
-    expect(text).toContain("      C: mély");
+    expect(productDetails(await captureInput(baseOrder([product])))[0]).toEqual([
+      { label: "A", value: "Igen", depth: 0 },
+      { label: "B", value: "Igen", depth: 1 },
+      { label: "C", value: "mély", depth: 2 },
+    ]);
   });
 
   it("omits a dependent field whose dependency is not fulfilled", async () => {
@@ -499,12 +511,9 @@ describe("dependent fields (depends_on)", () => {
       ],
     });
 
-    const text = productTexts(await captureInput(baseOrder([product])))[0];
-    expect(text).toContain("Hímzés: Nem");
-    // The dependency (Hímzés = Igen) is unmet, so the field must not appear —
-    // not even its filled-in value.
-    expect(text).not.toContain("Hímzés szövege");
-    expect(text).not.toContain("Anna");
+    expect(productDetails(await captureInput(baseOrder([product])))[0]).toEqual([
+      { label: "Hímzés", value: "Nem", depth: 0 },
+    ]);
   });
 });
 

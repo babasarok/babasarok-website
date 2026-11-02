@@ -80,51 +80,6 @@ function productDetailLines(
   );
 }
 
-/** Render a single product into the plain-text block stored on the order line. */
-function formatProductString(
-  product: IProduct,
-  threadColors: CmsEnhancedEmbroideryColor[]
-): string {
-  const price = calculatePriceForItem(product);
-
-  // The forint a valid standalone discount removes from the line, so the email
-  // records both the percent and the resulting amount without recomputation.
-  const undiscounted =
-    price.unitPrice === undefined ? undefined : Math.round(price.unitPrice * product.count);
-  const standaloneMoney =
-    price.discountInfo && undiscounted !== undefined && price.totalPrice !== undefined
-      ? undiscounted - price.totalPrice
-      : undefined;
-
-  const lines = [
-    `${product.title} (${product.count.toString()}db)`,
-
-    ...productDetailLines(product, threadColors).map(
-      (d) => `${"  ".repeat(d.depth + 1)}${d.label}: ${d.value}`
-    ),
-
-    "",
-    `Alapár: ${price.basePrice.price?.toString() ?? ""} Ft`,
-    ...price.options.map((o) => `${o.label}: ${o.price?.toString() ?? "??"}Ft`),
-
-    "",
-    ...(price.unitPrice ? [`  Egységár: ${price.unitPrice.toString()}Ft`] : []),
-    ...(price.priced_by_length
-      ? [`  Méterár: ${price.per_meter_price?.toString() ?? ""}Ft/m`]
-      : []),
-    ...(price.discountInfo
-      ? [
-          `Kedvezmény: ${(price.discountInfo.percent / 100).toLocaleString("hu-HU", {
-            style: "percent",
-          })}${standaloneMoney === undefined ? "" : ` (-${standaloneMoney.toString()} Ft)`} (${price.discountInfo.discountAppliedCount} db)`,
-        ]
-      : []),
-    `Összár: ${price.totalPrice?.toString() ?? ""}Ft`,
-  ];
-
-  return lines.join("\n");
-}
-
 /**
  * Basket-level set-discount summary stored with the order: one line per
  * formed instance listing the set, the forint amount it removes, and the
@@ -193,7 +148,6 @@ function buildQuoteOrderInput(
         slug: product.product_id,
         title: product.title,
         count: product.count,
-        configText: formatProductString(product, order.threadColors),
         details: productDetailLines(product, order.threadColors),
         unitPrice: price.unitPrice ?? 0,
         lineTotal: price.totalPrice ?? 0,

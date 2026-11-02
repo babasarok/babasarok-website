@@ -69,7 +69,7 @@ export const quoteOrderSchema = gql`
     slug: String!
     title: String!
     count: Int!
-    configText: String!
+    configText: String
     details: [QuoteOrderDetailInput!]
     unitPrice: Int!
     lineTotal: Int!

@@ -101,4 +101,17 @@ describe("parseProductDetails", () => {
     };
     expect(QuoteOrderSchema.safeParse({ ...validInput, products: [product] }).success).toBe(true);
   });
+
+  it("rejects a product with neither details nor configText", () => {
+    const { configText: _omit, ...product } = validInput.products[0];
+    expect(QuoteOrderSchema.safeParse({ ...validInput, products: [product] }).success).toBe(false);
+  });
+
+  it("accepts a product with details only", () => {
+    const { configText: _omit, ...product } = validInput.products[0];
+    const withDetails = { ...product, details: [{ label: "Méret", value: "80", depth: 0 }] };
+    expect(QuoteOrderSchema.safeParse({ ...validInput, products: [withDetails] }).success).toBe(
+      true
+    );
+  });
 });
