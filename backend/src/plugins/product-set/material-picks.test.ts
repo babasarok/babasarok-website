@@ -69,9 +69,7 @@ describe("materialPicks", () => {
 
   it("rejects a variant without exactly one option in the material group", () => {
     expect(materialPicks(fixed, new Map([["anyag", []]]), {})).toBeUndefined();
-    expect(
-      materialPicks(fixed, new Map([["anyag", ["wellsoft", "minky"]]]), {})
-    ).toBeUndefined();
+    expect(materialPicks(fixed, new Map([["anyag", ["wellsoft", "minky"]]]), {})).toBeUndefined();
     expect(materialPicks(fixed, new Map(), {})).toBeUndefined();
   });
 

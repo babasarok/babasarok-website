@@ -197,10 +197,7 @@ export const productSetBasketCondition = new PromotionCondition({
     connection = injector.get(TransactionalConnection);
     entityHydrator = injector.get(EntityHydrator);
   },
-  check: async (
-    ctx: RequestContext,
-    order: Order
-  ): Promise<ProductSetConditionState | false> => {
+  check: async (ctx: RequestContext, order: Order): Promise<ProductSetConditionState | false> => {
     if (!(await isTheOnlyActiveSetPromotion(ctx))) {
       return false;
     }

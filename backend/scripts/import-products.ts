@@ -444,11 +444,7 @@ async function main(): Promise<void> {
         : [[synced.target.productId, synced.nativeProductId] as const]
     )
   );
-  const groups = await upsertGroups(
-    productIdByFile,
-    seededProductIds,
-    nativeProductIdByProductId
-  );
+  const groups = await upsertGroups(productIdByFile, seededProductIds, nativeProductIdByProductId);
   const promotion = await upsertSetPromotion();
 
   console.log(
@@ -478,7 +474,13 @@ async function upsertGroups(
   productIdByFile: ReadonlyMap<string, string>,
   seededProductIds: ReadonlySet<string>,
   nativeProductIdByProductId: ReadonlyMap<string, number>
-): Promise<{ created: number; unchanged: number; updated: number; failed: number; unseeded: number }> {
+): Promise<{
+  created: number;
+  unchanged: number;
+  updated: number;
+  failed: number;
+  unseeded: number;
+}> {
   const files = (await readdir(GROUPS_DIR)).filter((file) => file.endsWith(".md"));
   const parents = await ensureGroupParents();
   let created = 0;
@@ -596,7 +598,8 @@ interface GroupParentIds {
 }
 
 /** A collection upsert's result: a status word, or the error message on failure. */
-type CollectionUpsert = { ok: true; status: "created" | "unchanged" | "updated" } | { ok: false; error: string };
+type CollectionUpsert =
+  { ok: true; status: "created" | "unchanged" | "updated" } | { ok: false; error: string };
 
 const SET_PARENT: GroupCollectionInput = {
   slug: "szettek",
@@ -654,9 +657,18 @@ async function listGroupCollections(): Promise<
               z.object({
                 id: z.union([z.string(), z.number()]).transform(String),
                 isPrivate: z.boolean().nullish(),
-                parentId: z.union([z.string(), z.number()]).nullish().transform((v) => (v == null ? null : String(v))),
+                parentId: z
+                  .union([z.string(), z.number()])
+                  .nullish()
+                  .transform((v) => (v == null ? null : String(v))),
                 translations: z
-                  .array(z.object({ languageCode: z.string(), name: z.string().nullable(), slug: z.string() }))
+                  .array(
+                    z.object({
+                      languageCode: z.string(),
+                      name: z.string().nullable(),
+                      slug: z.string(),
+                    })
+                  )
                   .default([]),
                 filters: z
                   .array(
@@ -764,7 +776,9 @@ async function upsertGroupCollection(
             isPrivate: true,
             parentId,
             filters,
-            translations: [{ languageCode: "hu", name: group.name, slug: group.slug, description: "" }],
+            translations: [
+              { languageCode: "hu", name: group.name, slug: group.slug, description: "" },
+            ],
             customFields: { setDiscount: group.setDiscount },
           },
         },

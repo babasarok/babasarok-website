@@ -16,7 +16,10 @@ type MaterialField = Extract<DefinitionField, { kind: "material" }>;
  * when the referenced selection is absent or not a number — the count cannot
  * be proven, so the line must not form an instance.
  */
-function requiredColorCount(field: MaterialField, selections: LineSelections | null): number | undefined {
+function requiredColorCount(
+  field: MaterialField,
+  selections: LineSelections | null
+): number | undefined {
   if (field.colorCount.kind === "fixed") {
     return field.colorCount.count;
   }
