@@ -35,9 +35,6 @@ export default defineConfig({
         new URL("packages/product-definition/src/index.ts", import.meta.url)
       ),
       "@": fileURLToPath(new URL("src", import.meta.url)),
-      "@babasarok/product-definition": fileURLToPath(
-        new URL("packages/product-definition/src/index.ts", import.meta.url)
-      ),
     },
   },
   test: {
