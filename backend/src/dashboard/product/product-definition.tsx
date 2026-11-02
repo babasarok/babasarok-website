@@ -25,7 +25,13 @@ import {
   PageTitle,
 } from "@vendure/dashboard";
 import type { PageContextValue } from "@vendure/dashboard";
+import { z } from "zod";
 import { ConfiguratorEditor } from "./product-definition-configurator";
+
+// The editor re-validates the definition client-side with the canonical zod
+// schema; its built-in messages are English, and the dashboard's UI language
+// is Hungarian.
+z.config(z.locales.hu());
 
 // Extensions load for side effects only (the dashboard's virtual module
 // dynamic-imports this file); the registration call must run on import.

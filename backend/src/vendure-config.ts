@@ -13,6 +13,7 @@ import { DashboardPlugin } from "@vendure/dashboard/plugin";
 import { EmailPlugin, FileBasedTemplateLoader } from "@vendure/email-plugin";
 import type { EmailPluginDevModeOptions, EmailPluginOptions } from "@vendure/email-plugin";
 import { env } from "./env";
+import { z } from "zod";
 import { HandlebarsHtmlGenerator } from "./plugins/email/handlebars-html-generator";
 import { CloudflareEmailSender } from "./plugins/email/cloudflare-email-sender";
 import { orderConfirmationHandler, orderNotificationHandler } from "./plugins/email/order-emails";
@@ -20,6 +21,11 @@ import { MaterialPlugin } from "./plugins/material/material.plugin";
 import { ProductPlugin } from "./plugins/product/product.plugin";
 import { QuoteOrderPlugin } from "./plugins/quote-order/quote-order.plugin";
 import { ChannelSetupPlugin } from "./plugins/setup/channel-setup.plugin";
+
+// Zod's built-in validation messages surface to the owner (definition and
+// material validation); the Hungarian locale localizes them for every process
+// that loads this config (server, worker, migrations, dashboard build).
+z.config(z.locales.hu());
 
 /** Prices are whole Forints everywhere (definitions, seed, sync, order lines);
  * the default precision 2 would make the stock dashboard read a stored 15000

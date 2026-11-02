@@ -77,7 +77,7 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await expect(page.getByText("fields.0.label:")).toBeVisible();
     await expect(page.getByText("fields.0.options.0.label:")).toBeVisible();
     await expect(
-      page.getByText("Must be non-empty without leading or trailing whitespace").first()
+      page.getByText("Nem lehet üres, és nem kezdődhet vagy végződhet szóközzel").first()
     ).toBeVisible();
   });
 
