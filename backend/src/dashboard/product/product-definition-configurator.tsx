@@ -2,8 +2,9 @@
  * The shared configurator editor: edits the canonical definition in its input
  * shape and re-validates it with the canonical schema on save; the server
  * re-derives the native option groups/variants via the queued sync, whose
- * state and staleness the SyncBadge surfaces. Renders PageLayout content
- * only; the create page supplies the page title and framing.
+ * state and staleness the SyncBadge surfaces. Create mode renders a PageLayout;
+ * embedded mode renders its blocks bare so the stock page's full-width block
+ * row sizes them.
  *
  * Type-checked by src/dashboard/tsconfig.json (`check:dashboard`); at build
  * time the dashboard's vite pipeline bundles this file. The typed graphql
@@ -914,5 +915,11 @@ export function ConfiguratorEditor({
     </>
   );
 
-  return <PageLayout>{editor}</PageLayout>;
+  if (mode === "create") {
+    return <PageLayout>{editor}</PageLayout>;
+  }
+
+  // The embedded block sits in the stock page's full-width row; a nested
+  // PageLayout would re-grid its cards into a 3/4-width main column.
+  return <div className="space-y-4">{editor}</div>;
 }

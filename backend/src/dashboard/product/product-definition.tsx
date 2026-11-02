@@ -53,7 +53,7 @@ defineDashboardExtension({
       description: "A strukturált termékmotor szerkesztője, beágyazva a stock terméklapra.",
       location: {
         pageId: "product-detail",
-        column: "main",
+        column: "full",
         position: { blockId: "main-form", order: "after" },
       },
       component: ProductConfiguratorBlock,
