@@ -47,6 +47,7 @@ function onOrderPlaced(name: string) {
         details: parseProductDetails(line.customFields.detailsJson)?.map((d) => ({
           ...d,
           paddingLeft: 14 + d.depth * 14,
+          indent: d.depth * 14,
         })),
       })),
     }));
