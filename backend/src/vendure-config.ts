@@ -305,6 +305,10 @@ export const config: VendureConfig = {
         ],
         nullable: true,
         validate: (value) => {
+          if (value === null || value === undefined) {
+            return;
+          }
+
           if (!Number.isInteger(value) || value <= 0) {
             return "A szett-kedvezmény pozitív egész forint lehet.";
           }
