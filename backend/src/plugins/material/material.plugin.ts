@@ -1,12 +1,17 @@
 import { PluginCommonModule, VendurePlugin } from "@vendure/core";
-import { Material, MaterialColor } from "./material.entity";
+import {
+  Material,
+  MaterialColor,
+  MaterialColorTranslation,
+  MaterialTranslation,
+} from "./material.entity";
 import { MaterialColorResolver, MaterialResolver, materialSchema } from "./material.resolver";
 import { MaterialFacetSync } from "./material-facet-sync";
 import { MaterialService } from "./material.service";
 
 @VendurePlugin({
   imports: [PluginCommonModule],
-  entities: [Material, MaterialColor],
+  entities: [Material, MaterialTranslation, MaterialColor, MaterialColorTranslation],
   adminApiExtensions: {
     schema: materialSchema,
     resolvers: [MaterialResolver, MaterialColorResolver],

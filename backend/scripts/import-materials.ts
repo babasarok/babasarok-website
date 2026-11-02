@@ -257,7 +257,7 @@ async function main(): Promise<void> {
   for (const input of inputs) {
     const colors = input.colors.map((color) => ({
       id: color.id,
-      label: color.label,
+      label: { hu: color.label },
       appearance:
         color.assetId === null
           ? { kind: "hex" as const, value: color.hex ?? "" }
@@ -265,9 +265,9 @@ async function main(): Promise<void> {
     }));
     const result = MaterialDefinitionSchema.safeParse({
       id: input.slug,
-      label: input.label,
-      subtitle: input.subtitle,
-      description: input.description,
+      label: { hu: input.label },
+      subtitle: input.subtitle === null ? null : { hu: input.subtitle },
+      description: input.description === null ? null : { hu: input.description },
       thumbnail: input.thumbnailAssetId === null ? null : { assetId: input.thumbnailAssetId },
       colors,
     });
@@ -300,7 +300,26 @@ async function main(): Promise<void> {
       existingId === undefined
         ? `mutation Create($input: MaterialInput!) { createMaterial(input: $input) { id } }`
         : `mutation Update($id: ID!, $input: MaterialInput!) { updateMaterial(id: $id, input: $input) { id } }`;
-    const variables = existingId === undefined ? { input } : { id: existingId, input };
+    const apiInput = {
+      slug: input.slug,
+      translations: [
+        {
+          languageCode: "hu",
+          label: input.label,
+          subtitle: input.subtitle,
+          description: input.description,
+        },
+      ],
+      thumbnailAssetId: input.thumbnailAssetId,
+      colors: input.colors.map((color) => ({
+        id: color.id,
+        translations: [{ languageCode: "hu", label: color.label }],
+        hex: color.hex,
+        assetId: color.assetId,
+      })),
+    };
+    const variables =
+      existingId === undefined ? { input: apiInput } : { id: existingId, input: apiInput };
     const result = await adminRequest(
       JSON.stringify({ query: mutation, variables }),
       "application/json"

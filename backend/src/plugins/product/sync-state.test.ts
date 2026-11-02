@@ -5,24 +5,24 @@ const nativeState: NativeProductState = {
   optionGroups: [
     {
       code: "meret",
-      name: "Méret",
+      name: { hu: "Méret" },
       options: [
-        { code: "kicsi", name: "Kicsi" },
-        { code: "nagy", name: "Nagy" },
+        { code: "kicsi", name: { hu: "Kicsi" } },
+        { code: "nagy", name: { hu: "Nagy" } },
       ],
     },
   ],
   variants: [
     {
       sku: "babafeszek--kicsi",
-      name: "Babafészek (Kicsi)",
+      name: { hu: "Babafészek (Kicsi)" },
       price: 15_000,
       options: [{ groupCode: "meret", optionCode: "kicsi" }],
       facetValues: ["wellsoft"],
     },
     {
       sku: "babafeszek--nagy",
-      name: "Babafészek (Nagy)",
+      name: { hu: "Babafészek (Nagy)" },
       price: 16_000,
       options: [{ groupCode: "meret", optionCode: "nagy" }],
       facetValues: ["velur", "velur--barna"],
@@ -36,10 +36,10 @@ describe("nativeStateHash", () => {
       optionGroups: [
         {
           code: "meret",
-          name: "Méret",
+          name: { hu: "Méret" },
           options: [
-            { code: "nagy", name: "Nagy" },
-            { code: "kicsi", name: "Kicsi" },
+            { code: "nagy", name: { hu: "Nagy" } },
+            { code: "kicsi", name: { hu: "Kicsi" } },
           ],
         },
       ],
@@ -63,7 +63,7 @@ describe("nativeStateHash", () => {
     const renamed: NativeProductState = {
       ...nativeState,
       optionGroups: nativeState.optionGroups.map((group) =>
-        group.code === "meret" ? { ...group, name: "Méret!" } : group
+        group.code === "meret" ? { ...group, name: { hu: "Méret!" } } : group
       ),
     };
     const reassigned: NativeProductState = {
@@ -96,7 +96,7 @@ describe("nativeStateDiff", () => {
       optionGroups: [
         {
           code: "meret",
-          name: "Méret",
+          name: { hu: "Méret" },
           options: [...(nativeState.optionGroups[0]?.options ?? [])].toSorted((a, b) =>
             b.code.localeCompare(a.code)
           ),
@@ -113,10 +113,14 @@ describe("nativeStateDiff", () => {
       optionGroups: [
         {
           code: "meret",
-          name: "Méret",
-          options: [{ code: "kicsi", name: "Kicsi" }],
+          name: { hu: "Méret" },
+          options: [{ code: "kicsi", name: { hu: "Kicsi" } }],
         },
-        { code: "suly", name: "Súly", options: [{ code: "konnyu", name: "Könnyű" }] },
+        {
+          code: "suly",
+          name: { hu: "Súly" },
+          options: [{ code: "konnyu", name: { hu: "Könnyű" } }],
+        },
       ],
     };
 
@@ -132,10 +136,10 @@ describe("nativeStateDiff", () => {
       optionGroups: [
         {
           code: "meret",
-          name: "Méret!",
+          name: { hu: "Méret!" },
           options: [
-            { code: "kicsi", name: "Kicsi" },
-            { code: "nagy", name: "Nagy" },
+            { code: "kicsi", name: { hu: "Kicsi" } },
+            { code: "nagy", name: { hu: "Nagy" } },
           ],
         },
       ],
@@ -152,19 +156,25 @@ describe("nativeStateDiff", () => {
       variants: [
         {
           sku: "babafeszek--kicsi",
-          name: "Babafészek (Kicsi)",
+          name: { hu: "Babafészek (Kicsi)" },
           price: 15_000,
           options: [{ groupCode: "meret", optionCode: "kicsi" }],
           facetValues: ["wellsoft"],
         },
         {
           sku: "babafeszek--nagy",
-          name: "Babafészek (Nagy)",
+          name: { hu: "Babafészek (Nagy)" },
           price: 99_000,
           options: [{ groupCode: "meret", optionCode: "kicsi" }],
           facetValues: ["velur", "velur--barna"],
         },
-        { sku: "babafeszek--uj", name: "Babafészek (Új)", price: 1, options: [], facetValues: [] },
+        {
+          sku: "babafeszek--uj",
+          name: { hu: "Babafészek (Új)" },
+          price: 1,
+          options: [],
+          facetValues: [],
+        },
       ],
     };
 

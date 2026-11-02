@@ -11,14 +11,17 @@ import type { MaterialFacetData } from "./facet-plan";
 import type { VariantPlan } from "./variant-plan";
 
 const wellsoft: MaterialFacetData = {
-  label: "Wellsoft",
+  label: { hu: "Wellsoft" },
   colors: [
-    { id: "barna", label: "Barna" },
-    { id: "kek", label: "Kék" },
+    { id: "barna", label: { hu: "Barna" } },
+    { id: "kek", label: { hu: "Kék" } },
   ],
 };
-const velur: MaterialFacetData = { label: "Velúr", colors: [{ id: "barna", label: "Barna" }] };
-const waffle: MaterialFacetData = { label: "Waffle", colors: [] };
+const velur: MaterialFacetData = {
+  label: { hu: "Velúr" },
+  colors: [{ id: "barna", label: { hu: "Barna" } }],
+};
+const waffle: MaterialFacetData = { label: { hu: "Waffle" }, colors: [] };
 
 const materialData = new Map([
   ["wellsoft", wellsoft],
@@ -29,9 +32,9 @@ const materialData = new Map([
 describe("materialFacetValues", () => {
   it("demands the material value plus one value per color", () => {
     expect(materialFacetValues({ slug: "wellsoft", ...wellsoft })).toEqual([
-      { facetCode: MATERIAL_FACET_CODE, code: "wellsoft", name: "Wellsoft" },
-      { facetCode: COLOR_FACET_CODE, code: "wellsoft--barna", name: "Barna" },
-      { facetCode: COLOR_FACET_CODE, code: "wellsoft--kek", name: "Kék" },
+      { facetCode: MATERIAL_FACET_CODE, code: "wellsoft", name: { hu: "Wellsoft" } },
+      { facetCode: COLOR_FACET_CODE, code: "wellsoft--barna", name: { hu: "Barna" } },
+      { facetCode: COLOR_FACET_CODE, code: "wellsoft--kek", name: { hu: "Kék" } },
     ]);
   });
 
@@ -71,22 +74,34 @@ describe("plannedVariantFacetCodes", () => {
     optionGroups: [],
     bannedOmitted: 0,
     variants: [
-      { sku: "p--wellsoft", name: "p", price: 0, optionCodes: [], materialSlugs: ["wellsoft"] },
+      {
+        sku: "p--wellsoft",
+        name: { hu: "p" },
+        price: 0,
+        optionCodes: [],
+        materialSlugs: ["wellsoft"],
+      },
       {
         sku: "p--dupla",
-        name: "p",
+        name: { hu: "p" },
         price: 0,
         optionCodes: [],
         materialSlugs: ["wellsoft", "wellsoft"],
       },
       {
         sku: "p--vegyes",
-        name: "p",
+        name: { hu: "p" },
         price: 0,
         optionCodes: [],
         materialSlugs: ["velur", "waffle"],
       },
-      { sku: "p--ismeretlen", name: "p", price: 0, optionCodes: [], materialSlugs: ["torolt"] },
+      {
+        sku: "p--ismeretlen",
+        name: { hu: "p" },
+        price: 0,
+        optionCodes: [],
+        materialSlugs: ["torolt"],
+      },
     ],
   };
 

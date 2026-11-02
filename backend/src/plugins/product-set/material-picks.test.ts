@@ -17,7 +17,7 @@ const field = (
       {
         kind: "material",
         id: "anyag",
-        label: "Anyag",
+        label: { hu: "Anyag" },
         colorCount,
         options: [
           { materialId: "wellsoft", price: 3000 },

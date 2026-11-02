@@ -26,7 +26,7 @@ function materialField(
   return {
     kind: "material",
     id: "anyag",
-    label: "Anyag",
+    label: { hu: "Anyag" },
     options: materialIds.map((materialId) => ({ materialId, price: 0 })),
     colorCount: { kind: "fixed", count: 1 },
   };

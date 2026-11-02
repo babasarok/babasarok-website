@@ -124,8 +124,8 @@ describe("definitionFromTinaProduct", () => {
       id: "meret",
       presentation: "radio",
       options: [
-        { id: "35x65", label: "Normál", price: 0, tooltip: "35x65cm" },
-        { id: "40x75", label: "Közepes", price: 1500 },
+        { id: "35x65", label: { hu: "Normál" }, price: 0, tooltip: { hu: "35x65cm" } },
+        { id: "40x75", label: { hu: "Közepes" }, price: 1500 },
       ],
     });
     expect(betet).toMatchObject({ kind: "toggle", id: "betet", price: 3700 });
@@ -133,7 +133,7 @@ describe("definitionFromTinaProduct", () => {
       kind: "embroidery",
       pricing: { kind: "per-word", pricePerWord: 1500 },
     });
-    expect(fodor).toMatchObject({ kind: "toggle", id: "fodor", label: "Fodorral kérem" });
+    expect(fodor).toMatchObject({ kind: "toggle", id: "fodor", label: { hu: "Fodorral kérem" } });
     expect(anyag1).toMatchObject({
       kind: "material",
       colorCount: { kind: "fixed", count: 1 },
@@ -145,7 +145,7 @@ describe("definitionFromTinaProduct", () => {
     expect(nev).toMatchObject({
       kind: "input",
       required: false,
-      placeholder: "Név",
+      placeholder: { hu: "Név" },
       pattern: "^[a-z]+$",
     });
   });

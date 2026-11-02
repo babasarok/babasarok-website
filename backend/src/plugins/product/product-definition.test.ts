@@ -24,10 +24,10 @@ function choice(
   return {
     kind: "choice",
     id,
-    label: id,
+    label: { hu: id },
     presentation: "select",
     visibility: { kind: "always" },
-    options: options.map((option) => ({ ...option, label: option.id })),
+    options: options.map((option) => ({ ...option, label: { hu: option.id } })),
     ...overrides,
   };
 }
@@ -40,7 +40,7 @@ function materialField(
   return {
     kind: "material",
     id,
-    label: id,
+    label: { hu: id },
     options,
     colorCount: { kind: "fixed", count: 1 },
     ...overrides,
@@ -143,7 +143,9 @@ describe("validateProductDefinition", () => {
       definition({
         basePrice: 0,
         fields: [
-          choice("felirat", [{ id: "fix", price: 500 }], { customValue: { placeholder: "..." } }),
+          choice("felirat", [{ id: "fix", price: 500 }], {
+            customValue: { placeholder: { hu: "..." } },
+          }),
         ],
       }),
       MATERIALS
@@ -159,14 +161,14 @@ describe("validateProductDefinition", () => {
     const toggle: ProductDefinitionInput["fields"][number] = {
       kind: "toggle",
       id: "csomagolas",
-      label: "Csomagolás",
+      label: { hu: "Csomagolás" },
       visibility: { kind: "always" },
       price: 500,
     };
     const embroidery: ProductDefinitionInput["fields"][number] = {
       kind: "embroidery",
       id: "hímzés",
-      label: "Hímzés",
+      label: { hu: "Hímzés" },
       visibility: { kind: "always" },
       pricing: { kind: "flat", price: 500 },
     };
@@ -190,7 +192,7 @@ describe("validateProductDefinition", () => {
           {
             kind: "input",
             id: "hossz",
-            label: "Hossz",
+            label: { hu: "Hossz" },
             visibility: { kind: "always" },
             required: true,
             price: 500,
@@ -219,7 +221,7 @@ describe("validateProductDefinition", () => {
           {
             kind: "input",
             id: "hossz",
-            label: "Hossz",
+            label: { hu: "Hossz" },
             visibility: { kind: "always" },
             required: true,
             price: 0,

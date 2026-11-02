@@ -278,7 +278,7 @@ export function validateProductDefinition(
 
     errors.push(
       ...numericSourceErrors(
-        `A "${field.label}" anyagmező színszám-forrása`,
+        `A "${field.label.hu}" anyagmező színszám-forrása`,
         field.colorCount.fieldId,
         definition.fields,
         fieldIds,

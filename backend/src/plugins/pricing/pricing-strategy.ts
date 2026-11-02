@@ -66,6 +66,7 @@ export class ServerPricingStrategy implements OrderItemPriceCalculationStrategy 
         optionCodes,
         selections: parseLineSelections(orderLineCustomFields.selections),
         lengthCm: typeof rawLengthCm === "number" ? rawLengthCm : null,
+        languageCode: ctx.languageCode,
       });
 
       return { price, priceIncludesTax: productVariant.listPriceIncludesTax };

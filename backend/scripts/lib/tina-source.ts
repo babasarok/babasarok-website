@@ -176,9 +176,9 @@ function choiceField(
     return [
       {
         id,
-        label: trimmed(item.label) ?? id,
+        label: { hu: trimmed(item.label) ?? id },
         price: item.price ?? 0,
-        ...(tooltip === undefined ? {} : { tooltip }),
+        ...(tooltip === undefined ? {} : { tooltip: { hu: tooltip } }),
       },
     ];
   });
@@ -190,21 +190,21 @@ function choiceField(
     field.allow_custom_value === true
       ? {
           ...(pattern === undefined ? {} : { pattern }),
-          ...(placeholder === undefined ? {} : { placeholder }),
+          ...(placeholder === undefined ? {} : { placeholder: { hu: placeholder } }),
         }
       : undefined;
 
   return {
     kind: "choice",
     id: field.name.trim(),
-    label: field.label.trim(),
+    label: { hu: field.label.trim() },
     presentation,
     // The field-level `price` is vestigial Tina frontmatter — pricing is per
     // option (the site and the variant plan both read `option.price`), so the
     // canonical model has no such member and the value is dropped here.
     visibility: visibility(field),
     options,
-    ...(tooltip === undefined ? {} : { tooltip }),
+    ...(tooltip === undefined ? {} : { tooltip: { hu: tooltip } }),
     ...(customValue === undefined ? {} : { customValue }),
   };
 }
@@ -217,7 +217,7 @@ function inputField(field: TinaProductField): DefinitionInput {
 
     const value = item.value.trim();
 
-    return [{ value, label: trimmed(item.label) ?? value }];
+    return [{ value, label: { hu: trimmed(item.label) ?? value } }];
   });
 
   const tooltip = trimmed(field.tooltip);
@@ -227,12 +227,12 @@ function inputField(field: TinaProductField): DefinitionInput {
   return {
     kind: "input",
     id: field.name.trim(),
-    label: field.label.trim(),
+    label: { hu: field.label.trim() },
     visibility: visibility(field),
     required: field.optional !== true,
     price: field.price ?? 0,
-    ...(tooltip === undefined ? {} : { tooltip }),
-    ...(placeholder === undefined ? {} : { placeholder }),
+    ...(tooltip === undefined ? {} : { tooltip: { hu: tooltip } }),
+    ...(placeholder === undefined ? {} : { placeholder: { hu: placeholder } }),
     ...(pattern === undefined ? {} : { pattern }),
     ...(suggestions.length === 0 ? {} : { suggestions }),
   };
@@ -244,10 +244,10 @@ function toggleField(field: TinaProductField): DefinitionInput {
   return {
     kind: "toggle",
     id: field.name.trim(),
-    label: field.label.trim(),
+    label: { hu: field.label.trim() },
     visibility: visibility(field),
     price: field.price ?? 0,
-    ...(tooltip === undefined ? {} : { tooltip }),
+    ...(tooltip === undefined ? {} : { tooltip: { hu: tooltip } }),
   };
 }
 
@@ -266,7 +266,7 @@ function materialField(field: TinaProductField): DefinitionInput {
   return {
     kind: "material",
     id: field.name.trim(),
-    label: field.label.trim(),
+    label: { hu: field.label.trim() },
     options: (field.materials ?? []).flatMap((entry) =>
       entry === null
         ? []
@@ -278,7 +278,7 @@ function materialField(field: TinaProductField): DefinitionInput {
           ]
     ),
     colorCount,
-    ...(tooltip === undefined ? {} : { tooltip }),
+    ...(tooltip === undefined ? {} : { tooltip: { hu: tooltip } }),
   };
 }
 
@@ -291,14 +291,14 @@ function embroideryField(field: TinaProductField): DefinitionInput {
   return {
     kind: "embroidery",
     id: field.name.trim(),
-    label: field.label.trim(),
+    label: { hu: field.label.trim() },
     visibility: visibility(field),
     pricing:
       field.price_unit === "word"
         ? { kind: "per-word", pricePerWord: price }
         : { kind: "flat", price },
-    ...(tooltip === undefined ? {} : { tooltip }),
-    ...(placeholder === undefined ? {} : { placeholder }),
+    ...(tooltip === undefined ? {} : { tooltip: { hu: tooltip } }),
+    ...(placeholder === undefined ? {} : { placeholder: { hu: placeholder } }),
     ...(pattern === undefined ? {} : { pattern }),
   };
 }

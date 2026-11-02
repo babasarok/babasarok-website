@@ -7,15 +7,37 @@ import type { MaterialInputData } from "./material-definition";
 
 @Resolver(() => MaterialColor)
 export class MaterialColorResolver {
+  constructor(private materialService: MaterialService) {}
+
   @ResolveField(() => String)
   id(@Parent() color: MaterialColor): string {
     return color.colorId;
+  }
+
+  @ResolveField(() => String)
+  label(@Ctx() ctx: RequestContext, @Parent() color: MaterialColor): string {
+    return this.materialService.translatedColor(ctx, color).label;
   }
 }
 
 @Resolver(() => Material)
 export class MaterialResolver {
   constructor(private materialService: MaterialService) {}
+
+  @ResolveField(() => String)
+  label(@Ctx() ctx: RequestContext, @Parent() material: Material): string {
+    return this.materialService.translated(ctx, material).label;
+  }
+
+  @ResolveField(() => String)
+  subtitle(@Ctx() ctx: RequestContext, @Parent() material: Material): string {
+    return this.materialService.translated(ctx, material).subtitle;
+  }
+
+  @ResolveField(() => String)
+  description(@Ctx() ctx: RequestContext, @Parent() material: Material): string {
+    return this.materialService.translated(ctx, material).description;
+  }
 
   @Query()
   @Allow(Permission.UpdateCatalog)
@@ -68,9 +90,22 @@ export class MaterialResolver {
 }
 
 export const materialSchema = gql`
+  type MaterialColorTranslation {
+    languageCode: LanguageCode!
+    label: String!
+  }
+
+  type MaterialTranslation {
+    languageCode: LanguageCode!
+    label: String!
+    subtitle: String!
+    description: String!
+  }
+
   type MaterialColor {
     id: String!
     label: String!
+    translations: [MaterialColorTranslation!]!
     hex: String
     asset: Asset
   }
@@ -79,24 +114,35 @@ export const materialSchema = gql`
     id: ID!
     slug: String!
     label: String!
-    subtitle: String
-    description: String
+    subtitle: String!
+    description: String!
+    translations: [MaterialTranslation!]!
     thumbnail: Asset
     colors: [MaterialColor!]!
   }
 
+  input MaterialColorTranslationInput {
+    languageCode: LanguageCode!
+    label: String!
+  }
+
+  input MaterialTranslationInput {
+    languageCode: LanguageCode!
+    label: String!
+    subtitle: String
+    description: String
+  }
+
   input MaterialColorInput {
     id: String!
-    label: String!
+    translations: [MaterialColorTranslationInput!]!
     hex: String
     assetId: String
   }
 
   input MaterialInput {
     slug: String!
-    label: String!
-    subtitle: String
-    description: String
+    translations: [MaterialTranslationInput!]!
     thumbnailAssetId: String
     colors: [MaterialColorInput!]!
   }
