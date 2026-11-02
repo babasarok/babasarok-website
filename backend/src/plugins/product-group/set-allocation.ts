@@ -53,7 +53,10 @@ function materialEntries(line: AllocationLine): Map<string, number> {
       continue;
     }
 
-    const key = JSON.stringify({ materialId: pick.materialId, colors: [...pick.colors].toSorted() });
+    const key = JSON.stringify({
+      materialId: pick.materialId,
+      colors: [...pick.colors].toSorted(),
+    });
 
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
