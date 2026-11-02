@@ -87,7 +87,12 @@ export async function authenticate(): Promise<void> {
   );
 
   if (authToken === null) {
-    throw new Error(`login failed: ${result.errors.join("; ") || "unknown error"}`);
+    const refusal = z
+      .object({ authenticate: z.object({ message: z.string() }) })
+      .safeParse(result.data);
+    const reason = refusal.success ? refusal.data.authenticate.message : result.errors.join("; ");
+
+    throw new Error(`login failed: ${reason || "unknown error"}`);
   }
 }
 
