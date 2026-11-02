@@ -136,8 +136,8 @@ merged to main until the backend structure is settled):
 - ⬜ Vendure-complete gate — catalog fully manageable in the Vendure dashboard,
   nothing left that only Tina can do
 - ⬜ Hardening follow-ups (from the epic 2 branch review): the
-  variant sync stays atomic but shows no progress and does not resume after a
-  redeploy — report job progress and make it self-healing
+  variant sync stays atomic but does not resume after a redeploy — make it
+  self-healing
 
 ## Epic 9 design notes (multi-market tax & pricing)
 

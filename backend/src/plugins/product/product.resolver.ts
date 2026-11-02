@@ -4,6 +4,7 @@ import type { ID } from "@vendure/core";
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { ProductDefinition } from "./product.entity";
 import { ProductDefinitionService } from "./product-definition.service";
+import type { SyncProgress } from "./sync-progress";
 
 /** Mirrors the dashboard's PaginatedListDataTable contract (spike-proven). */
 interface GeneratedVariantListOptionsInput {
@@ -43,6 +44,7 @@ export interface ProductDefinitionGraph {
   definition: unknown;
   syncState: string;
   syncError: string | null;
+  syncProgress: SyncProgress | null;
   stale: boolean;
   driftDetails: ProductDefinitionDriftGraph[];
 }
@@ -55,7 +57,8 @@ export interface ProductDefinitionDriftGraph {
 function toGraph(
   row: ProductDefinition,
   stale: boolean,
-  driftDetails: ProductDefinitionDriftGraph[] = []
+  driftDetails: ProductDefinitionDriftGraph[] = [],
+  syncProgress: SyncProgress | null = null
 ): ProductDefinitionGraph {
   return {
     id: row.id,
@@ -67,6 +70,7 @@ function toGraph(
     definition: row.definition,
     syncState: row.syncState,
     syncError: row.syncError,
+    syncProgress,
     stale,
     driftDetails,
   };
@@ -110,7 +114,14 @@ export class ProductDefinitionResolver {
       row.productId
     );
 
-    return toGraph(row, analysis?.stale ?? false, analysis?.details ?? []);
+    return toGraph(
+      row,
+      analysis?.stale ?? false,
+      analysis?.details ?? [],
+      row.syncState === "pending"
+        ? await this.productDefinitionService.syncProgress(productId)
+        : null
+    );
   }
 
   @Query()
@@ -202,6 +213,11 @@ export const productDefinitionSchema = gql`
     label: String!
   }
 
+  type ProductDefinitionSyncProgress {
+    done: Int!
+    total: Int!
+  }
+
   type ProductDefinition implements Node {
     id: ID!
     productId: String!
@@ -212,6 +228,7 @@ export const productDefinitionSchema = gql`
     definition: JSON!
     syncState: String!
     syncError: String
+    syncProgress: ProductDefinitionSyncProgress
     stale: Boolean!
     driftDetails: [ProductDefinitionDrift!]
   }

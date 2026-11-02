@@ -335,3 +335,18 @@ fail. Deleting through the configurator keeps removing both.
 - **Scenario: Configurator delete**
   - WHEN a product is deleted through the configurator
   - THEN both the definition and the native product are removed, as before
+
+### Variant sync progress
+
+The system SHALL report the progress of a running variant sync as finished
+out of total work units (variant creates, updates and removals), readable
+while the sync's single transaction is still open. The configurator's sync
+status SHALL show it next to the pending label.
+
+- **Scenario: Running sync**
+  - WHEN a sync is pending and its job has reported progress
+  - THEN the configurator shows "Szinkronizálás… 340 / 1400", refreshed by its
+    existing poll
+- **Scenario: No progress reported yet**
+  - WHEN a sync is pending but its job has not started or reported
+  - THEN the configurator shows the plain pending label
