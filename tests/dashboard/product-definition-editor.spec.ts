@@ -56,12 +56,14 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await page.getByRole("button", { name: "Új konfigurátor termék" }).click();
     await page.waitForURL("**/dashboard/product-definitions/new");
     await expect(
-      page.getByText('Végleges: a natív termék slugja is ez lesz. Nem lehet "new".')
+      page.getByText('Végleges: a natív termék slugja létrehozáskor ebből készül. Nem lehet "new".')
     ).toBeVisible();
   });
 
   await test.step("the literal 'new' id is refused client-side", async () => {
     await page.getByLabel("Azonosító").fill("new");
+    // "Név" is the native product's name now (ADR 0011 decision 1); filling
+    // it keeps the create's own required-fields check out of the way.
     await page.getByLabel("Név").first().fill("E2E F1");
     await page.getByRole("button", { name: "Létrehozás" }).click();
 
