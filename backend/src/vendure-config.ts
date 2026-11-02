@@ -26,6 +26,7 @@ import {
   productSetBasketCondition,
   productSetDiscountAction,
 } from "./plugins/product-set/promotion";
+import { ProductSetPlugin } from "./plugins/product-set/product-set.plugin";
 import { ProductPlugin } from "./plugins/product/product.plugin";
 import { hexColorError } from "./plugins/product/thread-color";
 import { QuoteOrderPlugin } from "./plugins/quote-order/quote-order.plugin";
@@ -174,6 +175,7 @@ export const config: VendureConfig = {
     QuoteOrderPlugin,
     MaterialPlugin,
     ProductPlugin,
+    ProductSetPlugin,
     PricingPlugin,
     ChannelSetupPlugin,
     // Owns the material/product imagery (ADR 0009): uploads and previews are

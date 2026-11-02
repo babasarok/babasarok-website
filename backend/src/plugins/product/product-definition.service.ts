@@ -63,6 +63,7 @@ import {
 } from "./facet-plan";
 import { validateProductDefinition } from "./product-definition";
 import { ProductDefinition } from "./product.entity";
+import { memoPerRequest } from "./request-memo";
 import {
   nativeStateHash,
   nativeStateDiff,
@@ -406,6 +407,22 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
     return row;
   }
+
+  /** Every stored definition by native product id, loaded once per request
+   * so a product list does not query per product. */
+  definitionsByNativeProduct = memoPerRequest(
+    async (ctx: RequestContext): Promise<ReadonlyMap<number, CanonicalProductDefinition>> => {
+      const rows = await this.connection.getRepository(ctx, ProductDefinition).find({
+        select: { nativeProductId: true, definition: true },
+      });
+
+      return new Map(
+        rows.flatMap((row) =>
+          row.nativeProductId === null ? [] : [[row.nativeProductId, row.definition] as const]
+        )
+      );
+    }
+  );
 
   /** The native variants a sync generates, paged for the dashboard's variant table. */
   async generatedVariantList(

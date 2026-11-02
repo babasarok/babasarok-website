@@ -4,7 +4,10 @@ import {
   ProductDefinitionResolver,
   ProductFieldResolver,
   productDefinitionSchema,
+  ShopProductFieldResolver,
+  shopProductSchema,
 } from "./product.resolver";
+import { ShopThreadColorResolver } from "./thread-color.resolver";
 import { ProductDefinitionService } from "./product-definition.service";
 
 @VendurePlugin({
@@ -13,6 +16,10 @@ import { ProductDefinitionService } from "./product-definition.service";
   adminApiExtensions: {
     schema: productDefinitionSchema,
     resolvers: [ProductDefinitionResolver, ProductFieldResolver],
+  },
+  shopApiExtensions: {
+    schema: shopProductSchema,
+    resolvers: [ShopProductFieldResolver, ShopThreadColorResolver],
   },
   providers: [ProductDefinitionService],
   dashboard: "../../dashboard/product/product-definition.tsx",

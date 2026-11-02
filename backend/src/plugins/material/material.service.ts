@@ -129,6 +129,16 @@ export class MaterialService {
     return this.sortColors(material);
   }
 
+  async materialBySlug(ctx: RequestContext, slug: string): Promise<Material | null> {
+    const material = await this.connection.getRepository(ctx, Material).findOneBy({ slug });
+
+    if (material === null) {
+      return null;
+    }
+
+    return this.sortColors(material);
+  }
+
   async createMaterial(ctx: RequestContext, input: MaterialInputData): Promise<Material> {
     const definition = await this.validated(input, ctx);
     const repo = this.connection.getRepository(ctx, Material);

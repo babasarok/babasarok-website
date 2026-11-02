@@ -3,6 +3,7 @@ import { Allow, Ctx, Permission, Product, RequestContext, UserInputError } from 
 import type { ID } from "@vendure/core";
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { ProductDefinition } from "./product.entity";
+import { shopThreadColorTypes } from "./thread-color.resolver";
 import { ProductDefinitionService } from "./product-definition.service";
 import type { SyncProgress } from "./sync-progress";
 
@@ -203,6 +204,30 @@ export class ProductFieldResolver {
     return row === null ? null : toGraph(row, false);
   }
 }
+
+@Resolver("Product")
+export class ShopProductFieldResolver {
+  constructor(private productDefinitionService: ProductDefinitionService) {}
+
+  @ResolveField()
+  @Allow(Permission.Public)
+  async productDefinition(
+    @Ctx() ctx: RequestContext,
+    @Parent() product: Product
+  ): Promise<unknown> {
+    const definitions = await this.productDefinitionService.definitionsByNativeProduct(ctx);
+
+    return definitions.get(Number(product.id)) ?? null;
+  }
+}
+
+export const shopProductSchema = gql`
+  extend type Product {
+    productDefinition: JSON
+  }
+
+  ${shopThreadColorTypes}
+`;
 
 export const productDefinitionSchema = gql`
   # The Node/PaginatedList implementations are what the dashboard's table
