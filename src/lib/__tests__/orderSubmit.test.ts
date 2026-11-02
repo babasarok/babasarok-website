@@ -97,7 +97,7 @@ describe("price-free product details", () => {
     const input = await captureInput(baseOrder([product]));
     const [line] = input.products as Array<{ details: unknown[] }>;
 
-    expect(line?.details).toEqual([{ label: "Név", value: "Anna", depth: 0 }]);
+    expect(line.details).toEqual([{ label: "Név", value: "Anna", depth: 0 }]);
     expect(line).not.toHaveProperty("configText");
   });
 });
@@ -427,8 +427,8 @@ describe("product details content", () => {
 
     const input = await captureInput(baseOrder([product]));
     const [line] = input.products as Array<{ details: unknown[]; lineTotal: number }>;
-    expect(line?.details).toEqual([]);
-    expect(line?.lineTotal).toBe(16_000);
+    expect(line.details).toEqual([]);
+    expect(line.lineTotal).toBe(16_000);
   });
 });
 
