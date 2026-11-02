@@ -10,9 +10,11 @@ treated as contributing nothing rather than producing a partial price.
 ### Price part composition
 
 The system SHALL compute an item's unit price as the sum of the product's base
-price, the prices of all visible and selected priced configurable fields, and
-the price of each selected `material` field. Each part's price MUST be rounded
-to whole units before summing.
+price, the prices of all visible priced configurable fields, and the price of
+each selected `material` field. A choice or toggle option's price counts only
+when that option is selected; an input field's price applies while the field is
+visible even when left empty. Each part's price MUST be rounded to whole units
+before summing.
 
 - **Scenario: Base price plus options**
   - WHEN a buyer selects priced options (e.g. a fabric variant, an extra
@@ -48,7 +50,12 @@ unaffected.
 A product MAY be priced by length: a designated source field holds a length in
 centimetres and the computed unit price is the per-meter price. The system
 SHALL compute the unit price and total price scaled by the length in meters
-when the length is known, and leave them undefined when it is not.
+when the length is known, and leave them undefined when it is not. The length
+is a whole number of centimetres (the order line carries it as an integer); a
+fractional length is not quotable. Prices are whole forints: the unit price of
+a length-priced item is the per-meter price times the length in centimetres
+divided by 100, rounded to whole forints once, and the line total is that unit
+price times the quantity — no further rounding.
 
 - **Scenario: Priced by length**
   - WHEN a length-priced product's source field holds a length value
@@ -59,6 +66,12 @@ when the length is known, and leave them undefined when it is not.
   - WHEN a length-priced product's source field has no valid length value
   - THEN the unit price and total price are not determined and no price is
     shown until a length is entered
+- **Scenario: Whole-forint rounding**
+  - WHEN the per-meter price times the length does not come out even
+    (e.g. 995 Ft/m × 335 cm)
+  - THEN the unit price is that product rounded to whole forints once
+    (995 × 335 ÷ 100 → 3333 Ft) and the line total is that unit price times
+    the quantity
 
 ### No product may be sold for 0 Ft
 
@@ -100,7 +113,13 @@ then sell for 0 Ft). Non-orderable (browse-only) products are exempt.
 > cm plus per-field picks — materials with their colors, embroidery text and
 > thread color, input texts, color picks) — and a length-priced line without
 > a length is rejected when the item is added or adjusted, with the strategy
-> refusing to price it as the backstop. Never a 0 Ft line. Until the cutover
+> refusing to price it as the backstop. Never a 0 Ft line. The generated
+> native variant list prices follow the same visibility rule: a variant's
+> price is the base price plus only the option prices of variant-axis fields
+> visible given the variant's own picks — a field hidden by `depends_on` rides
+> the matrix but contributes nothing, so no variant charges for a selection
+> the order form cannot offer (the length walk's per-meter price obeys the
+> same rule). Until the cutover
 > the site keeps quoting client-side; server-side pricing applies to orders
 > that carry those fields. An open owner question: a `customValue` choice
 > field used as a variant axis cannot select a generated variant, and the

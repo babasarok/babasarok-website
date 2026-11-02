@@ -200,6 +200,41 @@ describe("planVariantCombinations", () => {
     expect(plan.variants.every((variant) => variant.price === 0)).toBe(true);
   });
 
+  it("prices a variant's hidden axis options at nothing — the form cannot select them", () => {
+    const definition = ProductDefinitionSchema.parse({
+      ...babafeszek,
+      id: "polya",
+      label: "Pólya",
+      fields: [
+        {
+          kind: "toggle",
+          id: "gumiskoto",
+          label: "Gumis átkötő",
+          visibility: { kind: "always" },
+          price: 800,
+        },
+        {
+          kind: "toggle",
+          id: "masni",
+          label: "Masni",
+          visibility: { kind: "when-equal", fieldId: "gumiskoto", value: true },
+          price: 500,
+        },
+      ],
+      forbiddenMaterialCombinations: [],
+    });
+
+    const plan = planVariantCombinations(definition, materials);
+    const priceOf = (codes: readonly string[]): number | undefined =>
+      plan.variants.find((variant) => variant.optionCodes.join("-") === codes.join("-"))?.price;
+
+    expect(plan.optionGroups.map((group) => group.code)).toEqual(["gumiskoto", "masni"]);
+    expect(priceOf(["nem", "nem"])).toBe(15_000);
+    expect(priceOf(["nem", "igen"])).toBe(15_000);
+    expect(priceOf(["igen", "nem"])).toBe(15_800);
+    expect(priceOf(["igen", "igen"])).toBe(16_300);
+  });
+
   it("keeps the short name while every value in a variant is unique", () => {
     const definition = ProductDefinitionSchema.parse({
       ...babafeszek,

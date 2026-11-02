@@ -308,6 +308,59 @@ describe("parseLineSelections", () => {
 });
 
 describe("length per-material pricing", () => {
+  it("skips a hidden variant axis in the per-meter price", () => {
+    const definition = ProductDefinitionSchema.parse({
+      ...lengthProduct,
+      fields: [
+        ...lengthProduct.fields,
+        {
+          kind: "toggle",
+          id: "gumiparositas",
+          label: "Gumírozás",
+          visibility: { kind: "always" },
+          price: 800,
+        },
+        {
+          kind: "toggle",
+          id: "masni",
+          label: "Masni",
+          visibility: { kind: "when-equal", fieldId: "gumiparositas", value: true },
+          price: 500,
+        },
+      ],
+    });
+
+    const hidden = computeLineUnitPrice({
+      definition,
+      variantListPrice: 0,
+      optionCodes: new Map([
+        ["sizes", "200"],
+        ["fonas", "3"],
+        ["anyag", "velur"],
+        ["gumiparositas", "nem"],
+        ["masni", "igen"],
+      ]),
+      selections: {},
+      lengthCm: 200,
+    });
+    const visible = computeLineUnitPrice({
+      definition,
+      variantListPrice: 0,
+      optionCodes: new Map([
+        ["sizes", "200"],
+        ["fonas", "3"],
+        ["anyag", "velur"],
+        ["gumiparositas", "igen"],
+        ["masni", "igen"],
+      ]),
+      selections: {},
+      lengthCm: 200,
+    });
+
+    expect(hidden).toBe(2 * 8000);
+    expect(visible).toBe(2 * (8000 + 800 + 500));
+  });
+
   it("scales each material's price with the length", () => {
     const teddy = computeLineUnitPrice({
       definition: lengthProduct,
