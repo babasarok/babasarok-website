@@ -28,6 +28,7 @@ import { Material } from "../material/material.entity";
 import { sortDefinitions } from "./definition-sort";
 import { validateProductDefinition } from "./product-definition";
 import { ProductDefinition } from "./product.entity";
+import type { MaterialFacetData } from "./facet-plan";
 import { nativeStateHash, type NativeProductState } from "./sync-state";
 import { plannedNativeState, planVariantCombinations, type VariantPlan } from "./variant-plan";
 
@@ -248,7 +249,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
    * sync. Pure planned-vs-actual comparison, so it needs no stored hashes.
    */
   async staleness(ctx: RequestContext, rows: ProductDefinition[]): Promise<Map<string, boolean>> {
-    const materialLabels = await this.materialLabels(ctx);
+    const materialData = await this.materialData(ctx);
     const flags = new Map<string, boolean>();
 
     for (const row of rows) {
@@ -257,7 +258,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         continue;
       }
 
-      const planned = plannedNativeState(row.definition, materialLabels, (id) =>
+      const planned = plannedNativeState(row.definition, materialData, (id) =>
         this.slugStrategy.generate(ctx, { value: id })
       );
       const current = await this.currentNativeState(ctx, row.nativeProductId);
@@ -397,7 +398,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     nativeProductId: number,
     definition: CanonicalProductDefinition
   ): Promise<void> {
-    const plan = planVariantCombinations(definition, await this.materialLabels(ctx));
+    const plan = planVariantCombinations(definition, await this.materialData(ctx));
     const optionIdsByGroupCode = await this.syncOptionGroups(ctx, nativeProductId, plan);
 
     await this.syncVariants(ctx, nativeProductId, plan, optionIdsByGroupCode);
@@ -682,7 +683,12 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     );
     const variants = await this.connection.getRepository(ctx, ProductVariant).find({
       where: { product: { id: nativeProductId }, deletedAt: IsNull() },
-      relations: { options: { group: true }, translations: true, productVariantPrices: true },
+      relations: {
+        options: { group: true },
+        translations: true,
+        productVariantPrices: true,
+        facetValues: true,
+      },
     });
 
     return {
@@ -706,14 +712,24 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
           groupCode: option.group.code,
           optionCode: option.code,
         })),
+        facetValues: variant.facetValues.map((value) => value.code),
       })),
     };
   }
 
-  private async materialLabels(ctx: RequestContext): Promise<Map<string, string>> {
+  /** The materials' labels and colors, the two inputs the facet/variant plan reads. */
+  private async materialData(ctx: RequestContext): Promise<Map<string, MaterialFacetData>> {
     const materials = await this.connection.getRepository(ctx, Material).find();
 
-    return new Map(materials.map((material) => [material.slug, material.label]));
+    return new Map(
+      materials.map((material) => [
+        material.slug,
+        {
+          label: material.label,
+          colors: material.colors.map((color) => ({ id: color.colorId, label: color.label })),
+        },
+      ])
+    );
   }
 
   private async validated(

@@ -1,4 +1,6 @@
 import type { ProductDefinition } from "@babasarok/product-definition";
+import { plannedVariantFacetCodes } from "./facet-plan";
+import type { MaterialFacetData } from "./facet-plan";
 import type { NativeProductState } from "./sync-state";
 
 export interface PlannedOption {
@@ -18,6 +20,7 @@ export interface PlannedVariant {
   name: string;
   price: number;
   optionCodes: string[];
+  materialSlugs: string[];
 }
 
 export interface VariantPlan {
@@ -98,7 +101,7 @@ function variantName(
  */
 export function planVariantCombinations(
   definition: ProductDefinition,
-  materialLabelById: ReadonlyMap<string, string>
+  materialDataBySlug: ReadonlyMap<string, MaterialFacetData>
 ): VariantPlan {
   const optionGroups: PlannedOptionGroup[] = [];
   const materialGroupIndexes: number[] = [];
@@ -141,7 +144,7 @@ export function planVariantCombinations(
         name: field.label,
         options: field.options.map((option) => ({
           code: option.materialId,
-          name: materialLabelById.get(option.materialId) ?? option.materialId,
+          name: materialDataBySlug.get(option.materialId)?.label ?? option.materialId,
           price: option.price,
         })),
       });
@@ -157,9 +160,9 @@ export function planVariantCombinations(
   const variants: PlannedVariant[] = [];
 
   for (const combo of combinations) {
-    const chosenMaterialIds = materialGroupIndexes.map((index) => combo[index].code);
+    const materialSlugs = materialGroupIndexes.map((index) => combo[index].code);
 
-    if (isBanned(chosenMaterialIds, definition.forbiddenMaterialCombinations)) {
+    if (isBanned(materialSlugs, definition.forbiddenMaterialCombinations)) {
       bannedOmitted += 1;
       continue;
     }
@@ -174,6 +177,7 @@ export function planVariantCombinations(
           ? 0
           : definition.basePrice + combo.reduce((sum, option) => sum + option.price, 0),
       optionCodes,
+      materialSlugs,
     });
   }
 
@@ -190,10 +194,11 @@ export function planVariantCombinations(
  */
 export function plannedNativeState(
   definition: ProductDefinition,
-  materialLabelById: ReadonlyMap<string, string>,
+  materialDataBySlug: ReadonlyMap<string, MaterialFacetData>,
   slugifyId: (id: string) => string = (id) => id
 ): NativeProductState {
-  const plan = planVariantCombinations(definition, materialLabelById);
+  const plan = planVariantCombinations(definition, materialDataBySlug);
+  const facetCodesBySku = plannedVariantFacetCodes(plan, materialDataBySlug);
 
   return {
     slug: slugifyId(definition.id),
@@ -211,6 +216,7 @@ export function plannedNativeState(
         groupCode: plan.optionGroups[groupIndex]?.code ?? "",
         optionCode: code,
       })),
+      facetValues: facetCodesBySku.get(variant.sku) ?? [],
     })),
   };
 }
