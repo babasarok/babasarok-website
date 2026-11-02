@@ -1,6 +1,6 @@
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
-import type { LineSelections } from "./line-selection.js";
+import type { LineSelectionRecord, LineSelections } from "./line-selection.js";
 import {
   MAX_SELECTION_TEXT_LENGTH,
   referencedMaterialIds,
@@ -178,7 +178,11 @@ describe("validateSelections", () => {
         },
       ],
     });
-    const material = { kind: "material", materialId: "len", colors: ["piros"] } as const;
+    const material = {
+      kind: "material",
+      materialId: "len",
+      colors: ["piros"],
+    } satisfies LineSelectionRecord;
 
     expect(
       validateSelections({

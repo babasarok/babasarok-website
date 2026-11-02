@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { completesForbiddenCombination, forbiddenMaterialFieldIds } from "./banned-combinations";
+import type { LineSelections } from "./line-selection";
 
 describe("completesForbiddenCombination", () => {
   it("bans a material chosen twice when the rule lists it twice", () => {
@@ -23,7 +24,7 @@ describe("forbiddenMaterialFieldIds", () => {
       one: { kind: "material", materialId: "a", colors: [] },
       two: { kind: "material", materialId: "b", colors: [] },
       three: { kind: "material", materialId: "c", colors: [] },
-    } as const;
+    } satisfies LineSelections;
 
     expect([...forbiddenMaterialFieldIds([["a", "b"]], selections)].toSorted()).toEqual([
       "one",
