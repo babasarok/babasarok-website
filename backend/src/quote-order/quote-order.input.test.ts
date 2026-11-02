@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { QuoteOrderSchema, splitName } from "./quote-order.input";
+import { QuoteOrderSchema, parseProductDetails, splitName } from "./quote-order.input";
 
 const validInput = {
   name: "Szabó Anna",
@@ -81,5 +81,37 @@ describe("splitName", () => {
 
   it("puts a single token in firstName", () => {
     expect(splitName("Anna")).toEqual({ firstName: "Anna", lastName: "" });
+  });
+});
+
+describe("parseProductDetails", () => {
+  it("returns undefined when nothing is stored", () => {
+    expect(parseProductDetails(null)).toBeUndefined();
+  });
+
+  it("returns the stored lines", () => {
+    const lines = [{ label: "Méret", value: "80", depth: 0 }];
+    expect(parseProductDetails(JSON.stringify(lines))).toEqual(lines);
+  });
+
+  it("accepts a product submitted with details", () => {
+    const product = {
+      ...validInput.products[0],
+      details: [{ label: "Méret", value: "80", depth: 0 }],
+    };
+    expect(QuoteOrderSchema.safeParse({ ...validInput, products: [product] }).success).toBe(true);
+  });
+
+  it("rejects a product with neither details nor configText", () => {
+    const { configText: _omit, ...product } = validInput.products[0];
+    expect(QuoteOrderSchema.safeParse({ ...validInput, products: [product] }).success).toBe(false);
+  });
+
+  it("accepts a product with details only", () => {
+    const { configText: _omit, ...product } = validInput.products[0];
+    const withDetails = { ...product, details: [{ label: "Méret", value: "80", depth: 0 }] };
+    expect(QuoteOrderSchema.safeParse({ ...validInput, products: [withDetails] }).success).toBe(
+      true
+    );
   });
 });

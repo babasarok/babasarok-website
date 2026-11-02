@@ -5,6 +5,12 @@ declare module "@vendure/core/dist/entity/custom-entity-fields" {
     orderEmailFrom: string | null;
     shopOwnerEmail: string | null;
   }
+  interface CustomOrderFields {
+    deliveryMethodName: string | null;
+  }
+  interface CustomOrderLineFields {
+    detailsJson: string | null;
+  }
 }
 
 import "@vendure/core/dist/entity/custom-entity-fields.js";

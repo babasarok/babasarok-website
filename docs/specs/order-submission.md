@@ -78,27 +78,42 @@ The system SHALL submit the order as a `submitQuoteOrder` mutation to the
 Vendure shop API, carrying the buyer's name, email, phone, delivery method
 (and address when required, plus a `deliveryFree` flag instead of the price
 when the method is charged at 0 by its free-delivery threshold), message, the
-terms acceptance flag, the computed total, one text block per product
-describing its quantity, configured fields (indented per dependency level),
-materials with colors, price breakdown, unit price (and per-meter price for
-length-priced items), and line total — plus a unique transaction identifier
+terms acceptance flag, the computed total, one structured `details` list per product
+(configured fields indented per dependency level, materials with colors), plus
+its unit price and line total — plus a unique transaction identifier
 generated per submission attempt. Set discounts SHALL be described at basket
 level: the payload SHALL summarize each formed set instance (set title, forint
 amount, and which items/units it covers) so each discount maps unambiguously
 to specific products.
 
 The backend SHALL validate the payload (zod schema), store it as a Vendure
-order with the quoted prices and text blocks as order/line custom fields, and
+order with the quoted prices and details as order/line custom fields, and
 return the generated order code. The computed prices travel with the order as
 the price authority (ADR 0002); the backend stores them as-is.
 
 On the AddingItems → ArrangingPayment transition the backend SHALL email the
 buyer a confirmation (subject: `Köszönjük a rendelésed: <rendelésszám>`) and
 the shop owner a notification (subject: `Új árajánlatkérés:
-<rendelésszám>`), both carrying the per-product blocks, the set-discount
+<rendelésszám>`), both carrying the per-product details, the set-discount
 summary, the order code, and the transaction identifier. Email delivery goes
 through Cloudflare Email Sending (REST); previews/dev run file transport and
 physically cannot email a buyer.
+
+The payload SHALL carry, per product, a price-free `details` list of
+`{label, value, depth}` lines (visible fields only, indented by dependency
+depth). `details` is the product description in both emails: each product is
+rendered as a heading (number, title, quantity) over a label: value list, with
+no option prices or subtotals, in the buyer confirmation and the owner
+notification alike. Delivery SHALL be its own row in the confirmation (method
+and price, or "ingyenes" when free), and the only price in the confirmation is
+the final total.
+
+`configText` (a preformatted text block) is legacy: new site builds do not send
+it. The backend still accepts it, stores it on the order line, and both emails
+fall back to it for a line that has no `details` (orders placed before
+`details` existed). Deploy skew rule: the backend deploys before the site, so
+it SHALL accept products with `configText` only (old site build) or `details`
+only (new site build); a product carrying neither is rejected.
 
 - **Scenario: Successful submission**
   - WHEN a valid order is submitted and the backend accepts it

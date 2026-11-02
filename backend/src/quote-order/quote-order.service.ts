@@ -47,7 +47,8 @@ export class QuoteOrderService {
         quantity: product.count,
         customFields: {
           title: product.title,
-          configText: product.configText,
+          configText: product.configText ?? null,
+          detailsJson: product.details === undefined ? null : JSON.stringify(product.details),
           quotedUnitPrice: product.unitPrice,
           quotedLineTotal: product.lineTotal,
         },
