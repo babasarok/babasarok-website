@@ -8,3 +8,5 @@ export const shopQuery = createShopQuery({
   apiUrl: PUBLIC_VENDURE_API_URL,
   languageCode: CATALOG_LANGUAGE,
 });
+
+export const ASSET_BASE = `${PUBLIC_VENDURE_API_URL}/assets/`;

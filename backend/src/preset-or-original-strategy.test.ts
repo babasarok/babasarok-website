@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ASSET_PRESETS, PresetOrOriginalStrategy } from "./asset-presets";
+import { ASSET_PRESETS } from "./asset-presets";
+import { PresetOrOriginalStrategy } from "./preset-or-original-strategy";
 
 const strategy = new PresetOrOriginalStrategy({
   defaultPreset: "card-lg",
