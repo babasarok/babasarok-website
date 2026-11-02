@@ -14,6 +14,7 @@ import type { CmsEnhancedDeliveryMethod, CmsEnhancedEmbroideryColor } from "../d
 import { isFieldVisible } from "../product/field";
 import { FIELD_BEHAVIORS } from "../product/behavior";
 import { PUBLIC_VENDURE_API_URL } from "astro:env/client";
+import { errorDetails, reportClientError } from "@/lib/errorReport";
 
 const VENDURE_API_URL = PUBLIC_VENDURE_API_URL;
 
@@ -52,57 +53,31 @@ function fieldIndentDepth(field: Field, fields: Field[]): number {
   return depth;
 }
 
-/** Render a single product into the plain-text block stored on the order line. */
-function formatProductString(
+interface ProductDetailLine {
+  label: string;
+  value: string;
+  depth: number;
+}
+
+/** The buyer-visible configuration of a product, without any prices. */
+function productDetailLines(
   product: IProduct,
   threadColors: CmsEnhancedEmbroideryColor[]
-): string {
-  const price = calculatePriceForItem(product);
-
-  // The forint a valid standalone discount removes from the line, so the email
-  // records both the percent and the resulting amount without recomputation.
-  const undiscounted =
-    price.unitPrice === undefined ? undefined : Math.round(price.unitPrice * product.count);
-  const standaloneMoney =
-    price.discountInfo && undiscounted !== undefined && price.totalPrice !== undefined
-      ? undiscounted - price.totalPrice
-      : undefined;
-
-  const lines = [
-    `${product.title} (${product.count.toString()}db)`,
-
-    ...product.fields
+): ProductDetailLine[] {
+  return (
+    product.fields
       // Drop fields hidden by an unmet `depends_on` condition — they're not
       // part of the order.
       .filter((f) => isFieldVisible(f, product.fields))
       // Hide only *empty* optional fields; a filled-in optional answer (e.g. a
       // custom note) must still reach the email.
       .filter((f) => FIELD_BEHAVIORS[f.type].includeInEmail(f))
-      .map(
-        (f) =>
-          `${"  ".repeat(fieldIndentDepth(f, product.fields) + 1)}${f.label}: ${FIELD_BEHAVIORS[f.type].formatForEmail(f, { fields: product.fields, threadColors })}`
-      ),
-
-    "",
-    `Alapár: ${price.basePrice.price?.toString() ?? ""} Ft`,
-    ...price.options.map((o) => `${o.label}: ${o.price?.toString() ?? "??"}Ft`),
-
-    "",
-    ...(price.unitPrice ? [`  Egységár: ${price.unitPrice.toString()}Ft`] : []),
-    ...(price.priced_by_length
-      ? [`  Méterár: ${price.per_meter_price?.toString() ?? ""}Ft/m`]
-      : []),
-    ...(price.discountInfo
-      ? [
-          `Kedvezmény: ${(price.discountInfo.percent / 100).toLocaleString("hu-HU", {
-            style: "percent",
-          })}${standaloneMoney === undefined ? "" : ` (-${standaloneMoney.toString()} Ft)`} (${price.discountInfo.discountAppliedCount} db)`,
-        ]
-      : []),
-    `Összár: ${price.totalPrice?.toString() ?? ""}Ft`,
-  ];
-
-  return lines.join("\n");
+      .map((f) => ({
+        label: f.label,
+        value: FIELD_BEHAVIORS[f.type].formatForEmail(f, { fields: product.fields, threadColors }),
+        depth: fieldIndentDepth(f, product.fields),
+      }))
+  );
 }
 
 /**
@@ -173,7 +148,7 @@ function buildQuoteOrderInput(
         slug: product.product_id,
         title: product.title,
         count: product.count,
-        configText: formatProductString(product, order.threadColors),
+        details: productDetailLines(product, order.threadColors),
         unitPrice: price.unitPrice ?? 0,
         lineTotal: price.totalPrice ?? 0,
       };
@@ -209,14 +184,12 @@ interface SubmitQuoteOrderResponse {
   errors?: Array<{ message: string }>;
 }
 
-export async function submitOrder(
-  order: OrderDetails,
-  options: SubmitOrderOptions
-): Promise<SubmitOrderResult> {
-  const input = buildQuoteOrderInput(order, options);
+type Failure = { reason: string; detail: string; stack?: string | undefined };
 
+async function sendOrder(input: Record<string, unknown>): Promise<Failure | undefined> {
+  let res: Response;
   try {
-    const res = await fetch(`${VENDURE_API_URL}/shop-api`, {
+    res = await fetch(`${VENDURE_API_URL}/shop-api`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -224,20 +197,45 @@ export async function submitOrder(
         variables: { input },
       }),
     });
-    const result = (await res.json()) as SubmitQuoteOrderResponse;
-
-    const submitted = result.data?.submitQuoteOrder;
-    if (submitted?.__typename === "SubmitQuoteOrderError") {
-      return { ok: false, message: `${GENERIC_ERROR} (${submitted.message})` };
-    }
-    if (submitted?.__typename !== "SubmitQuoteOrderSuccess") {
-      console.log("Failed to submit order", result.errors ?? result);
-      return { ok: false, message: GENERIC_ERROR };
-    }
   } catch (e) {
-    console.log("Failed to submit order", e);
-    return { ok: false, message: GENERIC_ERROR };
+    return { reason: "hálózati hiba", ...asDetail(e) };
   }
 
-  return { ok: true };
+  let result: SubmitQuoteOrderResponse;
+  try {
+    result = (await res.json()) as SubmitQuoteOrderResponse;
+  } catch (e) {
+    return { reason: `szerverhiba ${res.status.toString()}`, ...asDetail(e) };
+  }
+
+  const submitted = result.data?.submitQuoteOrder;
+  if (submitted?.__typename === "SubmitQuoteOrderError") {
+    return { reason: submitted.message, detail: `${submitted.errorCode}: ${submitted.message}` };
+  }
+
+  if (submitted?.__typename !== "SubmitQuoteOrderSuccess") {
+    const detail = result.errors?.map((e) => e.message).join("; ") ?? JSON.stringify(result);
+    return { reason: `szerverhiba ${res.status.toString()}`, detail };
+  }
+
+  return undefined;
+}
+
+function asDetail(error: unknown): { detail: string; stack?: string | undefined } {
+  const { message, stack } = errorDetails(error);
+  return { detail: message, stack };
+}
+
+export async function submitOrder(
+  order: OrderDetails,
+  options: SubmitOrderOptions
+): Promise<SubmitOrderResult> {
+  const failure = await sendOrder(buildQuoteOrderInput(order, options));
+  if (!failure) {
+    return { ok: true };
+  }
+
+  const reference = options.transactionId.slice(0, 8);
+  reportClientError({ kind: "order", message: failure.detail, stack: failure.stack, reference });
+  return { ok: false, message: `${GENERIC_ERROR} (${failure.reason}, kód: ${reference})` };
 }
