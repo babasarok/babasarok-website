@@ -142,11 +142,18 @@ order.
 ### Product availability for ordering
 
 The system SHALL expose only products whose `can_be_ordered` flag is set to
-the ordering UI; other products are browse-only.
+the ordering UI; other products are browse-only. The server enforces the flag
+at order time: adding or adjusting a basket line for a browse-only product is
+rejected with a clear error, and the pricing step refuses to price such a line
+as the backstop (ADR 0011 decision 5).
 
 - **Scenario: Non-orderable product**
   - WHEN a product's `can_be_ordered` flag is not set
   - THEN the product is not offered as an option in the order form
+- **Scenario: Non-orderable product rejected at the basket**
+  - WHEN a basket add or adjust targets a product whose `orderable` flag is
+    not set
+  - THEN the mutation is rejected with a clear error naming the product
 
 ### Product page order configurator
 
@@ -231,3 +238,18 @@ or skipping.
   - WHEN a product sync cannot resolve a facet value it should assign
   - THEN the sync fails with an error naming the value and the convergence
     step, and the dashboard shows the failed sync state
+
+### Definition lifecycle with the native product
+
+The system SHALL delete a product's canonical definition when the native
+product behind it is deleted through the stock product list or the API
+(ADR 0011 decision 4), so no orphan definition remains whose next sync would
+fail. Deleting through the configurator keeps removing both.
+
+- **Scenario: Stock delete of a generated product**
+  - WHEN the native product a definition generated is deleted in the stock
+    dashboard or via the API
+  - THEN the definition is deleted with it, in the same flow
+- **Scenario: Configurator delete**
+  - WHEN a product is deleted through the configurator
+  - THEN both the definition and the native product are removed, as before
