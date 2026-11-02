@@ -27,9 +27,11 @@ import {
   PageLayout,
   PageTitle,
   Textarea,
+  useUserSettings,
 } from "@vendure/dashboard";
 import { graphql } from "@/gql";
 import { errorCodeOf, ErrorNotice, rowKey } from "../shared";
+import { DEFAULT_TEXT_LANGUAGE } from "@babasarok/product-definition";
 
 const materialsQuery = graphql(`
   query Materials {
@@ -53,9 +55,12 @@ const materialQuery = graphql(`
     material(id: $id) {
       id
       slug
-      label
-      subtitle
-      description
+      translations {
+        languageCode
+        label
+        subtitle
+        description
+      }
       thumbnail {
         id
         name
@@ -63,7 +68,10 @@ const materialQuery = graphql(`
       }
       colors {
         id
-        label
+        translations {
+          languageCode
+          label
+        }
         hex
         asset {
           id
@@ -115,10 +123,18 @@ interface ColorRow {
   /** React key, independent of the (editable) color id. */
   key: string;
   colorId: string;
-  label: string;
+  labels: Record<string, string>;
   hex: string;
   asset: AssetRef | null;
 }
+
+interface MaterialTexts {
+  label: string;
+  subtitle: string;
+  description: string;
+}
+
+const EMPTY_TEXTS: MaterialTexts = { label: "", subtitle: "", description: "" };
 
 /** What the open asset picker writes into. */
 type PickerTarget = { kind: "color"; key: string } | { kind: "thumbnail" };
@@ -218,9 +234,8 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
   const navigate = route.useNavigate();
   const creatingNew = materialId === "" || materialId === NEW_ENTITY_PATH;
 
-  const [label, setLabel] = useState("");
-  const [subtitle, setSubtitle] = useState("");
-  const [description, setDescription] = useState("");
+  const language = useUserSettings().settings.contentLanguage;
+  const [texts, setTexts] = useState<Record<string, MaterialTexts>>({});
   const [thumbnail, setThumbnail] = useState<AssetRef | null>(null);
   const [newId, setNewId] = useState("");
   const [slug, setSlug] = useState("");
@@ -246,16 +261,27 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
           return;
         }
 
-        setLabel(result.material.label);
+        setTexts(
+          Object.fromEntries(
+            result.material.translations.map((translation) => [
+              translation.languageCode,
+              {
+                label: translation.label,
+                subtitle: translation.subtitle,
+                description: translation.description,
+              },
+            ])
+          )
+        );
         setSlug(result.material.slug);
-        setSubtitle(result.material.subtitle ?? "");
-        setDescription(result.material.description ?? "");
         setThumbnail(result.material.thumbnail);
         setColors(
           result.material.colors.map((color) => ({
             key: rowKey(),
             colorId: color.id,
-            label: color.label,
+            labels: Object.fromEntries(
+              color.translations.map((translation) => [translation.languageCode, translation.label])
+            ),
             hex: color.hex ?? "",
             asset: color.asset,
           }))
@@ -267,11 +293,21 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
   }, [creatingNew, loadedId, materialId]);
 
   function addColor(): void {
-    setColors((rows) => [...rows, { key: rowKey(), colorId: "", label: "", hex: "", asset: null }]);
+    setColors((rows) => [
+      ...rows,
+      { key: rowKey(), colorId: "", labels: {}, hex: "", asset: null },
+    ]);
   }
 
   function updateColor(key: string, patch: Partial<ColorRow>): void {
     setColors((rows) => rows.map((row) => (row.key === key ? { ...row, ...patch } : row)));
+  }
+
+  function patchTexts(patch: Partial<MaterialTexts>): void {
+    setTexts((current) => ({
+      ...current,
+      [language]: { ...(current[language] ?? EMPTY_TEXTS), ...patch },
+    }));
   }
 
   function removeColor(key: string): void {
@@ -284,13 +320,20 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
     setPending(true);
     const input = {
       slug: creatingNew ? newId.trim() : slug,
-      label: label.trim(),
-      subtitle: subtitle.trim() || null,
-      description: description.trim() || null,
+      translations: Object.entries(texts)
+        .map(([languageCode, text]) => ({
+          languageCode,
+          label: text.label.trim(),
+          subtitle: text.subtitle.trim() || null,
+          description: text.description.trim() || null,
+        }))
+        .filter((text) => text.label !== "" || text.subtitle !== null || text.description !== null),
       thumbnailAssetId: thumbnail?.id ?? null,
       colors: colors.map((row) => ({
         id: row.colorId.trim(),
-        label: row.label.trim(),
+        translations: Object.entries(row.labels)
+          .map(([languageCode, label]) => ({ languageCode, label: label.trim() }))
+          .filter((translation) => translation.label !== ""),
         hex: row.asset === null ? row.hex.trim() || null : null,
         assetId: row.asset?.id ?? null,
       })),
@@ -335,9 +378,13 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
     }
   }
 
+  const current = texts[language] ?? EMPTY_TEXTS;
+  const fallback = language === DEFAULT_TEXT_LANGUAGE ? undefined : texts[DEFAULT_TEXT_LANGUAGE];
+  const title = current.label || (texts[DEFAULT_TEXT_LANGUAGE]?.label ?? slug);
+
   return (
     <Page pageId="material-detail">
-      <PageTitle>{creatingNew ? "Új anyag" : label}</PageTitle>
+      <PageTitle>{creatingNew ? "Új anyag" : title}</PageTitle>
       <PageActionBar>
         <ActionBarItem itemId="save-material">
           <Button
@@ -391,18 +438,20 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
             <label className="flex flex-col gap-1 text-sm">
               <span>Név</span>
               <Input
-                value={label}
+                value={current.label}
+                placeholder={fallback?.label}
                 onChange={(e) => {
-                  setLabel(e.target.value);
+                  patchTexts({ label: e.target.value });
                 }}
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">
               <span>Alcím</span>
               <Input
-                value={subtitle}
+                value={current.subtitle}
+                placeholder={fallback?.subtitle}
                 onChange={(e) => {
-                  setSubtitle(e.target.value);
+                  patchTexts({ subtitle: e.target.value });
                 }}
               />
             </label>
@@ -410,9 +459,10 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
               <span>Leírás</span>
               <Textarea
                 rows={3}
-                value={description}
+                value={current.description}
+                placeholder={fallback?.description}
                 onChange={(e) => {
-                  setDescription(e.target.value);
+                  patchTexts({ description: e.target.value });
                 }}
               />
             </label>
@@ -470,9 +520,16 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
                   <span>Név</span>
                   <Input
                     className="w-40"
-                    value={row.label}
+                    value={row.labels[language] ?? ""}
+                    placeholder={
+                      language === DEFAULT_TEXT_LANGUAGE
+                        ? undefined
+                        : row.labels[DEFAULT_TEXT_LANGUAGE]
+                    }
                     onChange={(e) => {
-                      updateColor(row.key, { label: e.target.value });
+                      updateColor(row.key, {
+                        labels: { ...row.labels, [language]: e.target.value },
+                      });
                     }}
                   />
                 </label>

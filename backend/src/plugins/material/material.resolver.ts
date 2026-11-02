@@ -122,12 +122,12 @@ export const materialSchema = gql`
   }
 
   input MaterialColorTranslationInput {
-    languageCode: LanguageCode!
+    languageCode: String!
     label: String!
   }
 
   input MaterialTranslationInput {
-    languageCode: LanguageCode!
+    languageCode: String!
     label: String!
     subtitle: String
     description: String
