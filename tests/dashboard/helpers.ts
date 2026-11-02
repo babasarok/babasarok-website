@@ -78,8 +78,8 @@ const CREATE_PRODUCT = `mutation CreateProductE2E($input: CreateProductInput!) {
   }
 }`;
 
-const CREATE_PRODUCT_VARIANTS = `mutation CreateProductVariantsE2E($productId: ID!, $input: [CreateProductVariantInput!]!) {
-  createProductVariants(productId: $productId, input: $input) {
+const CREATE_PRODUCT_VARIANTS = `mutation CreateProductVariantsE2E($input: [CreateProductVariantInput!]!) {
+  createProductVariants(input: $input) {
     id
   }
 }`;
@@ -111,9 +111,9 @@ export async function createManualProduct(page: Page, slug: string): Promise<str
     page,
     CREATE_PRODUCT_VARIANTS,
     {
-      productId: product.createProduct.id,
       input: [
         {
+          productId: product.createProduct.id,
           sku: `${slug}--variant`,
           price: 15_400,
           translations: [{ languageCode: "en", name: "E2E Manual Variant" }],

@@ -112,7 +112,7 @@ test("the async sync settles and the generated-variants table follows it", async
     const manualProductId = await createManualProduct(page, "e2e-manual");
     await page.goto(`/dashboard/products/${manualProductId}`);
 
-    const varianta = stockTable(page).getByRole("row", { name: /e2e-manual--variant/ });
+    const varianta = stockTable(page).getByRole("row", { name: /E2E Manual Variant/ });
     await expect(varianta).toContainText(/15[,\u00A0 ]?400/);
     await expect(varianta).not.toContainText("154.00");
 
