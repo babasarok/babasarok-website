@@ -36,10 +36,9 @@ export interface NativeProductState {
 
 /** One human-readable difference between the state a sync would produce and
  * the native product's current state. Separate from nativeStateHash so later
- * sync-owned slices (e.g. facet values) can extend it without reshaping the
- * hash. */
+ * sync-owned slices can extend it without reshaping the hash. */
 export interface NativeStateDiff {
-  kind: "rename" | "presence" | "price" | "options";
+  kind: "rename" | "presence" | "price" | "options" | "facets";
   label: string;
 }
 
@@ -192,6 +191,10 @@ function variantDiffs(
     if (optionSignature(variant) !== optionSignature(existing)) {
       diffs.push({ kind: "options", label: `Változat "${sku}" opciói eltérnek` });
     }
+
+    if (facetSignature(variant) !== facetSignature(existing)) {
+      diffs.push({ kind: "facets", label: `Változat "${sku}" facet értékei eltérnek` });
+    }
   }
 
   for (const [sku, variant] of [...currentBySku].toSorted(byCode)) {
@@ -211,6 +214,10 @@ function optionSignature(variant: NativeVariantState): string {
     .map((option) => `${option.groupCode}/${option.optionCode}`)
     .toSorted()
     .join(",");
+}
+
+function facetSignature(variant: NativeVariantState): string {
+  return [...variant.facetValues].toSorted((a, b) => a.localeCompare(b)).join(",");
 }
 
 function sha256(value: string): string {

@@ -168,14 +168,16 @@ describe("nativeStateDiff", () => {
           name: "Babafészek (Kicsi)",
           price: 15_000,
           options: [{ groupCode: "meret", optionCode: "kicsi" }],
+          facetValues: ["wellsoft"],
         },
         {
           sku: "babafeszek--nagy",
           name: "Babafészek (Nagy)",
           price: 99_000,
           options: [{ groupCode: "meret", optionCode: "kicsi" }],
+          facetValues: ["velur", "velur--barna"],
         },
-        { sku: "babafeszek--uj", name: "Babafészek (Új)", price: 1, options: [] },
+        { sku: "babafeszek--uj", name: "Babafészek (Új)", price: 1, options: [], facetValues: [] },
       ],
     };
 
@@ -189,6 +191,21 @@ describe("nativeStateDiff", () => {
         kind: "presence",
         label: 'Változat "babafeszek--uj" (Babafészek (Új)) törlésre vár',
       },
+    ]);
+  });
+
+  it("reports drifted variant facet values regardless of ordering", () => {
+    const drifted: NativeProductState = {
+      ...nativeState,
+      variants: nativeState.variants.map((variant) =>
+        variant.sku === "babafeszek--kicsi"
+          ? { ...variant, facetValues: ["masik", "wellsoft"] }
+          : variant
+      ),
+    };
+
+    expect(nativeStateDiff(nativeState, drifted)).toEqual([
+      { kind: "facets", label: 'Változat "babafeszek--kicsi" facet értékei eltérnek' },
     ]);
   });
 });
