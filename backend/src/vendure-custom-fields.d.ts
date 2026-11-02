@@ -1,10 +1,27 @@
 // Declaration merging for the custom fields defined in vendure-config.ts:
 // Vendure augments these classes at runtime, TS sees only the declared shape.
+// Locale-typed custom fields live on the *Translation interfaces.
 declare module "@vendure/core/dist/entity/custom-entity-fields" {
   interface CustomChannelFields {
     orderEmailFrom: string | null;
     shopOwnerEmail: string | null;
   }
+
+  interface CustomProductFields {
+    date: Date | null;
+    icon: Asset | null;
+    iconId: number | null;
+  }
+
+  interface CustomProductFieldsTranslation {
+    shortDescription: string | null;
+    tagline: string | null;
+  }
+
+  interface CustomAssetFieldsTranslation {
+    galleryDescription: string | null;
+  }
 }
 
 import "@vendure/core/dist/entity/custom-entity-fields.js";
+import type { Asset } from "@vendure/core";
