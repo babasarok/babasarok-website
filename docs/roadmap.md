@@ -97,9 +97,10 @@ merged to main until the backend structure is settled):
   `src/lib/pricing` is untouched until cutover (supersedes the price-authority
   part of issue #71). Per-product % discounts are dropped (owner decision:
   unused); they get no Vendure home
-- ⬜ Display fields — `shortDescription`, `categories` (tagline), `date`,
-  `icon` as `Product` custom fields and gallery descriptions as an `Asset`
-  custom field ([ADR 0010](adr/0010-native-generated-product-model.md))
+- ✅ Display fields — `shortDescription`, `tagline` (the Tina `categories`),
+  `date` and `icon` as `Product` custom fields and gallery descriptions as an
+  `Asset` custom field, editable in the stock dashboard and populated by the
+  preview seed ([ADR 0010](adr/0010-native-generated-product-model.md))
 - ⬜ Vendure-complete gate — catalog fully manageable in the Vendure dashboard,
   nothing left that only Tina can do
 
