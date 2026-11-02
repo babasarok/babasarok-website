@@ -27,6 +27,7 @@ import {
 import type { PageContextValue } from "@vendure/dashboard";
 import { z } from "zod";
 import { ConfiguratorEditor } from "./product-definition-configurator";
+import { ProductSaveActionBarItem } from "./product-save-action-bar-item";
 
 import "../shared-markdown-editor/markdown-editor-extension";
 
@@ -120,6 +121,13 @@ defineDashboardExtension({
     },
   ],
   actionBarItems: [
+    {
+      pageId: "product-detail",
+      id: "unified-product-save",
+      position: { itemId: "save-button", order: "replace" },
+      component: ProductSaveActionBarItem,
+      requiresPermission: ["UpdateProduct", "UpdateCatalog"],
+    },
     {
       pageId: "product-list",
       component: NewProductDefinitionActionBarItem,

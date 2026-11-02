@@ -298,3 +298,28 @@ export function newDefinition(id: string): ProductDefinitionInput {
     forbiddenMaterialCombinations: [],
   };
 }
+
+export interface UnifiedSaveState {
+  pageDirty: boolean;
+  pageValid: boolean;
+  configuratorDirty: boolean;
+}
+
+/** What the single Update button saves: the stock page form only when it is
+ * dirty and valid, the configurator whenever it has unsaved changes. */
+export function planUnifiedSave(state: UnifiedSaveState): {
+  savePage: boolean;
+  saveConfigurator: boolean;
+} {
+  return {
+    savePage: state.pageDirty && state.pageValid,
+    saveConfigurator: state.configuratorDirty,
+  };
+}
+
+/** The Update button is enabled when anything is saveable. */
+export function canUnifiedSave(state: UnifiedSaveState): boolean {
+  const plan = planUnifiedSave(state);
+
+  return plan.savePage || plan.saveConfigurator;
+}

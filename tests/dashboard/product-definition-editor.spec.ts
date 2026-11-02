@@ -198,8 +198,10 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await meret.getByLabel("Név").first().fill("Méret");
     await meret.getByLabel("Név").nth(1).fill("S");
 
+    await page.getByLabel("Terméknév", { exact: true }).fill("E2E F1 átnevezve");
+
     const update = waitForMutation(page, "mutation UpdateProductDefinition");
-    await page.getByRole("button", { name: "Mentés", exact: true }).click();
+    await page.getByRole("button", { name: "Frissítés", exact: true }).click();
     await update;
 
     await expect(page.getByText("Mentés sikeres — a szinkronizálás fut.")).toBeVisible();
@@ -207,6 +209,8 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
 
     await page.reload();
+
+    await expect(page.getByLabel("Terméknév", { exact: true })).toHaveValue("E2E F1 átnevezve");
 
     const generated = generatedTable(page);
     await expect(generated.getByRole("row", { name: /Szín: / })).toHaveCount(8);

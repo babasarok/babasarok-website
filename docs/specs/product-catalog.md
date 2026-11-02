@@ -344,6 +344,26 @@ fail. Deleting through the configurator keeps removing both.
   - WHEN a product is deleted through the configurator
   - THEN both the definition and the native product are removed, as before
 
+### Single save on the product page
+
+The stock product page's action bar SHALL carry one Update button for a
+generated product, replacing the stock one (the Enabled switch is kept). It
+saves the page form (name, slug, description, enabled …) when that is dirty
+and valid, and the configurator editor when it has unsaved changes; each
+shows its own errors, and one failing does not stop the other. The
+configurator block has no save button of its own (delete, the sync status and
+the drift-conflict force-save remain); on a non-generated product the button
+behaves as the stock one. Navigating away with only configurator changes
+gives no unsaved-changes warning.
+
+- **Scenario: Rename and configurator edit**
+  - WHEN a generated product's name and a configurator field are both
+    edited and Update is clicked once
+  - THEN both are persisted and the sync starts
+- **Scenario: Nothing changed**
+  - WHEN neither the page form nor the configurator has changes
+  - THEN the Update button is disabled
+
 ### Variant sync progress
 
 The system SHALL report the progress of a running variant sync as finished

@@ -8,6 +8,8 @@ import { describe, expect, test } from "vitest";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import {
   assignGeneratedIds,
+  canUnifiedSave,
+  planUnifiedSave,
   carryOver,
   hasEditableData,
   newDefinition,
@@ -300,5 +302,34 @@ describe("text helpers", () => {
   test("emptying a non-default language removes it, hu stays", () => {
     expect(withText({ hu: "Méret", en: "Size" }, "en", "")).toEqual({ hu: "Méret" });
     expect(withText({ hu: "Méret" }, "hu", "")).toEqual({ hu: "" });
+  });
+});
+
+describe("planUnifiedSave", () => {
+  test("saves only the page form when only it is dirty", () => {
+    const state = { pageDirty: true, pageValid: true, configuratorDirty: false };
+
+    expect(planUnifiedSave(state)).toEqual({ savePage: true, saveConfigurator: false });
+  });
+
+  test("saves both when both are dirty", () => {
+    const state = { pageDirty: true, pageValid: true, configuratorDirty: true };
+
+    expect(planUnifiedSave(state)).toEqual({ savePage: true, saveConfigurator: true });
+  });
+
+  test("an invalid dirty page does not block the configurator", () => {
+    const state = { pageDirty: true, pageValid: false, configuratorDirty: true };
+
+    expect(planUnifiedSave(state)).toEqual({ savePage: false, saveConfigurator: true });
+  });
+
+  test("is disabled when nothing is saveable", () => {
+    expect(canUnifiedSave({ pageDirty: false, pageValid: true, configuratorDirty: false })).toBe(
+      false
+    );
+    expect(canUnifiedSave({ pageDirty: true, pageValid: false, configuratorDirty: false })).toBe(
+      false
+    );
   });
 });
