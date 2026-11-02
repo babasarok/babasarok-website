@@ -16,7 +16,7 @@
  * time the dashboard's vite pipeline bundles this file.
  */
 import type { ReactElement } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Button,
   defineDashboardExtension,
@@ -106,6 +106,16 @@ defineDashboardExtension({
       component: EmptyBlock,
       shouldRender: isGeneratedProduct,
     },
+    {
+      id: "variant-parent-product",
+      title: "Termék",
+      location: {
+        pageId: "product-variant-detail",
+        column: "side",
+        position: { blockId: "options", order: "before" },
+      },
+      component: VariantParentProductBlock,
+    },
   ],
   actionBarItems: [
     {
@@ -120,6 +130,24 @@ defineDashboardExtension({
  * an empty component leaves no visible trace. */
 function EmptyBlock(): ReactElement {
   return <></>;
+}
+
+const VariantProductSchema = z.object({ product: z.object({ id: z.string(), name: z.string() }) });
+
+/** Generated variant names list only field values, so the variant page names
+ * the product they belong to. */
+function VariantParentProductBlock({ context }: { context: PageContextValue }): ReactElement {
+  const variant = VariantProductSchema.safeParse(context.entity);
+
+  if (!variant.success) {
+    return <></>;
+  }
+
+  return (
+    <Link to="/products/$id" params={{ id: variant.data.product.id }} className="underline">
+      {variant.data.product.name}
+    </Link>
+  );
 }
 
 function isGeneratedProduct(context: PageContextValue): boolean {
