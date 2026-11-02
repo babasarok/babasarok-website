@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { FieldVisibilitySchema, fieldBaseShape, PatternSchema } from "../field";
-import { MoneySchema, TrimmedTextSchema } from "../model";
+import { LocalizedTextSchema } from "../localized-text";
+import { MoneySchema } from "../model";
 
 const EmbroideryPricingSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("flat"), price: MoneySchema }),
@@ -12,7 +13,7 @@ export const EmbroideryFieldSchema = z.strictObject({
   kind: z.literal("embroidery"),
   visibility: FieldVisibilitySchema,
   pricing: EmbroideryPricingSchema,
-  placeholder: TrimmedTextSchema.optional(),
+  placeholder: LocalizedTextSchema.optional(),
   pattern: PatternSchema.optional(),
 });
 

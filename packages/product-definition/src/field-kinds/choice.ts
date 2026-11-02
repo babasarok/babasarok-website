@@ -1,14 +1,15 @@
 import { z } from "zod";
 import { FieldVisibilitySchema, fieldBaseShape, PatternSchema } from "../field";
-import { LabelSchema, MoneySchema, TrimmedTextSchema } from "../model";
+import { LocalizedTextSchema } from "../localized-text";
+import { MoneySchema, TrimmedTextSchema } from "../model";
 
 export const ChoiceOptionIdSchema = TrimmedTextSchema.brand<"ChoiceOptionId">();
 
 export const ChoiceOptionSchema = z.strictObject({
   id: ChoiceOptionIdSchema,
-  label: LabelSchema,
+  label: LocalizedTextSchema,
   price: MoneySchema,
-  tooltip: TrimmedTextSchema.optional(),
+  tooltip: LocalizedTextSchema.optional(),
 });
 
 export const ChoiceFieldSchema = z.strictObject({
@@ -20,7 +21,7 @@ export const ChoiceFieldSchema = z.strictObject({
   customValue: z
     .strictObject({
       pattern: PatternSchema.optional(),
-      placeholder: TrimmedTextSchema.optional(),
+      placeholder: LocalizedTextSchema.optional(),
     })
     .optional(),
 });

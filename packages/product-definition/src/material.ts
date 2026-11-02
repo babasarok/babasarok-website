@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { LabelSchema, TrimmedTextSchema } from "./model";
+import { LocalizedTextSchema } from "./localized-text";
+import { TrimmedTextSchema } from "./model";
 
 export const MaterialIdSchema = TrimmedTextSchema.brand<"MaterialId">();
 export const MaterialColorIdSchema = TrimmedTextSchema.brand<"MaterialColorId">();
@@ -21,15 +22,15 @@ export const ColorAppearanceSchema = z.discriminatedUnion("kind", [
 
 export const MaterialColorDefinitionSchema = z.strictObject({
   id: MaterialColorIdSchema,
-  label: LabelSchema,
+  label: LocalizedTextSchema,
   appearance: ColorAppearanceSchema,
 });
 
 export const MaterialDefinitionSchema = z.strictObject({
   id: MaterialIdSchema,
-  label: LabelSchema,
-  subtitle: z.string().trim().min(1).nullish(),
-  description: z.string().trim().min(1).nullish(),
+  label: LocalizedTextSchema,
+  subtitle: LocalizedTextSchema.nullish(),
+  description: LocalizedTextSchema.nullish(),
   thumbnail: z.strictObject({ assetId: TrimmedTextSchema }).nullish(),
   colors: z.array(MaterialColorDefinitionSchema).min(1),
 });

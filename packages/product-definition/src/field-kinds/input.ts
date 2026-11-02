@@ -1,10 +1,11 @@
 import { z } from "zod";
 import { FieldVisibilitySchema, fieldBaseShape, PatternSchema } from "../field";
-import { LabelSchema, MoneySchema, TrimmedTextSchema } from "../model";
+import { LocalizedTextSchema } from "../localized-text";
+import { MoneySchema, TrimmedTextSchema } from "../model";
 
 const SuggestionSchema = z.strictObject({
   value: TrimmedTextSchema,
-  label: LabelSchema,
+  label: LocalizedTextSchema,
 });
 
 export const InputFieldSchema = z.strictObject({
@@ -13,7 +14,7 @@ export const InputFieldSchema = z.strictObject({
   visibility: FieldVisibilitySchema,
   required: z.boolean(),
   price: MoneySchema,
-  placeholder: TrimmedTextSchema.optional(),
+  placeholder: LocalizedTextSchema.optional(),
   pattern: PatternSchema.optional(),
   suggestions: z.array(SuggestionSchema).min(1).optional(),
 });

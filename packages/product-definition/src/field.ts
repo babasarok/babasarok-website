@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { LabelSchema, ProductFieldIdSchema, TrimmedTextSchema } from "./model";
+import { LocalizedTextSchema } from "./localized-text";
+import { ProductFieldIdSchema } from "./model";
 
 export const FieldVisibilitySchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("always") }),
@@ -31,8 +32,8 @@ export const PatternSchema = z
 
 export const fieldBaseShape = {
   id: ProductFieldIdSchema,
-  label: LabelSchema,
-  tooltip: TrimmedTextSchema.optional(),
+  label: LocalizedTextSchema,
+  tooltip: LocalizedTextSchema.optional(),
 };
 
 export type FieldVisibility = z.output<typeof FieldVisibilitySchema>;
