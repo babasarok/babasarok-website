@@ -71,6 +71,10 @@ const productDefinitionQuery = graphql(`
       syncState
       syncError
       stale
+      driftDetails {
+        kind
+        label
+      }
       definition
     }
   }
@@ -129,6 +133,7 @@ interface SyncInfo {
   state: string;
   error: string | null;
   stale: boolean;
+  details: Array<{ kind: string; label: string }>;
 }
 
 const syncStateDictionary = defineStateEntries({
@@ -225,6 +230,7 @@ export function ConfiguratorEditor({
           state: result.productDefinition.syncState,
           error: result.productDefinition.syncError,
           stale: result.productDefinition.stale,
+          details: result.productDefinition.driftDetails ?? [],
         });
 
         if (result.productDefinition.syncState === "pending") {
@@ -441,6 +447,7 @@ export function ConfiguratorEditor({
           state: result.productDefinition.syncState,
           error: result.productDefinition.syncError,
           stale: result.productDefinition.stale,
+          details: result.productDefinition.driftDetails ?? [],
         };
         setSync(next);
 
@@ -541,6 +548,7 @@ export function ConfiguratorEditor({
           state: result.updateProductDefinition.syncState,
           error: result.updateProductDefinition.syncError,
           stale: false,
+          details: [],
         });
         // Adopt the saved payload (with the generated codes filled in) so the
         // next save keeps them stable instead of regenerating from labels.
@@ -621,6 +629,13 @@ export function ConfiguratorEditor({
           )}
           <SyncBadge sync={sync} />
         </div>
+        {sync?.stale === true && sync.details.length > 0 && (
+          <ul className="text-muted-foreground max-h-40 space-y-1 overflow-y-auto text-xs">
+            {sync.details.map((drift) => (
+              <li key={drift.label}>{drift.label}</li>
+            ))}
+          </ul>
+        )}
         {errors !== null && <ErrorNotice message={errors.join("\n")} />}
         {driftConflict && (
           <Alert variant="destructive">

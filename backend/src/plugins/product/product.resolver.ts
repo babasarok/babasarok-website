@@ -44,9 +44,19 @@ export interface ProductDefinitionGraph {
   syncState: string;
   syncError: string | null;
   stale: boolean;
+  driftDetails: ProductDefinitionDriftGraph[];
 }
 
-function toGraph(row: ProductDefinition, stale: boolean): ProductDefinitionGraph {
+export interface ProductDefinitionDriftGraph {
+  kind: string;
+  label: string;
+}
+
+function toGraph(
+  row: ProductDefinition,
+  stale: boolean,
+  driftDetails: ProductDefinitionDriftGraph[] = []
+): ProductDefinitionGraph {
   return {
     id: row.id,
     productId: row.productId,
@@ -59,6 +69,7 @@ function toGraph(row: ProductDefinition, stale: boolean): ProductDefinitionGraph
     syncState: row.syncState,
     syncError: row.syncError,
     stale,
+    driftDetails,
   };
 }
 
@@ -96,9 +107,11 @@ export class ProductDefinitionResolver {
       return null;
     }
 
-    const staleness = await this.productDefinitionService.staleness(ctx, [row]);
+    const analysis = (await this.productDefinitionService.driftAnalysis(ctx, [row])).get(
+      row.productId
+    );
 
-    return toGraph(row, staleness.get(row.productId) ?? false);
+    return toGraph(row, analysis?.stale ?? false, analysis?.details ?? []);
   }
 
   @Query()
@@ -184,6 +197,11 @@ export const productDefinitionSchema = gql`
   # The Node/PaginatedList implementations are what the dashboard's table
   # machinery keys on (the admin-api schema plugin marks list types by the
   # PaginatedList interface); without them the lists render without columns.
+  type ProductDefinitionDrift {
+    kind: String!
+    label: String!
+  }
+
   type ProductDefinition implements Node {
     id: ID!
     productId: String!
@@ -196,6 +214,7 @@ export const productDefinitionSchema = gql`
     syncState: String!
     syncError: String
     stale: Boolean!
+    driftDetails: [ProductDefinitionDrift!]
   }
 
   type GeneratedVariant implements Node {
