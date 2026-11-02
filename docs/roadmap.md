@@ -58,10 +58,12 @@ shared pricing package, basket is the Vendure active order). Principle 2
 ends here: epic 3 changes `src/`. Tina product collections stay until epic 4.
 Slices are PRs against `feat/vendure-materials`:
 
-- ⬜ **S1 Shop-API catalog surface + site data layer** — the shop API exposes
+- ✅ **S1 Shop-API catalog surface + site data layer** — the shop API exposes
   what the site renders (product definitions, materials and colors, thread
-  colors, product groups, display fields, assets); the site gets a typed,
-  zod-validated shop-API client used from Astro frontmatter
+  colors, product groups, display fields, assets, `popularityRank`); the site
+  gets a zod-validated shop-API client (`src/lib/vendure/`, `src/lib/catalog/`)
+  with a contract test (`CATALOG_CONTRACT_API_URL`). No pages switched. Long
+  product/material descriptions are S7
 - 🟡 **S2 Shared pricing package** (package and backend done; the site is wired in S3) — one pure workspace package used by the
   backend pricing strategy and the configurator; replaces the backend's own
   copy and the site's `src/lib/pricing` configurator pricing (ADR 0002)
@@ -93,6 +95,9 @@ Slices are PRs against `feat/vendure-materials`:
 
 ## Post-cutover follow-ups
 
+- **Popularity from real past orders** — derive `popularityRank` from actual
+  order history instead of the curated Tina ordering (owner: nice to have, not
+  a priority).
 - **Product×material×color imagery** — photos of completed products keyed by
   (product, material, color): editor slots in the configurator (asset
   upload/picker per material+color row in the definition's material fields),

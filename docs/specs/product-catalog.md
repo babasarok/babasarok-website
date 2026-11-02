@@ -13,8 +13,10 @@ filterable product list with a detail page per product.
 > `embroidery`, and `banned_combinations` ↔ `forbiddenMaterialCombinations`.
 > The native Product owns its name and slug (ADR 0011 decision 1): the
 > preview seed writes the Tina `title` into the native product's name, the
-> slug is seeded from the definition's `id` at creation only, and the definition
-> sync never writes the product's name or slug. Generated variant names list
+> slug is seeded from the definition's `id` at creation only (the preview seed
+> then sets it to the Tina content file name, the current site URL — 8 of 33
+> differ from the product id), and the definition sync never writes the
+> product's name or slug. Generated variant names list
 > the labelled field values ("`Anyag: Pamut · Méret: Nagy · Masni`"): a toggle
 > shows its bare label when on and is omitted when off; a variant with nothing
 > to list carries the product's name, so a rename on the stock product form
@@ -25,8 +27,9 @@ filterable product list with a detail page per product.
 > assets. The remaining display fields are native Vendure custom fields (the
 > display-field
 > gap of ADR 0010, resolved): `shortDescription`, `tagline` (the Tina
-> `categories` "Alcím"), `date` ("newest first" sorting) and `icon` (an Asset
-> relation) on `Product`, plus a `galleryDescription` custom field on `Asset`
+> `categories` "Alcím"), `date` ("newest first" sorting), `popularityRank` (nullable int, 1 = most
+> popular; the curated "Népszerű" sort, unranked products after ranked ones)
+> and `icon` (an Asset relation) on `Product`, plus a `galleryDescription` custom field on `Asset`
 > for the per-image gallery text — all editable in the stock dashboard, and
 > the preview seed populates them from Tina content (thumbnails and gallery
 > images upload as real assets). They stay outside the canonical
@@ -367,3 +370,41 @@ Vendure's 20 s shutdown wait so a redeploy defers the running job.
 - **Scenario: Pending sync already queued**
   - WHEN a worker starts and a pending definition has a queued job
   - THEN no second job is queued
+
+### Shop API catalog surface
+
+The system SHALL expose, on the Vendure shop API, everything the storefront
+renders for the catalog, without making private data public. The site reads it
+with plain query documents validated by zod schemas (`src/lib/catalog/`), over
+an injected-`fetch` transport (`src/lib/vendure/`) that sends the request
+language as `?languageCode=` (currently `hu`).
+
+- `Product.productDefinition: JSON` — the stored canonical definition
+  (`null` for a native product without one), loaded once per request for all
+  products of that request. The site validates it with the shared
+  `@babasarok/product-definition` schema and resolves its `LocalizedText`
+  with `resolveText`. Products without generated variants are still listed;
+  the page decides orderability.
+- `materials` / `material(slug)` — materials with request-language
+  `label`/`subtitle`/`description`, thumbnail and colors (`id`, `label`,
+  `hex`, `asset`).
+- `productGroups` — a projection of the private "Szettek" and
+  "Kapcsolódó termékek" child collections: `id` (slug), `kind` (`set` |
+  `related`), `label`, `discount` (sets only) and `productIds` (definition
+  ids). Groups with fewer than two known members, and sets without a positive
+  discount, are omitted. The collections themselves stay private.
+- `threadColors` — the values of the private thread-color facet (`id` = the
+  facet value code, `label`, `hex`, `swatch`); the facet itself stays hidden
+  from the shop's `facets`.
+- The native `Product` custom fields (`shortDescription`, `tagline`, `date`,
+  `popularityRank`, `icon`) and `Asset.galleryDescription` are public.
+
+- **Scenario: Popularity order**
+  - WHEN products are sorted by popularity
+  - THEN ranked products come first by ascending `popularityRank` and
+    unranked products follow in their existing order
+- **Scenario: Invalid definition**
+  - WHEN a response's `productDefinition` does not match the canonical schema
+  - THEN the catalog read fails instead of rendering partial data
+
+Out of scope for now: long product and material descriptions.

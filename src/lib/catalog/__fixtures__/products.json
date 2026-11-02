@@ -1,0 +1,284 @@
+{
+  "products": {
+    "totalItems": 3,
+    "items": [
+      {
+        "id": "1",
+        "slug": "babatakaro-szett",
+        "name": "Babatakaró szett",
+        "customFields": {
+          "shortDescription": "Univerzális takaró és párna minden évszakra",
+          "tagline": null,
+          "date": "2025-04-20T12:07:16.000Z",
+          "popularityRank": 2
+        },
+        "featuredAsset": {
+          "source": "http://localhost:4010/assets/source/5c/noemi-41.webp"
+        },
+        "facetValues": [
+          {
+            "code": "takaro",
+            "name": "Takaró",
+            "facet": {
+              "code": "babasarok-product-type"
+            }
+          }
+        ],
+        "productDefinition": {
+          "id": "babatakaro-szett",
+          "fields": [
+            {
+              "id": "himzes",
+              "kind": "embroidery",
+              "label": {
+                "hu": "Hímzés"
+              },
+              "pricing": {
+                "kind": "per-word",
+                "pricePerWord": 1500
+              },
+              "visibility": {
+                "kind": "always"
+              }
+            },
+            {
+              "id": "Fodor",
+              "kind": "toggle",
+              "label": {
+                "hu": "Fodorral kérem"
+              },
+              "price": 4000,
+              "tooltip": {
+                "hu": "A termék színével és anyagával egyező fodor"
+              },
+              "visibility": {
+                "kind": "always"
+              }
+            },
+            {
+              "id": "anyag1",
+              "kind": "material",
+              "label": {
+                "hu": "Anyag 1"
+              },
+              "options": [
+                {
+                  "price": 0,
+                  "materialId": "teddy"
+                },
+                {
+                  "price": 0,
+                  "materialId": "pamutvaszon"
+                },
+                {
+                  "price": 0,
+                  "materialId": "minky"
+                },
+                {
+                  "price": 0,
+                  "materialId": "potty-nelkuli-minky"
+                },
+                {
+                  "price": 0,
+                  "materialId": "wellsoft"
+                },
+                {
+                  "price": 0,
+                  "materialId": "duplagez"
+                },
+                {
+                  "price": 0,
+                  "materialId": "waffle"
+                }
+              ],
+              "colorCount": {
+                "kind": "fixed",
+                "count": 1
+              }
+            },
+            {
+              "id": "anyag2",
+              "kind": "material",
+              "label": {
+                "hu": "Anyag 2"
+              },
+              "options": [
+                {
+                  "price": 0,
+                  "materialId": "teddy"
+                },
+                {
+                  "price": 0,
+                  "materialId": "pamutvaszon"
+                },
+                {
+                  "price": 0,
+                  "materialId": "minky"
+                },
+                {
+                  "price": 0,
+                  "materialId": "potty-nelkuli-minky"
+                },
+                {
+                  "price": 0,
+                  "materialId": "wellsoft"
+                },
+                {
+                  "price": 0,
+                  "materialId": "duplagez"
+                },
+                {
+                  "price": 0,
+                  "materialId": "waffle"
+                }
+              ],
+              "colorCount": {
+                "kind": "fixed",
+                "count": 1
+              }
+            }
+          ],
+          "pricing": {
+            "kind": "unit"
+          },
+          "revision": "55e4903ab0a922a377b7f4337d92d3ef7b548e174a7aa915f3a7627d5d3dc307",
+          "basePrice": 7500,
+          "orderable": true,
+          "hiddenInProductList": false,
+          "forbiddenMaterialCombinations": [["wellsoft", "wellsoft"]]
+        }
+      },
+      {
+        "id": "4",
+        "slug": "kismama-parna",
+        "name": "Kismamapárna",
+        "customFields": {
+          "shortDescription": "Kényelmes segítség szoptatáskor, ami a terhesség alatt kismamapárnaként is tökéletes.\nCipzáras huzattal, a könnyű tisztíthatóság érdekében.",
+          "tagline": null,
+          "date": "2026-04-07T09:40:26.389Z",
+          "popularityRank": 14
+        },
+        "featuredAsset": {
+          "source": "http://localhost:4010/assets/source/ed/img_8048.jpeg"
+        },
+        "facetValues": [
+          {
+            "code": "parna",
+            "name": "Párna",
+            "facet": {
+              "code": "babasarok-product-type"
+            }
+          }
+        ],
+        "productDefinition": {
+          "id": "kismama-parna",
+          "fields": [
+            {
+              "id": "Iker",
+              "kind": "toggle",
+              "label": {
+                "hu": "Iker kismamapárnát kérek"
+              },
+              "price": 10000,
+              "visibility": {
+                "kind": "always"
+              }
+            },
+            {
+              "id": "anyag",
+              "kind": "material",
+              "label": {
+                "hu": "Anyag"
+              },
+              "options": [
+                {
+                  "price": 0,
+                  "materialId": "pamutvaszon"
+                }
+              ],
+              "colorCount": {
+                "kind": "fixed",
+                "count": 1
+              }
+            }
+          ],
+          "pricing": {
+            "kind": "unit"
+          },
+          "revision": "d786c621b248722f1b3515c83202c9f5ce8f5608579f5ac84a03070556e966e1",
+          "basePrice": 9500,
+          "orderable": true,
+          "hiddenInProductList": false,
+          "forbiddenMaterialCombinations": []
+        }
+      },
+      {
+        "id": "9",
+        "slug": "tornazsak",
+        "name": "Tornazsák",
+        "customFields": {
+          "shortDescription": "Bölcsőde és óvodakezdésre alkalmas tornazsák.\nMérete: kb. 28x35cm (+-3cm eltérés elfogadott)",
+          "tagline": null,
+          "date": "2026-07-08T09:40:59.374Z",
+          "popularityRank": 22
+        },
+        "featuredAsset": {
+          "source": "http://localhost:4010/assets/source/0b/img_5520.jpeg"
+        },
+        "facetValues": [
+          {
+            "code": "zsak",
+            "name": "Zsák és tároló",
+            "facet": {
+              "code": "babasarok-product-type"
+            }
+          }
+        ],
+        "productDefinition": {
+          "id": "tornazsak",
+          "fields": [
+            {
+              "id": "himzes",
+              "kind": "embroidery",
+              "label": {
+                "hu": "Hímzés"
+              },
+              "pricing": {
+                "kind": "per-word",
+                "pricePerWord": 1500
+              },
+              "visibility": {
+                "kind": "always"
+              }
+            },
+            {
+              "id": "anyag",
+              "kind": "material",
+              "label": {
+                "hu": "Anyag"
+              },
+              "options": [
+                {
+                  "price": 0,
+                  "materialId": "pamutvaszon"
+                }
+              ],
+              "colorCount": {
+                "kind": "fixed",
+                "count": 1
+              }
+            }
+          ],
+          "pricing": {
+            "kind": "unit"
+          },
+          "revision": "cc4c851062d7cd30d3b253a5e8c745d43d56881637d68a149259db8fba5a97bd",
+          "basePrice": 4000,
+          "orderable": true,
+          "hiddenInProductList": false,
+          "forbiddenMaterialCombinations": []
+        }
+      }
+    ]
+  }
+}

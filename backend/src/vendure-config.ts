@@ -26,6 +26,7 @@ import {
   productSetBasketCondition,
   productSetDiscountAction,
 } from "./plugins/product-set/promotion";
+import { ProductSetPlugin } from "./plugins/product-set/product-set.plugin";
 import { ProductPlugin } from "./plugins/product/product.plugin";
 import { hexColorError } from "./plugins/product/thread-color";
 import { QuoteOrderPlugin } from "./plugins/quote-order/quote-order.plugin";
@@ -174,6 +175,7 @@ export const config: VendureConfig = {
     QuoteOrderPlugin,
     MaterialPlugin,
     ProductPlugin,
+    ProductSetPlugin,
     PricingPlugin,
     ChannelSetupPlugin,
     // Owns the material/product imagery (ADR 0009): uploads and previews are
@@ -291,6 +293,20 @@ export const config: VendureConfig = {
         label: [{ languageCode: LanguageCode.hu, value: "Termék ikon" }],
         description: [
           { languageCode: LanguageCode.hu, value: "Opcionális ikon a rendelési felülethez." },
+        ],
+        nullable: true,
+      },
+      {
+        name: "popularityRank",
+        type: "int",
+        min: 1,
+        label: [{ languageCode: LanguageCode.hu, value: "Népszerűségi sorrend" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value:
+              "A „Népszerű” rendezés sorrendje (1 = legelöl). Az üresen hagyott termékek a rangsoroltak után kerülnek.",
+          },
         ],
         nullable: true,
       },

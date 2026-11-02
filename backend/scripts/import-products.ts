@@ -36,6 +36,7 @@ import {
   definitionFromTinaProduct,
   displayFromTinaProduct,
   groupDefinitionFromTinaProductGroup,
+  popularityRanks,
   type TinaDisplayContent,
   TinaProductGroupSchema,
   TinaProductSchema,
@@ -51,6 +52,15 @@ const GROUPS_DIR = path.resolve(
   "src",
   "content",
   "product_groups"
+);
+const PRODUCT_SECTION_FILE = path.resolve(
+  import.meta.dirname,
+  "..",
+  "..",
+  "src",
+  "content",
+  "sections",
+  "product.json"
 );
 const REPO_ROOT = path.resolve(import.meta.dirname, "..", "..");
 // Vendure's built-in product-id collection filter and the set-discount
@@ -229,6 +239,7 @@ async function main(): Promise<void> {
   const files = (await readdir(CONTENT_DIR)).filter((file) => file.endsWith(".md"));
   await authenticate();
   const startedAt = Date.now();
+  const ranks = popularityRanks(JSON.parse(await readFile(PRODUCT_SECTION_FILE, "utf8")));
 
   let created = 0;
   let updated = 0;
@@ -265,7 +276,10 @@ async function main(): Promise<void> {
 
     displayByProductId.set(
       frontmatter.data.product_id.trim(),
-      displayFromTinaProduct(frontmatter.data)
+      displayFromTinaProduct(frontmatter.data, {
+        slug: file.replace(/\.md$/, ""),
+        popularityRank: ranks.get(file.replace(/\.md$/, "")) ?? null,
+      })
     );
 
     typeByProductId.set(frontmatter.data.product_id.trim(), frontmatter.data.type.trim());
@@ -542,8 +556,8 @@ const RELATED_PARENT: GroupCollectionInput = {
   nativeIds: [],
   setDiscount: null,
 };
-// The "szettek" slug is also read by backend/src/plugins/product-set/
-// promotion.ts (the condition reads that parent's children); keep in sync.
+// Both slugs are also read by backend/src/plugins/product-set/
+// group-parents.ts (the set promotion and the shop's productGroups); keep in sync.
 
 function productFilterArguments(
   nativeIds: number[]
@@ -815,7 +829,7 @@ async function upsertSetPromotion(): Promise<string> {
 
     const result = await adminRequest(
       JSON.stringify({
-        query: `mutation Update($input: UpdatePromotionInput!) { updatePromotion(input: $input) { id } }`,
+        query: `mutation Update($input: UpdatePromotionInput!) { updatePromotion(input: $input) { ... on Promotion { id } } }`,
         variables: {
           input: {
             id: existing.id,
@@ -838,7 +852,7 @@ async function upsertSetPromotion(): Promise<string> {
 
   const result = await adminRequest(
     JSON.stringify({
-      query: `mutation Create($input: CreatePromotionInput!) { createPromotion(input: $input) { id } }`,
+      query: `mutation Create($input: CreatePromotionInput!) { createPromotion(input: $input) { ... on Promotion { id } } }`,
       variables: {
         input: {
           enabled: true,
@@ -928,7 +942,7 @@ async function waitForSyncs(
 /**
  * Writes the display-field gap content (ADR 0010) onto the synced native
  * products: uploads the product images as assets (thumbnail → featured asset,
- * gallery → assets), sets shortDescription/tagline/date and the icon relation,
+ * gallery → assets), sets shortDescription/tagline/date/popularityRank, the slug (the Tina file name, i.e. the current site URL) and the icon relation,
  * and writes gallery descriptions onto the uploaded assets. Absent content
  * clears the fields, so a re-run re-establishes known test state.
  */
@@ -977,10 +991,15 @@ async function applyDisplayContent(
                 id: String(nativeProductId),
                 featuredAssetId,
                 assetIds: galleryAssetIds,
-                customFields: { date: display.date, iconId },
+                customFields: {
+                  date: display.date,
+                  iconId,
+                  popularityRank: display.popularityRank,
+                },
                 translations: [
                   {
                     languageCode: "hu",
+                    slug: display.slug,
                     customFields: {
                       shortDescription: display.shortDescription,
                       tagline: display.tagline,

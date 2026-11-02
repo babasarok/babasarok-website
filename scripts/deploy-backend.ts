@@ -122,7 +122,8 @@ try {
   // TEMPORARY, preview-only (ADR 0009): the preview seed reads the Tina
   // material and product content from the repo tree, so the tar carries the
   // content dirs (products too — import-products reads their frontmatter,
-  // and product_groups for the set/related-group validation log) plus
+  // product_groups for the set/related-group validation log, and the product
+  // section for popularity ranks) plus
   // exactly the assets the materials reference — not the whole 589M
   // src/assets tree. Prod never runs the seed (hand-migration at cutover);
   // drop this when the Tina catalog domains are removed at cutover.
@@ -179,6 +180,7 @@ try {
       "src/content/material",
       "src/content/product",
       "src/content/product_groups",
+      "src/content/sections/product.json",
       "-T",
       seedList,
     ],

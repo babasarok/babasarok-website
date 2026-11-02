@@ -121,6 +121,8 @@ function trimmedOrNull(value: string | null | undefined): string | null {
  * them.
  */
 export interface TinaDisplayContent {
+  slug: string;
+  popularityRank: number | null;
   shortDescription: string | null;
   tagline: string | null;
   date: string | null;
@@ -129,9 +131,26 @@ export interface TinaDisplayContent {
   iconPath: string | null;
 }
 
+const TinaProductSectionSchema = z.object({
+  product_popular_ordering: z.array(z.object({ product: z.string() })).default([]),
+});
+
+/** Product file slug → 1-based rank in the section's curated popularity order. */
+export function popularityRanks(section: unknown): Map<string, number> {
+  const { product_popular_ordering } = TinaProductSectionSchema.parse(section);
+
+  return new Map(
+    product_popular_ordering.map((entry, index) => [slugFromPath(entry.product), index + 1])
+  );
+}
+
 /** Maps the Tina display frontmatter onto the custom-field payload the seed sends. */
-export function displayFromTinaProduct(source: TinaProduct): TinaDisplayContent {
+export function displayFromTinaProduct(
+  source: TinaProduct,
+  identity: { slug: string; popularityRank: number | null }
+): TinaDisplayContent {
   return {
+    ...identity,
     shortDescription: trimmedOrNull(source.shortDescription),
     tagline: trimmedOrNull(source.categories),
     date: trimmedOrNull(source.date),

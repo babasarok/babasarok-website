@@ -1,0 +1,26 @@
+{
+  "productGroups": [
+    {
+      "id": "ovis-szett",
+      "kind": "set",
+      "label": "Ovis szett",
+      "discount": 1300,
+      "productIds": ["tornazsak", "vallfas-zsak"]
+    },
+    {
+      "id": "ovis-felszereles",
+      "kind": "related",
+      "label": "Ovis Felszerelés",
+      "discount": null,
+      "productIds": [
+        "vizhatlan-lepedo",
+        "vizhatlan-lepedo-ketretegu",
+        "paplan-parnahuzat",
+        "egyben-moshato-takaro-lapos-parna",
+        "sima-takaro-lapos-parna",
+        "pufi-parna",
+        "pufi-parna-huzat"
+      ]
+    }
+  ]
+}

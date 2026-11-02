@@ -20,8 +20,9 @@ export class MaterialColorResolver {
   }
 }
 
+/** Shared by the admin and shop schemas: both expose Material with request-language text. */
 @Resolver(() => Material)
-export class MaterialResolver {
+export class MaterialFieldResolver {
   constructor(private materialService: MaterialService) {}
 
   @ResolveField(() => String)
@@ -38,6 +39,11 @@ export class MaterialResolver {
   description(@Ctx() ctx: RequestContext, @Parent() material: Material): string {
     return this.materialService.translated(ctx, material).description;
   }
+}
+
+@Resolver(() => Material)
+export class MaterialResolver {
+  constructor(private materialService: MaterialService) {}
 
   @Query()
   @Allow(Permission.UpdateCatalog)
@@ -88,6 +94,47 @@ export class MaterialResolver {
     return this.materialService.convergeFacets(ctx);
   }
 }
+
+@Resolver()
+export class ShopMaterialResolver {
+  constructor(private materialService: MaterialService) {}
+
+  @Query()
+  @Allow(Permission.Public)
+  async materials(@Ctx() ctx: RequestContext): Promise<Material[]> {
+    return this.materialService.materials(ctx);
+  }
+
+  @Query()
+  @Allow(Permission.Public)
+  async material(@Ctx() ctx: RequestContext, @Args("slug") slug: string): Promise<Material | null> {
+    return this.materialService.materialBySlug(ctx, slug);
+  }
+}
+
+export const shopMaterialSchema = gql`
+  type MaterialColor {
+    id: String!
+    label: String!
+    hex: String
+    asset: Asset
+  }
+
+  type Material {
+    id: ID!
+    slug: String!
+    label: String!
+    subtitle: String!
+    description: String!
+    thumbnail: Asset
+    colors: [MaterialColor!]!
+  }
+
+  extend type Query {
+    material(slug: String!): Material
+    materials: [Material!]!
+  }
+`;
 
 export const materialSchema = gql`
   type MaterialColorTranslation {

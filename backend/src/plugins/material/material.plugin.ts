@@ -5,7 +5,14 @@ import {
   MaterialColorTranslation,
   MaterialTranslation,
 } from "./material.entity";
-import { MaterialColorResolver, MaterialResolver, materialSchema } from "./material.resolver";
+import {
+  MaterialColorResolver,
+  MaterialFieldResolver,
+  MaterialResolver,
+  materialSchema,
+  ShopMaterialResolver,
+  shopMaterialSchema,
+} from "./material.resolver";
 import { MaterialFacetSync } from "./material-facet-sync";
 import { MaterialService } from "./material.service";
 
@@ -14,7 +21,11 @@ import { MaterialService } from "./material.service";
   entities: [Material, MaterialTranslation, MaterialColor, MaterialColorTranslation],
   adminApiExtensions: {
     schema: materialSchema,
-    resolvers: [MaterialResolver, MaterialColorResolver],
+    resolvers: [MaterialResolver, MaterialFieldResolver, MaterialColorResolver],
+  },
+  shopApiExtensions: {
+    schema: shopMaterialSchema,
+    resolvers: [ShopMaterialResolver, MaterialFieldResolver, MaterialColorResolver],
   },
   providers: [MaterialFacetSync, MaterialService],
   dashboard: "../../dashboard/material/material.tsx",
