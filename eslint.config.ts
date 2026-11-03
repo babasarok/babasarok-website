@@ -129,6 +129,7 @@ export default defineConfig([
           "./backend/tsconfig.dashboard.json",
           "./backend/src/dashboard/tsconfig.json",
           "./backend/tsconfig.scripts.json",
+          "./backend/tsconfig.integration.json",
         ],
         extraFileExtensions: [],
       },

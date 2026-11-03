@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { allocateSetDiscounts, type AllocationGroup } from "./set-allocation";
-import { instanceViews, lineSetStates, type StateLine } from "./set-line-states";
+import { instanceViews, lineSetStates, type LineSetState, type StateLine } from "./set-line-states";
 
 function line(
   lineId: string,
@@ -35,7 +35,7 @@ const szett: AllocationGroup = {
   productIds: ["a", "b"],
 };
 
-function states(lines: StateLine[], groups = [szett]) {
+function states(lines: StateLine[], groups = [szett]): Map<string, LineSetState> {
   return lineSetStates(lines, groups, allocateSetDiscounts(lines, groups));
 }
 

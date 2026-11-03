@@ -32,6 +32,11 @@ export interface SetInstanceView {
   lines: Array<{ lineId: string; units: number }>;
 }
 
+interface Coverage {
+  instance: SetInstance;
+  units: number;
+}
+
 export function instanceViews(instances: readonly SetInstance[]): SetInstanceView[] {
   return instances.map((instance) => {
     const units = new Map<string, number>();
@@ -112,14 +117,14 @@ export function lineSetStates(
   groups: readonly AllocationGroup[],
   instances: readonly SetInstance[]
 ): Map<string, LineSetState> {
-  const coverage = new Map<string, Map<string, { instance: SetInstance; units: number }>>();
+  const coverage = new Map<string, Map<string, Coverage>>();
   const consumed = new Map<string, number>();
 
   for (const instance of instances) {
     for (const lineId of instance.members) {
       consumed.set(lineId, (consumed.get(lineId) ?? 0) + 1);
 
-      const bySet = coverage.get(lineId) ?? new Map();
+      const bySet = coverage.get(lineId) ?? new Map<string, Coverage>();
       const entry = bySet.get(instance.groupId) ?? { instance, units: 0 };
       entry.units += 1;
       bySet.set(instance.groupId, entry);
