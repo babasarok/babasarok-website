@@ -86,6 +86,11 @@ const ORDER_FIELDS = `
   }
 `;
 
+const HUNGARIAN_ERRORS: Record<string, string> = {
+  EMAIL_ADDRESS_CONFLICT_ERROR:
+    "Ez az email cím már regisztrált fiókhoz tartozik. Kérlek, adj meg egy másik email címet.",
+};
+
 const ERROR_FIELDS = `__typename ... on ErrorResult { errorCode message }`;
 const INTERCEPTOR_FIELDS = `... on OrderInterceptorError { interceptorError }`;
 const TRANSITION_FIELDS = `... on OrderStateTransitionError { transitionError }`;
@@ -97,6 +102,7 @@ function orderResult(extraErrorFields: string): string {
 const ErrorResultSchema = z.object({
   __typename: z.string(),
   message: z.string().optional(),
+  errorCode: z.string().optional(),
   interceptorError: z.string().optional(),
   transitionError: z.string().optional(),
 });
@@ -211,7 +217,13 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
       return { ok: true, value: payload };
     }
 
+    const hungarian =
+      "errorCode" in payload && typeof payload.errorCode === "string"
+        ? HUNGARIAN_ERRORS[payload.errorCode]
+        : undefined;
+
     const message =
+      hungarian ??
       ("interceptorError" in payload ? payload.interceptorError : undefined) ??
       ("transitionError" in payload ? payload.transitionError : undefined) ??
       ("message" in payload ? payload.message : undefined) ??

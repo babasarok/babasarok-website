@@ -317,6 +317,32 @@ describe("createBasketApi", () => {
     return { api, fetchMock, token: () => token };
   }
 
+  it("translates the vendure defaults buyers can hit into Hungarian", async () => {
+    const { api } = apiWith({
+      data: {
+        setCustomerForOrder: {
+          __typename: "EmailAddressConflictError",
+          errorCode: "EMAIL_ADDRESS_CONFLICT_ERROR",
+          message: "The email address is not available.",
+        },
+      },
+    });
+    const result = await api.setCustomer({
+      emailAddress: "regisztralt@example.com",
+      firstName: "A",
+      lastName: "B",
+      phoneNumber: "",
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      failure: {
+        reason:
+          "Ez az email cím már regisztrált fiókhoz tartozik. Kérlek, adj meg egy másik email címet.",
+      },
+    });
+  });
+
   it("sends the bearer token, stores the issued one and prefers the interceptor message", async () => {
     const { api, fetchMock, token } = apiWith(
       {
