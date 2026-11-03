@@ -475,11 +475,11 @@ describe("set discount adapter", () => {
         { slug: "kosar", name: "Kosár" },
       ],
     });
-    expect(partner && partnerLinks(partner, fixtureOrder, members)).toEqual([
+    expect(partnerLinks(partner, fixtureOrder, members)).toEqual([
       { slug: "takaro", name: "Takaró" },
       { slug: "kosar", name: "Kosár" },
     ]);
-    expect(active && partnerLinks(active, fixtureOrder, members)).toEqual([]);
+    expect(partnerLinks(active, fixtureOrder, members)).toEqual([]);
   });
 
   it("rejects set data of the wrong shape", () => {
