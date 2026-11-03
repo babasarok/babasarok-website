@@ -45,6 +45,9 @@ Slovakia/EUR (9).
    subtotal after line and set discounts (`>=`; the old rule was strict `>`).
    The threshold amount is data on the promotion, so a second market adds its
    own promotion in its own channel/currency.
+   The set discount's per-instance breakdown and per-line set state are shop-API
+   fields (`Order.setDiscounts`, `OrderLine.setState`) read from the same
+   allocation the set promotion applies (`SetBasketService`).
 4. **Contact, address and the rest use native fields where they exist.**
    Contact is `setCustomerForOrder` (guest; the phone is its
    `phoneNumber`). The address stays free text for this version: it is

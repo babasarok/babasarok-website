@@ -129,6 +129,15 @@ discount (with the winning set and covered count), pending-partner (a matching
 set sibling is not in the basket / all matching units already allocated), and
 pending-material (a sibling is present but materials differ, with a one-click
 material sync offered when the sibling's materials are available on the line).
+The shop API SHALL expose this from the same allocation the set promotion
+applies (never a second computation): `Order.setDiscounts` lists the formed
+instances (group id, Hungarian title, the amount actually removed after the
+clamp, and the member order lines with unit counts) and `OrderLine.setState`
+carries each line's state (`ACTIVE` with the winning set and covered units,
+`PENDING_PARTNER`, `PENDING_MATERIAL` with `materialSyncFromLineId` set when a
+partner line's material picks are all offered on the line, otherwise null;
+null for lines in no set). The fields are empty unless exactly one active
+promotion uses the set condition.
 The product configurator SHALL offer to add related set members, and SHALL
 present the members of any zero/absent-discount group the product belongs to as
 a separate "related items" list per group.
