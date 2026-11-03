@@ -8,12 +8,21 @@ import { test } from "@playwright/test";
 import {
   acceptTermsAndSubmit,
   addToBasket,
+  chooseDelivery,
+  chooseMaterial,
   chooseOption,
+  editLineMaterial,
   expectDetailsEmpty,
   expectDetailsPrefilled,
   expectEmptyBasket,
   expectInvalidLineBlocksSubmit,
   expectLine,
+  expectNoDeliveryChosen,
+  expectNoSetSection,
+  expectPendingMaterial,
+  expectPriceChangeNotice,
+  expectSetSection,
+  expectShippingRow,
   expectNavCount,
   expectOrderPlaced,
   fillContactAndPickup,
@@ -25,11 +34,23 @@ import {
   openSecondTabOnCheckout,
   removeFirstLine,
   submitOrder,
+  syncLineMaterial,
 } from "./pages";
-import { createProduct, withdrawLargeSize } from "./helpers";
+import {
+  createDeliveryProduct,
+  createPricedProduct,
+  createProduct,
+  createSet,
+  raisePrice,
+  SET_TITLE,
+  withdrawLargeSize,
+} from "./helpers";
 
 test.beforeAll(async () => {
   await createProduct();
+  await createPricedProduct();
+  await createDeliveryProduct();
+  await createSet();
 });
 
 test("product page to a placed order, surviving reload, navigation and a second tab", async ({
@@ -102,4 +123,61 @@ test("a line whose option was withdrawn is marked and blocks the order until rem
   await expectInvalidLineBlocksSubmit(page);
   await removeFirstLine(page);
   await expectEmptyBasket(page);
+});
+
+test("a set forms, breaks on a material mismatch and is restored by the one-click material sync", async ({
+  page,
+}) => {
+  await openProductFromList(page, /E2E Szett Fej/);
+  await chooseMaterial(page, /Alfa/);
+  await addToBasket(page);
+  await openProductFromList(page, /E2E Szett Láb/);
+  await chooseMaterial(page, /Alfa/);
+  await addToBasket(page);
+  await goToCheckoutInApp(page);
+  await expectSetSection(page, SET_TITLE, /1\s?000\s?Ft/);
+
+  await editLineMaterial(page, /E2E Szett Láb/, /Béta/);
+  await expectNoSetSection(page);
+  await expectPendingMaterial(page, /E2E Szett Láb/, SET_TITLE);
+
+  await syncLineMaterial(page, /E2E Szett Láb/);
+  await expectSetSection(page, SET_TITLE, /1\s?000\s?Ft/);
+});
+
+test("a price changed after adding shows the new unit price with a notice once the line is adjusted", async ({
+  page,
+}) => {
+  await openProductFromList(page, /E2E Változó ár/);
+  await addToBasket(page);
+  await raisePrice();
+
+  await openCheckout(page);
+  await increaseQuantity(page);
+  await expectLine(page, /2 db/, 2);
+  await expectPriceChangeNotice(page, /6\s?000\s?Ft/);
+});
+
+test("each delivery method is priced, free delivery applies above the threshold and an emptied basket forgets the method", async ({
+  page,
+}) => {
+  await openProductFromList(page, /E2E Szállítás/);
+  await addToBasket(page);
+  await goToCheckoutInApp(page);
+
+  await chooseDelivery(page, /GLS házhozszállítás előre utalással/);
+  await expectShippingRow(page, /2\s?500\s?Ft/);
+
+  await chooseDelivery(page, /GLS házhozszállítás utánvéttel \(előleg szükséges\)/);
+  await expectShippingRow(page, /3\s?500\s?Ft/);
+
+  await increaseQuantity(page);
+  await expectShippingRow(page, /Ingyenes/);
+
+  await removeFirstLine(page);
+  await expectEmptyBasket(page);
+  await openProductFromList(page, /E2E Szállítás/);
+  await addToBasket(page);
+  await goToCheckoutInApp(page);
+  await expectNoDeliveryChosen(page);
 });

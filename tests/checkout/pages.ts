@@ -3,7 +3,7 @@ import { expect, type BrowserContext, type Locator, type Page } from "@playwrigh
 export async function openProductFromList(page: Page, name: RegExp): Promise<void> {
   await page.goto("/product/", { waitUntil: "domcontentloaded" });
   await page.getByRole("link", { name }).first().click();
-  await expect(page.getByRole("button", { name: /Kosárba/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Kosárba$/ })).toBeVisible();
 }
 
 export async function chooseOption(page: Page, name: RegExp): Promise<void> {
@@ -11,7 +11,7 @@ export async function chooseOption(page: Page, name: RegExp): Promise<void> {
 }
 
 export async function addToBasket(page: Page): Promise<void> {
-  await page.getByRole("button", { name: /Kosárba|Kosár frissítése/ }).click();
+  await page.getByRole("button", { name: /^(Kosárba|Kosár frissítése)$/ }).click();
   await expect(page.getByText("A termék a kosárban van.")).toBeVisible();
 }
 
@@ -129,4 +129,84 @@ export async function expectDetailsEmpty(page: Page): Promise<void> {
 export async function acceptTermsAndSubmit(page: Page): Promise<void> {
   await page.getByRole("checkbox").check();
   await submitOrder(page);
+}
+
+export async function chooseMaterial(page: Page, material: RegExp): Promise<void> {
+  await chooseOption(page, material);
+  await page.locator("button[aria-selected]").first().click();
+}
+
+export function lineOf(page: Page, product: RegExp | string): Locator {
+  return checkoutLines(page).filter({ hasText: product });
+}
+
+export async function expectSetSection(page: Page, title: string, discount: RegExp): Promise<void> {
+  const section = page.getByTestId("set-discount");
+
+  await expect(section).toHaveCount(1);
+  await expect(section).toContainText(title);
+  await expect(section).toContainText(discount);
+  await expect(section).toContainText("E2E Szett Fej · 1 db");
+  await expect(section).toContainText("E2E Szett Láb · 1 db");
+}
+
+export async function expectNoSetSection(page: Page): Promise<void> {
+  await expect(page.getByTestId("set-discount")).toHaveCount(0);
+}
+
+export async function editLineMaterial(
+  page: Page,
+  product: RegExp | string,
+  material: RegExp
+): Promise<void> {
+  await lineOf(page, product)
+    .getByRole("link", { name: /Szerkesztés/ })
+    .click();
+  await expect(page.getByRole("button", { name: /^Kosár frissítése$/ })).toBeVisible();
+  await chooseMaterial(page, material);
+  await addToBasket(page);
+  await goToCheckoutInApp(page);
+}
+
+export async function syncLineMaterial(page: Page, product: RegExp | string): Promise<void> {
+  await lineOf(page, product)
+    .getByRole("link", { name: /Anyag egyeztetése/ })
+    .click();
+  await expect(page.getByRole("button", { name: /^Kosár frissítése$/ })).toBeVisible();
+  await page.getByRole("button", { name: /^Kosár frissítése$/ }).click();
+  await expect(page.getByText("A termék a kosárban van.")).toBeVisible();
+  await goToCheckoutInApp(page);
+}
+
+export async function expectPendingMaterial(
+  page: Page,
+  product: RegExp | string,
+  setTitle: string
+): Promise<void> {
+  await expect(lineOf(page, product).getByTestId("line-set-state")).toContainText(
+    `${setTitle}: egyeztesd az anyagot`
+  );
+}
+
+export async function expectPriceChangeNotice(page: Page, actual: RegExp): Promise<void> {
+  await expect(checkoutLines(page)).toContainText(/megváltozott/);
+  await expect(checkoutLines(page)).toContainText(actual);
+}
+
+export async function chooseDelivery(page: Page, method: RegExp): Promise<void> {
+  const saved = shopMutation(page, "setOrderShippingMethod");
+
+  await page.getByRole("radio", { name: method }).check();
+  await saved;
+}
+
+export async function expectShippingRow(page: Page, text: RegExp): Promise<void> {
+  await expect(page.getByText("Szállítás", { exact: true }).locator("..")).toContainText(text);
+}
+
+export async function expectNoDeliveryChosen(page: Page): Promise<void> {
+  await expect(page.getByRole("radio", { name: /GLS házhozszállítás előre/ })).not.toBeChecked();
+  await expect(
+    page.getByRole("radio", { name: /GLS házhozszállítás utánvéttel/ })
+  ).not.toBeChecked();
 }

@@ -79,38 +79,34 @@ async function login(): Promise<void> {
   );
 }
 
-export async function createProduct(): Promise<string> {
-  await login();
-  try {
-    await gql(
-      "admin-api",
-      `mutation C($definition: JSON!, $name: String!) { createProductDefinition(definition: $definition, name: $name) { productId } }`,
-      { definition: definition(true), name: "E2E Párna" },
-      z.unknown()
-    );
-  } catch (error) {
-    if (!(error instanceof Error) || !error.message.includes("Már létezik")) {
-      throw error;
-    }
-  }
+const ProductsSchema = z.object({
+  products: z.object({
+    items: z.array(
+      z.object({
+        slug: z.string(),
+        productDefinition: z.object({ id: z.string() }).nullable(),
+        variants: z.array(z.object({ priceWithTax: z.number() })),
+      })
+    ),
+  }),
+});
 
+async function findShopProduct(
+  productId: string,
+  accept: (priceWithTax: number) => boolean
+): Promise<string> {
   for (let attempt = 0; attempt < 120; attempt += 1) {
     const result = await gql(
       "shop-api",
-      `query { products(options: { take: 50 }) { items { slug productDefinition } } }`,
+      `query { products(options: { take: 50 }) { items { slug productDefinition variants { priceWithTax } } } }`,
       {},
-      z.object({
-        products: z.object({
-          items: z.array(
-            z.object({
-              slug: z.string(),
-              productDefinition: z.object({ id: z.string() }).nullable(),
-            })
-          ),
-        }),
-      })
+      ProductsSchema
     );
-    const found = result.products.items.find((item) => item.productDefinition?.id === PRODUCT_ID);
+    const found = result.products.items.find(
+      (item) =>
+        item.productDefinition?.id === productId &&
+        item.variants.some((variant) => accept(variant.priceWithTax))
+    );
 
     if (found !== undefined) {
       return found.slug;
@@ -119,7 +115,201 @@ export async function createProduct(): Promise<string> {
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
-  throw new Error("A fixture termék nem szinkronizálódott.");
+  throw new Error(`A(z) ${productId} fixture termék nem szinkronizálódott.`);
+}
+
+async function createDefinition(
+  productDefinition: Record<string, unknown>,
+  name: string
+): Promise<void> {
+  await login();
+  try {
+    await gql(
+      "admin-api",
+      `mutation C($definition: JSON!, $name: String!) { createProductDefinition(definition: $definition, name: $name) { productId } }`,
+      { definition: productDefinition, name },
+      z.unknown()
+    );
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.includes("Már létezik")) {
+      throw error;
+    }
+  }
+}
+
+export async function createProduct(): Promise<string> {
+  await createDefinition(definition(true), "E2E Párna");
+
+  return findShopProduct(PRODUCT_ID, () => true);
+}
+
+function plainDefinition(id: string, basePrice: number): Record<string, unknown> {
+  return {
+    id,
+    orderable: true,
+    basePrice,
+    pricing: { kind: "unit" },
+    forbiddenMaterialCombinations: [],
+    fields: [],
+  };
+}
+
+const PRICED_PRODUCT_ID = "e2e-priced";
+const PRICED_BEFORE = 5000;
+const PRICED_AFTER = 6000;
+
+export async function createPricedProduct(): Promise<void> {
+  await createDefinition(plainDefinition(PRICED_PRODUCT_ID, PRICED_BEFORE), "E2E Változó ár");
+  await findShopProduct(PRICED_PRODUCT_ID, () => true);
+}
+
+export async function raisePrice(): Promise<void> {
+  await gql(
+    "admin-api",
+    `mutation U($productId: String!, $definition: JSON!, $force: Boolean) { updateProductDefinition(productId: $productId, definition: $definition, force: $force) { productId } }`,
+    {
+      productId: PRICED_PRODUCT_ID,
+      definition: plainDefinition(PRICED_PRODUCT_ID, PRICED_AFTER),
+      force: true,
+    },
+    z.unknown()
+  );
+  await findShopProduct(PRICED_PRODUCT_ID, (price) => price === PRICED_AFTER);
+}
+
+export async function createDeliveryProduct(): Promise<void> {
+  await createDefinition(plainDefinition("e2e-delivery", 30_000), "E2E Szállítás");
+  await findShopProduct("e2e-delivery", () => true);
+}
+
+const SET_MATERIALS = [
+  { slug: "e2e-szett-alfa", label: "Alfa" },
+  { slug: "e2e-szett-beta", label: "Béta" },
+];
+
+function setMemberDefinition(id: string, basePrice: number): Record<string, unknown> {
+  return {
+    id,
+    orderable: true,
+    basePrice,
+    pricing: { kind: "unit" },
+    forbiddenMaterialCombinations: [],
+    fields: [
+      {
+        kind: "material",
+        id: "anyag",
+        label: { hu: "Anyag" },
+        options: SET_MATERIALS.map((material) => ({ materialId: material.slug, price: 0 })),
+        colorCount: { kind: "fixed", count: 1 },
+      },
+    ],
+  };
+}
+
+const SetMemberSyncSchema = z.object({
+  productDefinition: z.object({ nativeProductId: z.number().nullable() }),
+});
+
+async function nativeProductId(productId: string): Promise<number> {
+  for (let attempt = 0; attempt < 120; attempt += 1) {
+    const { productDefinition } = await gql(
+      "admin-api",
+      `query($productId: String!) { productDefinition(productId: $productId) { nativeProductId } }`,
+      { productId },
+      SetMemberSyncSchema
+    );
+
+    if (productDefinition.nativeProductId !== null) {
+      return productDefinition.nativeProductId;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  throw new Error(`A(z) ${productId} nem szinkronizálódott.`);
+}
+
+async function createCollection(input: Record<string, unknown>): Promise<string> {
+  const result = await gql(
+    "admin-api",
+    `mutation($input: CreateCollectionInput!) { createCollection(input: $input) { id } }`,
+    { input },
+    z.object({ createCollection: z.object({ id: z.string() }) })
+  );
+
+  return result.createCollection.id;
+}
+
+function collectionInput(
+  name: string,
+  slug: string,
+  parentId: string | null,
+  productIds: number[],
+  setDiscount: number | null
+): Record<string, unknown> {
+  return {
+    isPrivate: true,
+    parentId,
+    filters: [
+      {
+        code: "product-id-filter",
+        arguments: [
+          { name: "productIds", value: JSON.stringify(productIds) },
+          { name: "combineWithAnd", value: JSON.stringify(true) },
+        ],
+      },
+    ],
+    translations: [{ languageCode: "hu", name, slug, description: "" }],
+    customFields: { setDiscount },
+  };
+}
+
+export const SET_TITLE = "E2E Szett";
+const SET_DISCOUNT = 1000;
+
+export async function createSet(): Promise<void> {
+  await login();
+
+  for (const material of SET_MATERIALS) {
+    await gql(
+      "admin-api",
+      `mutation($input: MaterialInput!) { createMaterial(input: $input) { slug } }`,
+      {
+        input: {
+          slug: material.slug,
+          translations: [{ languageCode: "hu", label: material.label }],
+          colors: [
+            { id: "feher", translations: [{ languageCode: "hu", label: "Fehér" }], hex: "#f5f5f5" },
+          ],
+        },
+      },
+      z.unknown()
+    );
+  }
+
+  await createDefinition(setMemberDefinition("e2e-szett-fej", 3000), "E2E Szett Fej");
+  await createDefinition(setMemberDefinition("e2e-szett-lab", 4000), "E2E Szett Láb");
+
+  const fej = await nativeProductId("e2e-szett-fej");
+  const lab = await nativeProductId("e2e-szett-lab");
+  const parent = await createCollection(collectionInput("Szettek", "szettek", null, [], null));
+
+  await createCollection(collectionInput(SET_TITLE, "e2e-szett", parent, [fej, lab], SET_DISCOUNT));
+  await gql(
+    "admin-api",
+    `mutation($input: CreatePromotionInput!) { createPromotion(input: $input) { __typename } }`,
+    {
+      input: {
+        enabled: true,
+        conditions: [{ code: "babasarok-product-set-basket", arguments: [] }],
+        actions: [{ code: "babasarok-product-set-discount", arguments: [] }],
+        translations: [{ languageCode: "hu", name: "Szett kedvezmény" }],
+      },
+    },
+    z.unknown()
+  );
+  await findShopProduct("e2e-szett-fej", () => true);
+  await findShopProduct("e2e-szett-lab", () => true);
 }
 
 export async function withdrawLargeSize(): Promise<void> {
