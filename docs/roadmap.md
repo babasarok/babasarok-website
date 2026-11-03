@@ -80,15 +80,24 @@ cleanups as follow-ups. A slice with both kinds splits into two PRs.
 - ✅ **S4 Catalog list, materials, search, sitemap** (needs S1) — on-demand
   product list (ADR 0004 dataset per request) and material pages; catalog
   sitemap and search replacements for the prerender-only integrations
-- ⬜ **S5 Vendure basket and checkout** (needs S1, S2) — the basket is the
+- 🟡 **S5 Vendure basket and checkout** (needs S1, S2) — the basket is the
   active order; checkout carries contact, address, delivery and message;
   `submitQuoteOrder` and client basket pricing retired; emails built from
-  `selections`
-  Stale-page UX (owner requirement, catalog pages are cached ~60 s): a
-  changed price shows the server price on the line with a visible notice; a
-  line whose option is no longer offered is marked with the reason and can be
-  edited or removed, and checkout is blocked until it is resolved (never
-  silently changed); a refused add-to-basket explains why and offers a reload
+  `selections`. Backend contract: [ADR 0013](adr/0013-checkout-on-the-native-vendure-order-flow.md)
+  - ✅ **S5a Backend** — native shipping methods and the free-delivery
+    promotion (seeded), the checkout readiness gate, per-line
+    `invalidReason` on the shop API, emails built from the order. The legacy
+    `submitQuoteOrder` path stays until the cutover (deploy skew) and is
+    **marked for removal in the cutover follow-up** (ADR 0013 decision 8). S5a lands in
+    `feat/site-cutover` (it deploys site and backend together), so it may
+    change the old checkout
+  - ⬜ **S5b Site** — basket and checkout islands on the shop API, `/checkout`
+    form, retire `submitQuoteOrder` and the client basket pricing
+    Stale-page UX (owner requirement, catalog pages are cached ~60 s): a
+    changed price shows the server price on the line with a visible notice; a
+    line whose option is no longer offered is marked with the reason and can be
+    edited or removed, and checkout is blocked until it is resolved (never
+    silently changed); a refused add-to-basket explains why and offers a reload
 - ✅ **S7 Markdown descriptions** (after S1; parallel with S3/S4) — product
   and material long descriptions are stored as markdown so the site drives
   their styling; a dashboard markdown editor (Vendure's exported rich-text

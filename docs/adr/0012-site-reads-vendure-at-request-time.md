@@ -47,7 +47,8 @@ Constraints:
    directly from the browser (no Worker invocation); `addItemToOrder` carries
    the `selections` / `lengthCm` order-line fields; the set discount is the
    server's promotion. `submitQuoteOrder` and the client-side basket pricing
-   are retired by the cutover.
+   are retired by the cutover. The backend contract is
+   [ADR 0013](0013-checkout-on-the-native-vendure-order-flow.md).
 
 ## Considered and rejected
 
