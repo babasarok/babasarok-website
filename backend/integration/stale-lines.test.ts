@@ -1,11 +1,14 @@
 /**
  * Seam 3: a cached catalog vs. the live one. Buyers hold lines the owner then
  * changes through the admin API (disables a variant, removes a material
- * colour, edits a price). The server verdict must reach the basket:
+ * colour or a product option, edits a price). The server verdict must reach the basket:
  * `OrderLine.invalidReason`, the Hungarian refusal at the transition to
  * ArrangingPayment, and recovery by removing/re-adding the line (ADR 0013
  * decision 6). Each case uses its own variant, so the owner's edits never
- * leak between cases.
+ * leak between cases. A removed product option is reported as
+ * VARIANT_UNAVAILABLE, not OPTION_NOT_OFFERED: the owner's save syncs the
+ * variants and retires the one the line uses, and Vendure's own (English)
+ * refusal then wins over our Hungarian one at the transition.
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { seedCatalog } from "./fixtures";
@@ -18,6 +21,7 @@ import {
   chooseShipping,
   completeCheckout,
   newShopper,
+  removeChoiceOption,
   removeLine,
   removeMaterialColor,
   setVariantEnabled,
@@ -110,5 +114,32 @@ describe("stale basket lines", () => {
     const adjusted = await adjustLine(shopper, untouched.lines[0]?.id ?? "", 2);
 
     expect(adjusted.lines[0]?.unitPriceWithTax).toBe(7000);
+  });
+
+  it("reports a line whose chosen product option was removed from the definition", async () => {
+    const shopper = newShopper(server);
+    const order = await addLine(shopper, elavulo(PAMUT, "nagy"));
+
+    expect(order.lines[0]?.invalidReason).toBeNull();
+
+    await completeCheckout(shopper);
+    await removeChoiceOption(server, "int-elavulo", "meret", "nagy");
+
+    const flagged = await activeOrder(shopper);
+
+    expect(flagged.lines[0]?.invalidReason).toEqual({
+      code: "VARIANT_UNAVAILABLE",
+      message: "A(z) Elavuló kiválasztott változata már nem elérhető.",
+    });
+    expect(await transitionTo(shopper, "ArrangingPayment")).toEqual({
+      refusal:
+        'Cannot transition to "ArrangingPayment" because the Order contains ProductVariants which are no longer available',
+    });
+
+    await removeLine(shopper, flagged.lines[0]?.id ?? "");
+
+    const replaced = await addLine(shopper, elavulo({ material: "int-len" }, "kicsi"));
+
+    expect(replaced.lines[0]?.invalidReason).toBeNull();
   });
 });
