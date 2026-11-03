@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { makeField } from "../__tests__/fixtures";
+import type { Field } from "@/lib/types.svelte";
 import { createBasketApi, type BasketApi, type Result } from "./api";
 import { applySelections, buildLine, buildSelections } from "./lineInput";
 import { describeLine } from "./lineRows";
@@ -8,6 +9,7 @@ import { formatMoney, majorUnits } from "./money";
 import { checkoutBlocker } from "./readiness";
 import type { Order, OrderLine, ShippingQuote } from "./schemas";
 import { loadShownPrices, priceChange, rememberShownPrice } from "./stale";
+import { SetDiscountSchema, lineSetState, setSection } from "./setDiscounts";
 import { placeOrder, splitName, type SubmitInput } from "./submit";
 
 const definition = ProductDefinitionSchema.parse({
@@ -62,7 +64,7 @@ const variants = [
   },
 ];
 
-const fields = () => [
+const fields = (): Field[] => [
   makeField({ name: "meret", type: "radio", value: { value: "50" } }),
   makeField({ name: "fodor", type: "toggle", value: { value: true } }),
 ];
@@ -128,8 +130,8 @@ describe("money", () => {
 const line = (over: Partial<OrderLine> = {}): OrderLine => ({
   id: "10",
   quantity: 1,
-  unitPriceWithTax: 11000,
-  discountedLinePriceWithTax: 11000,
+  unitPriceWithTax: 11_000,
+  discountedLinePriceWithTax: 11_000,
   customFields: null,
   invalidReason: null,
   productVariant: {
@@ -172,8 +174,8 @@ const draft = {
 
 describe("stale prices", () => {
   it("reports a line whose server price differs from the shown one", () => {
-    expect(priceChange(line(), { "10": 10000 })).toEqual({ shown: 10000, actual: 11000 });
-    expect(priceChange(line(), { "10": 11000 })).toBeUndefined();
+    expect(priceChange(line(), { "10": 10_000 })).toEqual({ shown: 10_000, actual: 11_000 });
+    expect(priceChange(line(), { "10": 11_000 })).toBeUndefined();
     expect(priceChange(line(), {})).toBeUndefined();
   });
 
@@ -292,11 +294,16 @@ describe("placeOrder", () => {
 });
 
 describe("createBasketApi", () => {
-  function apiWith(body: unknown, headers: Record<string, string> = {}) {
+  function apiWith(
+    body: unknown,
+    headers: Record<string, string> = {}
+  ): {
+    api: BasketApi;
+    fetchMock: ReturnType<typeof vi.fn<typeof fetch>>;
+    token: () => string | null;
+  } {
     let token: string | null = "old";
-    const fetchMock = vi.fn<typeof fetch>(() =>
-      Promise.resolve(new Response(JSON.stringify(body), { headers }))
-    );
+    const fetchMock = vi.fn<typeof fetch>(() => Promise.resolve(Response.json(body, { headers })));
     const api = createBasketApi({
       fetch: fetchMock,
       apiUrl: "http://x",
@@ -337,5 +344,73 @@ describe("createBasketApi", () => {
     const { api } = apiWith({ data: { activeOrder: { id: 1 } } });
 
     expect((await api.activeOrder()).ok).toBe(false);
+  });
+});
+
+describe("set discount adapter", () => {
+  const fixtureOrder = {
+    ...order([
+      line({
+        id: "1",
+        setState: { kind: "ACTIVE", groupId: "g", coveredUnits: 2, materialSyncFromLineId: null },
+      }),
+      line({
+        id: "2",
+        setState: {
+          kind: "PENDING_MATERIAL",
+          groupId: "g",
+          coveredUnits: 0,
+          materialSyncFromLineId: "1",
+        },
+      }),
+      line({
+        id: "3",
+        setState: {
+          kind: "PENDING_PARTNER",
+          groupId: "g",
+          coveredUnits: 0,
+          materialSyncFromLineId: null,
+        },
+      }),
+    ]),
+    setDiscounts: [
+      {
+        groupId: "g",
+        title: "Fészek szett",
+        amount: -1000,
+        lines: [
+          { orderLineId: "1", units: 2 },
+          { orderLineId: "9", units: 1 },
+        ],
+      },
+    ],
+  };
+
+  it("lists set instances with their member lines, dropping unknown lines", () => {
+    expect(setSection(fixtureOrder)).toEqual([
+      {
+        groupId: "g",
+        title: "Fészek szett",
+        amount: -1000,
+        members: [{ lineId: "1", name: "Párna", units: 2 }],
+      },
+    ]);
+  });
+
+  it("renders no set section and no line state when the API has no set fields", () => {
+    expect(setSection(order([line()]))).toEqual([]);
+    expect(lineSetState(line())).toBeUndefined();
+  });
+
+  it("maps each line state kind", () => {
+    const [active, material, partner] = fixtureOrder.lines.map(lineSetState);
+
+    expect(active?.kind).toBe("active");
+    expect(material).toMatchObject({ kind: "pending-material", syncFromLineId: "1" });
+    expect(partner?.kind).toBe("pending-partner");
+  });
+
+  it("rejects set data of the wrong shape", () => {
+    expect(SetDiscountSchema.safeParse({ groupId: "g" }).success).toBe(false);
   });
 });

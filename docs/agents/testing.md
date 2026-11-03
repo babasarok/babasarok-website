@@ -87,6 +87,7 @@ with one owner: unit-test it there, don't re-prove it across the seam.
 | Backend integration  | not set up yet — agree the harness with the owner first                   | —                             |
 | Site E2E (hydration) | `tests/*.spec.ts`                                                         | `pnpm run test:hydration`     |
 | Dashboard E2E        | `tests/dashboard/*.spec.ts`, shared steps in `tests/dashboard/helpers.ts` | `pnpm run test:dashboard-e2e` |
+| Checkout E2E         | `tests/checkout/*.spec.ts`, page actions in `tests/checkout/pages.ts`     | `pnpm run test:checkout-e2e`  |
 
 Playwright only collects `*.spec.ts`; `*.test.ts` belongs to Vitest.
 

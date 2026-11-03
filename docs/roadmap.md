@@ -91,8 +91,10 @@ cleanups as follow-ups. A slice with both kinds splits into two PRs.
     **marked for removal in the cutover follow-up** (ADR 0013 decision 8). S5a lands in
     `feat/site-cutover` (it deploys site and backend together), so it may
     change the old checkout
-  - ⬜ **S5b Site** — basket and checkout islands on the shop API, `/checkout`
-    form, retire `submitQuoteOrder` and the client basket pricing
+  - ✅ **S5b Site** — basket and checkout islands on the shop API, `/checkout`
+    form, `submitQuoteOrder` and the client basket pricing retired from the site
+    (checkout E2E: `pnpm run test:checkout-e2e`; the set section waits for the
+    shop API's set fields)
     Stale-page UX (owner requirement, catalog pages are cached ~60 s): a
     changed price shows the server price on the line with a visible notice; a
     line whose option is no longer offered is marked with the reason and can be

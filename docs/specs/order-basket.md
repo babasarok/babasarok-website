@@ -61,9 +61,12 @@ does not).
 The system SHALL keep the basket server-side as the active order, identified
 by the bearer session token the shop API returns (`vendure-auth-token`
 response header). The site SHALL store only that token in browser
-localStorage under a versioned key; selections, quantities and prices are
-never persisted client-side. Client baskets from before the cutover are
-dropped, not migrated.
+localStorage under a versioned key; selections and quantities are never
+persisted client-side, and contact details are not persisted at all. The only
+other stored value is, per order line in sessionStorage, the unit price the
+product page showed when the line was added (used solely for the price-change
+notice). Client baskets from before the cutover are dropped (the old key is
+removed once), not migrated.
 
 - **Scenario: Reload restores the basket**
   - WHEN a buyer with a stored session token returns to the site
@@ -95,7 +98,25 @@ refused (order-submission spec).
 - **Scenario: Price changed on a stale page**
   - WHEN a line is added from a page showing an older price
   - THEN the line carries the server price and the site shows the
-    difference instead of silently accepting it
+    difference (on the product page right after adding, and on the checkout
+    line) instead of silently accepting it
+- **Scenario: Invalid line at checkout**
+  - WHEN a line has an `invalidReason`
+  - THEN the checkout marks it with the message, it can be edited (the edit
+    page re-opens it from its `selections`) or removed, and placing the order
+    is blocked until it is resolved
+- **Scenario: Refused add**
+  - WHEN the shop API refuses an add (stale page, withdrawn option)
+  - THEN the product page shows the server's Hungarian reason and offers to
+    reload the page
+
+### Editing a line
+
+The system SHALL edit a basket line by opening its product page with
+`?line=<order line id>`, prefilled from the line's `selections` and quantity.
+Saving adjusts the quantity when the configuration is unchanged; otherwise it
+adds the new configuration and then removes the old line (Vendure cannot change
+a line's variant), so a refused add leaves the old line intact.
 
 ### Shared live basket
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SET_LINE_FIELDS, SET_ORDER_FIELDS } from "./setDiscounts";
 import {
   OrderSchema,
   ShippingQuoteSchema,
@@ -68,11 +69,13 @@ export interface BasketApi {
 const ORDER_FIELDS = `
   id code state currencyCode totalQuantity subTotalWithTax shippingWithTax totalWithTax
   discounts { description amountWithTax }
+  ${SET_ORDER_FIELDS}
   shippingLines { priceWithTax discountedPriceWithTax shippingMethod { id } }
   lines {
     id quantity unitPriceWithTax discountedLinePriceWithTax
     customFields { selections lengthCm }
     invalidReason { code message }
+    ${SET_LINE_FIELDS}
     productVariant {
       id name
       product { slug name featuredAsset { source } productDefinition }
@@ -296,8 +299,12 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
         input: { customFields },
       }),
     transitionToArrangingPayment: () =>
-      orderMutation("transitionOrderToState", "($state: String!)", "(state: $state)", {
-        state: "ArrangingPayment",
-      }),
+      orderMutation(
+        "transitionOrderToState",
+        "($state: String!)",
+        "(state: $state)",
+        { state: "ArrangingPayment" },
+        TRANSITION_FIELDS
+      ),
   };
 }

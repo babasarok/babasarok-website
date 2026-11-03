@@ -2,6 +2,7 @@
   import Icon from "@iconify/svelte";
   import { formatMoney } from "@/lib/basket/money";
   import type { Order } from "@/lib/basket/schemas";
+  import { setSection } from "@/lib/basket/setDiscounts";
 
   interface Props {
     order: Order;
@@ -9,8 +10,32 @@
 
   let { order }: Props = $props();
 
+  const sets = $derived(setSection(order));
   const deals = $derived(order.discounts.filter((discount) => discount.amountWithTax !== 0));
 </script>
+
+{#if sets.length > 0}
+  <section class="flex flex-col gap-2 rounded-2xl border border-success-600 bg-success-50 p-4">
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-success-800">
+      Szett kedvezmények
+    </h2>
+    <ul class="flex flex-col gap-2 text-sm text-success-800">
+      {#each sets as set (set.groupId)}
+        <li data-testid="set-discount">
+          <div class="flex justify-between gap-4">
+            <span class="font-medium">{set.title}</span>
+            <span>{formatMoney(set.amount, order.currencyCode)}</span>
+          </div>
+          <ul class="text-xs">
+            {#each set.members as member (member.lineId)}
+              <li>{member.name} · {member.units} db</li>
+            {/each}
+          </ul>
+        </li>
+      {/each}
+    </ul>
+  </section>
+{/if}
 
 {#if deals.length > 0}
   <section class="flex flex-col gap-2 rounded-2xl border border-success-600 bg-success-50 p-4">

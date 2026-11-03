@@ -1,4 +1,4 @@
-import { expect, type BrowserContext, type Page } from "@playwright/test";
+import { expect, type BrowserContext, type Locator, type Page } from "@playwright/test";
 
 export async function openProductFromList(page: Page, name: RegExp): Promise<void> {
   await page.goto("/product/", { waitUntil: "domcontentloaded" });
@@ -28,7 +28,7 @@ export async function openCheckout(page: Page): Promise<void> {
   await page.goto("/checkout", { waitUntil: "domcontentloaded" });
 }
 
-export function checkoutLines(page: Page) {
+export function checkoutLines(page: Page): Locator {
   return page.getByTestId("checkout-line");
 }
 

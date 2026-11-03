@@ -19,10 +19,12 @@ unit), and surface the formed set discounts to the buyer at basket level.
 > missing or unprovable forms no instance. Degenerate groups (<2 members, no
 > discount) are ignored with a report, not thrown. The condition also refuses
 > to apply when more than one active promotion uses it, so the allocation is
-> never double-counted; exactly one such promotion must exist. Until the
-> cutover the site keeps rendering the basket's set-discount section and
-> related items from Tina, and order emails record the client-computed
-> summary; the per-line status surfacing (active / pending-partner /
+> never double-counted; exactly one such promotion must exist. The
+> checkout renders the set section and the per-line set state from the shop
+> API (`Order.setDiscounts`, `OrderLine.setState`) through one adapter in
+> `src/lib/basket/setDiscounts.ts`, never recomputing allocation in the
+> browser; it renders nothing until the API exposes those fields. The
+> per-line status surfacing (active / pending-partner /
 > pending-material with material sync), the related-items presentation, and
 > the email's per-instance provenance flip to the Vendure-owned data at
 > cutover.

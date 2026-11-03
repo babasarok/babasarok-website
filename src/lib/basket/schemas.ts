@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
+import { SetDiscountSchema, SetStateSchema } from "./setDiscounts";
 
 const InvalidReasonSchema = z.object({ code: z.string(), message: z.string() });
 
@@ -12,6 +13,7 @@ export const OrderLineSchema = z.object({
     .object({ selections: z.string().nullable(), lengthCm: z.number().nullable() })
     .nullable(),
   invalidReason: InvalidReasonSchema.nullable(),
+  setState: SetStateSchema.nullable().optional(),
   productVariant: z.object({
     id: z.string(),
     name: z.string(),
@@ -42,6 +44,7 @@ export const OrderSchema = z.object({
     })
   ),
   lines: z.array(OrderLineSchema),
+  setDiscounts: z.array(SetDiscountSchema).optional(),
 });
 
 export type Order = z.output<typeof OrderSchema>;

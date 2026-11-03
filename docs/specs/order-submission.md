@@ -117,7 +117,8 @@ discount adjustments.
 
 - **Scenario: Successful submission**
   - WHEN a complete order is transitioned to `ArrangingPayment`
-  - THEN the buyer sees a confirmation, both emails are sent with details
+  - THEN the buyer sees a confirmation showing the order code, a new empty
+    basket starts, both emails are sent with details
     built from the lines' `selections`, and the order is not kept in an
     active state
 - **Scenario: Submission failure**

@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import Icon from "@iconify/svelte";
   import type { ProductDefinition } from "@babasarok/product-definition";
-  import { parseLineSelections } from "@babasarok/pricing";
+  import { parseLineSelections, type LineSelections } from "@babasarok/pricing";
   import OrderItem from "./OrderItem.svelte";
   import SetPanel from "./SetPanel.svelte";
   import RelatedItems from "./RelatedItems.svelte";
@@ -120,7 +120,8 @@
 
     restored = true;
 
-    const lineId = new URLSearchParams(globalThis.location.search).get("line");
+    const params = new URLSearchParams(globalThis.location.search);
+    const lineId = params.get("line");
     const line = basket.order?.lines.find(
       (candidate) => candidate.id === lineId && candidate.productVariant.product.slug === slug
     );
@@ -131,7 +132,9 @@
 
     try {
       const next = $state.snapshot(item);
-      applySelections(next.fields, parseLineSelections(line.customFields?.selections ?? null));
+      const selections = parseLineSelections(line.customFields?.selections ?? null);
+      applySelections(next.fields, selections);
+      applySelections(next.fields, partnerMaterials(params.get("syncFrom")));
       next.count = line.quantity;
       item = sanitizeItem(next);
       editingLineId = line.id;
@@ -155,6 +158,20 @@
       quantity,
       customFields: { selections: line.selections, lengthCm: line.lengthCm },
     };
+  }
+
+  function partnerMaterials(partnerLineId: string | null): LineSelections {
+    const partner = basket.order?.lines.find((candidate) => candidate.id === partnerLineId);
+
+    if (!partner) {
+      return {};
+    }
+
+    const all = parseLineSelections(partner.customFields?.selections ?? null);
+
+    return Object.fromEntries(
+      Object.entries(all).filter(([, selection]) => selection?.kind === "material")
+    );
   }
 
   function refuse(message: string): false {

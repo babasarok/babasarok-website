@@ -12,9 +12,11 @@ selection validation, forbidden material combinations) are implemented once, in
 the pure workspace package `packages/pricing` (`@babasarok/pricing`, depending
 only on zod and `@babasarok/product-definition`). The backend pricing strategy
 and the order-line boundary call it; it prices a canonical `ProductDefinition`
-plus the line's selections and variant options. The site's configurator still
-runs its own Tina-shaped copy in `src/lib/pricing` until it is rewired to the
-package (roadmap S3), and the set discount is unaffected (a server promotion).
+plus the line's selections and variant options. The site's configurator shows a
+live unit price from the package (`src/lib/catalog/livePrice.ts`) and an option
+breakdown from `src/lib/pricing/price.ts` (display only); every basket and
+checkout amount is read from the Vendure order, and the set discount is a server
+promotion.
 
 Selection problems are structured (`field`, `code`, detail) and rendered by one
 formatter; a selection is also refused when a material field carries fewer
@@ -145,9 +147,8 @@ then sell for 0 Ft). Non-orderable (browse-only) products are exempt.
 > embroidery selection whose `colorId` is not a value code of the private
 > `babasarok-thread-color` facet is rejected at the same boundary (ADR 0011
 > decision 3; one lookup per add/adjust, only when the line carries an
-> embroidery selection). Until the cutover
-> the site keeps quoting client-side; server-side pricing applies to orders
-> that carry those fields. An open owner question: a `customValue` choice
+> embroidery selection). The site
+> never prices a basket itself: lines carry the server's unit price. An open owner question: a `customValue` choice
 > field used as a variant axis cannot select a generated variant, and the
 > server refuses to price such a line — whether such fields may exist outside
 > length source fields is undecided; none exist in current content.

@@ -5,6 +5,7 @@
   import { formatMoney } from "@/lib/basket/money";
   import type { PriceChange } from "@/lib/basket/stale";
   import type { OrderLine } from "@/lib/basket/schemas";
+  import { lineSetState } from "@/lib/basket/setDiscounts";
   import { ASSET_BASE } from "@/lib/vendure/client";
   import { imageUrl } from "@/lib/vendure/imageUrl";
 
@@ -26,6 +27,7 @@
       ? describeLine(product.productDefinition, line.customFields?.selections ?? null, labels)
       : []
   );
+  const setState = $derived(lineSetState(line));
   const thumbnail = $derived(
     product.featuredAsset ? imageUrl(product.featuredAsset.source, "card-sm", ASSET_BASE) : null
   );
@@ -56,6 +58,24 @@
     >
       <Icon icon="mdi:alert-circle" class="mt-0.5 shrink-0" />
       {line.invalidReason.message}
+    </p>
+  {/if}
+
+  {#if setState}
+    <p
+      class="flex flex-wrap items-center gap-2 text-xs text-brown-600"
+      data-testid="line-set-state"
+    >
+      {setState.message}
+      {#if setState.kind === "pending-material" && setState.syncFromLineId}
+        <a
+          href={`/product/${product.slug}/?line=${line.id}&syncFrom=${setState.syncFromLineId}`}
+          class="flex items-center gap-1 rounded-full border border-brown-300 px-3 py-1 font-medium transition-all hover:bg-brown-100"
+        >
+          <Icon icon="mdi:sync" class="shrink-0" />
+          Anyag egyeztetése
+        </a>
+      {/if}
     </p>
   {/if}
 
