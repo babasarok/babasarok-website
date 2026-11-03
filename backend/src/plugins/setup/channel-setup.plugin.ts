@@ -4,7 +4,10 @@ import {
   ChannelService,
   Country,
   CountryService,
+  CurrencyCode,
+  Logger,
   PluginCommonModule,
+  ProductVariantPrice,
   PromotionService,
   RequestContext,
   RequestContextService,
@@ -51,6 +54,7 @@ export class ChannelSetupPlugin implements OnApplicationBootstrap {
       await this.channelService.update(ctx, { id: channel.id, pricesIncludeTax: true });
     }
 
+    await this.ensureForint(ctx, channel);
     await this.ensureZones(ctx, channel);
     await seedDelivery(this.connection, this.shippingMethodService, this.promotionService, ctx);
   }
@@ -76,6 +80,29 @@ export class ChannelSetupPlugin implements OnApplicationBootstrap {
       id: channel.id,
       defaultTaxZoneId: zone.id,
       defaultShippingZoneId: zone.id,
+    });
+  }
+
+  private async ensureForint(ctx: RequestContext, channel: Channel): Promise<void> {
+    if (channel.defaultCurrencyCode === CurrencyCode.HUF) {
+      return;
+    }
+
+    // Existing prices are rows in the old currency; switching would orphan them.
+    const priced = await this.connection.getRepository(ctx, ProductVariantPrice).count();
+
+    if (priced > 0) {
+      Logger.warn(
+        `Default channel currency is ${channel.defaultCurrencyCode}, not HUF, and variant prices exist — not switching`,
+        "ChannelSetupPlugin"
+      );
+      return;
+    }
+
+    await this.channelService.update(ctx, {
+      id: channel.id,
+      defaultCurrencyCode: CurrencyCode.HUF,
+      availableCurrencyCodes: [CurrencyCode.HUF],
     });
   }
 
