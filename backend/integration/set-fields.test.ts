@@ -8,7 +8,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { SET_PROMOTION_NAME, seedCatalog } from "./fixtures";
 import { startServer, type IntegrationServer } from "./harness";
-import { elavulo, feszek, parna, takaro } from "./lines";
+import { elavulo, feszek, kendo, parna, szalag, takaro } from "./lines";
 import { addLine, newShopper, type Order } from "./shop";
 
 const PAMUT = { material: "int-pamut" } as const;
@@ -84,6 +84,18 @@ describe("exposed set discounts and line states", () => {
     }
 
     expect(parnaLine.setState?.groupId).toBe("int-duo-szett");
+  });
+
+  it("exposes the clamped amount, not the set's nominal one", async () => {
+    const shopper = newShopper(server);
+
+    await addLine(shopper, feszek(PAMUT, PAMUT));
+    await addLine(shopper, szalag(100));
+
+    const order = await addLine(shopper, kendo());
+
+    expect(order.setDiscounts.map((instance) => instance.amount)).toEqual([2400]);
+    expect(appliedSetDiscount(order)).toBe(2400);
   });
 
   it("reports only the covered share of a line as active", async () => {

@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Collection, EntityHydrator, Promotion, TransactionalConnection } from "@vendure/core";
+import { Collection, OrderLine, Promotion, TransactionalConnection } from "@vendure/core";
 import type { Order, RequestContext } from "@vendure/core";
 import { IsNull, In } from "typeorm";
 import { ProductDefinition } from "../product/product.entity";
@@ -13,12 +13,14 @@ import {
 
 @Injectable()
 export class SetBasketService {
-  constructor(
-    private connection: TransactionalConnection,
-    private entityHydrator: EntityHydrator
-  ) {}
+  constructor(private connection: TransactionalConnection) {}
 
-  /** The allocation for an order, read by the promotion and the shop API alike. */
+  /**
+   * The allocation for an order, read by the promotion and the shop API alike.
+   * The order's own lines are never hydrated: that would overwrite the
+   * calculator's not-yet-saved line prices with the stored ones. In-flight
+   * quantities and prices are overlaid on the stored lines instead.
+   */
   async stateForOrder(ctx: RequestContext, order: Order): Promise<SetBasketState | undefined> {
     const parent = await this.connection.getRepository(ctx, Collection).findOne({
       relations: { translations: true },
@@ -34,26 +36,29 @@ export class SetBasketService {
       relations: { translations: true },
     });
 
-    await this.entityHydrator.hydrate(ctx, order, {
-      relations: [
-        "lines",
-        "lines.productVariant",
-        "lines.productVariant.options",
-        "lines.productVariant.options.group",
-      ],
+    const stored = await this.connection.getRepository(ctx, OrderLine).find({
+      where: { order: { id: order.id } },
+      relations: { productVariant: { options: { group: true } } },
+      order: { id: "ASC" },
     });
+    const inFlight = new Map(
+      (Array.isArray(order.lines) ? order.lines : []).map((line) => [String(line.id), line])
+    );
+    const lines: BasketLine[] = stored.map((line) => {
+      const current = inFlight.get(String(line.id)) ?? line;
 
-    const lines: BasketLine[] = order.lines.map((line) => ({
-      id: line.id,
-      quantity: line.quantity,
-      listPrice: line.listPrice,
-      nativeProductId: Number(line.productVariant.productId),
-      selectionsRaw: line.customFields.selections,
-      options: line.productVariant.options.map((option) => ({
-        groupCode: option.group.code,
-        code: option.code,
-      })),
-    }));
+      return {
+        id: line.id,
+        quantity: current.quantity,
+        listPrice: current.listPrice,
+        nativeProductId: Number(line.productVariant.productId),
+        selectionsRaw: line.customFields.selections,
+        options: line.productVariant.options.map((option) => ({
+          groupCode: option.group.code,
+          code: option.code,
+        })),
+      };
+    });
     const definitionRows = await this.connection.getRepository(ctx, ProductDefinition).find({
       select: { nativeProductId: true, definition: true },
       where: { nativeProductId: In(relevantNativeProductIds(lines, children)) },

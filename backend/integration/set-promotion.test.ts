@@ -68,6 +68,17 @@ describe("the set promotion in Vendure's order calculator", () => {
     expect(setDiscount(order)).toBe(0);
   });
 
+  it("keeps a configured line's computed price when it joins a non-empty basket", async () => {
+    const shopper = newShopper(server);
+
+    await addLine(shopper, takaro(PAMUT));
+
+    const order = await addLine(shopper, szalag(150));
+
+    expect(lineWith(order, "int-szalag").unitPriceWithTax).toBe(3000);
+    expect(order.subTotalWithTax).toBe(8000 + 3000);
+  });
+
   it("caps pairing at the partner's units (2 x A + 1 x B forms one instance)", async () => {
     const shopper = newShopper(server);
 
@@ -106,12 +117,13 @@ describe("the set promotion in Vendure's order calculator", () => {
   it("clamps a set's amount to the covered units' charged subtotal", async () => {
     const shopper = newShopper(server);
 
+    await addLine(shopper, feszek(PAMUT, PAMUT));
     await addLine(shopper, szalag(100));
 
     const order = await addLine(shopper, kendo());
 
-    expect(order.subTotalWithTax).toBe(0);
     expect(setDiscount(order)).toBe(2400);
+    expect(order.subTotalWithTax).toBe(12_000);
   });
 
   it("pairs when the smaller material selection is a subset, not otherwise", async () => {
