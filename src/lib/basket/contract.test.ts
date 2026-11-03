@@ -3,6 +3,8 @@
  * createBasketApi to a live shop API and fails when the schema rejects one
  * (unknown field, argument or type, invalid variable shape). Business errors
  * (no active order, unknown variant) prove the schema accepted the document.
+ * The calls perform real mutations (addItem creates an anonymous guest
+ * order on the target API): point it at a test API, not production.
  * Skipped unless BASKET_CONTRACT_API_URL is set, e.g. against
  * `pnpm -C backend run e2e:server` (http://localhost:4000) or a seeded dev
  * backend: BASKET_CONTRACT_API_URL=http://localhost:4000 pnpm test
