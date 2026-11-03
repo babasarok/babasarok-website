@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createShopQuery } from "../../src/lib/vendure/transport";
 
 const API = "http://localhost:4000";
 const PRODUCT_ID = "e2e-checkout";
@@ -12,8 +13,9 @@ const Envelope = z.object({
 
 let adminToken: string | null = null;
 
+const shopQuery = createShopQuery({ fetch, apiUrl: API, languageCode: "hu" });
+
 async function gql<Schema extends z.ZodType>(
-  path: "admin-api" | "shop-api",
   query: string,
   variables: Record<string, unknown>,
   schema: Schema
@@ -23,18 +25,18 @@ async function gql<Schema extends z.ZodType>(
     "Apollo-Require-Preflight": "true",
   };
 
-  if (adminToken !== null && path === "admin-api") {
+  if (adminToken !== null) {
     headers.Authorization = `Bearer ${adminToken}`;
   }
 
-  const response = await fetch(`${API}/${path}`, {
+  const response = await fetch(`${API}/admin-api`, {
     method: "POST",
     headers,
     body: JSON.stringify({ query, variables }),
   });
   const issued = response.headers.get("vendure-auth-token");
 
-  if (issued !== null && path === "admin-api") {
+  if (issued !== null) {
     adminToken = issued;
   }
 
@@ -72,7 +74,6 @@ export function definition(withLargeSize: boolean): Record<string, unknown> {
 
 async function login(): Promise<void> {
   await gql(
-    "admin-api",
     `mutation Login($u: String!, $p: String!) { authenticate(input: { native: { username: $u, password: $p } }) { ... on CurrentUser { id } } }`,
     { u: EMAIL, p: PASSWORD },
     z.unknown()
@@ -96,12 +97,10 @@ async function findShopProduct(
   accept: (priceWithTax: number) => boolean
 ): Promise<string> {
   for (let attempt = 0; attempt < 120; attempt += 1) {
-    const result = await gql(
-      "shop-api",
-      `query { products(options: { take: 50 }) { items { slug productDefinition variants { priceWithTax } } } }`,
-      {},
-      ProductsSchema
-    );
+    const result = await shopQuery({
+      query: `query { products(options: { take: 50 }) { items { slug productDefinition variants { priceWithTax } } } }`,
+      schema: ProductsSchema,
+    });
     const found = result.products.items.find(
       (item) =>
         item.productDefinition?.id === productId &&
@@ -125,7 +124,6 @@ async function createDefinition(
   await login();
   try {
     await gql(
-      "admin-api",
       `mutation C($definition: JSON!, $name: String!) { createProductDefinition(definition: $definition, name: $name) { productId } }`,
       { definition: productDefinition, name },
       z.unknown()
@@ -165,7 +163,6 @@ export async function createPricedProduct(): Promise<void> {
 
 export async function raisePrice(): Promise<void> {
   await gql(
-    "admin-api",
     `mutation U($productId: String!, $definition: JSON!, $force: Boolean) { updateProductDefinition(productId: $productId, definition: $definition, force: $force) { productId } }`,
     {
       productId: PRICED_PRODUCT_ID,
@@ -213,7 +210,6 @@ const SetMemberSyncSchema = z.object({
 async function nativeProductId(productId: string): Promise<number> {
   for (let attempt = 0; attempt < 120; attempt += 1) {
     const { productDefinition } = await gql(
-      "admin-api",
       `query($productId: String!) { productDefinition(productId: $productId) { nativeProductId } }`,
       { productId },
       SetMemberSyncSchema
@@ -231,7 +227,6 @@ async function nativeProductId(productId: string): Promise<number> {
 
 async function createCollection(input: Record<string, unknown>): Promise<string> {
   const result = await gql(
-    "admin-api",
     `mutation($input: CreateCollectionInput!) { createCollection(input: $input) { id } }`,
     { input },
     z.object({ createCollection: z.object({ id: z.string() }) })
@@ -272,7 +267,6 @@ export async function createSet(): Promise<void> {
 
   for (const material of SET_MATERIALS) {
     await gql(
-      "admin-api",
       `mutation($input: MaterialInput!) { createMaterial(input: $input) { slug } }`,
       {
         input: {
@@ -296,7 +290,6 @@ export async function createSet(): Promise<void> {
 
   await createCollection(collectionInput(SET_TITLE, "e2e-szett", parent, [fej, lab], SET_DISCOUNT));
   await gql(
-    "admin-api",
     `mutation($input: CreatePromotionInput!) { createPromotion(input: $input) { __typename } }`,
     {
       input: {
@@ -314,7 +307,6 @@ export async function createSet(): Promise<void> {
 
 export async function withdrawLargeSize(): Promise<void> {
   await gql(
-    "admin-api",
     `mutation U($productId: String!, $definition: JSON!, $force: Boolean) { updateProductDefinition(productId: $productId, definition: $definition, force: $force) { productId } }`,
     { productId: PRODUCT_ID, definition: definition(false), force: true },
     z.unknown()
