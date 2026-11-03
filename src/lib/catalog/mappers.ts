@@ -32,6 +32,7 @@ export type CatalogProductGroup = z.output<
 >["productGroups"][number];
 
 export interface CatalogProductDetail extends CatalogProduct {
+  description: string;
   gallery: Array<{ url: string; description: string | null }>;
 }
 
@@ -75,6 +76,7 @@ export function toProductDetail(row: DetailRow): CatalogProductDetail | null {
 
   return {
     ...product,
+    description: row.description,
     gallery: row.assets.map((asset) => ({
       url: asset.source,
       description: asset.customFields?.galleryDescription ?? null,

@@ -91,6 +91,12 @@ describe("getProduct", () => {
     expect(result?.gallery[0]?.description).toBeNull();
   });
 
+  it("carries the markdown description", async () => {
+    expect((await getProduct("tornazsak", runReturning(product)))?.description).toBe(
+      "**Tornazsák** leírása"
+    );
+  });
+
   it("is null for an unknown slug", async () => {
     expect(await getProduct("nope", runReturning({ product: null }))).toBeNull();
   });

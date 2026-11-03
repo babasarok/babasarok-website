@@ -1,0 +1,13 @@
+---
+import { ASSET_BASE } from "@/lib/vendure/client";
+import { renderMarkdown } from "@/lib/markdown/renderMarkdown";
+
+interface Props {
+  source: string;
+  class?: string;
+}
+
+const { source, class: className } = Astro.props;
+---
+
+<div class:list={["prose max-w-none", className]} set:html={renderMarkdown(source, ASSET_BASE)} />
