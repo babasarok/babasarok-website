@@ -1,17 +1,17 @@
-import { initGraphQLTada } from 'gql.tada';
-import type { introspection } from './graphql-env.d.ts';
+import { initGraphQLTada } from "gql.tada";
+import type { introspection } from "./graphql-env.d.ts";
 
 export const graphql = initGraphQLTada<{
-    disableMasking: true;
-    introspection: introspection;
-    scalars: {
-        DateTime: string;
-        JSON: any;
-        Money: number;
-        Upload: File;
-    };
+  disableMasking: true;
+  introspection: introspection;
+  scalars: {
+    DateTime: string;
+    JSON: any;
+    Money: number;
+    Upload: File;
+  };
 }>();
 
-export type { TypedDocumentNode } from '@graphql-typed-document-node/core';
-export { readFragment } from 'gql.tada';
-export type { FragmentOf, ResultOf, VariablesOf } from 'gql.tada';
+export type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+export { readFragment } from "gql.tada";
+export type { FragmentOf, ResultOf, VariablesOf } from "gql.tada";
