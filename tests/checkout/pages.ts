@@ -46,6 +46,24 @@ export async function increaseQuantity(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Mennyiség növelése" }).last().click();
 }
 
+export async function increaseQuantityOf(page: Page, text: RegExp): Promise<void> {
+  await checkoutLines(page)
+    .filter({ hasText: text })
+    .getByRole("button", { name: "Mennyiség növelése" })
+    .click();
+}
+
+export async function expectLineHighlight(page: Page, text: RegExp, on: boolean): Promise<void> {
+  const line = checkoutLines(page).filter({ hasText: text });
+
+  if (on) {
+    await expect(line).toHaveClass(/ring-2/);
+    return;
+  }
+
+  await expect(line).not.toHaveClass(/ring-2/);
+}
+
 export async function fillContactAndPickup(page: Page): Promise<void> {
   await page.getByPlaceholder("Név *").fill("Teszt Elek");
   await page.getByPlaceholder("Email cím *").fill("teszt@example.com");

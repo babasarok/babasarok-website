@@ -15,13 +15,24 @@
     labels: Labels;
     partnerLinks: PartnerLink[];
     priceChange: PriceChange | undefined;
+    /** Emphasise this line while its set discount is hovered/pinned in the deals panel. */
+    highlighted: boolean;
     busy: boolean;
     onQuantity: (quantity: number) => void;
     onRemove: () => void;
   }
 
-  let { line, currencyCode, labels, partnerLinks, priceChange, busy, onQuantity, onRemove }: Props =
-    $props();
+  let {
+    line,
+    currencyCode,
+    labels,
+    partnerLinks,
+    priceChange,
+    highlighted,
+    busy,
+    onQuantity,
+    onRemove,
+  }: Props = $props();
 
   const product = $derived(line.productVariant.product);
   const rows = $derived(
@@ -38,7 +49,11 @@
 <article
   class={[
     "flex flex-col gap-3 rounded-xl border bg-white p-4 shadow-sm transition-all",
-    line.invalidReason ? "border-danger-500" : "border-brown-200",
+    highlighted
+      ? "border-success-500 ring-2 ring-success-500"
+      : line.invalidReason
+        ? "border-danger-500"
+        : "border-brown-200",
   ]}
   data-testid="checkout-line"
 >

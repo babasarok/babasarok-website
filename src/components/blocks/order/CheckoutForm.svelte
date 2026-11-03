@@ -65,6 +65,7 @@
   const shippingFree = $derived(
     shippingLine !== undefined && shippingLine.priceWithTax > 0 && order?.shippingWithTax === 0
   );
+  let highlightedLines = $state<readonly string[]>([]);
 
   const readContact = (): ContactDraft => ({ name, email, phone, address, message });
   const contactSaver = createContactSaver(basket.api, readContact);
@@ -309,6 +310,7 @@
               {labels}
               partnerLinks={partnerLinks(line, order, setMembers)}
               priceChange={priceChange(line, basket.shownPrices)}
+              highlighted={highlightedLines.includes(line.id)}
               {busy}
               onQuantity={(quantity) => changeLine(basket.adjust(line.id, quantity))}
               onRemove={() => changeLine(basket.remove(line.id))}
@@ -318,7 +320,7 @@
       </section>
 
       <div class="flex flex-col gap-6">
-        <CheckoutDeals {order} />
+        <CheckoutDeals {order} onHighlight={(lineIds) => (highlightedLines = lineIds)} />
 
         <OrderDelivery
           {methods}
@@ -357,7 +359,7 @@
           </div>
           <div class="flex items-center justify-between">
             <span class="text-lg font-medium uppercase">Végösszeg</span>
-            <span class="text-lg font-semibold text-dark">
+            <span data-testid="checkout-total" class="text-lg font-semibold text-dark">
               {formatMoney(order.totalWithTax, order.currencyCode)}
             </span>
           </div>

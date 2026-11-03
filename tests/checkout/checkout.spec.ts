@@ -4,7 +4,7 @@
  * page vs. the live catalog. Server verdicts (prices, line validity, set
  * allocation) are proven by backend tests; this only proves the wiring.
  */
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import {
   acceptTermsAndSubmit,
   addToBasket,
@@ -17,6 +17,7 @@ import {
   expectEmptyBasket,
   expectInvalidLineBlocksSubmit,
   expectLine,
+  expectLineHighlight,
   expectNoDeliveryChosen,
   expectNoSetSection,
   expectPartnerLink,
@@ -24,12 +25,14 @@ import {
   expectPriceChangeNotice,
   expectSetSection,
   expectShippingRow,
+  checkoutLines,
   expectNavCount,
   expectOrderPlaced,
   fillContactAndPickup,
   fillDetailsAndWaitUntilSaved,
   goToCheckoutInApp,
   increaseQuantity,
+  increaseQuantityOf,
   openCheckout,
   openProductFromList,
   openSecondTabOnCheckout,
@@ -146,6 +149,37 @@ test("a set forms, breaks on a material mismatch and is restored by the one-clic
 
   await syncLineMaterial(page, /E2E Szett Láb/);
   await expectSetSection(page, SET_TITLE, /1\s?000\s?Ft/);
+
+  // Hovering the set card highlights its member lines; moving away clears it
+  // and clicking pins the highlight.
+  await page.getByTestId("set-discount").first().hover();
+  await expectLineHighlight(page, /E2E Szett Fej/, true);
+  await expectLineHighlight(page, /E2E Szett Láb/, true);
+  await page.mouse.move(0, 0);
+  await expectLineHighlight(page, /E2E Szett Fej/, false);
+  await page.getByTestId("set-discount").first().click();
+  await page.mouse.move(0, 0);
+  await expectLineHighlight(page, /E2E Szett Fej/, true);
+
+  // Two instances of one set: bumping both members forms a second discount
+  // row, and the page must keep updating (a duplicate key here froze every
+  // later update on the page — totals, quantity, delivery).
+  await increaseQuantityOf(page, /E2E Szett Fej/);
+  await increaseQuantityOf(page, /E2E Szett Láb/);
+  const discounts = page.getByTestId("set-discount");
+
+  await expect(discounts).toHaveCount(2);
+
+  for (const row of await discounts.all()) {
+    await expect(row).toContainText(SET_TITLE);
+    await expect(row).toContainText(/1\s?000\s?Ft/);
+    await expect(row).toContainText("E2E Szett Fej · 1 db");
+    await expect(row).toContainText("E2E Szett Láb · 1 db");
+  }
+
+  await expect(checkoutLines(page).filter({ hasText: "E2E Szett Fej" })).toContainText("2 db");
+  await expect(checkoutLines(page).filter({ hasText: "E2E Szett Láb" })).toContainText("2 db");
+  await expect(page.getByTestId("checkout-total")).toContainText(/12\s?000\s?Ft/);
 });
 
 test("a price changed after adding shows the new unit price with a notice once the line is adjusted", async ({
