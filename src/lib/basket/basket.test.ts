@@ -132,6 +132,20 @@ describe("money", () => {
     expect(majorUnits(2500, "HUF")).toBe(2500);
     expect(formatMoney(2500, "HUF")).toMatch(/2\s?500\s?Ft/);
   });
+
+  it("keeps forints whole even when ICU claims a 2-digit minor unit", () => {
+    const real = new Intl.NumberFormat("hu-HU", { style: "currency", currency: "HUF" });
+    const spy = vi
+      .spyOn(Intl.NumberFormat.prototype, "resolvedOptions")
+      .mockReturnValue({ ...real.resolvedOptions(), maximumFractionDigits: 2 });
+
+    try {
+      expect(formatMoney(3500, "HUF")).toMatch(/3\s?500\s?Ft/);
+      expect(majorUnits(3500, "HUF")).toBe(3500);
+    } finally {
+      spy.mockRestore();
+    }
+  });
 });
 
 const line = (over: Partial<OrderLine> = {}): OrderLine => ({
