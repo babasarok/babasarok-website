@@ -12,6 +12,14 @@ to. Its principles are fixed (notably: product information is never stored
 in Tina, and the Astro site is untouched until the site-cutover epic); do
 not re-plan or relitigate them in briefs, PRs or docs.
 
+## Maintenance and testing read-gate (mandatory)
+
+Before adding or changing a test or a check, removing or reshaping code,
+adding a dependency, moving code between modules, starting a migration or
+writing an ADR, read [docs/agents/maintenance.md](docs/agents/maintenance.md)
+and [docs/agents/testing.md](docs/agents/testing.md) (test levels, seams,
+where tests live, how to run the E2E suites).
+
 ## Core Values
 
 These are listed in priority order. When values conflict, prefer the one higher up.
@@ -166,38 +174,6 @@ max-h-none`); `width: 100%` on a `position: fixed` element stops short of
 - **Unit tests:** `npm test` (Vitest, `vitest run`) · watch with `npm run test:watch`.
   Specs live in `src/**/*.test.ts` (e.g. the order-form logic in
   [src/lib/**tests**/](src/lib/__tests__/)); fast pure-function tests, no build needed.
-- **Test levels, in order:** reach for each in this order and fall back only when
-  the earlier level genuinely can't do the job: **types** (illegal states,
-  required props, "only built through X" — via brands, discriminated unions,
-  narrowed props, un-exported helpers, `satisfies`) → **lint/build-time checks**
-  (patterns types can't see) → **unit tests** (pure decisions, parsing,
-  formatting) → **component tests** (rendered markup, event wiring, island state
-  transitions; Svelte via `@testing-library/svelte` + `jsdom` — install on
-  demand, nothing extra exists yet) → **hydration tests** (real browser
-  behaviour, Playwright). Types first, even if it costs a refactor: when a type
-  could solve the problem (a brand, splitting a function so the illegal state is
-  unrepresentable, un-exporting a helper so the only entry point is the
-  validated one), present the refactor to the user instead of silently settling
-  for a weaker level. Keep decisions pure so the unit level stays viable: inject
-  storage/URL/DOM access instead of reading it inside the decision logic. One
-  behaviour, one owner: don't re-test in Playwright what a type or unit test
-  already proves. Valid reasons to fall back a level: **can't express it** (e.g.
-  a type can't narrow a computed string, so that check is an ESLint rule),
-  **tests the wrong thing** (implementation details where behaviour matters, or
-  a jsdom test of something that depends on layout), or **hard to maintain** —
-  a judgement call to discuss with the user, recording the agreed reason in the
-  test file's header comment.
-- **Hydration tests:** `npm run test:hydration` (Playwright; needs a `dist/` build
-  via `npm run build:local`). Its webServer reuses an already-running server on
-  port 4321, so a running `astro dev` is tested instead of the dist — a stale-HMR
-  dev server yields spurious island failures, so rule out the server before
-  debugging the test.
-- **Dashboard e2e:** `pnpm run test:dashboard-e2e` (Playwright; needs a `dist/`
-  build via `pnpm run build:local` and the local postgres container). Boots the
-  Vendure API on :4000 via `pnpm -C backend run e2e:server` against a fresh
-  `babasarok_e2e` database (fixed credentials/seed in backend/e2e.env) and the
-  built site on :4100 — stop the dev backend first, ports must be free; the
-  servers are never reused.
 - **Backend plugin layout:** custom Vendure plugins live in
   `backend/src/plugins/<name>/` — one folder per plugin, with the plugin's
   entity/entities, service, resolver and plugin file together. Dashboard
