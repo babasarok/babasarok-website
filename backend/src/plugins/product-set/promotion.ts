@@ -52,8 +52,10 @@ export const productSetBasketCondition = new PromotionCondition({
  * Removes the allocated set discounts from the order total: the sum of the
  * formed instances' clamped amounts, computed by the basket condition.
  */
+export const PRODUCT_SET_ACTION_CODE = "babasarok-product-set-discount";
+
 export const productSetDiscountAction = new PromotionOrderAction({
-  code: "babasarok-product-set-discount",
+  code: PRODUCT_SET_ACTION_CODE,
   description: [
     { languageCode: LanguageCode.hu, value: "A képződött szett-példányok összes kedvezménye." },
   ],
