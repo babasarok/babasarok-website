@@ -80,14 +80,13 @@ const ORDER_FIELDS = `
   }
 `;
 
-const ERROR_FIELDS = `
-  __typename
-  ... on ErrorResult { errorCode message }
-  ... on OrderInterceptorError { interceptorError }
-  ... on OrderStateTransitionError { transitionError }
-`;
+const ERROR_FIELDS = `__typename ... on ErrorResult { errorCode message }`;
+const INTERCEPTOR_FIELDS = `... on OrderInterceptorError { interceptorError }`;
+const TRANSITION_FIELDS = `... on OrderStateTransitionError { transitionError }`;
 
-const ORDER_RESULT = `... on Order { __typename ${ORDER_FIELDS} } ${ERROR_FIELDS}`;
+function orderResult(extraErrorFields: string): string {
+  return `... on Order { __typename ${ORDER_FIELDS} } ${ERROR_FIELDS} ${extraErrorFields}`;
+}
 
 const ErrorResultSchema = z.object({
   __typename: z.string(),
@@ -183,10 +182,11 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
     field: string,
     signature: string,
     args: string,
-    variables: Record<string, unknown>
+    variables: Record<string, unknown>,
+    extraErrorFields = ""
   ): Promise<Result<Order>> {
     const result = await request(
-      `mutation M${signature} { ${field}${args} { ${ORDER_RESULT} } }`,
+      `mutation M${signature} { ${field}${args} { ${orderResult(extraErrorFields)} } }`,
       variables,
       z.partialRecord(z.string(), OrderResultSchema)
     );
@@ -229,17 +229,25 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
         "addItemToOrder",
         "($id: ID!, $quantity: Int!, $customFields: OrderLineCustomFieldsInput)",
         "(productVariantId: $id, quantity: $quantity, customFields: $customFields)",
-        { id: input.productVariantId, quantity: input.quantity, customFields: input.customFields }
+        { id: input.productVariantId, quantity: input.quantity, customFields: input.customFields },
+        INTERCEPTOR_FIELDS
       ),
     adjustLine: (orderLineId, quantity) =>
       orderMutation(
         "adjustOrderLine",
         "($id: ID!, $quantity: Int!)",
         "(orderLineId: $id, quantity: $quantity)",
-        { id: orderLineId, quantity }
+        { id: orderLineId, quantity },
+        INTERCEPTOR_FIELDS
       ),
     removeLine: (orderLineId) =>
-      orderMutation("removeOrderLine", "($id: ID!)", "(orderLineId: $id)", { id: orderLineId }),
+      orderMutation(
+        "removeOrderLine",
+        "($id: ID!)",
+        "(orderLineId: $id)",
+        { id: orderLineId },
+        INTERCEPTOR_FIELDS
+      ),
     async productVariants(slug) {
       const result = await request(
         `query Variants($slug: String!) { product(slug: $slug) { variants { id options { code group { code } } } } }`,
@@ -264,7 +272,7 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
     },
     async eligibleShippingMethods() {
       const result = await request(
-        `query Eligible { eligibleShippingMethods { id name description priceWithTax customFields } }`,
+        `query Eligible { eligibleShippingMethods { id name description priceWithTax customFields { requiresAddress } } }`,
         {},
         z.object({ eligibleShippingMethods: z.array(ShippingQuoteSchema) })
       );

@@ -60,6 +60,7 @@
     <Icon icon="mdi:cart-outline" class="text-2xl" />
     {#if count > 0}
       <span
+        data-testid="nav-basket-count"
         class="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-sand-300 px-1 text-xs font-medium text-white"
       >
         {count}

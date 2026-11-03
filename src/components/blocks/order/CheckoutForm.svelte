@@ -75,6 +75,7 @@
     const result = await basket.api.eligibleShippingMethods();
 
     if (!result.ok) {
+      error = "A szállítási módok most nem tölthetők be. Töltsd újra az oldalt.";
       return;
     }
 

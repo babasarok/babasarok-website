@@ -50,7 +50,10 @@
   </div>
 
   {#if line.invalidReason}
-    <p class="flex items-start gap-1 rounded-lg bg-danger-50 p-2 text-sm text-danger-500">
+    <p
+      data-testid="line-invalid-reason"
+      class="flex items-start gap-1 rounded-lg bg-danger-50 p-2 text-sm text-danger-500"
+    >
       <Icon icon="mdi:alert-circle" class="mt-0.5 shrink-0" />
       {line.invalidReason.message}
     </p>

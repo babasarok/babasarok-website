@@ -1,76 +1,74 @@
-import { expect, test, type Page } from "@playwright/test";
+/**
+ * Seam: the browser session (bearer token in localStorage, reload, in-app
+ * navigation, a second tab) vs. the Vendure active order, and a cached product
+ * page vs. the live catalog. Server verdicts (prices, line validity, set
+ * allocation) are proven by backend tests; this only proves the wiring.
+ */
+import { test } from "@playwright/test";
+import {
+  addToBasket,
+  chooseOption,
+  expectEmptyBasket,
+  expectInvalidLineBlocksSubmit,
+  expectLine,
+  expectNavCount,
+  expectOrderPlaced,
+  fillContactAndPickup,
+  goToCheckoutInApp,
+  increaseQuantity,
+  openCheckout,
+  openProductFromList,
+  openSecondTabOnCheckout,
+  removeFirstLine,
+  submitOrder,
+} from "./pages";
 import { createProduct, withdrawLargeSize } from "./helpers";
 
-let slug = "";
-
 test.beforeAll(async () => {
-  slug = await createProduct();
+  await createProduct();
 });
 
-async function openProductInApp(page: Page): Promise<void> {
-  await page.goto("/product/");
-  await page
-    .getByRole("link", { name: /E2E Párna/ })
-    .first()
-    .click();
-  await expect(page.getByRole("button", { name: /Kosárba/ })).toBeVisible();
-}
-
-async function addLargeToBasket(page: Page): Promise<void> {
-  await openProductInApp(page);
-  await page.getByRole("button", { name: /50x50/ }).click();
-  await page.getByRole("button", { name: /Kosárba|Kosár frissítése/ }).click();
-  await expect(page.getByText("A termék a kosárban van.")).toBeVisible();
-}
-
-test("configured product goes from the product page through checkout to a placed order", async ({
+test("product page to a placed order, surviving reload, navigation and a second tab", async ({
   page,
+  context,
 }) => {
-  await addLargeToBasket(page);
-  await expect(page.locator("header").getByText("1", { exact: true }).first()).toBeVisible();
+  await openProductFromList(page, /E2E Párna/);
+  await chooseOption(page, /50x50/);
+  await addToBasket(page);
+  await expectNavCount(page, 1);
 
-  await page.getByRole("link", { name: /Tovább a pénztárhoz/ }).click();
-  await expect(page).toHaveURL(/\/checkout/);
+  await goToCheckoutInApp(page);
+  await expectLine(page, /50x50/, 1);
+  await expectLine(page, /11\s?000\s?Ft/, 1);
 
-  const line = page.getByTestId("checkout-line");
-  await expect(line).toHaveCount(1);
-  await expect(line).toContainText("50x50");
-  await expect(line).toContainText(/11\s?000\s?Ft/);
+  await increaseQuantity(page);
+  await expectLine(page, /50x50/, 2);
 
-  await page.getByPlaceholder("Név *").fill("Teszt Elek");
-  await page.getByPlaceholder("Email cím *").fill("teszt@example.com");
-  await page.getByLabel(/Személyes átvétel/).check();
-  await page.getByRole("checkbox").check();
-  await page.getByRole("button", { name: /Leadom a rendelést/ }).click();
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expectLine(page, /50x50/, 2);
 
-  await expect(page.getByTestId("order-code")).toBeVisible();
-  await expect(page.getByTestId("order-code")).not.toBeEmpty();
+  const other = await openSecondTabOnCheckout(context);
+  await expectLine(other, /50x50/, 2);
+  await other.close();
 
-  await page.reload();
-  await expect(page.getByText("A kosarad üres.")).toBeVisible();
+  await fillContactAndPickup(page);
+  await submitOrder(page);
+  await expectOrderPlaced(page);
+
+  await openCheckout(page);
+  await expectEmptyBasket(page);
 });
 
 test("a line whose option was withdrawn is marked and blocks the order until removed", async ({
   page,
 }) => {
-  await addLargeToBasket(page);
+  await openProductFromList(page, /E2E Párna/);
+  await chooseOption(page, /50x50/);
+  await addToBasket(page);
   await withdrawLargeSize();
 
-  await page.goto("/checkout");
-
-  const line = page.getByTestId("checkout-line");
-  await expect
-    .poll(
-      async () => {
-        await page.reload();
-        return line.locator("p.text-danger-500").count();
-      },
-      { timeout: 90_000 }
-    )
-    .toBeGreaterThan(0);
-  await expect(page.getByRole("button", { name: /Leadom a rendelést/ })).toBeDisabled();
-
-  await line.getByRole("button", { name: /Törlés/ }).click();
-  await expect(page.getByText("A kosarad üres.")).toBeVisible();
-  expect(slug).not.toBe("");
+  await openCheckout(page);
+  await expectInvalidLineBlocksSubmit(page);
+  await removeFirstLine(page);
+  await expectEmptyBasket(page);
 });
