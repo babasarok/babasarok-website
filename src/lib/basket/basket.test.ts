@@ -352,13 +352,20 @@ describe("set discount adapter", () => {
     ...order([
       line({
         id: "1",
-        setState: { kind: "ACTIVE", groupId: "g", coveredUnits: 2, materialSyncFromLineId: null },
+        setState: {
+          kind: "ACTIVE",
+          groupId: "g",
+          title: "Alap",
+          coveredUnits: 2,
+          materialSyncFromLineId: null,
+        },
       }),
       line({
         id: "2",
         setState: {
           kind: "PENDING_MATERIAL",
           groupId: "g",
+          title: "Alap",
           coveredUnits: 0,
           materialSyncFromLineId: "1",
         },
@@ -368,6 +375,7 @@ describe("set discount adapter", () => {
         setState: {
           kind: "PENDING_PARTNER",
           groupId: "g",
+          title: "Alap",
           coveredUnits: 0,
           materialSyncFromLineId: null,
         },
