@@ -51,7 +51,9 @@ Slovakia/EUR (9).
    `setOrderShippingAddress` with `streetLine1` holding the text and
    `countryCode` — the same place the legacy path already writes — so
    structured addresses (epic 6) fill the other native address columns
-   without a data move. `message`, `termsAccepted` and
+   without a data move. A separate billing address (epic 7, invoicing)
+   is the order's native billing address, set with `setOrderBillingAddress`
+   from the same structured form; no billing data is collected before then. `message`, `termsAccepted` and
    `submissionTransactionId` are the existing Order custom fields set through
    `setOrderCustomFields` (never named `transactionId`: it collides with the
    native payment-derived field).
