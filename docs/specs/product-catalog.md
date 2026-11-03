@@ -131,7 +131,7 @@ filtering, and sorting inert.
 The material list is one on-demand page (no pagination; the former
 `/material/page/N/` URLs redirect to `/material`) of all materials ordered by
 label, each linking to `/material/<slug>/`. A material page shows the label,
-subtitle, thumbnail, colors, the plain-text description and previous/next
+subtitle, thumbnail, colors, the markdown description (rendered via `Markdown.astro`) and previous/next
 links; an unknown slug answers 404 uncached. The home page's product block is
 a server island showing the `itemCount` (from `product.json`) most popular
 listed products; its title and button stay prerendered. Catalog images come
@@ -153,7 +153,7 @@ materials; a catalog hit replaces a Pagefind hit for the same URL.
 
 The system SHALL render a detail page per product showing its title, an image
 gallery (thumbnail plus gallery images with descriptions), its body content,
-and sharing links to social networks. For orderable products the page SHALL
+and sharing links to social networks. Markdown descriptions render server-side with raw HTML escaped, unsafe link schemes dropped, and host-relative asset image paths (`source/ab/file.jpg`) rewritten to asset-server preset URLs. For orderable products the page SHALL
 additionally embed an order configurator for that product.
 
 - **Scenario: Viewing a product**

@@ -26,6 +26,7 @@ export const ProductsResponseSchema = z.object({
 
 export const ProductResponseSchema = z.object({
   product: ProductRowSchema.extend({
+    description: z.string(),
     assets: z.array(
       z.object({
         source: z.string(),

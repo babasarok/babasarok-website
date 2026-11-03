@@ -21,6 +21,7 @@ export const PRODUCT_QUERY = `
   query CatalogProduct($slug: String!) {
     product(slug: $slug) {
       ${PRODUCT_FIELDS}
+      description
       assets { source customFields { galleryDescription } }
     }
   }

@@ -2,6 +2,7 @@
 import { Icon } from "astro-icon/components";
 import Base from "../../layouts/Base.astro";
 import FloatingShapes from "../../components/ui/FloatingShapes.astro";
+import Markdown from "../../components/ui/Markdown.astro";
 import VendureImage from "../../components/ui/VendureImage.astro";
 import { getMaterials } from "@/lib/catalog";
 
@@ -105,11 +106,7 @@ const shareLinks = [
           )
         }
 
-        {
-          description && (
-            <p class="mx-auto max-w-none text-center whitespace-pre-line">{description}</p>
-          )
-        }
+        {description && <Markdown source={description} class="text-left" />}
       </div>
 
       <div class="relative z-1 lg:mx-auto lg:w-10/12">

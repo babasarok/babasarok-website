@@ -89,7 +89,7 @@ cleanups as follow-ups. A slice with both kinds splits into two PRs.
   line whose option is no longer offered is marked with the reason and can be
   edited or removed, and checkout is blocked until it is resolved (never
   silently changed); a refused add-to-basket explains why and offers a reload
-- 🟡 **S7 Markdown descriptions** (dashboard editor and storage done; the site rendering is not) (after S1; parallel with S3/S4) — product
+- ✅ **S7 Markdown descriptions** (after S1; parallel with S3/S4) — product
   and material long descriptions are stored as markdown so the site drives
   their styling; a dashboard markdown editor (Vendure's exported rich-text
   toolbar/image dialog + TipTap's markdown extension) replaces
