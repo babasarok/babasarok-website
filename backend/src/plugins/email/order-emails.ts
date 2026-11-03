@@ -1,7 +1,9 @@
 import {
   ConfigService,
   EntityHydrator,
+  type Order,
   OrderStateTransitionEvent,
+  type RequestContext,
   TransactionalConnection,
 } from "@vendure/core";
 import { Channel } from "@vendure/core/dist/entity/channel/channel.entity";
@@ -16,6 +18,31 @@ import { parseProductDetails } from "../quote-order/quote-order.input";
 import { plainDeliveryName } from "./delivery-name";
 import { loadNativeLineContent } from "./native-line-content";
 import { orderEmailView, type OrderEmailView } from "./order-email-view";
+
+// Channel-level email config, editable in the dashboard's channel settings;
+// fall back to the env values while unset.
+async function loadChannelEmails(
+  connection: TransactionalConnection,
+  ctx: RequestContext
+): Promise<{ orderEmailFrom: string; ownerEmail: string }> {
+  const channel = await connection
+    .getRepository(ctx, Channel)
+    // No `select`: TypeORM ignores an embedded selected as `true`
+    // (selects none of its columns), which silently emptied customFields.
+    .findOne({ where: { id: ctx.channelId } });
+
+  return {
+    orderEmailFrom: channel?.customFields.orderEmailFrom ?? env.orderEmailFrom,
+    ownerEmail: channel?.customFields.shopOwnerEmail ?? env.shopOwnerEmail,
+  };
+}
+
+// Deep link to the order itself; ADMIN_URL is per-stack (previews get
+// their own host provisioned at first deploy), so one env var serves
+// every stack correctly.
+function adminOrderUrl(order: Order): string {
+  return `${env.adminUrl.replace(/\/$/, "")}/orders/${order.id}`;
+}
 
 // "Order placed" for a quote shop: the submission transitions AddingItems ->
 // ArrangingPayment and there is no payment step.
@@ -38,26 +65,12 @@ function onOrderPlaced(
       await entityHydrator.hydrate(event.ctx, event.order, {
         relations: ["lines", "customer"],
       });
-      // Channel-level email config, editable in the dashboard's channel
-      // settings; fall back to the env values while unset.
-      const channel = await injector
-        .get(TransactionalConnection)
-        .getRepository(event.ctx, Channel)
-        // No `select`: TypeORM ignores an embedded selected as `true`
-        // (selects none of its columns), which silently emptied customFields.
-        .findOne({ where: { id: event.ctx.channelId } });
-      return {
-        orderEmailFrom: channel?.customFields.orderEmailFrom ?? env.orderEmailFrom,
-        ownerEmail: channel?.customFields.shopOwnerEmail ?? env.shopOwnerEmail,
-      };
+      return loadChannelEmails(injector.get(TransactionalConnection), event.ctx);
     })
     .setTemplateVars((event) => ({
       order: event.order,
       fromAddress: event.data.orderEmailFrom,
-      // Deep link to the order itself; ADMIN_URL is per-stack (previews get
-      // their own host provisioned at first deploy), so one env var serves
-      // every stack correctly.
-      adminOrderUrl: `${env.adminUrl.replace(/\/$/, "")}/orders/${event.order.id}`,
+      adminOrderUrl: adminOrderUrl(event.order),
       deliveryMethodName: plainDeliveryName(event.order.customFields.deliveryMethodName ?? ""),
       // 1-based numbering keeps the per-product blocks aligned with the
       // "1. termék: …" labels inside the client-generated set-discount summary.
@@ -114,9 +127,6 @@ function onNativeOrderPlaced(
       });
 
       const connection = injector.get(TransactionalConnection);
-      const channel = await connection
-        .getRepository(event.ctx, Channel)
-        .findOne({ where: { id: event.ctx.channelId } });
       const view = orderEmailView(
         event.order,
         await loadNativeLineContent(connection, event.ctx, event.order),
@@ -128,14 +138,13 @@ function onNativeOrderPlaced(
 
       return {
         view,
-        orderEmailFrom: channel?.customFields.orderEmailFrom ?? env.orderEmailFrom,
-        ownerEmail: channel?.customFields.shopOwnerEmail ?? env.shopOwnerEmail,
+        ...(await loadChannelEmails(connection, event.ctx)),
       };
     })
     .setTemplateVars((event) => ({
       order: event.order,
       fromAddress: event.data.orderEmailFrom,
-      adminOrderUrl: `${env.adminUrl.replace(/\/$/, "")}/orders/${event.order.id}`,
+      adminOrderUrl: adminOrderUrl(event.order),
       ...event.data.view,
     }));
 }
