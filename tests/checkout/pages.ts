@@ -74,15 +74,8 @@ export async function openSecondTabOnCheckout(context: BrowserContext): Promise<
 }
 
 export async function expectInvalidLineBlocksSubmit(page: Page): Promise<void> {
-  await expect
-    .poll(
-      async () => {
-        await page.reload({ waitUntil: "domcontentloaded" });
-        return page.getByTestId("line-invalid-reason").count();
-      },
-      { timeout: 90_000 }
-    )
-    .toBeGreaterThan(0);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.getByTestId("line-invalid-reason")).toBeVisible();
   await expect(page.getByRole("button", { name: /Leadom a rendelést/ })).toBeDisabled();
 }
 
