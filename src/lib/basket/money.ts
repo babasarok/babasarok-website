@@ -2,7 +2,7 @@
 // a 2-digit minor unit (the obsolete fillér), and some ICU builds follow it
 // — dividing every checkout amount by 100 in those browsers. Pin HUF to 0
 // digits; other currencies keep their Intl-resolved digits (EUR needs 2).
-const PINNED_DIGITS: Record<string, number> = { HUF: 0 };
+const PINNED_DIGITS: Record<string, number | undefined> = { HUF: 0 };
 
 function fractionDigits(currencyCode: string): number {
   return (
