@@ -43,6 +43,16 @@ export const OrderSchema = z.object({
       shippingMethod: z.object({ id: z.string() }),
     })
   ),
+  customer: z
+    .object({
+      firstName: z.string(),
+      lastName: z.string(),
+      emailAddress: z.string(),
+      phoneNumber: z.string().nullable(),
+    })
+    .nullable(),
+  shippingAddress: z.object({ streetLine1: z.string().nullable() }).nullable(),
+  customFields: z.object({ message: z.string().nullable() }).nullable(),
   lines: z.array(OrderLineSchema),
   setDiscounts: z.array(SetDiscountSchema).optional(),
 });

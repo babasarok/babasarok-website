@@ -8,6 +8,7 @@
   import Button from "./common/Button.svelte";
   import TextInput from "./common/TextInput.svelte";
   import { basket } from "@/lib/basket/basket.svelte";
+  import { createContactSaver, draftFromOrder, type ContactDraft } from "@/lib/basket/contactDraft";
   import type { Labels } from "@/lib/basket/lineRows";
   import { formatMoney, majorUnits } from "@/lib/basket/money";
   import { checkoutBlocker, selectedMethod } from "@/lib/basket/readiness";
@@ -56,9 +57,44 @@
     shippingLine !== undefined && shippingLine.priceWithTax > 0 && order?.shippingWithTax === 0
   );
 
+  const readContact = (): ContactDraft => ({ name, email, phone, address, message });
+  const contactSaver = createContactSaver(basket.api, readContact);
+  let prefilledFor: string | null = null;
+
   onMount(() => {
     basket.start();
   });
+
+  $effect(() => {
+    const current = basket.order;
+
+    if (current === null || current.id === prefilledFor) {
+      return;
+    }
+
+    prefilledFor = current.id;
+
+    const draft = draftFromOrder(current);
+
+    ({ name, email, phone, address, message } = draft);
+    contactSaver.adopt(draft);
+  });
+
+  $effect(() => {
+    void readContact();
+
+    const timer = setTimeout(saveContact, 800);
+
+    return () => clearTimeout(timer);
+  });
+
+  function saveContact(): void {
+    if (sending || success !== null) {
+      return;
+    }
+
+    void contactSaver.save();
+  }
 
   $effect(() => {
     const key = order ? `${order.id}:${order.totalWithTax}` : null;
@@ -132,6 +168,7 @@
     }
 
     sending = true;
+    await contactSaver.save();
 
     const transactionId = randomUUID();
     const result = await placeOrder(
@@ -221,7 +258,11 @@
       </a>
     </div>
   {:else}
-    <form class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2" onsubmit={onSubmit}>
+    <form
+      class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2"
+      onsubmit={onSubmit}
+      onfocusout={saveContact}
+    >
       <section class="flex flex-col gap-3 lg:col-span-2">
         <div class="flex items-center gap-2">
           <Icon

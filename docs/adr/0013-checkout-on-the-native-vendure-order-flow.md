@@ -25,7 +25,9 @@ Slovakia/EUR (9).
    custom fields, edited with `adjustOrderLine` / `removeOrderLine`. Prices
    come from the server pricing strategy; every amount is read from the order
    with its `currencyCode`, nothing in the API is Forint-specific. Old
-   client-side baskets are dropped at cutover (no migration).
+   client-side baskets are dropped at cutover (no migration). The checkout's
+   contact details are saved onto the active order as the buyer types and
+   pre-filled from it, never kept in the browser; ÁSZF acceptance is never kept.
 2. **Delivery methods are native `ShippingMethod`s.** The first version keeps
    today's three combined payment+delivery options exactly (GLS előre
    utalással 2 500, GLS utánvéttel 3 500 with the deposit note, Személyes

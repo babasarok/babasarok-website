@@ -42,9 +42,9 @@ export interface CustomerInput {
 }
 
 export interface OrderCustomFieldsInput {
-  message: string;
-  termsAccepted: boolean;
-  submissionTransactionId: string;
+  message?: string;
+  termsAccepted?: boolean;
+  submissionTransactionId?: string;
 }
 
 export interface VariantOptions {
@@ -70,6 +70,9 @@ const ORDER_FIELDS = `
   id code state currencyCode totalQuantity subTotalWithTax shippingWithTax totalWithTax
   discounts { description amountWithTax }
   ${SET_ORDER_FIELDS}
+  customer { firstName lastName emailAddress phoneNumber }
+  shippingAddress { streetLine1 }
+  customFields { message }
   shippingLines { priceWithTax discountedPriceWithTax shippingMethod { id } }
   lines {
     id quantity unitPriceWithTax discountedLinePriceWithTax

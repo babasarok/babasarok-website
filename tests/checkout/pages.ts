@@ -85,3 +85,48 @@ export async function removeFirstLine(page: Page): Promise<void> {
     .getByRole("button", { name: /Törlés/ })
     .click();
 }
+
+function shopMutation(page: Page, name: string): Promise<unknown> {
+  return page.waitForResponse(
+    (response) =>
+      response.url().includes("/shop-api") && !!response.request().postData()?.includes(name)
+  );
+}
+
+export async function fillDetailsAndWaitUntilSaved(page: Page): Promise<void> {
+  const methodSaved = shopMutation(page, "setOrderShippingMethod");
+
+  await page.getByRole("radio", { name: /Személyes átvétel/ }).check();
+  await methodSaved;
+
+  const saved = shopMutation(page, "setOrderCustomFields");
+
+  await page.getByPlaceholder("Név *").fill("Teszt Elek");
+  await page.getByPlaceholder("Email cím *").fill("teszt@example.com");
+  await page.getByPlaceholder("Telefonszám").fill("+36301234567");
+  await page.getByPlaceholder(/Írd meg ide/).fill("Kék legyen");
+  await page.getByPlaceholder(/Írd meg ide/).blur();
+  await saved;
+}
+
+export async function expectDetailsPrefilled(page: Page): Promise<void> {
+  await expect(page.getByPlaceholder("Név *")).toHaveValue("Teszt Elek");
+  await expect(page.getByPlaceholder("Email cím *")).toHaveValue("teszt@example.com");
+  await expect(page.getByPlaceholder("Telefonszám")).toHaveValue("+36301234567");
+  await expect(page.getByPlaceholder(/Írd meg ide/)).toHaveValue("Kék legyen");
+  await expect(page.getByRole("radio", { name: /Személyes átvétel/ })).toBeChecked();
+  await expect(page.getByRole("checkbox")).not.toBeChecked();
+}
+
+export async function expectDetailsEmpty(page: Page): Promise<void> {
+  await expect(page.getByPlaceholder("Név *")).toHaveValue("");
+  await expect(page.getByPlaceholder("Email cím *")).toHaveValue("");
+  await expect(page.getByPlaceholder(/Írd meg ide/)).toHaveValue("");
+  await expect(page.getByRole("radio", { name: /Személyes átvétel/ })).not.toBeChecked();
+  await expect(page.getByRole("checkbox")).not.toBeChecked();
+}
+
+export async function acceptTermsAndSubmit(page: Page): Promise<void> {
+  await page.getByRole("checkbox").check();
+  await submitOrder(page);
+}

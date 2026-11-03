@@ -62,7 +62,8 @@ The system SHALL keep the basket server-side as the active order, identified
 by the bearer session token the shop API returns (`vendure-auth-token`
 response header). The site SHALL store only that token in browser
 localStorage under a versioned key; selections and quantities are never
-persisted client-side, and contact details are not persisted at all. The only
+persisted client-side, and contact details are never kept in the browser
+(they live on the active order, see the order-submission spec). The only
 other stored value is, per order line in sessionStorage, the unit price the
 product page showed when the line was added (used solely for the price-change
 notice). Client baskets from before the cutover are dropped (the old key is

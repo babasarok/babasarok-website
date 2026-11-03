@@ -74,6 +74,31 @@ validation.
   - WHEN a line has an `invalidReason`
   - THEN placing the order is refused until the line is adjusted or removed
 
+### Checkout details follow the active order
+
+While a basket is in progress the checkout SHALL save what the buyer types
+onto the active order through the same native mutations the submission uses
+(`setCustomerForOrder` only when name and email are valid,
+`setOrderShippingAddress`, `setOrderCustomFields` with `message` only,
+`setOrderShippingMethod` on selection), on blur and after a short pause in
+typing, and SHALL pre-fill name, email, phone, address, message and the
+delivery method from the active order on load. A failed save SHALL NOT block
+typing or submitting; submission still sends every field. Contact details are
+never stored in the browser, and the ÁSZF acceptance is never saved or
+pre-filled. A new basket after a placed order starts empty.
+
+- **Scenario: Returning to an unfinished basket**
+  - WHEN a buyer fills in the details, then reloads, opens another tab or
+    returns on a later visit
+  - THEN name, email, phone, address, message and delivery method are
+    pre-filled from the active order and the ÁSZF box is unchecked
+- **Scenario: Next basket after an order**
+  - WHEN the buyer places an order and starts a new basket
+  - THEN the checkout form is empty
+- **Scenario: Save refused**
+  - WHEN the server refuses a save (e.g. the email belongs to a registered account)
+  - THEN typing and submitting continue unaffected
+
 ### Order submission
 
 The system SHALL place the order with these native shop-API mutations, in

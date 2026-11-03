@@ -153,6 +153,9 @@ const order = (lines: OrderLine[]): Order => ({
   totalWithTax: 0,
   discounts: [],
   shippingLines: [],
+  customer: null,
+  shippingAddress: null,
+  customFields: null,
   lines,
 });
 

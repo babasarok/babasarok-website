@@ -6,14 +6,18 @@
  */
 import { test } from "@playwright/test";
 import {
+  acceptTermsAndSubmit,
   addToBasket,
   chooseOption,
+  expectDetailsEmpty,
+  expectDetailsPrefilled,
   expectEmptyBasket,
   expectInvalidLineBlocksSubmit,
   expectLine,
   expectNavCount,
   expectOrderPlaced,
   fillContactAndPickup,
+  fillDetailsAndWaitUntilSaved,
   goToCheckoutInApp,
   increaseQuantity,
   openCheckout,
@@ -57,6 +61,33 @@ test("product page to a placed order, surviving reload, navigation and a second 
 
   await openCheckout(page);
   await expectEmptyBasket(page);
+});
+
+test("typed details stay on the unfinished basket and the next basket starts empty", async ({
+  page,
+}) => {
+  await openProductFromList(page, /E2E Párna/);
+  await chooseOption(page, /50x50/);
+  await addToBasket(page);
+  await goToCheckoutInApp(page);
+  await expectDetailsEmpty(page);
+
+  await fillDetailsAndWaitUntilSaved(page);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expectDetailsPrefilled(page);
+
+  await page.goBack();
+  await openCheckout(page);
+  await expectDetailsPrefilled(page);
+
+  await acceptTermsAndSubmit(page);
+  await expectOrderPlaced(page);
+
+  await openProductFromList(page, /E2E Párna/);
+  await chooseOption(page, /50x50/);
+  await addToBasket(page);
+  await goToCheckoutInApp(page);
+  await expectDetailsEmpty(page);
 });
 
 test("a line whose option was withdrawn is marked and blocks the order until removed", async ({
