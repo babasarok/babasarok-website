@@ -2,7 +2,7 @@
 import { Icon } from "astro-icon/components";
 import Base from "../../layouts/Base.astro";
 import ProductGallery from "../../components/ui/ProductGallery.astro";
-import ProductDescription from "../../components/ui/ProductDescription.astro";
+import Markdown from "../../components/ui/Markdown.astro";
 import ProductOrder from "../../components/blocks/order/ProductOrder.svelte";
 import {
   getMaterials,
@@ -111,7 +111,7 @@ const shareLinks = [
             </div>
 
             <div class="prose mt-12 max-w-none">
-              <ProductDescription text={null} />
+              {product.description && <Markdown source={product.description} />}
             </div>
           </div>
         ) : (
@@ -124,7 +124,7 @@ const shareLinks = [
             </div>
 
             <div class="prose mx-auto max-w-none text-center">
-              <ProductDescription text={null} />
+              {product.description && <Markdown source={product.description} />}
             </div>
           </div>
         )
