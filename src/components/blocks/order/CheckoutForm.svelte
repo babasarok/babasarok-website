@@ -20,14 +20,13 @@
 
   interface Props {
     labels: Labels;
-    supportEmail: string | null | undefined;
     basketInfo?: string | undefined;
     contactHeading: string;
     basketHeading: string;
     messageHeading: string;
   }
 
-  let { labels, supportEmail, basketInfo, contactHeading, basketHeading, messageHeading }: Props =
+  let { labels, basketInfo, contactHeading, basketHeading, messageHeading }: Props =
     $props();
 
   let name = $state("");
@@ -351,18 +350,6 @@
               {formatMoney(order.totalWithTax, order.currencyCode)}
             </span>
           </div>
-        </div>
-
-        <div class="flex items-center gap-2 rounded border border-gray-300 bg-brown-100 p-2">
-          <Icon icon="mdi:info" class="shrink-0 text-2xl text-yellow-500" />
-          <p class="text-xs text-yellow-700">
-            Jelenleg a rendelési folyamat tesztelés alatt áll. Ha bármilyen problémát tapasztalsz,
-            kérlek, jelezd nekünk a <a
-              class="text-yellow-700 underline hover:text-yellow-900"
-              href={`mailto:${supportEmail ?? ""}?subject=Babasarok rendelési probléma&body=Kérlek, írd le a problémát, ha lehet screenshot-tal együtt.&cc=attilagreguss@protonmail.com`}
-              >email címünkön</a
-            >.
-          </p>
         </div>
 
         {#if error}
