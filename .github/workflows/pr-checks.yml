@@ -179,3 +179,4 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
       - run: pnpm run test:dashboard-e2e
+      - run: pnpm run test:checkout-e2e

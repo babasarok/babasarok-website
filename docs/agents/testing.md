@@ -117,6 +117,11 @@ Playwright only collects `*.spec.ts`; `*.test.ts` belongs to Vitest.
   `babasarok_e2e` database, fixed seed in `backend/e2e.env`) and the built site
   on :4100 — stop the dev backend first, the ports must be free; the servers
   are never reused.
+- **Checkout E2E** boots the same backend and the built site. On-demand
+  pages read the Tina site config at request time; a `build:local` dist asks
+  the local Tina datalayer, so run `pnpm exec tinacms dev` alongside (CI's
+  build uses Tina Cloud and needs nothing). A `build:local` while it runs
+  needs `--datalayer-port <other>`.
 
 ## Tooling
 
