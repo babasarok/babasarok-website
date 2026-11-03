@@ -48,7 +48,9 @@ value the field does not offer; a `custom` value on a choice without
 pattern; a material the colour list of which does not contain a picked colour,
 or that repeats a colour; input, custom or embroidery text over 200
 characters. `lengthCm` is a whole number from 1 to 10,000 (100 m); Vendure
-refuses values outside it.
+refuses values outside it. The refusal reaches the site as an `OrderInterceptorError`
+whose `interceptorError` field carries the Hungarian message (its generic `message`
+does not).
 
 - **Scenario: Foreign colour**
   - WHEN a line picks a colour the referenced material does not offer

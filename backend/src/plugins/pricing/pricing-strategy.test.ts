@@ -9,7 +9,6 @@ import {
 } from "@vendure/core";
 import { describe, expect, it } from "vitest";
 import type { LineValuationDeps } from "./line-valuation";
-import { refuseInvalidLines, type LineValidityDeps } from "./line-validity-process";
 import { calculateUnitPrice } from "./pricing-strategy";
 import { ProductDefinition } from "../product/product.entity";
 
@@ -99,50 +98,5 @@ describe("calculateUnitPrice", () => {
     await expect(
       calculateUnitPrice(depsFor(stale), ctx, variant, {}, new Order({ lines: [] }))
     ).rejects.toThrow("Árazási hiba");
-  });
-});
-
-describe("refuseInvalidLines", () => {
-  const order = new Order({ id: 1 });
-  const data = { ctx, order };
-
-  function validityDeps(row: ProductDefinition | null): LineValidityDeps {
-    return {
-      ...depsFor(row),
-      findLines: async () => [new OrderLine({ productVariant: variant, customFields: {} })],
-    };
-  }
-
-  it("refuses leaving AddingItems while a line is invalid", async () => {
-    const message = await refuseInvalidLines(
-      validityDeps(stale),
-      "AddingItems",
-      "ArrangingPayment",
-      data
-    );
-
-    expect(message).toContain("Árazási hiba");
-  });
-
-  it("allows the transition when every line prices", async () => {
-    const message = await refuseInvalidLines(
-      validityDeps(definitionRow),
-      "AddingItems",
-      "ArrangingPayment",
-      data
-    );
-
-    expect(message).toBeUndefined();
-  });
-
-  it("ignores other transitions", async () => {
-    const message = await refuseInvalidLines(
-      validityDeps(stale),
-      "ArrangingPayment",
-      "Cancelled",
-      data
-    );
-
-    expect(message).toBeUndefined();
   });
 });

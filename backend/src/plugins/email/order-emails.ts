@@ -1,4 +1,9 @@
-import { EntityHydrator, OrderStateTransitionEvent, TransactionalConnection } from "@vendure/core";
+import {
+  ConfigService,
+  EntityHydrator,
+  OrderStateTransitionEvent,
+  TransactionalConnection,
+} from "@vendure/core";
 import { Channel } from "@vendure/core/dist/entity/channel/channel.entity";
 import {
   EmailEventListener,
@@ -6,8 +11,11 @@ import {
   type EventWithAsyncData,
 } from "@vendure/email-plugin";
 import { env } from "../../env";
+import { isLegacyQuoteOrder } from "../quote-order/legacy-order";
 import { parseProductDetails } from "../quote-order/quote-order.input";
 import { plainDeliveryName } from "./delivery-name";
+import { loadNativeLineContent } from "./native-line-content";
+import { orderEmailView, type OrderEmailView } from "./order-email-view";
 
 // "Order placed" for a quote shop: the submission transitions AddingItems ->
 // ArrangingPayment and there is no payment step.
@@ -19,7 +27,12 @@ function onOrderPlaced(
 > {
   return new EmailEventListener(name)
     .on(OrderStateTransitionEvent)
-    .filter((event) => event.toState === "ArrangingPayment" && event.fromState === "AddingItems")
+    .filter(
+      (event) =>
+        event.toState === "ArrangingPayment" &&
+        event.fromState === "AddingItems" &&
+        isLegacyQuoteOrder(event.order)
+    )
     .loadData(async ({ event, injector }) => {
       const entityHydrator = injector.get(EntityHydrator);
       await entityHydrator.hydrate(event.ctx, event.order, {
@@ -68,6 +81,71 @@ export const orderConfirmationHandler = onOrderPlaced("quote-order-confirmation"
   .setSubject("Köszönjük a rendelésed: {{ order.code }}");
 
 export const orderNotificationHandler = onOrderPlaced("quote-order-notification")
+  .setRecipient((event) => event.data.ownerEmail)
+  .setFrom("{{ fromAddress }}")
+  .setSubject("Új árajánlatkérés: {{ order.code }}");
+
+function onNativeOrderPlaced(
+  name: string
+): EmailEventHandler<
+  string,
+  EventWithAsyncData<
+    OrderStateTransitionEvent,
+    { orderEmailFrom: string; ownerEmail: string; view: OrderEmailView }
+  >
+> {
+  return new EmailEventListener(name)
+    .on(OrderStateTransitionEvent)
+    .filter(
+      (event) =>
+        event.toState === "ArrangingPayment" &&
+        event.fromState === "AddingItems" &&
+        !isLegacyQuoteOrder(event.order)
+    )
+    .loadData(async ({ event, injector }) => {
+      await injector.get(EntityHydrator).hydrate(event.ctx, event.order, {
+        relations: [
+          "lines",
+          "lines.productVariant",
+          "customer",
+          "shippingLines",
+          "shippingLines.shippingMethod",
+        ],
+      });
+
+      const connection = injector.get(TransactionalConnection);
+      const channel = await connection
+        .getRepository(event.ctx, Channel)
+        .findOne({ where: { id: event.ctx.channelId } });
+      const view = orderEmailView(
+        event.order,
+        await loadNativeLineContent(connection, event.ctx, event.order),
+        {
+          currencyCode: event.order.currencyCode,
+          precision: injector.get(ConfigService).entityOptions.moneyStrategy.precision ?? 2,
+        }
+      );
+
+      return {
+        view,
+        orderEmailFrom: channel?.customFields.orderEmailFrom ?? env.orderEmailFrom,
+        ownerEmail: channel?.customFields.shopOwnerEmail ?? env.shopOwnerEmail,
+      };
+    })
+    .setTemplateVars((event) => ({
+      order: event.order,
+      fromAddress: event.data.orderEmailFrom,
+      adminOrderUrl: `${env.adminUrl.replace(/\/$/, "")}/orders/${event.order.id}`,
+      ...event.data.view,
+    }));
+}
+
+export const nativeOrderConfirmationHandler = onNativeOrderPlaced("order-confirmation")
+  .setRecipient((event) => event.order.customer?.emailAddress ?? "")
+  .setFrom("{{ fromAddress }}")
+  .setSubject("Köszönjük a rendelésed: {{ order.code }}");
+
+export const nativeOrderNotificationHandler = onNativeOrderPlaced("order-notification")
   .setRecipient((event) => event.data.ownerEmail)
   .setFrom("{{ fromAddress }}")
   .setSubject("Új árajánlatkérés: {{ order.code }}");

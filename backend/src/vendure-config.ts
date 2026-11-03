@@ -3,6 +3,8 @@ import type { OrderPlacedStrategy, RequestContext, VendureConfig } from "@vendur
 import {
   Asset,
   configureDefaultOrderProcess,
+  defaultPromotionActions,
+  defaultPromotionConditions,
   DefaultJobQueuePlugin,
   DefaultMoneyStrategy,
   DefaultSearchPlugin,
@@ -18,11 +20,16 @@ import { env } from "./env";
 import { z } from "zod";
 import { HandlebarsHtmlGenerator } from "./plugins/email/handlebars-html-generator";
 import { CloudflareEmailSender } from "./plugins/email/cloudflare-email-sender";
-import { orderConfirmationHandler, orderNotificationHandler } from "./plugins/email/order-emails";
+import {
+  nativeOrderConfirmationHandler,
+  nativeOrderNotificationHandler,
+  orderConfirmationHandler,
+  orderNotificationHandler,
+} from "./plugins/email/order-emails";
 import { MaterialPlugin } from "./plugins/material/material.plugin";
+import { CheckoutPlugin } from "./plugins/checkout/checkout.plugin";
 import { PricingPlugin } from "./plugins/pricing/pricing.plugin";
 import { MAX_LINE_LENGTH_CM } from "@babasarok/pricing";
-import { LineValidityProcess } from "./plugins/pricing/line-validity-process";
 import { ServerPricingStrategy } from "./plugins/pricing/pricing-strategy";
 import {
   productSetBasketCondition,
@@ -52,7 +59,12 @@ function emailPluginOptions(): EmailPluginOptions | EmailPluginDevModeOptions {
     templateLoader: new FileBasedTemplateLoader(path.join(__dirname, "..", "email-templates")),
     // Plain-HTML handlebars templates, not MJML.
     emailGenerator: new HandlebarsHtmlGenerator(),
-    handlers: [orderConfirmationHandler, orderNotificationHandler],
+    handlers: [
+      orderConfirmationHandler,
+      orderNotificationHandler,
+      nativeOrderConfirmationHandler,
+      nativeOrderNotificationHandler,
+    ],
     globalTemplateVars: { fromAddress: env.orderEmailFrom },
   };
 
@@ -147,10 +159,7 @@ export const config: VendureConfig = {
     },
   },
   orderOptions: {
-    process: [
-      configureDefaultOrderProcess({ arrangingPaymentRequiresShipping: false }),
-      new LineValidityProcess(),
-    ],
+    process: [configureDefaultOrderProcess({ arrangingPaymentRequiresShipping: false })],
     orderPlacedStrategy: new QuoteOrderPlacedStrategy(),
     orderItemPriceCalculationStrategy: new ServerPricingStrategy(),
   },
@@ -162,8 +171,8 @@ export const config: VendureConfig = {
   },
   paymentOptions: { paymentMethodHandlers: [] },
   promotionOptions: {
-    promotionConditions: [productSetBasketCondition],
-    promotionActions: [productSetDiscountAction],
+    promotionConditions: [...defaultPromotionConditions, productSetBasketCondition],
+    promotionActions: [...defaultPromotionActions, productSetDiscountAction],
   },
   dbConnectionOptions: {
     type: "postgres",
@@ -179,6 +188,7 @@ export const config: VendureConfig = {
     ProductPlugin,
     ProductSetPlugin,
     PricingPlugin,
+    CheckoutPlugin,
     ChannelSetupPlugin,
     // Owns the material/product imagery (ADR 0009): uploads and previews are
     // stored on local disk (a docker volume in deploys) and served at /assets.
@@ -238,6 +248,20 @@ export const config: VendureConfig = {
     ],
     // Email addresses editable in the dashboard's channel settings; the env
     // values are the fallback (and what exists before this field is filled).
+    ShippingMethod: [
+      {
+        name: "requiresAddress",
+        type: "boolean",
+        defaultValue: false,
+        label: [{ languageCode: LanguageCode.hu, value: "Szállítási cím szükséges" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value: "Igen esetén a vevőnek szállítási címet kell megadnia a rendeléshez.",
+          },
+        ],
+      },
+    ],
     Channel: [
       {
         name: "orderEmailFrom",
