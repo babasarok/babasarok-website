@@ -217,6 +217,37 @@ merged to main until the backend structure is settled):
 - ⬜ Resume without redoing work (staged disabled-variant build, see
   `spike/sync-resume`) — revisit after real use
 
+## Epic 8 plan (English / multi-language)
+
+Owner requirement: the site will support multiple languages (English first).
+Build on what exists; do not relitigate the catalog decision:
+
+- Already translatable (ADR 0011 decision 6): material/colour labels and
+  descriptions, definition text (`LocalizedText`, hu required, hu fallback),
+  generated options, variants and mirrored facet values. The shop API takes a
+  `languageCode` per request and the site's API client already passes one.
+- To translate for epic 8:
+  - Site UI strings — every hardcoded Hungarian string in the site
+    (checkout labels, basket/checkout messages incl. the set-state messages
+    and the Hungarian error mappings in `src/lib/basket`, product-page and
+    list labels, cookie banner). Extract to locale dictionaries; route
+    per-locale (Astro i18n routing, hreflang).
+  - Buyer-visible server messages — the backend's Hungarian business text
+    (invalid reasons, transition refusals, refused-add reasons) must follow
+    the request's language; reconcile with Vendure's English default errors
+    (e.g. `EmailAddressConflictError`), which the site currently maps to
+    Hungarian in one place.
+  - Order emails — Hungarian templates need per-locale variants.
+  - Native names — delivery methods, promotions and set-group titles are
+    Vendure-translatable; give them English values.
+  - Non-catalog Tina content (privacy, contact, blog, ÁSZF) needs per-locale
+    content; the product collections are gone by epic 4 and must NOT return
+    as a translation home (roadmap principle).
+  - SEO surfaces — per-locale sitemap/search index, meta titles and
+    descriptions.
+- Prices stay HUF for English at first (EUR is epic 9's scope); do not couple
+  the two epics.
+
 ## Epic 9 design notes (multi-market tax & pricing)
 
 Analysis parked from the epic 7 tax work, so epic 9 (Slovakia) starts here
