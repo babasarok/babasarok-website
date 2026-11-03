@@ -1,11 +1,11 @@
 import type { Result } from "./api";
 import type { Order } from "./schemas";
 
-const REJECTION_CODES: readonly string[] = ["FORBIDDEN", "UNAUTHORIZED"];
+const REJECTION_CODES = new Set(["FORBIDDEN", "UNAUTHORIZED"]);
 
 export function isTokenRejection(status: number, errorCodes: readonly string[]): boolean {
   return (
-    status === 401 || status === 403 || errorCodes.some((code) => REJECTION_CODES.includes(code))
+    status === 401 || status === 403 || errorCodes.some((code) => REJECTION_CODES.has(code))
   );
 }
 

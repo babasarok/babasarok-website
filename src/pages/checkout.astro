@@ -8,6 +8,8 @@ import { getEntry } from "astro:content";
 
 export const prerender = false;
 
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const config = (await getEntry("config", "config")!).data;
 const checkout = await getEntry("checkout", "index");
 
 if (!checkout) {
@@ -48,6 +50,7 @@ const labels = {
         messageHeading={checkout.data.message_heading}
         labels={labels}
         setMembers={setMembers}
+        supportEmail={config.address?.email}
         client:load
       />
     </div>
