@@ -10,6 +10,7 @@ import { checkoutBlocker } from "./readiness";
 import type { Order, OrderLine, ShippingQuote } from "./schemas";
 import { loadShownPrices, priceChange, rememberShownPrice } from "./stale";
 import { SetDiscountSchema, lineSetState, setSection } from "./setDiscounts";
+import { isTokenRejection, loadActiveOrder } from "./tokenRejection";
 import { placeOrder, splitName, type SubmitInput } from "./submit";
 
 const definition = ProductDefinitionSchema.parse({
@@ -311,7 +312,7 @@ describe("createBasketApi", () => {
       fetch: fetchMock,
       apiUrl: "http://x",
       languageCode: "hu",
-      tokens: { get: () => token, set: (t) => void (token = t) },
+      tokens: { get: () => token, set: (t) => void (token = t), clear: () => void (token = null) },
     });
 
     return { api, fetchMock, token: () => token };
@@ -449,5 +450,38 @@ describe("set discount adapter", () => {
 
   it("rejects set data of the wrong shape", () => {
     expect(SetDiscountSchema.safeParse({ groupId: "g" }).success).toBe(false);
+  });
+});
+
+describe("rejected basket token", () => {
+  it("only auth/session rejections count as a rejected token", () => {
+    expect(isTokenRejection(200, ["FORBIDDEN"])).toBe(true);
+    expect(isTokenRejection(200, ["UNAUTHORIZED"])).toBe(true);
+    expect(isTokenRejection(401, [])).toBe(true);
+    expect(isTokenRejection(503, [])).toBe(false);
+    expect(isTokenRejection(200, ["INTERNAL_SERVER_ERROR"])).toBe(false);
+  });
+
+  it("discards the token and starts empty when the load is rejected", async () => {
+    const discardToken = vi.fn();
+    const load = await loadActiveOrder({
+      activeOrder: () =>
+        Promise.resolve({ ok: false, failure: { reason: "x", detail: "x", tokenRejected: true } }),
+      discardToken,
+    });
+
+    expect(load).toEqual({ order: null, loadFailed: false });
+    expect(discardToken).toHaveBeenCalledOnce();
+  });
+
+  it("keeps the token on transient failures", async () => {
+    const discardToken = vi.fn();
+    const load = await loadActiveOrder({
+      activeOrder: () => Promise.resolve({ ok: false, failure: { reason: "x", detail: "x" } }),
+      discardToken,
+    });
+
+    expect(load).toBeNull();
+    expect(discardToken).not.toHaveBeenCalled();
   });
 });

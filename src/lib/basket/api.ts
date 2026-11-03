@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isTokenRejection } from "./tokenRejection";
 import { SET_LINE_FIELDS, SET_ORDER_FIELDS } from "./setDiscounts";
 import {
   OrderSchema,
@@ -11,6 +12,7 @@ import {
 export interface TokenStore {
   get(): string | null;
   set(token: string): void;
+  clear(): void;
 }
 
 export interface BasketApiDeps {
@@ -24,6 +26,7 @@ export interface Failure {
   reason: string;
   detail: string;
   stack?: string | undefined;
+  tokenRejected?: boolean;
 }
 
 export type Result<T> = { ok: true; value: T } | { ok: false; failure: Failure };
@@ -114,7 +117,14 @@ const OrderResultSchema = z.union([
 
 const EnvelopeSchema = z.object({
   data: z.unknown().optional(),
-  errors: z.array(z.object({ message: z.string() })).optional(),
+  errors: z
+    .array(
+      z.object({
+        message: z.string(),
+        extensions: z.object({ code: z.string().optional() }).optional(),
+      })
+    )
+    .optional(),
 });
 
 function asFailure(error: unknown): Failure {
@@ -177,7 +187,14 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
     if (envelope.data.errors !== undefined && envelope.data.errors.length > 0) {
       return {
         ok: false,
-        failure: { reason: status, detail: envelope.data.errors.map((e) => e.message).join("; ") },
+        failure: {
+          reason: status,
+          detail: envelope.data.errors.map((e) => e.message).join("; "),
+          tokenRejected: isTokenRejection(
+            response.status,
+            envelope.data.errors.flatMap((e) => e.extensions?.code ?? [])
+          ),
+        },
       };
     }
 

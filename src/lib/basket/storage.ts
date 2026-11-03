@@ -30,6 +30,15 @@ export function createTokenStore(): TokenStore {
         // Persisting is best effort: the basket still works in-session.
       }
     },
+    clear() {
+      memory = null;
+
+      try {
+        getStorage()?.removeItem(TOKEN_KEY);
+      } catch {
+        // Nothing to clear when storage is unavailable.
+      }
+    },
   };
 }
 

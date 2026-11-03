@@ -2,6 +2,7 @@ import { PUBLIC_VENDURE_API_URL } from "astro:env/client";
 import { CATALOG_LANGUAGE } from "@/lib/vendure/client";
 import { createBasketApi, type LineInput, type Result } from "./api";
 import type { Order } from "./schemas";
+import { loadActiveOrder } from "./tokenRejection";
 import { loadShownPrices, rememberShownPrice, type ShownPrices } from "./stale";
 import {
   BASKET_STORAGE_KEYS,
@@ -30,11 +31,13 @@ class Basket {
   shownPrices = $state<ShownPrices>({});
   #started = false;
 
+  readonly #tokens = createTokenStore();
+
   readonly api = createBasketApi({
     fetch: (input, init) => fetch(input, init),
     apiUrl: PUBLIC_VENDURE_API_URL,
     languageCode: CATALOG_LANGUAGE,
-    tokens: createTokenStore(),
+    tokens: this.#tokens,
   });
 
   get count(): number {
@@ -58,13 +61,16 @@ class Basket {
   }
 
   async refresh(): Promise<void> {
-    const result = await this.api.activeOrder();
+    const load = await loadActiveOrder({
+      activeOrder: () => this.api.activeOrder(),
+      discardToken: () => this.#tokens.clear(),
+    });
 
     this.loaded = true;
-    this.loadFailed = !result.ok;
+    this.loadFailed = load === null;
 
-    if (result.ok) {
-      this.order = result.value;
+    if (load !== null) {
+      this.order = load.order;
       this.shownPrices = loadShownPrices(priceStorage());
     }
   }

@@ -23,7 +23,7 @@ describe.skipIf(apiUrl === undefined)("basket contract against the live shop API
     const api = createBasketApi({
       apiUrl: apiUrl ?? "",
       languageCode: "hu",
-      tokens: { get: () => null, set: () => {} },
+      tokens: { get: () => null, set: () => {}, clear: () => {} },
       fetch: async (input, init) => {
         const response = await fetch(input, init);
         const body: unknown = await response.clone().json();
