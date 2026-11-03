@@ -80,8 +80,10 @@ Slovakia/EUR (9).
    charged price) and the total from the order. The legacy path keeps its
    stored `details`/custom-field values until it is removed. Subjects are
    unchanged.
-8. **`submitQuoteOrder` is retired at the cutover** and stays until then
-   because the backend deploys before the site: the legacy mutation, its
+8. **`submitQuoteOrder` is retired in the cleanup after the cutover.** S5a
+   lands in `feat/site-cutover`, which deploys site and backend together, so
+   it could change the old checkout; the mutation and its emails nevertheless
+   keep working unchanged as cheap insurance for the deploy-skew window: the legacy mutation, its
    `details`/`configText` handling, the legacy-only Order/OrderLine custom
    fields (`deliveryMethodName`, `deliveryPrice`, `deliveryFree`,
    `orderTotal`, `setDiscountSummary`; `title`, `configText`, `detailsJson`,
