@@ -1,9 +1,13 @@
 import { OnApplicationBootstrap } from "@nestjs/common";
 import {
+  Channel,
   ChannelService,
   Country,
   CountryService,
+  CurrencyCode,
+  Logger,
   PluginCommonModule,
+  ProductVariantPrice,
   RequestContext,
   RequestContextService,
   TransactionalConnection,
@@ -45,6 +49,8 @@ export class ChannelSetupPlugin implements OnApplicationBootstrap {
       await this.channelService.update(ctx, { id: channel.id, pricesIncludeTax: true });
     }
 
+    await this.ensureForint(ctx, channel);
+
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- the zone relations are typed non-null but sit unset on a fresh database, which is exactly what this guard handles
     if (channel.defaultTaxZone && channel.defaultShippingZone) {
       return;
@@ -65,6 +71,29 @@ export class ChannelSetupPlugin implements OnApplicationBootstrap {
       id: channel.id,
       defaultTaxZoneId: zone.id,
       defaultShippingZoneId: zone.id,
+    });
+  }
+
+  private async ensureForint(ctx: RequestContext, channel: Channel): Promise<void> {
+    if (channel.defaultCurrencyCode === CurrencyCode.HUF) {
+      return;
+    }
+
+    // Existing prices are rows in the old currency; switching would orphan them.
+    const priced = await this.connection.getRepository(ctx, ProductVariantPrice).count();
+
+    if (priced > 0) {
+      Logger.warn(
+        `Default channel currency is ${channel.defaultCurrencyCode}, not HUF, and variant prices exist — not switching`,
+        "ChannelSetupPlugin"
+      );
+      return;
+    }
+
+    await this.channelService.update(ctx, {
+      id: channel.id,
+      defaultCurrencyCode: CurrencyCode.HUF,
+      availableCurrencyCodes: [CurrencyCode.HUF],
     });
   }
 
