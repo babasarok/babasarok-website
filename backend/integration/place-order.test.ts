@@ -5,6 +5,11 @@
  * strategy, the free-shipping promotion and the order emails built from the
  * placed order (file transport). The legacy `submitQuoteOrder` mutation must
  * keep working unchanged for the deploy-skew window (decision 8).
+ *
+ * Also the registered-email collision: a guest saving the email of a
+ * registered customer is refused with a result error, and the order stays
+ * usable. The site relies on this: a refused save must not block submission
+ * (it resends everything at submit), and a different email recovers the order.
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -12,10 +17,12 @@ import { seedCatalog } from "./fixtures";
 import { emailsFor, emailText, run, startServer, type IntegrationServer } from "./harness";
 import { feszek, parna, szalag } from "./lines";
 import {
+  activeOrder,
   addLine,
   BUYER,
   BUYER_ADDRESS,
   chooseShipping,
+  createRegisteredCustomer,
   newShopper,
   setAddress,
   setCustomer,
@@ -125,6 +132,40 @@ describe("placing an order with the native sequence", () => {
       expect(body).toContain("Fészek (5 db)");
       expect(body).toContain("ingyenes");
     }
+  });
+});
+
+describe("a guest using a registered customer's email", () => {
+  it("is refused without harming the order, and a different email recovers it", async () => {
+    await createRegisteredCustomer(server, "regisztralt@example.com");
+
+    const shopper = newShopper(server);
+    const before = await addLine(shopper, parna(PAMUT));
+
+    await expect(setCustomer(shopper, "regisztralt@example.com")).rejects.toMatchObject({
+      errorCode: "EMAIL_ADDRESS_CONFLICT_ERROR",
+      message: "The email address is not available.",
+    });
+
+    const after = await activeOrder(shopper);
+
+    expect(after.state).toBe("AddingItems");
+    expect(after.customer).toBeNull();
+    expect(after.lines).toEqual(before.lines);
+
+    const recovered = await setCustomer(shopper);
+
+    expect(recovered.customer?.emailAddress).toBe(BUYER.emailAddress);
+    await setAddress(shopper);
+    await chooseShipping(shopper, "szemelyes");
+    await setOrderNotes(shopper, {
+      message: "",
+      termsAccepted: true,
+      submissionTransactionId: "collision-1",
+    });
+    expect(await transitionTo(shopper, "ArrangingPayment")).toMatchObject({
+      order: { state: "ArrangingPayment" },
+    });
   });
 });
 
@@ -271,14 +312,16 @@ describe("the legacy submitQuoteOrder mutation", () => {
       },
     });
     expect(
-      stored.lines.map((line) => [
-        line.quantity,
-        line.customFields.title,
-        line.customFields.configText,
-        line.customFields.detailsJson,
-        line.customFields.quotedUnitPrice,
-        line.customFields.quotedLineTotal,
-      ])
+      stored.lines
+        .toSorted((a, b) => (a.customFields.title ?? "").localeCompare(b.customFields.title ?? ""))
+        .map((line) => [
+          line.quantity,
+          line.customFields.title,
+          line.customFields.configText,
+          line.customFields.detailsJson,
+          line.customFields.quotedUnitPrice,
+          line.customFields.quotedLineTotal,
+        ])
     ).toEqual([
       [2, "Párna", null, JSON.stringify(legacyPayload.products[0]?.details), 6000, 12_000],
       [1, "Takaró", "Anyag: Pamut\nSzín: Kék", null, 9000, 9000],

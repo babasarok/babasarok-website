@@ -301,7 +301,10 @@ export const BUYER = {
 
 export const BUYER_ADDRESS = "3894 Telkibánya, Fő u. 1.";
 
-export async function setCustomer(shopper: Shopper): Promise<Order> {
+export async function setCustomer(
+  shopper: Shopper,
+  emailAddress = BUYER.emailAddress
+): Promise<Order> {
   return orderMutation(
     shopper.client,
     "setCustomerForOrder",
@@ -310,7 +313,7 @@ export async function setCustomer(shopper: Shopper): Promise<Order> {
         __typename ... on Order { ${ORDER_FIELDS} } ... on ErrorResult { errorCode message }
       }
     }`,
-    { input: BUYER }
+    { input: { ...BUYER, emailAddress } }
   );
 }
 
@@ -429,3 +432,96 @@ export async function removeMaterialColor(
     z.unknown()
   );
 }
+
+/** A registered customer (with a password), as created in the dashboard. */
+export async function createRegisteredCustomer(
+  server: IntegrationServer,
+  emailAddress: string
+): Promise<void> {
+  const { createCustomer } = await run(
+    server.admin,
+    `mutation($input: CreateCustomerInput!, $password: String) {
+      createCustomer(input: $input, password: $password) { __typename }
+    }`,
+    {
+      input: { emailAddress, firstName: "Regisztrált", lastName: "Vevő" },
+      password: "titok-123456",
+    },
+    z.object({ createCustomer: z.object({ __typename: z.string() }) })
+  );
+
+  if (createCustomer.__typename !== "Customer") {
+    throw new Error(`The customer ${emailAddress} was not created.`);
+  }
+}
+
+/** Drops one option of a choice field from the stored definition, the way the owner edits it. */
+export async function removeChoiceOption(
+  server: IntegrationServer,
+  productId: ProductId,
+  fieldId: string,
+  optionId: string
+): Promise<void> {
+  const { productDefinition } = await run(
+    server.admin,
+    `query($productId: String!) { productDefinition(productId: $productId) { definition } }`,
+    { productId },
+    z.object({ productDefinition: z.object({ definition: DefinitionSchema }) })
+  );
+  const definition = productDefinition.definition;
+
+  await run(
+    server.admin,
+    `mutation($productId: String!, $definition: JSON!) {
+      updateProductDefinition(productId: $productId, definition: $definition, force: true) { productId }
+    }`,
+    {
+      productId,
+      definition: {
+        ...definition,
+        fields: definition.fields.map((field) =>
+          field.id === fieldId && field.options !== undefined
+            ? { ...field, options: field.options.filter((option) => option.id !== optionId) }
+            : field
+        ),
+      },
+    },
+    z.unknown()
+  );
+
+  for (let attempt = 0; attempt < 240; attempt += 1) {
+    const { productDefinition: current } = await run(
+      server.admin,
+      `query($productId: String!) { productDefinition(productId: $productId) { syncState syncError } }`,
+      { productId },
+      z.object({
+        productDefinition: z.object({ syncState: z.string(), syncError: z.string().nullable() }),
+      })
+    );
+
+    if (current.syncState === "failed") {
+      throw new Error(`${productId} sync failed: ${current.syncError}`);
+    }
+
+    if (current.syncState === "synced") {
+      return;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  throw new Error(`${productId} did not sync in time.`);
+}
+
+const DefinitionSchema = z
+  .object({
+    fields: z.array(
+      z
+        .object({
+          id: z.string(),
+          options: z.array(z.object({ id: z.string().optional() }).loose()).optional(),
+        })
+        .loose()
+    ),
+  })
+  .loose();
