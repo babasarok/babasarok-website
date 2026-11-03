@@ -152,32 +152,30 @@ describe("setBasketState", () => {
   it("forms one instance from a complete set and totals its discount", () => {
     const state = evaluate([promotion()], [line(10, 1), line(11, 2)]);
 
-    expect(state).not.toBe(false);
-
-    if (state === false) {
-      return;
-    }
-
     expect(state.total).toBe(1000);
     expect(state.instances).toHaveLength(1);
     expect(state.instances[0]?.groupId).toBe("szett");
   });
 
   it("stays silent when no set forms", () => {
-    expect(evaluate([promotion()], [line(10, 1, 3)])).toBe(false);
-    expect(evaluate([promotion()], [line(10, 5), line(11, 6)])).toBe(false);
+    expect(evaluate([promotion()], [line(10, 1, 3)]).instances).toEqual([]);
+    expect(evaluate([promotion()], [line(10, 5), line(11, 6)]).instances).toEqual([]);
   });
 
   it("refuses when two active promotions use the condition", () => {
     const lines = [line(10, 1), line(11, 2)];
 
-    expect(evaluate([promotion(), promotion()], lines)).toBe(false);
+    expect(evaluate([promotion(), promotion()], lines).instances).toEqual([]);
+  });
+
+  it("is empty without an active promotion", () => {
+    expect(evaluate([], [line(10, 1), line(11, 2)]).instances).toEqual([]);
   });
 
   it("does not count deleted or other-channel promotions", () => {
     const lines = [line(10, 1), line(11, 2)];
     const others = [promotion({ deletedAt: new Date() }), promotion({ channelId: 2 })];
 
-    expect(evaluate([promotion(), ...others], lines)).not.toBe(false);
+    expect(evaluate([promotion(), ...others], lines).total).toBe(1000);
   });
 });

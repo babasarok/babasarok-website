@@ -1,23 +1,8 @@
-import {
-  Collection,
-  EntityHydrator,
-  LanguageCode,
-  Promotion,
-  PromotionCondition,
-  PromotionOrderAction,
-  TransactionalConnection,
-} from "@vendure/core";
+import { LanguageCode, PromotionCondition, PromotionOrderAction } from "@vendure/core";
 import type { Injector, Order, RequestContext } from "@vendure/core";
-import { IsNull, In } from "typeorm";
-import { ProductDefinition } from "../product/product.entity";
-import {
-  PRODUCT_SET_CONDITION_CODE,
-  relevantNativeProductIds,
-  setBasketState,
-  type BasketLine,
-} from "./set-basket";
+import { PRODUCT_SET_CONDITION_CODE } from "./set-basket";
+import { SetBasketService } from "./set-basket.service";
 import type { SetInstance } from "./set-allocation";
-import { SET_PARENT_SLUG } from "./group-parents";
 
 export { PRODUCT_SET_CONDITION_CODE };
 
@@ -32,8 +17,7 @@ export interface ProductSetConditionState extends Record<string, unknown> {
 
 // The documented pattern for configurable operations: services captured at
 // init time, used from the check/execute functions.
-let connection: TransactionalConnection;
-let entityHydrator: EntityHydrator;
+let setBasketService: SetBasketService;
 
 /**
  * Computes the basket's formed set instances (product-sets spec) from the
@@ -51,61 +35,16 @@ export const productSetBasketCondition = new PromotionCondition({
   ],
   args: {},
   init(injector: Injector): void {
-    connection = injector.get(TransactionalConnection);
-    entityHydrator = injector.get(EntityHydrator);
+    setBasketService = injector.get(SetBasketService);
   },
   check: async (ctx: RequestContext, order: Order): Promise<ProductSetConditionState | false> => {
-    const parent = await connection.getRepository(ctx, Collection).findOne({
-      relations: { translations: true },
-      where: { translations: { slug: SET_PARENT_SLUG } },
-    });
+    const state = await setBasketService.stateForOrder(ctx, order);
 
-    if (parent === null) {
+    if (state === undefined || state.instances.length === 0) {
       return false;
     }
 
-    const children = await connection.getRepository(ctx, Collection).find({
-      where: { parentId: parent.id },
-      relations: { translations: true },
-    });
-
-    await entityHydrator.hydrate(ctx, order, {
-      relations: [
-        "lines",
-        "lines.productVariant",
-        "lines.productVariant.options",
-        "lines.productVariant.options.group",
-      ],
-    });
-
-    const lines: BasketLine[] = order.lines.map((line) => ({
-      id: line.id,
-      quantity: line.quantity,
-      listPrice: line.listPrice,
-      nativeProductId: Number(line.productVariant.productId),
-      selectionsRaw: line.customFields.selections,
-      options: line.productVariant.options.map((option) => ({
-        groupCode: option.group.code,
-        code: option.code,
-      })),
-    }));
-    const definitionRows = await connection.getRepository(ctx, ProductDefinition).find({
-      select: { nativeProductId: true, definition: true },
-      where: { nativeProductId: In(relevantNativeProductIds(lines, children)) },
-    });
-    const promotions = await connection.getRepository(ctx, Promotion).find({
-      where: { enabled: true, deletedAt: IsNull() },
-      relations: { channels: true },
-    });
-
-    return setBasketState({
-      promotions,
-      channelId: ctx.channelId,
-      now: new Date(),
-      children,
-      lines,
-      definitionRows,
-    });
+    return { total: state.total, instances: state.instances };
   },
 });
 

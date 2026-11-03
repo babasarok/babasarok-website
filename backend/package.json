@@ -18,11 +18,11 @@
     "import-facets": "node --env-file-if-exists=.env scripts/import-facets.ts",
     "import-products": "node --env-file-if-exists=.env scripts/import-products.ts",
     "converge-facets": "node --env-file-if-exists=.env scripts/converge-facets.ts",
-    "test:quote-roundtrip": "node --env-file-if-exists=.env scripts/quote-order-roundtrip.ts",
     "e2e:server": "node --env-file=e2e.env scripts/e2e-server.ts",
-    "check": "tsc -b",
+    "check": "tsc -b && tsc -p tsconfig.integration.json",
     "check:dashboard": "pnpm -C ../packages/product-definition run build && node scripts/check-dashboard-types.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:integration": "tsc -b && vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@babasarok/pricing": "workspace:*",
@@ -58,6 +58,7 @@
     "@tanstack/react-query": "^5.91.0",
     "@tanstack/react-router": "1.170.46",
     "@types/pg": "^8.23.1",
+    "@vendure/testing": "3.8.1",
     "gql.tada": "^1.11.4",
     "typeorm": "^0.3.31",
     "typescript": "^5.9.3",

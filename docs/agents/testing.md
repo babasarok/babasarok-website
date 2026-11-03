@@ -79,15 +79,15 @@ with one owner: unit-test it there, don't re-prove it across the seam.
 
 ## Where tests live
 
-| Kind                 | Location / naming                                                         | Run with                      |
-| -------------------- | ------------------------------------------------------------------------- | ----------------------------- |
-| Site/package unit    | next to the code, `src/**/*.test.ts`, `packages/*/src/**/*.test.ts`       | `pnpm test`                   |
-| Backend unit         | next to the code, `backend/src/**/*.test.ts`                              | `pnpm -C backend test`        |
-| Component            | next to the component, `*.test.ts` + `// @vitest-environment jsdom`       | `pnpm test`                   |
-| Backend integration  | not set up yet — agree the harness with the owner first                   | —                             |
-| Site E2E (hydration) | `tests/*.spec.ts`                                                         | `pnpm run test:hydration`     |
-| Dashboard E2E        | `tests/dashboard/*.spec.ts`, shared steps in `tests/dashboard/helpers.ts` | `pnpm run test:dashboard-e2e` |
-| Checkout E2E         | `tests/checkout/*.spec.ts`, page actions in `tests/checkout/pages.ts`     | `pnpm run test:checkout-e2e`  |
+| Kind                 | Location / naming                                                         | Run with                               |
+| -------------------- | ------------------------------------------------------------------------- | -------------------------------------- |
+| Site/package unit    | next to the code, `src/**/*.test.ts`, `packages/*/src/**/*.test.ts`       | `pnpm test`                            |
+| Backend unit         | next to the code, `backend/src/**/*.test.ts`                              | `pnpm -C backend test`                 |
+| Component            | next to the component, `*.test.ts` + `// @vitest-environment jsdom`       | `pnpm test`                            |
+| Backend integration  | `backend/integration/*.test.ts`, shared harness/fixtures beside them      | `pnpm -C backend run test:integration` |
+| Site E2E (hydration) | `tests/*.spec.ts`                                                         | `pnpm run test:hydration`              |
+| Dashboard E2E        | `tests/dashboard/*.spec.ts`, shared steps in `tests/dashboard/helpers.ts` | `pnpm run test:dashboard-e2e`          |
+| Checkout E2E         | `tests/checkout/*.spec.ts`, page actions in `tests/checkout/pages.ts`     | `pnpm run test:checkout-e2e`           |
 
 Playwright only collects `*.spec.ts`; `*.test.ts` belongs to Vitest.
 
@@ -130,4 +130,9 @@ needs it — don't pre-install. Known choices:
 
 - Svelte component tests: `@testing-library/svelte` + `jsdom`.
 - Astro component tests: `experimental_AstroContainer` ships with `astro`.
-- Backend integration: `@vendure/testing` (Vendure's own test server).
+- Backend integration: `@vendure/testing` (Vendure's own `TestServer.bootstrap()`
+  and `SimpleGraphQLClient`, not its sqljs `init()` — see the header of
+  `backend/integration/harness.ts`). The suite boots the built server
+  (`dist/`) on postgres with the real migrations; needs the local postgres
+  container, uses its own `babasarok_int` database and file email transport
+  (`backend/integration.env`), and runs in CI as the "Backend Integration" job.

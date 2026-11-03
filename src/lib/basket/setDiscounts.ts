@@ -11,14 +11,14 @@ export const SetDiscountSchema = z.object({
 export const SetStateSchema = z.object({
   kind: z.enum(["ACTIVE", "PENDING_PARTNER", "PENDING_MATERIAL"]),
   groupId: z.string(),
+  title: z.string(),
   coveredUnits: z.number().int(),
   materialSyncFromLineId: z.string().nullable(),
 });
 
-// Empty until the shop API exposes Order.setDiscounts / OrderLine.setState: an
-// unknown field would make the whole order query fail validation.
-export const SET_ORDER_FIELDS = "";
-export const SET_LINE_FIELDS = "";
+export const SET_ORDER_FIELDS = "setDiscounts { groupId title amount lines { orderLineId units } }";
+export const SET_LINE_FIELDS =
+  "setState { kind groupId title coveredUnits materialSyncFromLineId }";
 
 export interface SetSectionEntry {
   groupId: string;
@@ -57,20 +57,20 @@ export function lineSetState(line: OrderLine): LineSetStateView | undefined {
   if (state.kind === "ACTIVE") {
     return {
       kind: "active",
-      message: `A szett kedvezmény aktív (${state.coveredUnits.toString()} db-ra).`,
+      message: `${state.title}: a szett kedvezmény aktív (${state.coveredUnits.toString()} db-ra).`,
     };
   }
 
   if (state.kind === "PENDING_PARTNER") {
     return {
       kind: "pending-partner",
-      message: "Add hozzá a szett egy másik darabját, és megkapod a kedvezményt.",
+      message: `${state.title}: add hozzá a szett egy másik darabját, és megkapod a kedvezményt.`,
     };
   }
 
   return {
     kind: "pending-material",
-    message: "Egyeztesd az anyagot a szett darabjához a kedvezményhez.",
+    message: `${state.title}: egyeztesd az anyagot a szett darabjához a kedvezményhez.`,
     syncFromLineId: state.materialSyncFromLineId ?? undefined,
   };
 }

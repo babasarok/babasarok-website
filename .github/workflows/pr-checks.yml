@@ -69,6 +69,31 @@ jobs:
       - run: pnpm -C backend run gql:fresh
       - run: pnpm -C backend test
 
+  # Backend integration tests: the built server against a real postgres with
+  # the real migrations, driven through the shop/admin API (backend/integration,
+  # harness in integration/harness.ts). Credentials match backend/integration.env.
+  backend-integration:
+    name: Backend Integration
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: babasarok
+          POSTGRES_PASSWORD: babasarok
+          POSTGRES_DB: babasarok_int
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm -C backend run test:integration
+
   # Real production build (`npm run build` -> `tinacms build`, talks to Tina
   # Cloud). The resulting `dist/` is uploaded so the guard jobs below can reuse
   # it without rebuilding.
