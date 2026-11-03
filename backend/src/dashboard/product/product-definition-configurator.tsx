@@ -12,7 +12,7 @@
  */
 import { Fragment, useEffect, useRef, useState, type ReactElement } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useBlocker, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import {
   Alert,
   AlertTitle,
@@ -36,9 +36,14 @@ import {
 } from "@babasarok/product-definition";
 import { graphql } from "@/gql";
 import { Switch } from "@/vdb/components/ui/switch.js";
+import { UnsavedChangesGuard } from "./unsaved-changes-guard";
 import { ErrorNotice, errorCodeOf, rowKey } from "../shared";
 import "./stock-image-sizes.css";
 import { FieldEditor, NumberInput } from "./product-definition-fields";
+import {
+  publishConfiguratorSave,
+  unpublishConfiguratorSave,
+} from "./product-definition-save-store";
 import {
   assignGeneratedIds,
   carryOver,
@@ -171,6 +176,14 @@ function SyncBadge({ sync }: { sync: SyncInfo | null }): ReactElement {
   );
 }
 
+function snapshotOf(
+  definition: ProductDefinitionInput,
+  fields: FieldRow["field"][],
+  banned: string[][]
+): string {
+  return JSON.stringify({ ...definition, fields, forbiddenMaterialCombinations: banned });
+}
+
 export function ConfiguratorEditor({
   definitionId,
   mode,
@@ -238,6 +251,13 @@ export function ConfiguratorEditor({
         setDefinition(parsed);
         setRows(parsed.fields.map((field) => ({ key: rowKey(), field })));
         setBanned(parsed.forbiddenMaterialCombinations.map((rule) => [...rule]));
+        setBaseline(
+          snapshotOf(
+            parsed,
+            parsed.fields,
+            parsed.forbiddenMaterialCombinations.map((rule) => [...rule])
+          )
+        );
         setSync({
           state: result.productDefinition.syncState,
           error: result.productDefinition.syncError,
@@ -280,15 +300,49 @@ export function ConfiguratorEditor({
     };
   }, [saved]);
 
+  const [baseline, setBaseline] = useState<string | null>(null);
+  const snapshot =
+    definition === null
+      ? null
+      : snapshotOf(
+          definition,
+          rows.map((row) => row.field),
+          banned
+        );
+  const configuratorDirty = !creatingNew && snapshot !== null && snapshot !== baseline;
+
   const dirty =
     definition !== null &&
     (definition.id !== "" || (creatingNew && name !== "") || rows.length > 0 || banned.length > 0);
 
-  // Guards only the create route: the embedded block shares the stock
-  // product page's navigation, where blocking is too broad a blast radius.
-  useBlocker({
-    shouldBlockFn: () => mode === "create" && !pending && dirty,
+  const blocksLeaving = (): boolean => !pending && (creatingNew ? dirty : configuratorDirty);
+
+  useEffect(() => {
+    if (creatingNew) {
+      return;
+    }
+
+    publishConfiguratorSave(definitionId, {
+      dirty: configuratorDirty,
+      save: async () => {
+        if (pending) {
+          return;
+        }
+
+        await save(false);
+      },
+    });
   });
+
+  useEffect(() => {
+    if (creatingNew) {
+      return;
+    }
+
+    return () => {
+      unpublishConfiguratorSave(definitionId);
+    };
+  }, [creatingNew, definitionId]);
 
   function patchBase(key: string, label: TextInput): void {
     setRows((current) =>
@@ -574,6 +628,7 @@ export function ConfiguratorEditor({
         setRows((current) =>
           current.map((row, index) => ({ ...row, field: validated.fields[index] }))
         );
+        setBaseline(snapshotOf(definition, validated.fields, banned));
         setSaved(true);
         void pollSync(definitionId);
       }
@@ -623,15 +678,17 @@ export function ConfiguratorEditor({
         description="A mentés után a natív termékszerkezet a háttérben újragenerálódik. A mezők kiegészítő tulajdonságai (megjelenítési függőségek, tippek, minták) változatlanul megőrződnek."
       >
         <div className="flex flex-wrap items-center gap-3">
-          <Button
-            type="button"
-            disabled={pending}
-            onClick={() => {
-              void save(false);
-            }}
-          >
-            {creatingNew ? "Létrehozás" : "Mentés"}
-          </Button>
+          {creatingNew && (
+            <Button
+              type="button"
+              disabled={pending}
+              onClick={() => {
+                void save(false);
+              }}
+            >
+              Létrehozás
+            </Button>
+          )}
           {!creatingNew && (
             <ConfirmationDialog
               title="Termék törlése"
@@ -930,10 +987,20 @@ export function ConfiguratorEditor({
   );
 
   if (mode === "create") {
-    return <PageLayout>{editor}</PageLayout>;
+    return (
+      <>
+        <UnsavedChangesGuard blocks={blocksLeaving} />
+        <PageLayout>{editor}</PageLayout>
+      </>
+    );
   }
 
   // The embedded block sits in the stock page's full-width row; a nested
   // PageLayout would re-grid its cards into a 3/4-width main column.
-  return <div className="space-y-4">{editor}</div>;
+  return (
+    <div className="space-y-4">
+      <UnsavedChangesGuard blocks={blocksLeaving} />
+      {editor}
+    </div>
+  );
 }

@@ -1,7 +1,11 @@
 import { ProductDefinitionSchema, type ProductDefinition } from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
 import { nativeStateHash, type NativeProductState } from "./sync-state";
-import { plannedNativeState, planVariantCombinations } from "./variant-plan";
+import {
+  plannedNativeState,
+  planVariantCombinations,
+  variantNamesUseProductName,
+} from "./variant-plan";
 import type { MaterialFacetData } from "./facet-plan";
 
 // The specimen product's shape (src/content/product/babafeszek.md), parsed
@@ -343,5 +347,28 @@ describe("plannedNativeState", () => {
 
     expect(nativeStateHash(refaceted)).not.toBe(nativeStateHash(planned));
     expect(nativeStateHash(reversed)).toBe(nativeStateHash(planned));
+  });
+});
+
+describe("variantNamesUseProductName", () => {
+  const toggle = babafeszek.fields[1];
+  const material = babafeszek.fields[3];
+
+  it.each([
+    ["choices, toggles and materials", babafeszek.fields],
+    ["toggles only", [toggle]],
+    ["no variant axis", []],
+    ["materials only", [material]],
+  ])("matches whether a planned variant carries the product name: %s", (_, fields) => {
+    const definition = ProductDefinitionSchema.parse({
+      ...babafeszek,
+      fields,
+      forbiddenMaterialCombinations: [],
+    });
+    const named = planVariantCombinations(definition, materials, { hu: "Termék" }).variants.some(
+      (variant) => variant.name.hu === "Termék"
+    );
+
+    expect(variantNamesUseProductName(definition)).toBe(named);
   });
 });

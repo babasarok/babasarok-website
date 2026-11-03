@@ -193,13 +193,23 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await toggleAr.fill("1200");
     await toggleAr.blur();
 
+    const productUrl = page.url();
+    await page.getByRole("link", { name: "Products", exact: true }).first().click();
+    const leaveDialog = page.getByRole("dialog", { name: "Elhagyod az oldalt?" });
+    await expect(leaveDialog).toBeVisible();
+    await leaveDialog.getByRole("button", { name: "Mégse" }).click();
+    await expect(leaveDialog).toHaveCount(0);
+    expect(page.url()).toBe(productUrl);
+
     await page.getByRole("button", { name: "+ Választó mező" }).click();
     const meret = fieldBlock(page, 6);
     await meret.getByLabel("Név").first().fill("Méret");
     await meret.getByLabel("Név").nth(1).fill("S");
 
+    await page.getByLabel("Product name", { exact: true }).fill("E2E F1 átnevezve");
+
     const update = waitForMutation(page, "mutation UpdateProductDefinition");
-    await page.getByRole("button", { name: "Mentés", exact: true }).click();
+    await page.getByRole("button", { name: "Frissítés", exact: true }).click();
     await update;
 
     await expect(page.getByText("Mentés sikeres — a szinkronizálás fut.")).toBeVisible();
@@ -207,6 +217,8 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
 
     await page.reload();
+
+    await expect(page.getByLabel("Product name", { exact: true })).toHaveValue("E2E F1 átnevezve");
 
     const generated = generatedTable(page);
     await expect(generated.getByRole("row", { name: /Szín: / })).toHaveCount(8);

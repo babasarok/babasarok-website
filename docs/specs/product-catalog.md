@@ -20,7 +20,8 @@ filterable product list with a detail page per product.
 > the labelled field values ("`Anyag: Pamut · Méret: Nagy · Masni`"): a toggle
 > shows its bare label when on and is omitted when off; a variant with nothing
 > to list carries the product's name, so a rename on the stock product form
-> propagates to those variants. The product type is a value of the public
+> propagates to those variants; a stock product save re-syncs only when such
+> a variant exists. The product type is a value of the public
 > `babasarok-product-type` facet on the native product (ADR 0011 decision 2),
 > not a definition field. Editorial content still maps to the native product
 > at cutover: body → `description`, `thumbnail` → featured asset, `images` →
@@ -260,6 +261,10 @@ Material writes SHALL propagate automatically, without a definition save:
   - THEN the material's color facet values follow, and every product
     definition referencing the material re-syncs, so its variants carry the
     correct color facets
+- **Scenario: Material edit the sync does not read**
+  - WHEN a material update leaves its label and its colors' ids and labels
+    unchanged (e.g. only the description or images change)
+  - THEN no product definition re-syncs
 - **Scenario: Automatic sync meets native edits**
   - WHEN a sync triggered by a material change or a stock product rename
     (not by a definition save) finds the native options, variants or prices
@@ -368,6 +373,30 @@ fail. Deleting through the configurator keeps removing both.
 - **Scenario: Configurator delete**
   - WHEN a product is deleted through the configurator
   - THEN both the definition and the native product are removed, as before
+
+### Single save on the product page
+
+The stock product page's action bar SHALL carry one Update button for a
+generated product, replacing the stock one (the Enabled switch is kept). It
+saves the page form (name, slug, description, enabled …) when that is dirty
+and valid, and the configurator editor when it has unsaved changes; each
+shows its own errors, and one failing does not stop the other. The
+configurator block has no save button of its own (delete, the sync status and
+the drift-conflict force-save remain); on a non-generated product the button
+behaves as the stock one. Navigating away or reloading with unsaved
+configurator changes asks for confirmation, like the stock form does.
+
+- **Scenario: Rename and configurator edit**
+  - WHEN a generated product's name and a configurator field are both
+    edited and Update is clicked once
+  - THEN both are persisted and the sync starts
+- **Scenario: Nothing changed**
+  - WHEN neither the page form nor the configurator has changes
+  - THEN the Update button is disabled
+- **Scenario: Leaving with configurator changes**
+  - WHEN a configurator field is edited and not saved
+  - AND the user navigates away or reloads the page
+  - THEN a confirmation is asked before the changes are discarded
 
 ### Variant sync progress
 

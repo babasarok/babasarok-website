@@ -73,7 +73,12 @@ import {
 import { definitionsToRequeue } from "./sync-recovery";
 import { createProgressCounter, progressOfJobData, type SyncProgress } from "./sync-progress";
 import { huName, nativeProductTexts, textOf } from "./native-names";
-import { plannedNativeState, planVariantCombinations, type VariantPlan } from "./variant-plan";
+import {
+  plannedNativeState,
+  planVariantCombinations,
+  variantNamesUseProductName,
+  type VariantPlan,
+} from "./variant-plan";
 
 function labelAsName(translation: { languageCode: LanguageCode; label: string }): {
   languageCode: LanguageCode;
@@ -547,9 +552,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   /**
    * Stock product writes find their generated definition: a delete cascades
    * to it (ADR 0011 decision 4 — the configurator's own delete removes the
-   * definition first, so this finds nothing to do there), and an update
-   * re-enqueues its sync so the variant names follow a rename (ADR 0011
-   * decision 1: the native Product owns the name; the sync only reads it).
+   * definition first, so this finds nothing to do there), and a rename
+   * re-enqueues its sync only when a variant is named after the product
+   * (ADR 0011 decision 1: the native Product owns the name; the sync only
+   * reads it).
    */
   private async onProductEvent(event: ProductEvent): Promise<void> {
     const nativeProductId = deletedNativeProductId(event) ?? updatedNativeProductId(event);
@@ -574,7 +580,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         .getRepository(event.ctx, ProductDefinition)
         .findOneBy({ nativeProductId });
 
-      if (row !== null) {
+      if (row !== null && variantNamesUseProductName(row.definition)) {
         await this.enqueueSync(event.ctx, row.productId, "automatic");
       }
     } catch (error: unknown) {
