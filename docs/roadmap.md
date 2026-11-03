@@ -113,7 +113,9 @@ cleanups as follow-ups. A slice with both kinds splits into two PRs.
   site renders them as asset-server preset URLs; raw HTML is disabled; the
   preview import carries the Tina bodies
 - ⬜ **S6 Prod cutover** — hand migration of the catalog into prod
-  (`converge-facets`, `import-facets`, products), switch, verify
+  (`converge-facets`, `import-facets`, products), switch, verify. Before
+  switching, the owner runs the epic-2 Vendure-complete gate and the user /
+  owner journey click-throughs (manual test plans) on the cutover preview
 
 ## Post-cutover follow-ups
 
@@ -209,7 +211,8 @@ merged to main until the backend structure is settled):
   ([ADR 0011](adr/0011-native-ownership-and-translatable-catalog.md)
   decision 6)
 - ⬜ Vendure-complete gate — catalog fully manageable in the Vendure dashboard,
-  nothing left that only Tina can do
+  nothing left that only Tina can do. Folded into epic 3 S6: the owner runs
+  the gate on the cutover preview before the prod switch
 - ✅ Variant sync self-heals after a crash/redeploy (restarts from zero)
 - ⬜ Resume without redoing work (staged disabled-variant build, see
   `spike/sync-resume`) — revisit after real use
