@@ -9,7 +9,13 @@ import { formatMoney, majorUnits } from "./money";
 import { checkoutBlocker } from "./readiness";
 import type { Order, OrderLine, ShippingQuote } from "./schemas";
 import { loadShownPrices, priceChange, rememberShownPrice } from "./stale";
-import { SetDiscountSchema, lineSetState, setSection } from "./setDiscounts";
+import {
+  SetDiscountSchema,
+  lineSetState,
+  partnerLinks,
+  setMembersByGroup,
+  setSection,
+} from "./setDiscounts";
 import { isTokenRejection, loadActiveOrder } from "./tokenRejection";
 import { placeOrder, splitName, type SubmitInput } from "./submit";
 
@@ -446,6 +452,34 @@ describe("set discount adapter", () => {
     expect(active?.kind).toBe("active");
     expect(material).toMatchObject({ kind: "pending-material", syncFromLineId: "1" });
     expect(partner?.kind).toBe("pending-partner");
+  });
+
+  it("offers a pending-partner line the set's members that are not yet in the basket", () => {
+    const members = setMembersByGroup(
+      [
+        { id: "g", kind: "set", productIds: ["a", "b", "c", "gone"] },
+        { id: "rel", kind: "related", productIds: ["a", "z"] },
+      ],
+      [
+        { slug: "parna", name: "Párna", definition: { id: "a" } },
+        { slug: "takaro", name: "Takaró", definition: { id: "b" } },
+        { slug: "kosar", name: "Kosár", definition: { id: "c" } },
+      ]
+    );
+    const [active, , partner] = fixtureOrder.lines;
+
+    expect(members).toEqual({
+      g: [
+        { slug: "parna", name: "Párna" },
+        { slug: "takaro", name: "Takaró" },
+        { slug: "kosar", name: "Kosár" },
+      ],
+    });
+    expect(partner && partnerLinks(partner, fixtureOrder, members)).toEqual([
+      { slug: "takaro", name: "Takaró" },
+      { slug: "kosar", name: "Kosár" },
+    ]);
+    expect(active && partnerLinks(active, fixtureOrder, members)).toEqual([]);
   });
 
   it("rejects set data of the wrong shape", () => {

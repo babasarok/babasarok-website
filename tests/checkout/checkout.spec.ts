@@ -19,6 +19,7 @@ import {
   expectLine,
   expectNoDeliveryChosen,
   expectNoSetSection,
+  expectPartnerLink,
   expectPendingMaterial,
   expectPriceChangeNotice,
   expectSetSection,
@@ -131,6 +132,8 @@ test("a set forms, breaks on a material mismatch and is restored by the one-clic
   await openProductFromList(page, /E2E Szett Fej/);
   await chooseMaterial(page, /Alfa/);
   await addToBasket(page);
+  await goToCheckoutInApp(page);
+  await expectPartnerLink(page, /E2E Szett Fej/, /E2E Szett Láb/);
   await openProductFromList(page, /E2E Szett Láb/);
   await chooseMaterial(page, /Alfa/);
   await addToBasket(page);

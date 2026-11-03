@@ -2,7 +2,8 @@
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
 import CheckoutForm from "@/components/blocks/order/CheckoutForm.svelte";
-import { getMaterials, getThreadColors } from "@/lib/catalog";
+import { getMaterials, getProductGroups, getProducts, getThreadColors } from "@/lib/catalog";
+import { setMembersByGroup } from "@/lib/basket/setDiscounts";
 import { getEntry } from "astro:content";
 
 export const prerender = false;
@@ -13,7 +14,13 @@ if (!checkout) {
   throw new Error("Checkout entry not found");
 }
 
-const [materials, threadColors] = await Promise.all([getMaterials(), getThreadColors()]);
+const [materials, threadColors, products, groups] = await Promise.all([
+  getMaterials(),
+  getThreadColors(),
+  getProducts(),
+  getProductGroups(),
+]);
+const setMembers = setMembersByGroup(groups, products);
 
 const labels = {
   materials: Object.fromEntries(
@@ -40,6 +47,7 @@ const labels = {
         basketHeading={checkout.data.basket_heading}
         messageHeading={checkout.data.message_heading}
         labels={labels}
+        setMembers={setMembers}
         client:load
       />
     </div>

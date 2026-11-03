@@ -13,6 +13,7 @@
   import { formatMoney, majorUnits } from "@/lib/basket/money";
   import { checkoutBlocker, selectedMethod } from "@/lib/basket/readiness";
   import type { ShippingQuote } from "@/lib/basket/schemas";
+  import { partnerLinks, type SetMembers } from "@/lib/basket/setDiscounts";
   import { priceChange } from "@/lib/basket/stale";
   import { placeOrder } from "@/lib/basket/submit";
   import { reportClientError } from "@/lib/errorReport";
@@ -20,13 +21,14 @@
 
   interface Props {
     labels: Labels;
+    setMembers: SetMembers;
     basketInfo?: string | undefined;
     contactHeading: string;
     basketHeading: string;
     messageHeading: string;
   }
 
-  let { labels, basketInfo, contactHeading, basketHeading, messageHeading }: Props =
+  let { labels, setMembers, basketInfo, contactHeading, basketHeading, messageHeading }: Props =
     $props();
 
   let name = $state("");
@@ -297,6 +299,7 @@
               {line}
               currencyCode={order.currencyCode}
               {labels}
+              partnerLinks={partnerLinks(line, order, setMembers)}
               priceChange={priceChange(line, basket.shownPrices)}
               {busy}
               onQuantity={(quantity) => changeLine(basket.adjust(line.id, quantity))}

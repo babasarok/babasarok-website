@@ -74,3 +74,38 @@ export function lineSetState(line: OrderLine): LineSetStateView | undefined {
     syncFromLineId: state.materialSyncFromLineId ?? undefined,
   };
 }
+
+export interface PartnerLink {
+  slug: string;
+  name: string;
+}
+
+export type SetMembers = Record<string, PartnerLink[]>;
+
+export function setMembersByGroup(
+  groups: ReadonlyArray<{ id: string; kind: string; productIds: readonly string[] }>,
+  products: ReadonlyArray<{ slug: string; name: string; definition: { id: string } }>
+): SetMembers {
+  return Object.fromEntries(
+    groups
+      .filter((group) => group.kind === "set")
+      .map((group) => [
+        group.id,
+        group.productIds.flatMap((productId) => {
+          const product = products.find((candidate) => candidate.definition.id === productId);
+
+          return product === undefined ? [] : [{ slug: product.slug, name: product.name }];
+        }),
+      ])
+  );
+}
+
+export function partnerLinks(line: OrderLine, order: Order, members: SetMembers): PartnerLink[] {
+  if (line.setState?.kind !== "PENDING_PARTNER") {
+    return [];
+  }
+
+  const inBasket = new Set(order.lines.map((other) => other.productVariant.product.slug));
+
+  return (members[line.setState.groupId] ?? []).filter((member) => !inBasket.has(member.slug));
+}

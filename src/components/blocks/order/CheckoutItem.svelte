@@ -5,7 +5,7 @@
   import { formatMoney } from "@/lib/basket/money";
   import type { PriceChange } from "@/lib/basket/stale";
   import type { OrderLine } from "@/lib/basket/schemas";
-  import { lineSetState } from "@/lib/basket/setDiscounts";
+  import { lineSetState, type PartnerLink } from "@/lib/basket/setDiscounts";
   import { ASSET_BASE } from "@/lib/vendure/client";
   import { imageUrl } from "@/lib/vendure/imageUrl";
 
@@ -13,13 +13,15 @@
     line: OrderLine;
     currencyCode: string;
     labels: Labels;
+    partnerLinks: PartnerLink[];
     priceChange: PriceChange | undefined;
     busy: boolean;
     onQuantity: (quantity: number) => void;
     onRemove: () => void;
   }
 
-  let { line, currencyCode, labels, priceChange, busy, onQuantity, onRemove }: Props = $props();
+  let { line, currencyCode, labels, partnerLinks, priceChange, busy, onQuantity, onRemove }: Props =
+    $props();
 
   const product = $derived(line.productVariant.product);
   const rows = $derived(
@@ -75,6 +77,17 @@
           <Icon icon="mdi:sync" class="shrink-0" />
           Anyag egyeztetése
         </a>
+      {/if}
+      {#if setState.kind === "pending-partner"}
+        {#each partnerLinks as partner (partner.slug)}
+          <a
+            href={`/product/${partner.slug}/`}
+            data-testid="set-partner-link"
+            class="flex items-center gap-1 rounded-full border border-brown-300 px-3 py-1 font-medium transition-all hover:bg-brown-100"
+          >
+            {partner.name}
+          </a>
+        {/each}
       {/if}
     </p>
   {/if}

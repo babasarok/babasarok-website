@@ -188,6 +188,16 @@ export async function expectPendingMaterial(
   );
 }
 
+export async function expectPartnerLink(
+  page: Page,
+  product: RegExp | string,
+  partner: RegExp
+): Promise<void> {
+  await expect(
+    lineOf(page, product).getByTestId("set-partner-link").filter({ hasText: partner })
+  ).toBeVisible();
+}
+
 export async function expectPriceChangeNotice(page: Page, actual: RegExp): Promise<void> {
   await expect(checkoutLines(page)).toContainText(/megváltozott/);
   await expect(checkoutLines(page)).toContainText(actual);
