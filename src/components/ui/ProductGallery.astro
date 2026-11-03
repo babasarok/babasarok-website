@@ -1,6 +1,5 @@
 ---
-import type { ImageMetadata } from "astro";
-import { Image } from "astro:assets";
+import VendureImage from "./VendureImage.astro";
 import { Icon } from "astro-icon/components";
 
 /**
@@ -9,7 +8,7 @@ import { Icon } from "astro-icon/components";
  * and prev/next arrows — a faithful port of the old Hugo `case-details-carousel`.
  */
 export interface GalleryImage {
-  src: ImageMetadata;
+  src: string;
   alt: string;
   description?: string | undefined;
 }
@@ -21,7 +20,7 @@ interface Props {
 
 const { id, images } = Astro.props;
 
-const widths = [600, 900, 1200, 1500, 1880];
+const presets = ["hero-sm", "hero-md", "hero-lg"] as const;
 const sizes = "(min-width: 992px) 940px, 90vw";
 
 // The track transform and the per-slide arrow visibility are generated;
@@ -36,10 +35,10 @@ for (const i of images.keys()) {
 {
   images.length === 1 && (
     <div class="w-full overflow-hidden rounded-[30px]">
-      <Image
+      <VendureImage
         src={images[0].src}
         alt={images[0].alt}
-        widths={widths}
+        presets={presets}
         sizes={sizes}
         class="mx-auto h-75 rounded-[20px] object-cover sm:h-125"
       />
@@ -65,10 +64,10 @@ for (const i of images.keys()) {
           <div class="cd-track flex items-start transition-transform duration-450 ease-out">
             {images.map((img) => (
               <div class="flex min-w-full flex-col items-center">
-                <Image
+                <VendureImage
                   src={img.src}
                   alt={img.alt}
-                  widths={widths}
+                  presets={presets}
                   sizes={sizes}
                   class="h-75 w-auto max-w-full rounded-[20px] object-cover sm:h-125"
                 />

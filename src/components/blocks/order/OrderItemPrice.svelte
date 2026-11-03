@@ -1,15 +1,24 @@
 <script lang="ts">
+  import type { ProductDefinition } from "@babasarok/product-definition";
   import { calculatePriceForItem } from "@/lib/pricing/price";
+  import { liveUnitPrice } from "@/lib/catalog/livePrice";
   import type { IProduct } from "@/lib/types.svelte";
 
   interface Props {
     product: IProduct;
+    definition: ProductDefinition;
   }
 
-  const { product }: Props = $props();
+  const { product, definition }: Props = $props();
 
-  const price = $derived.by(() => {
-    return calculatePriceForItem(product);
+  const breakdown = $derived(calculatePriceForItem(product));
+
+  const unitPrice = $derived(liveUnitPrice(definition, product.title, product) ?? undefined);
+
+  const price = $derived({
+    ...breakdown,
+    unitPrice,
+    totalPrice: unitPrice === undefined ? undefined : unitPrice * product.count,
   });
 
   const activeOptions = $derived.by(() => {
@@ -17,12 +26,7 @@
   });
 
   const hasBreakdown = $derived.by(() => {
-    return (
-      activeOptions.length > 0 ||
-      price.priced_by_length ||
-      price.discountInfo !== undefined ||
-      product.count > 1
-    );
+    return activeOptions.length > 0 || price.priced_by_length || product.count > 1;
   });
 </script>
 
@@ -60,21 +64,7 @@
         </div>
       {/if}
 
-      {#if price.discountInfo !== undefined}
-        <div class="flex justify-between text-success-700">
-          <p>Kedvezmény</p>
-          <p>
-            −{(price.discountInfo.percent / 100).toLocaleString(undefined, {
-              style: "percent",
-            })}
-            {#if price.discountInfo.discountAppliedCount < product.count}
-              ({price.discountInfo.discountAppliedCount} db)
-            {/if}
-          </p>
-        </div>
-      {/if}
-
-      {#if product.count > 1 && (activeOptions.length > 0 || price.priced_by_length || price.discountInfo !== undefined)}
+      {#if product.count > 1 && (activeOptions.length > 0 || price.priced_by_length)}
         <div class="flex justify-between font-medium text-brown-700">
           <p>Egységár</p>
           <p>

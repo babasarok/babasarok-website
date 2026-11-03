@@ -1,70 +1,69 @@
 ---
-import type { GetStaticPaths, ImageMetadata } from "astro";
-import { getCollection, render } from "astro:content";
 import { Icon } from "astro-icon/components";
 import Base from "../../layouts/Base.astro";
 import ProductGallery from "../../components/ui/ProductGallery.astro";
+import ProductDescription from "../../components/ui/ProductDescription.astro";
 import ProductOrder from "../../components/blocks/order/ProductOrder.svelte";
-import { getProducts, getProductGroups, getProductSlugs, getThreadColors } from "../../lib/data";
+import {
+  getMaterials,
+  getProduct,
+  getProductGroups,
+  getProducts,
+  getThreadColors,
+} from "@/lib/catalog";
+import { toOrderGroups, toOrderProduct, toOrderThreadColors } from "@/lib/catalog/orderProduct";
+import { ASSET_BASE } from "@/lib/vendure/client";
 
-type GalleryImage = {
-  src: ImageMetadata;
-  alt: string;
-  description?: string | undefined;
-};
+export const prerender = false;
 
-export const getStaticPaths = (async () => {
-  const products = (await getCollection("product")).toSorted(
-    (a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0)
-  );
+const product = await getProduct(Astro.params.id ?? "");
 
-  const enhancedProducts = await getProducts();
-  const enhancedById = new Map(enhancedProducts.map((p) => [p.product_id, p]));
-  const productCatalog = Object.fromEntries(enhancedProducts.map((p) => [p.product_id, p]));
-  const productGroups = await getProductGroups();
-  const slugByProductId = await getProductSlugs();
-  const threadColors = await getThreadColors();
+if (product === null) {
+  Astro.cache.set(false);
 
-  return products.map((product, i) => ({
-    params: { id: product.id },
-    props: {
-      product,
-      orderProduct: enhancedById.get(product.data.product_id) ?? null,
-      productCatalog,
-      productGroups,
-      slugByProductId,
-      threadColors,
-      prev: products[i - 1] ?? null,
-      next: products[i + 1] ?? null,
-    },
-  }));
-}) satisfies GetStaticPaths;
-
-const {
-  product,
-  prev,
-  next,
-  orderProduct,
-  productCatalog,
-  productGroups,
-  slugByProductId,
-  threadColors,
-} = Astro.props;
-const { Content } = await render(product);
-
-const { title, shortDescription } = product.data;
-const canOrder = !!orderProduct && !!orderProduct.can_be_ordered;
-
-const gallery: GalleryImage[] = [];
-const thumb = product.data.thumbnail;
-if (thumb) {
-  gallery.push({ src: thumb, alt: title });
+  return new Response(null, { status: 404 });
 }
-for (const entry of product.data.images ?? []) {
-  const img = entry?.image;
-  if (img) {
-    gallery.push({ src: img, alt: title, description: entry?.description ?? undefined });
-  }
+
+const [products, groups, materials, threadColors] = await Promise.all([
+  getProducts(),
+  getProductGroups(),
+  getMaterials(),
+  getThreadColors(),
+]);
+
+const { definition, name: title, shortDescription } = product;
+const canOrder = definition.orderable;
+
+const newestFirst = products.toSorted(
+  (a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
+);
+const index = newestFirst.findIndex((candidate) => candidate.slug === product.slug);
+const prev = newestFirst.slice(0, index).at(-1);
+const next = newestFirst.at(index + 1);
+
+const relatedIds = new Set(
+  groups
+    .filter((group) => group.productIds.includes(definition.id))
+    .flatMap((group) => group.productIds)
+);
+const orderCatalog = Object.fromEntries(
+  products
+    .filter((candidate) => relatedIds.has(candidate.definition.id))
+    .map((candidate) => [candidate.definition.id, toOrderProduct(candidate, materials, ASSET_BASE)])
+);
+const orderProduct = toOrderProduct(product, materials, ASSET_BASE);
+const slugByProductId = Object.fromEntries(
+  products.map((candidate) => [candidate.definition.id, candidate.slug])
+);
+
+const gallery = product.gallery.map((image) => ({
+  src: image.url,
+  alt: title,
+  description: image.description ?? undefined,
+}));
+
+if (gallery.length === 0 && product.thumbnailUrl) {
+  gallery.push({ src: product.thumbnailUrl, alt: title, description: undefined });
 }
 
 const shareUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;
@@ -84,28 +83,27 @@ const shareLinks = [
 ];
 ---
 
-<Base title={title} description={shortDescription} isArticle data-pagefind-meta={`section:product`}>
+<Base title={title} description={shortDescription ?? undefined} isArticle>
   <section class="relative overflow-hidden pt-30 pb-25 sm:pt-50">
     <div class="container">
       {
-        canOrder && orderProduct ? (
+        canOrder ? (
           <div class="relative z-1 mb-12">
             <div class="grid grid-cols-1 items-start justify-start gap-8 lg:grid-cols-2 lg:gap-16">
               <div class="lg:sticky">
-                <ProductGallery id={`case-details-carousel-${product.id}`} images={gallery} />
+                <ProductGallery id={`case-details-carousel-${product.slug}`} images={gallery} />
               </div>
               <div class="flex flex-col text-left">
-                <h1 class="text-h2 text-headings" data-pagefind-weight="10">
-                  {title}
-                </h1>
+                <h1 class="text-h2 text-headings">{title}</h1>
                 {shortDescription && <p class="mt-3">{shortDescription}</p>}
                 <div class="mt-6">
                   <ProductOrder
                     product={orderProduct}
-                    products={productCatalog}
-                    productGroups={productGroups}
+                    definition={definition}
+                    products={orderCatalog}
+                    productGroups={toOrderGroups(groups)}
                     slugByProductId={slugByProductId}
-                    threadColors={threadColors}
+                    threadColors={toOrderThreadColors(threadColors, ASSET_BASE)}
                     client:load
                   />
                 </div>
@@ -113,22 +111,20 @@ const shareLinks = [
             </div>
 
             <div class="prose mt-12 max-w-none">
-              <Content />
+              <ProductDescription text={null} />
             </div>
           </div>
         ) : (
           <div class="relative z-1 mb-12 text-center lg:mx-auto lg:w-10/12">
-            <h1 class="text-h1 text-headings mb-6" data-pagefind-weight="10">
-              {title}
-            </h1>
+            <h1 class="text-h1 text-headings mb-6">{title}</h1>
             {shortDescription && <p>{shortDescription}</p>}
 
             <div class="mt-7.5 mb-12 flex flex-col items-center">
-              <ProductGallery id={`case-details-carousel-${product.id}`} images={gallery} />
+              <ProductGallery id={`case-details-carousel-${product.slug}`} images={gallery} />
             </div>
 
             <div class="prose mx-auto max-w-none text-center">
-              <Content />
+              <ProductDescription text={null} />
             </div>
           </div>
         )
@@ -138,7 +134,7 @@ const shareLinks = [
         <nav class="flex items-center justify-between gap-4 sm:gap-8">
           {
             prev ? (
-              <a class="group flex items-center" href={`/product/${prev.id}/`}>
+              <a class="group flex items-center" href={`/product/${prev.slug}/`}>
                 <span class="text-dark mr-3 leading-none">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -154,7 +150,7 @@ const shareLinks = [
                 <span class="text-left">
                   <span class="text-body block text-sm">Előző</span>
                   <span class="font-heading text-dark group-hover:text-sand-300 block text-xl">
-                    {prev.data.title}
+                    {prev.name}
                   </span>
                 </span>
               </a>
@@ -182,11 +178,11 @@ const shareLinks = [
 
           {
             next ? (
-              <a class="group flex items-center" href={`/product/${next.id}/`}>
+              <a class="group flex items-center" href={`/product/${next.slug}/`}>
                 <span class="text-right">
                   <span class="text-body block text-sm">Következő</span>
                   <span class="font-heading text-dark group-hover:text-sand-300 block text-xl">
-                    {next.data.title}
+                    {next.name}
                   </span>
                 </span>
                 <span class="text-dark ml-3 leading-none">

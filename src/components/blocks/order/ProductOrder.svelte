@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Icon from "@iconify/svelte";
+  import type { ProductDefinition } from "@babasarok/product-definition";
   import OrderItem from "./OrderItem.svelte";
   import SetPanel from "./SetPanel.svelte";
   import RelatedItems from "./RelatedItems.svelte";
@@ -30,6 +31,7 @@
 
   interface Props {
     product: CmsEnhancedProduct;
+    definition: ProductDefinition;
     products: Record<string, CmsEnhancedProduct>;
     productGroups: CmsProductGroup[];
     slugByProductId?: Record<string, string | undefined>;
@@ -39,6 +41,7 @@
 
   let {
     product,
+    definition,
     products,
     productGroups,
     slugByProductId = {},
@@ -119,11 +122,6 @@
     item ? resolveBasketPricing(basket, productGroups).statuses.get(item.uuid) : undefined
   );
 
-  // Whether this product is fully configured, so set siblings can be added
-  // without surfacing a validation error. Validated on a snapshot so the live
-  // item doesn't flash field errors before the user submits.
-  const itemReady = $derived(item ? isItemValid(validateItem($state.snapshot(item))) : false);
-
   // The discount set this product belongs to (biggest amount wins), for the set
   // panel header. Absent when the product is in no discount-granting set.
   const setInfo = $derived(resolveSetDiscount(product.product_id, productGroups));
@@ -167,9 +165,6 @@
   }
 
   onMount(() => {
-    orderBasket.start();
-    orderBasket.pruneAgainstCatalog(catalog);
-
     // Warn on refresh/close while a saved item has unsaved changes. (A fresh,
     // never-saved item is intentionally not guarded: the "Kosárba" button is
     // the visible state, and warning on every reload would be noise.)
@@ -248,6 +243,7 @@
   {#if item}
     <OrderItem
       product={item}
+      {definition}
       {threadColors}
       bare
       onChange={(updated) => {
@@ -325,7 +321,14 @@
         </IconButton>
       </div>
 
-      <Button class="h-11 flex-1 uppercase" variant="contained" type="button" onclick={save}>
+      <Button
+        class="h-11 flex-1 uppercase"
+        variant="contained"
+        type="button"
+        disabled
+        title="A kosár hamarosan elérhető"
+        onclick={save}
+      >
         {editing ? "Kosár frissítése" : "Kosárba"}
       </Button>
     </div>
@@ -338,7 +341,7 @@
           {relatedProducts}
           {basketCountByProductId}
           {slugByProductId}
-          ready={itemReady}
+          ready={false}
           onAddRelated={addRelated}
           onSyncToSet={syncToSet}
         />

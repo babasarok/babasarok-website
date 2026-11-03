@@ -69,10 +69,12 @@ cleanups as follow-ups. A slice with both kinds splits into two PRs.
   gets a zod-validated shop-API client (`src/lib/vendure/`, `src/lib/catalog/`)
   with a contract test (`CATALOG_CONTRACT_API_URL`). No pages switched. Long
   product/material descriptions are S7
-- 🟡 **S2 Shared pricing package** (package and backend done; the site is wired in S3) — one pure workspace package used by the
+- 🟡 **S2 Shared pricing package** (package and backend done; the site configurator is wired in S3) — one pure workspace package used by the
   backend pricing strategy and the configurator; replaces the backend's own
   copy and the site's `src/lib/pricing` configurator pricing (ADR 0002)
-- ⬜ **S3 Product page from Vendure** (needs S1, S2) — on-demand product
+- 🟡 **S3 Product page from Vendure** (needs S1, S2; page, configurator and
+  pricing done; add-to-basket is disabled until S5 and the description renders
+  once S7's site part lands) — on-demand product
   detail page, configurator fed by the canonical definition, Vendure asset
   images, edge caching
 - ✅ **S4 Catalog list, materials, search, sitemap** (needs S1) — on-demand

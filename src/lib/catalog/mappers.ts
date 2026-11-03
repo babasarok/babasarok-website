@@ -98,9 +98,16 @@ export function toMaterial(row: MaterialRow): CatalogMaterial {
   };
 }
 
+export interface CatalogThreadColor {
+  id: string;
+  label: string;
+  hex: string | null;
+  swatchUrl: string | null;
+}
+
 export function toThreadColors(
   response: z.output<typeof ThreadColorsResponseSchema>
-): Array<{ id: string; label: string; hex: string | null; swatchUrl: string | null }> {
+): CatalogThreadColor[] {
   return response.threadColors.map((color) => ({
     id: color.id,
     label: color.label,

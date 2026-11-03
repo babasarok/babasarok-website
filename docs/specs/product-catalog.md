@@ -165,6 +165,24 @@ additionally embed an order configurator for that product.
   - THEN the page embeds an order configurator for that product alongside the
     gallery
 
+The detail page is one on-demand page at `/product/<slug>/` (cached 60 s with
+60 s + 300 s stale-while-revalidate like the other catalog pages). Its data
+comes from the shop API: the gallery is the product's Vendure assets as
+`hero-*` presets (the featured asset when there are none), previous/next link
+the newest-first product order, and the set and related panels come from the
+product groups. An unknown slug, or a product without a definition, answers
+404 uncached. The long description renders through one description component;
+until the markdown rendering (S7) is wired it shows nothing.
+
+The configurator is fed by the product's canonical definition (adapted to the
+configurator's field model) and shows the live unit and total price computed
+with the shared pricing package; an option the buyer has not picked yet is
+priced at the first listed option, and a length product shows no price until a
+length is entered. The standalone percentage discount is not part of the
+definition, so no discount line is shown. The add-to-basket button and adding
+set members are disabled until the Vendure basket (S5) lands; the legacy
+localStorage basket is not read or written by the page.
+
 ### Product configurator fields
 
 The system SHALL support configurable product fields of the types radio,

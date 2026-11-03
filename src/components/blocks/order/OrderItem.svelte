@@ -4,12 +4,14 @@
   import type { HTMLAttributes } from "svelte/elements";
   import OrderItemFields from "./OrderItemFields.svelte";
   import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
+  import type { ProductDefinition } from "@babasarok/product-definition";
   import type { IProduct } from "@/lib/types.svelte";
   import OrderItemPrice from "./OrderItemPrice.svelte";
 
   interface Props extends HTMLAttributes<HTMLDivElement> {
     onClose?: (() => void) | undefined;
     product: IProduct;
+    definition: ProductDefinition;
     threadColors: CmsEnhancedEmbroideryColor[];
     onChange?: (product: IProduct) => void;
     /** Drop the card chrome and title header so it reads as part of the page
@@ -20,6 +22,7 @@
   let {
     onClose,
     product,
+    definition,
     threadColors,
     onChange,
     bare = false,
@@ -62,5 +65,5 @@
     <div class="w-full h-0.5 bg-brown-200"></div>
   {/if}
   <OrderItemFields {product} {threadColors} {onChange} />
-  <OrderItemPrice {product} />
+  <OrderItemPrice {product} {definition} />
 </div>
