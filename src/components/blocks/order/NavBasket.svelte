@@ -1,22 +1,17 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Icon from "@iconify/svelte";
-  import { orderBasket } from "@/lib/order/basket.svelte";
-
-  interface ProductMeta {
-    title: string;
-    slug: string;
-  }
+  import { basket } from "@/lib/basket/basket.svelte";
+  import { formatMoney } from "@/lib/basket/money";
 
   interface Props {
-    productMeta: Record<string, ProductMeta | undefined>;
     checkoutHref?: string;
     /** Anchor the panel to the button (desktop). When false, pin it to the
      * viewport as a sheet so it can't overflow on narrow screens. */
     anchored?: boolean;
   }
 
-  let { productMeta, checkoutHref = "/contact", anchored = true }: Props = $props();
+  let { checkoutHref = "/checkout", anchored = true }: Props = $props();
 
   let open = $state(false);
   let buttonEl: HTMLButtonElement | undefined;
@@ -29,7 +24,7 @@
   }
 
   onMount(() => {
-    orderBasket.start();
+    basket.start();
   });
 
   // Keep the pinned sheet under the button when the viewport resizes.
@@ -43,8 +38,9 @@
     return () => globalThis.removeEventListener("resize", onResize);
   });
 
-  const items = $derived(orderBasket.items);
-  const count = $derived(orderBasket.count);
+  const order = $derived(basket.order);
+  const items = $derived(order?.lines ?? []);
+  const count = $derived(basket.count);
 </script>
 
 <div class="relative">
@@ -97,29 +93,30 @@
         </a>
       {:else}
         <ul class="flex max-h-[50vh] flex-col gap-2 overflow-auto">
-          {#each items as basketItem (basketItem.uuid)}
-            {@const meta = productMeta[basketItem.product_id]}
+          {#each items as basketItem (basketItem.id)}
+            {@const product = basketItem.productVariant.product}
             <li class="flex items-center gap-2 rounded-lg border border-brown-100 p-2 text-sm">
               <div class="flex min-w-0 flex-1 flex-col">
                 <span class="truncate font-medium text-dark">
-                  {meta?.title ?? basketItem.product_id}
+                  {product.name}
                 </span>
-                <span class="text-xs text-brown-500">{basketItem.count} db</span>
+                <span class="text-xs text-brown-500">
+                  {basketItem.quantity} db
+                  {#if order}· {formatMoney(basketItem.discountedLinePriceWithTax, order.currencyCode)}{/if}
+                </span>
               </div>
-              {#if meta}
-                <a
-                  href={`/product/${meta.slug}/?uuid=${basketItem.uuid}`}
-                  class="shrink-0 rounded-full p-1.5 text-brown-500 transition-colors hover:bg-brown-100"
-                  aria-label="Szerkesztés"
-                >
-                  <Icon icon="mdi:pencil" />
-                </a>
-              {/if}
+              <a
+                href={`/product/${product.slug}/?line=${basketItem.id}`}
+                class="shrink-0 rounded-full p-1.5 text-brown-500 transition-colors hover:bg-brown-100"
+                aria-label="Szerkesztés"
+              >
+                <Icon icon="mdi:pencil" />
+              </a>
               <button
                 type="button"
                 class="shrink-0 cursor-pointer rounded-full p-1.5 text-brown-500 transition-colors hover:bg-brown-100"
                 aria-label="Törlés"
-                onclick={() => orderBasket.remove(basketItem.uuid)}
+                onclick={() => basket.remove(basketItem.id)}
               >
                 <Icon icon="mdi:delete-outline" />
               </button>

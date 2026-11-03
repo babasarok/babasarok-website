@@ -6,7 +6,7 @@ import { FIELD_BEHAVIORS } from "../product/behavior";
  * deep-linked with preselected options. Mutates `item` in place; the caller is
  * expected to {@link sanitizeItem} afterwards.
  *
- * Reserved keys (not treated as options): `uuid`, `count`.
+ * Reserved keys (not treated as options): `line`, `count`.
  *
  * Scheme:
  * - `count=<n>` — item quantity (integer ≥ 1).
@@ -33,7 +33,7 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
   }
 
   for (const [key, raw] of params.entries()) {
-    if (key === "uuid" || key === "count") {
+    if (key === "line" || key === "count") {
       continue;
     }
 

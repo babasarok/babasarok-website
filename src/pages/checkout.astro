@@ -1,33 +1,34 @@
 ---
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
-import {
-  getConfig,
-  getDeliveryMethods,
-  getProducts,
-  getThreadColors,
-  getProductGroups,
-  getProductSlugs,
-  type CmsEnhancedProduct,
-  type CmsEnhancedDeliveryMethod,
-} from "../lib/data";
+import { getConfig } from "../lib/data";
 import CheckoutForm from "@/components/blocks/order/CheckoutForm.svelte";
+import { getMaterials, getThreadColors } from "@/lib/catalog";
 import { getEntry } from "astro:content";
 
+export const prerender = false;
+
 const config = await getConfig();
-
-const products = await getProducts();
-const deliveryMethods = await getDeliveryMethods();
-const threadColors = await getThreadColors();
-const productGroups = await getProductGroups();
-
-// Slug lookup so the checkout can link each item back to its product page.
-const slugByProductId = await getProductSlugs();
 const checkout = await getEntry("checkout", "index");
 
 if (!checkout) {
   throw new Error("Checkout entry not found");
 }
+
+const [materials, threadColors] = await Promise.all([getMaterials(), getThreadColors()]);
+
+const labels = {
+  materials: Object.fromEntries(
+    materials.map((material) => [
+      material.slug,
+      {
+        label: material.label,
+        colors: Object.fromEntries(material.colors.map((color) => [color.id, color.label])),
+      },
+    ])
+  ),
+  threadColors: Object.fromEntries(threadColors.map((color) => [color.id, color.label])),
+};
 ---
 
 <Base title="Pénztár">
@@ -40,24 +41,8 @@ if (!checkout) {
         contactHeading={checkout.data.contact_heading}
         basketHeading={checkout.data.basket_heading}
         messageHeading={checkout.data.message_heading}
-        products={products.reduce<Record<string, CmsEnhancedProduct>>((acc, p) => {
-          if (!p.can_be_ordered) {
-            return acc;
-          }
-          acc[p.product_id] = p;
-          return acc;
-        }, {})}
-        deliveryMethods={deliveryMethods.reduce<Record<string, CmsEnhancedDeliveryMethod>>(
-          (acc, d) => {
-            acc[d.delivery_name] = d;
-            return acc;
-          },
-          {}
-        )}
+        labels={labels}
         config={{ address: config.address }}
-        threadColors={threadColors}
-        productGroups={productGroups}
-        slugByProductId={slugByProductId}
         client:load
       />
     </div>

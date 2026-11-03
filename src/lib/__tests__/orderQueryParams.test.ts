@@ -1,6 +1,6 @@
 /**
  * URL query-param prefill for product pages. See {@link prefillFromParams} and
- * docs — reserved keys are `uuid` and `count`; fields are keyed by name,
+ * docs — reserved keys are `line` and `count`; fields are keyed by name,
  * including `material` fields (plus their `<name>_colors` companion).
  */
 import { describe, expect, it } from "vitest";
@@ -166,7 +166,7 @@ describe("prefillFromParams", () => {
 
   it("ignores unknown keys", () => {
     const item = makeProduct({ fields: [makeField({ name: "szin", type: "color" })] });
-    prefillFromParams(item, new URLSearchParams("bogus=1&uuid=xyz"));
+    prefillFromParams(item, new URLSearchParams("bogus=1&line=xyz"));
     expect(item.fields[0].value).toBeUndefined();
   });
 });

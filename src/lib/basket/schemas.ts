@@ -1,0 +1,63 @@
+import { z } from "zod";
+import { ProductDefinitionSchema } from "@babasarok/product-definition";
+
+const InvalidReasonSchema = z.object({ code: z.string(), message: z.string() });
+
+export const OrderLineSchema = z.object({
+  id: z.string(),
+  quantity: z.number().int(),
+  unitPriceWithTax: z.number(),
+  discountedLinePriceWithTax: z.number(),
+  customFields: z
+    .object({ selections: z.string().nullable(), lengthCm: z.number().nullable() })
+    .nullable(),
+  invalidReason: InvalidReasonSchema.nullable(),
+  productVariant: z.object({
+    id: z.string(),
+    name: z.string(),
+    product: z.object({
+      slug: z.string(),
+      name: z.string(),
+      featuredAsset: z.object({ source: z.string() }).nullable(),
+      productDefinition: ProductDefinitionSchema.nullable(),
+    }),
+  }),
+});
+
+export const OrderSchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  state: z.string(),
+  currencyCode: z.string(),
+  totalQuantity: z.number().int(),
+  subTotalWithTax: z.number(),
+  shippingWithTax: z.number(),
+  totalWithTax: z.number(),
+  discounts: z.array(z.object({ description: z.string(), amountWithTax: z.number() })),
+  shippingLines: z.array(
+    z.object({
+      priceWithTax: z.number(),
+      discountedPriceWithTax: z.number(),
+      shippingMethod: z.object({ id: z.string() }),
+    })
+  ),
+  lines: z.array(OrderLineSchema),
+});
+
+export type Order = z.output<typeof OrderSchema>;
+export type OrderLine = z.output<typeof OrderLineSchema>;
+
+export const ShippingQuoteSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  priceWithTax: z.number(),
+  customFields: z.object({ requiresAddress: z.boolean() }).nullable(),
+});
+
+export type ShippingQuote = z.output<typeof ShippingQuoteSchema>;
+
+export const VariantOptionsSchema = z.object({
+  id: z.string(),
+  options: z.array(z.object({ code: z.string(), group: z.object({ code: z.string() }) })),
+});

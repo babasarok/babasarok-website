@@ -7,32 +7,20 @@
   import OrderDelivery from "./OrderDelivery.svelte";
   import Button from "./common/Button.svelte";
   import TextInput from "./common/TextInput.svelte";
-  import { orderBasket } from "@/lib/order/basket.svelte";
-  import { restoreProducts } from "@/lib/order/product";
-  import { loadOrderState, updateOrderEnvelope } from "@/lib/order/storage";
-  import { isItemValid, validateItem } from "@/lib/product/validation";
-  import { submitOrder } from "@/lib/order/submit";
+  import { basket } from "@/lib/basket/basket.svelte";
+  import type { Labels } from "@/lib/basket/lineRows";
+  import { formatMoney, majorUnits } from "@/lib/basket/money";
+  import { checkoutBlocker, selectedMethod } from "@/lib/basket/readiness";
+  import type { ShippingQuote } from "@/lib/basket/schemas";
+  import { priceChange } from "@/lib/basket/stale";
+  import { placeOrder } from "@/lib/basket/submit";
+  import { reportClientError } from "@/lib/errorReport";
   import { randomUUID } from "@/lib/uuid";
-  import { chargedDeliveryPrice, isDeliveryFree, orderTotal } from "@/lib/order/total";
-  import { resolveBasketPricing } from "@/lib/pricing/setDiscount";
-  import type {
-    CmsEnhancedConfig,
-    CmsEnhancedDeliveryMethod,
-    CmsEnhancedEmbroideryColor,
-    CmsEnhancedProduct,
-    CmsProductGroup,
-  } from "@/lib/data";
-  import type { IProduct } from "@/lib/types.svelte";
+  import type { CmsEnhancedConfig } from "@/lib/data";
 
   interface Props {
-    products: Record<string, CmsEnhancedProduct>;
-    deliveryMethods: Record<string, CmsEnhancedDeliveryMethod>;
-    // Only the support address is needed; passing the full config would
-    // serialize the heavyweight logo images into the island props.
+    labels: Labels;
     config: Pick<CmsEnhancedConfig, "address">;
-    threadColors: CmsEnhancedEmbroideryColor[];
-    productGroups: CmsProductGroup[];
-    slugByProductId: Record<string, string | undefined>;
     basketInfo?: string | undefined;
     contactHeading: string;
     basketHeading: string;
@@ -40,125 +28,124 @@
   }
 
   let {
-    products: productInfo,
-    deliveryMethods,
+    labels,
     config: params,
-    threadColors,
-    productGroups,
-    slugByProductId,
     basketInfo,
     contactHeading,
     basketHeading,
     messageHeading,
   }: Props = $props();
 
-  const catalog = $derived($state.snapshot(productInfo));
-
-  const savedState = loadOrderState();
-  let name = $state(savedState?.name ?? "");
-  let email = $state(savedState?.email ?? "");
-  let phone = $state(savedState?.phone ?? "");
-  let deliveryMethod = $state<string>(savedState?.deliveryMethod ?? "");
-  let address = $state<string>(savedState?.address ?? "");
-  let message = $state(savedState?.message ?? "");
-  // Not persisted: acceptance must be given for every order, so it re-arms on
-  // each visit instead of surviving in localStorage.
+  let name = $state("");
+  let email = $state("");
+  let phone = $state("");
+  let address = $state("");
+  let message = $state("");
+  let shippingMethodId = $state("");
   let termsAccepted = $state(false);
+  let methods = $state<ShippingQuote[]>([]);
 
-  let mounted = $state(false);
+  let busy = $state(false);
   let sending = $state(false);
   let error = $state<string | null>(null);
-  let success = $state<string | null>(null);
+  let success = $state<{ code: string } | null>(null);
 
-  // Basket lines to highlight while a set discount is hovered/pinned in the deals
-  // panel, so the user sees which items earn it.
-  let highlightedUuids = $state<string[]>([]);
-
-  // The persisted basket as live order items against the current catalog.
-  const basket = $derived(
-    mounted ? restoreProducts($state.snapshot(orderBasket.items), catalog) : []
+  const order = $derived(basket.order);
+  const method = $derived(selectedMethod(methods, shippingMethodId));
+  const blocker = $derived(
+    checkoutBlocker(order, methods, { name, email, address, termsAccepted, shippingMethodId })
   );
-
-  // The whole basket's set pricing, resolved once: statuses, formed instances
-  // with their clamped amounts, and the totals. Shared with CheckoutDeals.
-  const pricing = $derived(resolveBasketPricing(basket, productGroups));
-
-  const deliveryData = $derived<CmsEnhancedDeliveryMethod | undefined>(
-    deliveryMethods[deliveryMethod]
+  const submitDisabled = $derived(
+    sending || (blocker !== undefined && blocker.field !== "method" && blocker.field !== "address")
   );
-
-  // The delivery price actually charged: the selected method's price, or 0 when
-  // the basket's products subtotal is above its free threshold.
-  const deliveryCharged = $derived(deliveryData ? chargedDeliveryPrice(deliveryData, pricing) : 0);
-
-  const grandTotal = $derived(orderTotal(pricing, deliveryCharged));
-
-  const valid = $derived(
-    basket.length > 0 && name.trim() !== "" && email.trim() !== "" && termsAccepted
+  const shippingLine = $derived(order?.shippingLines.at(0));
+  const shippingFree = $derived(
+    shippingLine !== undefined && shippingLine.priceWithTax > 0 && order?.shippingWithTax === 0
   );
 
   onMount(() => {
-    orderBasket.start();
-    orderBasket.pruneAgainstCatalog(catalog);
-    mounted = true;
+    basket.start();
   });
 
-  // Persist the contact/delivery envelope without touching the basket products.
   $effect(() => {
-    if (!mounted) {
+    const key = order ? `${order.id}:${order.totalWithTax}` : null;
+
+    if (key === null) {
+      methods = [];
       return;
     }
-    updateOrderEnvelope({ name, email, phone, deliveryMethod, address, message });
+
+    void loadMethods();
   });
 
-  function editHref(item: IProduct): string | undefined {
-    const slug = slugByProductId[item.product_id];
-    return slug ? `/product/${slug}/?uuid=${item.uuid}` : undefined;
+  async function loadMethods(): Promise<void> {
+    const result = await basket.api.eligibleShippingMethods();
+
+    if (!result.ok) {
+      return;
+    }
+
+    methods = result.value;
+
+    const current = basket.order?.shippingLines.at(0)?.shippingMethod.id;
+
+    if (shippingMethodId === "" && current !== undefined) {
+      shippingMethodId = current;
+    }
+  }
+
+  $effect(() => {
+    const chosen = shippingMethodId;
+    const applied = basket.order?.shippingLines.at(0)?.shippingMethod.id;
+
+    if (chosen === "" || chosen === applied || basket.order === null) {
+      return;
+    }
+
+    void basket.setShippingMethod(chosen);
+  });
+
+  async function changeLine(task: Promise<{ ok: boolean }>): Promise<void> {
+    busy = true;
+    error = null;
+
+    try {
+      const result = await task;
+
+      if (!result.ok) {
+        error = "A kosár módosítása nem sikerült. Töltsd újra az oldalt, és próbáld újra.";
+      }
+    } finally {
+      busy = false;
+    }
   }
 
   async function onSubmit(event: SubmitEvent): Promise<void> {
     event.preventDefault();
     error = null;
-    success = null;
 
-    const items = basket;
-    for (const item of items) {
-      validateItem(item);
-    }
-    if (items.some((item) => !isItemValid(item))) {
-      error =
-        "Néhány termék adatai hiányosak. Kérlek, a szerkesztés gombbal töltsd ki a hiányzó mezőket.";
-      return;
-    }
+    const found = checkoutBlocker(order, methods, {
+      name,
+      email,
+      address,
+      termsAccepted,
+      shippingMethodId,
+    });
 
-    const deliveryMethodData = deliveryData;
-    if (!deliveryMethodData) {
-      error = "Kérem, válassz egy szállítási módot.";
-      return;
-    }
-    if (deliveryMethodData.needs_address && address.trim() === "") {
-      error = "Kérem, add meg a szállítási címet a szállítási módhoz.";
+    if (found || !method) {
+      error = found?.message ?? "Kérem, válassz egy szállítási módot.";
       return;
     }
 
     sending = true;
-    // One id per submission attempt, shared between the email payload and the
-    // conversion event below so Google Ads can deduplicate against the email.
+
     const transactionId = randomUUID();
-    const result = await submitOrder(
-      {
-        name,
-        email,
-        phone,
-        deliveryMethod: deliveryMethodData,
-        address,
-        products: items,
-        threadColors,
-        productGroups,
-        termsAccepted,
-      },
-      { message, transactionId }
+    const result = await placeOrder(
+      basket.api,
+      { name, email, phone, address, message, shippingMethod: method, termsAccepted, transactionId },
+      (report) => reportClientError({ kind: "order", ...report })
     );
+
     sending = false;
 
     if (!result.ok) {
@@ -166,14 +153,15 @@
       return;
     }
 
+    const value = majorUnits(result.order.totalWithTax, result.order.currencyCode);
+    const currency = result.order.currencyCode;
+
     if (globalThis.window.fbq) {
       try {
         globalThis.window.fbq("track", "Purchase", {
-          currency: "HUF",
-          // `items` is the derived `basket` itself, so `grandTotal` already
-          // reflects exactly this submission.
-          value: grandTotal,
-          num_items: items.length,
+          currency,
+          value,
+          num_items: result.order.lines.length,
         });
       } catch (e) {
         console.error("Failed to record purchase", e);
@@ -181,27 +169,18 @@
     }
 
     try {
-      // The order total goes through the shared data layer (see the `gtag` shim
-      // in Base.astro) to the GTM container (GTM_ID), whose Google Ads
-      // conversion tag is configured over there — not in the site — so no
-      // conversion id lives here. `transaction_id` matches the transaction
-      // identifier stored with the order so Google Ads can deduplicate.
-      gtag("event", "conversion", {
-        value: grandTotal,
-        currency: "HUF",
-        transaction_id: transactionId,
-      });
+      gtag("event", "conversion", { value, currency, transaction_id: transactionId });
     } catch (e) {
       console.error("Failed to record purchase conversion", e);
     }
 
-    orderBasket.clear();
-    success = "Rendelésed sikeresen elküldve! Hamarosan felvesszük veled a kapcsolatot.";
+    basket.finish();
+    success = { code: result.order.code };
   }
 </script>
 
 <div class="mx-auto flex w-full max-w-160 flex-col gap-6 text-body lg:max-w-5xl">
-  {#if !mounted}
+  {#if !basket.loaded}
     <div
       class="min-h-64 w-full animate-pulse rounded-xl border border-brown-200 bg-brown-100 lg:mx-auto lg:max-w-160"
     ></div>
@@ -210,7 +189,12 @@
       class="flex flex-col items-center gap-3 rounded-2xl border border-green-600 bg-green-50 p-8 text-center lg:mx-auto lg:max-w-160"
     >
       <Icon icon="mdi:check-circle" class="text-4xl text-green-600" />
-      <p class="text-green-800">{success}</p>
+      <p class="text-green-800">
+        Rendelésed sikeresen elküldve! Hamarosan felvesszük veled a kapcsolatot.
+      </p>
+      <p class="text-green-800">
+        Rendelésszám: <strong data-testid="order-code">{success.code}</strong>
+      </p>
       <a
         href="/product/"
         class="mt-2 flex h-11 items-center justify-center rounded-md bg-brown-500 px-4 text-sm font-medium uppercase text-white transition-all hover:bg-brown-700"
@@ -218,12 +202,14 @@
         Vissza a termékekhez
       </a>
     </div>
-  {:else if basket.length === 0}
+  {:else if !order || order.lines.length === 0}
     <div
       class="flex flex-col items-center gap-3 rounded-2xl border border-brown-200 bg-brown-50 p-8 text-center lg:mx-auto lg:max-w-160"
     >
       <Icon icon="mdi:cart-outline" class="text-4xl text-brown-400" />
-      <p class="text-brown-600">A kosarad üres.</p>
+      <p class="text-brown-600">
+        {basket.loadFailed ? "A kosár most nem érhető el." : "A kosarad üres."}
+      </p>
       <a
         href="/product/"
         class="mt-2 flex h-11 items-center justify-center rounded-md bg-brown-500 px-4 text-sm font-medium uppercase text-white transition-all hover:bg-brown-700"
@@ -262,30 +248,30 @@
             <span>{basketInfo}</span>
           </div>
         {/if}
-        {#each basket as item (item.uuid)}
+        {#each order.lines as line (line.id)}
           <div transition:fade={{ duration: 200 }}>
             <CheckoutItem
-              product={item}
-              {threadColors}
-              editHref={editHref(item)}
-              highlighted={highlightedUuids.includes(item.uuid)}
-              onRemove={() => orderBasket.remove(item.uuid)}
+              {line}
+              currencyCode={order.currencyCode}
+              {labels}
+              priceChange={priceChange(line, basket.shownPrices)}
+              {busy}
+              onQuantity={(quantity) => changeLine(basket.adjust(line.id, quantity))}
+              onRemove={() => changeLine(basket.remove(line.id))}
             />
           </div>
         {/each}
       </section>
 
       <div class="flex flex-col gap-6">
-        <CheckoutDeals
-          {basket}
-          {pricing}
-          products={productInfo}
-          {productGroups}
-          {slugByProductId}
-          onHighlight={(uuids) => (highlightedUuids = uuids)}
-        />
+        <CheckoutDeals {order} />
 
-        <OrderDelivery {deliveryMethods} bind:deliveryMethod bind:address {pricing} />
+        <OrderDelivery
+          {methods}
+          currencyCode={order.currencyCode}
+          bind:shippingMethodId
+          bind:address
+        />
 
         <div class="flex flex-col rounded-xl bg-brown-200 p-4">
           <div class="flex items-center gap-2">
@@ -303,22 +289,22 @@
           <div class="flex items-center justify-between text-sm text-body">
             <span>Szállítás</span>
             <span>
-              {#if deliveryData && isDeliveryFree(deliveryData, deliveryCharged)}
+              {#if !shippingLine}
+                —
+              {:else if shippingFree}
                 <span class="mr-1 line-through opacity-60">
-                  {deliveryData.price} Ft
+                  {formatMoney(shippingLine?.priceWithTax ?? 0, order.currencyCode)}
                 </span>
                 Ingyenes
-              {:else if deliveryData}
-                {deliveryCharged} Ft
               {:else}
-                —
+                {formatMoney(order.shippingWithTax, order.currencyCode)}
               {/if}
             </span>
           </div>
           <div class="flex items-center justify-between">
             <span class="text-lg font-medium uppercase">Végösszeg</span>
             <span class="text-lg font-semibold text-dark">
-              {grandTotal} Ft
+              {formatMoney(order.totalWithTax, order.currencyCode)}
             </span>
           </div>
         </div>
@@ -336,7 +322,7 @@
         </div>
 
         {#if error}
-          <p class="text-sm text-red-500">{error}</p>
+          <p class="text-sm text-red-500" data-testid="checkout-error">{error}</p>
         {/if}
 
         <label class="text-body flex cursor-pointer items-center gap-2.5 text-sm">
@@ -356,7 +342,7 @@
           class="h-11 uppercase"
           variant="contained"
           type="submit"
-          disabled={!valid || sending}
+          disabled={submitDisabled}
         >
           Leadom a rendelést!
         </Button>
