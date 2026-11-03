@@ -232,11 +232,15 @@ Build on what exists; do not relitigate the catalog decision:
     and the Hungarian error mappings in `src/lib/basket`, product-page and
     list labels, cookie banner). Extract to locale dictionaries; route
     per-locale (Astro i18n routing, hreflang).
-  - Buyer-visible server messages — the backend's Hungarian business text
-    (invalid reasons, transition refusals, refused-add reasons) must follow
-    the request's language; reconcile with Vendure's English default errors
-    (e.g. `EmailAddressConflictError`), which the site currently maps to
-    Hungarian in one place.
+  - Buyer-visible server messages — translate at the server per request
+    language (one source of truth; the site renders what the server says).
+    `OrderLine.invalidReason` is ready: each message carries a stable `code`
+    and `ctx.languageCode` already reaches the shared rejection helper. The
+    two free-text surfaces (the pricing package's invalid-configuration
+    message and `checkoutRefusal`) get their Hungarian templates moved into
+    the same per-language tables. Vendure's own default errors stay English
+    server-side — the site maps them by `errorCode`, so that one map grows
+    locale-keyed dictionaries.
   - Order emails — Hungarian templates need per-locale variants.
   - Native names — delivery methods, promotions and set-group titles are
     Vendure-translatable; give them English values.
