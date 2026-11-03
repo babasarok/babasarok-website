@@ -16,25 +16,18 @@
   import { placeOrder } from "@/lib/basket/submit";
   import { reportClientError } from "@/lib/errorReport";
   import { randomUUID } from "@/lib/uuid";
-  import type { CmsEnhancedConfig } from "@/lib/data";
 
   interface Props {
     labels: Labels;
-    config: Pick<CmsEnhancedConfig, "address">;
+    supportEmail: string | null | undefined;
     basketInfo?: string | undefined;
     contactHeading: string;
     basketHeading: string;
     messageHeading: string;
   }
 
-  let {
-    labels,
-    config: params,
-    basketInfo,
-    contactHeading,
-    basketHeading,
-    messageHeading,
-  }: Props = $props();
+  let { labels, supportEmail, basketInfo, contactHeading, basketHeading, messageHeading }: Props =
+    $props();
 
   let name = $state("");
   let email = $state("");
@@ -142,7 +135,16 @@
     const transactionId = randomUUID();
     const result = await placeOrder(
       basket.api,
-      { name, email, phone, address, message, shippingMethod: method, termsAccepted, transactionId },
+      {
+        name,
+        email,
+        phone,
+        address,
+        message,
+        shippingMethod: method,
+        termsAccepted,
+        transactionId,
+      },
       (report) => reportClientError({ kind: "order", ...report })
     );
 
@@ -293,7 +295,7 @@
                 —
               {:else if shippingFree}
                 <span class="mr-1 line-through opacity-60">
-                  {formatMoney(shippingLine?.priceWithTax ?? 0, order.currencyCode)}
+                  {formatMoney(shippingLine.priceWithTax, order.currencyCode)}
                 </span>
                 Ingyenes
               {:else}
@@ -315,7 +317,7 @@
             Jelenleg a rendelési folyamat tesztelés alatt áll. Ha bármilyen problémát tapasztalsz,
             kérlek, jelezd nekünk a <a
               class="text-yellow-700 underline hover:text-yellow-900"
-              href={`mailto:${params.address?.email ?? ""}?subject=Babasarok rendelési probléma&body=Kérlek, írd le a problémát, ha lehet screenshot-tal együtt.&cc=attilagreguss@protonmail.com`}
+              href={`mailto:${supportEmail ?? ""}?subject=Babasarok rendelési probléma&body=Kérlek, írd le a problémát, ha lehet screenshot-tal együtt.&cc=attilagreguss@protonmail.com`}
               >email címünkön</a
             >.
           </p>
@@ -338,12 +340,7 @@
           >
         </label>
 
-        <Button
-          class="h-11 uppercase"
-          variant="contained"
-          type="submit"
-          disabled={submitDisabled}
-        >
+        <Button class="h-11 uppercase" variant="contained" type="submit" disabled={submitDisabled}>
           Leadom a rendelést!
         </Button>
       </div>

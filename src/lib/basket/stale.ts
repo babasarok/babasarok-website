@@ -3,7 +3,7 @@ import type { ConfiguredLine } from "./lineInput";
 import type { Order, OrderLine } from "./schemas";
 
 const SHOWN_PRICES_KEY = "babasarok-basket-shown-prices-v1";
-const ShownPricesSchema = z.record(z.string(), z.number());
+const ShownPricesSchema = z.partialRecord(z.string(), z.number());
 
 export type ShownPrices = z.output<typeof ShownPricesSchema>;
 

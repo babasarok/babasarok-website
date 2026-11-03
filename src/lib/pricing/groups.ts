@@ -85,10 +85,3 @@ export function resolveSetDiscount(
   }
   return best;
 }
-
-/**
- * A product's selected material values as a counted multiset of canonical
- * tuples, order-independent and ignoring transient `error` fields. Each tuple
- * encodes the material id, its sorted colours and custom colour; the map value
- * counts how many times that exact selection was picked, so the same fabric
- * picked twice (or in two different colours) is preserved rather than collapsed.

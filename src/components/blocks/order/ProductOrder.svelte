@@ -343,8 +343,11 @@
         class="mt-3 flex items-center gap-2 rounded-xl border border-warning-400 bg-warning-50 p-3 text-sm text-warning-800"
       >
         <Icon icon="mdi:alert-circle" class="shrink-0" />
-        Az oldalon látott ár ({formatMoney(priceNotice.shown, priceNotice.currencyCode)}) megváltozott;
-        a kosárban a jelenlegi ár van: {formatMoney(priceNotice.actual, priceNotice.currencyCode)}.
+        Az oldalon látott ár ({formatMoney(priceNotice.shown, priceNotice.currencyCode)})
+        megváltozott; a kosárban a jelenlegi ár van: {formatMoney(
+          priceNotice.actual,
+          priceNotice.currencyCode
+        )}.
       </div>
     {/if}
 

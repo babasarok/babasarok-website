@@ -59,8 +59,8 @@
   {#if priceChange}
     <p class="flex items-start gap-1 rounded-lg bg-warning-50 p-2 text-sm text-warning-800">
       <Icon icon="mdi:alert-circle" class="mt-0.5 shrink-0" />
-      Az oldalon látott ár ({formatMoney(priceChange.shown, currencyCode)}) megváltozott; a jelenlegi
-      egységár: {formatMoney(priceChange.actual, currencyCode)}.
+      Az oldalon látott ár ({formatMoney(priceChange.shown, currencyCode)}) megváltozott; a
+      jelenlegi egységár: {formatMoney(priceChange.actual, currencyCode)}.
     </p>
   {/if}
 

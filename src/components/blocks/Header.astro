@@ -15,7 +15,6 @@ const isHome = Astro.url.pathname === "/";
 // The checkout page shows the full basket already; skip the nav basket there.
 const showBasket = !Astro.url.pathname.startsWith(checkoutLink);
 
-
 const rawMenu = config.mainMenu ?? [];
 const mainMenu = rawMenu
   .filter((item): item is NonNullable<typeof item> => item !== null)
@@ -42,15 +41,7 @@ const mainMenu = rawMenu
 
       <div class="flex items-center gap-2 lg:hidden">
         <SearchDialog client:load />
-        {
-          showBasket && (
-            <NavBasket
-              checkoutHref={checkoutLink}
-              anchored={false}
-              client:load
-            />
-          )
-        }
+        {showBasket && <NavBasket checkoutHref={checkoutLink} anchored={false} client:load />}
         <button
           id="navbar-toggler"
           type="button"

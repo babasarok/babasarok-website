@@ -19,8 +19,7 @@ export interface SubmitInput {
 }
 
 export type SubmitResult =
-  | { ok: true; order: Order }
-  | { ok: false; message: string; reference: string };
+  { ok: true; order: Order } | { ok: false; message: string; reference: string };
 
 export interface OrderErrorReport {
   message: string;

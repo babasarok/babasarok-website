@@ -95,11 +95,7 @@ class Basket {
   }
 
   rememberShownPrice(lineId: string, price: number): void {
-    setShippingMethod(shippingMethodId: string): Promise<Result<Order>> {
-    return this.api.setShippingMethod(shippingMethodId).then((result) => this.#apply(result));
-  }
-
-  rememberShownPrice(priceStorage(), lineId, price);
+    rememberShownPrice(priceStorage(), lineId, price);
     this.shownPrices = loadShownPrices(priceStorage());
   }
 

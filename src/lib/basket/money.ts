@@ -1,8 +1,10 @@
 function fractionDigits(currencyCode: string): number {
-  return new Intl.NumberFormat("hu-HU", {
-    style: "currency",
-    currency: currencyCode,
-  }).resolvedOptions().maximumFractionDigits;
+  return (
+    new Intl.NumberFormat("hu-HU", {
+      style: "currency",
+      currency: currencyCode,
+    }).resolvedOptions().maximumFractionDigits ?? 2
+  );
 }
 
 export function majorUnits(amount: number, currencyCode: string): number {

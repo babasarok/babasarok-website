@@ -8,8 +8,8 @@ import { parseLineSelections, type LineSelectionRecord } from "@babasarok/pricin
 const LANGUAGE = "hu";
 
 export interface Labels {
-  materials: Record<string, { label: string; colors: Record<string, string> }>;
-  threadColors: Record<string, string>;
+  materials: Partial<Record<string, { label: string; colors: Partial<Record<string, string>> }>>;
+  threadColors: Partial<Record<string, string>>;
 }
 
 export interface LineRow {
@@ -70,6 +70,8 @@ export function describeLine(
       return [];
     }
 
-    return [{ label: resolveText(field.label, LANGUAGE), value: valueText(field, selection, labels) }];
+    return [
+      { label: resolveText(field.label, LANGUAGE), value: valueText(field, selection, labels) },
+    ];
   });
 }

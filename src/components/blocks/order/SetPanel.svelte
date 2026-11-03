@@ -20,15 +20,11 @@
     ready,
     onAddRelated,
   }: Props = $props();
-
 </script>
 
 <section class="flex flex-col gap-3 rounded-2xl border border-brown-200 bg-brown-50 p-4">
   <div class="flex items-start gap-2">
-    <Icon
-      icon="mdi:tag-multiple-outline"
-      class="mt-0.5 shrink-0 text-xl text-brown-500"
-    />
+    <Icon icon="mdi:tag-multiple-outline" class="mt-0.5 shrink-0 text-xl text-brown-500" />
     <div class="flex flex-col gap-0.5">
       <div class="flex flex-wrap items-center gap-2">
         <span class="text-xs font-semibold uppercase tracking-wide text-brown-500">

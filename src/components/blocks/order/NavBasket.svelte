@@ -102,7 +102,10 @@
                 </span>
                 <span class="text-xs text-brown-500">
                   {basketItem.quantity} db
-                  {#if order}· {formatMoney(basketItem.discountedLinePriceWithTax, order.currencyCode)}{/if}
+                  {#if order}· {formatMoney(
+                      basketItem.discountedLinePriceWithTax,
+                      order.currencyCode
+                    )}{/if}
                 </span>
               </div>
               <a

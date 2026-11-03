@@ -38,7 +38,6 @@ describe("resolveSetDiscount (potential)", () => {
   });
 });
 
-
 describe("membership queries", () => {
   const nestSet: SetDiscountGroup = {
     title: "Babafészek szett",

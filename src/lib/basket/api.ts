@@ -108,7 +108,11 @@ const EnvelopeSchema = z.object({
 
 function asFailure(error: unknown): Failure {
   if (error instanceof Error) {
-    return { reason: "hálózati hiba", detail: `${error.name}: ${error.message}`, stack: error.stack };
+    return {
+      reason: "hálózati hiba",
+      detail: `${error.name}: ${error.message}`,
+      stack: error.stack,
+    };
   }
 
   return { reason: "hálózati hiba", detail: String(error) };
@@ -184,7 +188,7 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
     const result = await request(
       `mutation M${signature} { ${field}${args} { ${ORDER_RESULT} } }`,
       variables,
-      z.record(z.string(), OrderResultSchema)
+      z.partialRecord(z.string(), OrderResultSchema)
     );
 
     if (!result.ok) {
@@ -276,22 +280,16 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
         input: { streetLine1, countryCode },
       }),
     setShippingMethod: (shippingMethodId) =>
-      orderMutation(
-        "setOrderShippingMethod",
-        "($id: [ID!]!)",
-        "(shippingMethodId: $id)",
-        { id: [shippingMethodId] }
-      ),
+      orderMutation("setOrderShippingMethod", "($id: [ID!]!)", "(shippingMethodId: $id)", {
+        id: [shippingMethodId],
+      }),
     setOrderCustomFields: (customFields) =>
       orderMutation("setOrderCustomFields", "($input: UpdateOrderInput!)", "(input: $input)", {
         input: { customFields },
       }),
     transitionToArrangingPayment: () =>
-      orderMutation(
-        "transitionOrderToState",
-        "($state: String!)",
-        "(state: $state)",
-        { state: "ArrangingPayment" }
-      ),
+      orderMutation("transitionOrderToState", "($state: String!)", "(state: $state)", {
+        state: "ArrangingPayment",
+      }),
   };
 }
