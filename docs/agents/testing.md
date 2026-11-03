@@ -79,15 +79,24 @@ with one owner: unit-test it there, don't re-prove it across the seam.
 
 ## Where tests live
 
-| Kind                 | Location / naming                                                         | Run with                               |
-| -------------------- | ------------------------------------------------------------------------- | -------------------------------------- |
-| Site/package unit    | next to the code, `src/**/*.test.ts`, `packages/*/src/**/*.test.ts`       | `pnpm test`                            |
-| Backend unit         | next to the code, `backend/src/**/*.test.ts`                              | `pnpm -C backend test`                 |
-| Component            | next to the component, `*.test.ts` + `// @vitest-environment jsdom`       | `pnpm test`                            |
-| Backend integration  | `backend/integration/*.test.ts`, shared harness/fixtures beside them      | `pnpm -C backend run test:integration` |
-| Site E2E (hydration) | `tests/*.spec.ts`                                                         | `pnpm run test:hydration`              |
-| Dashboard E2E        | `tests/dashboard/*.spec.ts`, shared steps in `tests/dashboard/helpers.ts` | `pnpm run test:dashboard-e2e`          |
-| Checkout E2E         | `tests/checkout/*.spec.ts`, page actions in `tests/checkout/pages.ts`     | `pnpm run test:checkout-e2e`           |
+| Kind                 | Location / naming                                                         | Run with                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Site/package unit    | next to the code, `src/**/*.test.ts`, `packages/*/src/**/*.test.ts`       | `pnpm test`                                                                                               |
+| Backend unit         | next to the code, `backend/src/**/*.test.ts`                              | `pnpm -C backend test`                                                                                    |
+| Shop API contract    | `src/lib/*/contract.test.ts`, skipped unless the env var below is set     | `CATALOG_CONTRACT_API_URL=… pnpm test` (catalog), `BASKET_CONTRACT_API_URL=… pnpm test` (basket/checkout) |
+| Component            | next to the component, `*.test.ts` + `// @vitest-environment jsdom`       | `pnpm test`                                                                                               |
+| Backend integration  | `backend/integration/*.test.ts`, shared harness/fixtures beside them      | `pnpm -C backend run test:integration`                                                                    |
+| Site E2E (hydration) | `tests/*.spec.ts`                                                         | `pnpm run test:hydration`                                                                                 |
+| Dashboard E2E        | `tests/dashboard/*.spec.ts`, shared steps in `tests/dashboard/helpers.ts` | `pnpm run test:dashboard-e2e`                                                                             |
+| Checkout E2E         | `tests/checkout/*.spec.ts`, page actions in `tests/checkout/pages.ts`     | `pnpm run test:checkout-e2e`                                                                              |
+
+Contract tests need a shop API serving the **current** schema, e.g.
+`pnpm -C backend run e2e:server` (`http://localhost:4000`). They are not in CI:
+no shop API URL is configured for PR checks, and production serves the old
+schema until the site cutover (the basket test fails there on `setDiscounts`,
+`invalidReason`, `productDefinition`, …). Wiring them in needs a repo variable
+pointing at an API with the new schema (a preview deployment, or production
+after cutover), or booting the backend in the job as "Backend Integration" does.
 
 Playwright only collects `*.spec.ts`; `*.test.ts` belongs to Vitest.
 
