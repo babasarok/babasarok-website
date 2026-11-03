@@ -44,11 +44,16 @@ describe("pendingSaves", () => {
     expect(pendingSaves(filled, filled)).toEqual([]);
   });
 
-  it("saves the customer only with a name and a valid email", () => {
-    expect(pendingSaves(EMPTY_CONTACT, { ...filled, email: "nem-email" })).toEqual([]);
-    expect(pendingSaves(EMPTY_CONTACT, { ...filled, name: " " })).toEqual([]);
+  it("saves customer fields independently", () => {
+    expect(pendingSaves(EMPTY_CONTACT, { ...filled, email: "nem-email" })).toEqual(["customer"]);
+    expect(pendingSaves(EMPTY_CONTACT, { ...filled, name: " " })).toEqual(["customer"]);
     expect(pendingSaves(EMPTY_CONTACT, filled)).toEqual(["customer"]);
     expect(pendingSaves(filled, { ...filled, phone: "123" })).toEqual(["customer"]);
+  });
+
+  it("does not fire a customer save when no field is individually valid", () => {
+    expect(pendingSaves(EMPTY_CONTACT, { ...EMPTY_CONTACT, email: "nem-email" })).toEqual([]);
+    expect(pendingSaves(filled, { ...filled, email: "nem-email" })).toEqual([]);
   });
 
   it("saves only the changed groups", () => {
@@ -108,6 +113,20 @@ describe("createContactSaver", () => {
     await saver.save();
 
     expect(setCustomer).not.toHaveBeenCalled();
+  });
+
+  it("sends the last good email when only the name changed", async () => {
+    const { setCustomer, saver, type } = setup();
+
+    type({ ...EMPTY_CONTACT, name: "Teszt Elek" });
+    await saver.save();
+
+    expect(setCustomer).toHaveBeenCalledWith({
+      emailAddress: "",
+      phoneNumber: "",
+      firstName: "Elek",
+      lastName: "Teszt",
+    });
   });
 
   it("retries a failed save on the next trigger without throwing", async () => {

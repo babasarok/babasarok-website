@@ -33,19 +33,25 @@ export function draftFromOrder(order: Order): ContactDraft {
   };
 }
 
-function canSaveCustomer(draft: ContactDraft): boolean {
-  return draft.name.trim() !== "" && z.email().safeParse(draft.email.trim()).success;
+function customerUpdate(
+  saved: ContactDraft,
+  current: ContactDraft
+): Pick<ContactDraft, "name" | "email" | "phone"> | null {
+  const email = z.email().safeParse(current.email.trim()).success ? current.email : saved.email;
+  const name = current.name.trim() === "" ? saved.name : current.name;
+  const update = { name, email, phone: current.phone };
+
+  if (update.name === saved.name && update.email === saved.email && update.phone === saved.phone) {
+    return null;
+  }
+
+  return update;
 }
 
 export function pendingSaves(saved: ContactDraft, current: ContactDraft): ContactSave[] {
   const saves: ContactSave[] = [];
 
-  if (
-    (saved.name !== current.name ||
-      saved.email !== current.email ||
-      saved.phone !== current.phone) &&
-    canSaveCustomer(current)
-  ) {
+  if (customerUpdate(saved, current) !== null) {
     saves.push("customer");
   }
 
@@ -79,14 +85,20 @@ export function createContactSaver(api: ContactApi, read: () => ContactDraft): C
 
     for (const save of pendingSaves(saved, current)) {
       if (save === "customer") {
+        const update = customerUpdate(saved, current);
+
+        if (update === null) {
+          continue;
+        }
+
         const result = await api.setCustomer({
-          emailAddress: current.email.trim(),
-          phoneNumber: current.phone.trim(),
-          ...splitName(current.name),
+          emailAddress: update.email.trim(),
+          phoneNumber: update.phone.trim(),
+          ...splitName(update.name),
         });
 
         if (result.ok) {
-          saved = { ...saved, name: current.name, email: current.email, phone: current.phone };
+          saved = { ...saved, name: update.name, email: update.email, phone: update.phone };
         }
       }
 
