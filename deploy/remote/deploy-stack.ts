@@ -278,7 +278,7 @@ try {
     // pre-deploy database too: dump before `up` runs the migrate service.
     // The WAL LSN recorded with the dump later proves whether ANYTHING
     // committed since — a restore is only ever lossless when it did not.
-    const dumpFile = `${DIR}/pre-deploy-${new Date().toISOString().replace(/[:.]/g, "-")}.sql`;
+    const dumpFile = `${DIR}/pre-deploy-${new Date().toISOString().replaceAll(/[:.]/g, "-")}.sql`;
     try {
       writeFileSync(
         dumpFile,
@@ -308,7 +308,7 @@ try {
       writeFileSync(`${dumpFile}.lsn`, savedLsn);
       const dumps = readdirSync(DIR)
         .filter((f) => f.startsWith("pre-deploy-"))
-        .sort();
+        .toSorted();
       for (const old of dumps.slice(0, -5)) {
         rmSync(path.join(DIR, old));
       }

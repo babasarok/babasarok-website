@@ -21,7 +21,7 @@
     "test:hydration": "playwright test",
     "test:dashboard-e2e": "playwright test --config playwright.dashboard.config.ts",
     "check": "npx astro check && npx sv check",
-    "lint": "eslint . --ext .ts,.tsx,.js,.jsx,.astro,.svelte",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx,.astro,.svelte --cache",
     "lint:style": "stylelint \"**/*.{css,astro,svelte}\"",
     "format": "prettier --write .",
     "dev:tina": "tinacms dev -c \"astro dev --host\""
