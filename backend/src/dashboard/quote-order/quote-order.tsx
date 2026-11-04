@@ -74,6 +74,9 @@ defineDashboardExtension({
           },
         },
       ],
+      viewOptionDefaults: {
+        columnVisibility: { configText: true },
+      },
     },
   ],
   detailForms: [

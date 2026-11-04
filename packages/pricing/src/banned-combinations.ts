@@ -1,4 +1,4 @@
-import type { LineSelections } from "./line-selection.js";
+import type { LineSelections } from "@babasarok/product-definition";
 
 type ForbiddenCombinations = readonly (readonly string[])[];
 

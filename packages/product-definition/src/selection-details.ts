@@ -1,13 +1,19 @@
-import { dependencyOrder, isVisible } from "@babasarok/pricing";
-import type { LineSelectionRecord, LineSelections } from "@babasarok/pricing";
-import { resolveText } from "@babasarok/product-definition";
-import type { ProductDefinition, ProductField } from "@babasarok/product-definition";
+import type { LineSelectionRecord, LineSelections } from "./line-selection.js";
+import { resolveText } from "./localized-text.js";
+import type { ProductDefinition, ProductField } from "./product.js";
+import { dependencyOrder, isVisible } from "./field-visibility.js";
 
-export interface EmailDetail {
+export interface SelectionDetail {
   label: string;
   value: string;
   depth: number;
 }
+
+/**
+ * The email view's name for {@link SelectionDetail}; kept as an alias so the
+ * dashboard and email rendering share one type.
+ */
+export type EmailDetail = SelectionDetail;
 
 export interface SelectionLabels {
   materials: ReadonlyMap<string, { label: string; colors: ReadonlyMap<string, string> }>;
@@ -102,12 +108,12 @@ function fieldValues(
  * fields the buyer filled in that are visible given their other answers,
  * in definition order, indented by visibility depth.
  */
-export function selectionDetails(input: SelectionDetailsInput): EmailDetail[] {
+export function selectionDetails(input: SelectionDetailsInput): SelectionDetail[] {
   const { fields } = input.definition;
   const byId = new Map<string, ProductField>(fields.map((field) => [field.id, field]));
   const { cyclic } = dependencyOrder(fields);
   const values = fieldValues(fields, input.selections);
-  const details: EmailDetail[] = [];
+  const details: SelectionDetail[] = [];
 
   if (input.lengthCm !== null) {
     details.push({ label: "Hossz", value: `${input.lengthCm} cm`, depth: 0 });

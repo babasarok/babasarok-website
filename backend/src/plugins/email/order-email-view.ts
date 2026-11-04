@@ -1,4 +1,4 @@
-import type { EmailDetail } from "./selection-details";
+import type { EmailDetail } from "@babasarok/product-definition";
 
 export interface EmailViewLine {
   quantity: number;

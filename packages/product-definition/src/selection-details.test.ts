@@ -1,7 +1,6 @@
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
-import { selectionDetails, type SelectionLabels } from "./selection-details";
-
+import { selectionDetails, type SelectionLabels } from "./selection-details.js";
 const definition = ProductDefinitionSchema.parse({
   id: "parna",
   orderable: true,

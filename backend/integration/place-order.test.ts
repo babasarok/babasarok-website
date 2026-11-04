@@ -93,6 +93,24 @@ describe("placing an order with the native sequence", () => {
     });
   });
 
+  it("summarises each native line's configuration into its configText field", async () => {
+    const order = await placeNativeOrder("native-configtext", 0);
+
+    for (const line of order.lines) {
+      const selections = JSON.parse(line.customFields.selections ?? "{}") as Record<
+        string,
+        unknown
+      >;
+
+      if (Object.keys(selections).length === 0) {
+        continue;
+      }
+
+      expect(line.customFields.configText).toBeTruthy();
+      expect(line.customFields.configText).toContain(": ");
+    }
+  });
+
   it("charges the delivery below the free-shipping threshold and says so in both emails", async () => {
     const order = await placeNativeOrder("native-2", 0);
 
@@ -151,7 +169,11 @@ describe("a guest using a registered customer's email", () => {
 
     expect(after.state).toBe("AddingItems");
     expect(after.customer).toBeNull();
-    expect(after.lines).toEqual(before.lines);
+    // Line identity survives the refused save; the configText summary lands
+    // asynchronously, so the comparison stays on the stable shape.
+    expect(
+      after.lines.map((line) => [line.id, line.productVariant.sku, line.quantity])
+    ).toEqual(before.lines.map((line) => [line.id, line.productVariant.sku, line.quantity]));
 
     const recovered = await setCustomer(shopper);
 

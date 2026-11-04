@@ -19,7 +19,7 @@ const ORDER_FIELDS = `
   lines {
     id quantity unitPriceWithTax linePriceWithTax
     productVariant { sku }
-    customFields { selections lengthCm }
+    customFields { selections lengthCm configText }
     invalidReason { code message }
     setState { kind groupId title coveredUnits materialSyncFromLineId }
   }
@@ -31,7 +31,11 @@ const LineSchema = z.object({
   unitPriceWithTax: z.number(),
   linePriceWithTax: z.number(),
   productVariant: z.object({ sku: z.string() }),
-  customFields: z.object({ selections: z.string().nullable(), lengthCm: z.number().nullable() }),
+  customFields: z.object({
+    selections: z.string().nullable(),
+    lengthCm: z.number().nullable(),
+    configText: z.string().nullable(),
+  }),
   invalidReason: z.object({ code: z.string(), message: z.string() }).nullable(),
   setState: z
     .object({

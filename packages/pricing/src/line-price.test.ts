@@ -1,7 +1,7 @@
 import type { ProductDefinition } from "@babasarok/product-definition";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
-import { LineSelectionsError, parseLineSelections } from "./line-selection";
+import { LineSelectionsError, parseLineSelections } from "@babasarok/product-definition";
 import { computeLineUnitPrice, LinePricingError, valueConfiguredLine } from "./line-price";
 
 const unitProduct = ProductDefinitionSchema.parse({

@@ -1,11 +1,10 @@
 import {
-  resolveText,
+  selectionDetails,
+  type LineSelections,
   type ProductDefinition,
-  type ProductField,
+  type SelectionLabels,
 } from "@babasarok/product-definition";
-import { parseLineSelections, type LineSelectionRecord } from "@babasarok/pricing";
-
-const LANGUAGE = "hu";
+import { parseLineSelections } from "@babasarok/pricing";
 
 export interface Labels {
   materials: Partial<Record<string, { label: string; colors: Partial<Record<string, string>> }>>;
@@ -17,45 +16,45 @@ export interface LineRow {
   value: string;
 }
 
-function optionLabel(field: ProductField, value: string): string {
-  if (field.kind !== "choice") {
-    return value;
-  }
+function definedEntries(record: Partial<Record<string, string>>): [string, string][] {
+  const entries: [string, string][] = [];
 
-  const option = field.options.find((candidate) => candidate.id === value);
-
-  return option === undefined ? value : resolveText(option.label, LANGUAGE);
-}
-
-function valueText(field: ProductField, selection: LineSelectionRecord, labels: Labels): string {
-  switch (selection.kind) {
-    case "input":
-      return selection.value;
-    case "custom":
-      return `Egyedi: ${selection.value}`;
-    case "option":
-      if (field.kind === "toggle") {
-        return selection.value === "igen" ? "Igen" : "Nem";
-      }
-
-      return optionLabel(field, selection.value);
-    case "material": {
-      const material = labels.materials[selection.materialId];
-      const colors = selection.colors.map((color) => material?.colors[color] ?? color);
-
-      return [material?.label ?? selection.materialId, ...colors].join(", ");
+  for (const [key, value] of Object.entries(record)) {
+    if (value !== undefined) {
+      entries.push([key, value]);
     }
-    case "embroidery":
-      return `${selection.text} (${labels.threadColors[selection.colorId] ?? selection.colorId})`;
   }
+
+  return entries;
 }
 
+function asMaps(labels: Labels): SelectionLabels {
+  return {
+    materials: new Map(
+      Object.entries(labels.materials).map(([slug, value]) => [
+        slug,
+        {
+          label: value?.label ?? slug,
+          colors: new Map(definedEntries(value?.colors ?? {})),
+        },
+      ])
+    ),
+    threadColors: new Map(definedEntries(labels.threadColors)),
+  };
+}
+
+/**
+ * The buyer-visible configuration of an order line as label/value rows, from
+ * the line's structured `selections` and the product definition — the same
+ * formatting the backend applies to the line's dashboard `configText`.
+ * Unparseable selections yield no rows.
+ */
 export function describeLine(
   definition: ProductDefinition,
   rawSelections: string | null,
   labels: Labels
 ): LineRow[] {
-  let selections: ReturnType<typeof parseLineSelections>;
+  let selections: LineSelections;
 
   try {
     selections = parseLineSelections(rawSelections);
@@ -63,15 +62,11 @@ export function describeLine(
     return [];
   }
 
-  return definition.fields.flatMap((field) => {
-    const selection = selections[field.id];
-
-    if (selection === undefined) {
-      return [];
-    }
-
-    return [
-      { label: resolveText(field.label, LANGUAGE), value: valueText(field, selection, labels) },
-    ];
-  });
+  return selectionDetails({
+    definition,
+    selections,
+    lengthCm: null,
+    labels: asMaps(labels),
+    languageCode: "hu",
+  }).map(({ label, value }) => ({ label, value }));
 }

@@ -67,6 +67,23 @@ export {
 } from "./product.js";
 export { canonicalJson } from "./canonical-json.js";
 export {
+  parseLineSelections,
+  serializeLineSelections,
+  LineSelectionsError,
+  LineSelectionRecordSchema,
+  LineSelectionsSchema,
+  type LineSelectionRecord,
+  type LineSelections,
+} from "./line-selection.js";
+export { dependencyOrder, isVisible } from "./field-visibility.js";
+export {
+  selectionDetails,
+  type EmailDetail,
+  type SelectionDetail,
+  type SelectionDetailsInput,
+  type SelectionLabels,
+} from "./selection-details.js";
+export {
   DiscountedProductSetSchema,
   ProductGroupDefinitionSchema,
   ProductGroupIdSchema,

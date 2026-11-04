@@ -1,4 +1,4 @@
-export { dependencyOrder, isVisible } from "./field-visibility.js";
+export { dependencyOrder, isVisible } from "@babasarok/product-definition";
 export {
   LineSelectionRecordSchema,
   LineSelectionsError,
@@ -7,7 +7,7 @@ export {
   serializeLineSelections,
   type LineSelectionRecord,
   type LineSelections,
-} from "./line-selection.js";
+} from "@babasarok/product-definition";
 export {
   MAX_LINE_LENGTH_CM,
   MAX_SELECTION_TEXT_LENGTH,
