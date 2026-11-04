@@ -88,13 +88,16 @@ const SYNC_PROGRESS_INTERVAL_MS = 30_000;
 // so the extension costs seconds of sync and stays well inside the limit.
 // Choice presentation "color" has no real content yet (e2e covers it).
 // At cutover prod is hand-migrated from the full content; drop this filter.
+// Entries are product_ids, not filenames — filenames and product ids diverge
+// in legacy files (bella-taska.md → Oko-taska, cumi-ragcsalanc.md → cumilanc,
+// fonott-racsvedo.md → racsvedo).
 const PREVIEW_PRODUCT_IDS = new Set([
   "babatakaro-szett",
-  "bella-taska",
-  "cumi-ragcsalanc",
+  "Oko-taska",
+  "cumilanc",
   "diszparna",
   "egyben-moshato-takaro-lapos-parna",
-  "fonott-racsvedo",
+  "racsvedo",
   "kismama-parna",
   "paplan-parnahuzat",
   "pufi-parna",
@@ -325,6 +328,19 @@ async function main(): Promise<void> {
       `✓ ${file}: ${outcome.kind} (${((Date.now() - fileStartedAt) / 1000).toFixed(1)}s)`
     );
     syncTargets.push({ file, productId: final.id, startedAt: fileStartedAt });
+  }
+
+  const unknownPreviewIds = [...PREVIEW_PRODUCT_IDS].filter(
+    (id) => !new Set(productIdByFile.values()).has(id)
+  );
+
+  if (unknownPreviewIds.length > 0) {
+    throw new Error(
+      `PREVIEW_PRODUCT_IDS lists product_id(s) that no Tina product defines: ` +
+        `${unknownPreviewIds.join(", ")}. The set is keyed by product_id, not by ` +
+        "filename — filenames and product ids diverge in a few legacy files " +
+        "(see scripts/lib/tina-source.ts); use the file's product_id."
+    );
   }
 
   const syncs = await waitForSyncs(syncTargets, startedAt);

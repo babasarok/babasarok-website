@@ -171,9 +171,9 @@ describe("a guest using a registered customer's email", () => {
     expect(after.customer).toBeNull();
     // Line identity survives the refused save; the configText summary lands
     // asynchronously, so the comparison stays on the stable shape.
-    expect(
-      after.lines.map((line) => [line.id, line.productVariant.sku, line.quantity])
-    ).toEqual(before.lines.map((line) => [line.id, line.productVariant.sku, line.quantity]));
+    expect(after.lines.map((line) => [line.id, line.productVariant.sku, line.quantity])).toEqual(
+      before.lines.map((line) => [line.id, line.productVariant.sku, line.quantity])
+    );
 
     const recovered = await setCustomer(shopper);
 

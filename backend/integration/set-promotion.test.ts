@@ -93,7 +93,11 @@ describe("the set promotion in Vendure's order calculator", () => {
     order = await addLine(shopper, kendo());
 
     const memberDiscount = order.lines
-      .filter((line) => line.productVariant.sku.startsWith("int-parna") || line.productVariant.sku.startsWith("int-takaro"))
+      .filter(
+        (line) =>
+          line.productVariant.sku.startsWith("int-parna") ||
+          line.productVariant.sku.startsWith("int-takaro")
+      )
       .reduce((sum, line) => sum - line.discounts.reduce((sub, d) => sub + d.amountWithTax, 0), 0);
 
     expect(memberDiscount).toBe(1500);
