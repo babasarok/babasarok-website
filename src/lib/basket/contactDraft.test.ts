@@ -11,7 +11,8 @@ import {
 import type { Order } from "./schemas";
 
 const filled: ContactDraft = {
-  name: "Teszt Elek",
+  lastName: "Teszt",
+  firstName: "Elek",
   email: "teszt@example.com",
   phone: "",
   address: "",
@@ -19,7 +20,7 @@ const filled: ContactDraft = {
 };
 
 describe("draftFromOrder", () => {
-  it("restores the name surname first and tolerates a bare order", () => {
+  it("restores the customer's names as stored and tolerates a bare order", () => {
     const order = {
       customer: { firstName: "Elek", lastName: "Teszt", emailAddress: "a@b.hu", phoneNumber: "1" },
       shippingAddress: { streetLine1: "Fő u. 1" },
@@ -27,7 +28,8 @@ describe("draftFromOrder", () => {
     } as Order;
 
     expect(draftFromOrder(order)).toEqual({
-      name: "Teszt Elek",
+      lastName: "Teszt",
+      firstName: "Elek",
       email: "a@b.hu",
       phone: "1",
       address: "Fő u. 1",
@@ -46,7 +48,7 @@ describe("pendingSaves", () => {
 
   it("saves customer fields independently", () => {
     expect(pendingSaves(EMPTY_CONTACT, { ...filled, email: "nem-email" })).toEqual(["customer"]);
-    expect(pendingSaves(EMPTY_CONTACT, { ...filled, name: " " })).toEqual(["customer"]);
+    expect(pendingSaves(EMPTY_CONTACT, { ...filled, lastName: " " })).toEqual(["customer"]);
     expect(pendingSaves(EMPTY_CONTACT, filled)).toEqual(["customer"]);
     expect(pendingSaves(filled, { ...filled, phone: "123" })).toEqual(["customer"]);
   });
@@ -118,7 +120,7 @@ describe("createContactSaver", () => {
   it("sends the last good email when only the name changed", async () => {
     const { setCustomer, saver, type } = setup();
 
-    type({ ...EMPTY_CONTACT, name: "Teszt Elek" });
+    type({ ...EMPTY_CONTACT, lastName: "Teszt", firstName: "Elek" });
     await saver.save();
 
     expect(setCustomer).toHaveBeenCalledWith({

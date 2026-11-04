@@ -65,7 +65,8 @@ export async function expectLineHighlight(page: Page, text: RegExp, on: boolean)
 }
 
 export async function fillContactAndPickup(page: Page): Promise<void> {
-  await page.getByPlaceholder("Név *").fill("Teszt Elek");
+  await page.getByPlaceholder("Vezetéknév *").fill("Teszt");
+  await page.getByPlaceholder("Keresztnév *").fill("Elek");
   await page.getByPlaceholder("Email cím *").fill("teszt@example.com");
   await page.getByRole("radio", { name: /Személyes átvétel/ }).check();
   await page.getByRole("checkbox").check();
@@ -119,7 +120,8 @@ export async function fillDetailsAndWaitUntilSaved(page: Page): Promise<void> {
 
   const saved = shopMutation(page, "setOrderCustomFields");
 
-  await page.getByPlaceholder("Név *").fill("Teszt Elek");
+  await page.getByPlaceholder("Vezetéknév *").fill("Teszt");
+  await page.getByPlaceholder("Keresztnév *").fill("Elek");
   await page.getByPlaceholder("Email cím *").fill("teszt@example.com");
   await page.getByPlaceholder("Telefonszám").fill("+36301234567");
   await page.getByPlaceholder(/Írd meg ide/).fill("Kék legyen");
@@ -128,7 +130,8 @@ export async function fillDetailsAndWaitUntilSaved(page: Page): Promise<void> {
 }
 
 export async function expectDetailsPrefilled(page: Page): Promise<void> {
-  await expect(page.getByPlaceholder("Név *")).toHaveValue("Teszt Elek");
+  await expect(page.getByPlaceholder("Vezetéknév *")).toHaveValue("Teszt");
+  await expect(page.getByPlaceholder("Keresztnév *")).toHaveValue("Elek");
   await expect(page.getByPlaceholder("Email cím *")).toHaveValue("teszt@example.com");
   await expect(page.getByPlaceholder("Telefonszám")).toHaveValue("+36301234567");
   await expect(page.getByPlaceholder(/Írd meg ide/)).toHaveValue("Kék legyen");
@@ -137,7 +140,8 @@ export async function expectDetailsPrefilled(page: Page): Promise<void> {
 }
 
 export async function expectDetailsEmpty(page: Page): Promise<void> {
-  await expect(page.getByPlaceholder("Név *")).toHaveValue("");
+  await expect(page.getByPlaceholder("Vezetéknév *")).toHaveValue("");
+  await expect(page.getByPlaceholder("Keresztnév *")).toHaveValue("");
   await expect(page.getByPlaceholder("Email cím *")).toHaveValue("");
   await expect(page.getByPlaceholder(/Írd meg ide/)).toHaveValue("");
   await expect(page.getByRole("radio", { name: /Személyes átvétel/ })).not.toBeChecked();

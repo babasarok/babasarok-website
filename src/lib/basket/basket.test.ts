@@ -17,7 +17,7 @@ import {
   setSection,
 } from "./setDiscounts";
 import { isTokenRejection, loadActiveOrder } from "./tokenRejection";
-import { placeOrder, splitName, type SubmitInput } from "./submit";
+import { placeOrder, type SubmitInput } from "./submit";
 
 const definition = ProductDefinitionSchema.parse({
   id: "parna",
@@ -189,7 +189,8 @@ const pickup: ShippingQuote = {
 };
 const gls: ShippingQuote = { ...pickup, id: "8", customFields: { requiresAddress: true } };
 const draft = {
-  name: "A B",
+  lastName: "A",
+  firstName: "B",
   email: "a@b.hu",
   address: "",
   termsAccepted: true,
@@ -231,7 +232,9 @@ describe("checkout readiness", () => {
         draft
       )?.field
     ).toBe("invalid");
-    expect(checkoutBlocker(order([line()]), [pickup], { ...draft, name: " " })?.field).toBe("name");
+    expect(checkoutBlocker(order([line()]), [pickup], { ...draft, firstName: "" })?.field).toBe(
+      "name"
+    );
     expect(
       checkoutBlocker(order([line()]), [pickup], { ...draft, termsAccepted: false })?.field
     ).toBe("terms");
@@ -276,7 +279,8 @@ function fakeApi(failAt?: keyof BasketApi): { api: BasketApi; calls: string[] } 
 }
 
 const submitInput: SubmitInput = {
-  name: "Kovács Anna",
+  lastName: "Kovács",
+  firstName: "Anna",
   email: "a@b.hu",
   phone: "",
   address: "Cím 1",
@@ -309,11 +313,6 @@ describe("placeOrder", () => {
     expect(result).toMatchObject({ ok: false, reference: "12345678" });
     expect(result.ok ? "" : result.message).toContain("nem megy, kód: 12345678");
     expect(report).toHaveBeenCalledWith(expect.objectContaining({ reference: "12345678" }));
-  });
-
-  it("splits names surname first", () => {
-    expect(splitName("Kovács Anna Mária")).toEqual({ lastName: "Kovács", firstName: "Anna Mária" });
-    expect(splitName("Anna")).toEqual({ lastName: "", firstName: "Anna" });
   });
 });
 

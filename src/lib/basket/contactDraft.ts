@@ -1,10 +1,11 @@
 import { z } from "zod";
 import type { BasketApi } from "./api";
 import type { Order } from "./schemas";
-import { SHIPPING_COUNTRY_CODE, splitName } from "./submit";
+import { SHIPPING_COUNTRY_CODE } from "./submit";
 
 export interface ContactDraft {
-  name: string;
+  lastName: string;
+  firstName: string;
   email: string;
   phone: string;
   address: string;
@@ -14,7 +15,8 @@ export interface ContactDraft {
 export type ContactSave = "customer" | "address" | "message";
 
 export const EMPTY_CONTACT: ContactDraft = {
-  name: "",
+  lastName: "",
+  firstName: "",
   email: "",
   phone: "",
   address: "",
@@ -25,7 +27,8 @@ export function draftFromOrder(order: Order): ContactDraft {
   const customer = order.customer;
 
   return {
-    name: [customer?.lastName, customer?.firstName].filter(Boolean).join(" "),
+    lastName: customer?.lastName ?? "",
+    firstName: customer?.firstName ?? "",
     email: customer?.emailAddress ?? "",
     phone: customer?.phoneNumber ?? "",
     address: order.shippingAddress?.streetLine1 ?? "",
@@ -36,12 +39,20 @@ export function draftFromOrder(order: Order): ContactDraft {
 function customerUpdate(
   saved: ContactDraft,
   current: ContactDraft
-): Pick<ContactDraft, "name" | "email" | "phone"> | null {
+): Pick<ContactDraft, "lastName" | "firstName" | "email" | "phone"> | null {
   const email = z.email().safeParse(current.email.trim()).success ? current.email : saved.email;
-  const name = current.name.trim() === "" ? saved.name : current.name;
-  const update = { name, email, phone: current.phone };
+  const nameComplete =
+    current.lastName.trim() !== "" && current.firstName.trim() !== "";
+  const lastName = nameComplete ? current.lastName : saved.lastName;
+  const firstName = nameComplete ? current.firstName : saved.firstName;
+  const update = { lastName, firstName, email, phone: current.phone };
 
-  if (update.name === saved.name && update.email === saved.email && update.phone === saved.phone) {
+  if (
+    update.lastName === saved.lastName &&
+    update.firstName === saved.firstName &&
+    update.email === saved.email &&
+    update.phone === saved.phone
+  ) {
     return null;
   }
 
@@ -94,11 +105,18 @@ export function createContactSaver(api: ContactApi, read: () => ContactDraft): C
         const result = await api.setCustomer({
           emailAddress: update.email.trim(),
           phoneNumber: update.phone.trim(),
-          ...splitName(update.name),
+          firstName: update.firstName.trim(),
+          lastName: update.lastName.trim(),
         });
 
         if (result.ok) {
-          saved = { ...saved, name: update.name, email: update.email, phone: update.phone };
+          saved = {
+            ...saved,
+            lastName: update.lastName,
+            firstName: update.firstName,
+            email: update.email,
+            phone: update.phone,
+          };
         }
       }
 

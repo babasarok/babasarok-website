@@ -1,7 +1,8 @@
 import type { Order, ShippingQuote } from "./schemas";
 
 export interface CheckoutDraft {
-  name: string;
+  lastName: string;
+  firstName: string;
   email: string;
   address: string;
   termsAccepted: boolean;
@@ -37,8 +38,8 @@ export function checkoutBlocker(
     };
   }
 
-  if (draft.name.trim() === "") {
-    return { field: "name", message: "Kérem, add meg a neved." };
+  if (draft.lastName.trim() === "" || draft.firstName.trim() === "") {
+    return { field: "name", message: "Kérem, add meg a teljes neved." };
   }
 
   if (draft.email.trim() === "") {

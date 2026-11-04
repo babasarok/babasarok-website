@@ -8,7 +8,8 @@ const GENERIC_ERROR =
   "Hiba történt az árajánlatkérés elküldése közben. Kérlek, próbáld meg újra később.";
 
 export interface SubmitInput {
-  name: string;
+  lastName: string;
+  firstName: string;
   email: string;
   phone: string;
   address: string;
@@ -27,21 +28,12 @@ export interface OrderErrorReport {
   reference: string;
 }
 
-export function splitName(name: string): { firstName: string; lastName: string } {
-  const parts = name.trim().split(/\s+/);
-
-  if (parts.length === 1) {
-    return { firstName: parts[0], lastName: "" };
-  }
-
-  return { lastName: parts[0], firstName: parts.slice(1).join(" ") };
-}
-
 async function runSequence(api: BasketApi, input: SubmitInput): Promise<Result<Order>> {
   const customer = await api.setCustomer({
     emailAddress: input.email.trim(),
     phoneNumber: input.phone.trim(),
-    ...splitName(input.name),
+    firstName: input.firstName.trim(),
+    lastName: input.lastName.trim(),
   });
 
   if (!customer.ok) {

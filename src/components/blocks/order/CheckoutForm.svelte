@@ -39,7 +39,8 @@
     messageHeading,
   }: Props = $props();
 
-  let name = $state("");
+  let lastName = $state("");
+  let firstName = $state("");
   let email = $state("");
   let phone = $state("");
   let address = $state("");
@@ -56,7 +57,14 @@
   const order = $derived(basket.order);
   const method = $derived(selectedMethod(methods, shippingMethodId));
   const blocker = $derived(
-    checkoutBlocker(order, methods, { name, email, address, termsAccepted, shippingMethodId })
+    checkoutBlocker(order, methods, {
+      lastName,
+      firstName,
+      email,
+      address,
+      termsAccepted,
+      shippingMethodId,
+    })
   );
   const submitDisabled = $derived(
     sending || (blocker !== undefined && blocker.field !== "method" && blocker.field !== "address")
@@ -67,7 +75,7 @@
   );
   let highlightedLines = $state<readonly string[]>([]);
 
-  const readContact = (): ContactDraft => ({ name, email, phone, address, message });
+  const readContact = (): ContactDraft => ({ lastName, firstName, email, phone, address, message });
   const contactSaver = createContactSaver(basket.api, readContact);
   let prefilledFor: string | null = null;
 
@@ -86,7 +94,7 @@
 
     const draft = draftFromOrder(current);
 
-    ({ name, email, phone, address, message } = draft);
+    ({ lastName, firstName, email, phone, address, message } = draft);
     contactSaver.adopt(draft);
   });
 
@@ -165,7 +173,8 @@
     error = null;
 
     const found = checkoutBlocker(order, methods, {
-      name,
+      lastName,
+      firstName,
       email,
       address,
       termsAccepted,
@@ -184,7 +193,8 @@
     const result = await placeOrder(
       basket.api,
       {
-        name,
+        lastName,
+        firstName,
         email,
         phone,
         address,
@@ -282,7 +292,10 @@
           <h2 class="text-lg uppercase">{contactHeading}</h2>
         </div>
         <div class="flex flex-col gap-2">
-          <TextInput type="text" placeholder="Név *" required bind:value={name} />
+          <div class="grid grid-cols-2 gap-2">
+            <TextInput type="text" placeholder="Vezetéknév *" required bind:value={lastName} />
+            <TextInput type="text" placeholder="Keresztnév *" required bind:value={firstName} />
+          </div>
           <TextInput type="email" placeholder="Email cím *" required bind:value={email} />
           <TextInput type="tel" placeholder="Telefonszám" bind:value={phone} />
         </div>
