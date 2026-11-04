@@ -1,8 +1,7 @@
-import { LanguageCode, PromotionCondition, PromotionOrderAction } from "@vendure/core";
+import { LanguageCode, PromotionCondition, PromotionItemAction } from "@vendure/core";
 import type { Injector, Order, RequestContext } from "@vendure/core";
 import { PRODUCT_SET_CONDITION_CODE } from "./set-basket";
 import { SetBasketService } from "./set-basket.service";
-import type { SetInstance } from "./set-allocation";
 
 export { PRODUCT_SET_CONDITION_CODE };
 
@@ -11,8 +10,8 @@ export { PRODUCT_SET_CONDITION_CODE };
  * `PromotionConditionState` constraint while keeping the named fields typed.
  */
 export interface ProductSetConditionState extends Record<string, unknown> {
-  total: number;
-  instances: SetInstance[];
+  /** Line id → the discount that line's covered units earn, prorated by price. */
+  lineDiscounts: Record<string, number>;
 }
 
 // The documented pattern for configurable operations: services captured at
@@ -44,24 +43,29 @@ export const productSetBasketCondition = new PromotionCondition({
       return false;
     }
 
-    return { total: state.total, instances: state.instances };
+    return { lineDiscounts: state.lineDiscounts };
   },
 });
 
 /**
- * Removes the allocated set discounts from the order total: the sum of the
- * formed instances' clamped amounts, computed by the basket condition.
+ * Charges each line its own share of the formed instances' clamped amounts
+ * (prorated by price, computed by the basket condition), so the order's
+ * line-level discounts land on the set members only and match the shop API's
+ * exposed per-set view. Vendure multiplies the returned per-unit value by the
+ * line's quantity and rounds, which reproduces the per-line total exactly.
  */
 export const PRODUCT_SET_ACTION_CODE = "babasarok-product-set-discount";
 
-export const productSetDiscountAction = new PromotionOrderAction({
+export const productSetDiscountAction = new PromotionItemAction({
   code: PRODUCT_SET_ACTION_CODE,
   description: [
     { languageCode: LanguageCode.hu, value: "A képződött szett-példányok összes kedvezménye." },
   ],
   args: {},
   conditions: [productSetBasketCondition],
-  execute(_ctx, _order, _args, state) {
-    return -state[PRODUCT_SET_CONDITION_CODE].total;
+  execute(_ctx, orderLine, _args, state) {
+    const discount = state[PRODUCT_SET_CONDITION_CODE].lineDiscounts[String(orderLine.id)] ?? 0;
+
+    return -discount / orderLine.quantity;
   },
 });

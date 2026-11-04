@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { allocateSetDiscounts, type AllocationGroup, type AllocationLine } from "./set-allocation";
+import {
+  allocateSetDiscounts,
+  lineDiscounts,
+  type AllocationGroup,
+  type AllocationLine,
+  type SetInstance,
+} from "./set-allocation";
 
 const line = (overrides: Partial<AllocationLine> & { lineId: string }): AllocationLine => ({
   productId: "a",
@@ -229,5 +235,55 @@ describe("clamping", () => {
     );
 
     expect(instances).toEqual([]);
+  });
+});
+
+describe("lineDiscounts", () => {
+  it("prorates an instance across its members and sums exactly to the amount", () => {
+    const instances: SetInstance[] = [
+      { groupId: "g", label: "g", members: ["1", "2"], nominal: 1000, amount: 1000 },
+    ];
+
+    const discounts = lineDiscounts(instances, new Map([
+      ["1", 9000],
+      ["2", 3000],
+    ]));
+
+    expect(discounts.get("1")).toBe(750);
+    expect(discounts.get("2")).toBe(250);
+    expect([...discounts.values()].reduce((sum, value) => sum + value, 0)).toBe(1000);
+  });
+
+  it("hands floored remainders to the largest fractional share", () => {
+    const instances: SetInstance[] = [
+      { groupId: "g", label: "g", members: ["1", "2", "3"], nominal: 1000, amount: 1000 },
+    ];
+
+    const discounts = lineDiscounts(instances, new Map([
+      ["1", 1000],
+      ["2", 1000],
+      ["3", 1000],
+    ]));
+
+    expect([...discounts.values()].reduce((sum, value) => sum + value, 0)).toBe(1000);
+    expect(discounts.get("1")).toBe(334);
+    expect(discounts.get("3")).toBe(333);
+  });
+
+  it("adds up a line covered by several instances", () => {
+    const instances: SetInstance[] = [
+      { groupId: "a", label: "a", members: ["1", "2"], nominal: 1000, amount: 1000 },
+      { groupId: "b", label: "b", members: ["1", "3"], nominal: 500, amount: 500 },
+    ];
+
+    const discounts = lineDiscounts(instances, new Map([
+      ["1", 5000],
+      ["2", 3000],
+      ["3", 3000],
+    ]));
+
+    expect(discounts.get("1")).toBe(625 + 313);
+    expect(discounts.get("2")).toBe(375);
+    expect(discounts.get("3")).toBe(187);
   });
 });

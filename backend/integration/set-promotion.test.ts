@@ -84,9 +84,20 @@ describe("the set promotion in Vendure's order calculator", () => {
 
     await addLine(shopper, parna(PAMUT, { quantity: 2 }));
 
-    const order = await addLine(shopper, takaro(PAMUT));
+    let order = await addLine(shopper, takaro(PAMUT));
 
     expect(setDiscount(order)).toBe(1500);
+
+    // The set discount lands on the member lines only — a non-member line
+    // must stay untouched, and the members carry the whole amount.
+    order = await addLine(shopper, kendo());
+
+    const memberDiscount = order.lines
+      .filter((line) => line.productVariant.sku.startsWith("int-parna") || line.productVariant.sku.startsWith("int-takaro"))
+      .reduce((sum, line) => sum - line.discounts.reduce((sub, d) => sub + d.amountWithTax, 0), 0);
+
+    expect(memberDiscount).toBe(1500);
+    expect(lineWith(order, "int-kendo").discounts).toEqual([]);
   });
 
   it("does not pair a product with itself across lines", async () => {

@@ -18,6 +18,7 @@ const ORDER_FIELDS = `
   setDiscounts { groupId title amount lines { orderLineId units } }
   lines {
     id quantity unitPriceWithTax linePriceWithTax
+    discounts { amountWithTax }
     productVariant { sku }
     customFields { selections lengthCm configText }
     invalidReason { code message }
@@ -30,6 +31,7 @@ const LineSchema = z.object({
   quantity: z.number(),
   unitPriceWithTax: z.number(),
   linePriceWithTax: z.number(),
+  discounts: z.array(z.object({ amountWithTax: z.number() })),
   productVariant: z.object({ sku: z.string() }),
   customFields: z.object({
     selections: z.string().nullable(),

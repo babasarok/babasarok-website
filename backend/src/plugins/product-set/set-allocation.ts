@@ -101,6 +101,55 @@ export function linesMaterialsMatch(a: AllocationLine, b: AllocationLine): boole
 }
 
 /**
+ * Each line's share of the formed instances' clamped amounts, prorated across
+ * the covered units by price. Each instance's shares sum exactly to its
+ * amount, and a line's total can never exceed its own covered units' price
+ * (each share is bounded by its weight because the amount is clamped to the
+ * instance subtotal). Used by the promotion's per-item action so the order's
+ * line-level discounts match the exposed per-set view.
+ */
+export function lineDiscounts(
+  instances: readonly SetInstance[],
+  unitPrices: ReadonlyMap<string, number>
+): Map<string, number> {
+  const totals = new Map<string, number>();
+
+  for (const instance of instances) {
+    const weights = instance.members.map((lineId) => ({
+      lineId,
+      weight: unitPrices.get(lineId) ?? 0,
+    }));
+    const totalWeight = weights.reduce((sum, entry) => sum + entry.weight, 0);
+
+    if (totalWeight === 0) {
+      continue;
+    }
+
+    const shares = weights.map((entry) => {
+      const exact = (instance.amount * entry.weight) / totalWeight;
+      const floor = Math.floor(exact);
+
+      return { lineId: entry.lineId, share: floor, remainder: exact - floor };
+    });
+    // The floored shares may miss a few forints of the instance amount; the
+    // remainder goes to the members with the largest fractional part so the
+    // instance's shares always sum exactly to its amount.
+    let pending = instance.amount - shares.reduce((sum, entry) => sum + entry.share, 0);
+    const ordered = shares.toSorted((a, b) => b.remainder - a.remainder);
+
+    for (let index = 0; pending > 0 && index < ordered.length; index++, pending--) {
+      ordered[index].share += 1;
+    }
+
+    for (const { lineId, share } of shares) {
+      totals.set(lineId, (totals.get(lineId) ?? 0) + share);
+    }
+  }
+
+  return totals;
+}
+
+/**
  * The basket's formed set instances, in allocation order, each with its
  * clamped amount. Pure and deterministic.
  */
