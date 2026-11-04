@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { createHash } from "node:crypto";
+import { canonicalJson } from "../../shared/product-definition/index";
 import { nativeStateDiff, nativeStateHash, type NativeProductState } from "./sync-state";
 
 const nativeState: NativeProductState = {
@@ -31,6 +33,46 @@ const nativeState: NativeProductState = {
 };
 
 describe("nativeStateHash", () => {
+  it("sorts by code unit, independent of the ICU locale", () => {
+    const state: NativeProductState = {
+      optionGroups: [
+        { code: "cz", name: { hu: "Cz" }, options: [] },
+        { code: "cs", name: { hu: "Cs" }, options: [{ code: "cz", name: { hu: "Cz" } }] },
+      ],
+      variants: [
+        {
+          sku: "ab",
+          name: { hu: "Zz" },
+          price: 1,
+          options: [{ groupCode: "cz", optionCode: "cs" }],
+          facetValues: ["cz", "cs", "Z"],
+        },
+      ],
+    };
+
+    const expected = createHash("sha256")
+      .update(
+        canonicalJson({
+          optionGroups: [
+            { code: "cs", name: { hu: "Cs" }, options: [{ code: "cz", name: { hu: "Cz" } }] },
+            { code: "cz", name: { hu: "Cz" }, options: [] },
+          ],
+          variants: [
+            {
+              sku: "ab",
+              name: { hu: "Zz" },
+              price: 1,
+              options: [{ groupCode: "cz", optionCode: "cs" }],
+              facetValues: ["Z", "cs", "cz"],
+            },
+          ],
+        })
+      )
+      .digest("hex");
+
+    expect(nativeStateHash(state)).toBe(expected);
+  });
+
   it("is stable under option-group, option, variant and facet-value ordering", () => {
     const reordered: NativeProductState = {
       optionGroups: [
