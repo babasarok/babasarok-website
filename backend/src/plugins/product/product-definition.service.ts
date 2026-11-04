@@ -21,11 +21,12 @@ import {
   UserInputError,
 } from "@vendure/core";
 import type { InspectableJobQueueStrategy, Job, JobQueue } from "@vendure/core";
+import type { ID } from "@vendure/common/lib/shared-types";
 import type {
   JobFilterParameter,
   UpdateProductVariantInput,
 } from "@vendure/common/lib/generated-types";
-import { GlobalFlag } from "@vendure/common/lib/generated-types";
+import { DeletionResult, GlobalFlag } from "@vendure/common/lib/generated-types";
 import {
   ConfigService,
   isInspectableJobQueueStrategy,
@@ -102,6 +103,14 @@ function sameText(a: LocalizedText, b: LocalizedText): boolean {
 
 /** The variant writes per ProductVariantService call — the spike's per-variant loop is not shippable. */
 const BATCH_SIZE = 100;
+
+/** Options and groups the plan no longer has. Their deletion waits for the
+ * variant writes, because Vendure's option delete reports NOT_DELETED while
+ * active variants still use the option instead of failing. */
+interface OptionGroupRemovals {
+  options: Array<{ id: ID; code: string }>;
+  groups: Array<{ id: ID; code: string }>;
+}
 
 /** Drift refusal with a machine-readable code: the dashboard keys its
  * force-confirmation UX off `extensions.code`, not the message text. */
@@ -784,7 +793,9 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
    * Regenerates the native option groups/options/variants from the structured
    * model: creates missing groups+options, creates missing variants in
    * batches, refreshes prices, and soft-deletes variants, options and groups
-   * that no longer exist in the model.
+   * that no longer exist in the model. Removed options and groups are deleted
+   * only after the variant writes: while stale variants still use an option,
+   * Vendure reports NOT_DELETED on its deletion instead of failing.
    */
   private async sync(
     ctx: RequestContext,
@@ -812,7 +823,11 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
     const plan = planVariantCombinations(definition, materialData, productName);
     const facetCodesBySku = plannedVariantFacetCodes(plan, materialData);
-    const optionIdsByGroupCode = await this.syncOptionGroups(ctx, nativeProductId, plan);
+    const { optionIdsByGroupCode, removals } = await this.syncOptionGroups(
+      ctx,
+      nativeProductId,
+      plan
+    );
     const facetValueIdsByCode = await this.facetValueIdsByCode(ctx, facetCodesBySku);
 
     await this.syncVariants(
@@ -824,18 +839,25 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       facetValueIdsByCode,
       reportProgress
     );
+
+    await this.deleteRemovedOptionGroups(ctx, nativeProductId, removals);
   }
 
   /**
-   * Creates missing option groups and options, updates renamed ones, deletes
-   * removed ones, and returns the resolved native option id per group/option
-   * code for the variant writes.
+   * Creates missing option groups and options, updates renamed ones, and
+   * returns the resolved native option id per group/option code for the
+   * variant writes plus the options and groups to delete. Soft-deleted rows
+   * are ignored: the relation load returns them too (deletedAt is a plain
+   * column), and deleting one again would fail the sync.
    */
   private async syncOptionGroups(
     ctx: RequestContext,
     nativeProductId: number,
     plan: VariantPlan
-  ): Promise<Map<string, Map<string, number>>> {
+  ): Promise<{
+    optionIdsByGroupCode: Map<string, Map<string, number>>;
+    removals: OptionGroupRemovals;
+  }> {
     const product = await this.connection.getRepository(ctx, Product).findOne({
       where: { id: nativeProductId, deletedAt: IsNull() },
       relations: { optionGroups: { translations: true, options: { translations: true } } },
@@ -847,21 +869,21 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
     const plannedByCode = new Map(plan.optionGroups.map((group) => [group.code, group]));
     const optionIdsByGroupCode = new Map<string, Map<string, number>>();
+    const removals: OptionGroupRemovals = { options: [], groups: [] };
 
     for (const group of product.optionGroups) {
-      const planned = plannedByCode.get(group.code);
-      optionIdsByGroupCode.set(group.code, new Map());
-
-      if (planned === undefined) {
-        await this.productService.removeOptionGroupFromProduct(
-          ctx,
-          nativeProductId,
-          group.id,
-          true
-        );
-        await this.optionGroupService.delete(ctx, group.id, true);
+      if (group.deletedAt !== null) {
         continue;
       }
+
+      const planned = plannedByCode.get(group.code);
+
+      if (planned === undefined) {
+        removals.groups.push({ id: group.id, code: group.code });
+        continue;
+      }
+
+      optionIdsByGroupCode.set(group.code, new Map());
 
       if (!sameText(textOf(group.translations, group.code), planned.name)) {
         await this.optionGroupService.update(ctx, {
@@ -878,10 +900,14 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       }
 
       for (const option of group.options) {
+        if (option.deletedAt !== null) {
+          continue;
+        }
+
         const plannedOption = plannedOptions.get(option.code);
 
         if (plannedOption === undefined) {
-          await this.optionService.delete(ctx, option.id);
+          removals.options.push({ id: option.id, code: option.code });
           continue;
         }
 
@@ -931,7 +957,40 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       }
     }
 
-    return optionIdsByGroupCode;
+    return { optionIdsByGroupCode, removals };
+  }
+
+  /**
+   * Deletes the removed options and groups: their option deletes report
+   * NOT_DELETED while active variants still use them, so this runs after the
+   * variant writes have soft-deleted the stale ones. A NOT_DELETED result
+   * fails the sync instead of leaving the option exposed on the shop API.
+   */
+  private async deleteRemovedOptionGroups(
+    ctx: RequestContext,
+    nativeProductId: number,
+    removals: OptionGroupRemovals
+  ): Promise<void> {
+    for (const option of removals.options) {
+      const result = await this.optionService.delete(ctx, option.id);
+
+      if (result.result !== DeletionResult.DELETED) {
+        throw new Error(
+          `A(z) "${option.code}" natív opció törlése nem sikerült, mert egy aktív változat még használja.`
+        );
+      }
+    }
+
+    for (const group of removals.groups) {
+      await this.productService.removeOptionGroupFromProduct(ctx, nativeProductId, group.id, true);
+      const result = await this.optionGroupService.delete(ctx, group.id, true);
+
+      if (result.result !== DeletionResult.DELETED) {
+        throw new Error(
+          `A(z) "${group.code}" natív opciócsoport törlése nem sikerült, mert egy aktív változat még használja az egyik opcióját.`
+        );
+      }
+    }
   }
 
   /**
@@ -1172,14 +1231,18 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     });
 
     return {
-      optionGroups: product.optionGroups.map((group) => ({
-        code: group.code,
-        name: textOf(group.translations, group.code),
-        options: group.options.map((option) => ({
-          code: option.code,
-          name: textOf(option.translations, option.code),
+      optionGroups: product.optionGroups
+        .filter((group) => group.deletedAt === null)
+        .map((group) => ({
+          code: group.code,
+          name: textOf(group.translations, group.code),
+          options: group.options
+            .filter((option) => option.deletedAt === null)
+            .map((option) => ({
+              code: option.code,
+              name: textOf(option.translations, option.code),
+            })),
         })),
-      })),
       variants: variants.map((variant) => ({
         sku: variant.sku,
         name: textOf(variant.translations, variant.sku),
