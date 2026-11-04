@@ -36,7 +36,7 @@ defineDashboardExtension({
 
             return (
               <div className="flex flex-col items-start gap-0.5 py-1">
-                <span className="text-xs text-muted-foreground">{variant?.product?.name}</span>
+                <span className="text-muted-foreground text-xs">{variant?.product?.name}</span>
                 <DetailPageButton
                   id={variant.id}
                   label={variant.name}
