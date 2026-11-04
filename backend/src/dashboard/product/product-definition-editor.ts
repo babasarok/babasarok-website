@@ -12,7 +12,7 @@ import {
   DEFAULT_TEXT_LANGUAGE,
   canonicalJson,
   type ProductDefinitionInput,
-} from "@babasarok/product-definition";
+} from "../../shared/product-definition/index";
 
 export type FieldInput = ProductDefinitionInput["fields"][number];
 export type ChoiceFieldInput = Extract<FieldInput, { kind: "choice" }>;

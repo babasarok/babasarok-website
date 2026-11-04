@@ -1,5 +1,5 @@
-import type { ProductDefinition } from "@babasarok/product-definition";
-import { ProductDefinitionSchema } from "@babasarok/product-definition";
+import type { ProductDefinition } from "../product-definition/index";
+import { ProductDefinitionSchema } from "../product-definition/index";
 import { describe, expect, it } from "vitest";
 import { LineSelectionsError, parseLineSelections } from "./line-selection";
 import { computeLineUnitPrice, LinePricingError, valueConfiguredLine } from "./line-price";

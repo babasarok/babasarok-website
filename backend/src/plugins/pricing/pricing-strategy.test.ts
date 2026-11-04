@@ -1,4 +1,4 @@
-import { ProductDefinitionSchema } from "@babasarok/product-definition";
+import { ProductDefinitionSchema } from "../../shared/product-definition/index";
 import {
   Channel,
   LanguageCode,

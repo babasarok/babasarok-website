@@ -1,4 +1,4 @@
-import type { ProductField } from "@babasarok/product-definition";
+import type { ProductField } from "../product-definition/index";
 
 /**
  * Fields in dependency order (each `visibility` target before its dependents),

@@ -3,22 +3,21 @@
     "target": "ES2023",
     "lib": ["ES2023"],
     // The scripts run from source via node's type stripping (ESM); bundler
-    // resolution matches that and keeps import.meta legal. The emit into
-    // dist/scripts only satisfies tsc -b composite semantics — run the
-    // scripts from source, never from dist.
+    // resolution matches that and keeps import.meta legal.
     "module": "esnext",
     "moduleResolution": "bundler",
     // Node's type stripping resolves relative imports only with the literal
-    // .ts extension; tsc rewrites it back to .js for the dist emit.
+    // .ts extension.
     "rewriteRelativeImportExtensions": true,
     "strict": true,
-    "composite": true,
-    "outDir": "dist",
-    "rootDir": "scripts",
+    // The scripts reach into src/shared (the canonical schemas), which lies
+    // outside this project's rootDir — fine under noEmit, so they are
+    // checked by `tsc -p tsconfig.scripts.json --noEmit` in the check script
+    // instead of the composite build.
+    "noEmit": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  // Standalone backend scripts; referenced by tsconfig.json so `tsc -b`
-  // type-checks them.
+  // Standalone backend scripts; type-checked by the check script.
   "include": ["scripts"]
 }

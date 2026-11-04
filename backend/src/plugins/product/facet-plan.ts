@@ -1,4 +1,4 @@
-import type { LocalizedText } from "@babasarok/product-definition";
+import type { LocalizedText } from "../../shared/product-definition/index";
 import type { VariantPlan } from "./variant-plan";
 
 /** The sync-owned facets: namespaced codes so admin-created facets can never collide. */

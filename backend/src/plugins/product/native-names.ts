@@ -1,4 +1,4 @@
-import { resolveText, type LocalizedText } from "@babasarok/product-definition";
+import { resolveText, type LocalizedText } from "../../shared/product-definition/index";
 import { LanguageCode, Product } from "@vendure/core";
 import type { RequestContext, TransactionalConnection } from "@vendure/core";
 import { In, IsNull } from "typeorm";

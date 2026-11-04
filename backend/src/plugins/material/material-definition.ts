@@ -1,4 +1,7 @@
-import { MaterialDefinitionSchema, type MaterialDefinition } from "@babasarok/product-definition";
+import {
+  MaterialDefinitionSchema,
+  type MaterialDefinition,
+} from "../../shared/product-definition/index";
 
 export interface MaterialTranslationInputData {
   languageCode: string;

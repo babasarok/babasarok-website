@@ -36,11 +36,6 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           typegen: ${{ matrix.typegen }}
-      # Typed lint resolves @babasarok/product-definition through its dist
-      # type declarations; the backend tree's node10 module resolution cannot
-      # follow the package's node16-style source imports.
-      - if: matrix.name == 'Lint'
-        run: pnpm -C packages/product-definition run build && pnpm -C packages/pricing run build
       - run: ${{ matrix.run }}
 
   # Fast unit tests for the order-form domain logic (pricing, validation,
@@ -173,8 +168,8 @@ jobs:
           name: dist
           path: dist
       # e2e-server spawns backend/dist/{migrate,index}.js; the checkout has no
-      # build output. Backend tsc uses its own TypeScript 5 (the site build's
-      # product-definition step is why this job waits for `build`).
+      # build output. Backend tsc uses its own TypeScript 5 (which is why this
+      # job waits for `build`).
       - run: pnpm -C backend run build
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium

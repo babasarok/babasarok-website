@@ -29,10 +29,6 @@ export default defineConfig({
   build: {
     outDir: process.env.DASHBOARD_OUT_DIR ?? "dist/dashboard",
     emptyOutDir: true,
-    // The workspace-linked @babasarok/product-definition resolves to its
-    // realpath outside node_modules, where the default include misses it and
-    // rollup would read its CJS output as ESM.
-    commonjsOptions: { include: [/node_modules/, /product-definition/] },
   },
   server: {
     port: 5173,

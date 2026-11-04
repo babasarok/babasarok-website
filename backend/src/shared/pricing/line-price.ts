@@ -2,7 +2,7 @@ import {
   resolveText,
   type ProductDefinition,
   type ProductField,
-} from "@babasarok/product-definition";
+} from "../product-definition/index";
 import { dependencyOrder, isVisible } from "./field-visibility.js";
 import type { LineSelections } from "./line-selection.js";
 

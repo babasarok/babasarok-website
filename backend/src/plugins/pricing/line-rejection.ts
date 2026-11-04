@@ -1,4 +1,4 @@
-import type { ProductDefinition } from "@babasarok/product-definition";
+import type { ProductDefinition } from "../../shared/product-definition/index";
 import { unknownThreadColorRejection } from "../product/thread-color";
 
 import {
@@ -9,7 +9,7 @@ import {
   referencedMaterialIds,
   selectionsRejection,
   type LineSelections,
-} from "@babasarok/pricing";
+} from "../../shared/pricing/index";
 
 /** The data a line check needs; the interceptor backs it with the database. */
 export interface LineFacts {

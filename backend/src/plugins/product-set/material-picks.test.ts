@@ -1,4 +1,4 @@
-import { ProductDefinitionSchema } from "@babasarok/product-definition";
+import { ProductDefinitionSchema } from "../../shared/product-definition/index";
 import { describe, expect, it } from "vitest";
 import { materialPicks, type DefinitionField } from "./material-picks";
 

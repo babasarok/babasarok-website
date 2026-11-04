@@ -1,5 +1,5 @@
-import type { ProductDefinition } from "@babasarok/product-definition";
-import type { LineSelections } from "@babasarok/pricing";
+import type { ProductDefinition } from "../../shared/product-definition/index";
+import type { LineSelections } from "../../shared/pricing/index";
 
 export interface MaterialPick {
   materialId: string;

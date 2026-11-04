@@ -1,4 +1,4 @@
-import { ProductDefinitionSchema } from "@babasarok/product-definition";
+import { ProductDefinitionSchema } from "../product-definition/index";
 import { describe, expect, it } from "vitest";
 import type { LineSelectionRecord, LineSelections } from "./line-selection.js";
 import {

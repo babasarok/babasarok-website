@@ -31,20 +31,20 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
+      // The canonical product-definition and pricing logic now live inside
+      // the backend's source tree; these aliases keep the site importing the
+      // shared code as TypeScript source.
       "@babasarok/product-definition": fileURLToPath(
-        new URL("packages/product-definition/src/index.ts", import.meta.url)
+        new URL("backend/src/shared/product-definition/index.ts", import.meta.url)
+      ),
+      "@babasarok/pricing": fileURLToPath(
+        new URL("backend/src/shared/pricing/index.ts", import.meta.url)
       ),
       "@": fileURLToPath(new URL("src", import.meta.url)),
     },
   },
   test: {
-    include: [
-      "src/**/*.test.ts",
-      // The shared package's schema tests run in the same fast suite; they are
-      // excluded from the package's own tsc build (see its tsconfig.json).
-      "packages/product-definition/src/**/*.test.ts",
-      "packages/pricing/src/**/*.test.ts",
-    ],
+    include: ["src/**/*.test.ts"],
     exclude: ["tests/**", "node_modules/**", "dist/**"],
     environment: "node",
   },

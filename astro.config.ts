@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig, envField, fontProviders } from "astro/config";
 import svelte from "@astrojs/svelte";
 import cloudflare from "@astrojs/cloudflare";
@@ -80,6 +81,19 @@ export default defineConfig({
   ],
   vite: {
     plugins: [tailwindcss(), tinaAdminDevRedirect()],
+    resolve: {
+      alias: {
+        // The canonical shared schemas and pricing logic live inside the
+        // backend's source tree; these aliases keep the site importing them
+        // as TypeScript source, so no CJS dist enters the browser graph.
+        "@babasarok/product-definition": fileURLToPath(
+          new URL("backend/src/shared/product-definition/index.ts", import.meta.url)
+        ),
+        "@babasarok/pricing": fileURLToPath(
+          new URL("backend/src/shared/pricing/index.ts", import.meta.url)
+        ),
+      },
+    },
     // Bundle @tinacms/astro into the SSR build instead of resolving it
     // per-module on every cold request — otherwise each
     // `import TinaMarkdown from '@tinacms/astro/TinaMarkdown.astro'`

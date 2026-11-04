@@ -7,7 +7,7 @@ import type {
   WillAddItemToOrderInput,
   WillAdjustOrderLineInput,
 } from "@vendure/core";
-import type { ProductDefinition as CanonicalProductDefinition } from "@babasarok/product-definition";
+import type { ProductDefinition as CanonicalProductDefinition } from "../../shared/product-definition/index";
 import { THREAD_COLOR_FACET_CODE } from "../product/facet-plan";
 import { nativeProductNames } from "../product/native-names";
 import { ProductDefinition } from "../product/product.entity";

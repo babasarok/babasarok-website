@@ -23,8 +23,8 @@
     "exactOptionalPropertyTypes": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@babasarok/product-definition": ["./packages/product-definition/src/index.ts"],
-      "@babasarok/pricing": ["./packages/pricing/src/index.ts"]
+      "@babasarok/product-definition": ["./backend/src/shared/product-definition/index.ts"],
+      "@babasarok/pricing": ["./backend/src/shared/pricing/index.ts"]
     }
   }
 }

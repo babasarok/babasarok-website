@@ -23,8 +23,6 @@ export default defineConfig([
     "backend/dist",
     "backend/node_modules",
     "backend/src/gql",
-    "packages/product-definition/dist",
-    "packages/pricing/dist",
   ]),
   {
     plugins: { js, astro, unicorn },
@@ -114,6 +112,53 @@ export default defineConfig([
           allowNullish: true,
           allowAny: false,
           allowRegExp: false,
+        },
+      ],
+    },
+  },
+  {
+    files: ["backend/**/*.ts", "backend/**/*.tsx", "backend/**/*.mts"],
+    languageOptions: {
+      parserOptions: {
+        parser: "@typescript-eslint/parser",
+        project: [
+          "./tsconfig.json",
+          "./backend/tsconfig.json",
+          "./backend/tsconfig.dashboard.json",
+          "./backend/src/dashboard/tsconfig.json",
+          "./backend/tsconfig.scripts.json",
+        ],
+        extraFileExtensions: [],
+      },
+    },
+    rules: {
+      // Vendure plugin definitions are empty decorated classes.
+      "@typescript-eslint/no-extraneous-class": ["error", { allowEmpty: true }],
+    },
+  },
+  {
+    // The shared folder holds the canonical schemas and pricing logic that
+    // the site and dashboard also import as TypeScript source — its code
+    // must stay free of backend-only dependencies (Vendure entities, server
+    // env, site paths) so every consumer can bundle it. Relative imports
+    // within the folder and plain libraries (zod) only.
+    files: ["backend/src/shared/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@vendure/*", "@/*"],
+              message:
+                "The shared schemas and pricing logic must stay consumer-agnostic: relative imports within the folder and plain libraries (zod) only. Backend-only dependencies belong in a plugin.",
+            },
+            {
+              group: ["../../*"],
+              message:
+                "Shared code is imported by the site and dashboard as TypeScript source; it must not reach outside its own tree.",
+            },
+          ],
         },
       ],
     },

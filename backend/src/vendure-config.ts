@@ -21,7 +21,7 @@ import { CloudflareEmailSender } from "./plugins/email/cloudflare-email-sender";
 import { orderConfirmationHandler, orderNotificationHandler } from "./plugins/email/order-emails";
 import { MaterialPlugin } from "./plugins/material/material.plugin";
 import { PricingPlugin } from "./plugins/pricing/pricing.plugin";
-import { MAX_LINE_LENGTH_CM } from "@babasarok/pricing";
+import { MAX_LINE_LENGTH_CM } from "./shared/pricing/index";
 import { LineValidityProcess } from "./plugins/pricing/line-validity-process";
 import { ServerPricingStrategy } from "./plugins/pricing/pricing-strategy";
 import {

@@ -2,7 +2,7 @@ import {
   resolveText,
   type ProductDefinition,
   type ProductField,
-} from "@babasarok/product-definition";
+} from "../product-definition/index";
 import type { LineSelectionRecord, LineSelections } from "./line-selection.js";
 
 /**

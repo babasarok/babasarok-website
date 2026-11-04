@@ -20,13 +20,11 @@
     "converge-facets": "node --env-file-if-exists=.env scripts/converge-facets.ts",
     "test:quote-roundtrip": "node --env-file-if-exists=.env scripts/quote-order-roundtrip.ts",
     "e2e:server": "node --env-file=e2e.env scripts/e2e-server.ts",
-    "check": "tsc -b",
-    "check:dashboard": "pnpm -C ../packages/product-definition run build && node scripts/check-dashboard-types.ts",
+    "check": "tsc -b && tsc -p tsconfig.scripts.json --noEmit",
+    "check:dashboard": "node scripts/check-dashboard-types.ts",
     "test": "vitest run"
   },
   "dependencies": {
-    "@babasarok/pricing": "workspace:*",
-    "@babasarok/product-definition": "workspace:*",
     "@nestjs/common": "^12.0.1",
     "@nestjs/graphql": "~14.0.0",
     "@tiptap/core": "3.32.0",

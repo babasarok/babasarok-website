@@ -37,11 +37,11 @@ import { In, IsNull } from "typeorm";
 import type {
   LocalizedText,
   ProductDefinition as CanonicalProductDefinition,
-} from "@babasarok/product-definition";
-import { canonicalJson, LabelSchema } from "@babasarok/product-definition";
+} from "../../shared/product-definition/index";
+import { canonicalJson, LabelSchema } from "../../shared/product-definition/index";
 // The node-only entry: productRevision needs node:crypto, which must not reach
 // the dashboard's browser bundle through the main barrel.
-import { productRevision } from "@babasarok/product-definition/node";
+import { productRevision } from "../../shared/product-definition/node";
 import { materialReferenceSlugs, toLanguageCode } from "../material/material.service";
 import { MaterialEvent } from "../material/material.event";
 import { Material } from "../material/material.entity";
