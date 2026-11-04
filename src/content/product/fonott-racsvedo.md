@@ -40,6 +40,8 @@ fields:
         label: 380cm
       - value: '400'
         label: 400cm
+      - value: '360'
+        label: 360cm
     allow_custom_value: true
     regex: ^(\d+)$
     placeholder: '220'
