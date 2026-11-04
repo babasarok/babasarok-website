@@ -11,8 +11,33 @@
  *   extension below.
  */
 import { defineDashboardExtension } from "@vendure/dashboard";
-import { graphql } from "@/gql";
+import { type ResultOf, graphql } from "@/gql";
 import { DetailPageButton } from "@/vdb/components/shared/detail-page-button.js";
+
+const orderDetailExtension = graphql(`
+  query GetOrderExtension($id: ID!) {
+    order(id: $id) {
+      id
+      lines {
+        productVariant {
+          id
+          name
+          product {
+            name
+          }
+        }
+      }
+    }
+  }
+`);
+
+/**
+ * The order line's variant as the order-detail cell sees it: `id` and `name`
+ * come from the dashboard's own line fragment, `product` from the extension.
+ */
+type ProductVariantValue = NonNullable<
+  ResultOf<typeof orderDetailExtension>["order"]
+>["lines"][number]["productVariant"];
 
 // Extensions load for side effects only.
 defineDashboardExtension({
@@ -31,16 +56,18 @@ defineDashboardExtension({
         },
         {
           column: "productVariant",
-          component: ({ row }) => {
-            const variant = row.original.productVariant;
+          component: ({ value }: { value?: ProductVariantValue }) => {
+            if (!value) {
+              return null;
+            }
 
             return (
               <div className="flex flex-col items-start gap-0.5 py-1">
-                <span className="text-muted-foreground text-xs">{variant?.product?.name}</span>
+                <span className="text-muted-foreground text-xs">{value.product.name}</span>
                 <DetailPageButton
-                  id={variant.id}
-                  label={variant.name}
-                  href={`/product-variants/${variant.id}`}
+                  id={value.id}
+                  label={value.name}
+                  href={`/product-variants/${value.id}`}
                 />
               </div>
             );
@@ -52,20 +79,7 @@ defineDashboardExtension({
   detailForms: [
     {
       pageId: "order-detail",
-      extendDetailDocument: graphql(`
-        query GetOrderExtension($id: ID!) {
-          order(id: $id) {
-            id
-            lines {
-              productVariant {
-                product {
-                  name
-                }
-              }
-            }
-          }
-        }
-      `),
+      extendDetailDocument: orderDetailExtension,
     },
   ],
 });
