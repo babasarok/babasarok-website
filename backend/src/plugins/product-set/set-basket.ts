@@ -3,7 +3,8 @@ import type { ProductDefinition as CanonicalProductDefinition } from "@babasarok
 import { parseLineSelections, type LineSelections } from "@babasarok/pricing";
 import { countActivePromotionsUsing, type PromotionWindow } from "./active-promotions";
 import { materialPicks } from "./material-picks";
-import { allocateSetDiscounts, type AllocationLine, type SetInstance } from "./set-allocation";
+import { allocateSetDiscounts, type SetInstance } from "./set-allocation";
+import { lineSetStates, type LineSetState, type StateLine } from "./set-line-states";
 
 export const PRODUCT_SET_CONDITION_CODE = "babasarok-product-set-basket";
 const PRODUCT_ID_FILTER_CODE = "product-id-filter";
@@ -164,10 +165,19 @@ export function relevantNativeProductIds(
   return [...ids];
 }
 
+export interface SetBasketState {
+  total: number;
+  instances: SetInstance[];
+  lineStates: Map<string, LineSetState>;
+}
+
+const NO_SET_BASKET: SetBasketState = { total: 0, instances: [], lineStates: new Map() };
+
 /**
- * The basket's formed set instances and their total, or `false` when more than
- * one active promotion uses the condition (each would deduct on its own) or no
- * instance forms.
+ * The one allocation behind both the promotion and the shop API's set fields:
+ * formed instances, their total and each line's set state. Empty when the
+ * condition is not backed by exactly one active promotion (with several each
+ * would deduct on its own, with none nothing is deducted).
  */
 export function setBasketState(input: {
   promotions: readonly PromotionWindow[];
@@ -176,7 +186,7 @@ export function setBasketState(input: {
   children: readonly SetCollection[];
   lines: readonly BasketLine[];
   definitionRows: readonly DefinitionRow[];
-}): { total: number; instances: SetInstance[] } | false {
+}): SetBasketState {
   const active = countActivePromotionsUsing(
     input.promotions,
     PRODUCT_SET_CONDITION_CODE,
@@ -186,8 +196,10 @@ export function setBasketState(input: {
 
   if (active > 1) {
     Logger.error(`${active} aktív szett-kedvezmény promóció létezik — egyik sem lép érvénybe.`);
+  }
 
-    return false;
+  if (active !== 1) {
+    return NO_SET_BASKET;
   }
 
   const productIdByNativeId = new Map<number, string>();
@@ -201,7 +213,7 @@ export function setBasketState(input: {
   const definitionByProductId = new Map<string, CanonicalProductDefinition>(
     input.definitionRows.map((row) => [row.definition.id, row.definition])
   );
-  const lines: AllocationLine[] = [];
+  const lines: StateLine[] = [];
 
   for (const line of input.lines) {
     const productId = productIdByNativeId.get(line.nativeProductId);
@@ -235,20 +247,28 @@ export function setBasketState(input: {
       continue;
     }
 
+    const materialFields = definition.fields.filter((field) => field.kind === "material");
+
     lines.push({
       lineId: String(line.id),
       productId,
       quantity: line.quantity,
       unitPrice: line.listPrice,
       materials: picks,
+      materialFields: materialFields.map((field, index) => ({
+        fieldId: field.id,
+        offeredMaterialIds: field.options.map((option) => option.materialId),
+        pickedMaterialId: picks[index]?.materialId ?? "",
+      })),
     });
   }
 
-  const instances = allocateSetDiscounts(lines, setGroups(input.children, productIdByNativeId));
+  const groups = setGroups(input.children, productIdByNativeId);
+  const instances = allocateSetDiscounts(lines, groups);
 
-  if (instances.length === 0) {
-    return false;
-  }
-
-  return { total: instances.reduce((sum, instance) => sum + instance.amount, 0), instances };
+  return {
+    total: instances.reduce((sum, instance) => sum + instance.amount, 0),
+    instances,
+    lineStates: lineSetStates(lines, groups, instances),
+  };
 }

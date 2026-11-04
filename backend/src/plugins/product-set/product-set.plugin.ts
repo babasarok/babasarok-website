@@ -1,6 +1,12 @@
 import gql from "graphql-tag";
 import { PluginCommonModule, VendurePlugin } from "@vendure/core";
+import {
+  orderSetFieldsSdl,
+  OrderLineSetStateResolver,
+  OrderSetDiscountsResolver,
+} from "./order-set-fields.resolver";
 import { ShopProductGroupResolver } from "./product-set.resolver";
+import { SetBasketService } from "./set-basket.service";
 
 const shopProductGroupSchema = gql`
   enum ProductGroupKind {
@@ -23,9 +29,13 @@ const shopProductGroupSchema = gql`
 
 @VendurePlugin({
   imports: [PluginCommonModule],
+  providers: [SetBasketService],
   shopApiExtensions: {
-    schema: shopProductGroupSchema,
-    resolvers: [ShopProductGroupResolver],
+    schema: gql`
+      ${shopProductGroupSchema}
+      ${orderSetFieldsSdl}
+    `,
+    resolvers: [ShopProductGroupResolver, OrderSetDiscountsResolver, OrderLineSetStateResolver],
   },
 })
 export class ProductSetPlugin {}

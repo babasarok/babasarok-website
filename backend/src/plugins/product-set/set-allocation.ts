@@ -96,6 +96,10 @@ function materialsMatch(a: Map<string, number>, b: Map<string, number>): boolean
   return materialCount(a) <= materialCount(b) ? isMaterialSubset(a, b) : isMaterialSubset(b, a);
 }
 
+export function linesMaterialsMatch(a: AllocationLine, b: AllocationLine): boolean {
+  return materialsMatch(materialEntries(a), materialEntries(b));
+}
+
 /**
  * The basket's formed set instances, in allocation order, each with its
  * clamped amount. Pure and deterministic.
