@@ -244,10 +244,13 @@ describe("lineDiscounts", () => {
       { groupId: "g", label: "g", members: ["1", "2"], nominal: 1000, amount: 1000 },
     ];
 
-    const discounts = lineDiscounts(instances, new Map([
-      ["1", 9000],
-      ["2", 3000],
-    ]));
+    const discounts = lineDiscounts(
+      instances,
+      new Map([
+        ["1", 9000],
+        ["2", 3000],
+      ])
+    );
 
     expect(discounts.get("1")).toBe(750);
     expect(discounts.get("2")).toBe(250);
@@ -259,11 +262,14 @@ describe("lineDiscounts", () => {
       { groupId: "g", label: "g", members: ["1", "2", "3"], nominal: 1000, amount: 1000 },
     ];
 
-    const discounts = lineDiscounts(instances, new Map([
-      ["1", 1000],
-      ["2", 1000],
-      ["3", 1000],
-    ]));
+    const discounts = lineDiscounts(
+      instances,
+      new Map([
+        ["1", 1000],
+        ["2", 1000],
+        ["3", 1000],
+      ])
+    );
 
     expect([...discounts.values()].reduce((sum, value) => sum + value, 0)).toBe(1000);
     expect(discounts.get("1")).toBe(334);
@@ -276,11 +282,14 @@ describe("lineDiscounts", () => {
       { groupId: "b", label: "b", members: ["1", "3"], nominal: 500, amount: 500 },
     ];
 
-    const discounts = lineDiscounts(instances, new Map([
-      ["1", 5000],
-      ["2", 3000],
-      ["3", 3000],
-    ]));
+    const discounts = lineDiscounts(
+      instances,
+      new Map([
+        ["1", 5000],
+        ["2", 3000],
+        ["3", 3000],
+      ])
+    );
 
     expect(discounts.get("1")).toBe(625 + 313);
     expect(discounts.get("2")).toBe(375);

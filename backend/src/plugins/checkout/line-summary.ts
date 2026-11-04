@@ -1,12 +1,6 @@
 import { selectionDetails, type ProductDefinition } from "@babasarok/product-definition";
 import { Injectable } from "@nestjs/common";
-import {
-  EventBus,
-  ID,
-  OrderLine,
-  OrderLineEvent,
-  TransactionalConnection,
-} from "@vendure/core";
+import { EventBus, ID, OrderLine, OrderLineEvent, TransactionalConnection } from "@vendure/core";
 import { In } from "typeorm";
 import { selectionLabels, selectionsOf } from "../product/line-labels";
 import { ProductDefinition as ProductDefinitionEntity } from "../product/product.entity";
@@ -27,11 +21,9 @@ export class LineSummaryService {
   ) {}
 
   onApplicationBootstrap(): void {
-    this.eventBus
-      .ofType(OrderLineEvent)
-      .subscribe((event) => {
-        void this.writeSummary(event);
-      });
+    this.eventBus.ofType(OrderLineEvent).subscribe((event) => {
+      void this.writeSummary(event);
+    });
   }
 
   private async writeSummary(event: OrderLineEvent): Promise<void> {
@@ -40,12 +32,10 @@ export class LineSummaryService {
     }
 
     const { ctx } = event;
-    const lines = await this.connection
-      .getRepository(ctx, OrderLine)
-      .find({
-        where: { id: event.orderLine.id },
-        relations: { productVariant: true },
-      });
+    const lines = await this.connection.getRepository(ctx, OrderLine).find({
+      where: { id: event.orderLine.id },
+      relations: { productVariant: true },
+    });
     const line = lines.at(0);
 
     if (!line) {
@@ -78,4 +68,3 @@ export class LineSummaryService {
     await this.connection.getRepository(ctx, OrderLine).save(line);
   }
 }
-

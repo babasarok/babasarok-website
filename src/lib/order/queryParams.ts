@@ -147,10 +147,7 @@ export function buildMaterialParams(item: Pick<IProduct, "fields">): URLSearchPa
     if (value.colors.length > 0) {
       // Percent-encode each id before joining with commas, so a comma inside
       // an id (real data: "Felhon alvo, feher") cannot read as a separator.
-      params.set(
-        `${field.name}_colors`,
-        value.colors.map((c) => encodeURIComponent(c)).join(",")
-      );
+      params.set(`${field.name}_colors`, value.colors.map((c) => encodeURIComponent(c)).join(","));
     }
   }
   return params;
