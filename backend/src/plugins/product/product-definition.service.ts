@@ -72,7 +72,12 @@ import {
   type NativeStateDiff,
 } from "./sync-state";
 import { definitionsToRequeue } from "./sync-recovery";
-import { createProgressCounter, progressOfJobData, type SyncProgress } from "./sync-progress";
+import {
+  createProgressCounter,
+  progressOfJobData,
+  progressPercent,
+  type SyncProgress,
+} from "./sync-progress";
 import { huName, nativeProductTexts, textOf } from "./native-names";
 import {
   plannedNativeState,
@@ -170,7 +175,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         await this.processSyncJob(data, (progress) => {
           // Persisted by the job queue on its own connection, outside the sync transaction.
           Object.assign(job.data, { progress });
-          job.setProgress(progress.total === 0 ? 100 : (progress.done / progress.total) * 100);
+          job.setProgress(progressPercent(progress));
         });
       },
     });

@@ -20,6 +20,15 @@ export function progressOfJobData(data: unknown): SyncProgress | null {
   return parsed.data.progress;
 }
 
+/** Whole percent, because the job queue stores progress in an integer column. */
+export function progressPercent({ done, total }: SyncProgress): number {
+  if (total === 0) {
+    return 100;
+  }
+
+  return Math.floor((done / total) * 100);
+}
+
 /** Counts finished work units out of a fixed total and reports each new count. */
 export function createProgressCounter(
   total: number,
