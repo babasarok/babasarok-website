@@ -15,7 +15,10 @@ images:
   - image: /src/assets/IMG_2908.jpeg
   - image: /src/assets/IMG_3414.jpeg
   - image: /src/assets/IMG_2449.jpeg
-shortDescription: 'A fonott rácsvédő nemcsak dizájnos kiegészítője a kiságyának, hanem praktikus védelmet is nyújt. Puha, pufi anyaga megóvja a baba fejét a rácsokkal való ütközéstől, különösen, amikor a pici már forogni kezd. '
+shortDescription: |-
+  A fonott rácsvédő nemcsak dizájnos kiegészítője a kiságyának, hanem praktikus védelmet is nyújt. 
+  Tipp: hogyha a kiságyban körbeérő fonatot szeretnél, a sarkainál 5cm-t vonj le. 
+  (Pl. 60x120-as kiságyba 340cm elegendő) 
 icon: /src/assets/product/braids.svg
 length_based_pricing:
   sourceField: sizes
@@ -33,6 +36,8 @@ fields:
         label: 300cm
       - value: '340'
         label: 340cm
+      - value: '360'
+        label: 360cm
       - value: '380'
         label: 380cm
       - value: '400'
