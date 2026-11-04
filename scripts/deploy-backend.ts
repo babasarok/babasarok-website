@@ -174,7 +174,6 @@ try {
       "Dockerfile",
       ".dockerignore",
       "backend",
-      "packages",
       "deploy",
       "src/content/config",
       "src/content/material",

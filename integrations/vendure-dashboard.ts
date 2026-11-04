@@ -31,17 +31,6 @@ export function vendureDashboard(): AstroIntegration {
       "astro:build:done": async ({ dir, logger }) => {
         const outDir = fileURLToPath(new URL("dashboard/", dir));
         logger.info(`building the vendure dashboard → ${outDir}`);
-        // The vendureDashboardPlugin introspects vendure-config.ts by loading
-        // it, which requires the shared package's compiled output.
-        for (const name of ["product-definition", "pricing"]) {
-          const pkg = spawnSync("pnpm", ["-C", `packages/${name}`, "run", "build"], {
-            stdio: "inherit",
-          });
-
-          if (pkg.status !== 0) {
-            throw new Error(`${name} build failed with exit code ${pkg.status}`);
-          }
-        }
 
         const result = spawnSync(
           process.execPath,

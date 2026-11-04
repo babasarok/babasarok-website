@@ -39,6 +39,14 @@ export const orderSetFieldsSdl = `
   }
 `;
 
+interface OrderLineSetStateView {
+  kind: (typeof KIND)[LineSetState["kind"]];
+  groupId: string;
+  title: string;
+  coveredUnits: number;
+  materialSyncFromLineId: string | null;
+}
+
 const KIND = {
   active: "ACTIVE",
   "pending-partner": "PENDING_PARTNER",
@@ -81,7 +89,10 @@ export class OrderLineSetStateResolver {
 
   // ponytail: recomputes the allocation per line; fine for baskets of a few lines, memoize per request if it shows up.
   @ResolveField()
-  async setState(@Ctx() ctx: RequestContext, @Parent() line: OrderLine) {
+  async setState(
+    @Ctx() ctx: RequestContext,
+    @Parent() line: OrderLine
+  ): Promise<OrderLineSetStateView | null> {
     const { order } = await this.connection.getEntityOrThrow(ctx, OrderLine, line.id, {
       relations: { order: true },
     });
