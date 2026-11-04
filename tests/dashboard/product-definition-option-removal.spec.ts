@@ -175,3 +175,108 @@ test("removing a choice option deletes it natively and re-adding syncs again", a
     ]);
   });
 });
+
+test("removing a whole variant-axis field deletes its native group and resyncs", async ({
+  page,
+}) => {
+  let nativeProductId: number | null | undefined;
+
+  const wholeFieldFixture = {
+    id: "e2e-o2",
+    orderable: true,
+    basePrice: 15_000,
+    pricing: { kind: "unit" },
+    fields: [
+      {
+        kind: "choice",
+        id: "szin",
+        label: { hu: "Szín" },
+        presentation: "select",
+        visibility: { kind: "always" },
+        options: [
+          { id: "kek", label: { hu: "Kék" }, price: 0 },
+          { id: "piros", label: { hu: "Piros" }, price: 500 },
+        ],
+      },
+      {
+        kind: "choice",
+        id: "meret",
+        label: { hu: "Méret" },
+        presentation: "select",
+        visibility: { kind: "always" },
+        options: [
+          { id: "kicsi", label: { hu: "Kicsi" }, price: 0 },
+          { id: "nagy", label: { hu: "Nagy" }, price: 0 },
+        ],
+      },
+    ],
+    forbiddenMaterialCombinations: [],
+  };
+
+  await test.step("login and create the two-field fixture through the admin API", async () => {
+    await login(page, "/products");
+    await deleteDefinitionIfPresent(page, "e2e-o2");
+    await adminApi(
+      page,
+      CREATE_DEFINITION,
+      { definition: wholeFieldFixture, name: "E2E O2" },
+      CreatedDefinition
+    );
+
+    const state = await adminApi(page, DEFINITION_STATE, { productId: "e2e-o2" }, DefinitionState);
+    nativeProductId = state.productDefinition?.nativeProductId;
+
+    if (nativeProductId === null || nativeProductId === undefined) {
+      throw new Error("A létrehozott definícióhoz nem tartozik natív termék.");
+    }
+  });
+
+  await test.step("the initial sync settles synced", async () => {
+    await page.goto(`/dashboard/products/${nativeProductId}`);
+    await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
+  });
+
+  await test.step("removing the Méret field and saving deletes its native group", async () => {
+    const meretCard = page.locator(".rounded.border.p-3").nth(1);
+    await meretCard.getByRole("button", { name: "Mező törlése" }).click();
+
+    const update = waitForMutation(page, "mutation UpdateProductDefinition");
+    await page.getByRole("button", { name: "Frissítés", exact: true }).click();
+    await update;
+
+    await expect(page.getByText("Szinkronizálás…")).toBeVisible();
+    await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
+
+    await page.reload();
+    await expect(generatedTable(page).getByRole("row", { name: /Szín: / })).toHaveCount(2);
+
+    const native = await adminApi(
+      page,
+      NATIVE_OPTION_GROUPS,
+      { id: String(nativeProductId) },
+      NativeOptionGroups
+    );
+    expect(native.product?.optionGroups).toEqual([
+      { code: "szin", options: [{ code: "kek" }, { code: "piros" }] },
+    ]);
+  });
+
+  await test.step("a second save settles synced and never stale", async () => {
+    // The save button is disabled while the editor is clean, so make the
+    // smallest real change: the first option's price.
+    const card = page.locator(".rounded.border.p-3").first();
+    const kekAr = card.getByLabel("Ár (Ft)").nth(0);
+    await kekAr.fill("100");
+    await kekAr.blur();
+
+    const update = waitForMutation(page, "mutation UpdateProductDefinition");
+    await page.getByRole("button", { name: "Frissítés", exact: true }).click();
+    await update;
+
+    await expect(page.getByText("Szinkronizálás…")).toBeVisible();
+    await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
+    await expect(
+      page.getByText("Elavult — a mentés a natív módosítások felülírása nélkül elutasított")
+    ).toHaveCount(0);
+  });
+});

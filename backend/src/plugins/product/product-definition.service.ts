@@ -837,10 +837,9 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       optionIdsByGroupCode,
       facetCodesBySku,
       facetValueIdsByCode,
+      removals,
       reportProgress
     );
-
-    await this.deleteRemovedOptionGroups(ctx, nativeProductId, removals);
   }
 
   /**
@@ -961,10 +960,11 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   }
 
   /**
-   * Deletes the removed options and groups: their option deletes report
+   * Deletes the removed options and groups. Their option deletes report
    * NOT_DELETED while active variants still use them, so this runs after the
-   * variant writes have soft-deleted the stale ones. A NOT_DELETED result
-   * fails the sync instead of leaving the option exposed on the shop API.
+   * variant writes have soft-deleted the stale ones; the groups are detached
+   * and deleted without force — a NOT_DELETED or in-use result fails the sync
+   * instead of leaving the option exposed on the shop API.
    */
   private async deleteRemovedOptionGroups(
     ctx: RequestContext,
@@ -982,8 +982,19 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     }
 
     for (const group of removals.groups) {
-      await this.productService.removeOptionGroupFromProduct(ctx, nativeProductId, group.id, true);
-      const result = await this.optionGroupService.delete(ctx, group.id, true);
+      const detached = await this.productService.removeOptionGroupFromProduct(
+        ctx,
+        nativeProductId,
+        group.id
+      );
+
+      if ("productVariantCount" in detached) {
+        throw new Error(
+          `A(z) "${group.code}" natív opciócsoport eltávolítása nem sikerült, mert egy aktív változat még használja az egyik opcióját.`
+        );
+      }
+
+      const result = await this.optionGroupService.delete(ctx, group.id);
 
       if (result.result !== DeletionResult.DELETED) {
         throw new Error(
@@ -994,10 +1005,12 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   }
 
   /**
-   * Batched variant writes: missing variants are created in chunks, drifted
-   * existing variants (price, name, option assignment) updated in chunks, and
-   * variants the model no longer knows are soft-deleted (their sku can be
-   * re-created later — Vendure enforces no sku uniqueness).
+   * Batched variant writes in the order Vendure's own validation requires:
+   * stale variants are soft-deleted first, then the removed options and
+   * groups are deleted (their option deletes report NOT_DELETED while active
+   * variants still use them), and only then the existing variants are updated
+   * and the missing ones created. A NOT_DELETED or in-use result fails the
+   * sync instead of leaving the option exposed on the shop API.
    */
   private async syncVariants(
     ctx: RequestContext,
@@ -1006,6 +1019,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     optionIdsByGroupCode: ReadonlyMap<string, ReadonlyMap<string, number>>,
     facetCodesBySku: ReadonlyMap<string, string[]>,
     facetValueIdsByCode: ReadonlyMap<string, number>,
+    removals: OptionGroupRemovals,
     reportProgress: (progress: SyncProgress) => void
   ): Promise<void> {
     const missingOption = plan.variants
@@ -1126,6 +1140,21 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       reportProgress
     );
 
+    if (stale.length > 0) {
+      await this.variantService.softDelete(
+        ctx,
+        stale.map((variant) => variant.id)
+      );
+      progress.advance(stale.length);
+    }
+
+    await this.deleteRemovedOptionGroups(ctx, nativeProductId, removals);
+
+    for (let start = 0; start < updates.length; start += BATCH_SIZE) {
+      await this.variantService.update(ctx, updates.slice(start, start + BATCH_SIZE));
+      progress.advance(Math.min(BATCH_SIZE, updates.length - start));
+    }
+
     for (let start = 0; start < missing.length; start += BATCH_SIZE) {
       await this.variantService.create(
         ctx,
@@ -1140,19 +1169,6 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         }))
       );
       progress.advance(Math.min(BATCH_SIZE, missing.length - start));
-    }
-
-    for (let start = 0; start < updates.length; start += BATCH_SIZE) {
-      await this.variantService.update(ctx, updates.slice(start, start + BATCH_SIZE));
-      progress.advance(Math.min(BATCH_SIZE, updates.length - start));
-    }
-
-    if (stale.length > 0) {
-      await this.variantService.softDelete(
-        ctx,
-        stale.map((variant) => variant.id)
-      );
-      progress.advance(stale.length);
     }
   }
 
