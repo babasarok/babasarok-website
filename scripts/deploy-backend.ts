@@ -74,6 +74,7 @@ if (cfg.DEPLOY_STACK === "preview") {
 
 const stack = slug || cfg.DEPLOY_STACK;
 const dir = `/srv/babasarok/${stack}`;
+const isPreview = cfg.DEPLOY_STACK === "preview";
 
 function git(args: string[]): string {
   const r = spawnSync("git", args, { cwd: REPO_ROOT, encoding: "utf8" });
@@ -127,31 +128,53 @@ try {
   // exactly the assets the materials reference — not the whole 589M
   // src/assets tree. Prod never runs the seed (hand-migration at cutover);
   // drop this when the Tina catalog domains are removed at cutover.
-  const seedAssets = new Set<string>();
-  const ASSET_REF = /\/src\/assets\/[^\s"'`)\]]+(?: \(\d+\)\.[^\s"'`)\]]+)?/g;
-  for (const dirName of ["material", "product", "product_groups"]) {
-    const contentDir = path.join(REPO_ROOT, "src", "content", dirName);
-    for (const file of readdirSync(contentDir)) {
-      if (!file.endsWith(".md")) continue;
-      const text = readFileSync(path.join(contentDir, file), "utf8");
-      for (const match of text.matchAll(ASSET_REF)) {
-        // Product markdown embeds images in tables/prose; the reference ends
-        // at whitespace/paren/backtick, then trailing punctuation.
-        seedAssets.add(
-          match[0]
-            .replace(/[.,;:]+$/, "")
-            .replace(/\/+$/, "")
-            .slice(1)
-        );
+  const tarEntries = [
+    "package.json",
+    "pnpm-workspace.yaml",
+    "pnpm-lock.yaml",
+    "patches",
+    "Dockerfile",
+    ".dockerignore",
+    "backend",
+    "deploy",
+  ];
+
+  if (isPreview) {
+    const seedAssets = new Set<string>();
+    const ASSET_REF = /\/src\/assets\/[^\s"'`)\]]+(?: \(\d+\)\.[^\s"'`)\]]+)?/g;
+    for (const dirName of ["material", "product", "product_groups"]) {
+      const contentDir = path.join(REPO_ROOT, "src", "content", dirName);
+      for (const file of readdirSync(contentDir)) {
+        if (!file.endsWith(".md")) continue;
+        const text = readFileSync(path.join(contentDir, file), "utf8");
+        for (const match of text.matchAll(ASSET_REF)) {
+          // Product markdown embeds images in tables/prose; the reference ends
+          // at whitespace/paren/backtick, then trailing punctuation.
+          seedAssets.add(
+            match[0]
+              .replace(/[.,;:]+$/, "")
+              .replace(/\/+$/, "")
+              .slice(1)
+          );
+        }
       }
     }
+    const missing = [...seedAssets].filter((p) => !existsSync(path.join(REPO_ROOT, p)));
+    if (missing.length > 0) {
+      throw new Error(`Seed asset references point at missing files: ${missing.join(", ")}`);
+    }
+    const seedList = path.join(tmp, "seed-files.txt");
+    writeFileSync(seedList, [...seedAssets].sort().join("\n") + "\n");
+    tarEntries.push(
+      "src/content/config",
+      "src/content/material",
+      "src/content/product",
+      "src/content/product_groups",
+      "src/content/sections/product.json",
+      "-T",
+      seedList
+    );
   }
-  const missing = [...seedAssets].filter((p) => !existsSync(path.join(REPO_ROOT, p)));
-  if (missing.length > 0) {
-    throw new Error(`Seed asset references point at missing files: ${missing.join(", ")}`);
-  }
-  const seedList = path.join(tmp, "seed-files.txt");
-  writeFileSync(seedList, [...seedAssets].sort().join("\n") + "\n");
 
   const tarfile = `${dir}/incoming-${process.pid}.tar`;
   const tarLocal = path.join(tmp, "tree.tar");
@@ -167,21 +190,7 @@ try {
       "--exclude=backend/email-out",
       "--exclude=backend/.env",
       "--exclude=backend/.env.*",
-      "package.json",
-      "pnpm-workspace.yaml",
-      "pnpm-lock.yaml",
-      "patches",
-      "Dockerfile",
-      ".dockerignore",
-      "backend",
-      "deploy",
-      "src/content/config",
-      "src/content/material",
-      "src/content/product",
-      "src/content/product_groups",
-      "src/content/sections/product.json",
-      "-T",
-      seedList,
+      ...tarEntries,
     ],
     { cwd: REPO_ROOT, stdio: "inherit" }
   );
@@ -292,7 +301,6 @@ exec node "$DIR/repo/deploy/remote/deploy-stack.ts" "$@"
   // Frontend deploy: the backend landed first, from the same commit. The
   // Cloudflare adapter's build emits the deployable Worker config at
   // dist/server/wrangler.json (assets in dist/client).
-  const isPreview = cfg.DEPLOY_STACK === "preview";
   const frontend = spawnSync(
     "npx",
     isPreview
