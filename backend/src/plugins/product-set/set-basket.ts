@@ -3,7 +3,7 @@ import type { ProductDefinition as CanonicalProductDefinition } from "@babasarok
 import { parseLineSelections, type LineSelections } from "@babasarok/pricing";
 import { countActivePromotionsUsing, type PromotionWindow } from "./active-promotions";
 import { materialPicks } from "./material-picks";
-import { allocateSetDiscounts, type SetInstance } from "./set-allocation";
+import { allocateSetDiscounts, lineDiscounts, type SetInstance } from "./set-allocation";
 import { lineSetStates, type LineSetState, type StateLine } from "./set-line-states";
 
 export const PRODUCT_SET_CONDITION_CODE = "babasarok-product-set-basket";
@@ -169,9 +169,16 @@ export interface SetBasketState {
   total: number;
   instances: SetInstance[];
   lineStates: Map<string, LineSetState>;
+  /** Line id → the discount its covered units earn, prorated by price. */
+  lineDiscounts: Record<string, number>;
 }
 
-const NO_SET_BASKET: SetBasketState = { total: 0, instances: [], lineStates: new Map() };
+const NO_SET_BASKET: SetBasketState = {
+  total: 0,
+  instances: [],
+  lineStates: new Map(),
+  lineDiscounts: {},
+};
 
 /**
  * The one allocation behind both the promotion and the shop API's set fields:
@@ -265,10 +272,12 @@ export function setBasketState(input: {
 
   const groups = setGroups(input.children, productIdByNativeId);
   const instances = allocateSetDiscounts(lines, groups);
+  const unitPrices = new Map(lines.map((line) => [line.lineId, line.unitPrice]));
 
   return {
     total: instances.reduce((sum, instance) => sum + instance.amount, 0),
     instances,
     lineStates: lineSetStates(lines, groups, instances),
+    lineDiscounts: Object.fromEntries(lineDiscounts(instances, unitPrices)),
   };
 }
