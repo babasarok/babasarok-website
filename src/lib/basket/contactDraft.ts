@@ -41,8 +41,7 @@ function customerUpdate(
   current: ContactDraft
 ): Pick<ContactDraft, "lastName" | "firstName" | "email" | "phone"> | null {
   const email = z.email().safeParse(current.email.trim()).success ? current.email : saved.email;
-  const nameComplete =
-    current.lastName.trim() !== "" && current.firstName.trim() !== "";
+  const nameComplete = current.lastName.trim() !== "" && current.firstName.trim() !== "";
   const lastName = nameComplete ? current.lastName : saved.lastName;
   const firstName = nameComplete ? current.firstName : saved.firstName;
   const update = { lastName, firstName, email, phone: current.phone };
