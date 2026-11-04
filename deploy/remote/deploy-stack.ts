@@ -225,6 +225,8 @@ try {
       throw error;
     }
   } else {
+    compose(["build"], DIR, true);
+
     const oldId = compose(["ps", "-q", "vendure"]).trim();
     if (oldId) {
       try {
@@ -238,7 +240,7 @@ try {
     }
 
     try {
-      compose(["up", "-d", "--build", "--wait", "--wait-timeout", "300"], DIR, true);
+      compose(["up", "-d", "--wait", "--wait-timeout", "300"], DIR, true);
     } catch {
       console.error("new stack failed to become healthy; rolling back to the previous image");
       dumpStackState();
