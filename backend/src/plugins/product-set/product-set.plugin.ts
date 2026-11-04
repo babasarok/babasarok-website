@@ -5,6 +5,7 @@ import {
   OrderLineSetStateResolver,
   OrderSetDiscountsResolver,
 } from "./order-set-fields.resolver";
+import { GroupParentGuardResolver } from "./group-parent-guard.resolver";
 import { ShopProductGroupResolver } from "./product-set.resolver";
 import { SetBasketService } from "./set-basket.service";
 
@@ -36,6 +37,9 @@ const shopProductGroupSchema = gql`
       ${orderSetFieldsSdl}
     `,
     resolvers: [ShopProductGroupResolver, OrderSetDiscountsResolver, OrderLineSetStateResolver],
+  },
+  adminApiExtensions: {
+    resolvers: [GroupParentGuardResolver],
   },
 })
 export class ProductSetPlugin {}
