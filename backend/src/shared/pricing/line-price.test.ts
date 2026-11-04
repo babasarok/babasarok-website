@@ -1,7 +1,7 @@
-import type { ProductDefinition } from "@babasarok/product-definition";
-import { ProductDefinitionSchema } from "@babasarok/product-definition";
+import type { ProductDefinition } from "../product-definition/index";
+import { ProductDefinitionSchema } from "../product-definition/index";
 import { describe, expect, it } from "vitest";
-import { LineSelectionsError, parseLineSelections } from "@babasarok/product-definition";
+import { LineSelectionsError, parseLineSelections } from "../product-definition/index";
 import { computeLineUnitPrice, LinePricingError, valueConfiguredLine } from "./line-price";
 
 const unitProduct = ProductDefinitionSchema.parse({

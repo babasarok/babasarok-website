@@ -2,8 +2,8 @@ import {
   ProductDefinitionSchema,
   type ProductDefinition,
   type ProductField,
-} from "@babasarok/product-definition";
-import { dependencyOrder, isVisible } from "@babasarok/pricing";
+} from "../../shared/product-definition/index";
+import { dependencyOrder, isVisible } from "../../shared/pricing/index";
 
 export type ProductDefinitionValidationResult =
   { success: true; definition: ProductDefinition } | { success: false; errors: string[] };

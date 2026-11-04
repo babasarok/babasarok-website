@@ -3,11 +3,15 @@ import {
   type LocalizedText,
   type ProductDefinition,
   type ProductField,
-} from "@babasarok/product-definition";
+} from "../../shared/product-definition/index";
 import { plannedVariantFacetCodes } from "./facet-plan";
 import type { MaterialFacetData } from "./facet-plan";
 import type { NativeProductState } from "./sync-state";
-import { completesForbiddenCombination, dependencyOrder, isVisible } from "@babasarok/pricing";
+import {
+  completesForbiddenCombination,
+  dependencyOrder,
+  isVisible,
+} from "../../shared/pricing/index";
 
 export interface PlannedOption {
   code: string;

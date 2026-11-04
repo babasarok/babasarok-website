@@ -23,8 +23,6 @@ export default defineConfig([
     "backend/dist",
     "backend/node_modules",
     "backend/src/gql",
-    "packages/product-definition/dist",
-    "packages/pricing/dist",
   ]),
   {
     plugins: { js, astro, unicorn },

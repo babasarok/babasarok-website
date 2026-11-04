@@ -19,14 +19,12 @@
     "import-products": "node --env-file-if-exists=.env scripts/import-products.ts",
     "converge-facets": "node --env-file-if-exists=.env scripts/converge-facets.ts",
     "e2e:server": "node --env-file=e2e.env scripts/e2e-server.ts",
-    "check": "tsc -b && tsc -p tsconfig.integration.json",
-    "check:dashboard": "pnpm -C ../packages/product-definition run build && node scripts/check-dashboard-types.ts",
+    "check": "tsc -b && tsc -p tsconfig.scripts.json --noEmit && tsc -p tsconfig.integration.json",
+    "check:dashboard": "node scripts/check-dashboard-types.ts",
     "test": "vitest run",
     "test:integration": "tsc -b && vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
-    "@babasarok/pricing": "workspace:*",
-    "@babasarok/product-definition": "workspace:*",
     "@nestjs/common": "^12.0.1",
     "@nestjs/graphql": "~14.0.0",
     "@tiptap/core": "3.32.0",

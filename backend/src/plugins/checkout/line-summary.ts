@@ -1,4 +1,4 @@
-import { selectionDetails, type ProductDefinition } from "@babasarok/product-definition";
+import { selectionDetails, type ProductDefinition } from "../../shared/product-definition/index";
 import { Injectable } from "@nestjs/common";
 import { EventBus, ID, OrderLine, OrderLineEvent, TransactionalConnection } from "@vendure/core";
 import { In } from "typeorm";

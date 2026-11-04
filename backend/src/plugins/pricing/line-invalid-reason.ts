@@ -1,4 +1,4 @@
-import { nonOrderableRejection } from "@babasarok/pricing";
+import { nonOrderableRejection } from "../../shared/pricing/index";
 import type { OrderLine, RequestContext } from "@vendure/core";
 import { lineRejection, type LineFacts } from "./line-rejection";
 import { valueVariantLine, type LineValuationDeps } from "./line-valuation";

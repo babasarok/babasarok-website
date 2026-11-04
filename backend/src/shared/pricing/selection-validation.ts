@@ -2,8 +2,8 @@ import {
   resolveText,
   type ProductDefinition,
   type ProductField,
-} from "@babasarok/product-definition";
-import type { LineSelectionRecord, LineSelections } from "@babasarok/product-definition";
+} from "../product-definition/index";
+import type { LineSelectionRecord, LineSelections } from "../product-definition/index";
 
 /**
  * The site's configurator sets no text limits; this keeps a buyer-entered value

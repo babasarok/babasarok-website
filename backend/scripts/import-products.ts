@@ -25,8 +25,8 @@
  */
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
-import type { ProductDefinitionSchema } from "@babasarok/product-definition";
-import { ProductGroupDefinitionSchema } from "@babasarok/product-definition";
+import type { ProductDefinitionSchema } from "../src/shared/product-definition/index.ts";
+import { ProductGroupDefinitionSchema } from "../src/shared/product-definition/index.ts";
 import { z } from "zod";
 import { parse } from "yaml";
 import { adminRequest, authenticate, uploadAsset } from "./lib/admin-client.ts";

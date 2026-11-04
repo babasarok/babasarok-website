@@ -1,4 +1,4 @@
-import { canonicalJson, type LocalizedText } from "@babasarok/product-definition";
+import { canonicalJson, type LocalizedText } from "../../shared/product-definition/index";
 import { createHash } from "node:crypto";
 
 export interface NativeOptionState {

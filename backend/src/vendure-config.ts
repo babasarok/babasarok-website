@@ -29,7 +29,7 @@ import {
 import { MaterialPlugin } from "./plugins/material/material.plugin";
 import { CheckoutPlugin } from "./plugins/checkout/checkout.plugin";
 import { PricingPlugin } from "./plugins/pricing/pricing.plugin";
-import { MAX_LINE_LENGTH_CM } from "@babasarok/pricing";
+import { MAX_LINE_LENGTH_CM } from "./shared/pricing/index";
 import { ServerPricingStrategy } from "./plugins/pricing/pricing-strategy";
 import {
   productSetBasketCondition,

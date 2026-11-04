@@ -104,10 +104,10 @@ export default defineConfig({
         // graph. The unit tests alias the same way (vitest.config.ts); only
         // the backend consumes the built dist.
         "@babasarok/product-definition": fileURLToPath(
-          new URL("packages/product-definition/src/index.ts", import.meta.url)
+          new URL("backend/src/shared/product-definition/index.ts", import.meta.url)
         ),
         "@babasarok/pricing": fileURLToPath(
-          new URL("packages/pricing/src/index.ts", import.meta.url)
+          new URL("backend/src/shared/pricing/index.ts", import.meta.url)
         ),
       },
     },

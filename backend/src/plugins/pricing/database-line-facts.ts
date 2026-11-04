@@ -1,6 +1,6 @@
 import { FacetValue } from "@vendure/core";
 import type { RequestContext, TransactionalConnection } from "@vendure/core";
-import type { ProductDefinition as CanonicalProductDefinition } from "@babasarok/product-definition";
+import type { ProductDefinition as CanonicalProductDefinition } from "../../shared/product-definition/index";
 import { In } from "typeorm";
 import { MaterialColor } from "../material/material.entity";
 import { THREAD_COLOR_FACET_CODE } from "../product/facet-plan";

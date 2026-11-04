@@ -33,7 +33,7 @@ import { defineStateEntries } from "@vendure/dashboard";
 import {
   ProductDefinitionSchema,
   type ProductDefinitionInput,
-} from "@babasarok/product-definition";
+} from "../../shared/product-definition/index";
 import { graphql } from "@/gql";
 import { Switch } from "@/vdb/components/ui/switch.js";
 import { UnsavedChangesGuard } from "./unsaved-changes-guard";

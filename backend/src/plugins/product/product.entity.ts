@@ -1,6 +1,6 @@
 import { DeepPartial, VendureEntity } from "@vendure/core";
 import { Column, Entity } from "typeorm";
-import type { ProductDefinition as CanonicalProductDefinition } from "@babasarok/product-definition";
+import type { ProductDefinition as CanonicalProductDefinition } from "../../shared/product-definition/index";
 
 @Entity()
 export class ProductDefinition extends VendureEntity {

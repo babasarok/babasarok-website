@@ -15,7 +15,7 @@
  */
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
-import { MaterialDefinitionSchema } from "@babasarok/product-definition";
+import { MaterialDefinitionSchema } from "../src/shared/product-definition/index.ts";
 import { parse } from "yaml";
 import { z } from "zod";
 import { adminRequest, authenticate, uploadAsset } from "./lib/admin-client.ts";

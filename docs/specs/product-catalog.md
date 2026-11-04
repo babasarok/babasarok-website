@@ -458,8 +458,9 @@ language as `?languageCode=` (currently `hu`).
 
 - `Product.productDefinition: JSON` — the stored canonical definition
   (`null` for a native product without one), loaded once per request for all
-  products of that request. The site validates it with the shared
-  `@babasarok/product-definition` schema and resolves its `LocalizedText`
+  products of that request. The site validates it with the shared canonical
+  schema (`backend/src/shared/product-definition`, imported as
+  `@babasarok/product-definition`) and resolves its `LocalizedText`
   with `resolveText`. Products without generated variants are still listed;
   the page decides orderability.
 - `materials` / `material(slug)` — materials with request-language

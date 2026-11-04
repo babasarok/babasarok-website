@@ -9,14 +9,15 @@ treated as contributing nothing rather than producing a partial price.
 
 The line-pricing rules (price composition, length scaling, field visibility,
 selection validation, forbidden material combinations) are implemented once, in
-the pure workspace package `packages/pricing` (`@babasarok/pricing`, depending
-only on zod and `@babasarok/product-definition`). The backend pricing strategy
+the shared folder `backend/src/shared/pricing` (imported by the site as
+`@babasarok/pricing`, depending only on zod and the shared canonical schemas in
+`backend/src/shared/product-definition`). The backend pricing strategy
 and the order-line boundary call it; it prices a canonical `ProductDefinition`
 plus the line's selections and variant options. The site's configurator shows a
-live unit price from the package (`src/lib/catalog/livePrice.ts`) and an option
-breakdown from `src/lib/pricing/price.ts` (display only); every basket and
-checkout amount is read from the Vendure order, and the set discount is a server
-promotion.
+live unit price from the shared code (`src/lib/catalog/livePrice.ts`) and an
+option breakdown from `src/lib/pricing/price.ts` (display only); every basket
+and checkout amount is read from the Vendure order, and the set discount is a
+server promotion.
 
 Selection problems are structured (`field`, `code`, detail) and rendered by one
 formatter; a selection is also refused when a material field carries fewer

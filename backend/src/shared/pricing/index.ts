@@ -1,4 +1,4 @@
-export { dependencyOrder, isVisible } from "@babasarok/product-definition";
+export { dependencyOrder, isVisible } from "../product-definition/index";
 export {
   LineSelectionRecordSchema,
   LineSelectionsError,
@@ -7,7 +7,7 @@ export {
   serializeLineSelections,
   type LineSelectionRecord,
   type LineSelections,
-} from "@babasarok/product-definition";
+} from "../product-definition/index";
 export {
   MAX_LINE_LENGTH_CM,
   MAX_SELECTION_TEXT_LENGTH,

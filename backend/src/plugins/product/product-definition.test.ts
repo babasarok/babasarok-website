@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ProductDefinitionInput } from "@babasarok/product-definition";
+import type { ProductDefinitionInput } from "../../shared/product-definition/index";
 import { validateProductDefinition } from "./product-definition";
 
 const MATERIALS = new Set(["wellsoft", "velur"]);

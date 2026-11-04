@@ -1,4 +1,4 @@
-import { ProductDefinitionSchema } from "@babasarok/product-definition";
+import { ProductDefinitionSchema } from "./product.js";
 import { describe, expect, it } from "vitest";
 import { selectionDetails, type SelectionLabels } from "./selection-details.js";
 const definition = ProductDefinitionSchema.parse({

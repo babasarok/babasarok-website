@@ -1,4 +1,4 @@
-import { selectionDetails, type ProductDefinition } from "@babasarok/product-definition";
+import { selectionDetails, type ProductDefinition } from "../../shared/product-definition/index";
 import type { TransactionalConnection } from "@vendure/core";
 import type { Order, RequestContext } from "@vendure/core";
 import { In } from "typeorm";

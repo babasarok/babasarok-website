@@ -1,4 +1,7 @@
-import { ProductDefinitionSchema, type ProductDefinition } from "@babasarok/product-definition";
+import {
+  ProductDefinitionSchema,
+  type ProductDefinition,
+} from "../../shared/product-definition/index";
 import { describe, expect, it } from "vitest";
 import { lineRejection, type LineFacts } from "./line-rejection";
 

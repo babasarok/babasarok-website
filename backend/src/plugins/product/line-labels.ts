@@ -1,9 +1,9 @@
-import { referencedMaterialIds, type LineSelections } from "@babasarok/pricing";
+import { referencedMaterialIds, type LineSelections } from "../../shared/pricing/index";
 import {
   LineSelectionsError,
   parseLineSelections,
   type SelectionLabels,
-} from "@babasarok/product-definition";
+} from "../../shared/product-definition/index";
 import { FacetValue, LanguageCode } from "@vendure/core";
 import type { TransactionalConnection, RequestContext } from "@vendure/core";
 import { In } from "typeorm";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { completesForbiddenCombination, forbiddenMaterialFieldIds } from "./banned-combinations";
-import type { LineSelections } from "@babasarok/product-definition";
+import type { LineSelections } from "../product-definition/index";
 
 describe("completesForbiddenCombination", () => {
   it("bans a material chosen twice when the rule lists it twice", () => {

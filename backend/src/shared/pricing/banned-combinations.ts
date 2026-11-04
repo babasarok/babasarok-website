@@ -1,4 +1,4 @@
-import type { LineSelections } from "@babasarok/product-definition";
+import type { LineSelections } from "../product-definition/index";
 
 type ForbiddenCombinations = readonly (readonly string[])[];
 

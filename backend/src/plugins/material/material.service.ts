@@ -18,7 +18,7 @@ import { z } from "zod";
 import type {
   MaterialDefinition,
   ProductDefinition as CanonicalProductDefinition,
-} from "@babasarok/product-definition";
+} from "../../shared/product-definition/index";
 import { nativeProductNames } from "../product/native-names";
 import { ProductDefinition } from "../product/product.entity";
 import {

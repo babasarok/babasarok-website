@@ -1,4 +1,4 @@
-import { ProductDefinitionSchema } from "@babasarok/product-definition";
+import { ProductDefinitionSchema } from "../../shared/product-definition/index";
 import { Channel, LanguageCode, OrderLine, ProductVariant, RequestContext } from "@vendure/core";
 import { describe, expect, it } from "vitest";
 import { ProductDefinition } from "../product/product.entity";

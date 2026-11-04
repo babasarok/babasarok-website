@@ -31,7 +31,7 @@ import {
 } from "@vendure/dashboard";
 import { graphql } from "@/gql";
 import { errorCodeOf, ErrorNotice, rowKey } from "../shared";
-import { DEFAULT_TEXT_LANGUAGE } from "@babasarok/product-definition";
+import { DEFAULT_TEXT_LANGUAGE } from "../../shared/product-definition/index";
 
 const materialsQuery = graphql(`
   query Materials {

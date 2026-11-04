@@ -36,26 +36,23 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           typegen: ${{ matrix.typegen }}
-      # Typed lint resolves @babasarok/product-definition through its dist
-      # type declarations; the backend tree's node10 module resolution cannot
-      # follow the package's node16-style source imports. The backend build
-      # also covers the integration harness, whose imports resolve against
-      # backend/dist (it tests the built artifact the deploy runs).
+      # The backend build also covers the integration harness, whose imports
+      # resolve against backend/dist (it tests the built artifact the deploy
+      # runs).
       - if: matrix.name == 'Lint'
-        run: pnpm -C packages/product-definition run build && pnpm -C packages/pricing run build && pnpm -C backend run build
+        run: pnpm -C backend run build
       - run: ${{ matrix.run }}
 
   # Fast unit tests for the order-form domain logic (pricing, validation,
   # order-string formatting). No Tina client, Astro sync, or production build
-  # is needed — it runs straight off source — but the runtime imports from
-  # @babasarok/pricing resolve through the package's dist output.
+  # is needed — it runs straight off source, with the shared logic resolved
+  # as TypeScript source through vitest's aliases.
   unit:
     name: Unit Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-      - run: pnpm -C packages/product-definition run build && pnpm -C packages/pricing run build
       - run: pnpm test
 
   # Type-check + unit tests for the Vendure backend (backend/ workspace).
