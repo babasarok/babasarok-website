@@ -174,3 +174,33 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
       - run: pnpm run test:dashboard-e2e
+
+      # API-level checks against a freshly booted e2e backend (the dashboard
+      # e2e run above tears its own webServer down, so :4000 is free again):
+      # the quote-order roundtrip regression check and the site's catalog
+      # contract test. The roundtrip runs first so the contract test also
+      # exercises getProduct() against the placeholder products it created.
+      - name: Boot e2e backend
+        working-directory: backend
+        run: |
+          pnpm run e2e:server &
+          for i in $(seq 1 120); do
+            if curl -sf http://localhost:4000/health > /dev/null; then
+              echo "e2e backend is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "e2e backend failed to start" >&2
+          exit 1
+
+      - name: Run quote-order roundtrip
+        working-directory: backend
+        run: pnpm run test:quote-roundtrip
+
+      - name: Run catalog contract test
+        run: CATALOG_CONTRACT_API_URL=http://localhost:4000 pnpm exec vitest run src/lib/catalog/contract.test.ts
+
+      - name: Stop e2e backend
+        if: always()
+        run: pkill -f "e2e-server.ts" || true
