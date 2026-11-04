@@ -274,11 +274,168 @@ try {
       }
     }
 
+    // Migrations are forward-only, so the rollback image needs the
+    // pre-deploy database too: dump before `up` runs the migrate service.
+    // The WAL LSN recorded with the dump later proves whether ANYTHING
+    // committed since — a restore is only ever lossless when it did not.
+    const dumpFile = `${DIR}/pre-deploy-${new Date().toISOString().replace(/[:.]/g, "-")}.sql`;
+    try {
+      writeFileSync(
+        dumpFile,
+        run(
+          "docker",
+          ["compose", "exec", "-T", "postgres", "pg_dump", "-U", "babasarok", "babasarok"],
+          { cwd: DIR }
+        )
+      );
+      const savedLsn = run(
+        "docker",
+        [
+          "compose",
+          "exec",
+          "-T",
+          "postgres",
+          "psql",
+          "-U",
+          "babasarok",
+          "-d",
+          "postgres",
+          "-tAc",
+          "select pg_current_wal_lsn()",
+        ],
+        { cwd: DIR }
+      ).trim();
+      writeFileSync(`${dumpFile}.lsn`, savedLsn);
+      const dumps = readdirSync(DIR)
+        .filter((f) => f.startsWith("pre-deploy-"))
+        .sort();
+      for (const old of dumps.slice(0, -5)) {
+        rmSync(path.join(DIR, old));
+      }
+    } catch (error) {
+      console.error("pre-deploy database dump failed; deploying without a restore point");
+      console.error(error);
+    }
+
     try {
       compose(["up", "-d", "--build", "--wait", "--wait-timeout", "300"], DIR, true);
     } catch {
       console.error("new stack failed to become healthy; rolling back to the previous image");
       dumpStackState();
+      // Order data is never destroyed automatically. The failed stack's
+      // writers are stopped first so nothing can commit between the LSN
+      // check and the restore; the restore itself only runs when the WAL
+      // proves zero commits since the dump. Any other state keeps the DB
+      // as-is (orders placed during the deploy survive) and leaves the
+      // dump on the box for a manual, human-owned recovery decision.
+      spawnSync("docker", ["compose", "stop", "vendure", "worker"], { cwd: DIR });
+      if (existsSync(`${dumpFile}.lsn`)) {
+        try {
+          const savedLsn = readFileSync(`${dumpFile}.lsn`, "utf8").trim();
+          const diff = run(
+            "docker",
+            [
+              "compose",
+              "exec",
+              "-T",
+              "postgres",
+              "psql",
+              "-U",
+              "babasarok",
+              "-d",
+              "postgres",
+              "-tAc",
+              `select pg_wal_lsn_diff(pg_current_wal_lsn(), '${savedLsn}')`,
+            ],
+            { cwd: DIR }
+          ).trim();
+          if (diff === "0") {
+            // Restore into a scratch DB first; the original is only dropped
+            // once the restore has fully succeeded, so a failed restore
+            // leaves the original untouched.
+            run(
+              "docker",
+              [
+                "compose",
+                "exec",
+                "-T",
+                "postgres",
+                "psql",
+                "-U",
+                "babasarok",
+                "-d",
+                "postgres",
+                "-c",
+                'DROP DATABASE IF EXISTS "babasarok_restore" WITH (FORCE)',
+              ],
+              { cwd: DIR }
+            );
+            run(
+              "docker",
+              [
+                "compose",
+                "exec",
+                "-T",
+                "postgres",
+                "psql",
+                "-U",
+                "babasarok",
+                "-d",
+                "postgres",
+                "-c",
+                'CREATE DATABASE "babasarok_restore"',
+              ],
+              { cwd: DIR }
+            );
+            run(
+              "docker",
+              [
+                "compose",
+                "exec",
+                "-T",
+                "postgres",
+                "psql",
+                "-U",
+                "babasarok",
+                "-d",
+                "babasarok_restore",
+                "-v",
+                "ON_ERROR_STOP=1",
+                "-q",
+              ],
+              { cwd: DIR, input: readFileSync(dumpFile, "utf8") }
+            );
+            run(
+              "docker",
+              [
+                "compose",
+                "exec",
+                "-T",
+                "postgres",
+                "psql",
+                "-U",
+                "babasarok",
+                "-d",
+                "postgres",
+                "-c",
+                'DROP DATABASE "babasarok" WITH (FORCE); ALTER DATABASE "babasarok_restore" RENAME TO "babasarok"',
+              ],
+              { cwd: DIR }
+            );
+            console.error("restored the pre-deploy database dump (provably unchanged since)");
+          } else {
+            console.error(
+              `database has ${diff} bytes of WAL since the dump (deploy-window writes); NOT restoring — data stays as-is`
+            );
+            console.error(`manual recovery point: ${dumpFile}`);
+          }
+        } catch (error) {
+          console.error(
+            "could not prove the database unchanged since the dump; NOT restoring (fail-safe)"
+          );
+          console.error(error);
+        }
+      }
       if (existsSync(`${DIR}/docker-compose.rollback.yml`)) {
         rmSync(`${DIR}/docker-compose.rollback.yml`);
       }
