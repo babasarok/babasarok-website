@@ -219,4 +219,42 @@ describe("buildMaterialParams", () => {
     }
     expect(field.value).toEqual({ material_id: "cotton", colors: ["red", "blue"] });
   });
+
+  it("round-trips a colour id that itself contains a comma", () => {
+    const source = makeProduct({
+      fields: [
+        makeField({
+          name: "anyag",
+          type: "material",
+          materials: [
+            makeMaterial({
+              material_id: "cotton",
+              colors: [{ color_id: "Felhon alvo, feher" }, { color_id: "red" }],
+            }),
+          ],
+          value: { material_id: "cotton", colors: ["Felhon alvo, feher", "red"] },
+        }),
+      ],
+    });
+    const target = makeProduct({
+      fields: [
+        makeField({
+          name: "anyag",
+          type: "material",
+          materials: [
+            makeMaterial({
+              material_id: "cotton",
+              colors: [{ color_id: "Felhon alvo, feher" }, { color_id: "red" }],
+            }),
+          ],
+        }),
+      ],
+    });
+    prefillFromParams(target, buildMaterialParams(source));
+    const field = target.fields[0];
+    if (field.type !== "material") {
+      throw new Error("expected material field");
+    }
+    expect(field.value).toEqual({ material_id: "cotton", colors: ["Felhon alvo, feher", "red"] });
+  });
 });
