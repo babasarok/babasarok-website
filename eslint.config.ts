@@ -138,6 +138,33 @@ export default defineConfig([
     },
   },
   {
+    // The shared folder holds the canonical schemas and pricing logic that
+    // the site and dashboard also import as TypeScript source — its code
+    // must stay free of backend-only dependencies (Vendure entities, server
+    // env, site paths) so every consumer can bundle it. Relative imports
+    // within the folder and plain libraries (zod) only.
+    files: ["backend/src/shared/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@vendure/*", "@/*"],
+              message:
+                "The shared schemas and pricing logic must stay consumer-agnostic: relative imports within the folder and plain libraries (zod) only. Backend-only dependencies belong in a plugin.",
+            },
+            {
+              group: ["../../*"],
+              message:
+                "Shared code is imported by the site and dashboard as TypeScript source; it must not reach outside its own tree.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ["backend/src/migrations/**/*.ts"],
     rules: {
       // TypeORM's migration generator emits `Promise<any>` signatures and

@@ -6,7 +6,6 @@
 !patches
 !Dockerfile
 !backend
-!packages
 backend/node_modules
 backend/dist
 # tsc -b would trust these and skip emitting dist in the image
@@ -19,5 +18,3 @@ backend/dist
 backend/email-out
 backend/.env
 backend/.env.*
-packages/*/dist
-packages/*/node_modules

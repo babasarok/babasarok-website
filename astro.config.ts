@@ -1,6 +1,6 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig, envField, fontProviders } from "astro/config";
 import svelte from "@astrojs/svelte";
-import { fileURLToPath } from "node:url";
 import cloudflare from "@astrojs/cloudflare";
 import { cacheCloudflare } from "@astrojs/cloudflare/cache";
 import sitemap from "@astrojs/sitemap";
@@ -99,10 +99,9 @@ export default defineConfig({
     plugins: [tailwindcss(), tinaAdminDevRedirect()],
     resolve: {
       alias: {
-        // Consume the workspace packages as TypeScript source: vite compiles
-        // them for dev and build alike, so no CJS dist enters the browser
-        // graph. The unit tests alias the same way (vitest.config.ts); only
-        // the backend consumes the built dist.
+        // The canonical shared schemas and pricing logic live inside the
+        // backend's source tree; these aliases keep the site importing them
+        // as TypeScript source, so no CJS dist enters the browser graph.
         "@babasarok/product-definition": fileURLToPath(
           new URL("backend/src/shared/product-definition/index.ts", import.meta.url)
         ),
