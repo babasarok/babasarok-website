@@ -1,5 +1,6 @@
 import { LanguageCode } from "@vendure/common/lib/generated-types";
 import { vendureDashboardPlugin } from "@vendure/dashboard/vite";
+import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { defineConfig } from "vite";
 
@@ -29,10 +30,36 @@ export default defineConfig({
   build: {
     outDir: process.env.DASHBOARD_OUT_DIR ?? "dist/dashboard",
     emptyOutDir: true,
-    // The workspace-linked @babasarok/product-definition resolves to its
-    // realpath outside node_modules, where the default include misses it and
-    // rollup would read its CJS output as ESM.
-    commonjsOptions: { include: [/node_modules/, /product-definition/] },
+  },
+  // The @babasarok packages are consumed as their TypeScript source: vite
+  // compiles them for dev and build alike, so no CJS dist ever enters the
+  // browser graph and no CJS interop is needed. The backend keeps consuming
+  // their built dist through tsc project references. Object form, not array:
+  // the vendure dashboard plugin merges user aliases by object-spread.
+  resolve: {
+    alias: {
+      "@babasarok/product-definition/node": path.resolve(
+        import.meta.dirname,
+        "src",
+        "node.ts"
+      ),
+      "@babasarok/product-definition": path.resolve(
+        import.meta.dirname,
+        "..",
+        "packages",
+        "product-definition",
+        "src",
+        "index.ts"
+      ),
+      "@babasarok/pricing": path.resolve(
+        import.meta.dirname,
+        "..",
+        "packages",
+        "pricing",
+        "src",
+        "index.ts"
+      ),
+    },
   },
   server: {
     port: 5173,
