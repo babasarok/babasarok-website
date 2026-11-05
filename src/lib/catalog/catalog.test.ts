@@ -13,7 +13,6 @@ import {
   getProductGroups,
   getProducts,
   getThreadColors,
-  type CatalogProduct,
 } from "./index";
 
 function runReturning(...responses: unknown[]): ShopQuery & { variables: unknown[] } {
@@ -77,7 +76,10 @@ describe("getProducts", () => {
   it("rejects a definition that is not a valid canonical definition", async () => {
     const broken = structuredClone(products);
 
-    broken.products.items[0].productDefinition = { id: 1 } as never;
+    broken.products.items[0].productDefinition = {
+      ...products.products.items[0].productDefinition,
+      basePrice: -1,
+    };
 
     await expect(getProducts(runReturning(broken))).rejects.toThrow();
   });
@@ -146,8 +148,11 @@ describe("materials, thread colors, groups", () => {
 });
 
 describe("byPopularity", () => {
-  function ranked(slug: string, popularityRank: number | null): CatalogProduct {
-    return { slug, popularityRank } as CatalogProduct;
+  function ranked(
+    slug: string,
+    popularityRank: number | null
+  ): { slug: string; popularityRank: number | null } {
+    return { slug, popularityRank };
   }
 
   it("puts ranked products first by rank and unranked after, keeping their order", () => {

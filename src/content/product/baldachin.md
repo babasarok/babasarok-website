@@ -11,23 +11,23 @@ images:
   - image: /src/assets/IMG_7836.jpeg
   - image: /src/assets/IMG_3228.jpeg
   - image: /src/assets/IMG_7894.jpeg
-shortDescription: A finom, puha tüllből készült baldachin eleganciát és modern
-  vonalat csempész a babaszobába.
+shortDescription: 'A finom, puha tüllből készült baldachin eleganciát és modern vonalat csempész a babaszobába.'
 price: 17000
 fields:
   - name: suruseg
     label: Sűrűség
     type: radio
     items:
-      - value: "9"
+      - value: '9'
         label: 9m
         price: 0
-      - value: "12"
+      - value: '12'
         label: 12m
         price: 4000
   - name: diszites
     label: Díszítés
     type: radio
+    price: 0
     items:
       - value: pompom
         label: Pompom
@@ -35,11 +35,12 @@ fields:
       - value: masni
         label: Masni
         price: 0
-    price: 0
+      - value: nincs
+        label: Nem kérek díszítést
   - name: anyag
     label: Anyag
     type: material
-    color_count: "1"
+    color_count: '1'
     materials:
       - material_path: src/content/material/tull.md
         price: 0

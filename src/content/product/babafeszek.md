@@ -17,7 +17,7 @@ shortDescription: |-
   Babafészek fekvő felület méretei: 
   Normál: kb. 35x65cm 
   Közepes: kb. 40x75cm 
-  Xxl: kb. 50x90cm 
+  Xxl: kb. 47x90cm 
 
   (+- 3cm eltérés elfogadott) 
 
@@ -98,6 +98,10 @@ fields:
         price: 0
       - material_path: src/content/material/waffle.md
         price: 0
+  - name: fül
+    label: Kérek hozzá fület
+    type: toggle
+    price: 1500
 ---
 
 pihenést biztosít a legkisebbeknek.

@@ -125,7 +125,9 @@ export function toProductGroups(
 }
 
 /** Ranked products first (1 = most popular), unranked after, each block in input order. */
-export function byPopularity(products: readonly CatalogProduct[]): CatalogProduct[] {
+export function byPopularity<T extends { popularityRank: number | null }>(
+  products: readonly T[]
+): T[] {
   const ranked = products.filter((product) => product.popularityRank !== null);
   const unranked = products.filter((product) => product.popularityRank === null);
 

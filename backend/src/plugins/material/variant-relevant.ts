@@ -1,3 +1,5 @@
+import { byCodeUnit } from "../../shared/product-definition/index";
+
 interface LabelTranslation {
   languageCode: string;
   label: string;
@@ -19,7 +21,7 @@ function variantRelevantKey(material: VariantRelevantMaterial): string {
     labels: labels(material.translations),
     colors: material.colors
       .map((color) => ({ id: color.colorId, labels: labels(color.translations) }))
-      .toSorted((a, b) => a.id.localeCompare(b.id)),
+      .toSorted((a, b) => byCodeUnit(a.id, b.id)),
   });
 }
 

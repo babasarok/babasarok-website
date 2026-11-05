@@ -1,4 +1,8 @@
-import { canonicalJson, type LocalizedText } from "../../shared/product-definition/index";
+import {
+  byCodeUnit,
+  canonicalJson,
+  type LocalizedText,
+} from "../../shared/product-definition/index";
 import { createHash } from "node:crypto";
 
 export interface NativeOptionState {
@@ -67,7 +71,7 @@ function sameText(a: LocalizedText, b: LocalizedText): boolean {
 }
 
 function byCode(a: [string, unknown], b: [string, unknown]): number {
-  return a[0].localeCompare(b[0]);
+  return byCodeUnit(a[0], b[0]);
 }
 
 function optionGroupDiffs(
@@ -210,7 +214,7 @@ function optionSignature(variant: NativeVariantState): string {
 }
 
 function facetSignature(variant: NativeVariantState): string {
-  return [...variant.facetValues].toSorted((a, b) => a.localeCompare(b)).join(",");
+  return [...variant.facetValues].toSorted(byCodeUnit).join(",");
 }
 
 function sha256(value: string): string {
@@ -226,23 +230,22 @@ function sha256(value: string): string {
 export function nativeStateHash(state: NativeProductState): string {
   const canonical = {
     optionGroups: [...state.optionGroups]
-      .toSorted((a, b) => a.code.localeCompare(b.code))
+      .toSorted((a, b) => byCodeUnit(a.code, b.code))
       .map((group) => ({
         code: group.code,
         name: group.name,
-        options: [...group.options].toSorted((a, b) => a.code.localeCompare(b.code)),
+        options: [...group.options].toSorted((a, b) => byCodeUnit(a.code, b.code)),
       })),
     variants: [...state.variants]
-      .toSorted((a, b) => a.sku.localeCompare(b.sku))
+      .toSorted((a, b) => byCodeUnit(a.sku, b.sku))
       .map((variant) => ({
         sku: variant.sku,
         name: variant.name,
         price: variant.price,
         options: [...variant.options].toSorted(
-          (a, b) =>
-            a.groupCode.localeCompare(b.groupCode) || a.optionCode.localeCompare(b.optionCode)
+          (a, b) => byCodeUnit(a.groupCode, b.groupCode) || byCodeUnit(a.optionCode, b.optionCode)
         ),
-        facetValues: [...variant.facetValues].toSorted((a, b) => a.localeCompare(b)),
+        facetValues: [...variant.facetValues].toSorted(byCodeUnit),
       })),
   };
 

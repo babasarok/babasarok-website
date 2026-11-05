@@ -14,7 +14,7 @@ colors:
     label: Szürke
     image: /src/assets/IMG_5139.webp
   - color_id: 'Világos bézs'
-    label: 'Világos bézs'
+    label: Homokbézs
     hex: ''
     image: /src/assets/IMG_5112.webp
   - color_id: barna
@@ -45,7 +45,7 @@ colors:
     hex: ''
     image: /src/assets/IMG_5143.webp
   - color_id: Halvány rózsaszín 19
-    label: 'Extra halvány rózsaszín'
+    label: 'Halvány rózsaszín'
     image: /src/assets/IMG_5147.webp
   - color_id: pink
     label: Pink

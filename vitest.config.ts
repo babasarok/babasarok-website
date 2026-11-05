@@ -1,4 +1,3 @@
-import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 /**
@@ -30,18 +29,7 @@ export default defineConfig({
     },
   ],
   resolve: {
-    alias: {
-      // The canonical shared schemas and pricing logic live inside the
-      // backend's source tree; these aliases keep the site importing the
-      // shared code as TypeScript source.
-      "@babasarok/product-definition": fileURLToPath(
-        new URL("backend/src/shared/product-definition/index.ts", import.meta.url)
-      ),
-      "@babasarok/pricing": fileURLToPath(
-        new URL("backend/src/shared/pricing/index.ts", import.meta.url)
-      ),
-      "@": fileURLToPath(new URL("src", import.meta.url)),
-    },
+    tsconfigPaths: true,
   },
   test: {
     include: ["src/**/*.test.ts"],

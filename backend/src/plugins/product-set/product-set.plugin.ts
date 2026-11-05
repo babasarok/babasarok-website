@@ -1,10 +1,12 @@
 import gql from "graphql-tag";
 import { PluginCommonModule, VendurePlugin } from "@vendure/core";
+import { APP_INTERCEPTOR } from "@nestjs/core";
 import {
   orderSetFieldsSdl,
   OrderLineSetStateResolver,
   OrderSetDiscountsResolver,
 } from "./order-set-fields.resolver";
+import { GroupParentGuardInterceptor } from "./group-parent-guard.interceptor";
 import { ShopProductGroupResolver } from "./product-set.resolver";
 import { SetBasketService } from "./set-basket.service";
 
@@ -29,7 +31,10 @@ const shopProductGroupSchema = gql`
 
 @VendurePlugin({
   imports: [PluginCommonModule],
-  providers: [SetBasketService],
+  providers: [
+    SetBasketService,
+    { provide: APP_INTERCEPTOR, useClass: GroupParentGuardInterceptor },
+  ],
   shopApiExtensions: {
     schema: gql`
       ${shopProductGroupSchema}

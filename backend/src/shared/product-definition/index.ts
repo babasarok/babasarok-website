@@ -65,7 +65,7 @@ export {
   type ProductField,
   type ProductPricing,
 } from "./product.js";
-export { canonicalJson } from "./canonical-json.js";
+export { byCodeUnit, canonicalJson } from "./canonical-json.js";
 export {
   parseLineSelections,
   serializeLineSelections,

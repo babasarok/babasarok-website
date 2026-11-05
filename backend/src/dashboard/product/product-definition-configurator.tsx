@@ -747,7 +747,7 @@ export function ConfiguratorEditor({
           />
         )}
 
-        <div className="flex flex-col gap-4">
+        <fieldset disabled={pending} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm">
             <span>Azonosító</span>
             {creatingNew ? (
@@ -804,7 +804,7 @@ export function ConfiguratorEditor({
           {lengthPricing !== null && (
             <p className="text-muted-foreground text-xs">{lengthPricing}</p>
           )}
-        </div>
+        </fieldset>
       </PageBlock>
       <PageBlock
         column="main"
@@ -812,7 +812,7 @@ export function ConfiguratorEditor({
         title="Mezők"
         description="Minden választó, kapcsoló és anyagmező natív opciócsoportot és variánsokat generál; a szabad szöveg és a hímzés a rendelési sorokon él tovább."
       >
-        <div className="flex flex-col gap-4">
+        <fieldset disabled={pending} className="flex flex-col gap-4">
           {rows.map((row, index) => (
             <Fragment key={row.key}>
               <FieldEditor
@@ -879,7 +879,7 @@ export function ConfiguratorEditor({
               </Button>
             ))}
           </div>
-        </div>
+        </fieldset>
       </PageBlock>
       <PageBlock
         column="main"
@@ -887,7 +887,7 @@ export function ConfiguratorEditor({
         title="Tiltott anyagkombinációk"
         description="Az itt felsorolt anyagpárok (akkor is, ha ugyanaz az anyag kétszer szerepel) nem fordulhatnak elő együtt egy választásban."
       >
-        <div className="flex flex-col gap-2">
+        <fieldset disabled={pending} className="flex flex-col gap-2">
           {banned.map((rule, index) => (
             <div key={index} className="flex items-end gap-2">
               {rule.map((materialId, memberIndex) => (
@@ -939,7 +939,7 @@ export function ConfiguratorEditor({
               + Kombináció hozzáadása
             </Button>
           </div>
-        </div>
+        </fieldset>
       </PageBlock>
       {!creatingNew && (
         <PageBlock
