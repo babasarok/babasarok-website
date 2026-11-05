@@ -28,7 +28,7 @@ colors:
     label: 'Babarózsaszín'
     image: /src/assets/IMG_4076.webp
   - color_id: '#16'
-    label: 'Extra Halvány rózsaszín'
+    label: 'Halvány rózsaszín'
     image: /src/assets/IMG_6648.webp
   - color_id: '#1'
     label: Babakék

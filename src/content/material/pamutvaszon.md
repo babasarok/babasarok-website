@@ -135,6 +135,9 @@ colors:
   - color_id: 'Puder'
     label: Púder
     image: /src/assets/IMG_6738.webp
+  - color_id: Halvanyrozsa
+    label: 'Halvány rózsaszín (barackosabb)'
+    image: /src/assets/IMG_7150.jpeg
   - color_id: 'Malyvas lila'
     label: 'Mályvásabb lila'
     image: /src/assets/IMG_6692.webp

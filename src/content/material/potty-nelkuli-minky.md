@@ -13,7 +13,7 @@ colors:
     label: 'Szürke'
     image: /src/assets/IMG_5169.webp
   - color_id: 'Világos bézs'
-    label: 'Világos bézs'
+    label: 'Bézs'
     image: /src/assets/IMG_6736.jpeg
   - color_id: Caffelatte66
     label: 'Tejeskávé'
@@ -40,7 +40,7 @@ colors:
     label: 'Halvány barackos rózsaszín'
     image: /src/assets/IMG_5143.webp
   - color_id: Extra halvanyrozsaszin-19
-    label: 'Extra halvány rózsaszín'
+    label: 'Halvány rózsaszín'
     image: /src/assets/IMG_5157.webp
   - color_id: Halvány babakek 13
     label: Pasztellkék
