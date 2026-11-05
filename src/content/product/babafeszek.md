@@ -98,6 +98,10 @@ fields:
         price: 0
       - material_path: src/content/material/waffle.md
         price: 0
+  - name: fül
+    label: Kérek hozzá fület
+    type: toggle
+    price: 1500
 ---
 
 pihenést biztosít a legkisebbeknek.
