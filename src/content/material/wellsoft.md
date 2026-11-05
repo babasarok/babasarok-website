@@ -19,7 +19,7 @@ colors:
     label: Pink
     image: /src/assets/IMG_5159.webp
   - color_id: Extra halvány rozsaszin19
-    label: 'Extra halvány rózsaszín '
+    label: 'Halvány rózsaszín '
     image: /src/assets/IMG_5156.webp
   - color_id: 'Halvány barackos-53 '
     label: 'Halvány barackos rózsaszín '
