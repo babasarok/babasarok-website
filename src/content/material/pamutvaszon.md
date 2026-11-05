@@ -150,6 +150,9 @@ colors:
   - color_id: Drapp
     label: Drapp
     image: /src/assets/IMG_6716.webp
+  - color_id: Halvanyrozsa
+    label: 'Halvány rózsaszín (barackosabb)  '
+    image: /src/assets/IMG_7150.jpeg
 thumbnail: /src/assets/IMG_5070.webp
 categories: '100%pamut, mintás vagy egyszínű gyerekbarát anyag. '
 shortDescription: |-
