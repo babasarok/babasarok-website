@@ -3,8 +3,8 @@ import {
   type ProductDefinition,
   type ProductField,
 } from "../product-definition/index";
-import { dependencyOrder, isVisible } from "./field-visibility.js";
-import type { LineSelections } from "./line-selection.js";
+import { dependencyOrder, isVisible } from "./field-visibility";
+import type { LineSelections } from "./line-selection";
 
 export interface LinePricingInput {
   definition: ProductDefinition;

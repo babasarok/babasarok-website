@@ -408,6 +408,9 @@ importers:
       tinacms:
         specifier: ^3.13.0
         version: 3.15.0(@types/node@25.9.9)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(abstract-level@1.0.4)(immer@10.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.28.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(supports-color@10.2.2)(use-sync-external-store@1.7.0(react@18.3.1))
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -523,6 +526,9 @@ importers:
       gql.tada:
         specifier: ^1.11.4
         version: 1.11.4(graphql@16.14.2)(typescript@5.9.3)
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
       typeorm:
         specifier: ^0.3.31
         version: 0.3.31(better-sqlite3@12.11.1)(pg@8.23.1)(supports-color@10.2.2)
@@ -16912,6 +16918,8 @@ snapshots:
       shiki: 3.23.0
       sonner: 2.0.8(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       tailwind-merge: 3.7.0
+    optionalDependencies:
+      next-themes: 0.4.6(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
     transitivePeerDependencies:
       - '@date-fns/tz'
       - '@emotion/is-prop-valid'
@@ -25102,7 +25110,6 @@ snapshots:
       esbuild: 0.28.2
     optionalDependencies:
       fsevents: 2.3.3
-    optional: true
 
   tunnel-agent@0.6.0:
     dependencies:

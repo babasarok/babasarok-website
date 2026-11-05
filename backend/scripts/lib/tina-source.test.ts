@@ -1,8 +1,8 @@
 import {
   ProductDefinitionSchema,
   ProductGroupDefinitionSchema,
-} from "../../src/shared/product-definition/index.ts";
-import { productRevision } from "../../src/shared/product-definition/node.ts";
+} from "../../src/shared/product-definition/index";
+import { productRevision } from "../../src/shared/product-definition/node";
 import { describe, expect, it } from "vitest";
 import {
   definitionFromTinaProduct,

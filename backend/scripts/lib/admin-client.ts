@@ -70,8 +70,8 @@ export async function adminRequest(
 
 export async function authenticate(): Promise<void> {
   // ponytail: the fallbacks duplicate vendure-config's superadmin defaults;
-  // sharing them needs an import of ../src/env, which node's type stripping
-  // only resolves with a .ts extension that tsc's emit rules reject.
+  // ../src/env parses the whole server env (DATABASE_URL, TOKEN_SECRET, …)
+  // at import, which the import scripts do not have.
   const email = process.env.SUPERADMIN_EMAIL ?? "admin@babasarok.local";
   const password = process.env.SUPERADMIN_PASSWORD ?? "superadmin";
   const result = await adminRequest(
