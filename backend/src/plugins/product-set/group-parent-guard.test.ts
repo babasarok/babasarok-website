@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RELATED_PARENT_SLUG, SET_PARENT_SLUG } from "./group-parents";
-import { groupParentViolation } from "./group-parent-guard";
+import { groupParentViolation, updateSlugViolation } from "./group-parent-guard";
 
 describe("groupParentViolation", () => {
   it("allows deleting a regular collection", () => {
@@ -41,5 +41,38 @@ describe("groupParentViolation", () => {
     expect(
       groupParentViolation("akciok", { type: "update-slug", incomingSlug: "mas-nev" })
     ).toBeUndefined();
+  });
+});
+
+describe("updateSlugViolation", () => {
+  const stored = [
+    { languageCode: "hu", slug: SET_PARENT_SLUG },
+    { languageCode: "en", slug: "sets" },
+  ];
+
+  it("allows updates that leave every stored slug unchanged", () => {
+    expect(
+      updateSlugViolation(stored, [
+        { languageCode: "hu", slug: SET_PARENT_SLUG },
+        { languageCode: "en", slug: "sets" },
+      ])
+    ).toBeUndefined();
+  });
+
+  it("allows translations without a slug or without a stored counterpart", () => {
+    expect(
+      updateSlugViolation(stored, [{ languageCode: "hu" }, { languageCode: "de", slug: "sets-de" }])
+    ).toBeUndefined();
+  });
+
+  it("blocks renaming a stored slug of a group parent", () => {
+    const message = updateSlugViolation(stored, [{ languageCode: "hu", slug: "setek" }]);
+
+    expect(message).toContain(SET_PARENT_SLUG);
+    expect(message).toContain("szett-kedvezmény");
+  });
+
+  it("blocks renaming a regular collection only via the stored slug of a group parent", () => {
+    expect(updateSlugViolation(stored, [{ languageCode: "en", slug: "new-slug" }])).toBeUndefined();
   });
 });

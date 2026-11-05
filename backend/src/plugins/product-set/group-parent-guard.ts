@@ -26,6 +26,35 @@ export function groupParentViolation(
   return message(storedSlug, role, action.type);
 }
 
+/** First violation when incoming translations rename a stored slug, or undefined when allowed. */
+export function updateSlugViolation(
+  stored: ReadonlyArray<{ languageCode: string; slug: string }>,
+  incoming: ReadonlyArray<{ languageCode: string; slug?: string | null }>
+): string | undefined {
+  for (const translation of incoming) {
+    if (translation.slug === undefined || translation.slug === null) {
+      continue;
+    }
+
+    const storedSlug = stored.find((t) => t.languageCode === translation.languageCode)?.slug;
+
+    if (storedSlug === undefined) {
+      continue;
+    }
+
+    const violation = groupParentViolation(storedSlug, {
+      type: "update-slug",
+      incomingSlug: translation.slug,
+    });
+
+    if (violation !== undefined) {
+      return violation;
+    }
+  }
+
+  return undefined;
+}
+
 function message(slug: string, role: string, actionType: GroupParentAction["type"]): string {
   const what = WHAT_BY_ACTION[actionType];
 
