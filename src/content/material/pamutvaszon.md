@@ -40,7 +40,7 @@ colors:
     label: 'Mancs őrjárat, kék'
     image: /src/assets/IMG_4616.webp
   - color_id: Macsorjarat feher
-    label: 'Mancs őrjárat, fehér '
+    label: 'Mancs őrjárat, halvány szürke alapon'
     image: /src/assets/IMG_4615.webp
   - color_id: Malyva szarvasos
     label: Varázserdő
