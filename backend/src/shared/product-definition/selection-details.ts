@@ -1,7 +1,7 @@
-import type { LineSelectionRecord, LineSelections } from "./line-selection.js";
-import { resolveText } from "./localized-text.js";
-import type { ProductDefinition, ProductField } from "./product.js";
-import { dependencyOrder, isVisible } from "./field-visibility.js";
+import type { LineSelectionRecord, LineSelections } from "./line-selection.ts";
+import { resolveText } from "./localized-text.ts";
+import type { ProductDefinition, ProductField } from "./product.ts";
+import { dependencyOrder, isVisible } from "./field-visibility.ts";
 
 export interface SelectionDetail {
   label: string;

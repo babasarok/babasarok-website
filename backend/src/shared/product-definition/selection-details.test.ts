@@ -1,6 +1,6 @@
-import { ProductDefinitionSchema } from "./product.js";
+import { ProductDefinitionSchema } from "./product.ts";
 import { describe, expect, it } from "vitest";
-import { selectionDetails, type SelectionLabels } from "./selection-details.js";
+import { selectionDetails, type SelectionLabels } from "./selection-details.ts";
 const definition = ProductDefinitionSchema.parse({
   id: "parna",
   orderable: true,

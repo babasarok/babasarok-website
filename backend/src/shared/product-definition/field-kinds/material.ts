@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { fieldBaseShape } from "../field";
-import { MaterialIdSchema } from "../material";
-import { MoneySchema, ProductFieldIdSchema } from "../model";
+import { fieldBaseShape } from "../field.ts";
+import { MaterialIdSchema } from "../material.ts";
+import { MoneySchema, ProductFieldIdSchema } from "../model.ts";
 
 const MaterialOptionSchema = z.strictObject({
   materialId: MaterialIdSchema,

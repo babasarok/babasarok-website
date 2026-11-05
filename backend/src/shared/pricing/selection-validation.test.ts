@@ -1,13 +1,13 @@
-import { ProductDefinitionSchema } from "../product-definition/index";
+import { ProductDefinitionSchema } from "../product-definition/index.ts";
 import { describe, expect, it } from "vitest";
-import type { LineSelectionRecord, LineSelections } from "../product-definition/index";
+import type { LineSelectionRecord, LineSelections } from "../product-definition/index.ts";
 import {
   MAX_SELECTION_TEXT_LENGTH,
   referencedMaterialIds,
   formatSelectionProblem,
   selectionsRejection,
   validateSelections,
-} from "./selection-validation";
+} from "./selection-validation.ts";
 
 const definition = ProductDefinitionSchema.parse({
   id: "parna",

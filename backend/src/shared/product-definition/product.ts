@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { ChoiceFieldSchema } from "./field-kinds/choice";
-import { EmbroideryFieldSchema } from "./field-kinds/embroidery";
-import { InputFieldSchema } from "./field-kinds/input";
-import { MaterialFieldSchema } from "./field-kinds/material";
-import { MaterialIdSchema } from "./material";
-import { ToggleFieldSchema } from "./field-kinds/toggle";
-import { MoneySchema, ProductFieldIdSchema, ProductIdSchema, ProductRevisionSchema } from "./model";
+import { ChoiceFieldSchema } from "./field-kinds/choice.ts";
+import { EmbroideryFieldSchema } from "./field-kinds/embroidery.ts";
+import { InputFieldSchema } from "./field-kinds/input.ts";
+import { MaterialFieldSchema } from "./field-kinds/material.ts";
+import { MaterialIdSchema } from "./material.ts";
+import { ToggleFieldSchema } from "./field-kinds/toggle.ts";
+import { MoneySchema, ProductFieldIdSchema, ProductIdSchema, ProductRevisionSchema } from "./model.ts";
 
 export const ProductPricingSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("unit") }),

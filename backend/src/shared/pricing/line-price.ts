@@ -2,9 +2,9 @@ import {
   resolveText,
   type ProductDefinition,
   type ProductField,
-} from "../product-definition/index";
-import { dependencyOrder, isVisible } from "../product-definition/index";
-import type { LineSelections } from "../product-definition/index";
+} from "../product-definition/index.ts";
+import { dependencyOrder, isVisible } from "../product-definition/index.ts";
+import type { LineSelections } from "../product-definition/index.ts";
 
 export interface LinePricingInput {
   definition: ProductDefinition;

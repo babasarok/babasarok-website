@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MaterialDefinitionSchema } from "./material";
+import { MaterialDefinitionSchema } from "./material.ts";
 
 describe("MaterialDefinitionSchema", () => {
   const color = {

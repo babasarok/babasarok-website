@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LabelSchema, PositiveMoneySchema, ProductIdSchema, TrimmedTextSchema } from "./model";
+import { LabelSchema, PositiveMoneySchema, ProductIdSchema, TrimmedTextSchema } from "./model.ts";
 
 // Membership lives in native Vendure Collections (a private child of the
 // "Szettek" / "Kapcsolódó termékek" parents, members via the product-id

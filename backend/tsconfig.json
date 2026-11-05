@@ -4,6 +4,10 @@
     "target": "ES2023",
     "lib": ["ES2023"],
     "module": "nodenext",
+    // Sources import with literal .ts specifiers (node type stripping runs the
+    // standalone scripts directly from src); tsc rewrites them to .js in the
+    // CJS emit.
+    "rewriteRelativeImportExtensions": true,
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
