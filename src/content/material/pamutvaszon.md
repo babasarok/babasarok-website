@@ -21,9 +21,6 @@ colors:
   - color_id: Felhon alvo rozsaszin
     label: 'Aranyos állatkölykök, rózsaszín alapon'
     image: /src/assets/IMG_4758.webp
-  - color_id: Felhon alvo kek
-    label: 'Aranyos állatkölykök, kék alapon'
-    image: /src/assets/IMG_4474.webp
   - color_id: 'Felhon alvó színes'
     label: 'Aranyos állatkölykök, színes'
     image: /src/assets/IMG_4329.webp
@@ -43,7 +40,7 @@ colors:
     label: 'Mancs őrjárat, kék'
     image: /src/assets/IMG_4616.webp
   - color_id: Macsorjarat feher
-    label: 'Mancs őrjárat, fehér'
+    label: 'Mancs őrjárat, halvány szürke alapon'
     image: /src/assets/IMG_4615.webp
   - color_id: Malyva szarvasos
     label: Varázserdő
@@ -102,9 +99,6 @@ colors:
   - color_id: Nyuszis vaszon
     label: Oliva nyuszik
     image: /src/assets/IMG_9650.webp
-  - color_id: Mackooleles
-    label: Mackóölelés
-    image: /src/assets/IMG_4087.webp
   - color_id: Lufis maci
     label: Mackók lufival
     image: /src/assets/IMG_5364.webp
@@ -117,9 +111,6 @@ colors:
   - color_id: 'Erdei kék ozike'
     label: 'Erdei őzike'
     image: /src/assets/IMG_4734.jpeg
-  - color_id: Színes pitypang
-    label: 'Pitypangos rét'
-    image: /src/assets/IMG_4876.webp
   - color_id: 'Szivecskes'
     label: Pasztell szívecskék
     image: /src/assets/IMG_5648.jpeg
