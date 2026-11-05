@@ -19,3 +19,6 @@ allowBuilds:
   lmdb: false
   msgpackr-extract: false
   re2: false
+
+patchedDependencies:
+  "@vendure/dashboard": patches/@vendure__dashboard.patch

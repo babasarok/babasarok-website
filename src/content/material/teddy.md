@@ -11,8 +11,8 @@ colors:
     label: Ekrü
     hex: ''
     image: /src/assets/IMG_3359.webp
-  - color_id: 'Világos bézs '
-    label: 'Világos bézs '
+  - color_id: 'Világos bézs'
+    label: 'Világos bézs'
     image: /src/assets/IMG_3356.webp
   - color_id: Barna
     label: Barna
@@ -30,7 +30,7 @@ colors:
     hex: ''
     image: /src/assets/IMG_5012.webp
   - color_id: Világos rózsaszín -53
-    label: 'Halvány barackos rózsaszín '
+    label: 'Halvány barackos rózsaszín'
     image: /src/assets/IMG_5144.webp
   - color_id: Sötétzöld-43
     label: Sötétzöld
@@ -39,7 +39,7 @@ colors:
     label: Sötétzsálya/khaki
     hex: ''
     image: /src/assets/IMG_5135.webp
-  - color_id: 'Zsalya '
+  - color_id: 'Zsalya'
     label: Zsálya
     image: /src/assets/IMG_5131.webp
   - color_id: sotetszurke

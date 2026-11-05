@@ -3,10 +3,18 @@
 !package.json
 !pnpm-workspace.yaml
 !pnpm-lock.yaml
+!patches
 !Dockerfile
 !backend
 backend/node_modules
 backend/dist
+# tsc -b would trust these and skip emitting dist in the image
+**/tsconfig.tsbuildinfo
+# TEMPORARY, preview-only seed content (ADR 0009; hand-migration at
+# cutover) — the deploy tars these selectively; a local build of the full
+# tree sends all of src/assets
+!src/content
+!src/assets
 backend/email-out
 backend/.env
 backend/.env.*

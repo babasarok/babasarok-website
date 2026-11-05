@@ -25,7 +25,12 @@ services:
     command: ["node", "dist/migrate.js"]
 
   vendure:
-    build: ./repo
+    # SEED_CONTENT bakes the Tina catalog content for the preview seed
+    # (TEMPORARY, preview-only per the Dockerfile; prod builds omit it).
+    build:
+      context: ./repo
+      args:
+        SEED_CONTENT: "1"
     restart: unless-stopped
     networks:
       default:
@@ -38,6 +43,9 @@ services:
     volumes:
       # Email files written by the worker; /mailbox here serves them.
       - ./email-out:/app/backend/email-out
+      # Vendure-owned imagery, copied from the prod volume on every deploy
+      # (deploy-stack.ts), same lifecycle as the preview database.
+      - assets:/app/backend/assets
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -62,6 +70,7 @@ services:
       NODE_ENV: development
       DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/${PREVIEW_DB_NAME}
     command: ["node", "dist/index-worker.js"]
+    stop_grace_period: 30s
     volumes:
       - ./email-out:/app/backend/email-out
     # Same DB probe as the prod stack's worker (no HTTP listener to fetch).
@@ -80,6 +89,9 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+
+volumes:
+  assets:
 
 networks:
   default:

@@ -5,7 +5,7 @@ import { config } from "./vendure-config";
 runMigrations(config)
   .then(() => bootstrapWorker(config))
   .then((worker) => worker.startJobQueue())
-  .catch((error) => {
+  .catch((error: unknown) => {
     console.error(error);
     process.exit(1);
   });

@@ -9,6 +9,8 @@
     "deploy/**/*",
     "tests/**/*",
     "tina/**/*",
+    "packages/product-definition/src/**/*",
+    "packages/pricing/src/**/*",
     "*.ts",
     "stylelint.config.mjs",
     "astro.config.ts",
@@ -20,7 +22,10 @@
     "strictNullChecks": true,
     "exactOptionalPropertyTypes": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      // Shared schemas/pricing as TypeScript source, so no CJS dist enters the browser graph.
+      "@babasarok/product-definition": ["./backend/src/shared/product-definition/index.ts"],
+      "@babasarok/pricing": ["./backend/src/shared/pricing/index.ts"]
     }
   }
 }

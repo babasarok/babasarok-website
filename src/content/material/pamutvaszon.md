@@ -10,7 +10,7 @@ colors:
     label: Őzike gidával
     image: /src/assets/IMG_4761.webp
   - color_id: Kosaras maci
-    label: 'Kedves macik kosárban '
+    label: 'Kedves macik kosárban'
     image: /src/assets/IMG_4635.webp
   - color_id: Apró erdolakok
     label: Apró erdőlakók
@@ -21,11 +21,11 @@ colors:
   - color_id: Felhon alvo rozsaszin
     label: 'Aranyos állatkölykök, rózsaszín alapon'
     image: /src/assets/IMG_4758.webp
-  - color_id: 'Felhon alvó színes '
-    label: 'Aranyos állatkölykök, színes '
+  - color_id: 'Felhon alvó színes'
+    label: 'Aranyos állatkölykök, színes'
     image: /src/assets/IMG_4329.webp
   - color_id: Erdei maci zold
-    label: 'Medve az erdőben '
+    label: 'Medve az erdőben'
     image: /src/assets/IMG_4764.webp
   - color_id: Uj felhon alvo
     label: Felhőkön alvó állatok
@@ -45,14 +45,14 @@ colors:
   - color_id: Malyva szarvasos
     label: Varázserdő
     image: /src/assets/IMG_4759.webp
-  - color_id: 'Sárga markolos '
+  - color_id: 'Sárga markolos'
     label: Sárga Munkagépek
     image: /src/assets/IMG_4622.webp
-  - color_id: 'Kék markolos '
+  - color_id: 'Kék markolos'
     label: Kis kék munkagépek
     image: /src/assets/IMG_3301.webp
   - color_id: barna markolos
-    label: 'Kis barna munkagépek '
+    label: 'Kis barna munkagépek'
     image: /src/assets/IMG_3296.webp
   - color_id: Szivarvanyos markolos
     label: Szivárványos építkezés
@@ -61,7 +61,7 @@ colors:
     label: Unikornis
     image: /src/assets/IMG_6219.png
   - color_id: Cirkuszos
-    label: 'Cirkuszi mulatság '
+    label: 'Cirkuszi mulatság'
     image: /src/assets/IMG_9069.webp
   - color_id: Hintazo szafari
     label: Hintázó szafarikölykök
@@ -70,27 +70,27 @@ colors:
     label: Repülős macik
     image: /src/assets/IMG_9639.webp
   - color_id: Tündéres rozsazin
-    label: 'Rózsaszín tündérkert '
+    label: 'Rózsaszín tündérkert'
     image: /src/assets/IMG_4741.webp
   - color_id: Pasztell tunderes
     label: Pasztell tündérkert
     image: /src/assets/IMG_9641.webp
   - color_id: Erdőben lakó szurke
-    label: 'Erdei barátok '
+    label: 'Erdei barátok'
     image: /src/assets/images/IMG_6401.jpeg
   - color_id: Cicas
-    label: 'Cicahorgászat '
+    label: 'Cicahorgászat'
     image: /src/assets/IMG_4934.webp
   - color_id: Sargakatica
     label: Katicák
     image: /src/assets/IMG_5499.webp
   - color_id: Rózsaszín polip
-    label: 'Tengeri világ '
+    label: 'Tengeri világ'
     image: /src/assets/IMG_5115.webp
   - color_id: Tuzoltos
     label: Tűzoltóság
     image: /src/assets/IMG_5079.webp
-  - color_id: 'Kalóz '
+  - color_id: 'Kalóz'
     label: Kalózkaland
     image: /src/assets/IMG_5720.jpeg
   - color_id: hintazo nyuszik
@@ -106,49 +106,49 @@ colors:
     label: Kukucskáló macik
     image: /src/assets/IMG_4476.webp
   - color_id: Meleg szafaris
-    label: 'Szafari állatai '
+    label: 'Szafari állatai'
     image: /src/assets/IMG_4736.webp
-  - color_id: 'Erdei kék ozike '
-    label: 'Erdei őzike '
+  - color_id: 'Erdei kék ozike'
+    label: 'Erdei őzike'
     image: /src/assets/IMG_4734.jpeg
-  - color_id: 'Szivecskes '
+  - color_id: 'Szivecskes'
     label: Pasztell szívecskék
     image: /src/assets/IMG_5648.jpeg
   - color_id: Rózsaszín virágmezo
     label: Rózsaszín virágmező
     image: /src/assets/IMG_4875.webp
-  - color_id: 'Pasztell virágos '
+  - color_id: 'Pasztell virágos'
     label: Natúr vadvirágok
     image: /src/assets/IMG_4926.webp
   - color_id: Vartacukor
     label: Vattacukor
     image: /src/assets/IMG_6734.webp
-  - color_id: 'Fehér '
-    label: 'Fehér '
+  - color_id: 'Fehér'
+    label: 'Fehér'
     hex: '#FFFFFF'
   - color_id: Zsalya
     label: Zsálya
     image: /src/assets/IMG_6697.webp
-  - color_id: 'Halvány rózsaszín '
-    label: 'Babarózsaszín '
+  - color_id: 'Halvány rózsaszín'
+    label: 'Babarózsaszín'
     image: /src/assets/IMG_6700.webp
-  - color_id: 'Puder '
+  - color_id: 'Puder'
     label: Púder
     image: /src/assets/IMG_6738.webp
   - color_id: Halvanyrozsa
-    label: 'Halvány rózsaszín (barackosabb)  '
+    label: 'Halvány rózsaszín (barackosabb)'
     image: /src/assets/IMG_7150.jpeg
-  - color_id: 'Malyvas lila '
-    label: 'Mályvásabb lila '
+  - color_id: 'Malyvas lila'
+    label: 'Mályvásabb lila'
     image: /src/assets/IMG_6692.webp
   - color_id: Babakek
     label: Babakék
     image: /src/assets/IMG_6688.webp
-  - color_id: 'Bézs '
-    label: 'Bézs '
+  - color_id: 'Bézs'
+    label: 'Bézs'
     image: /src/assets/IMG_6718.webp
-  - color_id: 'Barna '
-    label: 'Barna '
+  - color_id: 'Barna'
+    label: 'Barna'
     image: /src/assets/47529CDD-1BE8-473F-A386-21FADEB578F0.webp
   - color_id: Drapp
     label: Drapp

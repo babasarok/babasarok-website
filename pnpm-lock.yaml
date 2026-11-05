@@ -204,6 +204,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@vendure/dashboard': 71f33939ff798f9d823a3f1fc62c0262a793b7a017541df85d35f7c5961f35b7
+
 importers:
 
   .:
@@ -425,9 +428,39 @@ importers:
       '@nestjs/common':
         specifier: ^12.0.1
         version: 12.2.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2)
+      '@nestjs/core':
+        specifier: ^12.0.1
+        version: 12.2.0(@nestjs/common@12.2.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/platform-express@12.2.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/graphql':
         specifier: ~14.0.0
         version: 14.0.3(@nestjs/common@12.2.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.2.0)(crossws@0.3.5)(graphql@16.14.2)(reflect-metadata@0.2.2)(typescript@5.9.3)
+      '@tiptap/core':
+        specifier: 3.32.0
+        version: 3.32.0(@tiptap/pm@3.32.0)
+      '@tiptap/extension-image':
+        specifier: 3.32.0
+        version: 3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))
+      '@tiptap/extension-table':
+        specifier: 3.32.0
+        version: 3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0)
+      '@tiptap/extension-underline':
+        specifier: 3.32.0
+        version: 3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))
+      '@tiptap/markdown':
+        specifier: 3.32.0
+        version: 3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0)
+      '@tiptap/pm':
+        specifier: 3.32.0
+        version: 3.32.0
+      '@tiptap/react':
+        specifier: 3.32.0
+        version: 3.32.0(@floating-ui/dom@1.8.0)(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@tiptap/starter-kit':
+        specifier: 3.32.0
+        version: 3.32.0
+      '@vendure/asset-server-plugin':
+        specifier: ^3.8.1
+        version: 3.8.1(@types/node@25.9.9)(supports-color@10.2.2)
       '@vendure/common':
         specifier: ^3.8.1
         version: 3.8.1
@@ -436,7 +469,7 @@ importers:
         version: 3.8.1(better-sqlite3@12.11.1)(crossws@0.3.5)(pg@8.23.1)(supports-color@10.2.2)(typescript@5.9.3)
       '@vendure/dashboard':
         specifier: ^3.8.1
-        version: 3.8.1(@date-fns/tz@1.5.0)(@floating-ui/dom@1.8.0)(@sinclair/typebox@0.27.12)(@standard-schema/spec@1.1.0)(@tanstack/router-core@1.171.39)(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/extensions@3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0))(@types/node@25.9.9)(ajv@8.20.0)(csstype@3.2.3)(esbuild@0.28.2)(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(express@5.3.0(supports-color@10.2.2))(jiti@2.7.0)(less@4.2.2)(lightningcss@1.33.0)(rolldown@1.2.15)(rollup@4.65.0)(sass@1.85.0)(supports-color@10.2.2)(terser@5.39.0)(tsx@4.23.15)(typanion@3.13.0)(typescript@5.9.3)(webpack@5.105.0(cssnano@7.1.9(postcss@8.5.31))(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.31)(uglify-js@3.19.3))(yaml@2.9.1)(yup@1.7.1)
+        version: 3.8.1(patch_hash=71f33939ff798f9d823a3f1fc62c0262a793b7a017541df85d35f7c5961f35b7)(@date-fns/tz@1.5.0)(@floating-ui/dom@1.8.0)(@sinclair/typebox@0.27.12)(@standard-schema/spec@1.1.0)(@tanstack/router-core@1.171.39)(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/extensions@3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0))(@types/node@25.9.9)(ajv@8.20.0)(csstype@3.2.3)(esbuild@0.28.2)(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(express@5.3.0(supports-color@10.2.2))(jiti@2.7.0)(less@4.2.2)(lightningcss@1.33.0)(rolldown@1.2.15)(rollup@4.65.0)(sass@1.85.0)(supports-color@10.2.2)(terser@5.39.0)(tsx@4.23.15)(typanion@3.13.0)(typescript@5.9.3)(webpack@5.105.0(cssnano@7.1.9(postcss@8.5.31))(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.31)(uglify-js@3.19.3))(yaml@2.9.1)(yup@1.7.1)
       '@vendure/email-plugin':
         specifier: ^3.8.1
         version: 3.8.1(supports-color@10.2.2)(svgo@4.1.0)(terser@5.39.0)(typescript@5.9.3)
@@ -455,16 +488,40 @@ importers:
       react:
         specifier: ^19.3.1
         version: 19.3.1
+      react-dom:
+        specifier: ^19.3.1
+        version: 19.3.1(react@19.3.1)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
+      rxjs:
+        specifier: ^7.8.2
+        version: 7.8.2
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
+      yaml:
+        specifier: ^2.6.0
+        version: 2.9.1
       zod:
         specifier: ^4.4.3
         version: 4.6.7
     devDependencies:
+      '@graphql-typed-document-node/core':
+        specifier: 3.2.0
+        version: 3.2.0(graphql@16.14.2)
+      '@tanstack/react-query':
+        specifier: ^5.91.0
+        version: 5.104.5(@types/react@19.3.0)(react@19.3.1)
+      '@tanstack/react-router':
+        specifier: 1.170.46
+        version: 1.170.46(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@types/pg':
+        specifier: ^8.23.1
+        version: 8.23.1
+      gql.tada:
+        specifier: ^1.11.4
+        version: 1.11.4(graphql@16.14.2)(typescript@5.9.3)
       typeorm:
         specifier: ^0.3.31
         version: 0.3.31(better-sqlite3@12.11.1)(pg@8.23.1)(supports-color@10.2.2)
@@ -4164,6 +4221,12 @@ packages:
       '@tiptap/core': 3.32.0
       '@tiptap/pm': 3.32.0
 
+  '@tiptap/markdown@3.32.0':
+    resolution: {integrity: sha512-y+pGAu4QMkXBMxhBoLvc6FWucQ1EWIoPi+Ajf4rAh5OlZtSV3CjBwyK6/xTwO7mvQxtoUf7DD23CzSaj5nCTBA==}
+    peerDependencies:
+      '@tiptap/core': 3.32.0
+      '@tiptap/pm': 3.32.0
+
   '@tiptap/pm@3.32.0':
     resolution: {integrity: sha512-H9eN+xHFboJybE7KPGVsu24S8aBlCIgYz38vCHRSnNv17nwmqm06owq/IQ5scza0n3Y7IfUfpgPOtm9SgeHmNQ==}
 
@@ -4402,6 +4465,9 @@ packages:
 
   '@types/object-path@0.11.4':
     resolution: {integrity: sha512-4tgJ1Z3elF/tOMpA8JLVuR9spt9Ynsf7+JjqsQ2IqtiPJtcLoHoXcT6qU4E10cPFqyXX5HDm9QwIzZhBSkLxsw==}
+
+  '@types/pg@8.23.1':
+    resolution: {integrity: sha512-fKVHpikPdg4GKks3JuLEhvwSyvwzF23hnabPy6DD8ljVbC7+6J5dQzdv4arV6jqq57djnMgs1HKBxX4P8aBI3A==}
 
   '@types/prismjs@1.26.6':
     resolution: {integrity: sha512-vqlvI7qlMvcCBbVe0AKAb4f97//Hy0EBTaiW8AalRnG/xAN5zOiWWyrNqNXeq8+KAuvRewjCVY1+IPxk4RdNYw==}
@@ -4801,6 +4867,9 @@ packages:
         optional: true
       next-themes:
         optional: true
+
+  '@vendure/asset-server-plugin@3.8.1':
+    resolution: {integrity: sha512-buYUXaciV2BKF/wOmSwMBPPltexwMjbihG8CR+5v7E02dgOoHo7EzOeN/u2TXLVB85Z/2Y4yZd4Qv2rAHPOAdg==}
 
   '@vendure/common@3.8.1':
     resolution: {integrity: sha512-UwDNy5gf/37cBArRySUZX4g0KxuC9HoZrZRBYGZ7T0QNcHftubNFnIJU2FgqTpZTh8tdpqkZT/VHiI8GZylYpg==}
@@ -8076,6 +8145,11 @@ packages:
 
   marked@16.4.2:
     resolution: {integrity: sha512-TI3V8YYWvkVf3KJe1dRkpnjs68JUPyEa5vjKrp1XEEJUAOaQc+Qj+L1qWbPd0SJuAdQkFU0h73sXXqwDYxsiDA==}
+    engines: {node: '>= 20'}
+    hasBin: true
+
+  marked@17.0.6:
+    resolution: {integrity: sha512-gB0gkNafnonOw0obSTEGZTT86IuhILt2Wfx0mWH/1Au83kybTayroZ/V6nS25mN7u8ASy+5fMhgB3XPNrOZdmA==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -15955,6 +16029,12 @@ snapshots:
       '@tiptap/core': 3.32.0(@tiptap/pm@3.32.0)
       '@tiptap/pm': 3.32.0
 
+  '@tiptap/markdown@3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0)':
+    dependencies:
+      '@tiptap/core': 3.32.0(@tiptap/pm@3.32.0)
+      '@tiptap/pm': 3.32.0
+      marked: 17.0.6
+
   '@tiptap/pm@3.32.0':
     dependencies:
       prosemirror-changeset: 2.4.4
@@ -16296,6 +16376,12 @@ snapshots:
       '@types/node': 25.9.9
 
   '@types/object-path@0.11.4': {}
+
+  '@types/pg@8.23.1':
+    dependencies:
+      '@types/node': 25.9.9
+      pg-protocol: 1.16.1
+      pg-types: 2.2.0
 
   '@types/prismjs@1.26.6': {}
 
@@ -16833,6 +16919,18 @@ snapshots:
       - '@types/react'
       - '@types/react-dom'
 
+  '@vendure/asset-server-plugin@3.8.1(@types/node@25.9.9)(supports-color@10.2.2)':
+    dependencies:
+      '@types/express': 5.0.6
+      express: 5.3.0(supports-color@10.2.2)
+      file-type: 21.3.4(supports-color@10.2.2)
+      fs-extra: 11.4.1
+      mime-types: 3.0.2
+      sharp: 0.35.5(@types/node@25.9.9)
+    transitivePeerDependencies:
+      - '@types/node'
+      - supports-color
+
   '@vendure/common@3.8.1': {}
 
   '@vendure/core@3.8.1(better-sqlite3@12.11.1)(crossws@0.3.5)(pg@8.23.1)(supports-color@10.2.2)(typescript@5.9.3)':
@@ -16913,7 +17011,7 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@vendure/dashboard@3.8.1(@date-fns/tz@1.5.0)(@floating-ui/dom@1.8.0)(@sinclair/typebox@0.27.12)(@standard-schema/spec@1.1.0)(@tanstack/router-core@1.171.39)(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/extensions@3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0))(@types/node@25.9.9)(ajv@8.20.0)(csstype@3.2.3)(esbuild@0.28.2)(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(express@5.3.0(supports-color@10.2.2))(jiti@2.7.0)(less@4.2.2)(lightningcss@1.33.0)(rolldown@1.2.15)(rollup@4.65.0)(sass@1.85.0)(supports-color@10.2.2)(terser@5.39.0)(tsx@4.23.15)(typanion@3.13.0)(typescript@5.9.3)(webpack@5.105.0(cssnano@7.1.9(postcss@8.5.31))(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.31)(uglify-js@3.19.3))(yaml@2.9.1)(yup@1.7.1)':
+  '@vendure/dashboard@3.8.1(patch_hash=71f33939ff798f9d823a3f1fc62c0262a793b7a017541df85d35f7c5961f35b7)(@date-fns/tz@1.5.0)(@floating-ui/dom@1.8.0)(@sinclair/typebox@0.27.12)(@standard-schema/spec@1.1.0)(@tanstack/router-core@1.171.39)(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/extensions@3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0))(@types/node@25.9.9)(ajv@8.20.0)(csstype@3.2.3)(esbuild@0.28.2)(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(express@5.3.0(supports-color@10.2.2))(jiti@2.7.0)(less@4.2.2)(lightningcss@1.33.0)(rolldown@1.2.15)(rollup@4.65.0)(sass@1.85.0)(supports-color@10.2.2)(terser@5.39.0)(tsx@4.23.15)(typanion@3.13.0)(typescript@5.9.3)(webpack@5.105.0(cssnano@7.1.9(postcss@8.5.31))(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.31)(uglify-js@3.19.3))(yaml@2.9.1)(yup@1.7.1)':
     dependencies:
       '@babel/core': 7.29.7(supports-color@10.2.2)
       '@babel/preset-react': 7.29.7(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2)
@@ -20788,6 +20886,8 @@ snapshots:
   markdown-table@3.0.4: {}
 
   marked@16.4.2: {}
+
+  marked@17.0.6: {}
 
   math-intrinsics@1.1.0: {}
 

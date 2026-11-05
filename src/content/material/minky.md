@@ -4,13 +4,13 @@ material_id: minky
 label: Minky
 colors:
   - color_id: '#12'
-    label: 'Fehér '
+    label: 'Fehér'
     image: /src/assets/IMG_6658.webp
   - color_id: '#14'
     label: Ekrü
     image: /src/assets/IMG_6657.webp
   - color_id: '#7'
-    label: 'Világos bézs '
+    label: 'Világos bézs'
     image: /src/assets/IMG_3079.webp
   - color_id: '#2'
     label: Pasztellkék
@@ -25,16 +25,16 @@ colors:
     label: Rosegold
     image: /src/assets/IMG_6646.webp
   - color_id: '#4 candypink'
-    label: 'Babarózsaszín '
+    label: 'Babarózsaszín'
     image: /src/assets/IMG_4076.webp
   - color_id: '#16'
-    label: 'Halvány rózsaszín '
+    label: 'Halvány rózsaszín'
     image: /src/assets/IMG_6648.webp
   - color_id: '#1'
     label: Babakék
     image: /src/assets/IMG_4081.webp
   - color_id: '#10'
-    label: 'Királykék '
+    label: 'Királykék'
     image: /src/assets/IMG_6673.webp
   - color_id: '#5'
     label: Sötétzöld
@@ -46,7 +46,7 @@ colors:
     label: Menta
     image: /src/assets/IMG_6675.webp
   - color_id: '#6'
-    label: 'Barna '
+    label: 'Barna'
     image: /src/assets/IMG_6732.jpeg
   - color_id: '#19'
     label: Mogyoró
@@ -58,7 +58,7 @@ colors:
     label: Halványszürke
     image: /src/assets/IMG_6668.webp
   - color_id: Szurke
-    label: 'Szürke '
+    label: 'Szürke'
     image: /src/assets/IMG_6723.jpeg
   - color_id: '#15'
     label: Lila

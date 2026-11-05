@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable", "ScriptHost"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "paths": {
+      // The backend's generated Admin-API schema (vite.config.mts gqlOutputPath)
+      "@/gql": ["../gql/graphql.ts"],
+      // The vendure dashboard's own sources import their internals via this
+      // alias; without it the type-check closure is pure module-not-found
+      // noise.
+      "@/vdb/*": ["../../node_modules/@vendure/dashboard/src/lib/*"]
+    }
+  },
+  // Sits in this folder so the editor's nearest-tsconfig discovery picks it
+  // up for every dashboard extension file. Checked by `check:dashboard`; the
+  // type-check closure includes the vendure dashboard's own sources (the
+  // package ships source as its types), whose ~26 internal type errors are
+  // why this project is not part of the plain `check`.
+  "include": ["**/*", "../gql/**/*.ts"]
+}

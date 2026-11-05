@@ -1,0 +1,394 @@
+{
+  "materials": [
+    {
+      "slug": "Vizlepergeto",
+      "label": "Vízlepergető anyag",
+      "subtitle": "Oxford vízlepergető anyag",
+      "description": "",
+      "thumbnail": {
+        "source": "http://localhost:4010/assets/source/85/img_6548.jpeg"
+      },
+      "colors": [
+        {
+          "id": "Elefantos",
+          "label": "Elefántbébik",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/e1/img_5410.jpeg"
+          }
+        },
+        {
+          "id": "Zsiraf",
+          "label": "Zsiráfok",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/c1/img_5407.jpeg"
+          }
+        },
+        {
+          "id": "Eukaliptusz",
+          "label": "Eukaliptusz",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/7e/img_5404.jpeg"
+          }
+        },
+        {
+          "id": "Bambusz",
+          "label": "Bambuszlevél",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/d0/img_5413.jpeg"
+          }
+        },
+        {
+          "id": "Macis",
+          "label": "Masnis mackók",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/8b/img_5406.jpeg"
+          }
+        },
+        {
+          "id": "Holegballon",
+          "label": "Felhők felett",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/25/img_5405.jpeg"
+          }
+        },
+        {
+          "id": "Mehecskes",
+          "label": "Virágporzás",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/57/img_5408.jpeg"
+          }
+        },
+        {
+          "id": "Gomba barna",
+          "label": "Pasztell gombamező",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/c0/img_5409.jpeg"
+          }
+        },
+        {
+          "id": "Fecske",
+          "label": "Fecskék tánca",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/1a/img_5415.jpeg"
+          }
+        },
+        {
+          "id": "Halvany puder",
+          "label": "Halvány púder",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/54/img_5420.jpeg"
+          }
+        },
+        {
+          "id": "Puder",
+          "label": "Púder",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/96/img_5419.jpeg"
+          }
+        },
+        {
+          "id": "Zsalya",
+          "label": "Zsálya",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/e3/img_5421.jpeg"
+          }
+        },
+        {
+          "id": "Vilagosszurke",
+          "label": "Világos szürke",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/00/img_5422.jpeg"
+          }
+        },
+        {
+          "id": "Bezs",
+          "label": "Bézs",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/a9/img_5418.jpeg"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "duplagez",
+      "label": "Duplagéz",
+      "subtitle": "100% pamut, extravékony, légáteresztő, nyári anyag",
+      "description": "A nyár legnagyobb slágere a duplagéz. Laza szövésének köszönhetően nagyon lenge, vékony, lélegző anyag.\nIdeális választás nyári takarónak, \nPamutvászon és waffle anyagokkal kombinálva gyönyörű ágytakaró is készülhet belőle.",
+      "thumbnail": {
+        "source": "http://localhost:4010/assets/source/33/img_5126.webp"
+      },
+      "colors": [
+        {
+          "id": "Színes pillangos",
+          "label": "Pillangók",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/21/img_4035.webp"
+          }
+        },
+        {
+          "id": "Nyuszis epres",
+          "label": "Nyuszis eperliget",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/fb/img_4763.webp"
+          }
+        },
+        {
+          "id": "Eper",
+          "label": "Eper",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/5d/img_4034.webp"
+          }
+        },
+        {
+          "id": "Malyva virágos",
+          "label": "Nyári virágok",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/c6/img_4028.webp"
+          }
+        },
+        {
+          "id": "Barna alapú virágos.",
+          "label": "Vadvirág barnán",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/6a/img_4030.webp"
+          }
+        },
+        {
+          "id": "Lila virágos",
+          "label": "Lila virágok",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/33/img_4762.webp"
+          }
+        },
+        {
+          "id": "Aranymasnis",
+          "label": "Arany masnik pöttyökkel",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/6d/img_4636.webp"
+          }
+        },
+        {
+          "id": "Koala",
+          "label": "Koalák",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/0e/img_5180.webp"
+          }
+        },
+        {
+          "id": "Szivárvány",
+          "label": "Szivárvány",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/7a/img_5181.webp"
+          }
+        },
+        {
+          "id": "Autós",
+          "label": "Járművek",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/67/img_2354.webp"
+          }
+        },
+        {
+          "id": "Nagy dínós",
+          "label": "Dínókert",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/9e/img_4490.webp"
+          }
+        },
+        {
+          "id": "Nagy pandas",
+          "label": "Pandák ölelése",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/bf/img_4491.webp"
+          }
+        },
+        {
+          "id": "Pandafejek",
+          "label": "Pandák",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/2e/img_4088.webp"
+          }
+        },
+        {
+          "id": "Macis",
+          "label": "Mackók",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/99/img_4089.webp"
+          }
+        },
+        {
+          "id": "Barackos",
+          "label": "Barack",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/f9/img_4382.webp"
+          }
+        },
+        {
+          "id": "Malyva csillagos",
+          "label": "Csillagok sötét púder",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/fb/img_5183.webp"
+          }
+        },
+        {
+          "id": "Ekru csillagos",
+          "label": "Csillagok-ekrü",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/46/img_5182.webp"
+          }
+        },
+        {
+          "id": "Halvány rózsaszín",
+          "label": "Halvány rózsaszín/púder",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/8e/img_4589.webp"
+          }
+        },
+        {
+          "id": "Babarózsaszín",
+          "label": "Babarózsaszín",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/c7/img_4588.webp"
+          }
+        },
+        {
+          "id": "Malyva",
+          "label": "Mályva",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/fd/img_4592.webp"
+          }
+        },
+        {
+          "id": "Pink",
+          "label": "Pink",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/06/img_4594.webp"
+          }
+        },
+        {
+          "id": "Lila",
+          "label": "Lila",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/7c/img_4596.webp"
+          }
+        },
+        {
+          "id": "Világoskék",
+          "label": "Világoskék",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/11/img_4591.webp"
+          }
+        },
+        {
+          "id": "Turkiz",
+          "label": "Világos türkiz",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/45/img_4609.webp"
+          }
+        },
+        {
+          "id": "Zsalya",
+          "label": "Zsálya",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/b0/img_4605.webp"
+          }
+        },
+        {
+          "id": "Sotetzold",
+          "label": "Sötétzöld/khaki",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/a8/img_4590.webp"
+          }
+        },
+        {
+          "id": "Drapp",
+          "label": "Drapp/világos bézs",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/65/img_4595.webp"
+          }
+        },
+        {
+          "id": "Meleg bézs",
+          "label": "Meleg bézs",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/03/img_4604.webp"
+          }
+        },
+        {
+          "id": "Tejeskávé",
+          "label": "Tejeskávé",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/d1/img_4597.webp"
+          }
+        },
+        {
+          "id": "Mustár",
+          "label": "Mustár",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/3c/img_4598.webp"
+          }
+        },
+        {
+          "id": "Ekru",
+          "label": "Ekrü/törtfehér",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/80/img_4602.webp"
+          }
+        },
+        {
+          "id": "Fehér",
+          "label": "Fehér",
+          "hex": null,
+          "asset": {
+            "source": "http://localhost:4010/assets/source/c1/img_4600.webp"
+          }
+        }
+      ]
+    }
+  ]
+}

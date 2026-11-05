@@ -13,7 +13,7 @@ colors:
   - color_id: Szurke
     label: Szürke
     image: /src/assets/IMG_5139.webp
-  - color_id: 'Világos bézs '
+  - color_id: 'Világos bézs'
     label: Homokbézs
     hex: ''
     image: /src/assets/IMG_5112.webp
@@ -25,8 +25,8 @@ colors:
     label: Pasztellkék
     hex: ''
     image: /src/assets/IMG_5140.webp
-  - color_id: 'Sotetkek '
-    label: 'Sötétkék '
+  - color_id: 'Sotetkek'
+    label: 'Sötétkék'
     image: /src/assets/IMG_5178.webp
   - color_id: zsalya
     label: Zsálya
@@ -45,7 +45,7 @@ colors:
     hex: ''
     image: /src/assets/IMG_5143.webp
   - color_id: Halvány rózsaszín 19
-    label: 'Halvány rózsaszín '
+    label: 'Halvány rózsaszín'
     image: /src/assets/IMG_5147.webp
   - color_id: pink
     label: Pink

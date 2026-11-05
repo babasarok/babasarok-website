@@ -1,0 +1,103 @@
+/* Plain CSS: the dashboard's Tailwind scan only covers the directories of the
+   plugins' extension entry files, so utilities used here would not be generated. */
+.markdown-editor-content {
+  min-height: 8rem;
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.markdown-editor-content h1 {
+  margin: 0.75rem 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.markdown-editor-content h2 {
+  margin: 0.75rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.markdown-editor-content h3 {
+  margin: 0.75rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.markdown-editor-content p {
+  margin: 0.5rem 0;
+}
+
+.markdown-editor-content ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+  list-style: disc;
+}
+
+.markdown-editor-content ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+  list-style: decimal;
+}
+
+.markdown-editor-content blockquote {
+  margin: 0.5rem 0;
+  padding-left: 0.75rem;
+  border-left: 4px solid var(--border);
+  font-style: italic;
+}
+
+.markdown-editor-content a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.markdown-editor-content img {
+  display: inline-block;
+  max-width: 100%;
+  margin: 0.5rem 0;
+  border-radius: 4px;
+}
+
+.markdown-editor-content code {
+  padding: 0 0.25rem;
+  border-radius: 3px;
+  background: var(--muted);
+}
+
+.markdown-editor-content pre {
+  margin: 0.5rem 0;
+  padding: 0.75rem;
+  overflow-x: auto;
+  border-radius: 6px;
+  background: var(--muted);
+}
+
+.markdown-editor-content pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.markdown-editor-content hr {
+  margin: 1rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.markdown-editor-content table {
+  width: 100%;
+  margin: 0.5rem 0;
+  border-collapse: collapse;
+}
+
+.markdown-editor-content td,
+.markdown-editor-content th {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+}
+
+.markdown-editor-content th {
+  background: var(--muted);
+}

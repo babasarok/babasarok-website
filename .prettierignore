@@ -24,7 +24,8 @@ src/content/sections
 # Prettier's markdown reflow re-parses this hand-written log's list
 # structure (merges items, shifts emphasis markers) — it must stay as-is.
 docs/vendure-migration.md
+packages/product-definition/dist/
 *.jpg
 *.jpeg
 *.png
-*.gif
+*.gifpackages/pricing/dist/

@@ -1,22 +1,51 @@
 import path from "node:path";
+import type { OrderPlacedStrategy, RequestContext, VendureConfig } from "@vendure/core";
 import {
+  Asset,
   configureDefaultOrderProcess,
   DefaultJobQueuePlugin,
+  DefaultMoneyStrategy,
   DefaultSearchPlugin,
   LanguageCode,
-  OrderPlacedStrategy,
-  RequestContext,
-  VendureConfig,
 } from "@vendure/core";
+import { AssetServerPlugin } from "@vendure/asset-server-plugin";
 import { DashboardPlugin } from "@vendure/dashboard/plugin";
 import { EmailPlugin, FileBasedTemplateLoader } from "@vendure/email-plugin";
 import type { EmailPluginDevModeOptions, EmailPluginOptions } from "@vendure/email-plugin";
+import { ASSET_PRESETS, ASSET_QUALITY } from "./asset-presets";
+import { PresetOrOriginalStrategy } from "./preset-or-original-strategy";
 import { env } from "./env";
-import { HandlebarsHtmlGenerator } from "./email/handlebars-html-generator";
-import { CloudflareEmailSender } from "./email/cloudflare-email-sender";
-import { orderConfirmationHandler, orderNotificationHandler } from "./email/order-emails";
-import { QuoteOrderPlugin } from "./quote-order/quote-order.plugin";
-import { ChannelSetupPlugin } from "./setup/channel-setup.plugin";
+import { z } from "zod";
+import { HandlebarsHtmlGenerator } from "./plugins/email/handlebars-html-generator";
+import { CloudflareEmailSender } from "./plugins/email/cloudflare-email-sender";
+import { orderConfirmationHandler, orderNotificationHandler } from "./plugins/email/order-emails";
+import { MaterialPlugin } from "./plugins/material/material.plugin";
+import { PricingPlugin } from "./plugins/pricing/pricing.plugin";
+import { MAX_LINE_LENGTH_CM } from "./shared/pricing/index";
+import { LineValidityProcess } from "./plugins/pricing/line-validity-process";
+import { ServerPricingStrategy } from "./plugins/pricing/pricing-strategy";
+import {
+  productSetBasketCondition,
+  productSetDiscountAction,
+} from "./plugins/product-set/promotion";
+import { ProductSetPlugin } from "./plugins/product-set/product-set.plugin";
+import { ProductPlugin } from "./plugins/product/product.plugin";
+import { hexColorError } from "./plugins/product/thread-color";
+import { QuoteOrderPlugin } from "./plugins/quote-order/quote-order.plugin";
+import { ChannelSetupPlugin } from "./plugins/setup/channel-setup.plugin";
+
+// Zod's built-in validation messages surface to the owner (definition and
+// material validation); the Hungarian locale localizes them for every process
+// that loads this config (server, worker, migrations, dashboard build).
+z.config(z.locales.hu());
+
+/** Prices are whole Forints everywhere (definitions, seed, sync, order lines);
+ * the default precision 2 would make the stock dashboard read a stored 15000
+ * as 150.00 Ft. Precision only changes how UIs display minor units — the
+ * stored value is untouched. */
+class ForintMoneyStrategy extends DefaultMoneyStrategy {
+  override readonly precision = 0;
+}
 
 function emailPluginOptions(): EmailPluginOptions | EmailPluginDevModeOptions {
   const base = {
@@ -80,10 +109,15 @@ export const config: VendureConfig = {
     port: env.port,
     adminApiPath: "admin-api",
     shopApiPath: "shop-api",
-    // Without an allowlist (local dev), Nest's default CORS applies. No API
-    // needs credentialed CORS: the dashboard authenticates with a bearer token
-    // (ADR 0008), whose response header Vendure exposes automatically.
-    cors: env.allowedOrigins ? { origin: env.allowedOrigins } : true,
+    // Without an allowlist (local dev), the request origin is reflected. The
+    // dashboard client sends credentials: 'include' on every request, so the
+    // browser rejects any cross-origin response unless the origin is exact
+    // (never *) and Allow-Credentials is set — also what lets the login
+    // response's vendure-auth-token header reach the dashboard (Vendure adds
+    // the exposedHeaders entry only for object cors options).
+    cors: env.allowedOrigins
+      ? { origin: env.allowedOrigins, credentials: true }
+      : { origin: true, credentials: true },
     csrfPrevention: true,
     middleware: [
       {
@@ -92,7 +126,7 @@ export const config: VendureConfig = {
         handler: (
           _req: unknown,
           res: { status: (n: number) => { send: (s: string) => void } },
-          next: () => void
+          _next: () => void
         ) => {
           res.status(200).send("ok");
         },
@@ -113,10 +147,24 @@ export const config: VendureConfig = {
     },
   },
   orderOptions: {
-    process: [configureDefaultOrderProcess({ arrangingPaymentRequiresShipping: false })],
+    process: [
+      configureDefaultOrderProcess({ arrangingPaymentRequiresShipping: false }),
+      new LineValidityProcess(),
+    ],
     orderPlacedStrategy: new QuoteOrderPlacedStrategy(),
+    orderItemPriceCalculationStrategy: new ServerPricingStrategy(),
+  },
+  // Prices are whole Forints everywhere (definitions, seed, sync, order lines);
+  // the default precision 2 would make the stock dashboard read a stored
+  // 15000 as 150.00 Ft. Precision only changes how UIs display minor units.
+  entityOptions: {
+    moneyStrategy: new ForintMoneyStrategy(),
   },
   paymentOptions: { paymentMethodHandlers: [] },
+  promotionOptions: {
+    promotionConditions: [productSetBasketCondition],
+    promotionActions: [productSetDiscountAction],
+  },
   dbConnectionOptions: {
     type: "postgres",
     url: env.databaseUrl,
@@ -127,7 +175,23 @@ export const config: VendureConfig = {
   },
   plugins: [
     QuoteOrderPlugin,
+    MaterialPlugin,
+    ProductPlugin,
+    ProductSetPlugin,
+    PricingPlugin,
     ChannelSetupPlugin,
+    // Owns the material/product imagery (ADR 0009): uploads and previews are
+    // stored on local disk (a docker volume in deploys) and served at /assets.
+    AssetServerPlugin.init({
+      route: "assets",
+      assetUploadDir: "assets",
+      presets: [...ASSET_PRESETS],
+      imageTransformStrategy: new PresetOrOriginalStrategy({
+        defaultPreset: "card-lg",
+        permittedQuality: [ASSET_QUALITY],
+        permittedFormats: ["webp"],
+      }),
+    }),
     DefaultJobQueuePlugin.init({}),
     // Ships in core; keeps the Admin UI's search views functional. Search
     // quality (boosting, facets) is a later milestone.
@@ -153,14 +217,24 @@ export const config: VendureConfig = {
       { name: "submissionTransactionId", type: "string" },
     ],
     // The quoted* names keep these apart from Vendure's native unitPrice /
-    // lineTotal columns, which stay 0 until the server-side re-pricing
-    // integration moves price authority into Vendure.
+    // lineTotal columns, which stay 0 until the site's cutover stops quoting
+    // client-side. The pricing fields carry what the server's own pricing
+    // needs (ADR 0010 delivery step 5); keep the OrderLine array contiguous —
+    // gql regeneration diffs against the other branch's field edits.
     OrderLine: [
       { name: "title", type: "string" },
       { name: "configText", type: "text" },
       { name: "detailsJson", type: "text", nullable: true },
       { name: "quotedUnitPrice", type: "int" },
       { name: "quotedLineTotal", type: "int" },
+      {
+        name: "lengthCm",
+        type: "int",
+        min: 1,
+        max: MAX_LINE_LENGTH_CM,
+        label: [{ languageCode: LanguageCode.hu, value: "Hossz (cm)" }],
+      },
+      { name: "selections", type: "text" },
     ],
     // Email addresses editable in the dashboard's channel settings; the env
     // values are the fallback (and what exists before this field is filled).
@@ -188,6 +262,128 @@ export const config: VendureConfig = {
             value:
               "Ide megy az értesítés minden új rendelésről. Üresen hagyva a kiszolgálón beállított cím marad érvényben.",
           },
+        ],
+        nullable: true,
+      },
+    ],
+    Product: [
+      {
+        name: "shortDescription",
+        type: "localeText",
+        label: [{ languageCode: LanguageCode.hu, value: "Rövid leírás" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value: "Rövid szöveg a terméklistához (keresés és kártyaszöveg).",
+          },
+        ],
+        nullable: true,
+      },
+      {
+        name: "tagline",
+        type: "localeString",
+        label: [{ languageCode: LanguageCode.hu, value: "Alcím" }],
+        description: [
+          { languageCode: LanguageCode.hu, value: "A lista és a részletező oldal alcíme." },
+        ],
+        nullable: true,
+      },
+      {
+        name: "date",
+        type: "datetime",
+        label: [{ languageCode: LanguageCode.hu, value: "Dátum" }],
+        description: [
+          { languageCode: LanguageCode.hu, value: "A „legújabb elöl” lista rendezéséhez." },
+        ],
+        nullable: true,
+      },
+      {
+        name: "icon",
+        type: "relation",
+        entity: Asset,
+        onDelete: "SET NULL",
+        label: [{ languageCode: LanguageCode.hu, value: "Termék ikon" }],
+        description: [
+          { languageCode: LanguageCode.hu, value: "Opcionális ikon a rendelési felülethez." },
+        ],
+        nullable: true,
+      },
+      {
+        name: "popularityRank",
+        type: "int",
+        min: 1,
+        label: [{ languageCode: LanguageCode.hu, value: "Népszerűségi sorrend" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value:
+              "A „Népszerű” rendezés sorrendje (1 = legelöl). Az üresen hagyott termékek a rangsoroltak után kerülnek.",
+          },
+        ],
+        nullable: true,
+      },
+    ],
+    Collection: [
+      {
+        name: "setDiscount",
+        type: "int",
+        label: [{ languageCode: LanguageCode.hu, value: "Szett-kedvezmény (Ft)" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value:
+              "Egy képződött szett-példány által levont fix forint. Csak a Szettek alatti gyűjteményeken használatos; üresen a gyűjtemény nem szett.",
+          },
+        ],
+        nullable: true,
+        validate: (value: unknown) => {
+          if (value === null || value === undefined) {
+            return;
+          }
+
+          if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
+            return "A szett-kedvezmény pozitív egész forint lehet.";
+          }
+        },
+      },
+    ],
+    FacetValue: [
+      {
+        name: "hex",
+        type: "string",
+        label: [{ languageCode: LanguageCode.hu, value: "Színkód (hex)" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value:
+              "#rrggbb formátumban (pl. #9caf88). A cérnaszínek facetnél a minta képe elsőbbséget élvez.",
+          },
+        ],
+        nullable: true,
+        validate: hexColorError,
+      },
+      {
+        name: "swatch",
+        type: "relation",
+        entity: Asset,
+        onDelete: "SET NULL",
+        label: [{ languageCode: LanguageCode.hu, value: "Minta (kép)" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value: "A cérnaszín képe; ha nincs, a színkód látszik.",
+          },
+        ],
+        nullable: true,
+      },
+    ],
+    Asset: [
+      {
+        name: "galleryDescription",
+        type: "localeText",
+        label: [{ languageCode: LanguageCode.hu, value: "Képleírás" }],
+        description: [
+          { languageCode: LanguageCode.hu, value: "A termék galériájában a kép alatti leírás." },
         ],
         nullable: true,
       },

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "composite": true,
     "target": "ES2023",
     "lib": ["ES2023"],
     "module": "nodenext",
@@ -9,11 +10,12 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    // TypeORM entities are hydrated through VendureEntity's constructor; ES2022+ field semantics would reset decorated fields to undefined after it.
+    "useDefineForClassFields": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "sourceMap": true
   },
   "include": ["src"],
-  "exclude": ["src/**/dashboard/*", "src/gql/*", "vite.*.*ts"],
-  "references": [{ "path": "./tsconfig.dashboard.json" }]
+  "exclude": ["src/**/dashboard/*", "src/gql/*", "vite.*.*ts"]
 }

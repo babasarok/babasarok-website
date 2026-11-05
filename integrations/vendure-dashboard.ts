@@ -31,6 +31,7 @@ export function vendureDashboard(): AstroIntegration {
       "astro:build:done": async ({ dir, logger }) => {
         const outDir = fileURLToPath(new URL("dashboard/", dir));
         logger.info(`building the vendure dashboard → ${outDir}`);
+
         const result = spawnSync(
           process.execPath,
           [

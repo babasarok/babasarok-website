@@ -58,6 +58,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
       - run: pnpm -C backend run check
+      - run: pnpm -C backend run check:dashboard
+      # The committed gql types must match the schema: regenerate and fail on
+      # any drift (see gql.tada docs, "Verifying committed output files").
+      - run: pnpm -C backend run gql:fresh
       - run: pnpm -C backend test
 
   # Real production build (`npm run build` -> `tinacms build`, talks to Tina
@@ -129,3 +133,74 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
       - run: pnpm run test:hydration
+
+  # Real-browser e2e for the Vendure dashboard (the custom "Anyagok" section).
+  # Reuses the build job's dist (the dashboard SPA ships inside the site build,
+  # ADR 0008), boots the site with `wrangler dev` like the hydration guard, and
+  # adds a Vendure API server on :4000 driven by backend/scripts/e2e-server.ts:
+  # it re-creates the babasarok_e2e database (dropped + created on the postgres
+  # service below, same credentials as backend/e2e.env), applies migrations,
+  # seeds two materials, then serves. Every run starts from that fixed state.
+  dashboard-e2e:
+    name: Dashboard E2E
+    needs: build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: babasarok
+          POSTGRES_PASSWORD: babasarok
+          POSTGRES_DB: babasarok_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      # e2e-server spawns backend/dist/{migrate,index}.js; the checkout has no
+      # build output. Backend tsc uses its own TypeScript 5 (which is why this
+      # job waits for `build`).
+      - run: pnpm -C backend run build
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - run: pnpm run test:dashboard-e2e
+
+      # API-level checks against a freshly booted e2e backend (the dashboard
+      # e2e run above tears its own webServer down, so :4000 is free again):
+      # the quote-order roundtrip regression check and the site's catalog
+      # contract test. The roundtrip runs first so the contract test also
+      # exercises getProduct() against the placeholder products it created.
+      - name: Boot e2e backend
+        working-directory: backend
+        run: |
+          pnpm run e2e:server &
+          for i in $(seq 1 120); do
+            if curl -sf http://localhost:4000/health > /dev/null; then
+              echo "e2e backend is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "e2e backend failed to start" >&2
+          exit 1
+
+      - name: Run quote-order roundtrip
+        working-directory: backend
+        run: pnpm run test:quote-roundtrip
+
+      - name: Run catalog contract test
+        run: CATALOG_CONTRACT_API_URL=http://localhost:4000 pnpm exec vitest run src/lib/catalog/contract.test.ts
+
+      - name: Stop e2e backend
+        if: always()
+        run: pkill -f "e2e-server.ts" || true
