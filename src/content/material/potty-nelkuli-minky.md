@@ -13,7 +13,7 @@ colors:
     label: 'Szürke '
     image: /src/assets/IMG_5169.webp
   - color_id: 'Világos bézs '
-    label: 'Világos bézs '
+    label: 'Bézs '
     image: /src/assets/IMG_6736.jpeg
   - color_id: Caffelatte66
     label: 'Tejeskávé '
