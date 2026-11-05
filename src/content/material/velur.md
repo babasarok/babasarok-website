@@ -14,7 +14,7 @@ colors:
     label: Szürke
     image: /src/assets/IMG_5139.webp
   - color_id: 'Világos bézs '
-    label: 'Világos bézs '
+    label: Homokbézs
     hex: ''
     image: /src/assets/IMG_5112.webp
   - color_id: barna
