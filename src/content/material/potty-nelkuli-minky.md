@@ -40,7 +40,7 @@ colors:
     label: 'Halvány barackos rózsaszín '
     image: /src/assets/IMG_5143.webp
   - color_id: Extra halvanyrozsaszin-19
-    label: 'Extra halvány rózsaszín '
+    label: 'Halvány rózsaszín '
     image: /src/assets/IMG_5157.webp
   - color_id: Halvány babakek 13
     label: Pasztellkék
