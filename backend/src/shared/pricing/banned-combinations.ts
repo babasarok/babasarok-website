@@ -1,4 +1,4 @@
-import type { LineSelections } from "../product-definition/index.ts";
+import type { LineSelections } from "../product-definition/index";
 
 type ForbiddenCombinations = readonly (readonly string[])[];
 

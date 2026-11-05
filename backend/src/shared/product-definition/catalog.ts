@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { MaterialDefinitionSchema } from "./material.ts";
-import { CatalogRevisionSchema } from "./model.ts";
-import { ProductGroupDefinitionSchema } from "./product-group.ts";
-import { ProductDefinitionSchema } from "./product.ts";
+import { MaterialDefinitionSchema } from "./material";
+import { CatalogRevisionSchema } from "./model";
+import { ProductGroupDefinitionSchema } from "./product-group";
+import { ProductDefinitionSchema } from "./product";
 
 export const ProductCatalogSchema = z.strictObject({
   revision: CatalogRevisionSchema,

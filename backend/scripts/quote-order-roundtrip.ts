@@ -15,7 +15,7 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { z } from "zod";
-import { adminRequest, authenticate } from "./lib/admin-client.ts";
+import { adminRequest, authenticate } from "./lib/admin-client";
 
 const SHOP_URL = `http://localhost:${process.env.PORT ?? "4000"}/shop-api`;
 const EMAIL_OUT_DIR = path.resolve(process.env.EMAIL_OUT_DIR ?? "email-out");

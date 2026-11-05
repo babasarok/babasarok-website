@@ -31,7 +31,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { z } from "zod";
-import { previewSlug } from "../src/lib/preview-slug.ts";
+import { previewSlug } from "../src/lib/preview-slug";
 
 const REPO_ROOT = path.resolve(import.meta.dirname, "..");
 

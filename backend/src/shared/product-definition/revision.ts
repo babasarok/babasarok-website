@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import { canonicalJson } from "./canonical-json.ts";
-import { ProductRevisionSchema, type ProductRevision } from "./model.ts";
-import type { ProductDefinition, ProductDefinitionInput } from "./product.ts";
+import { canonicalJson } from "./canonical-json";
+import { ProductRevisionSchema, type ProductRevision } from "./model";
+import type { ProductDefinition, ProductDefinitionInput } from "./product";
 
 /**
  * The deterministic definition revision: a sha256 over the canonical

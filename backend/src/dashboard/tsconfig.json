@@ -8,9 +8,6 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    // .ts specifiers are the backend-wide convention (rewriteRelativeImportExtensions
-    // in the root tsconfig); type-checking needs this flag to accept them.
-    "allowImportingTsExtensions": true,
     "paths": {
       // The backend's generated Admin-API schema (vite.config.mts gqlOutputPath)
       "@/gql": ["../gql/graphql.ts"],

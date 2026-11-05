@@ -1,4 +1,4 @@
-export { dependencyOrder, isVisible } from "../product-definition/index.ts";
+export { dependencyOrder, isVisible } from "../product-definition/index";
 export {
   LineSelectionRecordSchema,
   LineSelectionsError,
@@ -7,7 +7,7 @@ export {
   serializeLineSelections,
   type LineSelectionRecord,
   type LineSelections,
-} from "../product-definition/index.ts";
+} from "../product-definition/index";
 export {
   MAX_LINE_LENGTH_CM,
   MAX_SELECTION_TEXT_LENGTH,
@@ -17,7 +17,7 @@ export {
   validateSelections,
   type SelectionProblem,
   type SelectionValidationInput,
-} from "./selection-validation.ts";
+} from "./selection-validation";
 export {
   computeLineUnitPrice,
   lengthMissingRejection,
@@ -26,5 +26,5 @@ export {
   valueConfiguredLine,
   type LinePricingInput,
   type LineValuation,
-} from "./line-price.ts";
-export { completesForbiddenCombination, forbiddenMaterialFieldIds } from "./banned-combinations.ts";
+} from "./line-price";
+export { completesForbiddenCombination, forbiddenMaterialFieldIds } from "./banned-combinations";

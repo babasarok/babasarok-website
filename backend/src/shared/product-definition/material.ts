@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { LocalizedTextSchema } from "./localized-text.ts";
-import { TrimmedTextSchema } from "./model.ts";
+import { LocalizedTextSchema } from "./localized-text";
+import { TrimmedTextSchema } from "./model";
 
 export const MaterialIdSchema = TrimmedTextSchema.brand<"MaterialId">();
 export const MaterialColorIdSchema = TrimmedTextSchema.brand<"MaterialColorId">();

@@ -1,4 +1,4 @@
-import type { ProductField } from "./product.ts";
+import type { ProductField } from "./product";
 
 /**
  * Fields in dependency order (each `visibility` target before its dependents),

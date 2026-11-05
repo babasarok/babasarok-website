@@ -1,8 +1,8 @@
-import type { ProductDefinition } from "../product-definition/index.ts";
-import { ProductDefinitionSchema } from "../product-definition/index.ts";
+import type { ProductDefinition } from "../product-definition/index";
+import { ProductDefinitionSchema } from "../product-definition/index";
 import { describe, expect, it } from "vitest";
-import { LineSelectionsError, parseLineSelections } from "../product-definition/index.ts";
-import { computeLineUnitPrice, LinePricingError, valueConfiguredLine } from "./line-price.ts";
+import { LineSelectionsError, parseLineSelections } from "../product-definition/index";
+import { computeLineUnitPrice, LinePricingError, valueConfiguredLine } from "./line-price";
 
 const unitProduct = ProductDefinitionSchema.parse({
   id: "parna",

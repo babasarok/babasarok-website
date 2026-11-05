@@ -18,13 +18,13 @@ export {
   type ProductFieldId,
   type ProductId,
   type ProductRevision,
-} from "./model.ts";
+} from "./model";
 export {
   DEFAULT_TEXT_LANGUAGE,
   LocalizedTextSchema,
   resolveText,
   type LocalizedText,
-} from "./localized-text.ts";
+} from "./localized-text";
 export {
   ColorAppearanceSchema,
   MaterialColorDefinitionSchema,
@@ -36,13 +36,13 @@ export {
   type MaterialColorId,
   type MaterialDefinition,
   type MaterialId,
-} from "./material.ts";
+} from "./material";
 export {
   FieldVisibilitySchema,
   PatternSchema,
   fieldBaseShape,
   type FieldVisibility,
-} from "./field.ts";
+} from "./field";
 export {
   ChoiceFieldSchema,
   ChoiceOptionIdSchema,
@@ -50,11 +50,11 @@ export {
   type ChoiceField,
   type ChoiceOption,
   type ChoiceOptionId,
-} from "./field-kinds/choice.ts";
-export { InputFieldSchema, type InputField } from "./field-kinds/input.ts";
-export { ToggleFieldSchema, type ToggleField } from "./field-kinds/toggle.ts";
-export { MaterialFieldSchema, type MaterialField } from "./field-kinds/material.ts";
-export { EmbroideryFieldSchema, type EmbroideryField } from "./field-kinds/embroidery.ts";
+} from "./field-kinds/choice";
+export { InputFieldSchema, type InputField } from "./field-kinds/input";
+export { ToggleFieldSchema, type ToggleField } from "./field-kinds/toggle";
+export { MaterialFieldSchema, type MaterialField } from "./field-kinds/material";
+export { EmbroideryFieldSchema, type EmbroideryField } from "./field-kinds/embroidery";
 export {
   ForbiddenMaterialCombinationSchema,
   ProductDefinitionSchema,
@@ -64,8 +64,8 @@ export {
   type ProductDefinitionInput,
   type ProductField,
   type ProductPricing,
-} from "./product.ts";
-export { byCodeUnit, canonicalJson } from "./canonical-json.ts";
+} from "./product";
+export { byCodeUnit, canonicalJson } from "./canonical-json";
 export {
   parseLineSelections,
   serializeLineSelections,
@@ -74,15 +74,15 @@ export {
   LineSelectionsSchema,
   type LineSelectionRecord,
   type LineSelections,
-} from "./line-selection.ts";
-export { dependencyOrder, isVisible } from "./field-visibility.ts";
+} from "./line-selection";
+export { dependencyOrder, isVisible } from "./field-visibility";
 export {
   selectionDetails,
   type EmailDetail,
   type SelectionDetail,
   type SelectionDetailsInput,
   type SelectionLabels,
-} from "./selection-details.ts";
+} from "./selection-details";
 export {
   DiscountedProductSetSchema,
   ProductGroupDefinitionSchema,
@@ -92,5 +92,5 @@ export {
   type ProductGroupDefinition,
   type ProductGroupId,
   type RelatedItems,
-} from "./product-group.ts";
-export { ProductCatalogSchema, type ProductCatalog } from "./catalog.ts";
+} from "./product-group";
+export { ProductCatalogSchema, type ProductCatalog } from "./catalog";

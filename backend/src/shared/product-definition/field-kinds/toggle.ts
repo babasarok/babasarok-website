@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { FieldVisibilitySchema, fieldBaseShape } from "../field.ts";
-import { MoneySchema } from "../model.ts";
+import { FieldVisibilitySchema, fieldBaseShape } from "../field";
+import { MoneySchema } from "../model";
 
 export const ToggleFieldSchema = z.strictObject({
   ...fieldBaseShape,

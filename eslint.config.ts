@@ -4,9 +4,15 @@ import tseslint from "typescript-eslint";
 import astro from "eslint-plugin-astro";
 import unicorn from "eslint-plugin-unicorn";
 import svelte from "eslint-plugin-svelte";
-import svelteConfig from "./svelte.config.ts";
+import svelteConfig from "./svelte.config";
 
 import { defineConfig, globalIgnores } from "eslint/config";
+
+const noExtensionImports = {
+  regex: String.raw`^\.{1,2}/.*\.[cm]?[jt]sx?$`,
+  message:
+    "Import relative modules without an extension. tsc (CJS emit), the vendure dashboard's config loader, vite and tsx all resolve extensionless specifiers; scripts run through tsx, not plain node.",
+};
 
 export default defineConfig([
   globalIgnores([
@@ -95,6 +101,7 @@ export default defineConfig([
         },
       ],
       "unicorn/no-empty-file": "error",
+      "no-restricted-imports": ["error", { patterns: [noExtensionImports] }],
       // We prefer if/else over ternaries
       "unicorn/prefer-ternary": "off",
       curly: "error",
@@ -149,6 +156,7 @@ export default defineConfig([
         "error",
         {
           patterns: [
+            noExtensionImports,
             {
               group: ["@vendure/*", "@/*"],
               message:

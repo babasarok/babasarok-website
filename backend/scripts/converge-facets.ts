@@ -12,7 +12,7 @@
  * Run: pnpm -C backend run converge-facets
  */
 import { z } from "zod";
-import { adminRequest, authenticate } from "./lib/admin-client.ts";
+import { adminRequest, authenticate } from "./lib/admin-client";
 
 const ConvergeDataSchema = z.object({
   convergeMaterialFacets: z.number(),

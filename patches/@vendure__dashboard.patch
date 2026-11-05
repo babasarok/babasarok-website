@@ -10,16 +10,3 @@ index b21dbc9100f0a16faf5420c7762a97bd8d90e3b7..46b259f431bc036f9862d3229369214c
                        }))
                      : [
                            {
-
-diff --git a/dist/vite/utils/compiler.js b/dist/vite/utils/compiler.js
-index efcadc7..00c4577 100644
---- a/dist/vite/utils/compiler.js
-+++ b/dist/vite/utils/compiler.js
-@@ -276,6 +276,7 @@ async function compileTypeScript({ outputPath, logger, module, sourceRoot, tsCon
-     const compilerOptions = {
-         target: ts.ScriptTarget.ES2020,
-         module: module === 'esm' ? ts.ModuleKind.ESNext : ts.ModuleKind.CommonJS,
-+        rewriteRelativeImportExtensions: true,
-         // Plugin import graphs can transitively reach .tsx files (e.g. server-side
-         // React for PDF or email rendering). Without this, transpileModule emits raw
-         // JSX into the .js output and the compiled config fails to import.

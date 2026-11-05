@@ -3,7 +3,7 @@ import type {
   FieldVisibilitySchema,
   ProductDefinitionSchema,
   ProductGroupDefinitionSchema,
-} from "../../src/shared/product-definition/index.ts";
+} from "../../src/shared/product-definition/index";
 
 /**
  * The read-only Tina product-content adapter for the preview seed

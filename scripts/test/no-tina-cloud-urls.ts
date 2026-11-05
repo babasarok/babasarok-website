@@ -12,7 +12,7 @@
  * excluded, as is the Worker bundle (`dist/server`): it is code, not output,
  * and carries source comments describing Tina URLs.
  *
- * Run after a build: `node scripts/test/no-tina-cloud-urls.ts`
+ * Run after a build: `pnpm run test:dist-tina-urls`
  * Exits non-zero (and prints offenders) when any leak is found.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";

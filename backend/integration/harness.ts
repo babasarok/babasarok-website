@@ -23,8 +23,8 @@ import { createTestEnvironment, SimpleGraphQLClient } from "@vendure/testing";
 import { Pool } from "pg";
 import gql from "graphql-tag";
 import { z } from "zod";
-import { config as appConfig } from "../dist/vendure-config.js";
-import { env } from "../dist/env.js";
+import { config as appConfig } from "../dist/vendure-config";
+import { env } from "../dist/env";
 
 export const EMAIL_OUT_DIR = path.resolve(import.meta.dirname, "..", "email-out");
 
