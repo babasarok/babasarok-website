@@ -1,6 +1,5 @@
 import { LanguageCode } from "@vendure/common/lib/generated-types";
 import { vendureDashboardPlugin } from "@vendure/dashboard/vite";
-import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { defineConfig } from "vite";
 

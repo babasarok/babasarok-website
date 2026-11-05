@@ -1,6 +1,6 @@
 import { selectionDetails, type ProductDefinition } from "../../shared/product-definition/index";
 import { Injectable } from "@nestjs/common";
-import { EventBus, ID, OrderLine, OrderLineEvent, TransactionalConnection } from "@vendure/core";
+import { EventBus, OrderLine, OrderLineEvent, TransactionalConnection } from "@vendure/core";
 import { In } from "typeorm";
 import { selectionLabels, selectionsOf } from "../product/line-labels";
 import { ProductDefinition as ProductDefinitionEntity } from "../product/product.entity";

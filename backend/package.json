@@ -18,6 +18,7 @@
     "import-facets": "node --env-file-if-exists=.env scripts/import-facets.ts",
     "import-products": "node --env-file-if-exists=.env scripts/import-products.ts",
     "converge-facets": "node --env-file-if-exists=.env scripts/converge-facets.ts",
+    "test:quote-roundtrip": "node --env-file-if-exists=.env scripts/quote-order-roundtrip.ts",
     "e2e:server": "node --env-file=e2e.env scripts/e2e-server.ts",
     "check": "tsc -b && tsc -p tsconfig.scripts.json --noEmit && tsc -p tsconfig.integration.json",
     "check:dashboard": "node scripts/check-dashboard-types.ts",
