@@ -45,7 +45,7 @@ colors:
     hex: ''
     image: /src/assets/IMG_5143.webp
   - color_id: Halvány rózsaszín 19
-    label: 'Extra halvány rózsaszín '
+    label: 'Halvány rózsaszín '
     image: /src/assets/IMG_5147.webp
   - color_id: pink
     label: Pink
