@@ -1,34 +1,8 @@
-/* The package table atoms pin whitespace-nowrap on every cell, so a narrow
-   card can only scroll horizontally. Inside a DataTable's @container/table,
-   let cells wrap below the dashboard's mobile breakpoint (useIsMobile =
-   768px): money and quantity tokens keep non-breaking separators, so plain
-   word wrapping cannot split them; SKU/id-style tokens are unbreakable, so
-   overflow-wrap:anywhere folds them instead of pinning the table's
-   min-content width. Unlayered rules outrank the Tailwind utilities layer,
-   so no !important is needed. */
-@container table (max-width: 767px) {
-  [data-slot="table-head"],
-  [data-slot="table-cell"] {
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
+/* Package DataTables are left untouched: their cells keep the package's
+   whitespace-nowrap and scroll inside their own table-container. Proper
+   mobile cards for them are a separate follow-up.
 
-  /* Row-link buttons (DetailPageButton et al.) carry whitespace-nowrap in the
-     button atom, which keeps product/variant-name columns as wide as their
-     longest name. */
-  [data-slot="table-cell"] button {
-    white-space: normal;
-  }
-
-  /* The pagination band is sized to its controls (range text, page-size
-     select, prev/next); without wrapping it is clipped at the card edge. */
-  [data-slot="table-pagination"],
-  [data-slot="table-pagination"] > div {
-    flex-wrap: wrap;
-  }
-}
-
-/* Below the dashboard's mobile breakpoint the app shell's main pane is the
+   Below the dashboard's mobile breakpoint the app shell's main pane is the
    page-like scroller, so a single oversized element outside a card (toolbar
    row, unbreakable token, non-wrapping control row) gains a page-wide
    horizontal scrollbar — the package already clips the sidebar inset for the
