@@ -56,7 +56,12 @@ function run(
     return "";
   }
 
-  const r = spawnSync(cmd, args, { cwd: opts.cwd, input: opts.input, encoding: "utf8" });
+  const r = spawnSync(cmd, args, {
+    cwd: opts.cwd,
+    input: opts.input,
+    encoding: "utf8",
+    maxBuffer: 1 << 30,
+  });
   if (r.status !== 0) {
     const stderr = r.stderr ? r.stderr.trim() : "";
     throw new Error(`${cmd} ${args.join(" ")} failed${stderr ? `: ${stderr}` : ""}`);
