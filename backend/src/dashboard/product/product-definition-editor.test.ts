@@ -602,6 +602,23 @@ describe("applyLengthSourceDefaults", () => {
     }
 
     expect(overwritten.pattern).toBe(String.raw`^\d+$`);
+
+    const ruled = {
+      ...bare,
+      fields: [
+        {
+          ...sampleInput("hossz", "Hossz"),
+          visibility: { kind: "when-present", fieldId: "mas" } as const,
+        },
+      ],
+    };
+    const shown = applyLengthSourceDefaults(ruled, "hossz").fields[0];
+
+    if (shown.kind !== "input") {
+      throw new Error("expected an input field");
+    }
+
+    expect(shown.visibility).toEqual({ kind: "always" });
   });
 
   test("a choice source stamps only an existing customValue's pattern", () => {
@@ -615,6 +632,18 @@ describe("applyLengthSourceDefaults", () => {
     }
 
     expect(plain.customValue).toBeUndefined();
+
+    const ruled = {
+      ...bare,
+      fields: [{ ...choice, visibility: { kind: "when-present", fieldId: "mas" } as const }],
+    };
+    const forced = applyLengthSourceDefaults(ruled, "hossz").fields[0];
+
+    if (forced.kind !== "choice") {
+      throw new Error("expected a choice field");
+    }
+
+    expect(forced.visibility).toEqual({ kind: "always" });
 
     const withCustom = {
       ...bare,

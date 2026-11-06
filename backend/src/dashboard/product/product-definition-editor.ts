@@ -543,6 +543,17 @@ export function withLengthSourcePattern(field: FieldInput): FieldInput {
   return field;
 }
 
+/** A length source must always show in the storefront configurator — pricing
+ * breaks when the buyer cannot enter the length — so its visibility rule is
+ * reset on assignment and the dashboard hides the rule editor for it. */
+function withAlwaysVisible(field: FieldInput): FieldInput {
+  if (field.kind === "material") {
+    return field;
+  }
+
+  return { ...field, visibility: { kind: "always" } };
+}
+
 export function applyLengthSourceDefaults(
   definition: ProductDefinitionInput,
   sourceFieldId: string
@@ -550,7 +561,7 @@ export function applyLengthSourceDefaults(
   return {
     ...definition,
     fields: definition.fields.map((field) =>
-      field.id === sourceFieldId ? withLengthSourcePattern(field) : field
+      field.id === sourceFieldId ? withLengthSourcePattern(withAlwaysVisible(field)) : field
     ),
   };
 }

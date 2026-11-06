@@ -291,45 +291,45 @@ function ChoiceSettings({
                 }}
               />
               {revealDetails && !isSource && (
-                <>
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span>Ár (Ft)</span>
-                    <NumberInput
-                      className="w-28"
-                      value={option.price}
-                      onChange={(price) => {
-                        updateOptions(
-                          field.options.map((candidate, at) =>
-                            at === optionIndex ? { ...candidate, price } : candidate
-                          )
-                        );
-                      }}
-                    />
-                  </label>
-                  <LocalizedInput
-                    label="Súgó"
-                    text={option.tooltip}
-                    language={language}
-                    width="w-40"
-                    onChange={(next) => {
+                <label className="flex flex-col gap-1 text-sm">
+                  <span>Ár (Ft)</span>
+                  <NumberInput
+                    className="w-28"
+                    value={option.price}
+                    onChange={(price) => {
                       updateOptions(
-                        field.options.map((candidate, at) => {
-                          if (at !== optionIndex) {
-                            return candidate;
-                          }
-
-                          if (next === undefined) {
-                            const { tooltip: _removed, ...rest } = candidate;
-
-                            return rest;
-                          }
-
-                          return { ...candidate, tooltip: next };
-                        })
+                        field.options.map((candidate, at) =>
+                          at === optionIndex ? { ...candidate, price } : candidate
+                        )
                       );
                     }}
                   />
-                </>
+                </label>
+              )}
+              {revealDetails && (
+                <LocalizedInput
+                  label="Súgó"
+                  text={option.tooltip}
+                  language={language}
+                  width="w-40"
+                  onChange={(next) => {
+                    updateOptions(
+                      field.options.map((candidate, at) => {
+                        if (at !== optionIndex) {
+                          return candidate;
+                        }
+
+                        if (next === undefined) {
+                          const { tooltip: _removed, ...rest } = candidate;
+
+                          return rest;
+                        }
+
+                        return { ...candidate, tooltip: next };
+                      })
+                    );
+                  }}
+                />
               )}
               <ReorderButtons
                 index={optionIndex}
@@ -1327,7 +1327,7 @@ export function FieldEditor({
             </FieldSection>
           )}
           <FieldSection title="Speciális">
-            {field.kind !== "material" && fields !== undefined && (
+            {field.kind !== "material" && fields !== undefined && !isSource && (
               <VisibilityEditor
                 field={field}
                 fields={fields}
