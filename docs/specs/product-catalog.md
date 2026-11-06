@@ -254,10 +254,9 @@ containsAny). Its filter is written at creation and not overwritten
 afterwards; renames propagate, manual content edits are the owner's.
 
 Convergence for databases that predate the facet sync SHALL be idempotent
-and re-run safe: the `convergeMaterialFacets` admin mutation (or
-`pnpm -C backend run converge-facets` against a running server + worker)
-brings every material's facet values and collection in line and re-syncs
-every referencing product. A missing facet value fails a product sync with a
+and re-run safe: the `convergeMaterialFacets` admin mutation brings every
+material's facet values and collection in line and re-syncs every
+referencing product. A missing facet value fails a product sync with a
 clear error pointing at the convergence step, rather than silently creating
 or skipping.
 
@@ -281,12 +280,11 @@ dashboard pages (ADR 0011 decisions 2 and 3); no sync writes them.
   embroidery thread color, code = the color id, name (translatable) = label.
   Each value has the custom fields `hex` (nullable, `#rrggbb`) and `swatch`
   (nullable Asset relation), edited on the stock facet-value page. A value
-  with neither is rendered as a neutral chip and reported by the seed.
+  with neither is rendered as a neutral chip.
 
-The seed (`import-facets`, then `import-products` for the assignment) creates
-both facets idempotently from the Tina `type` values and
-`src/content/config/embroidery.json`; existing facets/values are left as the
-owner edited them. Production runs the same scripts once by hand.
+Both facets and their values are owner-maintained on the stock dashboard
+(the one-off catalog import seeded the current values; the importers were
+removed at cutover).
 
 - **Scenario: Owner adds a product type**
   - WHEN the owner creates a value in the product-type facet
