@@ -278,22 +278,30 @@ describe("computeLineUnitPrice", () => {
     ).toThrow(LinePricingError);
   });
 
-  it("refuses a custom value on a field the variant matrix carries", () => {
-    expect(() =>
-      computeLineUnitPrice({
-        productName: "Termék",
-        definition: lengthProduct,
-        variantListPrice: 0,
-        optionCodes: new Map([
-          ["sizes", "200"],
-          ["fonas", "3"],
-          ["anyag", "velur"],
-        ]),
-        selections: { fonas: { kind: "custom", value: "7" } },
-        lengthCm: 200,
-        languageCode: "hu",
-      })
-    ).toThrow(LinePricingError);
+  it("prices a custom value on a variant-axis field like the variant's pinned option", () => {
+    // The storefront cannot put a custom value on a variant: it pins a listed
+    // option's variant and stores the custom text on the line. The line prices
+    // via the pinned option — what the live price already showed — while the
+    // custom text rides the stored selections (configText, emails).
+    const price = computeLineUnitPrice({
+      productName: "Termék",
+      definition: lengthProduct,
+      variantListPrice: 0,
+      optionCodes: new Map([
+        ["sizes", "200"],
+        ["fonas", "3"],
+        ["anyag", "velur"],
+      ]),
+      selections: {
+        sizes: { kind: "custom", value: "240" },
+        fonas: { kind: "custom", value: "7" },
+      },
+      lengthCm: 240,
+      languageCode: "hu",
+    });
+
+    // (base 0 + fonás "3" 8000 Ft/m) × 2.4 m; the custom values ride along.
+    expect(price).toBe(19_200);
   });
 
   it("refuses selections that disagree with the variant", () => {
