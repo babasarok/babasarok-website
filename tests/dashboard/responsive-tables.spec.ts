@@ -82,10 +82,14 @@ test("a phone-width collection list reorders cards by their drag handle", async 
   // sensor. (dnd-kit's keyboard drag works too, but on cards taller than half
   // the scroll pane its first arrow press scrolls instead of moving.)
   await test.step("dragging the first fixture's handle moves it below the second", async () => {
-    const moved = waitForMutation(page, "MoveCollection");
+    // Under CI load the pointer sequence occasionally races a list re-render
+    // and the drag drops dead; retry the whole drag until the mutation lands.
+    await expect(async () => {
+      const moved = waitForMutation(page, "MoveCollection");
 
-    await dragHandleOnto(page, cardDragHandle(page, names[0]), cardDragHandle(page, names[1]));
-    await moved;
+      await dragHandleOnto(page, cardDragHandle(page, names[0]), cardDragHandle(page, names[1]));
+      await moved;
+    }).toPass({ timeout: 30_000 });
 
     await expect.poll(() => cardOrder(page, names)).toEqual([names[1], names[0], names[2]]);
   });

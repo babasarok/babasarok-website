@@ -45,9 +45,11 @@ const E2E_MATERIALS = [
   { slug: "e2e-m2", label: "Len" },
 ];
 
-/** The material-picker select inside a material field card's option rows. */
+/** The material-picker select inside a material field card's option rows.
+ * Role-based with an exact name: getByLabel substring-matches the field-type
+ * select too, whose label text contains its "Anyag" option. */
 function materialSelect(card: Locator, index: number): Locator {
-  return card.getByLabel("Anyag").nth(index);
+  return card.getByRole("combobox", { name: "Anyag", exact: true }).nth(index);
 }
 
 interface FixtureDefinition {
@@ -415,8 +417,8 @@ test("the Részletek switch reveals a choice grid's details and auto-reveals sav
     const szin = fieldCardById(page, "szin");
     await expandCard(szin);
 
-    await expect(szin.getByLabel("Érték")).toHaveCount(0);
-    await expect(szin.getByLabel("Ár (Ft)")).toHaveCount(0);
+    await expect(szin.getByLabel("Érték", { exact: true })).toHaveCount(0);
+    await expect(szin.getByLabel("Ár (Ft)", { exact: true })).toHaveCount(0);
     // The field's own Súgó (Alapadatok) exists; the per-row ones do not yet.
     await expect(szin.getByLabel("Súgó")).toHaveCount(1);
     await expect(szin.getByLabel("Név")).toHaveCount(3);
@@ -426,14 +428,14 @@ test("the Részletek switch reveals a choice grid's details and auto-reveals sav
     const szin = fieldCardById(page, "szin");
     await szin.getByRole("switch", { name: "Részletek" }).click();
 
-    await expect(szin.getByLabel("Érték")).toHaveCount(2);
-    await expect(szin.getByLabel("Ár (Ft)")).toHaveCount(2);
+    await expect(szin.getByLabel("Érték", { exact: true })).toHaveCount(2);
+    await expect(szin.getByLabel("Ár (Ft)", { exact: true })).toHaveCount(2);
     await expect(szin.getByLabel("Súgó")).toHaveCount(3);
   });
 
   await test.step("a saved non-zero price keeps the grid detailed after a reload", async () => {
     const szin = fieldCardById(page, "szin");
-    const pirosAr = szin.getByLabel("Ár (Ft)").nth(1);
+    const pirosAr = szin.getByLabel("Ár (Ft)", { exact: true }).nth(1);
     await pirosAr.fill("500");
     await pirosAr.blur();
 
@@ -449,8 +451,8 @@ test("the Részletek switch reveals a choice grid's details and auto-reveals sav
 
     // No Részletek click on this page load: the saved price turned the
     // details on by itself, so the columns are already revealed.
-    await expect(reloaded.getByLabel("Ár (Ft)")).toHaveCount(2);
-    await expect(reloaded.getByLabel("Érték")).toHaveCount(2);
+    await expect(reloaded.getByLabel("Ár (Ft)", { exact: true })).toHaveCount(2);
+    await expect(reloaded.getByLabel("Érték", { exact: true })).toHaveCount(2);
   });
 });
 

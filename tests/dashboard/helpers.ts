@@ -180,6 +180,10 @@ export function cardDragHandle(page: Page, name: string): Locator {
 /** Drags `handle` with the pointer, in small steps (dnd-kit needs moves past
  * its activation threshold), until it sits just past `target`. */
 export async function dragHandleOnto(page: Page, handle: Locator, target: Locator): Promise<void> {
+  // The cards may sit below the phone viewport's fold; scroll the target in
+  // first so both bounding boxes are viewport coordinates the pointer can
+  // actually reach (the handle sits on the card right above the target).
+  await target.scrollIntoViewIfNeeded();
   const from = await handle.boundingBox();
   const to = await target.boundingBox();
 
