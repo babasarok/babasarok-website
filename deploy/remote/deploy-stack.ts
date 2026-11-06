@@ -41,11 +41,7 @@ const DIR = `${ROOT}/${stack}`;
 const isPreview = deployStack === "preview";
 const DB = `babasarok_preview_${slug}`;
 
-function run(
-  cmd: string,
-  args: string[],
-  opts: { cwd?: string; input?: string | Buffer; stream?: boolean } = {}
-): string {
+function run(cmd: string, args: string[], opts: { cwd?: string; stream?: boolean } = {}): string {
   // stream: inherit stdio so long-running output (image builds) flows to the
   // CF build log live instead of surfacing only on completion.
   if (opts.stream) {
@@ -56,12 +52,7 @@ function run(
     return "";
   }
 
-  const r = spawnSync(cmd, args, {
-    cwd: opts.cwd,
-    input: opts.input,
-    encoding: "utf8",
-    maxBuffer: 1 << 30,
-  });
+  const r = spawnSync(cmd, args, { cwd: opts.cwd, encoding: "utf8" });
   if (r.status !== 0) {
     const stderr = r.stderr ? r.stderr.trim() : "";
     throw new Error(`${cmd} ${args.join(" ")} failed${stderr ? `: ${stderr}` : ""}`);
@@ -161,32 +152,12 @@ try {
     // data. WITH (FORCE) evicts open connections first (PostgreSQL 13+).
     psql("babasarok-edge-postgres-1", "postgres", `DROP DATABASE IF EXISTS "${DB}" WITH (FORCE)`);
     psql("babasarok-edge-postgres-1", "postgres", `CREATE DATABASE "${DB}"`);
-    const dump = run("docker", [
-      "exec",
-      "babasarok-prod-postgres-1",
-      "pg_dump",
-      "-U",
-      "babasarok",
-      "-d",
-      "babasarok",
+    // The dump streams straight into the restore: buffering it through
+    // spawnSync would cap it at maxBuffer (the prod dump outgrew 1 MiB).
+    run("bash", [
+      "-c",
+      `set -o pipefail; docker exec babasarok-prod-postgres-1 pg_dump -U babasarok -d babasarok | docker exec -i babasarok-edge-postgres-1 psql -U babasarok -d ${DB} -v ON_ERROR_STOP=1 -q`,
     ]);
-    run(
-      "docker",
-      [
-        "exec",
-        "-i",
-        "babasarok-edge-postgres-1",
-        "psql",
-        "-U",
-        "babasarok",
-        "-d",
-        DB,
-        "-v",
-        "ON_ERROR_STOP=1",
-        "-q",
-      ],
-      { input: dump }
-    );
 
     // Preview containers ride the INFRA stack's network; make sure the shared
     // preview postgres there is up before anything in this stack boots. The
