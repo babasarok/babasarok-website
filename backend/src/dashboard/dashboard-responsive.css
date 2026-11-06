@@ -9,7 +9,7 @@
    horizontal scrollbar — the package already clips the sidebar inset for the
    same reason. Legitimate table scrolling happens inside each
    [data-slot="table-container"], so the belt cannot trap it. */
-@media (max-width: 767px) {
+@media (width <= 767px) {
   [data-slot="app-shell-main"] {
     overflow-x: hidden;
   }

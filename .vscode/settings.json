@@ -8,7 +8,6 @@
   "[svelte]": {
     "editor.defaultFormatter": "svelte.svelte-vscode"
   },
-  "stylelint.configFile": "stylelint.config.mjs",
   "stylelint.packageManager": "pnpm",
   "stylelint.validate": ["css", "postcss", "astro", "svelte", "html", "vue"],
   "stylelint.reportNeedlessDisables": true,
