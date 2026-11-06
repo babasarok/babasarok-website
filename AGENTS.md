@@ -215,6 +215,15 @@ max-h-none`); `width: 100%` on a `position: fixed` element stops short of
   `.prettierignore`).
 - **npm leftovers:** `package-lock.json` is ignored/untracked; don't run
   `npm install`/`npm ci` — it would create a stale npm lockfile.
+- **Patched dependencies (`patches/`):** `@vendure/dashboard` and
+  `@vendure-io/ui` carry pnpm patches (the responsive tables of ADR 0013 plus
+  smaller dashboard fixes). `pnpm patch <pkg> --edit-dir <dir>` does **not**
+  apply the existing patch to the edit dir — apply it first
+  (`patch -p1 < patches/<file>` inside the dir), or `pnpm patch-commit`
+  silently drops it. `patch-commit` also writes a versioned `<pkg>@x.y.z`
+  key and file next to the unversioned one, which fails the install
+  ("patches were not used"): fold it back into the existing unversioned
+  file and key.
 - **Don't read `tina/tina-lock.json` in full.** It is a huge minified JSON
   (the TinaCMS GraphQL schema dump) that floods the context. Inspect it with
   surgical searches instead, e.g. `grep -o 'SomeTypeName.\{0,200\}'

@@ -1,0 +1,722 @@
+diff --git a/src/components/molecules/data-table/data-table-cards.tsx b/src/components/molecules/data-table/data-table-cards.tsx
+new file mode 100644
+index 0000000000000000000000000000000000000000..c03db8b61cb3f398fefdbc3d84907d5d6ac5c91d
+--- /dev/null
++++ b/src/components/molecules/data-table/data-table-cards.tsx
+@@ -0,0 +1,288 @@
++'use client';
++
++import { flexRender, type Row, type Table as TanStackTable } from '@tanstack/react-table';
++import { Button } from '@vendure-io/ui/components/atoms/button';
++import { CardContent } from '@vendure-io/ui/components/atoms/card';
++import { Checkbox } from '@vendure-io/ui/components/atoms/checkbox';
++import {
++  ContextMenu,
++  ContextMenuContent,
++  ContextMenuTrigger,
++} from '@vendure-io/ui/components/atoms/context-menu';
++import {
++  NativeSelect,
++  NativeSelectOption,
++} from '@vendure-io/ui/components/atoms/native-select';
++import { Skeleton } from '@vendure-io/ui/components/atoms/skeleton';
++import { Table, TableBody } from '@vendure-io/ui/components/atoms/table';
++import { cn } from '@vendure-io/ui/lib/utils';
++import type {
++  DataTableCardLayout,
++  DataTableProps,
++} from '@vendure-io/ui/components/molecules/data-table/data-table-types';
++import { ArrowDownIcon, ArrowUpIcon } from 'lucide-react';
++import * as React from 'react';
++// Relative: `data-table-helpers` is closed in the package exports.
++import { getCardColumns, headerLabelText } from './data-table-helpers.tsx';
++
++// The card layout of the DataTable body: the same rows, columns and table
++// state as the `<Table>` body, laid out as one card per row for frames too
++// narrow for a column grid. Only the body changes — the header band
++// (controls, bulk bar, chips) and the pagination footer are shared, so every
++// capability keeps working. Column headers don't exist here, so a sort
++// control and a select-all checkbox stand in for them.
++
++const DEFAULT_CARD_BREAKPOINT = 640;
++const ACTIONS_COLUMN_ID = 'actions';
++// A cell whose content is a button (e.g. a ghost link button) would sit
++// indented by the button's padding and taller than a text line; negative
++// margins cancel both, so its text lines up with the label and the other
++// values while the hit area stays the button's own.
++const FLUSH_LEADING_BUTTON =
++  '[&>[data-slot=button]:first-child]:-my-2 [&>[data-slot=button]:first-child]:-ml-2.5';
++
++/**
++ * Whether the body renders as cards. `'auto'` measures the frame itself (not
++ * the viewport), before paint, so a table in a narrow column or sheet
++ * switches too and the first frame never flashes the other layout.
++ */
++function useCardLayout(
++  frameRef: React.RefObject<HTMLElement | null>,
++  cardLayout: Pick<DataTableCardLayout<unknown>, 'mode' | 'breakpoint'> | undefined,
++): boolean {
++  const auto = cardLayout != null && (cardLayout.mode ?? 'auto') === 'auto';
++  const breakpoint = cardLayout?.breakpoint ?? DEFAULT_CARD_BREAKPOINT;
++  const [narrow, setNarrow] = React.useState(false);
++
++  React.useLayoutEffect(() => {
++    const frame = frameRef.current;
++    if (!auto || frame == null) return;
++    const update = () => setNarrow(frame.getBoundingClientRect().width < breakpoint);
++    update();
++    const observer = new ResizeObserver(update);
++    observer.observe(frame);
++    return () => observer.disconnect();
++  }, [frameRef, auto, breakpoint]);
++
++  if (cardLayout == null) return false;
++  return cardLayout.mode === 'always' || narrow;
++}
++
++interface DataTableCardsLabels {
++  empty: string;
++  selectAllRows: string;
++  selectRow: (index: number) => string;
++  sortBy: string;
++  sortNone: string;
++  sortAscending: string;
++  sortDescending: string;
++}
++
++interface DataTableCardsProps<TData> {
++  table: TanStackTable<TData>;
++  cardLayout: DataTableCardLayout<TData>;
++  isLoading: boolean;
++  hasRows: boolean;
++  skeletonRowCount: number;
++  selectColumnId: string | undefined;
++  emptyState: React.ReactNode;
++  contextActions: DataTableProps<TData>['contextActions'];
++  renderRow: DataTableProps<TData>['renderRow'];
++  footerRows: DataTableProps<TData>['footerRows'];
++  labels: DataTableCardsLabels;
++}
++
++function DataTableCards<TData>({
++  table,
++  cardLayout,
++  isLoading,
++  hasRows,
++  skeletonRowCount,
++  selectColumnId,
++  emptyState,
++  contextActions,
++  renderRow,
++  footerRows,
++  labels: l,
++}: DataTableCardsProps<TData>) {
++  const label = cardLayout.columnLabel ?? headerLabelText;
++  const { titleColumnId, lines } = getCardColumns(table.getVisibleLeafColumns(), {
++    displayColumnIds: [selectColumnId, ACTIONS_COLUMN_ID].filter(
++      (id): id is string => id != null,
++    ),
++    label,
++    pickTitle: cardLayout.titleColumnId,
++  });
++  const bodyRows = table.getRowModel().rows;
++  const columnCount = table.getVisibleLeafColumns().length;
++  const sortEntry = table.getState().sorting[0];
++  const sortColumns = lines.filter((line) => line.column.getCanSort());
++  const titleColumn = titleColumnId != null ? table.getColumn(titleColumnId) : undefined;
++  if (titleColumn?.getCanSort()) {
++    const titleLabel = label(titleColumn);
++    if (titleLabel != null) sortColumns.unshift({ column: titleColumn, label: titleLabel });
++  }
++  // The active sort may be on a hidden column (e.g. a list's default sort);
++  // list it so the control shows what the rows are sorted by.
++  const sortedColumn = sortEntry != null ? table.getColumn(sortEntry.id) : undefined;
++  if (sortedColumn != null && !sortColumns.some((entry) => entry.column.id === sortedColumn.id)) {
++    const sortedLabel = label(sortedColumn);
++    if (sortedLabel != null) sortColumns.push({ column: sortedColumn, label: sortedLabel });
++  }
++
++  const renderCard = (row: Row<TData>) => {
++    const cells = row.getVisibleCells();
++    const titleCell = cells.find((cell) => cell.column.id === titleColumnId);
++    const actionsCell = cells.find((cell) => cell.column.id === ACTIONS_COLUMN_ID);
++    const card = (
++      <div
++        data-slot="data-table-card"
++        data-state={row.getIsSelected() ? 'selected' : undefined}
++        className="group/row flex flex-col gap-2 rounded-lg border border-border/50 p-3 data-[state=selected]:border-primary data-[state=selected]:bg-accent"
++      >
++        <div className="flex items-start gap-2">
++          {selectColumnId != null && (
++            <Checkbox
++              checked={row.getIsSelected()}
++              disabled={!row.getCanSelect()}
++              onCheckedChange={(checked) => row.toggleSelected(checked)}
++              aria-label={l.selectRow(row.index)}
++              className="mt-0.5"
++            />
++          )}
++          <div className={cn('min-w-0 flex-1 font-medium wrap-anywhere', FLUSH_LEADING_BUTTON)}>
++            {titleCell && flexRender(titleCell.column.columnDef.cell, titleCell.getContext())}
++          </div>
++          {actionsCell && (
++            <div className="-my-1.5 -mr-1.5 shrink-0">
++              {flexRender(actionsCell.column.columnDef.cell, actionsCell.getContext())}
++            </div>
++          )}
++        </div>
++        {lines.length > 0 && (
++          <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5">
++            {lines.map(({ column, label: lineLabel }) => {
++              const cell = cells.find((candidate) => candidate.column.id === column.id);
++              return (
++                <React.Fragment key={column.id}>
++                  <dt className="text-muted-foreground">{lineLabel}</dt>
++                  <dd className={cn('min-w-0 wrap-anywhere', FLUSH_LEADING_BUTTON)}>
++                    {cell && flexRender(cell.column.columnDef.cell, cell.getContext())}
++                  </dd>
++                </React.Fragment>
++              );
++            })}
++          </dl>
++        )}
++      </div>
++    );
++    if (!contextActions) return card;
++    return (
++      <ContextMenu>
++        <ContextMenuTrigger render={card} />
++        <ContextMenuContent>{contextActions(row.original, { row, table })}</ContextMenuContent>
++      </ContextMenu>
++    );
++  };
++
++  const footer = typeof footerRows === 'function' ? footerRows({ columnCount }) : footerRows;
++  const showSelectAll = selectColumnId != null && bodyRows.length > 0;
++
++  return (
++    <CardContent data-slot="data-table-cards" className="flex flex-col gap-3">
++      {(showSelectAll || sortColumns.length > 0) && (
++        <div className="flex flex-wrap items-center gap-2">
++          {showSelectAll && (
++            // biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox renders the labelled control
++            <label className="mr-auto flex items-center gap-2">
++              <Checkbox
++                checked={table.getIsAllPageRowsSelected()}
++                indeterminate={
++                  table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected()
++                }
++                onCheckedChange={(checked) => table.toggleAllPageRowsSelected(checked)}
++              />
++              <span>{l.selectAllRows}</span>
++            </label>
++          )}
++          {sortColumns.length > 0 && (
++            <div className="ml-auto flex min-w-0 items-center gap-2">
++              <NativeSelect
++                size="sm"
++                aria-label={l.sortBy}
++                className="min-w-0"
++                value={sortEntry?.id ?? ''}
++                onChange={(event) => {
++                  const id = event.target.value;
++                  if (id === '') {
++                    table.setSorting([]);
++                    return;
++                  }
++                  // A newly picked column starts in its first direction, as a
++                  // header click would — not in the previous column's.
++                  const desc = table.getColumn(id)?.getFirstSortDir() === 'desc';
++                  table.setSorting([{ id, desc }]);
++                }}
++              >
++                <NativeSelectOption value="">{l.sortNone}</NativeSelectOption>
++                {sortColumns.map(({ column, label: optionLabel }) => (
++                  <NativeSelectOption key={column.id} value={column.id}>
++                    {optionLabel}
++                  </NativeSelectOption>
++                ))}
++              </NativeSelect>
++              <Button
++                type="button"
++                variant="outline"
++                size="icon-sm"
++                disabled={sortEntry == null}
++                aria-label={sortEntry?.desc ? l.sortDescending : l.sortAscending}
++                onClick={() => {
++                  if (sortEntry == null) return;
++                  table.setSorting([{ id: sortEntry.id, desc: !sortEntry.desc }]);
++                }}
++              >
++                {sortEntry?.desc ? <ArrowDownIcon /> : <ArrowUpIcon />}
++              </Button>
++            </div>
++          )}
++        </div>
++      )}
++      {isLoading && !hasRows ? (
++        <ul className="flex flex-col gap-2">
++          {Array.from({ length: skeletonRowCount }).map((_, index) => (
++            // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders
++            <li key={`skeleton-${index}`} className="flex flex-col gap-2 rounded-lg border border-border/50 p-3">
++              <Skeleton className="h-4 w-1/2" />
++              <Skeleton className="h-4 w-full" />
++            </li>
++          ))}
++        </ul>
++      ) : bodyRows.length === 0 ? (
++        <div className="text-muted-foreground py-6 text-center">{emptyState ?? l.empty}</div>
++      ) : (
++        <>
++          <ul className="flex flex-col gap-2">
++            {bodyRows.map((row) => {
++              const defaultRow = renderCard(row);
++              return (
++                <li key={row.id}>
++                  {renderRow
++                    ? renderRow(row, { table, columnCount, defaultRow, layout: 'cards' })
++                    : defaultRow}
++                </li>
++              );
++            })}
++          </ul>
++          {footer != null && (
++            <Table>
++              <TableBody>{footer}</TableBody>
++            </Table>
++          )}
++        </>
++      )}
++    </CardContent>
++  );
++}
++
++export { DataTableCards, useCardLayout };
+diff --git a/src/components/molecules/data-table/data-table-helpers.tsx b/src/components/molecules/data-table/data-table-helpers.tsx
+index 55893e759beb7ad11d88b793fdde44e5d8e48f4b..a62e83aadab393e63180fb50637672347892d1fe 100644
+--- a/src/components/molecules/data-table/data-table-helpers.tsx
++++ b/src/components/molecules/data-table/data-table-helpers.tsx
+@@ -42,6 +42,42 @@ export function getHideableLeafColumns<TData>(table: Table<TData>): Column<TData
+   return table.getAllLeafColumns().filter((column) => column.getCanHide());
+ }
+ 
++/** A string label for a column, from a string `header`, else the column id. */
++export function headerLabelText<TData>(column: Column<TData, unknown>): string {
++  const header = column.columnDef.header;
++  return typeof header === 'string' ? header : column.id;
++}
++
++export interface CardColumns<TData> {
++  titleColumnId: string | undefined;
++  lines: Array<{ column: Column<TData, unknown>; label: string }>;
++}
++
++/**
++ * Splits the visible columns into the card title and its label/value lines.
++ * Display columns (select, actions) and columns labelled `null` stay off the
++ * lines; the title is picked from the remaining data columns.
++ */
++export function getCardColumns<TData>(
++  visibleColumns: Column<TData, unknown>[],
++  options: {
++    displayColumnIds: string[];
++    label: (column: Column<TData, unknown>) => string | null;
++    pickTitle?: (columns: Column<TData, unknown>[]) => string | undefined;
++  },
++): CardColumns<TData> {
++  const labelled = visibleColumns
++    .filter((column) => !options.displayColumnIds.includes(column.id))
++    .map((column) => ({ column, label: options.label(column) }))
++    .filter((entry): entry is { column: Column<TData, unknown>; label: string } => entry.label !== null);
++  const dataColumns = labelled.map((entry) => entry.column);
++  const titleColumnId = options.pickTitle?.(dataColumns) ?? dataColumns[0]?.id;
++  return {
++    titleColumnId,
++    lines: labelled.filter((entry) => entry.column.id !== titleColumnId),
++  };
++}
++
+ /** Resolve a render-prop-or-node slot against the live table instance. */
+ export function resolveSlot<TData, TSlot>(
+   slot: TSlot | ((table: Table<TData>) => TSlot) | undefined,
+diff --git a/src/components/molecules/data-table/data-table-types.tsx b/src/components/molecules/data-table/data-table-types.tsx
+index 378a58316b68bf972cc3a85050bb9239b683b7bd..69dc82e202f41bf917c70f5d3ae7a1ea3f20538d 100644
+--- a/src/components/molecules/data-table/data-table-types.tsx
++++ b/src/components/molecules/data-table/data-table-types.tsx
+@@ -1,5 +1,6 @@
+ import type {
+   CellContext,
++  Column,
+   ColumnDef,
+   ColumnFiltersState,
+   HeaderContext,
+@@ -129,6 +130,32 @@ export type DataTableFilters<TData> = ControlledState<ColumnFiltersState> & {
+   showAppliedFilters?: boolean;
+ };
+ 
++/**
++ * Renders each row as a card (title, label/value lines, selection, actions)
++ * instead of a table row — the header band and pagination stay as they are.
++ * Column visibility and order apply to the cards as to the table; a sort
++ * control and select-all stand in for the column headers.
++ */
++export interface DataTableCardLayout<TData> {
++  /** 'auto' (default) → cards while the frame is narrower than `breakpoint`. 'always' → cards at every width. */
++  mode?: 'auto' | 'always';
++  /** Frame width in px below which `'auto'` renders cards. Default 640. */
++  breakpoint?: number;
++  /**
++   * A column's label on the card's lines and in the sort control. Default: a
++   * string `header`, else the column id. Return `null` to leave the column off
++   * the cards.
++   */
++  columnLabel?: (column: Column<TData, unknown>) => string | null;
++  /**
++   * Picks the column rendered as the card title from the visible data columns
++   * (display columns excluded). Default: the first one.
++   */
++  titleColumnId?: (columns: Column<TData, unknown>[]) => string | undefined;
++}
++
++export type DataTableLayout = 'table' | 'cards';
++
+ export interface DataTableBulkActionContext<TData> {
+   /**
+    * `row.original` for EVERY selected row across pages (resolved from the core's
+@@ -151,6 +178,10 @@ export interface DataTableLabels {
+   removeFilter?: (columnLabel: string) => string; // (l) => `Remove ${l} filter`
+   sortLabel?: (columnLabel: string) => string; // (c) => `Sort by ${c}`
+   filtersCollapsed?: (count: number) => string; // (n) => `${n} filters`
++  sortBy?: string; // 'Sort by' — the card layout's sort control
++  sortNone?: string; // 'Default order'
++  sortAscending?: string; // 'Ascending'
++  sortDescending?: string; // 'Descending'
+   pagination?: {
+     // forwarded to TablePagination
+     navLabel?: string;
+@@ -215,13 +246,23 @@ export interface DataTableProps<TData> {
+    * in the current model. Complements `setTableOptions` (which shapes the row
+    * MODEL) by owning the row JSX — together they restore the donor's
+    * `isUtilityRow`/`renderUtilityRow`/`DraggableRow` seam without the core reading
+-   * `meta`.
++   * `meta`. With `cardLayout`, `ctx.layout` says which shape `defaultRow`
++   * has: a `<TableRow>` (`'table'`) or a card (`'cards'`) — return the matching
++   * shape.
+    */
+   renderRow?: (
+     row: Row<TData>,
+-    ctx: { table: Table<TData>; columnCount: number; defaultRow: React.ReactNode },
++    ctx: {
++      table: Table<TData>;
++      columnCount: number;
++      defaultRow: React.ReactNode;
++      layout: DataTableLayout;
++    },
+   ) => React.ReactNode;
+ 
++  /** Opt-in card rendering of the rows. Absent → always a table. */
++  cardLayout?: DataTableCardLayout<TData>;
++
+   /**
+    * Escape hatch (donor's `setTableOptions` name kept for port recognisability):
+    * mutate `TableOptions` before `useReactTable` — expanded rows, drag meta,
+@@ -269,7 +310,8 @@ export interface DataTableProps<TData> {
+    * with selection, sorting, or pagination. Use the function form to receive
+    * `columnCount` for `colSpan`s — display columns (select, actions) are
+    * injected around your columns, so a hard-coded count desyncs. Rows are
+-   * presentational: give them `hover:bg-transparent`.
++   * presentational: give them `hover:bg-transparent`. In the card layout they
++   * render in a compact table under the cards.
+    */
+   footerRows?: React.ReactNode | ((ctx: { columnCount: number }) => React.ReactNode);
+ 
+diff --git a/src/components/molecules/data-table/data-table.tsx b/src/components/molecules/data-table/data-table.tsx
+index e2477bd216d8cb1fdd086e49a0927e98f129b077..878f1291c4a0f6ef2e42c1068b41162c9aef1425 100644
+--- a/src/components/molecules/data-table/data-table.tsx
++++ b/src/components/molecules/data-table/data-table.tsx
+@@ -59,7 +59,13 @@ import { cn } from '@vendure-io/ui/lib/utils';
+ import { AnimatePresence, motion } from 'motion/react';
+ import * as React from 'react';
+ // Relative: `data-table-helpers` is closed in the package exports.
+-import { buildDisplayColumns, getSelectedRowIds, resolveSlot } from './data-table-helpers.tsx';
++import { DataTableCards, useCardLayout } from './data-table-cards.tsx';
++import {
++  buildDisplayColumns,
++  getSelectedRowIds,
++  headerLabelText,
++  resolveSlot,
++} from './data-table-helpers.tsx';
+ 
+ // The composition root. Owns the single `useReactTable` instance and the
+ // controlled/uncontrolled bridge, then lays out the card-framed table anatomy:
+@@ -95,12 +101,6 @@ function useControlledTableState<T>(
+   return [value, onChange] as const;
+ }
+ 
+-/** A string label for a column, from a string `header`, else the column id. */
+-function headerLabelText<TData>(column: Column<TData, unknown>): string {
+-  const header = column.columnDef.header;
+-  return typeof header === 'string' ? header : column.id;
+-}
+-
+ // The controls/bulk replace-on-select swap: the outgoing row drifts slightly
+ // up as it fades, the incoming row rises in from below — a subtle vertical
+ // hand-off (4px) rather than a plain crossfade.
+@@ -138,6 +138,7 @@ function DataTable<TData>({
+   contextActions,
+   emptyState,
+   renderRow,
++  cardLayout,
+   setTableOptions,
+   onTableReady,
+   frame = 'card',
+@@ -176,6 +177,10 @@ function DataTable<TData>({
+         labels?.removeFilter ?? ((columnLabel: string) => `Remove ${columnLabel} filter`),
+       sortLabel: labels?.sortLabel ?? ((columnLabel: string) => `Sort by ${columnLabel}`),
+       filtersCollapsed: labels?.filtersCollapsed ?? ((count: number) => `${count} filters`),
++      sortBy: labels?.sortBy ?? 'Sort by',
++      sortNone: labels?.sortNone ?? 'Default order',
++      sortAscending: labels?.sortAscending ?? 'Ascending',
++      sortDescending: labels?.sortDescending ?? 'Descending',
+       pagination: labels?.pagination,
+     }),
+     [labels],
+@@ -321,6 +326,9 @@ function DataTable<TData>({
+ 
+   const selectionCache = useSelectionCache(table);
+ 
++  const frameRef = React.useRef<HTMLDivElement>(null);
++  const showCards = useCardLayout(frameRef, cardLayout);
++
+   const bodyRows = table.getRowModel().rows;
+   const columnCount = table.getVisibleLeafColumns().length;
+ 
+@@ -426,100 +434,118 @@ function DataTable<TData>({
+         </CardHeader>
+       )}
+ 
+-      <CardTable>
+-        <Table>
+-          <TableHeader>
+-            {table.getHeaderGroups().map((headerGroup) => (
+-              <TableRow key={headerGroup.id} className="group/header-row">
+-                {headerGroup.headers.map((headerCell) => {
+-                  const content = headerCell.isPlaceholder
+-                    ? null
+-                    : flexRender(headerCell.column.columnDef.header, headerCell.getContext());
+-                  return (
+-                    <TableHead
+-                      key={headerCell.id}
+-                      aria-sort={ariaSort(sorting != null, headerCell.column)}
+-                      className={columnClass(headerCell.column.id)}
+-                    >
+-                      {sorting != null && !headerCell.isPlaceholder ? (
+-                        <DataTableColumnHeader
+-                          column={headerCell.column}
+-                          sortLabel={l.sortLabel(headerLabelText(headerCell.column))}
+-                        >
+-                          {content}
+-                        </DataTableColumnHeader>
+-                      ) : (
+-                        content
+-                      )}
+-                    </TableHead>
+-                  );
+-                })}
+-              </TableRow>
+-            ))}
+-          </TableHeader>
+-          <TableBody>
+-            {isLoading && rows.length === 0 ? (
+-              Array.from({ length: skeletonRowCount }).map((_, rowIndex) => (
+-                <TableRow key={`skeleton-${rowIndex}`}>
+-                  {Array.from({ length: Math.max(columnCount, 1) }).map((__, cellIndex) => (
+-                    <TableCell key={`skeleton-cell-${cellIndex}`}>
+-                      <Skeleton className="h-4 w-full" />
+-                    </TableCell>
+-                  ))}
++      {showCards && cardLayout ? (
++        <DataTableCards
++          table={table}
++          cardLayout={cardLayout}
++          isLoading={isLoading ?? false}
++          hasRows={rows.length > 0}
++          skeletonRowCount={skeletonRowCount}
++          selectColumnId={rowSelection != null ? selectColumnId : undefined}
++          emptyState={emptyState}
++          contextActions={contextActions}
++          renderRow={renderRow}
++          footerRows={footerRows}
++          labels={l}
++        />
++      ) : (
++        <CardTable>
++          <Table>
++            <TableHeader>
++              {table.getHeaderGroups().map((headerGroup) => (
++                <TableRow key={headerGroup.id} className="group/header-row">
++                  {headerGroup.headers.map((headerCell) => {
++                    const content = headerCell.isPlaceholder
++                      ? null
++                      : flexRender(headerCell.column.columnDef.header, headerCell.getContext());
++                    return (
++                      <TableHead
++                        key={headerCell.id}
++                        aria-sort={ariaSort(sorting != null, headerCell.column)}
++                        className={columnClass(headerCell.column.id)}
++                      >
++                        {sorting != null && !headerCell.isPlaceholder ? (
++                          <DataTableColumnHeader
++                            column={headerCell.column}
++                            sortLabel={l.sortLabel(headerLabelText(headerCell.column))}
++                          >
++                            {content}
++                          </DataTableColumnHeader>
++                        ) : (
++                          content
++                        )}
++                      </TableHead>
++                    );
++                  })}
+                 </TableRow>
+-              ))
+-            ) : bodyRows.length === 0 ? (
+-              <TableRow className="hover:bg-transparent">
+-                <TableCell
+-                  colSpan={Math.max(columnCount, 1)}
+-                  className="text-muted-foreground h-24 text-center"
+-                >
+-                  {emptyState ?? l.empty}
+-                </TableCell>
+-              </TableRow>
+-            ) : (
+-              <>
+-                {bodyRows.map((row) => {
+-                  const rowNode = (
+-                    <TableRow
+-                      className="group/row"
+-                      data-state={row.getIsSelected() ? 'selected' : undefined}
+-                    >
+-                      {row.getVisibleCells().map((cell) => (
+-                        <TableCell key={cell.id} className={columnClass(cell.column.id)}>
+-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+-                        </TableCell>
+-                      ))}
+-                    </TableRow>
+-                  );
+-                  // Right-click accelerator: the row itself is the context-menu
+-                  // trigger, so the consumer supplies only the items and the core
+-                  // owns the menu chrome.
+-                  const defaultRow = contextActions ? (
+-                    <ContextMenu>
+-                      <ContextMenuTrigger render={rowNode} />
+-                      <ContextMenuContent>
+-                        {contextActions(row.original, { row, table })}
+-                      </ContextMenuContent>
+-                    </ContextMenu>
+-                  ) : (
+-                    rowNode
+-                  );
+-                  // Row-render seam: consumers can swap the default row for a
+-                  // full-width utility row or a per-row wrapper the cell grid can't
+-                  // express. Returning `defaultRow` keeps the built-in rendering.
+-                  return (
+-                    <React.Fragment key={row.id}>
+-                      {renderRow ? renderRow(row, { table, columnCount, defaultRow }) : defaultRow}
+-                    </React.Fragment>
+-                  );
+-                })}
+-                {typeof footerRows === 'function' ? footerRows({ columnCount }) : footerRows}
+-              </>
+-            )}
+-          </TableBody>
+-        </Table>
+-      </CardTable>
++              ))}
++            </TableHeader>
++            <TableBody>
++              {isLoading && rows.length === 0 ? (
++                Array.from({ length: skeletonRowCount }).map((_, rowIndex) => (
++                  <TableRow key={`skeleton-${rowIndex}`}>
++                    {Array.from({ length: Math.max(columnCount, 1) }).map((__, cellIndex) => (
++                      <TableCell key={`skeleton-cell-${cellIndex}`}>
++                        <Skeleton className="h-4 w-full" />
++                      </TableCell>
++                    ))}
++                  </TableRow>
++                ))
++              ) : bodyRows.length === 0 ? (
++                <TableRow className="hover:bg-transparent">
++                  <TableCell
++                    colSpan={Math.max(columnCount, 1)}
++                    className="text-muted-foreground h-24 text-center"
++                  >
++                    {emptyState ?? l.empty}
++                  </TableCell>
++                </TableRow>
++              ) : (
++                <>
++                  {bodyRows.map((row) => {
++                    const rowNode = (
++                      <TableRow
++                        className="group/row"
++                        data-state={row.getIsSelected() ? 'selected' : undefined}
++                      >
++                        {row.getVisibleCells().map((cell) => (
++                          <TableCell key={cell.id} className={columnClass(cell.column.id)}>
++                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
++                          </TableCell>
++                        ))}
++                      </TableRow>
++                    );
++                    // Right-click accelerator: the row itself is the context-menu
++                    // trigger, so the consumer supplies only the items and the core
++                    // owns the menu chrome.
++                    const defaultRow = contextActions ? (
++                      <ContextMenu>
++                        <ContextMenuTrigger render={rowNode} />
++                        <ContextMenuContent>
++                          {contextActions(row.original, { row, table })}
++                        </ContextMenuContent>
++                      </ContextMenu>
++                    ) : (
++                      rowNode
++                    );
++                    // Row-render seam: consumers can swap the default row for a
++                    // full-width utility row or a per-row wrapper the cell grid can't
++                    // express. Returning `defaultRow` keeps the built-in rendering.
++                    return (
++                      <React.Fragment key={row.id}>
++                        {renderRow
++                          ? renderRow(row, { table, columnCount, defaultRow, layout: 'table' })
++                          : defaultRow}
++                      </React.Fragment>
++                    );
++                  })}
++                  {typeof footerRows === 'function' ? footerRows({ columnCount }) : footerRows}
++                </>
++              )}
++            </TableBody>
++          </Table>
++        </CardTable>
++      )}
+ 
+       {pagination && (
+         <CardFooter className="border-t">
+@@ -553,6 +579,7 @@ function DataTable<TData>({
+   // the stack restores that one gap as padding.
+   return frame === 'plain' ? (
+     <div
++      ref={frameRef}
+       data-slot="data-table"
+       className={cn(
+         'flex flex-col gap-(--card-gap)',
+@@ -563,7 +590,7 @@ function DataTable<TData>({
+       {bands}
+     </div>
+   ) : (
+-    <Card data-slot="data-table" className={className}>
++    <Card ref={frameRef} data-slot="data-table" className={className}>
+       {bands}
+     </Card>
+   );

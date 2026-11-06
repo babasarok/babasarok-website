@@ -7,8 +7,8 @@
   "scripts": {
     "dev": "tsc -b && node --env-file-if-exists=.env dist/migrate.js && (tsc -b --watch --preserveWatchOutput & node --watch --env-file-if-exists=.env dist/index.js & node --watch --env-file-if-exists=.env dist/index-worker.js)",
     "dashboard": "node --env-file-if-exists=build.env --env-file-if-exists=.env ./node_modules/vite/bin/vite.js",
-    "dashboard:build": "node --env-file-if-exists=build.env --env-file-if-exists=.env ./node_modules/vite/bin/vite.js build && npx prettier --write src/gql >/dev/null",
-    "gql:fresh": "pnpm run dashboard:build >/dev/null && npx prettier --write src/gql >/dev/null && git diff --exit-code -- src/gql",
+    "dashboard:build": "node --env-file-if-exists=build.env --env-file-if-exists=.env ./node_modules/vite/bin/vite.js build",
+    "gql:fresh": "pnpm run dashboard:build >/dev/null && git diff --exit-code -- src/gql",
     "build": "tsc -b",
     "start": "node --env-file-if-exists=.env dist/index.js",
     "worker": "node --env-file-if-exists=.env dist/index-worker.js",

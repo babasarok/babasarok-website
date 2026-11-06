@@ -43,10 +43,10 @@ export function ProductSaveActionBarItem({
   };
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex flex-wrap items-center gap-4">
       <div
         className="flex items-center gap-2"
-        title="Bekapcsolva a termék elérhető a boltban"
+        title="Bekapcsolt állapotban a termék elérhető a boltban"
         data-testid="product-enabled-switch"
       >
         <label htmlFor="product-enabled-switch-input" className="text-sm font-medium">

@@ -7,6 +7,8 @@ import {
   DEFINITION_STATE,
   DefinitionState,
   deleteDefinitionIfPresent,
+  expandCard,
+  fieldCardById,
   generatedTable,
   login,
   waitForMutation,
@@ -96,7 +98,8 @@ test("removing a choice option deletes it natively and re-adding syncs again", a
   });
 
   await test.step("removing the Piros option and saving deletes it from the native group", async () => {
-    const card = page.locator(".rounded.border.p-3").first();
+    const card = fieldCardById(page, "szin");
+    await expandCard(card);
     await card.getByRole("button", { name: "Sor törlése" }).nth(1).click();
 
     const update = waitForMutation(page, "mutation UpdateProductDefinition");
@@ -120,9 +123,13 @@ test("removing a choice option deletes it natively and re-adding syncs again", a
   });
 
   await test.step("a second save settles synced and never stale", async () => {
+    const card = fieldCardById(page, "szin");
+    await expandCard(card);
     // The save button is disabled while the editor is clean, so make the
-    // smallest real change: the kept option's price.
-    const card = page.locator(".rounded.border.p-3").first();
+    // smallest real change: the kept option's price. With Piros gone no row
+    // carries data any more, so the grid starts name-only and the price
+    // column needs the Részletek switch first.
+    await card.getByRole("switch", { name: "Részletek" }).click();
     const kekAr = card.getByLabel("Ár (Ft)").nth(0);
     await kekAr.fill("100");
     await kekAr.blur();
@@ -134,7 +141,7 @@ test("removing a choice option deletes it natively and re-adding syncs again", a
     await expect(page.getByText("Szinkronizálás…")).toBeVisible();
     await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
     await expect(
-      page.getByText("Elavult — a mentés a natív módosítások felülírása nélkül elutasított")
+      page.getByText("Elavult — mentés csak a natív módosítások felülírásával lehetséges")
     ).toHaveCount(0);
 
     const native = await adminApi(
@@ -147,8 +154,9 @@ test("removing a choice option deletes it natively and re-adding syncs again", a
   });
 
   await test.step("re-adding the same option code syncs it back into the native group", async () => {
-    const card = page.locator(".rounded.border.p-3").first();
-    await card.getByRole("button", { name: "+ Elem hozzáadása" }).click();
+    const card = fieldCardById(page, "szin");
+    // Still expanded with the Részletek override on from the previous step.
+    await card.getByRole("button", { name: "+ Opció hozzáadása" }).click();
     await card.getByLabel("Név").nth(2).fill("Piros");
     const pirosAr = card.getByLabel("Ár (Ft)").nth(1);
     await pirosAr.fill("500");
@@ -237,8 +245,7 @@ test("removing a whole variant-axis field deletes its native group and resyncs",
   });
 
   await test.step("removing the Méret field and saving deletes its native group", async () => {
-    const meretCard = page.locator(".rounded.border.p-3").nth(1);
-    await meretCard.getByRole("button", { name: "Mező törlése" }).click();
+    await fieldCardById(page, "meret").getByRole("button", { name: "Mező törlése" }).click();
 
     const update = waitForMutation(page, "mutation UpdateProductDefinition");
     await page.getByRole("button", { name: "Frissítés", exact: true }).click();
@@ -264,7 +271,8 @@ test("removing a whole variant-axis field deletes its native group and resyncs",
   await test.step("a second save settles synced and never stale", async () => {
     // The save button is disabled while the editor is clean, so make the
     // smallest real change: the first option's price.
-    const card = page.locator(".rounded.border.p-3").first();
+    const card = fieldCardById(page, "szin");
+    await expandCard(card);
     const kekAr = card.getByLabel("Ár (Ft)").nth(0);
     await kekAr.fill("100");
     await kekAr.blur();
@@ -276,7 +284,7 @@ test("removing a whole variant-axis field deletes its native group and resyncs",
     await expect(page.getByText("Szinkronizálás…")).toBeVisible();
     await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
     await expect(
-      page.getByText("Elavult — a mentés a natív módosítások felülírása nélkül elutasított")
+      page.getByText("Elavult — mentés csak a natív módosítások felülírásával lehetséges")
     ).toHaveCount(0);
   });
 });

@@ -66,7 +66,7 @@ defineDashboardExtension({
     {
       id: "product-definition-configurator",
       title: "Konfigurátor",
-      description: "A strukturált termékmotor szerkesztője, beágyazva a stock terméklapra.",
+      description: "A strukturált termékmotor szerkesztője, a beépített termékoldalba ágyazva.",
       location: {
         pageId: "product-detail",
         column: "full",
@@ -184,7 +184,7 @@ function NewProductDefinitionActionBarItem(): ReactElement {
         void navigate({ to: "/product-definitions/new" });
       }}
     >
-      Új konfigurátor termék
+      Új konfigurátoros termék
     </Button>
   );
 }
@@ -192,7 +192,7 @@ function NewProductDefinitionActionBarItem(): ReactElement {
 function NewProductDefinitionPage(): ReactElement {
   return (
     <Page pageId="product-definition-create">
-      <PageTitle>Új konfigurátor termék</PageTitle>
+      <PageTitle>Új konfigurátoros termék</PageTitle>
       <ConfiguratorEditor definitionId={NEW_ENTITY_PATH} mode="create" />
     </Page>
   );

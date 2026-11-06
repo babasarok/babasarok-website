@@ -45,24 +45,27 @@ import {
   unpublishConfiguratorSave,
 } from "./product-definition-save-store";
 import {
+  applyLengthSourceDefaults,
   assignGeneratedIds,
   carryOver,
+  colorCountValueErrors,
   hasEditableData,
+  lengthSourceCandidates,
+  lengthSourceValueErrors,
+  loadBearingFieldIds,
   newDefinition,
   newField,
-  type TextInput,
+  pricingMode,
   sanitize,
+  textValue,
+  withLengthSourcePattern,
+  withPricingMode,
   FIELD_KINDS,
   FIELD_KIND_LABELS,
-  type ChoiceFieldInput,
-  type ChoiceOptionInput,
-  type EmbroideryFieldInput,
+  type FieldInput,
   type FieldKind,
   type FieldRow,
-  type InputFieldInput,
-  type MaterialFieldInput,
-  type MaterialOptionInput,
-  type ToggleFieldInput,
+  type PricingMode,
 } from "./product-definition-editor";
 
 const productDefinitionQuery = graphql(`
@@ -169,7 +172,7 @@ function SyncBadge({ sync }: { sync: SyncInfo | null }): ReactElement {
       </StatusBadge>
       {sync.stale && sync.state !== "pending" && (
         <Badge variant="warning">
-          Elavult — a mentés a natív módosítások felülírása nélkül elutasított
+          Elavult — mentés csak a natív módosítások felülírásával lehetséges
         </Badge>
       )}
     </span>
@@ -182,6 +185,21 @@ function snapshotOf(
   banned: string[][]
 ): string {
   return JSON.stringify({ ...definition, fields, forbiddenMaterialCombinations: banned });
+}
+
+function optionsCarryData(field: FieldInput): boolean {
+  if (field.kind === "choice") {
+    return (
+      field.customValue !== undefined ||
+      field.options.some((option) => option.price !== 0 || option.tooltip !== undefined)
+    );
+  }
+
+  if (field.kind === "material") {
+    return field.options.some((option) => option.price !== 0);
+  }
+
+  return false;
 }
 
 export function ConfiguratorEditor({
@@ -203,6 +221,8 @@ export function ConfiguratorEditor({
   const [name, setName] = useState("");
   const language = useUserSettings().settings.contentLanguage;
   const [rows, setRows] = useState<FieldRow[]>([]);
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
+  const [detailsOverrides, setDetailsOverrides] = useState<Record<string, boolean | undefined>>({});
   const [banned, setBanned] = useState<string[][]>([]);
   const [materialOptions, setMaterialOptions] = useState<Array<{ slug: string; label: string }>>(
     []
@@ -250,6 +270,7 @@ export function ConfiguratorEditor({
         const parsed = ProductDefinitionSchema.parse(result.productDefinition.definition);
         setDefinition(parsed);
         setRows(parsed.fields.map((field) => ({ key: rowKey(), field })));
+        setSavedFields(parsed.fields);
         setBanned(parsed.forbiddenMaterialCombinations.map((rule) => [...rule]));
         setBaseline(
           snapshotOf(
@@ -301,14 +322,9 @@ export function ConfiguratorEditor({
   }, [saved]);
 
   const [baseline, setBaseline] = useState<string | null>(null);
-  const snapshot =
-    definition === null
-      ? null
-      : snapshotOf(
-          definition,
-          rows.map((row) => row.field),
-          banned
-        );
+  const [savedFields, setSavedFields] = useState<FieldInput[]>([]);
+  const liveFields = rows.map((row) => row.field);
+  const snapshot = definition === null ? null : snapshotOf(definition, liveFields, banned);
   const configuratorDirty = !creatingNew && snapshot !== null && snapshot !== baseline;
 
   const dirty =
@@ -344,94 +360,43 @@ export function ConfiguratorEditor({
     };
   }, [creatingNew, definitionId]);
 
-  function patchBase(key: string, label: TextInput): void {
-    setRows((current) =>
-      current.map((row) => (row.key === key ? { ...row, field: { ...row.field, label } } : row))
-    );
-  }
+  function setField(key: string, field: FieldInput): void {
+    setRows((current) => {
+      const previous = current.find((row) => row.key === key)?.field;
+      const colorCountSourceId =
+        previous?.kind === "material" &&
+        field.kind === "material" &&
+        field.colorCount.kind === "from-field" &&
+        (previous.colorCount.kind !== "from-field" ||
+          previous.colorCount.fieldId !== field.colorCount.fieldId)
+          ? field.colorCount.fieldId
+          : undefined;
 
-  function patchChoice(key: string, patch: Partial<ChoiceFieldInput>): void {
-    setRows((current) =>
-      current.map((row) =>
-        row.key === key && row.field.kind === "choice"
-          ? { ...row, field: { ...row.field, ...patch } }
-          : row
-      )
-    );
-  }
-
-  function patchToggle(key: string, patch: Partial<ToggleFieldInput>): void {
-    setRows((current) =>
-      current.map((row) =>
-        row.key === key && row.field.kind === "toggle"
-          ? { ...row, field: { ...row.field, ...patch } }
-          : row
-      )
-    );
-  }
-
-  function patchMaterial(key: string, patch: Partial<MaterialFieldInput>): void {
-    setRows((current) =>
-      current.map((row) =>
-        row.key === key && row.field.kind === "material"
-          ? { ...row, field: { ...row.field, ...patch } }
-          : row
-      )
-    );
-  }
-
-  function patchInputField(key: string, patch: Partial<InputFieldInput>): void {
-    setRows((current) =>
-      current.map((row) =>
-        row.key === key && row.field.kind === "input"
-          ? { ...row, field: { ...row.field, ...patch } }
-          : row
-      )
-    );
-  }
-
-  function patchEmbroidery(key: string, patch: Partial<EmbroideryFieldInput>): void {
-    setRows((current) =>
-      current.map((row) =>
-        row.key === key && row.field.kind === "embroidery"
-          ? { ...row, field: { ...row.field, ...patch } }
-          : row
-      )
-    );
-  }
-
-  function patchChoiceOptions(
-    key: string,
-    transform: (options: ChoiceOptionInput[]) => ChoiceOptionInput[]
-  ): void {
-    setRows((current) =>
-      current.map((row) => {
-        if (row.key !== key || row.field.kind !== "choice") {
-          return row;
+      return current.map((row) => {
+        if (row.key === key) {
+          return { ...row, field };
         }
 
-        return { ...row, field: { ...row.field, options: transform(row.field.options) } };
-      })
-    );
-  }
-
-  function patchMaterialOptions(
-    key: string,
-    transform: (options: MaterialOptionInput[]) => MaterialOptionInput[]
-  ): void {
-    setRows((current) =>
-      current.map((row) => {
-        if (row.key !== key || row.field.kind !== "material") {
-          return row;
+        if (colorCountSourceId !== undefined && row.field.id === colorCountSourceId) {
+          return { ...row, field: withLengthSourcePattern(row.field) };
         }
 
-        return { ...row, field: { ...row.field, options: transform(row.field.options) } };
-      })
-    );
+        return row;
+      });
+    });
   }
 
   function addField(kind: FieldKind): void {
-    setRows((current) => [...current, { key: rowKey(), field: newField(kind, "", { hu: "" }) }]);
+    const key = rowKey();
+
+    setRows((current) => [...current, { key, field: newField(kind, "", { hu: "" }) }]);
+    setExpandedKeys((current) => {
+      const next = new Set(current);
+
+      next.add(key);
+
+      return next;
+    });
   }
 
   function changeFieldKind(key: string, kind: FieldKind): void {
@@ -450,6 +415,8 @@ export function ConfiguratorEditor({
   }
 
   function applyKindSwitch(key: string, kind: FieldKind): void {
+    const nextKey = rowKey();
+
     setRows((current) =>
       current.map((row) => {
         if (row.key !== key) {
@@ -457,11 +424,23 @@ export function ConfiguratorEditor({
         }
 
         return {
-          key: rowKey(),
+          key: nextKey,
           field: carryOver(newField(kind, row.field.id, row.field.label), row.field),
         };
       })
     );
+    setExpandedKeys((current) => {
+      if (!current.has(key)) {
+        return current;
+      }
+
+      const next = new Set(current);
+
+      next.delete(key);
+      next.add(nextKey);
+
+      return next;
+    });
   }
 
   function removeField(key: string): void {
@@ -482,6 +461,67 @@ export function ConfiguratorEditor({
       moved.splice(target, 0, row);
       return moved;
     });
+  }
+
+  function changePricingMode(mode: PricingMode): void {
+    if (definition === null) {
+      return;
+    }
+
+    const next = withPricingMode(definition, mode);
+
+    if (next.pricing.kind !== "length") {
+      setDefinition(next);
+      return;
+    }
+
+    adoptLengthSource(next, next.pricing.sourceFieldId);
+  }
+
+  function changeLengthSource(sourceFieldId: string): void {
+    if (definition === null) {
+      return;
+    }
+
+    adoptLengthSource(withPricingMode(definition, "length", sourceFieldId), sourceFieldId);
+  }
+
+  function adoptLengthSource(base: ProductDefinitionInput, sourceFieldId: string): void {
+    const defaulted = applyLengthSourceDefaults(
+      { ...base, fields: rows.map((row) => row.field) },
+      sourceFieldId
+    );
+
+    setDefinition(base);
+    setRows((current) => current.map((row, index) => ({ ...row, field: defaulted.fields[index] })));
+  }
+
+  function toggleExpandAll(): void {
+    setExpandedKeys((current) => {
+      if (rows.every((row) => current.has(row.key))) {
+        return new Set();
+      }
+
+      return new Set(rows.map((row) => row.key));
+    });
+  }
+
+  function changeExpanded(key: string, expanded: boolean): void {
+    setExpandedKeys((current) => {
+      const next = new Set(current);
+
+      if (expanded) {
+        next.add(key);
+      } else {
+        next.delete(key);
+      }
+
+      return next;
+    });
+  }
+
+  function toggleDetails(key: string, reveal: boolean): void {
+    setDetailsOverrides((current) => ({ ...current, [key]: reveal }));
   }
 
   /** Polls the definition until the queued sync settles. Survives network
@@ -536,7 +576,7 @@ export function ConfiguratorEditor({
           setSync((current) =>
             current === null
               ? current
-              : { ...current, error: "Állapotlekérés nem sikerült — újrapróbálás…" }
+              : { ...current, error: "Az állapot lekérése nem sikerült — újrapróbálkozás…" }
           );
         }
       }
@@ -571,7 +611,7 @@ export function ConfiguratorEditor({
     }
 
     if (creatingNew && payload.id === NEW_ENTITY_PATH) {
-      clientErrors.push('Az azonosító nem lehet "new".');
+      clientErrors.push("Az azonosító nem lehet „new”.");
     }
 
     if (clientErrors.length > 0) {
@@ -628,6 +668,7 @@ export function ConfiguratorEditor({
         setRows((current) =>
           current.map((row, index) => ({ ...row, field: validated.fields[index] }))
         );
+        setSavedFields(validated.fields);
         setBaseline(snapshotOf(definition, validated.fields, banned));
         setSaved(true);
         void pollSync(definitionId);
@@ -664,10 +705,31 @@ export function ConfiguratorEditor({
     return <></>;
   }
 
-  const lengthPricing =
-    definition.pricing.kind === "length"
-      ? `Méteráras árazás (mező: ${definition.pricing.sourceFieldId}) — a variánsok ára 0 Ft.`
-      : null;
+  const live: ProductDefinitionInput = { ...definition, fields: liveFields };
+  const loadBearing = loadBearingFieldIds(live);
+  const sourceValueErrors = lengthSourceValueErrors(live);
+  const colorCountValueErrorList = colorCountValueErrors(live);
+  const sourceFieldId = live.pricing.kind === "length" ? live.pricing.sourceFieldId : undefined;
+  const numericSourceFieldIds = new Set<string>([
+    ...(sourceFieldId !== undefined && sourceFieldId !== "" ? [sourceFieldId] : []),
+    ...live.fields.flatMap((field) =>
+      field.kind === "material" &&
+      field.colorCount.kind === "from-field" &&
+      field.colorCount.fieldId !== ""
+        ? [field.colorCount.fieldId]
+        : []
+    ),
+  ]);
+
+  function revealDetails(row: FieldRow): boolean {
+    const override = detailsOverrides[row.key];
+
+    if (override !== undefined) {
+      return override;
+    }
+
+    return loadBearing.has(row.field.id) || optionsCarryData(row.field);
+  }
 
   const editor = (
     <>
@@ -675,7 +737,7 @@ export function ConfiguratorEditor({
         column="main"
         blockId="product-definition-form"
         title="Termék"
-        description="A mentés után a natív termékszerkezet a háttérben újragenerálódik. A mezők kiegészítő tulajdonságai (megjelenítési függőségek, tippek, minták) változatlanul megőrződnek."
+        description="A mentés után a natív termékszerkezet a háttérben újragenerálódik. A mezők kiegészítő tulajdonságai (láthatósági feltételek, súgók, minták) változatlanul megőrződnek."
       >
         <div className="flex flex-wrap items-center gap-3">
           {creatingNew && (
@@ -742,7 +804,7 @@ export function ConfiguratorEditor({
           <ErrorNotice
             message={
               (sync.error ?? "") +
-              "\nA szinkronizálás a következő mentéskor újra indul — javítsd az okát, majd mentsd újra."
+              "\nA szinkronizálás a következő mentéskor újraindul — szüntesd meg a hiba okát, majd mentsd újra."
             }
           />
         )}
@@ -753,45 +815,80 @@ export function ConfiguratorEditor({
             {creatingNew ? (
               <>
                 <Input
-                  className="w-64"
+                  className="w-full max-w-64"
                   value={definition.id}
                   onChange={(e) => {
                     setDefinition({ ...definition, id: e.target.value });
                   }}
                 />
                 <span className="text-muted-foreground text-xs">
-                  Végleges: a natív termék slugja létrehozáskor ebből készül. Nem lehet "new".
+                  Végleges: a natív termék slugja létrehozáskor ebből készül. Nem lehet „new”.
                 </span>
               </>
             ) : (
-              <span className="font-mono text-xs">{definition.id}</span>
+              <span className="font-mono text-xs wrap-anywhere">{definition.id}</span>
             )}
           </label>
           {creatingNew && (
             <label className="flex flex-col gap-1 text-sm">
               <span>Név</span>
               <Input
-                className="w-80"
+                className="w-full max-w-80"
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
                 }}
               />
               <span className="text-muted-foreground text-xs">
-                A natív termék neve; a mentés után a stock termékformában szerkeszthető.
+                A natív termék neve; mentés után a beépített termékűrlapon szerkeszthető.
               </span>
             </label>
           )}
           <label className="flex flex-col gap-1 text-sm">
             <span>Alapár (Ft)</span>
             <NumberInput
-              className="w-40"
+              className="w-full max-w-40"
               value={definition.basePrice}
               onChange={(basePrice) => {
                 setDefinition({ ...definition, basePrice });
               }}
             />
           </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span>Árazási mód</span>
+            <NativeSelect
+              value={pricingMode(definition)}
+              onChange={(e) => {
+                changePricingMode(e.target.value === "length" ? "length" : "unit");
+              }}
+            >
+              <option value="unit">Darabáras</option>
+              <option value="length">Méteráras</option>
+            </NativeSelect>
+          </label>
+          {definition.pricing.kind === "length" && (
+            <label className="flex flex-col gap-1 text-sm">
+              <span>Forrásmező</span>
+              <NativeSelect
+                className="w-full max-w-52"
+                value={definition.pricing.sourceFieldId}
+                onChange={(e) => {
+                  changeLengthSource(e.target.value);
+                }}
+              >
+                <option value="">Válassz forrásmezőt…</option>
+                {lengthSourceCandidates(live).map((candidate) => (
+                  <option key={candidate.id} value={candidate.id}>
+                    {textValue(candidate.label, language)} ({candidate.id})
+                  </option>
+                ))}
+              </NativeSelect>
+              <span className="text-muted-foreground text-xs">
+                Az alapár és a mezőárak adják az Ft/m egységárat; a forrásmező saját árai figyelmen
+                kívül maradnak.
+              </span>
+            </label>
+          )}
           <label className="flex items-center gap-2 text-sm">
             <span>Rendelhető</span>
             <Switch
@@ -801,18 +898,36 @@ export function ConfiguratorEditor({
               }}
             />
           </label>
-          {lengthPricing !== null && (
-            <p className="text-muted-foreground text-xs">{lengthPricing}</p>
-          )}
+          <label className="flex items-center gap-2 text-sm">
+            <span>Rejtett a listában</span>
+            <Switch
+              checked={definition.hiddenInProductList === true}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  setDefinition({ ...definition, hiddenInProductList: true });
+                  return;
+                }
+
+                const { hiddenInProductList: _removed, ...rest } = definition;
+
+                setDefinition(rest);
+              }}
+            />
+          </label>
         </fieldset>
       </PageBlock>
       <PageBlock
         column="main"
         blockId="product-definition-fields"
         title="Mezők"
-        description="Minden választó, kapcsoló és anyagmező natív opciócsoportot és variánsokat generál; a szabad szöveg és a hímzés a rendelési sorokon él tovább."
+        description="Minden választó, kapcsoló és anyagmező natív opciócsoportot és változatokat generál; a szabad szöveg és a hímzés értéke a rendelési sorokon tárolódik."
       >
         <fieldset disabled={pending} className="flex flex-col gap-4">
+          <div className="flex justify-end">
+            <Button type="button" variant="outline" onClick={toggleExpandAll}>
+              Összes kibontása/összecsukása
+            </Button>
+          </div>
           {rows.map((row, index) => (
             <Fragment key={row.key}>
               <FieldEditor
@@ -821,22 +936,32 @@ export function ConfiguratorEditor({
                 count={rows.length}
                 materialOptions={materialOptions}
                 language={language}
-                patchBase={patchBase}
-                patchChoice={patchChoice}
-                patchToggle={patchToggle}
-                patchMaterial={patchMaterial}
-                patchInputField={patchInputField}
-                patchEmbroidery={patchEmbroidery}
-                patchChoiceOptions={patchChoiceOptions}
-                patchMaterialOptions={patchMaterialOptions}
                 changeFieldKind={changeFieldKind}
                 removeField={removeField}
                 moveField={moveField}
+                expanded={expandedKeys.has(row.key)}
+                onExpandedChange={changeExpanded}
+                revealDetails={revealDetails(row)}
+                onDetailsToggle={toggleDetails}
+                sourceFieldId={sourceFieldId}
+                sourceValueErrors={sourceValueErrors
+                  .filter((error) => error.fieldId === row.field.id)
+                  .map((error) => error.message)}
+                colorCountErrors={colorCountValueErrorList
+                  .filter((error) => error.fieldId === row.field.id)
+                  .map((error) => error.message)}
+                isNumericSource={numericSourceFieldIds.has(row.field.id)}
+                baselineFieldId={
+                  savedFields.find((candidate) => candidate.id === row.field.id)?.id ?? ""
+                }
+                fields={liveFields}
+                savedFields={savedFields}
+                setField={setField}
               />
               {kindSwitchKey?.key === row.key && (
                 <Alert variant="destructive">
                   <AlertTitle>
-                    A(z) "{kindSwitchKey.label}" mezőhöz tartozó adatok (opciók, árak, beállítások)
+                    A(z) „{kindSwitchKey.label}” mezőhöz tartozó adatok (opciók, árak, beállítások)
                     elvesznek a típusváltáskor.
                   </AlertTitle>
                   <div className="mt-2 flex gap-2">
@@ -889,10 +1014,10 @@ export function ConfiguratorEditor({
       >
         <fieldset disabled={pending} className="flex flex-col gap-2">
           {banned.map((rule, index) => (
-            <div key={index} className="flex items-end gap-2">
+            <div key={index} className="flex flex-wrap items-end gap-2">
               {rule.map((materialId, memberIndex) => (
                 <label key={memberIndex} className="flex flex-col gap-1 text-sm">
-                  <span>Anyag {memberIndex + 1}</span>
+                  <span>{memberIndex + 1}. anyag</span>
                   <NativeSelect
                     className="w-52"
                     value={materialId}
@@ -945,8 +1070,8 @@ export function ConfiguratorEditor({
         <PageBlock
           column="main"
           blockId="product-definition-generated"
-          title="Generált natív struktúra"
-          description="A szinkronizálás által előállított natív opciócsoportok és variánsok."
+          title="Generált natív szerkezet"
+          description="A szinkronizálással előállított natív opciócsoportok és változatok."
         >
           <div className="flex flex-col gap-4">
             <PaginatedListDataTable
@@ -977,7 +1102,7 @@ export function ConfiguratorEditor({
                 // default) and would render hidden with an unfetched value.
                 code: { header: "SKU", enableSorting: false },
                 price: { header: "Ár (Ft)", enableSorting: false },
-                facets: { header: "Facetek", enableSorting: false },
+                facets: { header: "Tulajdonságok", enableSorting: false },
               }}
             />
           </div>

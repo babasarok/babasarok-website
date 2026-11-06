@@ -1,6 +1,8 @@
 node_modules
 dist
 backend/dist/dashboard
+# Generated GraphQL types (codegen); the generator owns their formatting.
+backend/src/gql/
 .astro
 package.json
 package-lock.json
