@@ -236,6 +236,15 @@ try {
       }
     }
 
+    // Pre-deploy dump: the migrations running in this compose up are the
+    // deploy's irreversible step; keep a guaranteed-fresh snapshot under its
+    // own label instead of trusting the hourly cron's timing. Skipped on the
+    // first-ever deploy (the script ships to INFRA later in this run) — a
+    // fresh database has nothing to lose.
+    if (existsSync(`${INFRA}/db-backup.ts`)) {
+      run(`${INFRA}/db-backup.ts`, ["predeploy"], { cwd: INFRA });
+    }
+
     try {
       compose(["up", "-d", "--wait", "--wait-timeout", "300"], DIR, true);
     } catch {

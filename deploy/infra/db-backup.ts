@@ -28,6 +28,10 @@ import path from "node:path";
 const CONTAINER = "babasarok-prod-postgres-1";
 const DIR = "/srv/babasarok/backups";
 const KEEP = 336;
+// Optional label (e.g. "predeploy") — tagged dumps live alongside the hourly
+// ones under their own name so a deploy dump cannot be overwritten by the
+// next cron run within the hour.
+const label = process.argv[2] === undefined ? "" : `${process.argv[2]}-`;
 
 if (spawnSync("docker", ["inspect", CONTAINER]).status !== 0) {
   console.error(`${CONTAINER} not running, skipping`);
@@ -64,7 +68,7 @@ if (dump.status !== 0) {
   process.exit(1);
 }
 
-const target = path.join(DIR, `prod-${stamp}.dump`);
+const target = path.join(DIR, `prod-${label}${stamp}.dump`);
 rmSync(target, { force: true });
 renameSync(tmp, target);
 console.log(`dumped ${target} (${Math.round(statSync(target).size / 1024)} KiB)`);
@@ -77,7 +81,7 @@ for (const f of readdirSync(DIR)) {
 }
 
 const dumps = readdirSync(DIR)
-  .filter((f) => /^prod-\d{8}-\d{4}\.dump$/.test(f))
+  .filter((f) => /^prod-(?:[a-z]+-)?\d{8}-\d{4}\.dump$/.test(f))
   .sort()
   .reverse();
 
