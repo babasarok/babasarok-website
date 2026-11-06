@@ -10,6 +10,246 @@ index b21dbc9100f0a16faf5420c7762a97bd8d90e3b7..46b259f431bc036f9862d3229369214c
                        }))
                      : [
                            {
+diff --git a/src/app/routes/_authenticated/_orders/orders.tsx b/src/app/routes/_authenticated/_orders/orders.tsx
+index 86d2dc811beed8164ab15dc5193c3ee347a511d4..96b95dbd703b3108e7bbff969a4c15088c764c73 100644
+--- a/src/app/routes/_authenticated/_orders/orders.tsx
++++ b/src/app/routes/_authenticated/_orders/orders.tsx
+@@ -78,6 +78,7 @@ function OrderListPage() {
+                     cell: OrderStateCell,
+                 },
+                 code: {
++                    meta: { cardTitle: true },
+                     cell: ({ cell, row }) => {
+                         const value = cell.getValue() as string;
+                         const id = row.original.id;
+diff --git a/src/i18n/locales/en.po b/src/i18n/locales/en.po
+index ec4ed9ca789c9408d1d5b510c12b8415efc60c70..9acdaf19c55c00cef9d98b31b21df522e39ee789 100644
+--- a/src/i18n/locales/en.po
++++ b/src/i18n/locales/en.po
+@@ -7411,3 +7411,19 @@ msgstr "Successfully updated API key"
+ #: src/lib/components/layout/manage-languages-dialog.tsx
+ msgid "These languages will be available for all channels to use"
+ msgstr "These languages will be available for all channels to use"
++
++#: src/lib/components/data-table/data-table.tsx
++msgid "Sort by"
++msgstr "Sort by"
++
++#: src/lib/components/data-table/data-table.tsx
++msgid "Default order"
++msgstr "Default order"
++
++#: src/lib/components/data-table/data-table.tsx
++msgid "Ascending"
++msgstr "Ascending"
++
++#: src/lib/components/data-table/data-table.tsx
++msgid "Descending"
++msgstr "Descending"
+diff --git a/src/i18n/locales/hu.po b/src/i18n/locales/hu.po
+index 6097c803d50e44318412d99b237b3e8bd6bd7f51..a63aad1fe17900570804ac2ef375bd127206e548 100644
+--- a/src/i18n/locales/hu.po
++++ b/src/i18n/locales/hu.po
+@@ -7394,3 +7394,19 @@ msgstr "API key sikeresen frissítve"
+ #: src/lib/components/layout/manage-languages-dialog.tsx
+ msgid "These languages will be available for all channels to use"
+ msgstr "Ezek a nyelvek minden csatorna számára elérhetők lesznek"
++
++#: src/lib/components/data-table/data-table.tsx
++msgid "Sort by"
++msgstr "Rendezés"
++
++#: src/lib/components/data-table/data-table.tsx
++msgid "Default order"
++msgstr "Alapértelmezett sorrend"
++
++#: src/lib/components/data-table/data-table.tsx
++msgid "Ascending"
++msgstr "Növekvő"
++
++#: src/lib/components/data-table/data-table.tsx
++msgid "Descending"
++msgstr "Csökkenő"
+diff --git a/src/lib/components/data-table/data-table.tsx b/src/lib/components/data-table/data-table.tsx
+index 1f3e2529d9248a2f9c76348160022da6c2c4bd0e..426a2d1a3eb9defe75374c9ea5fd77a97f2487ee 100644
+--- a/src/lib/components/data-table/data-table.tsx
++++ b/src/lib/components/data-table/data-table.tsx
+@@ -10,6 +10,7 @@ import { TableCell, TableRow } from '@/vdb/components/ui/table.js';
+ import { BulkActionsInput } from '@/vdb/framework/extension-api/types/index.js';
+ import { useChannel } from '@/vdb/hooks/use-channel.js';
+ import { useDragAndDrop } from '@/vdb/hooks/use-drag-and-drop.js';
++import { useDynamicTranslations } from '@/vdb/hooks/use-dynamic-translations.js';
+ import { usePage } from '@/vdb/hooks/use-page.js';
+ import { cn } from '@/vdb/lib/utils.js';
+ import { closestCenter, DndContext } from '@dnd-kit/core';
+@@ -18,6 +19,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
+ import { CSS } from '@dnd-kit/utilities';
+ import { Trans, useLingui } from '@lingui/react/macro';
+ import {
++    Column,
+     ColumnDef,
+     ColumnFilter,
+     ColumnFiltersState,
+@@ -108,6 +110,55 @@ function DraggableRow<TData>({
+     );
+ }
+ 
++interface DraggableCardProps<TData> {
++    row: Row<TData>;
++    card: React.ReactNode;
++    getRowCanDrag?: (row: Row<TData>) => boolean;
++}
++
++// babasarok patch: the card-layout counterpart of DraggableRow — the drag
++// handle sits beside the molecule's default card. `touch-none` lets the
++// pointer sensor own touch drags instead of the page scrolling.
++function DraggableCard<TData>({ row, card, getRowCanDrag }: Readonly<DraggableCardProps<TData>>) {
++    const { t } = useLingui();
++    const rowCanDrag = getRowCanDrag ? getRowCanDrag(row) : true;
++    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
++        id: row.id,
++        disabled: !rowCanDrag,
++    });
++
++    return (
++        <div
++            ref={setNodeRef}
++            style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
++            className="flex items-stretch gap-1 animate-in fade-in duration-100"
++        >
++            <div className="flex w-6 shrink-0 items-center justify-center">
++                {rowCanDrag ? (
++                    <div
++                        {...attributes}
++                        {...listeners}
++                        aria-label={t`Drag to reorder`}
++                        className="cursor-move touch-none text-muted-foreground hover:text-foreground transition-colors"
++                    >
++                        <GripVertical className="h-4 w-4" />
++                    </div>
++                ) : null}
++            </div>
++            <div className="min-w-0 flex-1">{card}</div>
++        </div>
++    );
++}
++
++// babasarok patch: the card layout's title — a column flagged `meta.cardTitle`,
++// else the first non-asset column (a thumbnail makes a poor title).
++function pickCardTitleColumnId<TData>(columns: Column<TData, unknown>[]): string | undefined {
++    const metaOf = (column: Column<TData, unknown>) => column.columnDef.meta as any;
++    const flagged = columns.find(column => metaOf(column)?.cardTitle === true);
++    const firstNonAsset = columns.find(column => metaOf(column)?.fieldInfo?.type !== 'Asset');
++    return (flagged ?? firstNonAsset ?? columns[0])?.id;
++}
++
+ const INLINE_FILTER_BADGE_LIMIT = 2;
+ 
+ export interface FacetedFilter {
+@@ -302,6 +353,7 @@ export function DataTable<TData>({
+     const { activeChannel } = useChannel();
+     const { pageId } = usePage();
+     const { t } = useLingui();
++    const { getTranslatedFieldName } = useDynamicTranslations();
+     const [pagination, setPagination] = React.useState<PaginationState>(() =>
+         createPaginationState(page, itemsPerPage),
+     );
+@@ -749,11 +801,31 @@ export function DataTable<TData>({
+                                 : undefined
+                         }
+                         emptyState={emptyState}
+-                        renderRow={(row, { table, columnCount, defaultRow }) => {
++                        // babasarok patch: below 640px of table width the rows render as
++                        // cards (the molecule's card layout); labels match the column menu.
++                        cardLayout={{
++                            breakpoint: 640,
++                            columnLabel: column => {
++                                if (column.id === '__drag_handle__') return null;
++                                const header = column.columnDef.header;
++                                if (typeof header === 'string') return header;
++                                const meta = column.columnDef.meta as any;
++                                return meta?.headerLabel ?? getTranslatedFieldName(column.id);
++                            },
++                            titleColumnId: pickCardTitleColumnId,
++                        }}
++                        renderRow={(row, { table, columnCount, defaultRow, layout }) => {
+                             const tableMeta = table.options.meta as any;
+                             // Utility rows (e.g. the draft order's "add item" row) span
+                             // the full visible width and render custom content.
+                             if (tableMeta?.isUtilityRow?.(row) && tableMeta.renderUtilityRow) {
++                                if (layout === 'cards') {
++                                    return (
++                                        <div className="animate-in fade-in duration-100">
++                                            {tableMeta.renderUtilityRow(row)}
++                                        </div>
++                                    );
++                                }
+                                 return (
+                                     <TableRow className="animate-in fade-in duration-100">
+                                         <TableCell colSpan={columnCount} className="h-12">
+@@ -763,6 +835,15 @@ export function DataTable<TData>({
+                                 );
+                             }
+                             if (isDraggableEnabled) {
++                                if (layout === 'cards') {
++                                    return (
++                                        <DraggableCard
++                                            row={row}
++                                            card={defaultRow}
++                                            getRowCanDrag={tableMeta?.getRowCanDrag}
++                                        />
++                                    );
++                                }
+                                 return (
+                                     <DraggableRow
+                                         row={row}
+@@ -779,6 +860,10 @@ export function DataTable<TData>({
+                         labels={{
+                             selectAllRows: t`Select all rows`,
+                             selectRow: () => t`Select row`,
++                            sortBy: t`Sort by`,
++                            sortNone: t`Default order`,
++                            sortAscending: t`Ascending`,
++                            sortDescending: t`Descending`,
+                             pagination: {
+                                 navLabel: t`Pagination`,
+                                 previousLabel: t`Go to previous page`,
+diff --git a/src/lib/components/data-table/use-generated-columns.tsx b/src/lib/components/data-table/use-generated-columns.tsx
+index 3f488bf7676389f4232de1ce5735a1e6815b339f..671781e753ec2d310e2ad5cde0b13da84be508aa 100644
+--- a/src/lib/components/data-table/use-generated-columns.tsx
++++ b/src/lib/components/data-table/use-generated-columns.tsx
+@@ -177,7 +177,13 @@ export function useGeneratedColumns<T extends TypedDocumentNode<any, any>>({
+ 
+             return columnHelper.accessor(fieldInfo.name as any, {
+                 id: fieldInfo.name,
+-                meta: { fieldInfo, isCustomField, ...(meta ?? {}) },
++                // babasarok patch: a custom string header doubles as the column's card-layout label.
++                meta: {
++                    fieldInfo,
++                    isCustomField,
++                    ...(typeof header === 'string' ? { headerLabel: header } : {}),
++                    ...(meta ?? {}),
++                },
+                 enableColumnFilter,
+                 enableSorting: fieldInfo.isScalar && fieldInfo.type !== 'Boolean' && enableSorting,
+                 // Filtering is done on the server side, but we set this to 'equalsString' because
+diff --git a/src/lib/components/shared/paginated-list-data-table.tsx b/src/lib/components/shared/paginated-list-data-table.tsx
+index 59d9c5c52f7b5b56863eb6aa5477ec963d1cfa48..ff66823e9a4c4d507c2080947bf47a71007c5d1b 100644
+--- a/src/lib/components/shared/paginated-list-data-table.tsx
++++ b/src/lib/components/shared/paginated-list-data-table.tsx
+@@ -108,6 +108,12 @@ export type ColumnDefWithMetaDependencies<T extends TypedDocumentNode<any, any>>
+          * included in the visible table columns.
+          */
+         dependencies?: Array<AllItemFieldKeys<T>>;
++        /**
++         * @description
++         * babasarok patch: renders this column as the card title in the card
++         * layout (narrow tables). Default: the first non-asset column.
++         */
++        cardTitle?: boolean;
+     };
+ };
+ 
 diff --git a/src/lib/framework/layout-engine/page-layout.tsx b/src/lib/framework/layout-engine/page-layout.tsx
 index 9b734d06d10c37078f6416316dd736e1025b4ee7..be0cb99b8acbc67a9fac47945d4497a4d5695ccb 100644
 --- a/src/lib/framework/layout-engine/page-layout.tsx

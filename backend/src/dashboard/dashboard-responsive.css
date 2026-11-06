@@ -1,6 +1,7 @@
-/* Package DataTables are left untouched: their cells keep the package's
-   whitespace-nowrap and scroll inside their own table-container. Proper
-   mobile cards for them are a separate follow-up.
+/* Package DataTables need no rules here: below 640px of table width their
+   rows render as cards (the patched DataTable molecule, ADR 0013); wider
+   tables keep the package's whitespace-nowrap cells and scroll inside their
+   own table-container.
 
    Below the dashboard's mobile breakpoint the app shell's main pane is the
    page-like scroller, so a single oversized element outside a card (toolbar

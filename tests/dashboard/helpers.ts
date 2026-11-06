@@ -95,13 +95,17 @@ const CreatedVariants = z.object({
 /** Creates a plain (non-generated) product with a single variant, for specs
  * that need the stock variants grid — generated products hide it in favor of
  * the configurator's own table. */
-export async function createManualProduct(page: Page, slug: string): Promise<string> {
+export async function createManualProduct(
+  page: Page,
+  slug: string,
+  name = "E2E Manual Product"
+): Promise<string> {
   const product = await adminApi(
     page,
     CREATE_PRODUCT,
     {
       input: {
-        translations: [{ languageCode: "en", name: "E2E Manual Product", slug, description: "" }],
+        translations: [{ languageCode: "en", name, slug, description: "" }],
       },
     },
     CreatedProduct
@@ -128,6 +132,73 @@ export async function createManualProduct(page: Page, slug: string): Promise<str
   }
 
   return product.createProduct.id;
+}
+
+const CREATE_COLLECTION = `mutation CreateCollectionE2E($input: CreateCollectionInput!) {
+  createCollection(input: $input) {
+    id
+  }
+}`;
+
+/** Creates a top-level collection without filters. */
+export async function createCollection(page: Page, name: string, slug: string): Promise<void> {
+  await adminApi(
+    page,
+    CREATE_COLLECTION,
+    {
+      input: {
+        translations: [{ languageCode: "en", name, slug, description: "" }],
+        filters: [],
+      },
+    },
+    z.object({ createCollection: z.object({ id: z.string() }) })
+  );
+}
+
+/** The row cards of a narrow data table (the patched molecule's card layout,
+ * ADR 0013). */
+export function tableCards(page: Page): Locator {
+  return page.locator('[data-slot="data-table-card"]');
+}
+
+/** Card titles in display order, reduced to the given fixture names. */
+export async function cardOrder(page: Page, names: string[]): Promise<string[]> {
+  const texts = await tableCards(page).allInnerTexts();
+
+  return texts.flatMap((text) => names.filter((name) => text.includes(name)));
+}
+
+/** The drag handle beside the card that shows `name` (rows that cannot be
+ * dragged have none, so handles do not line up with cards by index). */
+export function cardDragHandle(page: Page, name: string): Locator {
+  return page
+    .getByRole("listitem")
+    .filter({ has: tableCards(page).filter({ hasText: name }) })
+    .getByRole("button", { name: "Drag to reorder" });
+}
+
+/** Drags `handle` with the pointer, in small steps (dnd-kit needs moves past
+ * its activation threshold), until it sits just past `target`. */
+export async function dragHandleOnto(page: Page, handle: Locator, target: Locator): Promise<void> {
+  const from = await handle.boundingBox();
+  const to = await target.boundingBox();
+
+  if (from === null || to === null) {
+    throw new Error("A húzófogantyú nem látható.");
+  }
+
+  const x = from.x + from.width / 2;
+  const startY = from.y + from.height / 2;
+  const endY = to.y + to.height / 2 + 10;
+
+  await page.mouse.move(x, startY);
+  await page.mouse.down();
+
+  for (let step = 1; step <= 10; step++) {
+    await page.mouse.move(x, startY + ((endY - startY) * step) / 10);
+  }
+
+  await page.mouse.up();
 }
 
 /** Creates a definition fixture; the mutation returns before the queued sync

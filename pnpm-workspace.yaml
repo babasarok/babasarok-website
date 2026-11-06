@@ -21,4 +21,5 @@ allowBuilds:
   re2: false
 
 patchedDependencies:
+  "@vendure-io/ui": patches/@vendure-io__ui.patch
   "@vendure/dashboard": patches/@vendure__dashboard.patch
