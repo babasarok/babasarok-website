@@ -11,6 +11,7 @@
 import { useEffect, useState, type ReactElement, type ReactNode } from "react";
 import { Badge, Button, Input, NativeSelect } from "@vendure/dashboard";
 import { Switch } from "@/vdb/components/ui/switch.js";
+import { DEFAULT_TEXT_LANGUAGE } from "../../shared/product-definition/index";
 import {
   EMBROIDERY_PRICINGS,
   EMBROIDERY_PRICING_LABELS,
@@ -18,6 +19,7 @@ import {
   FIELD_KIND_LABELS,
   PRESENTATIONS,
   PRESENTATION_LABELS,
+  generateFieldId,
   slugifyLabel,
   summaryChips,
   textPlaceholder,
@@ -116,12 +118,14 @@ function LocalizedInput({
   text,
   language,
   width,
+  onBlur,
   onChange,
 }: {
   label: string;
   text: TextInput | undefined;
   language: string;
   width?: string;
+  onBlur?: () => void;
   onChange: (text: TextInput | undefined) => void;
 }): ReactElement {
   return (
@@ -131,6 +135,7 @@ function LocalizedInput({
         className={width}
         value={textValue(text, language)}
         placeholder={textPlaceholder(text, language)}
+        onBlur={onBlur}
         onChange={(e) => {
           onChange(optionalText(text, language, e.target.value));
         }}
@@ -1184,6 +1189,17 @@ export function FieldEditor({
                 text={field.label}
                 language={language}
                 width="w-44"
+                onBlur={() => {
+                  if (field.id !== "" || textValue(field.label, DEFAULT_TEXT_LANGUAGE) === "") {
+                    return;
+                  }
+
+                  const used = new Set(
+                    (fields ?? []).map((entry) => entry.id).filter((id) => id !== "")
+                  );
+
+                  updateField({ ...field, id: generateFieldId(field.label, used) });
+                }}
                 onChange={(next) => {
                   updateField({ ...field, label: next ?? { hu: "" } });
                 }}

@@ -12,6 +12,7 @@ import {
   canUnifiedSave,
   planUnifiedSave,
   carryOver,
+  generateFieldId,
   hasEditableData,
   isLengthSourceField,
   lengthSourceCandidates,
@@ -243,7 +244,10 @@ describe("sanitize", () => {
       { id: " kek ", label: { hu: " Kék " }, price: 0, tooltip: { hu: " Sötét " } },
     ];
     choice.tooltip = { hu: " Válassz " };
-    choice.customValue = { pattern: String.raw` ^\d+$ `, placeholder: { hu: " Egyéb ", en: " Other " } };
+    choice.customValue = {
+      pattern: String.raw` ^\d+$ `,
+      placeholder: { hu: " Egyéb ", en: " Other " },
+    };
 
     const input = sampleInput(" nev ", " Név ");
     input.tooltip = { hu: " Írd ide " };
@@ -505,7 +509,7 @@ describe("pricing mode", () => {
 });
 
 describe("lengthSourceCandidates", () => {
-  test("only input and choice fields are string-valued candidates", () => {
+  test("only named input and choice fields are string-valued candidates", () => {
     const definition = {
       ...newDefinition("p"),
       fields: [
@@ -514,10 +518,21 @@ describe("lengthSourceCandidates", () => {
         sampleMaterial("anyag", "Anyag"),
         sampleChoice("szin", "Szín", ["kek"]),
         newField("embroidery", "himzes", { hu: "Hímzés" }),
+        newField("input", "", { hu: "Névtelen" }),
       ],
     };
 
     expect(lengthSourceCandidates(definition).map((field) => field.id)).toEqual(["hossz", "szin"]);
+  });
+});
+
+describe("generateFieldId", () => {
+  test("slugs the Hungarian label, dedupes against used ids, falls back to mezo", () => {
+    const used = new Set(["meret"]);
+
+    expect(generateFieldId({ hu: " Méret " }, used)).toBe("meret-2");
+    expect(generateFieldId({ hu: "Szín" }, used)).toBe("szin");
+    expect(generateFieldId({ hu: "   " }, used)).toBe("mezo");
   });
 });
 
@@ -606,7 +621,10 @@ describe("applyLengthSourceDefaults", () => {
       throw new Error("expected a choice field");
     }
 
-    expect(filled.customValue).toEqual({ placeholder: { hu: "Egyéb" }, pattern: String.raw`^\d+$` });
+    expect(filled.customValue).toEqual({
+      placeholder: { hu: "Egyéb" },
+      pattern: String.raw`^\d+$`,
+    });
 
     const withPattern = { ...bare, fields: [{ ...choice, customValue: { pattern: "^[0-9]+$" } }] };
 
@@ -713,13 +731,19 @@ describe("withCustomValue", () => {
   });
 
   test("re-enabling keeps the custom value the field already had", () => {
-    const field = { ...sampleChoice("szin", "Szín", ["kek"]), customValue: { pattern: String.raw`^\d+$` } };
+    const field = {
+      ...sampleChoice("szin", "Szín", ["kek"]),
+      customValue: { pattern: String.raw`^\d+$` },
+    };
 
     expect(withCustomValue(field, true).customValue).toEqual({ pattern: String.raw`^\d+$` });
   });
 
   test("disabling removes the key entirely", () => {
-    const field = { ...sampleChoice("szin", "Szín", ["kek"]), customValue: { pattern: String.raw`^\d+$` } };
+    const field = {
+      ...sampleChoice("szin", "Szín", ["kek"]),
+      customValue: { pattern: String.raw`^\d+$` },
+    };
 
     const disabled = withCustomValue(field, false);
 

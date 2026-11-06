@@ -279,6 +279,13 @@ const HUNGARIAN_FOLDS: Record<string, string> = {
   ű: "u",
 };
 
+/** The id a freshly named field takes immediately (before any save), so
+ * references — length source, visibility rules, color-count sources — point
+ * at a stable value from creation. */
+export function generateFieldId(label: TextInput, used: Set<string>): string {
+  return uniqueCode(slugifyLabel(label.hu) || "mezo", used);
+}
+
 /** ASCII slug of a label, in the shape the canonical ids use. */
 export function slugifyLabel(label: string): string {
   const folded = label
@@ -319,7 +326,7 @@ export function assignGeneratedIds(definition: ProductDefinitionInput): ProductD
       let id = field.id;
 
       if (id === "") {
-        id = uniqueCode(slugifyLabel(field.label.hu) || "mezo", fieldIds);
+        id = generateFieldId(field.label, fieldIds);
         fieldIds.add(id);
       }
 
@@ -483,9 +490,12 @@ export function withPricingMode(
 }
 
 /** The field kinds whose buyer-facing value is a plain string — the same set
- * the server accepts as a numeric source. */
+ * the server accepts as a numeric source. Id-less (not yet named) fields are
+ * excluded: a source reference needs a stable id. */
 export function lengthSourceCandidates(definition: ProductDefinitionInput): FieldInput[] {
-  return definition.fields.filter((field) => field.kind === "input" || field.kind === "choice");
+  return definition.fields.filter(
+    (field) => (field.kind === "input" || field.kind === "choice") && field.id !== ""
+  );
 }
 
 export function isLengthSourceField(definition: ProductDefinitionInput, fieldId: string): boolean {
