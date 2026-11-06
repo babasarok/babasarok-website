@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { LocalizedTextSchema } from "./localized-text.ts";
-import { ProductFieldIdSchema } from "./model.ts";
+import { LocalizedTextSchema } from "./localized-text";
+import { ProductFieldIdSchema } from "./model";
 
 export const FieldVisibilitySchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("always") }),

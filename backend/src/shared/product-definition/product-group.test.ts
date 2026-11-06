@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ProductGroupDefinitionSchema } from "./product-group.ts";
+import { ProductGroupDefinitionSchema } from "./product-group";
 
 describe("ProductGroupDefinitionSchema", () => {
   const discountedSet = {

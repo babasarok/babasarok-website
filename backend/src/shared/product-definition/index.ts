@@ -18,13 +18,13 @@ export {
   type ProductFieldId,
   type ProductId,
   type ProductRevision,
-} from "./model.ts";
+} from "./model.js";
 export {
   DEFAULT_TEXT_LANGUAGE,
   LocalizedTextSchema,
   resolveText,
   type LocalizedText,
-} from "./localized-text.ts";
+} from "./localized-text.js";
 export {
   ColorAppearanceSchema,
   MaterialColorDefinitionSchema,
@@ -36,13 +36,13 @@ export {
   type MaterialColorId,
   type MaterialDefinition,
   type MaterialId,
-} from "./material.ts";
+} from "./material.js";
 export {
   FieldVisibilitySchema,
   PatternSchema,
   fieldBaseShape,
   type FieldVisibility,
-} from "./field.ts";
+} from "./field.js";
 export {
   ChoiceFieldSchema,
   ChoiceOptionIdSchema,
@@ -50,11 +50,11 @@ export {
   type ChoiceField,
   type ChoiceOption,
   type ChoiceOptionId,
-} from "./field-kinds/choice.ts";
-export { InputFieldSchema, type InputField } from "./field-kinds/input.ts";
-export { ToggleFieldSchema, type ToggleField } from "./field-kinds/toggle.ts";
-export { MaterialFieldSchema, type MaterialField } from "./field-kinds/material.ts";
-export { EmbroideryFieldSchema, type EmbroideryField } from "./field-kinds/embroidery.ts";
+} from "./field-kinds/choice.js";
+export { InputFieldSchema, type InputField } from "./field-kinds/input.js";
+export { ToggleFieldSchema, type ToggleField } from "./field-kinds/toggle.js";
+export { MaterialFieldSchema, type MaterialField } from "./field-kinds/material.js";
+export { EmbroideryFieldSchema, type EmbroideryField } from "./field-kinds/embroidery.js";
 export {
   ForbiddenMaterialCombinationSchema,
   ProductDefinitionSchema,
@@ -64,8 +64,8 @@ export {
   type ProductDefinitionInput,
   type ProductField,
   type ProductPricing,
-} from "./product.ts";
-export { byCodeUnit, canonicalJson } from "./canonical-json.ts";
+} from "./product.js";
+export { byCodeUnit, canonicalJson } from "./canonical-json.js";
 export {
   DiscountedProductSetSchema,
   ProductGroupDefinitionSchema,
@@ -75,5 +75,5 @@ export {
   type ProductGroupDefinition,
   type ProductGroupId,
   type RelatedItems,
-} from "./product-group.ts";
-export { ProductCatalogSchema, type ProductCatalog } from "./catalog.ts";
+} from "./product-group.js";
+export { ProductCatalogSchema, type ProductCatalog } from "./catalog.js";

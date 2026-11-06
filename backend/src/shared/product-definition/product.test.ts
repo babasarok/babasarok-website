@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
-import { FieldVisibilitySchema, PatternSchema } from "./field.ts";
-import { ChoiceFieldSchema } from "./field-kinds/choice.ts";
-import { EmbroideryFieldSchema } from "./field-kinds/embroidery.ts";
-import type { InputFieldSchema } from "./field-kinds/input.ts";
-import { MaterialFieldSchema } from "./field-kinds/material.ts";
-import { ToggleFieldSchema } from "./field-kinds/toggle.ts";
+import { FieldVisibilitySchema, PatternSchema } from "./field";
+import { ChoiceFieldSchema } from "./field-kinds/choice";
+import { EmbroideryFieldSchema } from "./field-kinds/embroidery";
+import type { InputFieldSchema } from "./field-kinds/input";
+import { MaterialFieldSchema } from "./field-kinds/material";
+import { ToggleFieldSchema } from "./field-kinds/toggle";
 import {
   ForbiddenMaterialCombinationSchema,
   ProductDefinitionSchema,
   ProductPricingSchema,
   type ProductDefinition,
-} from "./product.ts";
-import { productRevision } from "./revision.ts";
+} from "./product";
+import { productRevision } from "./revision";
 
 const inputFixture: z.input<typeof InputFieldSchema> = {
   id: "szoveg",

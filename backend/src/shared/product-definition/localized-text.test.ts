@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LocalizedTextSchema, resolveText } from "./localized-text.ts";
+import { LocalizedTextSchema, resolveText } from "./localized-text";
 
 describe("LocalizedTextSchema", () => {
   it("requires hu", () => {

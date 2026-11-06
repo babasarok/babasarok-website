@@ -272,15 +272,3 @@ index 9b734d06d10c37078f6416316dd736e1025b4ee7..be0cb99b8acbc67a9fac47945d4497a4
      }
  
      // When the page provides its own actions, the primary slot is taken (e.g. Update/Save),
-diff --git a/dist/vite/utils/compiler.js b/dist/vite/utils/compiler.js
-index efcadc7..e185bf9 100644
---- a/dist/vite/utils/compiler.js
-+++ b/dist/vite/utils/compiler.js
-@@ -283,6 +283,7 @@ async function compileTypeScript({ outputPath, logger, module, sourceRoot, tsCon
-         experimentalDecorators: true,
-         emitDecoratorMetadata: true,
-         esModuleInterop: true,
-+        rewriteRelativeImportExtensions: true,
-     };
-     const transformers = afterTransformers.length
-         ? { after: afterTransformers }
