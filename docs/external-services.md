@@ -57,7 +57,10 @@ Content edits ──▶ Tina Cloud (CMS) ──▶ GitHub repo ──▶ Workers
 - **Backups:** hourly prod DB dumps on the box — `deploy/infra/db-backup.ts`
   (cron installed by the deploy) writes a compressed `pg_dump -Fc` archive to
   `/srv/babasarok/backups` every hour and keeps 14 days; every prod deploy
-  additionally dumps right before its migrations run (`prod-predeploy-*`). Restore a dump with
+  additionally dumps right before its migrations run. Files are named
+  `prod[-predeploy]-{YYYYMMDD}-{HHMM}-{commit8}.dump`, so a dump can be
+  matched to the commit that was (or was about to be) deployed. Restore a
+  dump with
   `pg_restore` into a scratch DB to inspect or selectively recover data. On
   top of that: Hetzner server backups (paid, enabled in the Hetzner Cloud
   console — 7 rotating snapshots of the whole server incl. the postgres

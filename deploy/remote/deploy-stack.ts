@@ -242,7 +242,7 @@ try {
     // first-ever deploy (the script ships to INFRA later in this run) — a
     // fresh database has nothing to lose.
     if (existsSync(`${INFRA}/db-backup.ts`)) {
-      run(`${INFRA}/db-backup.ts`, ["predeploy"], { cwd: INFRA });
+      run(`${INFRA}/db-backup.ts`, ["predeploy", commitSha], { cwd: INFRA });
     }
 
     try {

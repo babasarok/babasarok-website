@@ -15,6 +15,7 @@ import {
   constants as fsConstants,
   mkdirSync,
   openSync,
+  readFileSync,
   readdirSync,
   renameSync,
   rmSync,
@@ -28,10 +29,16 @@ import path from "node:path";
 const CONTAINER = "babasarok-prod-postgres-1";
 const DIR = "/srv/babasarok/backups";
 const KEEP = 336;
-// Optional label (e.g. "predeploy") — tagged dumps live alongside the hourly
+// Optional label ("predeploy") — tagged dumps live alongside the hourly
 // ones under their own name so a deploy dump cannot be overwritten by the
 // next cron run within the hour.
 const label = process.argv[2] === undefined ? "" : `${process.argv[2]}-`;
+// Commit tail for the filename: the deploy passes the incoming commit for
+// predeploy dumps; the cron falls back to the deployed commit marker.
+const sha =
+  process.argv[3]?.slice(0, 8) ??
+  readFileSync("/srv/babasarok/prod/commit.txt", "utf8").trim().split(" ")[1]?.slice(0, 8) ??
+  "nocommit";
 
 if (spawnSync("docker", ["inspect", CONTAINER]).status !== 0) {
   console.error(`${CONTAINER} not running, skipping`);
@@ -68,7 +75,7 @@ if (dump.status !== 0) {
   process.exit(1);
 }
 
-const target = path.join(DIR, `prod-${label}${stamp}.dump`);
+const target = path.join(DIR, `prod-${label}${stamp}-${sha}.dump`);
 rmSync(target, { force: true });
 renameSync(tmp, target);
 console.log(`dumped ${target} (${Math.round(statSync(target).size / 1024)} KiB)`);
@@ -81,7 +88,7 @@ for (const f of readdirSync(DIR)) {
 }
 
 const dumps = readdirSync(DIR)
-  .filter((f) => /^prod-(?:[a-z]+-)?\d{8}-\d{4}\.dump$/.test(f))
+  .filter((f) => /^prod-(?:[a-z]+-)?\d{8}-\d{4}-[0-9a-z]+\.dump$/.test(f))
   .sort()
   .reverse();
 
