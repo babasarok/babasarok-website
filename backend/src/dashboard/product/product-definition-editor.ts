@@ -187,7 +187,7 @@ export function summaryChips(field: FieldInput): string[] {
   }
 
   if (field.kind === "toggle") {
-    return [`kapcsoló ár: ${field.price} Ft`];
+    return [`ár bekapcsolva: ${field.price} Ft`];
   }
 
   if (field.kind === "material") {
@@ -596,7 +596,7 @@ export function colorCountValueErrors(
     if (source === undefined) {
       errors.push({
         fieldId: field.id,
-        message: `A(z) "${name}" anyagmező színszám-forrása nem létező mezőre hivatkozik: "${sourceFieldId}".`,
+        message: `A(z) „${name}” anyagmező színszám-forrása nem létező mezőre hivatkozik: „${sourceFieldId}”.`,
       });
       continue;
     }
@@ -612,7 +612,7 @@ export function colorCountValueErrors(
       if (!/^\d+$/.test(option.id) || Number(option.id) < 1) {
         errors.push({
           fieldId: field.id,
-          message: `A(z) "${name}" színszám-forrása ("${sourceName}") "${option.id}" opciókódja nem pozitív egész szám.`,
+          message: `A(z) „${name}” anyagmező színszám-forrásának („${sourceName}”) „${option.id}” opciókódja nem pozitív egész szám.`,
         });
       }
     }
@@ -655,13 +655,13 @@ export function lengthSourceValueErrors(
       if (centimeters < 1 || centimeters > MAX_LINE_LENGTH_CM) {
         errors.push({
           fieldId: source.id,
-          message: `A(z) "${name}" méteráras forrásmező "${option.id}" opciókódja 1 és ${MAX_LINE_LENGTH_CM} közé eső egész szám (cm) lehet — ${MAX_LINE_LENGTH_CM} cm = 100 m.`,
+          message: `A(z) „${name}” méteráras forrásmező „${option.id}” opciókódja csak 1 és ${MAX_LINE_LENGTH_CM} közötti egész szám (cm) lehet — ${MAX_LINE_LENGTH_CM} cm = 100 m.`,
         });
       }
     } else {
       errors.push({
         fieldId: source.id,
-        message: `A(z) "${name}" méteráras forrásmező "${option.id}" opciókódja nem szám (cm).`,
+        message: `A(z) „${name}” méteráras forrásmező „${option.id}” opciókódja nem szám (cm).`,
       });
     }
 

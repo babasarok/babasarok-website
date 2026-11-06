@@ -1,6 +1,6 @@
 /**
  * The product-definition editor's per-field editor: one FieldEditor renders a
- * single field row of any kind as a collapsible card with Alap / Beállítások /
+ * single field row of any kind as a collapsible card with Alapadatok / Beállítások /
  * Speciális sections, with NumberInput as the shared whole-Forint numeric
  * input.
  *
@@ -354,8 +354,8 @@ function ChoiceSettings({
             </div>
             {renamed && (
               <p className="text-destructive text-xs">
-                Az elmentett érték „{saved}" megváltozott — a korábbi választások nem illeszkednek
-                többé.
+                A mentett „{saved}” érték megváltozott — a korábbi választások már nem egyeznek
+                vele.
               </p>
             )}
           </div>
@@ -369,7 +369,7 @@ function ChoiceSettings({
             updateOptions([...field.options, { id: "", label: { hu: "" }, price: 0 }]);
           }}
         >
-          + Elem hozzáadása
+          + Opció hozzáadása
         </Button>
       </div>
       {sourceErrors.length > 0 && (
@@ -441,7 +441,7 @@ function CustomValueInputs({
         />
       </label>
       <LocalizedInput
-        label="Helyettesítő szöveg"
+        label="Helyőrző szöveg"
         text={customValue.placeholder}
         language={language}
         onChange={(next) => {
@@ -468,7 +468,7 @@ function ToggleSettings({
 }): ReactElement {
   return (
     <label className="flex flex-col gap-1 text-sm">
-      <span>Ár ha bekapcsolva (Ft)</span>
+      <span>Ár bekapcsolt állapotban (Ft)</span>
       <NumberInput
         className="w-32"
         value={field.price}
@@ -554,8 +554,8 @@ function MaterialSettings({
               ))}
             </NativeSelect>
             <span className="text-muted-foreground text-xs">
-              A vásárló által megadott szám adja a színek számát, ezért a forrásmező értékeinek
-              egész számoknak kell lenniük.
+              A vásárló által megadott szám adja a színek számát, ezért a forrásmező minden
+              értékének egész számnak kell lennie.
             </span>
           </label>
         )}
@@ -675,7 +675,7 @@ function InputSettings({
           </label>
         )}
         <LocalizedInput
-          label="Helyettesítő szöveg"
+          label="Helyőrző szöveg"
           text={field.placeholder}
           language={language}
           onChange={(next) => {
@@ -851,7 +851,7 @@ function EmbroiderySettings({
           </NativeSelect>
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span>{field.pricing.kind === "per-word" ? "Ár / szó (Ft)" : "Ár (Ft)"}</span>
+          <span>{field.pricing.kind === "per-word" ? "Ár szavanként (Ft)" : "Ár (Ft)"}</span>
           <NumberInput
             className="w-28"
             value={
@@ -871,7 +871,7 @@ function EmbroiderySettings({
       </div>
       <div className="flex flex-wrap items-end gap-2">
         <LocalizedInput
-          label="Helyettesítő szöveg"
+          label="Helyőrző szöveg"
           text={field.placeholder}
           language={language}
           onChange={(next) => {
@@ -960,7 +960,7 @@ function VisibilityEditor({
   return (
     <div className="flex flex-wrap items-end gap-2">
       <label className="flex flex-col gap-1 text-sm">
-        <span>Megjelenítés</span>
+        <span>Láthatóság</span>
         <NativeSelect
           className="w-40"
           value={field.visibility.kind}
@@ -986,7 +986,7 @@ function VisibilityEditor({
         >
           <option value="always">Mindig</option>
           <option value="when-present">Ha kitöltve</option>
-          <option value="when-equal">Ha értéke =</option>
+          <option value="when-equal">Ha az értéke =</option>
         </NativeSelect>
       </label>
       {field.visibility.kind !== "always" && (
@@ -1197,7 +1197,7 @@ export function FieldEditor({
       </div>
       {expanded && (
         <div className="flex flex-col gap-3">
-          <FieldSection title="Alap">
+          <FieldSection title="Alapadatok">
             <div className="flex flex-wrap items-end gap-2">
               <label className="flex flex-col gap-1 text-sm">
                 <span>Típus</span>

@@ -737,7 +737,7 @@ describe("colorCountValueErrors", () => {
 
     expect(errors).toHaveLength(1);
     expect(errors[0].fieldId).toBe("anyag");
-    expect(errors[0].message).toContain('"sok"');
+    expect(errors[0].message).toContain("„sok”");
     expect(errors[0].message).toContain("nem pozitív egész szám");
   });
 });
@@ -782,17 +782,17 @@ describe("lengthSourceValueErrors", () => {
     expect(lengthSourceValueErrors(definition)).toEqual([
       {
         fieldId: "hossz",
-        message: 'A(z) "Hossz" méteráras forrásmező "abc" opciókódja nem szám (cm).',
+        message: "A(z) „Hossz” méteráras forrásmező „abc” opciókódja nem szám (cm).",
       },
       {
         fieldId: "hossz",
         message:
-          'A(z) "Hossz" méteráras forrásmező "0" opciókódja 1 és 10000 közé eső egész szám (cm) lehet — 10000 cm = 100 m.',
+          "A(z) „Hossz” méteráras forrásmező „0” opciókódja csak 1 és 10000 közötti egész szám (cm) lehet — 10000 cm = 100 m.",
       },
       {
         fieldId: "hossz",
         message:
-          'A(z) "Hossz" méteráras forrásmező "10001" opciókódja 1 és 10000 közé eső egész szám (cm) lehet — 10000 cm = 100 m.',
+          "A(z) „Hossz” méteráras forrásmező „10001” opciókódja csak 1 és 10000 közötti egész szám (cm) lehet — 10000 cm = 100 m.",
       },
       { fieldId: "hossz", message: 'hossz: duplikált opciókód: "250".' },
     ]);
@@ -809,7 +809,7 @@ describe("lengthSourceValueErrors", () => {
     expect(lengthSourceValueErrors(definition)).toEqual([
       {
         fieldId: "hossz",
-        message: 'A(z) "hossz" méteráras forrásmező "abc" opciókódja nem szám (cm).',
+        message: "A(z) „hossz” méteráras forrásmező „abc” opciókódja nem szám (cm).",
       },
     ]);
   });
@@ -963,7 +963,7 @@ describe("summaryChips", () => {
     const field = sampleToggle("kapcsolo", "Kapcsoló");
     field.price = 500;
 
-    expect(summaryChips(field)).toEqual(["kapcsoló ár: 500 Ft"]);
+    expect(summaryChips(field)).toEqual(["ár bekapcsolva: 500 Ft"]);
   });
 
   test("material chips count options and describe the colorCount mode", () => {

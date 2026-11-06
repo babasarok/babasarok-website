@@ -172,7 +172,7 @@ function SyncBadge({ sync }: { sync: SyncInfo | null }): ReactElement {
       </StatusBadge>
       {sync.stale && sync.state !== "pending" && (
         <Badge variant="warning">
-          Elavult — a mentés a natív módosítások felülírása nélkül elutasított
+          Elavult — mentés csak a natív módosítások felülírásával lehetséges
         </Badge>
       )}
     </span>
@@ -576,7 +576,7 @@ export function ConfiguratorEditor({
           setSync((current) =>
             current === null
               ? current
-              : { ...current, error: "Állapotlekérés nem sikerült — újrapróbálás…" }
+              : { ...current, error: "Az állapot lekérése nem sikerült — újrapróbálkozás…" }
           );
         }
       }
@@ -611,7 +611,7 @@ export function ConfiguratorEditor({
     }
 
     if (creatingNew && payload.id === NEW_ENTITY_PATH) {
-      clientErrors.push('Az azonosító nem lehet "new".');
+      clientErrors.push("Az azonosító nem lehet „new”.");
     }
 
     if (clientErrors.length > 0) {
@@ -737,7 +737,7 @@ export function ConfiguratorEditor({
         column="main"
         blockId="product-definition-form"
         title="Termék"
-        description="A mentés után a natív termékszerkezet a háttérben újragenerálódik. A mezők kiegészítő tulajdonságai (megjelenítési függőségek, tippek, minták) változatlanul megőrződnek."
+        description="A mentés után a natív termékszerkezet a háttérben újragenerálódik. A mezők kiegészítő tulajdonságai (láthatósági feltételek, súgók, minták) változatlanul megőrződnek."
       >
         <div className="flex flex-wrap items-center gap-3">
           {creatingNew && (
@@ -804,7 +804,7 @@ export function ConfiguratorEditor({
           <ErrorNotice
             message={
               (sync.error ?? "") +
-              "\nA szinkronizálás a következő mentéskor újra indul — javítsd az okát, majd mentsd újra."
+              "\nA szinkronizálás a következő mentéskor újraindul — szüntesd meg a hiba okát, majd mentsd újra."
             }
           />
         )}
@@ -822,7 +822,7 @@ export function ConfiguratorEditor({
                   }}
                 />
                 <span className="text-muted-foreground text-xs">
-                  Végleges: a natív termék slugja létrehozáskor ebből készül. Nem lehet "new".
+                  Végleges: a natív termék slugja létrehozáskor ebből készül. Nem lehet „new”.
                 </span>
               </>
             ) : (
@@ -840,7 +840,7 @@ export function ConfiguratorEditor({
                 }}
               />
               <span className="text-muted-foreground text-xs">
-                A natív termék neve; a mentés után a stock termékformában szerkeszthető.
+                A natív termék neve; mentés után a beépített termékűrlapon szerkeszthető.
               </span>
             </label>
           )}
@@ -855,20 +855,20 @@ export function ConfiguratorEditor({
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span>Árazás mód</span>
+            <span>Árazási mód</span>
             <NativeSelect
               value={pricingMode(definition)}
               onChange={(e) => {
                 changePricingMode(e.target.value === "length" ? "length" : "unit");
               }}
             >
-              <option value="unit">Egyszeri</option>
+              <option value="unit">Darabáras</option>
               <option value="length">Méteráras</option>
             </NativeSelect>
           </label>
           {definition.pricing.kind === "length" && (
             <label className="flex flex-col gap-1 text-sm">
-              <span>Forrás mező</span>
+              <span>Forrásmező</span>
               <NativeSelect
                 className="w-52"
                 value={definition.pricing.sourceFieldId}
@@ -920,12 +920,12 @@ export function ConfiguratorEditor({
         column="main"
         blockId="product-definition-fields"
         title="Mezők"
-        description="Minden választó, kapcsoló és anyagmező natív opciócsoportot és variánsokat generál; a szabad szöveg és a hímzés a rendelési sorokon él tovább."
+        description="Minden választó, kapcsoló és anyagmező natív opciócsoportot és változatokat generál; a szabad szöveg és a hímzés értéke a rendelési sorokon tárolódik."
       >
         <fieldset disabled={pending} className="flex flex-col gap-4">
           <div className="flex justify-end">
             <Button type="button" variant="outline" onClick={toggleExpandAll}>
-              Mindet kibontása/összecsukása
+              Összes kibontása/összecsukása
             </Button>
           </div>
           {rows.map((row, index) => (
@@ -961,7 +961,7 @@ export function ConfiguratorEditor({
               {kindSwitchKey?.key === row.key && (
                 <Alert variant="destructive">
                   <AlertTitle>
-                    A(z) "{kindSwitchKey.label}" mezőhöz tartozó adatok (opciók, árak, beállítások)
+                    A(z) „{kindSwitchKey.label}” mezőhöz tartozó adatok (opciók, árak, beállítások)
                     elvesznek a típusváltáskor.
                   </AlertTitle>
                   <div className="mt-2 flex gap-2">
@@ -1017,7 +1017,7 @@ export function ConfiguratorEditor({
             <div key={index} className="flex items-end gap-2">
               {rule.map((materialId, memberIndex) => (
                 <label key={memberIndex} className="flex flex-col gap-1 text-sm">
-                  <span>Anyag {memberIndex + 1}</span>
+                  <span>{memberIndex + 1}. anyag</span>
                   <NativeSelect
                     className="w-52"
                     value={materialId}
@@ -1070,8 +1070,8 @@ export function ConfiguratorEditor({
         <PageBlock
           column="main"
           blockId="product-definition-generated"
-          title="Generált natív struktúra"
-          description="A szinkronizálás által előállított natív opciócsoportok és variánsok."
+          title="Generált natív szerkezet"
+          description="A szinkronizálással előállított natív opciócsoportok és változatok."
         >
           <div className="flex flex-col gap-4">
             <PaginatedListDataTable
@@ -1102,7 +1102,7 @@ export function ConfiguratorEditor({
                 // default) and would render hidden with an unfetched value.
                 code: { header: "SKU", enableSorting: false },
                 price: { header: "Ár (Ft)", enableSorting: false },
-                facets: { header: "Facetek", enableSorting: false },
+                facets: { header: "Tulajdonságok", enableSorting: false },
               }}
             />
           </div>

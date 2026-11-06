@@ -17,7 +17,7 @@ import {
 
 /**
  * Browser-level e2e for the product-definition create and editor flows. The
- * stock products list's "Új konfigurátor termék" action-bar button opens
+ * stock products list's "Új konfigurátoros termék" action-bar button opens
  * /product-definitions/new (the only editor route); after creating, the
  * dashboard lands on the generated native product's page, where the
  * "Konfigurátor" page block is the editor home and hosts delete. The editor
@@ -26,7 +26,7 @@ import {
  * groups/variants via the queued sync, whose state the badge surfaces.
  *
  * Each field renders as a card (`data-testid="field-card"`) that starts
- * collapsed after every load: the header chevron opens the Alap /
+ * collapsed after every load: the header chevron opens the Alapadatok /
  * Beállítások / Speciális sections, and a per-card "Részletek" switch flips
  * the option grids between name-only and fully detailed rows (it turns on by
  * itself for load-bearing fields and fields whose rows carry data). The
@@ -106,10 +106,10 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await ensureMaterials(page, E2E_MATERIALS);
     await deleteDefinitionIfPresent(page, "e2e-f1");
 
-    await page.getByRole("button", { name: "Új konfigurátor termék" }).click();
+    await page.getByRole("button", { name: "Új konfigurátoros termék" }).click();
     await page.waitForURL("**/dashboard/product-definitions/new");
     await expect(
-      page.getByText('Végleges: a natív termék slugja létrehozáskor ebből készül. Nem lehet "new".')
+      page.getByText("Végleges: a natív termék slugja létrehozáskor ebből készül. Nem lehet „new”.")
     ).toBeVisible();
   });
 
@@ -120,7 +120,7 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await page.getByLabel("Név").first().fill("E2E F1");
     await page.getByRole("button", { name: "Létrehozás" }).click();
 
-    await expect(page.getByText('Az azonosító nem lehet "new".')).toBeVisible();
+    await expect(page.getByText("Az azonosító nem lehet „new”.")).toBeVisible();
     await expect(page).toHaveURL(/product-definitions\/new$/);
   });
 
@@ -146,7 +146,7 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     const valaszto = fieldCard(page, 0);
     await valaszto.getByLabel("Név").first().fill("Szín");
     await valaszto.getByLabel("Név").nth(1).fill("Kék");
-    await valaszto.getByRole("button", { name: "+ Elem hozzáadása" }).click();
+    await valaszto.getByRole("button", { name: "+ Opció hozzáadása" }).click();
     await valaszto.getByLabel("Név").nth(2).fill("Piros");
     // The option grid starts name-only; the Részletek switch reveals the
     // price column so the Piros surcharge can be entered.
@@ -158,7 +158,7 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await page.getByRole("button", { name: "+ Kapcsoló mező" }).click();
     const kapcsolo = fieldCard(page, 1);
     await kapcsolo.getByLabel("Név").first().fill("Ajándék csomagolás");
-    const kapcsoloAr = kapcsolo.getByLabel("Ár ha bekapcsolva (Ft)");
+    const kapcsoloAr = kapcsolo.getByLabel("Ár bekapcsolt állapotban (Ft)");
     await kapcsoloAr.fill("1000");
     await kapcsoloAr.blur();
 
@@ -189,13 +189,13 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await page.getByRole("button", { name: "+ Hímzés mező" }).click();
     const himzes = fieldCard(page, 5);
     await himzes.getByLabel("Név").first().fill("Név hímzés");
-    const szoAr = himzes.getByLabel("Ár / szó (Ft)");
+    const szoAr = himzes.getByLabel("Ár szavanként (Ft)");
     await szoAr.fill("300");
     await szoAr.blur();
 
     await page.getByRole("button", { name: "+ Kombináció hozzáadása" }).click();
-    await page.getByLabel("Anyag 1").selectOption("e2e-m1");
-    await page.getByLabel("Anyag 2").selectOption("e2e-m2");
+    await page.getByLabel("1. anyag").selectOption("e2e-m1");
+    await page.getByLabel("2. anyag").selectOption("e2e-m2");
 
     const create = waitForMutation(page, "mutation CreateProductDefinition");
     await page.getByRole("button", { name: "Létrehozás" }).click();
@@ -250,7 +250,7 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
 
     const kapcsolo = fieldCard(page, 1);
     await expandCard(kapcsolo);
-    const toggleAr = kapcsolo.getByLabel("Ár ha bekapcsolva (Ft)");
+    const toggleAr = kapcsolo.getByLabel("Ár bekapcsolt állapotban (Ft)");
     await toggleAr.fill("1200");
     await toggleAr.blur();
 
@@ -360,12 +360,12 @@ test("the pricing mode and source field persist through save round-trips", async
   });
 
   await test.step("switching to Méteráras reveals the source select and the hint", async () => {
-    await page.getByLabel("Árazás mód").selectOption({ label: "Méteráras" });
+    await page.getByLabel("Árazási mód").selectOption({ label: "Méteráras" });
 
     // With no source chosen yet the editor falls back to the first
     // string-valued field; the select must still offer an explicit pick.
-    await expect(page.getByLabel("Forrás mező")).toBeVisible();
-    await page.getByLabel("Forrás mező").selectOption("hossz");
+    await expect(page.getByLabel("Forrásmező")).toBeVisible();
+    await page.getByLabel("Forrásmező").selectOption("hossz");
     await expect(page.getByText("a forrásmező saját árai figyelmen kívül maradnak")).toBeVisible();
     await expect(fieldCardById(page, "hossz").getByText("méteráras forrás")).toBeVisible();
   });
@@ -380,14 +380,14 @@ test("the pricing mode and source field persist through save round-trips", async
 
     await page.reload();
 
-    await expect(page.getByLabel("Árazás mód")).toHaveValue("length");
-    await expect(page.getByLabel("Forrás mező")).toHaveValue("hossz");
+    await expect(page.getByLabel("Árazási mód")).toHaveValue("length");
+    await expect(page.getByLabel("Forrásmező")).toHaveValue("hossz");
     await expect(fieldCardById(page, "hossz").getByText("méteráras forrás")).toBeVisible();
   });
 
-  await test.step("switching back to Egyszeri drops the source field for good", async () => {
-    await page.getByLabel("Árazás mód").selectOption({ label: "Egyszeri" });
-    await expect(page.getByLabel("Forrás mező")).toHaveCount(0);
+  await test.step("switching back to Darabáras drops the source field for good", async () => {
+    await page.getByLabel("Árazási mód").selectOption({ label: "Darabáras" });
+    await expect(page.getByLabel("Forrásmező")).toHaveCount(0);
     await expect(fieldCardById(page, "hossz").getByText("méteráras forrás")).toHaveCount(0);
 
     const update = waitForMutation(page, "mutation UpdateProductDefinition");
@@ -398,8 +398,8 @@ test("the pricing mode and source field persist through save round-trips", async
 
     await page.reload();
 
-    await expect(page.getByLabel("Árazás mód")).toHaveValue("unit");
-    await expect(page.getByLabel("Forrás mező")).toHaveCount(0);
+    await expect(page.getByLabel("Árazási mód")).toHaveValue("unit");
+    await expect(page.getByLabel("Forrásmező")).toHaveCount(0);
   });
 });
 
@@ -417,7 +417,7 @@ test("the Részletek switch reveals a choice grid's details and auto-reveals sav
 
     await expect(szin.getByLabel("Érték")).toHaveCount(0);
     await expect(szin.getByLabel("Ár (Ft)")).toHaveCount(0);
-    // The field's own Súgó (Alap) exists; the per-row ones do not yet.
+    // The field's own Súgó (Alapadatok) exists; the per-row ones do not yet.
     await expect(szin.getByLabel("Súgó")).toHaveCount(1);
     await expect(szin.getByLabel("Név")).toHaveCount(3);
   });
@@ -470,7 +470,7 @@ test("the custom-value switch persists its pattern and placeholder and clears on
     await szin.getByRole("switch", { name: "Egyéni érték" }).click();
 
     await szin.getByLabel("Minta (regex)").fill("^[A-Za-z]+$");
-    await szin.getByLabel("Helyettesítő szöveg").fill("Saját szín");
+    await szin.getByLabel("Helyőrző szöveg").fill("Saját szín");
   });
 
   await test.step("the custom value survives save and reload", async () => {
@@ -487,7 +487,7 @@ test("the custom-value switch persists its pattern and placeholder and clears on
     const szin = fieldCardById(page, "szin");
     await expandCard(szin);
     await expect(szin.getByLabel("Minta (regex)")).toHaveValue("^[A-Za-z]+$");
-    await expect(szin.getByLabel("Helyettesítő szöveg")).toHaveValue("Saját szín");
+    await expect(szin.getByLabel("Helyőrző szöveg")).toHaveValue("Saját szín");
   });
 
   await test.step("disabling removes the custom value including its inputs", async () => {
@@ -541,7 +541,7 @@ test("the Mezők expand-all toggle opens and closes every field card", async ({ 
   });
 
   await test.step("the block-level toggle expands and collapses all cards", async () => {
-    await page.getByRole("button", { name: "Mindet kibontása/összecsukása" }).click();
+    await page.getByRole("button", { name: "Összes kibontása/összecsukása" }).click();
 
     const szin = fieldCardById(page, "szin");
     await expect(szin.getByText("Speciális")).toBeVisible();
@@ -551,7 +551,7 @@ test("the Mezők expand-all toggle opens and closes every field card", async ({ 
     await expect(meret.getByText("Speciális")).toBeVisible();
     await expect(meret.getByRole("button", { name: "Mező összecsukása" })).toBeVisible();
 
-    await page.getByRole("button", { name: "Mindet kibontása/összecsukása" }).click();
+    await page.getByRole("button", { name: "Összes kibontása/összecsukása" }).click();
 
     await expect(szin.getByText("Speciális")).toHaveCount(0);
     await expect(meret.getByText("Speciális")).toHaveCount(0);
@@ -561,7 +561,7 @@ test("the Mezők expand-all toggle opens and closes every field card", async ({ 
     const szin = fieldCardById(page, "szin");
     await expandCard(szin);
 
-    await page.getByRole("button", { name: "Mindet kibontása/összecsukása" }).click();
+    await page.getByRole("button", { name: "Összes kibontása/összecsukása" }).click();
 
     await expect(fieldCardById(page, "meret").getByText("Speciális")).toBeVisible();
     await expect(szin.getByText("Speciális")).toBeVisible();

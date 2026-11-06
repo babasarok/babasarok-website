@@ -141,7 +141,7 @@ test("removing a choice option deletes it natively and re-adding syncs again", a
     await expect(page.getByText("Szinkronizálás…")).toBeVisible();
     await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
     await expect(
-      page.getByText("Elavult — a mentés a natív módosítások felülírása nélkül elutasított")
+      page.getByText("Elavult — mentés csak a natív módosítások felülírásával lehetséges")
     ).toHaveCount(0);
 
     const native = await adminApi(
@@ -156,7 +156,7 @@ test("removing a choice option deletes it natively and re-adding syncs again", a
   await test.step("re-adding the same option code syncs it back into the native group", async () => {
     const card = fieldCardById(page, "szin");
     // Still expanded with the Részletek override on from the previous step.
-    await card.getByRole("button", { name: "+ Elem hozzáadása" }).click();
+    await card.getByRole("button", { name: "+ Opció hozzáadása" }).click();
     await card.getByLabel("Név").nth(2).fill("Piros");
     const pirosAr = card.getByLabel("Ár (Ft)").nth(1);
     await pirosAr.fill("500");
@@ -284,7 +284,7 @@ test("removing a whole variant-axis field deletes its native group and resyncs",
     await expect(page.getByText("Szinkronizálás…")).toBeVisible();
     await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
     await expect(
-      page.getByText("Elavult — a mentés a natív módosítások felülírása nélkül elutasított")
+      page.getByText("Elavult — mentés csak a natív módosítások felülírásával lehetséges")
     ).toHaveCount(0);
   });
 });

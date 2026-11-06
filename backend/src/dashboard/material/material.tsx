@@ -509,7 +509,7 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
           column="main"
           blockId="material-colors"
           title="Színek/minták"
-          description="Minden színhez adj meg hex kódot VAGY képet."
+          description="Minden színhez adj meg hexkódot VAGY képet."
         >
           <div className="flex flex-col gap-4">
             {colors.map((row) => (

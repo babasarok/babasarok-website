@@ -136,7 +136,7 @@ test("a natively hand-edited variant price is refused until the force re-sync", 
     await page.goto(`/dashboard/products/${nativeProductId}`);
     await expect(page.getByText("Szinkronizálva")).toBeVisible();
     await expect(
-      page.getByText("Elavult — a mentés a natív módosítások felülírása nélkül elutasított")
+      page.getByText("Elavult — mentés csak a natív módosítások felülírásával lehetséges")
     ).toBeVisible();
   });
 
@@ -169,7 +169,7 @@ test("a natively hand-edited variant price is refused until the force re-sync", 
     await expect(page.getByText("Szinkronizálás…")).toBeVisible();
     await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
     await expect(
-      page.getByText("Elavult — a mentés a natív módosítások felülírása nélkül elutasított")
+      page.getByText("Elavult — mentés csak a natív módosítások felülírásával lehetséges")
     ).toHaveCount(0);
 
     await page.reload();
