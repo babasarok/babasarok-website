@@ -826,7 +826,7 @@ export function ConfiguratorEditor({
                 </span>
               </>
             ) : (
-              <span className="font-mono text-xs">{definition.id}</span>
+              <span className="font-mono text-xs wrap-anywhere">{definition.id}</span>
             )}
           </label>
           {creatingNew && (

@@ -445,7 +445,7 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
                   }}
                 />
               ) : (
-                <span className="font-mono text-xs">{slug}</span>
+                <span className="font-mono text-xs wrap-anywhere">{slug}</span>
               )}
             </label>
             <label className="flex flex-col gap-1 text-sm">
@@ -479,7 +479,7 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
                 }}
               />
             </label>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {thumbnail !== null && (
                 <img
                   src={thumbnail.preview}
@@ -561,7 +561,7 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
                     disabled={row.asset !== null}
                   />
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {row.asset !== null && (
                     <img
                       src={row.asset.preview}

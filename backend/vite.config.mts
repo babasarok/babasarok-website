@@ -46,7 +46,7 @@ export default defineConfig({
       gqlOutputPath: "./src/gql",
       theme: {
         additionalStylesheets: [
-          fileURLToPath(new URL("./src/dashboard/dashboard-responsive.css", import.meta.url)),
+          fileURLToPath(new URL("src/dashboard/dashboard-responsive.css", import.meta.url)),
         ],
       },
     }),
