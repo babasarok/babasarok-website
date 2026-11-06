@@ -5,7 +5,12 @@ import { InputFieldSchema } from "./field-kinds/input.ts";
 import { MaterialFieldSchema } from "./field-kinds/material.ts";
 import { MaterialIdSchema } from "./material.ts";
 import { ToggleFieldSchema } from "./field-kinds/toggle.ts";
-import { MoneySchema, ProductFieldIdSchema, ProductIdSchema, ProductRevisionSchema } from "./model.ts";
+import {
+  MoneySchema,
+  ProductFieldIdSchema,
+  ProductIdSchema,
+  ProductRevisionSchema,
+} from "./model.ts";
 
 export const ProductPricingSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("unit") }),
