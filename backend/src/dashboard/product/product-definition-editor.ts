@@ -267,32 +267,6 @@ export function withVisibility(
   return { ...field, visibility: rule };
 }
 
-/** What a when-equal rule on `fieldId` can compare against; `undefined` means
- * the UI falls back to a free-text input. */
-export function visibilityValueCandidates(
-  definition: ProductDefinitionInput,
-  fieldId: string
-): Array<{ value: string; label: string }> | undefined {
-  const field = definition.fields.find((candidate) => candidate.id === fieldId);
-
-  if (field === undefined) {
-    return undefined;
-  }
-
-  if (field.kind === "choice") {
-    return field.options.map((option) => ({ value: option.id, label: option.label.hu }));
-  }
-
-  if (field.kind === "toggle") {
-    return [
-      { value: "igen", label: "Bekapcsolva" },
-      { value: "nem", label: "Kikapcsolva" },
-    ];
-  }
-
-  return undefined;
-}
-
 const HUNGARIAN_FOLDS: Record<string, string> = {
   á: "a",
   é: "e",
@@ -439,21 +413,21 @@ export function sanitize(definition: ProductDefinitionInput): ProductDefinitionI
         };
       }
 
-      if (trimmed.kind === "input") {
+      if (trimmed.kind === "input" || trimmed.kind === "embroidery") {
         return {
           ...trimmed,
           ...(trimmed.placeholder === undefined
             ? {}
             : { placeholder: trimText(trimmed.placeholder) }),
           ...(trimmed.pattern === undefined ? {} : { pattern: trimmed.pattern.trim() }),
-          ...(trimmed.suggestions === undefined
-            ? {}
-            : {
+          ...(trimmed.kind === "input" && trimmed.suggestions !== undefined
+            ? {
                 suggestions: trimmed.suggestions.map((suggestion) => ({
                   value: suggestion.value.trim(),
                   label: trimText(suggestion.label),
                 })),
-              }),
+              }
+            : {}),
         };
       }
 
@@ -496,12 +470,14 @@ export function withPricingMode(
 
   const current =
     definition.pricing.kind === "length" ? definition.pricing.sourceFieldId : undefined;
+  const preferred = sourceFieldId ?? current;
+  const fallbackId = lengthSourceCandidates(definition)[0]?.id ?? "";
 
   return {
     ...definition,
     pricing: {
       kind: "length",
-      sourceFieldId: sourceFieldId ?? current ?? lengthSourceCandidates(definition)[0]?.id ?? "",
+      sourceFieldId: preferred ?? fallbackId,
     },
   };
 }
@@ -553,7 +529,7 @@ export function applyLengthSourceDefaults(
       }
 
       if (field.kind === "input" && field.pattern === undefined) {
-        return { ...field, pattern: "^\\d+$" };
+        return { ...field, pattern: String.raw`^\d+$` };
       }
 
       if (
@@ -561,7 +537,7 @@ export function applyLengthSourceDefaults(
         field.customValue !== undefined &&
         field.customValue.pattern === undefined
       ) {
-        return { ...field, customValue: { ...field.customValue, pattern: "^\\d+$" } };
+        return { ...field, customValue: { ...field.customValue, pattern: String.raw`^\d+$` } };
       }
 
       return field;
@@ -592,17 +568,12 @@ export function lengthSourceValueErrors(
   }
 
   const label = source.label.hu.trim();
-  const name = label !== "" ? label : source.id;
+  const name = label === "" ? source.id : label;
   const errors: LengthSourceValueError[] = [];
   const seen = new Set<string>();
 
   for (const option of source.options) {
-    if (!/^\d+$/.test(option.id)) {
-      errors.push({
-        fieldId: source.id,
-        message: `A(z) "${name}" méteráras forrásmező "${option.id}" opciókódja nem szám (cm).`,
-      });
-    } else {
+    if (/^\d+$/.test(option.id)) {
       const centimeters = Number(option.id);
 
       if (centimeters < 1 || centimeters > MAX_LINE_LENGTH_CM) {
@@ -611,6 +582,11 @@ export function lengthSourceValueErrors(
           message: `A(z) "${name}" méteráras forrásmező "${option.id}" opciókódja 1 és ${MAX_LINE_LENGTH_CM} közé eső egész szám (cm) lehet — ${MAX_LINE_LENGTH_CM} cm = 100 m.`,
         });
       }
+    } else {
+      errors.push({
+        fieldId: source.id,
+        message: `A(z) "${name}" méteráras forrásmező "${option.id}" opciókódja nem szám (cm).`,
+      });
     }
 
     if (seen.has(option.id)) {

@@ -25,7 +25,6 @@ import {
   summaryChips,
   textPlaceholder,
   textValue,
-  visibilityValueCandidates,
   withColorCountMode,
   withCustomValue,
   withPricingMode,
@@ -244,7 +243,7 @@ describe("sanitize", () => {
       { id: " kek ", label: { hu: " Kék " }, price: 0, tooltip: { hu: " Sötét " } },
     ];
     choice.tooltip = { hu: " Válassz " };
-    choice.customValue = { pattern: " ^\\d+$ ", placeholder: { hu: " Egyéb ", en: " Other " } };
+    choice.customValue = { pattern: String.raw` ^\d+$ `, placeholder: { hu: " Egyéb ", en: " Other " } };
 
     const input = sampleInput(" nev ", " Név ");
     input.tooltip = { hu: " Írd ide " };
@@ -264,7 +263,7 @@ describe("sanitize", () => {
     expect(cleanedChoice.tooltip).toEqual({ hu: "Válassz" });
     expect(cleanedChoice.options[0].tooltip).toEqual({ hu: "Sötét" });
     expect(cleanedChoice.customValue).toEqual({
-      pattern: "^\\d+$",
+      pattern: String.raw`^\d+$`,
       placeholder: { hu: "Egyéb", en: "Other" },
     });
 
@@ -286,7 +285,7 @@ describe("sanitize", () => {
     const definition = newDefinition("p");
 
     const choice = sampleChoice("szin", "Szín", ["kek"]);
-    choice.customValue = { pattern: " ^\\d+$ " };
+    choice.customValue = { pattern: String.raw` ^\d+$ ` };
 
     definition.fields = [choice];
 
@@ -297,7 +296,7 @@ describe("sanitize", () => {
       throw new Error("expected a choice field");
     }
 
-    expect(cleanedChoice.customValue).toStrictEqual({ pattern: "^\\d+$" });
+    expect(cleanedChoice.customValue).toStrictEqual({ pattern: String.raw`^\d+$` });
   });
 });
 
@@ -578,7 +577,7 @@ describe("applyLengthSourceDefaults", () => {
       throw new Error("expected an input field");
     }
 
-    expect(field.pattern).toBe("^\\d+$");
+    expect(field.pattern).toBe(String.raw`^\d+$`);
 
     const custom = { ...bare, fields: [{ ...sampleInput("hossz", "Hossz"), pattern: "^[0-9]+$" }] };
 
@@ -607,7 +606,7 @@ describe("applyLengthSourceDefaults", () => {
       throw new Error("expected a choice field");
     }
 
-    expect(filled.customValue).toEqual({ placeholder: { hu: "Egyéb" }, pattern: "^\\d+$" });
+    expect(filled.customValue).toEqual({ placeholder: { hu: "Egyéb" }, pattern: String.raw`^\d+$` });
 
     const withPattern = { ...bare, fields: [{ ...choice, customValue: { pattern: "^[0-9]+$" } }] };
 
@@ -707,20 +706,20 @@ describe("lengthSourceValueErrors", () => {
 describe("withCustomValue", () => {
   test("enabling starts empty and preserves a given previous value", () => {
     const field = sampleChoice("szin", "Szín", ["kek"]);
-    const previous = { pattern: "^\\d+$", placeholder: { hu: "Egyéb" } };
+    const previous = { pattern: String.raw`^\d+$`, placeholder: { hu: "Egyéb" } };
 
     expect(withCustomValue(field, true).customValue).toEqual({});
     expect(withCustomValue(field, true, previous).customValue).toEqual(previous);
   });
 
   test("re-enabling keeps the custom value the field already had", () => {
-    const field = { ...sampleChoice("szin", "Szín", ["kek"]), customValue: { pattern: "^\\d+$" } };
+    const field = { ...sampleChoice("szin", "Szín", ["kek"]), customValue: { pattern: String.raw`^\d+$` } };
 
-    expect(withCustomValue(field, true).customValue).toEqual({ pattern: "^\\d+$" });
+    expect(withCustomValue(field, true).customValue).toEqual({ pattern: String.raw`^\d+$` });
   });
 
   test("disabling removes the key entirely", () => {
-    const field = { ...sampleChoice("szin", "Szín", ["kek"]), customValue: { pattern: "^\\d+$" } };
+    const field = { ...sampleChoice("szin", "Szín", ["kek"]), customValue: { pattern: String.raw`^\d+$` } };
 
     const disabled = withCustomValue(field, false);
 
@@ -780,28 +779,30 @@ describe("withVisibility", () => {
   });
 });
 
-describe("visibilityValueCandidates", () => {
-  test("choice offers its options, toggle the two states, the rest is free text", () => {
-    const choice = sampleChoice("szin", "Szín", ["kek", "piros"]);
-    choice.options[0].label = { hu: "Kék" };
-    choice.options[1].label = { hu: "Piros" };
+test("trims embroidery placeholder and pattern", () => {
+  const definition = newDefinition("p");
 
-    const definition = {
-      ...newDefinition("p"),
-      fields: [choice, sampleToggle("kapcsolo", "Kapcsoló"), sampleInput("nev", "Név")],
-    };
+  const field = newField("embroidery", " himzes ", { hu: " Hímzés " });
 
-    expect(visibilityValueCandidates(definition, "szin")).toEqual([
-      { value: "kek", label: "Kék" },
-      { value: "piros", label: "Piros" },
-    ]);
-    expect(visibilityValueCandidates(definition, "kapcsolo")).toEqual([
-      { value: "igen", label: "Bekapcsolva" },
-      { value: "nem", label: "Kikapcsolva" },
-    ]);
-    expect(visibilityValueCandidates(definition, "nev")).toBeUndefined();
-    expect(visibilityValueCandidates(definition, "nincs")).toBeUndefined();
-  });
+  if (field.kind !== "embroidery") {
+    throw new Error("expected an embroidery field");
+  }
+
+  field.placeholder = { hu: " Pl. Boglárka " };
+  field.pattern = " ^[A-Z] ";
+  definition.fields = [field];
+
+  const cleaned = sanitize(definition);
+  const cleanedEmbroidery = cleaned.fields[0];
+
+  if (cleanedEmbroidery.kind !== "embroidery") {
+    throw new Error("expected an embroidery field");
+  }
+
+  expect(cleanedEmbroidery.id).toBe("himzes");
+  expect(cleanedEmbroidery.placeholder).toEqual({ hu: "Pl. Boglárka" });
+  expect(cleanedEmbroidery.pattern).toBe("^[A-Z]");
+  expect(ProductDefinitionSchema.safeParse(cleaned).success).toBe(true);
 });
 
 describe("summaryChips", () => {
@@ -810,7 +811,7 @@ describe("summaryChips", () => {
 
     expect(summaryChips(field)).toEqual(["2 opció"]);
 
-    field.customValue = { pattern: "^\\d+$" };
+    field.customValue = { pattern: String.raw`^\d+$` };
 
     expect(summaryChips(field)).toEqual(["2 opció", "egyéni érték"]);
   });
