@@ -40,7 +40,7 @@ import type { CurrencyCode } from "@vendure/core";
 import type { UpdateProductVariantInput } from "@vendure/common/lib/generated-types";
 import type { LocalizedText } from "../../shared/product-definition/index";
 import { toLanguageCode } from "../material/material.service";
-import { buildChunkedInsert, desiredFacetJoins, diffTranslations } from "./bulk-variant-sql";
+import { desiredFacetJoins, diffTranslations } from "./bulk-variant-sql";
 import { In } from "typeorm";
 
 /** One variant's planned create. */
