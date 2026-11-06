@@ -64,9 +64,12 @@ defineDashboardExtension({
             return (
               <div className="flex flex-col items-start gap-0.5 py-1">
                 <span className="text-muted-foreground text-xs">{value.product.name}</span>
+                {/* The button molecule is whitespace-nowrap; a long variant name
+                    would force the cell to one line and squeeze configText into
+                    wrapping its every line — re-allow wrapping on the label. */}
                 <DetailPageButton
                   id={value.id}
-                  label={value.name}
+                  label={<span className="break-words whitespace-pre-wrap">{value.name}</span>}
                   href={`/product-variants/${value.id}`}
                 />
               </div>
