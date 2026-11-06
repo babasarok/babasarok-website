@@ -571,6 +571,56 @@ export interface LengthSourceValueError {
   message: string;
 }
 
+/** What a material field's color-count source cannot deliver: a dangling
+ * reference, or choice codes that are not positive integers — the buyer's
+ * pick is parsed as the number of colors. An unset source stays silent. */
+export function colorCountValueErrors(
+  definition: ProductDefinitionInput
+): LengthSourceValueError[] {
+  const errors: LengthSourceValueError[] = [];
+
+  for (const field of definition.fields) {
+    if (field.kind !== "material" || field.colorCount.kind !== "from-field") {
+      continue;
+    }
+
+    const sourceFieldId = field.colorCount.fieldId;
+    const source = definition.fields.find((candidate) => candidate.id === sourceFieldId);
+    const label = field.label.hu.trim();
+    const name = label === "" ? field.id : label;
+
+    if (sourceFieldId === "") {
+      continue;
+    }
+
+    if (source === undefined) {
+      errors.push({
+        fieldId: field.id,
+        message: `A(z) "${name}" anyagmező színszám-forrása nem létező mezőre hivatkozik: "${sourceFieldId}".`,
+      });
+      continue;
+    }
+
+    if (source.kind !== "choice") {
+      continue;
+    }
+
+    const sourceLabel = source.label.hu.trim();
+    const sourceName = sourceLabel === "" ? source.id : sourceLabel;
+
+    for (const option of source.options) {
+      if (!/^\d+$/.test(option.id) || Number(option.id) < 1) {
+        errors.push({
+          fieldId: field.id,
+          message: `A(z) "${name}" színszám-forrása ("${sourceName}") "${option.id}" opciókódja nem pozitív egész szám.`,
+        });
+      }
+    }
+  }
+
+  return errors;
+}
+
 /** What the storefront cannot parse from a choice source's option codes: not
  * a number, outside 1..10000 cm (the cap the order line enforces), or a
  * duplicated code. */

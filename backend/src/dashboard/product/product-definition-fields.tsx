@@ -234,6 +234,7 @@ function ChoiceSettings({
   revealDetails,
   showValues,
   isSource,
+  isNumericSource,
   sourceErrors,
   baselineOptions,
   onFieldChange,
@@ -243,6 +244,7 @@ function ChoiceSettings({
   revealDetails: boolean;
   showValues: boolean;
   isSource: boolean;
+  isNumericSource: boolean;
   sourceErrors: string[];
   baselineOptions: ChoiceOptionInput[] | undefined;
   onFieldChange: (field: FieldInput) => void;
@@ -384,7 +386,7 @@ function ChoiceSettings({
             onCheckedChange={(checked) => {
               const next = withCustomValue(field, checked);
 
-              onFieldChange(isSource ? withLengthSourcePattern(next) : next);
+              onFieldChange(isNumericSource ? withLengthSourcePattern(next) : next);
             }}
           />
           <span>Egyéni érték</span>
@@ -394,7 +396,7 @@ function ChoiceSettings({
             field={field}
             customValue={field.customValue}
             language={language}
-            isSource={isSource}
+            isNumericSource={isNumericSource}
             onFieldChange={onFieldChange}
           />
         )}
@@ -407,13 +409,13 @@ function CustomValueInputs({
   field,
   customValue,
   language,
-  isSource,
+  isNumericSource,
   onFieldChange,
 }: {
   field: ChoiceFieldInput;
   customValue: NonNullable<ChoiceFieldInput["customValue"]>;
   language: string;
-  isSource: boolean;
+  isNumericSource: boolean;
   onFieldChange: (field: FieldInput) => void;
 }): ReactElement {
   return (
@@ -423,7 +425,7 @@ function CustomValueInputs({
         <Input
           className="w-56 font-mono"
           value={customValue.pattern ?? ""}
-          disabled={isSource}
+          disabled={isNumericSource}
           onChange={(e) => {
             const value = e.target.value;
 
@@ -483,6 +485,7 @@ function MaterialSettings({
   language,
   materialOptions,
   fields,
+  colorCountErrors,
   revealDetails,
   onFieldChange,
 }: {
@@ -490,6 +493,7 @@ function MaterialSettings({
   language: string;
   materialOptions: Array<{ slug: string; label: string }>;
   fields: FieldInput[] | undefined;
+  colorCountErrors: string[];
   revealDetails: boolean;
   onFieldChange: (field: FieldInput) => void;
 }): ReactElement {
@@ -549,9 +553,20 @@ function MaterialSettings({
                 </option>
               ))}
             </NativeSelect>
+            <span className="text-muted-foreground text-xs">
+              A vásárló által megadott szám adja a színek számát, ezért a forrásmező értékeinek
+              egész számoknak kell lenniük.
+            </span>
           </label>
         )}
       </div>
+      {colorCountErrors.length > 0 && (
+        <ul className="text-destructive space-y-1 text-xs">
+          {colorCountErrors.map((message) => (
+            <li key={message}>{message}</li>
+          ))}
+        </ul>
+      )}
       {field.options.map((entry, entryIndex) => (
         <div key={entryIndex} className="flex items-end gap-2">
           <label className="flex flex-col gap-1 text-sm">
@@ -635,11 +650,13 @@ function InputSettings({
   field,
   language,
   isSource,
+  isNumericSource,
   onFieldChange,
 }: {
   field: InputFieldInput;
   language: string;
   isSource: boolean;
+  isNumericSource: boolean;
   onFieldChange: (field: FieldInput) => void;
 }): ReactElement {
   return (
@@ -677,7 +694,7 @@ function InputSettings({
           <Input
             className="w-56 font-mono"
             value={field.pattern ?? ""}
-            disabled={isSource}
+            disabled={isNumericSource}
             onChange={(e) => {
               const value = e.target.value;
 
@@ -1094,6 +1111,8 @@ export interface FieldEditorProps {
   sourceFieldId: string | undefined;
   sourceValueErrors: string[];
   baselineFieldId: string;
+  colorCountErrors: string[];
+  isNumericSource: boolean;
   fields?: FieldInput[];
   savedFields?: FieldInput[];
 }
@@ -1115,6 +1134,8 @@ export function FieldEditor({
   sourceFieldId,
   sourceValueErrors,
   baselineFieldId,
+  colorCountErrors,
+  isNumericSource,
   fields,
   savedFields,
 }: FieldEditorProps): ReactElement {
@@ -1289,6 +1310,7 @@ export function FieldEditor({
                   revealDetails={revealDetails}
                   showValues={revealDetails || isSource}
                   isSource={isSource}
+                  isNumericSource={isNumericSource}
                   sourceErrors={sourceValueErrors}
                   baselineOptions={baselineOptions}
                   onFieldChange={updateField}
@@ -1300,6 +1322,7 @@ export function FieldEditor({
                   language={language}
                   materialOptions={materialOptions}
                   fields={fields}
+                  colorCountErrors={colorCountErrors}
                   revealDetails={revealDetails}
                   onFieldChange={updateField}
                 />
@@ -1317,6 +1340,7 @@ export function FieldEditor({
                 field={field}
                 language={language}
                 isSource={isSource}
+                isNumericSource={isNumericSource}
                 onFieldChange={updateField}
               />
             </FieldSection>

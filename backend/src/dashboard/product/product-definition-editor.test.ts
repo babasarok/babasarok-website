@@ -12,6 +12,7 @@ import {
   canUnifiedSave,
   planUnifiedSave,
   carryOver,
+  colorCountValueErrors,
   generateFieldId,
   hasEditableData,
   isLengthSourceField,
@@ -680,6 +681,64 @@ describe("applyLengthSourceDefaults", () => {
       sampleToggle("hossz", "Hossz"),
       sampleInput("masik", "Másik"),
     ]);
+  });
+});
+
+describe("colorCountValueErrors", () => {
+  test("an unset or dangling source is silent or flagged, fixed counts are silent", () => {
+    const definition = {
+      ...newDefinition("p"),
+      fields: [sampleMaterial("anyag", "Anyag")],
+    };
+
+    expect(colorCountValueErrors(definition)).toEqual([]);
+
+    const fromField = {
+      ...definition,
+      fields: [
+        {
+          ...sampleMaterial("anyag", "Anyag"),
+          colorCount: { kind: "from-field", fieldId: "" } as const,
+        },
+      ],
+    };
+
+    expect(colorCountValueErrors(fromField)).toEqual([]);
+
+    const dangling = {
+      ...definition,
+      fields: [
+        {
+          ...sampleMaterial("anyag", "Anyag"),
+          colorCount: { kind: "from-field", fieldId: "nincs" } as const,
+        },
+      ],
+    };
+    const danglingErrors = colorCountValueErrors(dangling);
+
+    expect(danglingErrors).toHaveLength(1);
+    expect(danglingErrors[0].fieldId).toBe("anyag");
+    expect(danglingErrors[0].message).toContain("nem létező mezőre hivatkozik");
+  });
+
+  test("a choice source's non-numeric option codes are flagged on the material field", () => {
+    const choice = sampleChoice("szinek", "Színek száma", ["2", "3", "sok"]);
+    const definition = {
+      ...newDefinition("p"),
+      fields: [
+        choice,
+        {
+          ...sampleMaterial("anyag", "Anyag"),
+          colorCount: { kind: "from-field", fieldId: "szinek" } as const,
+        },
+      ],
+    };
+    const errors = colorCountValueErrors(definition);
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0].fieldId).toBe("anyag");
+    expect(errors[0].message).toContain('"sok"');
+    expect(errors[0].message).toContain("nem pozitív egész szám");
   });
 });
 

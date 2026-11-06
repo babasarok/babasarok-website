@@ -48,6 +48,7 @@ import {
   applyLengthSourceDefaults,
   assignGeneratedIds,
   carryOver,
+  colorCountValueErrors,
   hasEditableData,
   lengthSourceCandidates,
   lengthSourceValueErrors,
@@ -57,6 +58,7 @@ import {
   pricingMode,
   sanitize,
   textValue,
+  withLengthSourcePattern,
   withPricingMode,
   FIELD_KINDS,
   FIELD_KIND_LABELS,
@@ -359,7 +361,29 @@ export function ConfiguratorEditor({
   }, [creatingNew, definitionId]);
 
   function setField(key: string, field: FieldInput): void {
-    setRows((current) => current.map((row) => (row.key === key ? { ...row, field } : row)));
+    setRows((current) => {
+      const previous = current.find((row) => row.key === key)?.field;
+      const colorCountSourceId =
+        previous?.kind === "material" &&
+        field.kind === "material" &&
+        field.colorCount.kind === "from-field" &&
+        (previous.colorCount.kind !== "from-field" ||
+          previous.colorCount.fieldId !== field.colorCount.fieldId)
+          ? field.colorCount.fieldId
+          : undefined;
+
+      return current.map((row) => {
+        if (row.key === key) {
+          return { ...row, field };
+        }
+
+        if (colorCountSourceId !== undefined && row.field.id === colorCountSourceId) {
+          return { ...row, field: withLengthSourcePattern(row.field) };
+        }
+
+        return row;
+      });
+    });
   }
 
   function addField(kind: FieldKind): void {
@@ -684,7 +708,18 @@ export function ConfiguratorEditor({
   const live: ProductDefinitionInput = { ...definition, fields: liveFields };
   const loadBearing = loadBearingFieldIds(live);
   const sourceValueErrors = lengthSourceValueErrors(live);
+  const colorCountValueErrorList = colorCountValueErrors(live);
   const sourceFieldId = live.pricing.kind === "length" ? live.pricing.sourceFieldId : undefined;
+  const numericSourceFieldIds = new Set<string>([
+    ...(sourceFieldId !== undefined && sourceFieldId !== "" ? [sourceFieldId] : []),
+    ...live.fields.flatMap((field) =>
+      field.kind === "material" &&
+      field.colorCount.kind === "from-field" &&
+      field.colorCount.fieldId !== ""
+        ? [field.colorCount.fieldId]
+        : []
+    ),
+  ]);
 
   function revealDetails(row: FieldRow): boolean {
     const override = detailsOverrides[row.key];
@@ -912,6 +947,10 @@ export function ConfiguratorEditor({
                 sourceValueErrors={sourceValueErrors
                   .filter((error) => error.fieldId === row.field.id)
                   .map((error) => error.message)}
+                colorCountErrors={colorCountValueErrorList
+                  .filter((error) => error.fieldId === row.field.id)
+                  .map((error) => error.message)}
+                isNumericSource={numericSourceFieldIds.has(row.field.id)}
                 baselineFieldId={
                   savedFields.find((candidate) => candidate.id === row.field.id)?.id ?? ""
                 }
