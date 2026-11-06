@@ -116,6 +116,28 @@ cleanups as follow-ups. A slice with both kinds splits into two PRs.
   (`converge-facets`, `import-facets`, products), switch, verify. Before
   switching, the owner runs the epic-2 Vendure-complete gate and the user /
   owner journey click-throughs (manual test plans) on the cutover preview
+  - ✅ **Catalog migrated to prod (2026-11-06)** — run from a dev machine
+    against the prod admin API (`ADMIN_API_URL` override; the import scripts
+    got the env override and an `IMPORT_PRODUCTS_ALL=1` full-catalog mode; the
+    scripts reuse prod assets by file name on re-runs). 33/33 products, 11
+    materials, facets, display fields, groups and the szett promotion all
+    applied. The import re-ran once (a prod redeploy mid-run restarted the
+    vendure server and cost the display-field pass; idempotent re-run was
+    clean). Content fix: material references now resolve file basename →
+    canonical material id (vizlepergeto-anyag.md → Vizlepergeto divergence).
+    Prod search index had to be rebuilt via the admin `reindex`: the
+    indexer's incremental `update-variants` job indexes only its first
+    take-50 page, so per-batch event indexing under-fills the index (any
+    future bulk write must reindex or page). The `[placeholder]` products
+    stay until the switch (the live checkout targets them)
+    - Prod sync speed measured (shared box): ~1–3 variants/s; the
+      1344-variant rácsvédő products each took 17–52 min. The bulk-writer
+      spike (`spike/fast-variant-sync`, work in `/tmp/opencode/fast-sync`)
+      reached identical native state (byte-equal drift hash) in ~25 s vs
+      ~13 min locally — ~30×. Candidate: replace the per-variant
+      ProductVariantService pipeline with chunked direct writes + one batched
+      event per phase; needs hardening (update-path tests, drift-parity on
+      updates, search-index via reindex) and an ADR before shipping
 
 ## Post-cutover follow-ups
 
@@ -215,7 +237,9 @@ merged to main until the backend structure is settled):
   the gate on the cutover preview before the prod switch
 - ✅ Variant sync self-heals after a crash/redeploy (restarts from zero)
 - ⬜ Resume without redoing work (staged disabled-variant build, see
-  `spike/sync-resume`) — revisit after real use
+  `spike/sync-resume`) — revisit after real use. Note: if the bulk-writer
+  sync (see S6, 2026-11-06) lands, full syncs drop to seconds and this
+  matters much less
 
 ## Epic 8 plan (English / multi-language)
 

@@ -16,8 +16,10 @@
  * the `icon` relation) and shortDescription/tagline/date are written
  * directly. Asset dedup is per-run only, same as the material seed.
  *
- * TEMPORARY and preview-only: production is seeded once by a hand-migration
- * directly from the repo at cutover, never by this script.
+ * TEMPORARY machinery (ADR 0009): preview deploys run it on every deploy
+ * against a fresh DB with the curated PREVIEW_PRODUCT_IDS subset (the deploy
+ * must fit Cloudflare's 30-minute limit); the prod hand-migration runs the
+ * same script once from a dev machine with IMPORT_PRODUCTS_ALL=1.
  *
  * Run: pnpm -C backend run import-products
  * (requires the backend running locally and SUPERADMIN_* in backend/.env;
@@ -108,6 +110,36 @@ const PREVIEW_PRODUCT_IDS = new Set([
   "vizhatlan-lepedo",
   "vizhatlan-lepedo-ketretegu",
 ]);
+
+// Full-catalog mode for the prod hand-migration; unset keeps the preview subset.
+const IMPORT_ALL = process.env.IMPORT_PRODUCTS_ALL === "1";
+
+const MATERIALS_DIR = path.resolve(import.meta.dirname, "..", "..", "src", "content", "material");
+
+const TinaMaterialIdSchema = z.object({ material_id: z.string() });
+
+/**
+ * The canonical material id (its `material_id`) per material file basename;
+ * one legacy file diverges from its file name (vizlepergeto-anyag.md →
+ * Vizlepergeto), and the products' material references must resolve to the
+ * canonical id the facet values are keyed by.
+ */
+async function materialIdByBasename(): Promise<Map<string, string>> {
+  const files = (await readdir(MATERIALS_DIR)).filter((file) => file.endsWith(".md"));
+  const map = new Map<string, string>();
+
+  for (const file of files) {
+    const raw = await readFile(path.join(MATERIALS_DIR, file), "utf8");
+    const match = /^---\n([\s\S]*?)\n---/.exec(raw);
+    const materialId = match === null ? undefined : TinaMaterialIdSchema.safeParse(parse(match[1]));
+
+    if (materialId?.success) {
+      map.set(file.replace(/\.md$/, ""), materialId.data.material_id.trim());
+    }
+  }
+
+  return map;
+}
 
 interface UpsertResult {
   kind: "created" | "updated";
@@ -243,6 +275,7 @@ async function main(): Promise<void> {
   await authenticate();
   const startedAt = Date.now();
   const ranks = popularityRanks(JSON.parse(await readFile(PRODUCT_SECTION_FILE, "utf8")));
+  const materialIds = await materialIdByBasename();
 
   let created = 0;
   let updated = 0;
@@ -271,7 +304,7 @@ async function main(): Promise<void> {
 
     productIdByFile.set(file.replace(/\.md$/, ""), frontmatter.data.product_id.trim());
 
-    if (!PREVIEW_PRODUCT_IDS.has(frontmatter.data.product_id.trim())) {
+    if (!IMPORT_ALL && !PREVIEW_PRODUCT_IDS.has(frontmatter.data.product_id.trim())) {
       // Curated-subset skip: silent per file, counted in the summary.
       skipped += 1;
       continue;
@@ -287,7 +320,7 @@ async function main(): Promise<void> {
 
     typeByProductId.set(frontmatter.data.product_id.trim(), frontmatter.data.type.trim());
 
-    const definition = definitionFromTinaProduct(frontmatter.data);
+    const definition = definitionFromTinaProduct(frontmatter.data, materialIds);
 
     if (!definition.success) {
       skipped += 1;
@@ -359,7 +392,7 @@ async function main(): Promise<void> {
 
   console.log(
     `products: ${created} created, ${updated} updated, ` +
-      `${failed} failed, ${skipped} skipped (${files.length} files; preview subset) | ` +
+      `${failed} failed, ${skipped} skipped (${files.length} files; ${IMPORT_ALL ? "full catalog" : "preview subset"}) | ` +
       `syncs: ${syncs.synced.length} synced, ${syncs.failed.length} failed | ` +
       `display: ${display.applied} applied, ${display.failed} failed | ` +
       `types: ${types.applied} applied, ${types.failed} failed | ` +

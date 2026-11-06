@@ -12,8 +12,11 @@ import type {
  * canonical schema instead of extending anything Tina-side.
  *
  * Text is trimmed on the way in (the canonical schemas reject untrimmed
- * values), and material references are the basename of their
- * `src/content/material/<slug>.md` paths.
+ * values), and material references resolve through
+ * `materialIdByBasename` — the canonical material id of the referenced
+ * `src/content/material/<slug>.md` file — falling back to the basename
+ * itself, which matches every material whose file name and `material_id`
+ * agree.
  */
 
 const TinaItemSchema = z.object({
@@ -270,7 +273,10 @@ function toggleField(field: TinaProductField): DefinitionInput {
   };
 }
 
-function materialField(field: TinaProductField): DefinitionInput {
+function materialField(
+  field: TinaProductField,
+  materialIdByBasename: ReadonlyMap<string, string>
+): DefinitionInput {
   const colorCountSource = trimmed(field.color_count);
   const colorCount =
     colorCountSource === undefined || /^-?\d+(?:\.\d+)?$/.test(colorCountSource)
@@ -291,7 +297,9 @@ function materialField(field: TinaProductField): DefinitionInput {
         ? []
         : [
             {
-              materialId: slugFromPath(entry.material_path).trim(),
+              materialId:
+                materialIdByBasename.get(slugFromPath(entry.material_path)) ??
+                slugFromPath(entry.material_path).trim(),
               price: entry.price ?? 0,
             },
           ]
@@ -322,7 +330,10 @@ function embroideryField(field: TinaProductField): DefinitionInput {
   };
 }
 
-function canonicalField(field: TinaProductField): DefinitionInput | undefined {
+function canonicalField(
+  field: TinaProductField,
+  materialIdByBasename: ReadonlyMap<string, string>
+): DefinitionInput | undefined {
   switch (field.type) {
     case "input":
       return inputField(field);
@@ -335,7 +346,7 @@ function canonicalField(field: TinaProductField): DefinitionInput | undefined {
     case "toggle":
       return toggleField(field);
     case "material":
-      return materialField(field);
+      return materialField(field, materialIdByBasename);
     case "embroidery":
       return embroideryField(field);
     default:
@@ -358,7 +369,10 @@ export type TinaProductParseResult =
  * minus its revision (the caller computes it once the shape is validated).
  * Unknown product/field types return issues instead of guessing.
  */
-export function definitionFromTinaProduct(source: TinaProduct): TinaProductParseResult {
+export function definitionFromTinaProduct(
+  source: TinaProduct,
+  materialIdByBasename: ReadonlyMap<string, string> = new Map()
+): TinaProductParseResult {
   const errors: string[] = [];
   const fields: DefinitionInput[] = [];
 
@@ -367,7 +381,7 @@ export function definitionFromTinaProduct(source: TinaProduct): TinaProductParse
       continue;
     }
 
-    const canonical = canonicalField(field);
+    const canonical = canonicalField(field, materialIdByBasename);
 
     if (canonical === undefined) {
       errors.push(`${field.name}: Ismeretlen mező típus: "${field.type}".`);
@@ -397,7 +411,11 @@ export function definitionFromTinaProduct(source: TinaProduct): TinaProductParse
         (combination) =>
           combination.materials
             ?.filter((member) => member !== null)
-            .map((member) => slugFromPath(member.material_path).trim()) ?? []
+            .map(
+              (member) =>
+                materialIdByBasename.get(slugFromPath(member.material_path)) ??
+                slugFromPath(member.material_path).trim()
+            ) ?? []
       ),
     },
   };

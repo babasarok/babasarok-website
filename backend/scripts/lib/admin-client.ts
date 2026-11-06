@@ -2,7 +2,10 @@ import { openAsBlob } from "node:fs";
 import path from "node:path";
 import { z } from "zod";
 
-const API_URL = `http://localhost:${process.env.PORT ?? "4000"}/admin-api`;
+// The prod hand-migration runs from a dev machine: ADMIN_API_URL points the
+// scripts at the remote admin API (defaults to a local backend).
+const API_URL =
+  process.env.ADMIN_API_URL ?? `http://localhost:${process.env.PORT ?? "4000"}/admin-api`;
 // Undici's own headersTimeout is 300s; ours must fire first to fail with a
 // clear message instead of UND_ERR_HEADERS_TIMEOUT.
 const REQUEST_TIMEOUT_MS = 240_000;
@@ -22,6 +25,48 @@ const CreateAssetsDataSchema = z.object({
     .array(z.object({ id: z.string().optional(), message: z.string().optional() }))
     .optional(),
 });
+
+const AssetPageDataSchema = z.object({
+  assets: z.object({
+    totalItems: z.number(),
+    items: z.array(z.object({ id: z.string(), name: z.string() })),
+  }),
+});
+
+// Populated on the first upload so re-runs (a hand-migration that failed
+// mid-way) reuse the target's existing assets by file name instead of
+// multiplying them; assets uploaded during the run are not in it.
+let assetIdsByName: Map<string, string> | null = null;
+
+async function existingAssetIdsByName(): Promise<Map<string, string>> {
+  if (assetIdsByName === null) {
+    assetIdsByName = new Map();
+    const take = 500;
+
+    for (let skip = 0; ; skip += take) {
+      const page = AssetPageDataSchema.parse(
+        (
+          await adminRequest(
+            JSON.stringify({
+              query: `query($skip: Int!, $take: Int!) { assets(options: { skip: $skip, take: $take }) { totalItems items { id name } } }`,
+              variables: { skip, take },
+            })
+          )
+        ).data
+      );
+
+      for (const asset of page.assets.items) {
+        assetIdsByName.set(asset.name, asset.id);
+      }
+
+      if (skip + take >= page.assets.totalItems) {
+        break;
+      }
+    }
+  }
+
+  return assetIdsByName;
+}
 
 let authToken: string | null = null;
 
@@ -97,6 +142,12 @@ export async function authenticate(): Promise<void> {
 }
 
 export async function uploadAsset(filePath: string): Promise<string> {
+  const reused = (await existingAssetIdsByName()).get(path.basename(filePath));
+
+  if (reused !== undefined) {
+    return reused;
+  }
+
   const fileName = path.basename(filePath);
   const form = new FormData();
   form.append(
