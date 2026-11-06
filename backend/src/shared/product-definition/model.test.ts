@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MoneySchema, ProductFieldIdSchema, ProductIdSchema, TrimmedTextSchema } from "./model";
+import { MoneySchema, ProductFieldIdSchema, ProductIdSchema, TrimmedTextSchema } from "./model.ts";
 
 describe("MoneySchema", () => {
   it.each([1.5, -1, "100", Number.NaN])("rejects invalid money value %j", (value) => {

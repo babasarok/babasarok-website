@@ -4,6 +4,10 @@
     "target": "ES2023",
     "lib": ["ES2023"],
     "module": "nodenext",
+    // Shared modules are also run from source by node type-stripping (the
+    // import-* scripts), which only resolves literal .ts specifiers; emitted
+    // dist stays .js.
+    "rewriteRelativeImportExtensions": true,
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,

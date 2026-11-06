@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canonicalJson } from "./canonical-json";
+import { canonicalJson } from "./canonical-json.ts";
 
 describe("canonicalJson", () => {
   it("sorts object keys in code-unit order, independent of the ICU locale", () => {

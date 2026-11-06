@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { FieldVisibilitySchema, fieldBaseShape, PatternSchema } from "../field";
-import { LocalizedTextSchema } from "../localized-text";
-import { MoneySchema, TrimmedTextSchema } from "../model";
+import { FieldVisibilitySchema, fieldBaseShape, PatternSchema } from "../field.ts";
+import { LocalizedTextSchema } from "../localized-text.ts";
+import { MoneySchema, TrimmedTextSchema } from "../model.ts";
 
 export const ChoiceOptionIdSchema = TrimmedTextSchema.brand<"ChoiceOptionId">();
 
