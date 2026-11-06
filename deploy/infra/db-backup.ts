@@ -32,12 +32,14 @@ const KEEP = 336;
 // Optional label ("predeploy") — tagged dumps live alongside the hourly
 // ones under their own name so a deploy dump cannot be overwritten by the
 // next cron run within the hour.
-const label = process.argv[2] === undefined ? "" : `${process.argv[2]}-`;
+const labelArg = process.argv.at(2);
+const shaArg = process.argv.at(3);
+const label = labelArg === undefined ? "" : `${labelArg}-`;
 // Commit tail for the filename: the deploy passes the incoming commit for
 // predeploy dumps; the cron falls back to the deployed commit marker.
 const sha =
-  process.argv[3]?.slice(0, 8) ??
-  readFileSync("/srv/babasarok/prod/commit.txt", "utf8").trim().split(" ")[1]?.slice(0, 8) ??
+  shaArg?.slice(0, 8) ??
+  readFileSync("/srv/babasarok/prod/commit.txt", "utf8").trim().split(" ").at(1)?.slice(0, 8) ??
   "nocommit";
 
 if (spawnSync("docker", ["inspect", CONTAINER]).status !== 0) {
@@ -89,8 +91,8 @@ for (const f of readdirSync(DIR)) {
 
 const dumps = readdirSync(DIR)
   .filter((f) => /^prod-(?:[a-z]+-)?\d{8}-\d{4}-[0-9a-z]+\.dump$/.test(f))
-  .sort()
-  .reverse();
+  .toSorted()
+  .toReversed();
 
 for (const stale of dumps.slice(KEEP)) {
   rmSync(path.join(DIR, stale), { force: true });
