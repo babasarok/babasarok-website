@@ -29,3 +29,13 @@
     flex-wrap: wrap;
   }
 }
+
+/* Below @md the package's form grids (DetailFormGrid, CustomFieldsForm) have
+   no column template, so their implicit auto column grows to the widest
+   field's min-content — the DateTimePicker's one-line button — and pushes
+   every field past the card edge. */
+@container (width < 28rem) {
+  [class~="@md:grid-cols-2"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
