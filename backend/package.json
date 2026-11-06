@@ -14,7 +14,6 @@
     "worker": "node --env-file-if-exists=.env dist/index-worker.js",
     "migrate": "node --env-file-if-exists=.env dist/migrate.js",
     "generate-migration": "node --env-file-if-exists=.env dist/generate-migration.js",
-    "test:quote-roundtrip": "tsx --env-file-if-exists=.env scripts/quote-order-roundtrip.ts",
     "e2e:server": "tsx --env-file=e2e.env scripts/e2e-server.ts",
     "check": "tsc -b && tsc -p tsconfig.scripts.json --noEmit && tsc -p tsconfig.integration.json",
     "check:dashboard": "tsx scripts/check-dashboard-types.ts",

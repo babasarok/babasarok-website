@@ -1,7 +1,8 @@
 /**
- * Dashboard extension for the QuoteOrderPlugin, bundled into the Vendure
- * dashboard by the `dashboard` vite build. It customizes the built-in
- * order-detail page:
+ * Dashboard extension bundled into the Vendure dashboard by the `dashboard`
+ * vite build (wired via the checkout plugin). It customizes the built-in
+ * order-detail page for every order — legacy quote orders and native checkout
+ * orders alike render from their stored line snapshots:
  *
  * - the order items table renders the configText custom field — the product's
  *   selected options, one option per line — as pre-formatted multi-line text
