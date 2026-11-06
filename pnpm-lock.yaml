@@ -205,7 +205,7 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@vendure/dashboard': 71f33939ff798f9d823a3f1fc62c0262a793b7a017541df85d35f7c5961f35b7
+  '@vendure/dashboard': 87bfa209d8810e0fbafce0091b6d8aa22a81d036e38e877d116caa26814dec36
 
 importers:
 
@@ -469,7 +469,7 @@ importers:
         version: 3.8.1(better-sqlite3@12.11.1)(crossws@0.3.5)(pg@8.23.1)(supports-color@10.2.2)(typescript@5.9.3)
       '@vendure/dashboard':
         specifier: ^3.8.1
-        version: 3.8.1(patch_hash=71f33939ff798f9d823a3f1fc62c0262a793b7a017541df85d35f7c5961f35b7)(@date-fns/tz@1.5.0)(@floating-ui/dom@1.8.0)(@sinclair/typebox@0.27.12)(@standard-schema/spec@1.1.0)(@tanstack/router-core@1.171.39)(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/extensions@3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0))(@types/node@25.9.9)(ajv@8.20.0)(csstype@3.2.3)(esbuild@0.28.2)(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(express@5.3.0(supports-color@10.2.2))(jiti@2.7.0)(less@4.2.2)(lightningcss@1.33.0)(rolldown@1.2.15)(rollup@4.65.0)(sass@1.85.0)(supports-color@10.2.2)(terser@5.39.0)(tsx@4.23.15)(typanion@3.13.0)(typescript@5.9.3)(webpack@5.105.0(cssnano@7.1.9(postcss@8.5.31))(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.31)(uglify-js@3.19.3))(yaml@2.9.1)(yup@1.7.1)
+        version: 3.8.1(patch_hash=87bfa209d8810e0fbafce0091b6d8aa22a81d036e38e877d116caa26814dec36)(@date-fns/tz@1.5.0)(@floating-ui/dom@1.8.0)(@sinclair/typebox@0.27.12)(@standard-schema/spec@1.1.0)(@tanstack/router-core@1.171.39)(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/extensions@3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0))(@types/node@25.9.9)(ajv@8.20.0)(csstype@3.2.3)(esbuild@0.28.2)(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(express@5.3.0(supports-color@10.2.2))(jiti@2.7.0)(less@4.2.2)(lightningcss@1.33.0)(rolldown@1.2.15)(rollup@4.65.0)(sass@1.85.0)(supports-color@10.2.2)(terser@5.39.0)(tsx@4.23.15)(typanion@3.13.0)(typescript@5.9.3)(webpack@5.105.0(cssnano@7.1.9(postcss@8.5.31))(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.31)(uglify-js@3.19.3))(yaml@2.9.1)(yup@1.7.1)
       '@vendure/email-plugin':
         specifier: ^3.8.1
         version: 3.8.1(supports-color@10.2.2)(svgo@4.1.0)(terser@5.39.0)(typescript@5.9.3)
@@ -17011,7 +17011,7 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@vendure/dashboard@3.8.1(patch_hash=71f33939ff798f9d823a3f1fc62c0262a793b7a017541df85d35f7c5961f35b7)(@date-fns/tz@1.5.0)(@floating-ui/dom@1.8.0)(@sinclair/typebox@0.27.12)(@standard-schema/spec@1.1.0)(@tanstack/router-core@1.171.39)(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/extensions@3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0))(@types/node@25.9.9)(ajv@8.20.0)(csstype@3.2.3)(esbuild@0.28.2)(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(express@5.3.0(supports-color@10.2.2))(jiti@2.7.0)(less@4.2.2)(lightningcss@1.33.0)(rolldown@1.2.15)(rollup@4.65.0)(sass@1.85.0)(supports-color@10.2.2)(terser@5.39.0)(tsx@4.23.15)(typanion@3.13.0)(typescript@5.9.3)(webpack@5.105.0(cssnano@7.1.9(postcss@8.5.31))(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.31)(uglify-js@3.19.3))(yaml@2.9.1)(yup@1.7.1)':
+  '@vendure/dashboard@3.8.1(patch_hash=87bfa209d8810e0fbafce0091b6d8aa22a81d036e38e877d116caa26814dec36)(@date-fns/tz@1.5.0)(@floating-ui/dom@1.8.0)(@sinclair/typebox@0.27.12)(@standard-schema/spec@1.1.0)(@tanstack/router-core@1.171.39)(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/extensions@3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0))(@types/node@25.9.9)(ajv@8.20.0)(csstype@3.2.3)(esbuild@0.28.2)(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(express@5.3.0(supports-color@10.2.2))(jiti@2.7.0)(less@4.2.2)(lightningcss@1.33.0)(rolldown@1.2.15)(rollup@4.65.0)(sass@1.85.0)(supports-color@10.2.2)(terser@5.39.0)(tsx@4.23.15)(typanion@3.13.0)(typescript@5.9.3)(webpack@5.105.0(cssnano@7.1.9(postcss@8.5.31))(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.31)(uglify-js@3.19.3))(yaml@2.9.1)(yup@1.7.1)':
     dependencies:
       '@babel/core': 7.29.7(supports-color@10.2.2)
       '@babel/preset-react': 7.29.7(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2)
