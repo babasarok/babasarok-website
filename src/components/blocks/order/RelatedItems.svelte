@@ -1,10 +1,10 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import type { CmsEnhancedProduct } from "@/lib/data";
+  import type { OrderProduct } from "@/lib/order/types";
 
   interface RelatedGroup {
     title: string;
-    products: CmsEnhancedProduct[];
+    products: OrderProduct[];
   }
 
   interface Props {

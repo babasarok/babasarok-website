@@ -3,7 +3,7 @@
   import IconButton from "./common/IconButton.svelte";
   import type { HTMLAttributes } from "svelte/elements";
   import OrderItemFields from "./OrderItemFields.svelte";
-  import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
+  import type { OrderThreadColor } from "@/lib/order/types";
   import type { ProductDefinition } from "@babasarok/product-definition";
   import type { IProduct } from "@/lib/types.svelte";
   import OrderItemPrice from "./OrderItemPrice.svelte";
@@ -12,7 +12,7 @@
     onClose?: (() => void) | undefined;
     product: IProduct;
     definition: ProductDefinition;
-    threadColors: CmsEnhancedEmbroideryColor[];
+    threadColors: OrderThreadColor[];
     onChange?: (product: IProduct) => void;
     /** Drop the card chrome and title header so it reads as part of the page
      * (used on the product page, where the page already shows the title). */

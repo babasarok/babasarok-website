@@ -2,7 +2,7 @@
 import { getCollection, render } from "astro:content";
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
-import { getConfig } from "../lib/data";
+import { getConfig } from "../lib/config";
 
 const [entry] = await getCollection("adatvedelem");
 const { Content } = await render(entry);

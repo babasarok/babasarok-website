@@ -1,17 +1,11 @@
-/** Minimal structural shape of a product group. */
-export interface SetDiscountGroup {
-  title: string;
-  /** Flat forint discount removed once per formed set instance. */
-  discount_amount?: number | undefined;
-  products: { product_id: string }[];
-}
+import type { OrderProductGroup } from "./types";
 
 /**
  * Whether a product group grants a set discount (a positive flat amount). A
  * group with a zero or absent amount is "related items" (cross-sell only), not
  * a set. The one home for the set-vs-related rule. See `CONTEXT.md`.
  */
-export function isSet(group: SetDiscountGroup): boolean {
+export function isSet(group: OrderProductGroup): boolean {
   return (group.discount_amount ?? 0) > 0;
 }
 
@@ -21,7 +15,7 @@ export function isSet(group: SetDiscountGroup): boolean {
  * excluded). Callers resolve the ids against the catalog. Related-items groups
  * contribute nothing.
  */
-export function siblingsFor(productId: string, groups: SetDiscountGroup[]): string[] {
+export function siblingsFor(productId: string, groups: OrderProductGroup[]): string[] {
   const out: string[] = [];
   for (const group of groups) {
     if (!isSet(group) || !group.products.some((m) => m.product_id === productId)) {
@@ -44,7 +38,7 @@ export function siblingsFor(productId: string, groups: SetDiscountGroup[]): stri
  */
 export function relatedGroupsFor(
   productId: string,
-  groups: SetDiscountGroup[]
+  groups: OrderProductGroup[]
 ): { title: string; members: string[] }[] {
   const out: { title: string; members: string[] }[] = [];
   for (const group of groups) {
@@ -71,7 +65,7 @@ export function relatedGroupsFor(
  */
 export function resolveSetDiscount(
   productId: string,
-  groups: SetDiscountGroup[]
+  groups: OrderProductGroup[]
 ): { amount: number; setTitle: string } | undefined {
   let best: { amount: number; setTitle: string } | undefined;
   for (const group of groups) {

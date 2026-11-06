@@ -2,14 +2,13 @@
  * Test fixtures for the order-form domain logic.
  *
  * The order pipeline (pricing → validation → order-string formatting) only ever
- * reads a small, well-defined slice of the generated Tina `CmsProduct` shape.
- * Rather than hand-author full Tina documents (with `_sys`, `id`, `__typename`,
- * …) these builders construct just that runtime slice and cast it to the lib
- * types, so tests stay readable and focused on the fields that actually drive
- * behaviour.
+ * reads a small, well-defined slice of the order product shape (`OrderProduct`).
+ * Rather than hand-author full documents these builders construct just that
+ * runtime slice, so tests stay readable and focused on the fields that actually
+ * drive behaviour.
  */
+import type { OrderFieldMaterial } from "@/lib/order/types";
 import type {
-  CmsProductMaterial,
   Field,
   EmbroideryValue,
   IProduct,
@@ -17,7 +16,6 @@ import type {
   ToggleValue,
   ValueWithError,
 } from "@/lib/types.svelte";
-import type { CmsEnhancedDeliveryMethod } from "@/lib/data";
 
 type FieldType = "input" | "select" | "radio" | "color" | "toggle" | "embroidery" | "material";
 
@@ -41,7 +39,7 @@ export interface FieldOpts {
   color_count?: string;
   value?: ValueWithError | ToggleValue | EmbroideryValue | ProductMaterialValue;
   depends_on?: { field?: string | null; value?: string | null } | null;
-  materials?: CmsProductMaterial[];
+  materials?: OrderFieldMaterial[];
 }
 
 /** Build a single product `Field` (the runtime slice the order logic reads). */
@@ -77,7 +75,7 @@ export interface MaterialOpts {
 }
 
 /** Build a single material choice (an entry of a material field's `materials`). */
-export function makeMaterial(opts: MaterialOpts): CmsProductMaterial {
+export function makeMaterial(opts: MaterialOpts): OrderFieldMaterial {
   return {
     price: opts.price ?? null,
     material_path: {
@@ -85,7 +83,7 @@ export function makeMaterial(opts: MaterialOpts): CmsProductMaterial {
       label: opts.label ?? opts.material_id,
       colors: (opts.colors ?? []).map((c) => ({ label: c.color_id, hex: undefined, ...c })),
     },
-  } as unknown as CmsProductMaterial;
+  } as unknown as OrderFieldMaterial;
 }
 
 export interface ProductOpts {
@@ -94,8 +92,6 @@ export interface ProductOpts {
   product_id?: string;
   count?: number;
   price?: number;
-  discount?: number | null;
-  discount_valid_until?: string | null;
   length_based_pricing?: {
     sourceField: string;
   };
@@ -112,8 +108,6 @@ export function makeProduct(opts: ProductOpts = {}): IProduct {
     title: opts.title ?? "Termék",
     count: opts.count ?? 1,
     price: opts.price ?? 0,
-    discount: opts.discount ?? null,
-    discount_valid_until: opts.discount_valid_until ?? null,
     length_based_pricing: opts.length_based_pricing ?? undefined,
     fields: opts.fields ?? [],
     materials: {
@@ -137,8 +131,6 @@ export interface MaterialProductOpts {
   product_id?: string;
   count?: number;
   price?: number;
-  discount?: number | null;
-  discount_valid_until?: string | null;
   fields?: Field[];
 }
 
@@ -161,21 +153,4 @@ export function makeMaterialProduct(opts: MaterialProductOpts): IProduct {
       ),
     ],
   });
-}
-
-/** Build a delivery method. */
-export function makeDelivery(
-  name = "Személyes átvétel",
-  price = 0,
-  delivery_name = "szemelyes",
-  needs_address?: boolean,
-  free_above?: number
-): CmsEnhancedDeliveryMethod {
-  return {
-    delivery_name,
-    name,
-    price,
-    needs_address,
-    free_above: free_above ?? null,
-  };
 }

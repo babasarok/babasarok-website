@@ -1,6 +1,6 @@
 import type { ProductFieldType } from "../fieldTypes";
 import type { Field } from "../../types.svelte";
-import type { CmsEnhancedEmbroideryColor } from "../../data";
+import type { OrderThreadColor } from "../../order/types";
 import { inputBehavior } from "./input";
 import { selectBehavior } from "./select";
 import { radioBehavior } from "./radio";
@@ -32,7 +32,7 @@ export interface FieldContext {
   /**
    * The shared embroidery thread palette, where a type resolves a colour id to a label.
    */
-  threadColors: CmsEnhancedEmbroideryColor[] | undefined;
+  threadColors: OrderThreadColor[] | undefined;
   /**
    * The product's banned material combinations as id multisets (`bannedCombinationIds`), precomputed by the caller because the rule spans all of the product's material fields.
    */

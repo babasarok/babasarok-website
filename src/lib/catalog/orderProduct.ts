@@ -4,11 +4,12 @@ import {
   type ProductField,
 } from "@babasarok/product-definition";
 import type {
-  CmsEnhancedEmbroideryColor,
-  CmsEnhancedProduct,
-  CmsProductGroup,
+  OrderField,
+  OrderThreadColor,
+  OrderProduct,
+  OrderProductGroup,
   SlimImage,
-} from "@/lib/data";
+} from "@/lib/order/types";
 import { isProductType } from "@/lib/product/productTypes";
 import { imageUrl } from "@/lib/vendure/imageUrl";
 import { cardImage } from "./listItems";
@@ -21,8 +22,6 @@ import type {
 
 const LANGUAGE = "hu";
 const FALLBACK_TYPE = "kiegeszito";
-
-type OrderField = NonNullable<NonNullable<CmsEnhancedProduct["fields"]>[number]>;
 type OrderMaterial = NonNullable<NonNullable<OrderField["materials"]>[number]>["material_path"];
 
 function swatchImage(source: string, assetBase: string): SlimImage {
@@ -158,7 +157,7 @@ export function toOrderProduct(
   product: CatalogProduct,
   materials: readonly CatalogMaterial[],
   assetBase: string
-): CmsEnhancedProduct {
+): OrderProduct {
   const { definition } = product;
   const orderMaterials = new Map(
     materials.map((material) => [material.slug, toOrderMaterial(material, assetBase)])
@@ -178,8 +177,6 @@ export function toOrderProduct(
     icon: undefined,
     images: [],
     price: definition.basePrice,
-    discount: undefined,
-    discount_valid_until: undefined,
     length_based_pricing:
       definition.pricing.kind === "length"
         ? { sourceField: definition.pricing.sourceFieldId }
@@ -197,7 +194,7 @@ export function toOrderProduct(
   };
 }
 
-export function toOrderGroups(groups: readonly CatalogProductGroup[]): CmsProductGroup[] {
+export function toOrderGroups(groups: readonly CatalogProductGroup[]): OrderProductGroup[] {
   return groups.map((group) => ({
     title: group.label,
     discount_amount: group.kind === "set" ? (group.discount ?? undefined) : undefined,
@@ -208,7 +205,7 @@ export function toOrderGroups(groups: readonly CatalogProductGroup[]): CmsProduc
 export function toOrderThreadColors(
   colors: readonly CatalogThreadColor[],
   assetBase: string
-): CmsEnhancedEmbroideryColor[] {
+): OrderThreadColor[] {
   return colors.map((color) => ({
     color_id: color.id,
     label: color.label,

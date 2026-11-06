@@ -1,15 +1,15 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import SetSiblingCard from "./SetSiblingCard.svelte";
-  import type { CmsEnhancedProduct } from "@/lib/data";
+  import type { OrderProduct } from "@/lib/order/types";
 
   interface Props {
     setTitle: string;
-    relatedProducts: CmsEnhancedProduct[];
+    relatedProducts: OrderProduct[];
     basketCountByProductId?: Record<string, number>;
     slugByProductId?: Record<string, string | undefined>;
     ready: boolean;
-    onAddRelated: (target: CmsEnhancedProduct) => void;
+    onAddRelated: (target: OrderProduct) => void;
   }
 
   let {
