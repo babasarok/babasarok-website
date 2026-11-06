@@ -19,15 +19,7 @@
  * this commit).
  */
 import { spawnSync } from "node:child_process";
-import {
-  chmodSync,
-  existsSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { z } from "zod";
@@ -126,14 +118,6 @@ try {
   // The tree lands in a per-build tar first — only the locked remote script
   // touches the live repo dir, so an overlapping deploy cannot corrupt a
   // transfer in flight.
-  // TEMPORARY, preview-only (ADR 0009): the preview seed reads the Tina
-  // material and product content from the repo tree, so the tar carries the
-  // content dirs (products too — import-products reads their frontmatter,
-  // product_groups for the set/related-group validation log, and the product
-  // section for popularity ranks) plus
-  // exactly the assets the materials reference — not the whole 589M
-  // src/assets tree. Prod never runs the seed (hand-migration at cutover);
-  // drop this when the Tina catalog domains are removed at cutover.
   const tarEntries = [
     "package.json",
     "pnpm-workspace.yaml",
@@ -144,43 +128,6 @@ try {
     "backend",
     "deploy",
   ];
-
-  if (isPreview) {
-    const seedAssets = new Set<string>();
-    const ASSET_REF = /\/src\/assets\/[^\s"'`)\]]+(?: \(\d+\)\.[^\s"'`)\]]+)?/g;
-    for (const dirName of ["material", "product", "product_groups"]) {
-      const contentDir = path.join(REPO_ROOT, "src", "content", dirName);
-      for (const file of readdirSync(contentDir)) {
-        if (!file.endsWith(".md")) continue;
-        const text = readFileSync(path.join(contentDir, file), "utf8");
-        for (const match of text.matchAll(ASSET_REF)) {
-          // Product markdown embeds images in tables/prose; the reference ends
-          // at whitespace/paren/backtick, then trailing punctuation.
-          seedAssets.add(
-            match[0]
-              .replace(/[.,;:]+$/, "")
-              .replace(/\/+$/, "")
-              .slice(1)
-          );
-        }
-      }
-    }
-    const missing = [...seedAssets].filter((p) => !existsSync(path.join(REPO_ROOT, p)));
-    if (missing.length > 0) {
-      throw new Error(`Seed asset references point at missing files: ${missing.join(", ")}`);
-    }
-    const seedList = path.join(tmp, "seed-files.txt");
-    writeFileSync(seedList, [...seedAssets].sort().join("\n") + "\n");
-    tarEntries.push(
-      "src/content/config",
-      "src/content/material",
-      "src/content/product",
-      "src/content/product_groups",
-      "src/content/sections/product.json",
-      "-T",
-      seedList
-    );
-  }
 
   const tarfile = `${dir}/incoming-${process.pid}.tar`;
   const tarLocal = path.join(tmp, "tree.tar");

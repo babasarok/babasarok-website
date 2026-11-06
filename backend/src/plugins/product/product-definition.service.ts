@@ -85,6 +85,8 @@ import {
   variantNamesUseProductName,
   type VariantPlan,
 } from "./variant-plan";
+import { BulkVariantWriter } from "./bulk-variant-writer";
+import type { PlannedVariantCreate } from "./bulk-variant-writer";
 
 function labelAsName(translation: { languageCode: LanguageCode; label: string }): {
   languageCode: LanguageCode;
@@ -162,7 +164,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     private requestContextService: RequestContextService,
     private channelService: ChannelService,
     private eventBus: EventBus,
-    private processContext: ProcessContext
+    private processContext: ProcessContext,
+    private bulkVariantWriter: BulkVariantWriter
   ) {}
 
   /** The server process only enqueues; the worker process runs the syncs. */
@@ -705,6 +708,14 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         );
       });
     } catch (error: unknown) {
+      // The stored syncError carries only the message; the job queue's own
+      // error line drops the stack, so the full trace is logged here.
+      Logger.error(
+        `A(z) "${productId}" termék szinkronizálása meghiúsult:\n` +
+          (error instanceof Error ? (error.stack ?? error.message) : String(error)),
+        undefined,
+        SYNC_QUEUE_NAME
+      );
       await repo.update(
         { productId },
         {
@@ -1140,40 +1151,71 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     }
 
     const stale = existing.filter((variant) => !plannedBySku.has(variant.sku));
+    const bulk = !this.bulkVariantWriter.legacyRequested;
     const progress = createProgressCounter(
       missing.length + updates.length + stale.length,
       reportProgress
     );
 
     if (stale.length > 0) {
-      await this.variantService.softDelete(
-        ctx,
-        stale.map((variant) => variant.id)
-      );
+      if (bulk) {
+        await this.bulkVariantWriter.softDelete(
+          ctx,
+          stale.map((variant) => Number(variant.id))
+        );
+      } else {
+        await this.variantService.softDelete(
+          ctx,
+          stale.map((variant) => variant.id)
+        );
+      }
+
       progress.advance(stale.length);
     }
 
     await this.deleteRemovedOptionGroups(ctx, nativeProductId, removals);
 
-    for (let start = 0; start < updates.length; start += BATCH_SIZE) {
-      await this.variantService.update(ctx, updates.slice(start, start + BATCH_SIZE));
-      progress.advance(Math.min(BATCH_SIZE, updates.length - start));
+    if (updates.length > 0) {
+      if (bulk) {
+        await this.bulkVariantWriter.update(ctx, updates);
+      } else {
+        for (let start = 0; start < updates.length; start += BATCH_SIZE) {
+          await this.variantService.update(ctx, updates.slice(start, start + BATCH_SIZE));
+        }
+      }
+
+      progress.advance(updates.length);
     }
 
-    for (let start = 0; start < missing.length; start += BATCH_SIZE) {
-      await this.variantService.create(
-        ctx,
-        missing.slice(start, start + BATCH_SIZE).map((variant) => ({
-          productId: nativeProductId,
-          sku: variant.sku,
-          price: variant.price,
-          optionIds: optionIdsFor(variant),
-          facetValueIds: facetValueIdsFor(variant.sku),
-          trackInventory: GlobalFlag.FALSE,
-          translations: nameTranslations(variant.name),
-        }))
-      );
-      progress.advance(Math.min(BATCH_SIZE, missing.length - start));
+    if (missing.length > 0) {
+      const plannedCreates: PlannedVariantCreate[] = missing.map((variant) => ({
+        sku: variant.sku,
+        price: variant.price,
+        name: variant.name,
+        optionIds: optionIdsFor(variant),
+        facetValueIds: facetValueIdsFor(variant.sku),
+      }));
+
+      if (bulk) {
+        await this.bulkVariantWriter.create(ctx, nativeProductId, plannedCreates);
+      } else {
+        for (let start = 0; start < missing.length; start += BATCH_SIZE) {
+          await this.variantService.create(
+            ctx,
+            missing.slice(start, start + BATCH_SIZE).map((variant) => ({
+              productId: nativeProductId,
+              sku: variant.sku,
+              price: variant.price,
+              optionIds: optionIdsFor(variant),
+              facetValueIds: facetValueIdsFor(variant.sku),
+              trackInventory: GlobalFlag.FALSE,
+              translations: nameTranslations(variant.name),
+            }))
+          );
+        }
+      }
+
+      progress.advance(missing.length);
     }
   }
 
@@ -1217,7 +1259,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     if (missing.length > 0) {
       throw new Error(
         `Hiányzó facet érték: ${missing.join(", ")}. Futtasd a facet-egyeztetést ` +
-          "(convergeMaterialFacets vagy pnpm -C backend run converge-facets)."
+          "(a convergeMaterialFacets admin mutationt)."
       );
     }
 

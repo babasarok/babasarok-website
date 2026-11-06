@@ -41,11 +41,7 @@ const DIR = `${ROOT}/${stack}`;
 const isPreview = deployStack === "preview";
 const DB = `babasarok_preview_${slug}`;
 
-function run(
-  cmd: string,
-  args: string[],
-  opts: { cwd?: string; input?: string | Buffer; stream?: boolean } = {}
-): string {
+function run(cmd: string, args: string[], opts: { cwd?: string; stream?: boolean } = {}): string {
   // stream: inherit stdio so long-running output (image builds) flows to the
   // CF build log live instead of surfacing only on completion.
   if (opts.stream) {
@@ -56,7 +52,7 @@ function run(
     return "";
   }
 
-  const r = spawnSync(cmd, args, { cwd: opts.cwd, input: opts.input, encoding: "utf8" });
+  const r = spawnSync(cmd, args, { cwd: opts.cwd, encoding: "utf8" });
   if (r.status !== 0) {
     const stderr = r.stderr ? r.stderr.trim() : "";
     throw new Error(`${cmd} ${args.join(" ")} failed${stderr ? `: ${stderr}` : ""}`);
@@ -156,32 +152,12 @@ try {
     // data. WITH (FORCE) evicts open connections first (PostgreSQL 13+).
     psql("babasarok-edge-postgres-1", "postgres", `DROP DATABASE IF EXISTS "${DB}" WITH (FORCE)`);
     psql("babasarok-edge-postgres-1", "postgres", `CREATE DATABASE "${DB}"`);
-    const dump = run("docker", [
-      "exec",
-      "babasarok-prod-postgres-1",
-      "pg_dump",
-      "-U",
-      "babasarok",
-      "-d",
-      "babasarok",
+    // The dump streams straight into the restore: buffering it through
+    // spawnSync would cap it at maxBuffer (the prod dump outgrew 1 MiB).
+    run("bash", [
+      "-c",
+      `set -o pipefail; docker exec babasarok-prod-postgres-1 pg_dump -U babasarok -d babasarok | docker exec -i babasarok-edge-postgres-1 psql -U babasarok -d ${DB} -v ON_ERROR_STOP=1 -q`,
     ]);
-    run(
-      "docker",
-      [
-        "exec",
-        "-i",
-        "babasarok-edge-postgres-1",
-        "psql",
-        "-U",
-        "babasarok",
-        "-d",
-        DB,
-        "-v",
-        "ON_ERROR_STOP=1",
-        "-q",
-      ],
-      { input: dump }
-    );
 
     // Preview containers ride the INFRA stack's network; make sure the shared
     // preview postgres there is up before anything in this stack boots. The
@@ -245,26 +221,6 @@ try {
       dumpStackState();
       throw error;
     }
-
-    // TEMPORARY, preview-only (ADR 0009/0010): seed the vendure-owned
-    // catalog from the Tina content in this commit. Previews get the one-way
-    // material + product import on every deploy, against their own fresh DB
-    // and assets volume. The product import waits for every definition to
-    // finish syncing (budget default 45 min) and exits non-zero on sync
-    // failures. Production is seeded once, manually, at cutover — never by
-    // the deploy. Drop this block at cutover.
-    try {
-      for (const script of ["import-materials", "import-facets", "import-products"]) {
-        compose(
-          ["exec", "-T", "vendure", "node_modules/.bin/tsx", `scripts/${script}.ts`],
-          DIR,
-          true
-        );
-      }
-    } catch (error) {
-      log("catalog import failed; preview stack stays up");
-      console.error(error);
-    }
   } else {
     compose(["build"], DIR, true);
 
@@ -278,6 +234,15 @@ try {
       } catch {
         // no running container to tag — first deploy or already down
       }
+    }
+
+    // Pre-deploy dump: the migrations running in this compose up are the
+    // deploy's irreversible step; keep a guaranteed-fresh snapshot under its
+    // own label instead of trusting the hourly cron's timing. Skipped on the
+    // first-ever deploy (the script ships to INFRA later in this run) — a
+    // fresh database has nothing to lose.
+    if (existsSync(`${INFRA}/db-backup.ts`)) {
+      run(`${INFRA}/db-backup.ts`, ["predeploy", commitSha], { cwd: INFRA });
     }
 
     try {
@@ -349,10 +314,11 @@ try {
     "Caddyfile",
     "preview-teardown.ts",
     "gen-networks-override.ts",
+    "db-backup.ts",
   ]) {
     copyFileSync(`${DIR}/repo/deploy/infra/${f}`, `${INFRA}/${f}`);
   }
-  for (const f of ["preview-teardown.ts", "gen-networks-override.ts"]) {
+  for (const f of ["preview-teardown.ts", "gen-networks-override.ts", "db-backup.ts"]) {
     chmodSync(`${INFRA}/${f}`, 0o755);
   }
   for (const f of ["preview-teardown.sh", "gen-networks-override.sh"]) {
@@ -389,11 +355,13 @@ try {
   // SSH session itself got here — a killed build can skip it).
   const oldCrontab = run("bash", ["-c", "crontab -l 2>/dev/null || true"]).split("\n");
   const kept = oldCrontab.filter(
-    (l) => !l.includes("preview-teardown") && !l.includes("incoming-")
+    (l) => !l.includes("preview-teardown") && !l.includes("incoming-") && !l.includes("db-backup")
   );
   const cronLine =
     "17 * * * * /srv/babasarok/infra/preview-teardown.ts >> /srv/babasarok/infra/preview-teardown.log 2>&1; find /srv/babasarok -name 'incoming-*.tar' -mmin +120 -delete; find /srv/babasarok -name '.env.cloudflare-*.tmp' -mmin +120 -delete";
-  writeFileSync(`${INFRA}/.crontab.new`, [...kept, cronLine, ""].join("\n"));
+  const backupCronLine =
+    "7 * * * * /srv/babasarok/infra/db-backup.ts >> /srv/babasarok/infra/db-backup.log 2>&1";
+  writeFileSync(`${INFRA}/.crontab.new`, [...kept, cronLine, backupCronLine, ""].join("\n"));
   execFileSync("crontab", [`${INFRA}/.crontab.new`]);
   rmSync(`${INFRA}/.crontab.new`);
 

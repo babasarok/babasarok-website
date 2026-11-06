@@ -9,6 +9,7 @@ import {
 } from "./product.resolver";
 import { ShopThreadColorResolver } from "./thread-color.resolver";
 import { ProductDefinitionService } from "./product-definition.service";
+import { BulkVariantWriter } from "./bulk-variant-writer";
 
 @VendurePlugin({
   imports: [PluginCommonModule],
@@ -21,7 +22,7 @@ import { ProductDefinitionService } from "./product-definition.service";
     schema: shopProductSchema,
     resolvers: [ShopProductFieldResolver, ShopThreadColorResolver],
   },
-  providers: [ProductDefinitionService],
+  providers: [ProductDefinitionService, BulkVariantWriter],
   dashboard: "../../dashboard/product/product-definition.tsx",
 })
 export class ProductPlugin {}
