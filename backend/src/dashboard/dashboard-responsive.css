@@ -1,0 +1,42 @@
+/* Package DataTables need no rules here: below 640px of table width their
+   rows render as cards (the patched DataTable molecule, ADR 0013); wider
+   tables keep the package's whitespace-nowrap cells and scroll inside their
+   own table-container.
+
+   Below the dashboard's mobile breakpoint the app shell's main pane is the
+   page-like scroller, so a single oversized element outside a card (toolbar
+   row, unbreakable token, non-wrapping control row) gains a page-wide
+   horizontal scrollbar — the package already clips the sidebar inset for the
+   same reason. Legitimate table scrolling happens inside each
+   [data-slot="table-container"], so the belt cannot trap it. */
+@media (width <= 767px) {
+  [data-slot="app-shell-main"] {
+    overflow-x: hidden;
+  }
+
+  /* Long tokens (slugs, order codes, raw server error text) must fold instead
+     of being clipped at the card or page edge. */
+  [data-slot="page-header-title"],
+  [data-slot="card-title"],
+  [data-slot="card-description"],
+  [data-slot="alert-title"] {
+    overflow-wrap: anywhere;
+  }
+
+  /* The action row lives in the page header's right slot without a wrap
+     class; let it wrap under the title instead of spilling rightwards. */
+  [data-slot="page-header-actions"] > div,
+  [data-slot="page-header-actions"] > div > div {
+    flex-wrap: wrap;
+  }
+}
+
+/* Below @md the package's form grids (DetailFormGrid, CustomFieldsForm) have
+   no column template, so their implicit auto column grows to the widest
+   field's min-content — the DateTimePicker's one-line button — and pushes
+   every field past the card edge. */
+@container (width < 28rem) {
+  [class~="@md:grid-cols-2"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

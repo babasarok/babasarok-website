@@ -15,8 +15,8 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
-import { adminRequest, authenticate } from "./lib/admin-client.ts";
-import { ensureFacetWithValues } from "./lib/facet-seed.ts";
+import { adminRequest, authenticate } from "./lib/admin-client";
+import { ensureFacetWithValues } from "./lib/facet-seed";
 
 const EMBROIDERY_PATH = path.resolve(
   import.meta.dirname,

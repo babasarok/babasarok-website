@@ -1,4 +1,4 @@
-export { dependencyOrder, isVisible } from "./field-visibility.js";
+export { dependencyOrder, isVisible } from "./field-visibility";
 export {
   LineSelectionRecordSchema,
   LineSelectionsError,
@@ -7,7 +7,7 @@ export {
   serializeLineSelections,
   type LineSelectionRecord,
   type LineSelections,
-} from "./line-selection.js";
+} from "./line-selection";
 export {
   MAX_LINE_LENGTH_CM,
   MAX_SELECTION_TEXT_LENGTH,
@@ -17,7 +17,7 @@ export {
   validateSelections,
   type SelectionProblem,
   type SelectionValidationInput,
-} from "./selection-validation.js";
+} from "./selection-validation";
 export {
   computeLineUnitPrice,
   lengthMissingRejection,
@@ -26,5 +26,5 @@ export {
   valueConfiguredLine,
   type LinePricingInput,
   type LineValuation,
-} from "./line-price.js";
-export { completesForbiddenCombination, forbiddenMaterialFieldIds } from "./banned-combinations.js";
+} from "./line-price";
+export { completesForbiddenCombination, forbiddenMaterialFieldIds } from "./banned-combinations";

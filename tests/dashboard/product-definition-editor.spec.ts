@@ -1,7 +1,15 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
+  CREATE_DEFINITION,
+  CreatedDefinition,
+  DEFINITION_STATE,
+  DefinitionState,
+  adminApi,
   deleteDefinitionIfPresent,
   ensureMaterials,
+  expandCard,
+  fieldCard,
+  fieldCardById,
   generatedTable,
   login,
   waitForMutation,
@@ -9,7 +17,7 @@ import {
 
 /**
  * Browser-level e2e for the product-definition create and editor flows. The
- * stock products list's "Új konfigurátor termék" action-bar button opens
+ * stock products list's "Új konfigurátoros termék" action-bar button opens
  * /product-definitions/new (the only editor route); after creating, the
  * dashboard lands on the generated native product's page, where the
  * "Konfigurátor" page block is the editor home and hosts delete. The editor
@@ -17,11 +25,16 @@ import {
  * the canonical schema on save; the server re-derives the native option
  * groups/variants via the queued sync, whose state the badge surfaces.
  *
- * The extension's labels are hardcoded Hungarian strings; the stock product
- * form around the block renders untranslated English ("Name", "Price"), which
- * is what keeps the two forms' labels apart. The fixture materials are
- * ensured through the admin API (helpers.ts) because the material specs
- * delete the seeded ones.
+ * Each field renders as a card (`data-testid="field-card"`) that starts
+ * collapsed after every load: the header chevron opens the Alapadatok /
+ * Beállítások / Speciális sections, and a per-card "Részletek" switch flips
+ * the option grids between name-only and fully detailed rows (it turns on by
+ * itself for load-bearing fields and fields whose rows carry data). The
+ * extension's labels are hardcoded Hungarian strings; the stock product form
+ * around the block renders untranslated English ("Name", "Price"), which is
+ * what keeps the two forms' labels apart. The fixture materials are ensured
+ * through the admin API (helpers.ts) because the material specs delete the
+ * seeded ones.
  */
 
 // One choice, one toggle, two material fields (the forbidden pair needs two
@@ -32,17 +45,59 @@ const E2E_MATERIALS = [
   { slug: "e2e-m2", label: "Len" },
 ];
 
-/** The nth field block of the editor (fields render in definition order). */
-function fieldBlock(page: Page, index: number): Locator {
-  return page.locator(".rounded.border.p-3").nth(index);
+/** The material-picker select inside a material field card's option rows.
+ * Role-based with an exact name: getByLabel substring-matches the field-type
+ * select too, whose label text contains its "Anyag" option. */
+function materialSelect(card: Locator, index: number): Locator {
+  return card.getByRole("combobox", { name: "Anyag", exact: true }).nth(index);
 }
 
-/** The material-picker select inside a field block: the comboboxes after the
- * block's Típus select, one per option row. A closed <select>'s options are
- * absent from the a11y tree, so filtering by the options' text matches
- * nothing — the position after the Típus select is the stable handle. */
-function materialSelect(block: Locator, index: number): Locator {
-  return block.getByRole("combobox").nth(1 + index);
+interface FixtureDefinition {
+  id: string;
+  orderable: boolean;
+  basePrice: number;
+  pricing: { kind: "unit" } | { kind: "length"; sourceFieldId: string };
+  fields: Array<
+    | {
+        kind: "choice";
+        id: string;
+        label: { hu: string };
+        presentation: "select" | "radio" | "color";
+        visibility: { kind: "always" };
+        options: Array<{ id: string; label: { hu: string }; price: number }>;
+      }
+    | {
+        kind: "input";
+        id: string;
+        label: { hu: string };
+        visibility: { kind: "always" };
+        required: boolean;
+        price: number;
+      }
+  >;
+  forbiddenMaterialCombinations: Array<string[]>;
+}
+
+/** Creates a definition fixture through the admin API and opens the
+ * generated native product's configurator block after the sync settles. */
+async function openFixture(page: Page, definition: FixtureDefinition, name: string): Promise<void> {
+  await deleteDefinitionIfPresent(page, definition.id);
+  await adminApi(page, CREATE_DEFINITION, { definition, name }, CreatedDefinition);
+
+  const state = await adminApi(
+    page,
+    DEFINITION_STATE,
+    { productId: definition.id },
+    DefinitionState
+  );
+  const nativeProductId = state.productDefinition?.nativeProductId;
+
+  if (nativeProductId === null || nativeProductId === undefined) {
+    throw new Error("A létrehozott definícióhoz nem tartozik natív termék.");
+  }
+
+  await page.goto(`/dashboard/products/${nativeProductId}`);
+  await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
 }
 
 test("the configurator product lifecycle: create, edit every field kind, delete", async ({
@@ -53,10 +108,10 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await ensureMaterials(page, E2E_MATERIALS);
     await deleteDefinitionIfPresent(page, "e2e-f1");
 
-    await page.getByRole("button", { name: "Új konfigurátor termék" }).click();
+    await page.getByRole("button", { name: "Új konfigurátoros termék" }).click();
     await page.waitForURL("**/dashboard/product-definitions/new");
     await expect(
-      page.getByText('Végleges: a natív termék slugja létrehozáskor ebből készül. Nem lehet "new".')
+      page.getByText("Végleges: a natív termék slugja létrehozáskor ebből készül. Nem lehet „new”.")
     ).toBeVisible();
   });
 
@@ -67,7 +122,7 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await page.getByLabel("Név").first().fill("E2E F1");
     await page.getByRole("button", { name: "Létrehozás" }).click();
 
-    await expect(page.getByText('Az azonosító nem lehet "new".')).toBeVisible();
+    await expect(page.getByText("Az azonosító nem lehet „new”.")).toBeVisible();
     await expect(page).toHaveURL(/product-definitions\/new$/);
   });
 
@@ -90,35 +145,39 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
 
     // Codes are generated from the labels (no manual Kód inputs): "Szín" →
     // "szin", "Kék" → "kek", so the SKU assertions below hold unchanged.
-    const valaszto = fieldBlock(page, 0);
+    const valaszto = fieldCard(page, 0);
     await valaszto.getByLabel("Név").first().fill("Szín");
     await valaszto.getByLabel("Név").nth(1).fill("Kék");
-    await valaszto.getByRole("button", { name: "+ Elem hozzáadása" }).click();
+    await valaszto.getByRole("button", { name: "+ Opció hozzáadása" }).click();
     await valaszto.getByLabel("Név").nth(2).fill("Piros");
+    // The option grid starts name-only; the Részletek switch reveals the
+    // price column so the Piros surcharge can be entered.
+    await valaszto.getByRole("switch", { name: "Részletek" }).click();
     const pirosAr = valaszto.getByLabel("Ár (Ft)").nth(1);
     await pirosAr.fill("500");
     await pirosAr.blur();
 
     await page.getByRole("button", { name: "+ Kapcsoló mező" }).click();
-    const kapcsolo = fieldBlock(page, 1);
+    const kapcsolo = fieldCard(page, 1);
     await kapcsolo.getByLabel("Név").first().fill("Ajándék csomagolás");
-    const kapcsoloAr = kapcsolo.getByLabel("Ár ha bekapcsolva (Ft)");
+    const kapcsoloAr = kapcsolo.getByLabel("Ár bekapcsolt állapotban (Ft)");
     await kapcsoloAr.fill("1000");
     await kapcsoloAr.blur();
 
     await page.getByRole("button", { name: "+ Anyag mező" }).click();
-    const kulso = fieldBlock(page, 2);
+    const kulso = fieldCard(page, 2);
     await kulso.getByLabel("Név").first().fill("Külső anyag");
     await kulso.getByRole("button", { name: "+ Anyag hozzáadása" }).click();
     await materialSelect(kulso, 0).selectOption("e2e-m1");
     await kulso.getByRole("button", { name: "+ Anyag hozzáadása" }).click();
     await materialSelect(kulso, 1).selectOption("e2e-m2");
+    await kulso.getByRole("switch", { name: "Részletek" }).click();
     const felar = kulso.getByLabel("Felár (Ft)").nth(1);
     await felar.fill("250");
     await felar.blur();
 
     await page.getByRole("button", { name: "+ Anyag mező" }).click();
-    const belso = fieldBlock(page, 3);
+    const belso = fieldCard(page, 3);
     await belso.getByLabel("Név").first().fill("Belső anyag");
     await belso.getByRole("button", { name: "+ Anyag hozzáadása" }).click();
     await materialSelect(belso, 0).selectOption("e2e-m1");
@@ -126,19 +185,19 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await materialSelect(belso, 1).selectOption("e2e-m2");
 
     await page.getByRole("button", { name: "+ Szabad szöveg mező" }).click();
-    const felirat = fieldBlock(page, 4);
+    const felirat = fieldCard(page, 4);
     await felirat.getByLabel("Név").first().fill("Felirat");
 
     await page.getByRole("button", { name: "+ Hímzés mező" }).click();
-    const himzes = fieldBlock(page, 5);
+    const himzes = fieldCard(page, 5);
     await himzes.getByLabel("Név").first().fill("Név hímzés");
-    const szoAr = himzes.getByLabel("Ár / szó (Ft)");
+    const szoAr = himzes.getByLabel("Ár szavanként (Ft)");
     await szoAr.fill("300");
     await szoAr.blur();
 
     await page.getByRole("button", { name: "+ Kombináció hozzáadása" }).click();
-    await page.getByLabel("Anyag 1").selectOption("e2e-m1");
-    await page.getByLabel("Anyag 2").selectOption("e2e-m2");
+    await page.getByLabel("1. anyag").selectOption("e2e-m1");
+    await page.getByLabel("2. anyag").selectOption("e2e-m2");
 
     const create = waitForMutation(page, "mutation CreateProductDefinition");
     await page.getByRole("button", { name: "Létrehozás" }).click();
@@ -184,12 +243,16 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
   await test.step("editing option rows and adding a field re-syncs on save", async () => {
     // The renamed option keeps its code: the variant name changes, the SKU
     // (built from codes) does not.
-    await fieldBlock(page, 0).getByLabel("Név").nth(1).fill("Zafír");
-    const pirosAr = fieldBlock(page, 0).getByLabel("Ár (Ft)").nth(1);
+    const szin = fieldCard(page, 0);
+    await expandCard(szin);
+    await szin.getByLabel("Név").nth(1).fill("Zafír");
+    const pirosAr = szin.getByLabel("Ár (Ft)").nth(1);
     await pirosAr.fill("700");
     await pirosAr.blur();
 
-    const toggleAr = fieldBlock(page, 1).getByLabel("Ár ha bekapcsolva (Ft)");
+    const kapcsolo = fieldCard(page, 1);
+    await expandCard(kapcsolo);
+    const toggleAr = kapcsolo.getByLabel("Ár bekapcsolt állapotban (Ft)");
     await toggleAr.fill("1200");
     await toggleAr.blur();
 
@@ -202,7 +265,7 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     expect(page.url()).toBe(productUrl);
 
     await page.getByRole("button", { name: "+ Választó mező" }).click();
-    const meret = fieldBlock(page, 6);
+    const meret = fieldCard(page, 6);
     await meret.getByLabel("Név").first().fill("Méret");
     await meret.getByLabel("Név").nth(1).fill("S");
 
@@ -250,5 +313,305 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
 
     await page.waitForURL("**/dashboard/products");
     await expect(page.getByRole("row", { name: /E2E F1/ })).toHaveCount(0);
+  });
+});
+
+// A choice field whose rows carry no price, tooltip or custom value: its
+// option grid starts name-only.
+const CHOICE_FIXTURE: FixtureDefinition = {
+  id: "e2e-b1",
+  orderable: true,
+  basePrice: 15_000,
+  pricing: { kind: "unit" },
+  fields: [
+    {
+      kind: "choice",
+      id: "szin",
+      label: { hu: "Szín" },
+      presentation: "select",
+      visibility: { kind: "always" },
+      options: [
+        { id: "kek", label: { hu: "Kék" }, price: 0 },
+        { id: "piros", label: { hu: "Piros" }, price: 0 },
+      ],
+    },
+  ],
+  forbiddenMaterialCombinations: [],
+};
+
+test("the pricing mode and source field persist through save round-trips", async ({ page }) => {
+  const fixture: FixtureDefinition = {
+    ...CHOICE_FIXTURE,
+    id: "e2e-p1",
+    fields: [
+      ...CHOICE_FIXTURE.fields,
+      {
+        kind: "input",
+        id: "hossz",
+        label: { hu: "Hossz" },
+        visibility: { kind: "always" },
+        required: true,
+        price: 0,
+      },
+    ],
+  };
+
+  await test.step("login and open the fixture's configurator block", async () => {
+    await login(page, "/products");
+    await openFixture(page, fixture, "E2E P1");
+  });
+
+  await test.step("switching to Méteráras reveals the source select and the hint", async () => {
+    await page.getByLabel("Árazási mód").selectOption({ label: "Méteráras" });
+
+    // With no source chosen yet the editor falls back to the first
+    // string-valued field; the select must still offer an explicit pick.
+    await expect(page.getByLabel("Forrásmező")).toBeVisible();
+    await page.getByLabel("Forrásmező").selectOption("hossz");
+    await expect(page.getByText("a forrásmező saját árai figyelmen kívül maradnak")).toBeVisible();
+    await expect(fieldCardById(page, "hossz").getByText("méteráras forrás")).toBeVisible();
+  });
+
+  await test.step("the pricing mode and source field survive save and reload", async () => {
+    const update = waitForMutation(page, "mutation UpdateProductDefinition");
+    await page.getByRole("button", { name: "Frissítés", exact: true }).click();
+    await update;
+
+    await expect(page.getByText("Mentés sikeres — a szinkronizálás fut.")).toBeVisible();
+    await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
+
+    await page.reload();
+
+    await expect(page.getByLabel("Árazási mód")).toHaveValue("length");
+    await expect(page.getByLabel("Forrásmező")).toHaveValue("hossz");
+    await expect(fieldCardById(page, "hossz").getByText("méteráras forrás")).toBeVisible();
+  });
+
+  await test.step("switching back to Darabáras drops the source field for good", async () => {
+    await page.getByLabel("Árazási mód").selectOption({ label: "Darabáras" });
+    await expect(page.getByLabel("Forrásmező")).toHaveCount(0);
+    await expect(fieldCardById(page, "hossz").getByText("méteráras forrás")).toHaveCount(0);
+
+    const update = waitForMutation(page, "mutation UpdateProductDefinition");
+    await page.getByRole("button", { name: "Frissítés", exact: true }).click();
+    await update;
+
+    await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
+
+    await page.reload();
+
+    await expect(page.getByLabel("Árazási mód")).toHaveValue("unit");
+    await expect(page.getByLabel("Forrásmező")).toHaveCount(0);
+  });
+});
+
+test("the Részletek switch reveals a choice grid's details and auto-reveals saved prices", async ({
+  page,
+}) => {
+  await test.step("login and open the fixture's configurator block", async () => {
+    await login(page, "/products");
+    await openFixture(page, CHOICE_FIXTURE, "E2E B1");
+  });
+
+  await test.step("a fresh grid shows the names only", async () => {
+    const szin = fieldCardById(page, "szin");
+    await expandCard(szin);
+
+    await expect(szin.getByLabel("Érték", { exact: true })).toHaveCount(0);
+    await expect(szin.getByLabel("Ár (Ft)", { exact: true })).toHaveCount(0);
+    // The field's own Súgó (Alapadatok) exists; the per-row ones do not yet.
+    await expect(szin.getByLabel("Súgó")).toHaveCount(1);
+    await expect(szin.getByLabel("Név")).toHaveCount(3);
+  });
+
+  await test.step("flipping Részletek reveals the Érték, Ár and Súgó columns", async () => {
+    const szin = fieldCardById(page, "szin");
+    await szin.getByRole("switch", { name: "Részletek" }).click();
+
+    await expect(szin.getByLabel("Érték", { exact: true })).toHaveCount(2);
+    await expect(szin.getByLabel("Ár (Ft)", { exact: true })).toHaveCount(2);
+    await expect(szin.getByLabel("Súgó")).toHaveCount(3);
+  });
+
+  await test.step("a saved non-zero price keeps the grid detailed after a reload", async () => {
+    const szin = fieldCardById(page, "szin");
+    const pirosAr = szin.getByLabel("Ár (Ft)", { exact: true }).nth(1);
+    await pirosAr.fill("500");
+    await pirosAr.blur();
+
+    const update = waitForMutation(page, "mutation UpdateProductDefinition");
+    await page.getByRole("button", { name: "Frissítés", exact: true }).click();
+    await update;
+
+    await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
+    await page.reload();
+
+    const reloaded = fieldCardById(page, "szin");
+    await expandCard(reloaded);
+
+    // No Részletek click on this page load: the saved price turned the
+    // details on by itself, so the columns are already revealed.
+    await expect(reloaded.getByLabel("Ár (Ft)", { exact: true })).toHaveCount(2);
+    await expect(reloaded.getByLabel("Érték", { exact: true })).toHaveCount(2);
+  });
+});
+
+test("the custom-value switch persists its pattern and placeholder and clears on disable", async ({
+  page,
+}) => {
+  const fixture = { ...CHOICE_FIXTURE, id: "e2e-c1" };
+
+  await test.step("login and open the fixture's configurator block", async () => {
+    await login(page, "/products");
+    await openFixture(page, fixture, "E2E C1");
+  });
+
+  await test.step("Egyéni érték reveals the pattern and placeholder inputs", async () => {
+    const szin = fieldCardById(page, "szin");
+    await expandCard(szin);
+    await szin.getByRole("switch", { name: "Egyéni érték" }).click();
+
+    await szin.getByLabel("Minta (regex)").fill("^[A-Za-z]+$");
+    await szin.getByLabel("Helyőrző szöveg").fill("Saját szín");
+  });
+
+  await test.step("the custom value survives save and reload", async () => {
+    const update = waitForMutation(page, "mutation UpdateProductDefinition");
+    await page.getByRole("button", { name: "Frissítés", exact: true }).click();
+    await update;
+
+    await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
+    await page.reload();
+
+    // The collapsed card advertises the custom value as a summary chip.
+    await expect(page.getByText("egyéni érték", { exact: true })).toBeVisible();
+
+    const szin = fieldCardById(page, "szin");
+    await expandCard(szin);
+    await expect(szin.getByLabel("Minta (regex)")).toHaveValue("^[A-Za-z]+$");
+    await expect(szin.getByLabel("Helyőrző szöveg")).toHaveValue("Saját szín");
+  });
+
+  await test.step("disabling removes the custom value including its inputs", async () => {
+    const szin = fieldCardById(page, "szin");
+    await szin.getByRole("switch", { name: "Egyéni érték" }).click();
+    await expect(szin.getByLabel("Minta (regex)")).toHaveCount(0);
+
+    const update = waitForMutation(page, "mutation UpdateProductDefinition");
+    await page.getByRole("button", { name: "Frissítés", exact: true }).click();
+    await update;
+
+    await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
+    await page.reload();
+
+    await expect(page.getByText("egyéni érték", { exact: true })).toHaveCount(0);
+
+    const reloaded = fieldCardById(page, "szin");
+    await expandCard(reloaded);
+    await expect(reloaded.getByLabel("Minta (regex)")).toHaveCount(0);
+  });
+});
+
+test("the Mezők expand-all toggle opens and closes every field card", async ({ page }) => {
+  const fixture: FixtureDefinition = {
+    ...CHOICE_FIXTURE,
+    id: "e2e-x1",
+    fields: [
+      ...CHOICE_FIXTURE.fields,
+      {
+        kind: "choice",
+        id: "meret",
+        label: { hu: "Méret" },
+        presentation: "select",
+        visibility: { kind: "always" },
+        options: [
+          { id: "kicsi", label: { hu: "Kicsi" }, price: 0 },
+          { id: "nagy", label: { hu: "Nagy" }, price: 0 },
+        ],
+      },
+    ],
+  };
+
+  await test.step("login and open the fixture's configurator block", async () => {
+    await login(page, "/products");
+    await openFixture(page, fixture, "E2E X1");
+  });
+
+  await test.step("every card starts collapsed", async () => {
+    await expect(fieldCardById(page, "szin").getByText("Speciális")).toHaveCount(0);
+    await expect(fieldCardById(page, "meret").getByText("Speciális")).toHaveCount(0);
+  });
+
+  await test.step("the block-level toggle expands and collapses all cards", async () => {
+    await page.getByRole("button", { name: "Összes kibontása/összecsukása" }).click();
+
+    const szin = fieldCardById(page, "szin");
+    await expect(szin.getByText("Speciális")).toBeVisible();
+    await expect(szin.getByRole("button", { name: "Mező összecsukása" })).toBeVisible();
+
+    const meret = fieldCardById(page, "meret");
+    await expect(meret.getByText("Speciális")).toBeVisible();
+    await expect(meret.getByRole("button", { name: "Mező összecsukása" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Összes kibontása/összecsukása" }).click();
+
+    await expect(szin.getByText("Speciális")).toHaveCount(0);
+    await expect(meret.getByText("Speciális")).toHaveCount(0);
+  });
+
+  await test.step("with one card opened by hand the toggle expands the rest", async () => {
+    const szin = fieldCardById(page, "szin");
+    await expandCard(szin);
+
+    await page.getByRole("button", { name: "Összes kibontása/összecsukása" }).click();
+
+    await expect(fieldCardById(page, "meret").getByText("Speciális")).toBeVisible();
+    await expect(szin.getByText("Speciális")).toBeVisible();
+  });
+});
+
+test("the Rejtett a listában switch persists through save round-trips", async ({ page }) => {
+  const fixture = { ...CHOICE_FIXTURE, id: "e2e-l1" };
+
+  await test.step("login and open the fixture's configurator block", async () => {
+    await login(page, "/products");
+    await openFixture(page, fixture, "E2E L1");
+  });
+
+  await test.step("toggling it on survives save and reload", async () => {
+    const rejtett = page.getByRole("switch", { name: "Rejtett a listában" });
+    await expect(rejtett).toHaveAttribute("aria-checked", "false");
+    await rejtett.click();
+    await expect(rejtett).toHaveAttribute("aria-checked", "true");
+
+    const update = waitForMutation(page, "mutation UpdateProductDefinition");
+    await page.getByRole("button", { name: "Frissítés", exact: true }).click();
+    await update;
+
+    await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
+    await page.reload();
+
+    await expect(page.getByRole("switch", { name: "Rejtett a listában" })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+  });
+
+  await test.step("toggling it off survives save and reload too", async () => {
+    const rejtett = page.getByRole("switch", { name: "Rejtett a listában" });
+    await rejtett.click();
+    await expect(rejtett).toHaveAttribute("aria-checked", "false");
+
+    const update = waitForMutation(page, "mutation UpdateProductDefinition");
+    await page.getByRole("button", { name: "Frissítés", exact: true }).click();
+    await update;
+
+    await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
+    await page.reload();
+
+    await expect(page.getByRole("switch", { name: "Rejtett a listában" })).toHaveAttribute(
+      "aria-checked",
+      "false"
+    );
   });
 });

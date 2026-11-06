@@ -1,6 +1,6 @@
 import { LanguageCode } from "@vendure/common/lib/generated-types";
 import { vendureDashboardPlugin } from "@vendure/dashboard/vite";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { defineConfig } from "vite";
 
 // Builds the Vendure Dashboard served by the site's Cloudflare Worker at
@@ -44,6 +44,11 @@ export default defineConfig({
         availableLanguages: [LanguageCode.hu, LanguageCode.en],
       },
       gqlOutputPath: "./src/gql",
+      theme: {
+        additionalStylesheets: [
+          fileURLToPath(new URL("src/dashboard/dashboard-responsive.css", import.meta.url)),
+        ],
+      },
     }),
   ],
 });

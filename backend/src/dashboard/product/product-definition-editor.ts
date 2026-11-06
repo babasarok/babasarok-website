@@ -13,6 +13,7 @@ import {
   canonicalJson,
   type ProductDefinitionInput,
 } from "../../shared/product-definition/index";
+import { MAX_LINE_LENGTH_CM } from "../../shared/pricing/selection-validation";
 
 export type FieldInput = ProductDefinitionInput["fields"][number];
 export type ChoiceFieldInput = Extract<FieldInput, { kind: "choice" }>;
@@ -159,6 +160,113 @@ export function carryOver(next: FieldInput, previous: FieldInput): FieldInput {
   return carried;
 }
 
+/** Short Hungarian chips for a collapsed field card. */
+export function summaryChips(field: FieldInput): string[] {
+  if (field.kind === "choice") {
+    const chips = [`${field.options.length} opció`];
+
+    if (field.customValue !== undefined) {
+      chips.push("egyéni érték");
+    }
+
+    return chips;
+  }
+
+  if (field.kind === "input") {
+    const chips: string[] = [];
+
+    if (field.required) {
+      chips.push("kötelező");
+    }
+
+    if (field.suggestions !== undefined) {
+      chips.push("javaslatok");
+    }
+
+    return chips;
+  }
+
+  if (field.kind === "toggle") {
+    return [`ár bekapcsolva: ${field.price} Ft`];
+  }
+
+  if (field.kind === "material") {
+    const chips = [`${field.options.length} anyag`];
+
+    if (field.colorCount.kind === "fixed") {
+      chips.push(`${field.colorCount.count} szín`);
+    } else {
+      chips.push("színszám mezőből");
+    }
+
+    return chips;
+  }
+
+  return [EMBROIDERY_PRICING_LABELS[field.pricing.kind].toLowerCase()];
+}
+
+/** Turning custom values on keeps the pattern and placeholder the caller
+ * passes (a just-disabled field no longer holds them); turning them off
+ * removes the key entirely — an explicit `undefined` would still travel as a
+ * property through editor state. */
+export function withCustomValue(
+  field: ChoiceFieldInput,
+  enabled: boolean,
+  previous?: ChoiceFieldInput["customValue"]
+): ChoiceFieldInput {
+  if (!enabled) {
+    const { customValue: _removed, ...rest } = field;
+
+    return rest;
+  }
+
+  const kept = previous ?? field.customValue;
+  const customValue: NonNullable<ChoiceFieldInput["customValue"]> = {};
+
+  if (kept?.pattern !== undefined) {
+    customValue.pattern = kept.pattern;
+  }
+
+  if (kept?.placeholder !== undefined) {
+    customValue.placeholder = kept.placeholder;
+  }
+
+  return { ...field, customValue };
+}
+
+/** A from-field colorCount carries no count, so switching back to fixed
+ * starts from 1. */
+export function withColorCountMode(
+  field: MaterialFieldInput,
+  mode: "fixed" | "from-field",
+  fieldId?: string
+): MaterialFieldInput {
+  if (mode === "fixed") {
+    return {
+      ...field,
+      colorCount: {
+        kind: "fixed",
+        count: field.colorCount.kind === "fixed" ? field.colorCount.count : 1,
+      },
+    };
+  }
+
+  return { ...field, colorCount: { kind: "from-field", fieldId: fieldId ?? "" } };
+}
+
+/** Material fields have no visibility in the canonical schema, so the call
+ * leaves them untouched. */
+export function withVisibility(
+  field: FieldInput,
+  rule: Exclude<FieldInput, MaterialFieldInput>["visibility"]
+): FieldInput {
+  if (field.kind === "material") {
+    return field;
+  }
+
+  return { ...field, visibility: rule };
+}
+
 const HUNGARIAN_FOLDS: Record<string, string> = {
   á: "a",
   é: "e",
@@ -170,6 +278,13 @@ const HUNGARIAN_FOLDS: Record<string, string> = {
   ü: "u",
   ű: "u",
 };
+
+/** The id a freshly named field takes immediately (before any save), so
+ * references — length source, visibility rules, color-count sources — point
+ * at a stable value from creation. */
+export function generateFieldId(label: TextInput, used: Set<string>): string {
+  return uniqueCode(slugifyLabel(label.hu) || "mezo", used);
+}
 
 /** ASCII slug of a label, in the shape the canonical ids use. */
 export function slugifyLabel(label: string): string {
@@ -211,7 +326,7 @@ export function assignGeneratedIds(definition: ProductDefinitionInput): ProductD
       let id = field.id;
 
       if (id === "") {
-        id = uniqueCode(slugifyLabel(field.label.hu) || "mezo", fieldIds);
+        id = generateFieldId(field.label, fieldIds);
         fieldIds.add(id);
       }
 
@@ -253,11 +368,32 @@ function trimText(text: TextInput): TextInput {
   return trimmed;
 }
 
+function trimCustomValue(
+  customValue: NonNullable<ChoiceFieldInput["customValue"]>
+): NonNullable<ChoiceFieldInput["customValue"]> {
+  const trimmed: NonNullable<ChoiceFieldInput["customValue"]> = {};
+
+  if (customValue.pattern !== undefined) {
+    trimmed.pattern = customValue.pattern.trim();
+  }
+
+  if (customValue.placeholder !== undefined) {
+    trimmed.placeholder = trimText(customValue.placeholder);
+  }
+
+  return trimmed;
+}
+
 export function sanitize(definition: ProductDefinitionInput): ProductDefinitionInput {
   return {
     ...definition,
     fields: definition.fields.map((field) => {
-      const trimmed = { ...field, id: field.id.trim(), label: trimText(field.label) };
+      const trimmed = {
+        ...field,
+        id: field.id.trim(),
+        label: trimText(field.label),
+        ...(field.tooltip === undefined ? {} : { tooltip: trimText(field.tooltip) }),
+      };
 
       if (trimmed.kind === "choice") {
         return {
@@ -266,7 +402,11 @@ export function sanitize(definition: ProductDefinitionInput): ProductDefinitionI
             ...option,
             id: option.id.trim(),
             label: trimText(option.label),
+            ...(option.tooltip === undefined ? {} : { tooltip: trimText(option.tooltip) }),
           })),
+          ...(trimmed.customValue === undefined
+            ? {}
+            : { customValue: trimCustomValue(trimmed.customValue) }),
         };
       }
 
@@ -277,6 +417,24 @@ export function sanitize(definition: ProductDefinitionInput): ProductDefinitionI
             ...option,
             materialId: option.materialId.trim(),
           })),
+        };
+      }
+
+      if (trimmed.kind === "input" || trimmed.kind === "embroidery") {
+        return {
+          ...trimmed,
+          ...(trimmed.placeholder === undefined
+            ? {}
+            : { placeholder: trimText(trimmed.placeholder) }),
+          ...(trimmed.pattern === undefined ? {} : { pattern: trimmed.pattern.trim() }),
+          ...(trimmed.kind === "input" && trimmed.suggestions !== undefined
+            ? {
+                suggestions: trimmed.suggestions.map((suggestion) => ({
+                  value: suggestion.value.trim(),
+                  label: trimText(suggestion.label),
+                })),
+              }
+            : {}),
         };
       }
 
@@ -297,6 +455,227 @@ export function newDefinition(id: string): ProductDefinitionInput {
     fields: [],
     forbiddenMaterialCombinations: [],
   };
+}
+
+export type PricingMode = "unit" | "length";
+
+export function pricingMode(definition: ProductDefinitionInput): PricingMode {
+  return definition.pricing.kind === "length" ? "length" : "unit";
+}
+
+/** Switching to length pricing keeps the current source field, else falls
+ * back to the first string-valued field, else stays blank until the UI picks
+ * one. */
+export function withPricingMode(
+  definition: ProductDefinitionInput,
+  mode: PricingMode,
+  sourceFieldId?: string
+): ProductDefinitionInput {
+  if (mode === "unit") {
+    return { ...definition, pricing: { kind: "unit" } };
+  }
+
+  const current =
+    definition.pricing.kind === "length" ? definition.pricing.sourceFieldId : undefined;
+  const preferred = sourceFieldId ?? current;
+  const fallbackId = lengthSourceCandidates(definition)[0]?.id ?? "";
+
+  return {
+    ...definition,
+    pricing: {
+      kind: "length",
+      sourceFieldId: preferred ?? fallbackId,
+    },
+  };
+}
+
+/** The field kinds whose buyer-facing value is a plain string — the same set
+ * the server accepts as a numeric source. Id-less (not yet named) fields are
+ * excluded: a source reference needs a stable id. */
+export function lengthSourceCandidates(definition: ProductDefinitionInput): FieldInput[] {
+  return definition.fields.filter(
+    (field) => (field.kind === "input" || field.kind === "choice") && field.id !== ""
+  );
+}
+
+export function isLengthSourceField(definition: ProductDefinitionInput, fieldId: string): boolean {
+  return definition.pricing.kind === "length" && definition.pricing.sourceFieldId === fieldId;
+}
+
+/** Fields a configured reference depends on: the length source, every
+ * visibility rule's subject and every colorCount source. */
+export function loadBearingFieldIds(definition: ProductDefinitionInput): Set<string> {
+  const ids = new Set<string>();
+
+  if (definition.pricing.kind === "length") {
+    ids.add(definition.pricing.sourceFieldId);
+  }
+
+  for (const field of definition.fields) {
+    if (field.kind !== "material" && field.visibility.kind !== "always") {
+      ids.add(field.visibility.fieldId);
+    }
+
+    if (field.kind === "material" && field.colorCount.kind === "from-field") {
+      ids.add(field.colorCount.fieldId);
+    }
+  }
+
+  return ids;
+}
+
+/** A length source must hand the storefront a bare centimeter number: inputs
+ * get the digits-only pattern, an existing choice customValue gets it too —
+ * custom values are never turned on here. */
+/** The length-source field's text is validated against the digit pattern —
+ * always, overwriting whatever regex it carried before the assignment (a
+ * non-numeric pattern on a length source would price garbage). A choice
+ * without custom values keeps none: its option ids are the buyer values. */
+export function withLengthSourcePattern(field: FieldInput): FieldInput {
+  if (field.kind === "input") {
+    return { ...field, pattern: String.raw`^\d+$` };
+  }
+
+  if (field.kind === "choice" && field.customValue !== undefined) {
+    return { ...field, customValue: { ...field.customValue, pattern: String.raw`^\d+$` } };
+  }
+
+  return field;
+}
+
+/** A length source must always show in the storefront configurator — pricing
+ * breaks when the buyer cannot enter the length — so its visibility rule is
+ * reset on assignment and the dashboard hides the rule editor for it. */
+function withAlwaysVisible(field: FieldInput): FieldInput {
+  if (field.kind === "material") {
+    return field;
+  }
+
+  return { ...field, visibility: { kind: "always" } };
+}
+
+export function applyLengthSourceDefaults(
+  definition: ProductDefinitionInput,
+  sourceFieldId: string
+): ProductDefinitionInput {
+  return {
+    ...definition,
+    fields: definition.fields.map((field) =>
+      field.id === sourceFieldId ? withLengthSourcePattern(withAlwaysVisible(field)) : field
+    ),
+  };
+}
+
+export interface LengthSourceValueError {
+  fieldId: string;
+  message: string;
+}
+
+/** What a material field's color-count source cannot deliver: a dangling
+ * reference, or choice codes that are not positive integers — the buyer's
+ * pick is parsed as the number of colors. An unset source stays silent. */
+export function colorCountValueErrors(
+  definition: ProductDefinitionInput
+): LengthSourceValueError[] {
+  const errors: LengthSourceValueError[] = [];
+
+  for (const field of definition.fields) {
+    if (field.kind !== "material" || field.colorCount.kind !== "from-field") {
+      continue;
+    }
+
+    const sourceFieldId = field.colorCount.fieldId;
+    const source = definition.fields.find((candidate) => candidate.id === sourceFieldId);
+    const label = field.label.hu.trim();
+    const name = label === "" ? field.id : label;
+
+    if (sourceFieldId === "") {
+      continue;
+    }
+
+    if (source === undefined) {
+      errors.push({
+        fieldId: field.id,
+        message: `A(z) „${name}” anyagmező színszám-forrása nem létező mezőre hivatkozik: „${sourceFieldId}”.`,
+      });
+      continue;
+    }
+
+    if (source.kind !== "choice") {
+      continue;
+    }
+
+    const sourceLabel = source.label.hu.trim();
+    const sourceName = sourceLabel === "" ? source.id : sourceLabel;
+
+    for (const option of source.options) {
+      if (!/^\d+$/.test(option.id) || Number(option.id) < 1) {
+        errors.push({
+          fieldId: field.id,
+          message: `A(z) „${name}” anyagmező színszám-forrásának („${sourceName}”) „${option.id}” opciókódja nem pozitív egész szám.`,
+        });
+      }
+    }
+  }
+
+  return errors;
+}
+
+/** What the storefront cannot parse from a choice source's option codes: not
+ * a number, outside 1..10000 cm (the cap the order line enforces), or a
+ * duplicated code. */
+export function lengthSourceValueErrors(
+  definition: ProductDefinitionInput
+): LengthSourceValueError[] {
+  if (definition.pricing.kind !== "length") {
+    return [];
+  }
+
+  const sourceFieldId = definition.pricing.sourceFieldId;
+
+  if (sourceFieldId === "") {
+    return [];
+  }
+
+  const source = definition.fields.find((field) => field.id === sourceFieldId);
+
+  if (source === undefined || source.kind !== "choice") {
+    return [];
+  }
+
+  const label = source.label.hu.trim();
+  const name = label === "" ? source.id : label;
+  const errors: LengthSourceValueError[] = [];
+  const seen = new Set<string>();
+
+  for (const option of source.options) {
+    if (/^\d+$/.test(option.id)) {
+      const centimeters = Number(option.id);
+
+      if (centimeters < 1 || centimeters > MAX_LINE_LENGTH_CM) {
+        errors.push({
+          fieldId: source.id,
+          message: `A(z) „${name}” méteráras forrásmező „${option.id}” opciókódja csak 1 és ${MAX_LINE_LENGTH_CM} közötti egész szám (cm) lehet — ${MAX_LINE_LENGTH_CM} cm = 100 m.`,
+        });
+      }
+    } else {
+      errors.push({
+        fieldId: source.id,
+        message: `A(z) „${name}” méteráras forrásmező „${option.id}” opciókódja nem szám (cm).`,
+      });
+    }
+
+    if (seen.has(option.id)) {
+      errors.push({
+        fieldId: source.id,
+        message: `${source.id}: duplikált opciókód: "${option.id}".`,
+      });
+    }
+
+    seen.add(option.id);
+  }
+
+  return errors;
 }
 
 export interface UnifiedSaveState {

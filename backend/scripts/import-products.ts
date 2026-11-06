@@ -25,13 +25,13 @@
  */
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
-import type { ProductDefinitionSchema } from "../src/shared/product-definition/index.ts";
-import { ProductGroupDefinitionSchema } from "../src/shared/product-definition/index.ts";
+import type { ProductDefinitionSchema } from "../src/shared/product-definition/index";
+import { ProductGroupDefinitionSchema } from "../src/shared/product-definition/index";
 import { z } from "zod";
 import { parse } from "yaml";
-import { adminRequest, authenticate, uploadAsset } from "./lib/admin-client.ts";
-import { assignProductFacetValue, ensureFacetWithValues } from "./lib/facet-seed.ts";
-import { formatSyncProgress } from "./lib/sync-progress.ts";
+import { adminRequest, authenticate, uploadAsset } from "./lib/admin-client";
+import { assignProductFacetValue, ensureFacetWithValues } from "./lib/facet-seed";
+import { formatSyncProgress } from "./lib/sync-progress";
 import {
   definitionFromTinaProduct,
   displayFromTinaProduct,
@@ -40,7 +40,7 @@ import {
   type TinaDisplayContent,
   TinaProductGroupSchema,
   TinaProductSchema,
-} from "./lib/tina-source.ts";
+} from "./lib/tina-source";
 /** The definition shape sent to the admin API (server-side zod validates it). */
 type DefinitionPayload = z.input<typeof ProductDefinitionSchema>;
 

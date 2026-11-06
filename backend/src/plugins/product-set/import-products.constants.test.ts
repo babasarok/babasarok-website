@@ -1,8 +1,8 @@
 /**
  * Seam: the import script's offline upserts vs. the values the plugins read
  * at runtime. The script cannot import the plugin sources (they carry
- * Vendure decorators; the script runs under Node type stripping; importing
- * them from scripts/ would also pull src into the scripts tsconfig build),
+ * Vendure decorators; importing them from scripts/ would also pull src into
+ * the scripts tsconfig build),
  * so its literals are guarded here instead: this test lives on the src
  * side, imports the real runtime constants from the owning modules and
  * reads the script only as text, failing when its copies drift.

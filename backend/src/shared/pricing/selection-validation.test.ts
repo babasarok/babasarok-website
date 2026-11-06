@@ -1,6 +1,6 @@
 import { ProductDefinitionSchema } from "../product-definition/index";
 import { describe, expect, it } from "vitest";
-import type { LineSelectionRecord, LineSelections } from "./line-selection.js";
+import type { LineSelectionRecord, LineSelections } from "./line-selection";
 import {
   MAX_SELECTION_TEXT_LENGTH,
   referencedMaterialIds,

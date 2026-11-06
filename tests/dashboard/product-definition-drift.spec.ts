@@ -6,6 +6,8 @@ import {
   DEFINITION_STATE,
   DefinitionState,
   deleteDefinitionIfPresent,
+  expandCard,
+  fieldCardById,
   GeneratedVariants,
   generatedTable,
   login,
@@ -91,7 +93,9 @@ test("a natively hand-edited variant price is refused until the force re-sync", 
     await page.goto(`/dashboard/products/${nativeProductId}`);
     await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
 
-    const pirosAr = page.locator(".rounded.border.p-3").first().getByLabel("Ár (Ft)").nth(1);
+    const szin = fieldCardById(page, "szin");
+    await expandCard(szin);
+    const pirosAr = szin.getByLabel("Ár (Ft)").nth(1);
     await pirosAr.fill("700");
     await pirosAr.blur();
 
@@ -132,12 +136,14 @@ test("a natively hand-edited variant price is refused until the force re-sync", 
     await page.goto(`/dashboard/products/${nativeProductId}`);
     await expect(page.getByText("Szinkronizálva")).toBeVisible();
     await expect(
-      page.getByText("Elavult — a mentés a natív módosítások felülírása nélkül elutasított")
+      page.getByText("Elavult — mentés csak a natív módosítások felülírásával lehetséges")
     ).toBeVisible();
   });
 
   await test.step("a save is refused with the drift alert and the force button", async () => {
-    const pirosAr = page.locator(".rounded.border.p-3").first().getByLabel("Ár (Ft)").nth(1);
+    const szin = fieldCardById(page, "szin");
+    await expandCard(szin);
+    const pirosAr = szin.getByLabel("Ár (Ft)").nth(1);
     await pirosAr.fill("800");
     await pirosAr.blur();
 
@@ -163,7 +169,7 @@ test("a natively hand-edited variant price is refused until the force re-sync", 
     await expect(page.getByText("Szinkronizálás…")).toBeVisible();
     await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
     await expect(
-      page.getByText("Elavult — a mentés a natív módosítások felülírása nélkül elutasított")
+      page.getByText("Elavult — mentés csak a natív módosítások felülírásával lehetséges")
     ).toHaveCount(0);
 
     await page.reload();

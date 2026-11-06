@@ -254,9 +254,13 @@ try {
     // failures. Production is seeded once, manually, at cutover — never by
     // the deploy. Drop this block at cutover.
     try {
-      compose(["exec", "-T", "vendure", "node", "scripts/import-materials.ts"], DIR, true);
-      compose(["exec", "-T", "vendure", "node", "scripts/import-facets.ts"], DIR, true);
-      compose(["exec", "-T", "vendure", "node", "scripts/import-products.ts"], DIR, true);
+      for (const script of ["import-materials", "import-facets", "import-products"]) {
+        compose(
+          ["exec", "-T", "vendure", "node_modules/.bin/tsx", `scripts/${script}.ts`],
+          DIR,
+          true
+        );
+      }
     } catch (error) {
       log("catalog import failed; preview stack stays up");
       console.error(error);

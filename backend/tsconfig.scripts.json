@@ -2,13 +2,10 @@
   "compilerOptions": {
     "target": "ES2023",
     "lib": ["ES2023"],
-    // The scripts run from source via node's type stripping (ESM); bundler
-    // resolution matches that and keeps import.meta legal.
+    // The scripts run from source via tsx (ESM); bundler resolution matches
+    // its extensionless imports and keeps import.meta legal.
     "module": "esnext",
     "moduleResolution": "bundler",
-    // Node's type stripping resolves relative imports only with the literal
-    // .ts extension.
-    "rewriteRelativeImportExtensions": true,
     "strict": true,
     // The scripts reach into src/shared (the canonical schemas), which lies
     // outside this project's rootDir — fine under noEmit, so they are

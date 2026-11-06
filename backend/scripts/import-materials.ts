@@ -15,10 +15,10 @@
  */
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
-import { MaterialDefinitionSchema } from "../src/shared/product-definition/index.ts";
+import { MaterialDefinitionSchema } from "../src/shared/product-definition/index";
 import { parse } from "yaml";
 import { z } from "zod";
-import { adminRequest, authenticate, uploadAsset } from "./lib/admin-client.ts";
+import { adminRequest, authenticate, uploadAsset } from "./lib/admin-client";
 
 const CONTENT_DIR = path.resolve(import.meta.dirname, "..", "..", "src", "content", "material");
 const REPO_ROOT = path.resolve(import.meta.dirname, "..", "..");

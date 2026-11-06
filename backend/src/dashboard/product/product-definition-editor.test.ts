@@ -7,21 +7,71 @@
 import { describe, expect, test } from "vitest";
 import { ProductDefinitionSchema } from "../../shared/product-definition/index";
 import {
+  applyLengthSourceDefaults,
   assignGeneratedIds,
   canUnifiedSave,
   planUnifiedSave,
   carryOver,
+  colorCountValueErrors,
+  generateFieldId,
   hasEditableData,
+  isLengthSourceField,
+  lengthSourceCandidates,
+  lengthSourceValueErrors,
+  loadBearingFieldIds,
   newDefinition,
   newField,
+  pricingMode,
   sanitize,
   slugifyLabel,
+  summaryChips,
   textPlaceholder,
   textValue,
+  withColorCountMode,
+  withCustomValue,
+  withPricingMode,
   withText,
+  withVisibility,
   type ChoiceFieldInput,
   type ChoiceOptionInput,
+  type InputFieldInput,
+  type MaterialFieldInput,
+  type ToggleFieldInput,
 } from "./product-definition-editor";
+
+const sampleChoice = (id: string, label: string, optionIds: string[]): ChoiceFieldInput => ({
+  id,
+  label: { hu: label },
+  kind: "choice",
+  presentation: "select",
+  visibility: { kind: "always" },
+  options: optionIds.map((optionId) => ({ id: optionId, label: { hu: optionId }, price: 0 })),
+});
+
+const sampleInput = (id: string, label: string): InputFieldInput => ({
+  id,
+  label: { hu: label },
+  kind: "input",
+  visibility: { kind: "always" },
+  required: true,
+  price: 0,
+});
+
+const sampleToggle = (id: string, label: string): ToggleFieldInput => ({
+  id,
+  label: { hu: label },
+  kind: "toggle",
+  visibility: { kind: "always" },
+  price: 0,
+});
+
+const sampleMaterial = (id: string, label: string): MaterialFieldInput => ({
+  id,
+  label: { hu: label },
+  kind: "material",
+  options: [{ materialId: `${id}-pamut`, price: 0 }],
+  colorCount: { kind: "fixed", count: 1 },
+});
 
 describe("newField", () => {
   test("choice fields default to a select with one empty option", () => {
@@ -186,6 +236,73 @@ describe("sanitize", () => {
 
     expect(ProductDefinitionSchema.safeParse(definition).success).toBe(true);
   });
+
+  test("trims the new editable strings", () => {
+    const definition = newDefinition("p");
+
+    const choice = sampleChoice(" szin ", " Szín ", []);
+    choice.options = [
+      { id: " kek ", label: { hu: " Kék " }, price: 0, tooltip: { hu: " Sötét " } },
+    ];
+    choice.tooltip = { hu: " Válassz " };
+    choice.customValue = {
+      pattern: String.raw` ^\d+$ `,
+      placeholder: { hu: " Egyéb ", en: " Other " },
+    };
+
+    const input = sampleInput(" nev ", " Név ");
+    input.tooltip = { hu: " Írd ide " };
+    input.placeholder = { hu: " Pl. Anna " };
+    input.pattern = " ^[A-Z] ";
+    input.suggestions = [{ value: " Anna ", label: { hu: " Anna " } }];
+
+    definition.fields = [choice, input];
+
+    const cleaned = sanitize(definition);
+    const cleanedChoice = cleaned.fields[0];
+
+    if (cleanedChoice.kind !== "choice") {
+      throw new Error("expected a choice field");
+    }
+
+    expect(cleanedChoice.tooltip).toEqual({ hu: "Válassz" });
+    expect(cleanedChoice.options[0].tooltip).toEqual({ hu: "Sötét" });
+    expect(cleanedChoice.customValue).toEqual({
+      pattern: String.raw`^\d+$`,
+      placeholder: { hu: "Egyéb", en: "Other" },
+    });
+
+    const cleanedInput = cleaned.fields[1];
+
+    if (cleanedInput.kind !== "input") {
+      throw new Error("expected an input field");
+    }
+
+    expect(cleanedInput.tooltip).toEqual({ hu: "Írd ide" });
+    expect(cleanedInput.placeholder).toEqual({ hu: "Pl. Anna" });
+    expect(cleanedInput.pattern).toBe("^[A-Z]");
+    expect(cleanedInput.suggestions).toEqual([{ value: "Anna", label: { hu: "Anna" } }]);
+
+    expect(ProductDefinitionSchema.safeParse(cleaned).success).toBe(true);
+  });
+
+  test("a sparse customValue keeps only the keys it has", () => {
+    const definition = newDefinition("p");
+
+    const choice = sampleChoice("szin", "Szín", ["kek"]);
+    choice.customValue = { pattern: String.raw` ^\d+$ ` };
+
+    definition.fields = [choice];
+
+    const cleaned = sanitize(definition);
+    const cleanedChoice = cleaned.fields[0];
+
+    if (cleanedChoice.kind !== "choice") {
+      throw new Error("expected a choice field");
+    }
+
+    expect(cleanedChoice.customValue).toStrictEqual({ pattern: String.raw`^\d+$` });
+  });
 });
 
 describe("newDefinition", () => {
@@ -331,5 +448,550 @@ describe("planUnifiedSave", () => {
     expect(canUnifiedSave({ pageDirty: true, pageValid: false, configuratorDirty: false })).toBe(
       false
     );
+  });
+});
+
+describe("pricing mode", () => {
+  test("unit is the default and carries no source field", () => {
+    const definition = newDefinition("p");
+
+    expect(pricingMode(definition)).toBe("unit");
+    expect(withPricingMode(definition, "unit")).toEqual(definition);
+  });
+
+  test("an explicit source field wins, even against the candidate order", () => {
+    const definition = {
+      ...newDefinition("p"),
+      fields: [sampleInput("hossz", "Hossz"), sampleChoice("szin", "Szín", ["kek"])],
+    };
+
+    expect(withPricingMode(definition, "length", "szin").pricing).toEqual({
+      kind: "length",
+      sourceFieldId: "szin",
+    });
+    expect(pricingMode(withPricingMode(definition, "length", "szin"))).toBe("length");
+  });
+
+  test("without an explicit id the current source, else the first candidate, is kept", () => {
+    const definition = {
+      ...newDefinition("p"),
+      fields: [sampleToggle("kapcsolo", "Kapcsoló"), sampleInput("hossz", "Hossz")],
+    };
+
+    expect(withPricingMode(definition, "length").pricing).toEqual({
+      kind: "length",
+      sourceFieldId: "hossz",
+    });
+    expect(withPricingMode(withPricingMode(definition, "length"), "length").pricing).toEqual({
+      kind: "length",
+      sourceFieldId: "hossz",
+    });
+  });
+
+  test("with no candidate field the source starts blank", () => {
+    expect(withPricingMode(newDefinition("p"), "length").pricing).toEqual({
+      kind: "length",
+      sourceFieldId: "",
+    });
+  });
+
+  test("a unit round-trip forgets the source and falls back to the first candidate", () => {
+    const definition = withPricingMode(
+      { ...newDefinition("p"), fields: [sampleInput("hossz", "Hossz")] },
+      "length",
+      "szin"
+    );
+
+    expect(withPricingMode(withPricingMode(definition, "unit"), "length").pricing).toEqual({
+      kind: "length",
+      sourceFieldId: "hossz",
+    });
+  });
+});
+
+describe("lengthSourceCandidates", () => {
+  test("only named input and choice fields are string-valued candidates", () => {
+    const definition = {
+      ...newDefinition("p"),
+      fields: [
+        sampleToggle("kapcsolo", "Kapcsoló"),
+        sampleInput("hossz", "Hossz"),
+        sampleMaterial("anyag", "Anyag"),
+        sampleChoice("szin", "Szín", ["kek"]),
+        newField("embroidery", "himzes", { hu: "Hímzés" }),
+        newField("input", "", { hu: "Névtelen" }),
+      ],
+    };
+
+    expect(lengthSourceCandidates(definition).map((field) => field.id)).toEqual(["hossz", "szin"]);
+  });
+});
+
+describe("generateFieldId", () => {
+  test("slugs the Hungarian label, dedupes against used ids, falls back to mezo", () => {
+    const used = new Set(["meret"]);
+
+    expect(generateFieldId({ hu: " Méret " }, used)).toBe("meret-2");
+    expect(generateFieldId({ hu: "Szín" }, used)).toBe("szin");
+    expect(generateFieldId({ hu: "   " }, used)).toBe("mezo");
+  });
+});
+
+describe("isLengthSourceField", () => {
+  test("true only for the length pricing's own source field", () => {
+    const definition = withPricingMode(
+      {
+        ...newDefinition("p"),
+        fields: [sampleInput("hossz", "Hossz"), sampleInput("szelesseg", "Szélesség")],
+      },
+      "length",
+      "hossz"
+    );
+
+    expect(isLengthSourceField(definition, "hossz")).toBe(true);
+    expect(isLengthSourceField(definition, "szelesseg")).toBe(false);
+    expect(isLengthSourceField(newDefinition("p"), "hossz")).toBe(false);
+  });
+});
+
+describe("loadBearingFieldIds", () => {
+  test("unions the length source, visibility subjects and colorCount sources", () => {
+    const choice = sampleChoice("szin", "Szín", ["kek"]);
+    choice.visibility = { kind: "when-equal", fieldId: "kapcsolo", value: "igen" };
+
+    const toggle = sampleToggle("kapcsolo", "Kapcsoló");
+    toggle.visibility = { kind: "when-present", fieldId: "szin" };
+
+    const material = sampleMaterial("anyag", "Anyag");
+    material.colorCount = { kind: "from-field", fieldId: "hossz" };
+
+    const definition = {
+      ...withPricingMode(newDefinition("p"), "length", "hossz"),
+      fields: [choice, toggle, material, sampleInput("magaban", "Magában")],
+    };
+
+    expect(loadBearingFieldIds(definition)).toEqual(new Set(["szin", "kapcsolo", "hossz"]));
+  });
+
+  test("unit pricing contributes no length source", () => {
+    const material = sampleMaterial("anyag", "Anyag");
+    material.colorCount = { kind: "from-field", fieldId: "hossz" };
+
+    expect(loadBearingFieldIds({ ...newDefinition("p"), fields: [material] })).toEqual(
+      new Set(["hossz"])
+    );
+  });
+});
+
+describe("applyLengthSourceDefaults", () => {
+  test("an input source always carries the digits-only pattern", () => {
+    const bare = { ...newDefinition("p"), fields: [sampleInput("hossz", "Hossz")] };
+    const defaulted = applyLengthSourceDefaults(bare, "hossz");
+    const field = defaulted.fields[0];
+
+    if (field.kind !== "input") {
+      throw new Error("expected an input field");
+    }
+
+    expect(field.pattern).toBe(String.raw`^\d+$`);
+
+    const custom = { ...bare, fields: [{ ...sampleInput("hossz", "Hossz"), pattern: "^[0-9]+$" }] };
+    const overwritten = applyLengthSourceDefaults(custom, "hossz").fields[0];
+
+    if (overwritten.kind !== "input") {
+      throw new Error("expected an input field");
+    }
+
+    expect(overwritten.pattern).toBe(String.raw`^\d+$`);
+
+    const ruled = {
+      ...bare,
+      fields: [
+        {
+          ...sampleInput("hossz", "Hossz"),
+          visibility: { kind: "when-present", fieldId: "mas" } as const,
+        },
+      ],
+    };
+    const shown = applyLengthSourceDefaults(ruled, "hossz").fields[0];
+
+    if (shown.kind !== "input") {
+      throw new Error("expected an input field");
+    }
+
+    expect(shown.visibility).toEqual({ kind: "always" });
+  });
+
+  test("a choice source stamps only an existing customValue's pattern", () => {
+    const choice = sampleChoice("hossz", "Hossz", ["250"]);
+    const bare = { ...newDefinition("p"), fields: [choice] };
+
+    const plain = applyLengthSourceDefaults(bare, "hossz").fields[0];
+
+    if (plain.kind !== "choice") {
+      throw new Error("expected a choice field");
+    }
+
+    expect(plain.customValue).toBeUndefined();
+
+    const ruled = {
+      ...bare,
+      fields: [{ ...choice, visibility: { kind: "when-present", fieldId: "mas" } as const }],
+    };
+    const forced = applyLengthSourceDefaults(ruled, "hossz").fields[0];
+
+    if (forced.kind !== "choice") {
+      throw new Error("expected a choice field");
+    }
+
+    expect(forced.visibility).toEqual({ kind: "always" });
+
+    const withCustom = {
+      ...bare,
+      fields: [{ ...choice, customValue: { placeholder: { hu: "Egyéb" } } }],
+    };
+    const filled = applyLengthSourceDefaults(withCustom, "hossz").fields[0];
+
+    if (filled.kind !== "choice") {
+      throw new Error("expected a choice field");
+    }
+
+    expect(filled.customValue).toEqual({
+      placeholder: { hu: "Egyéb" },
+      pattern: String.raw`^\d+$`,
+    });
+
+    const withPattern = { ...bare, fields: [{ ...choice, customValue: { pattern: "^[0-9]+$" } }] };
+    const overwritten = applyLengthSourceDefaults(withPattern, "hossz").fields[0];
+
+    if (overwritten.kind !== "choice") {
+      throw new Error("expected a choice field");
+    }
+
+    expect(overwritten.customValue).toEqual({ pattern: String.raw`^\d+$` });
+  });
+
+  test("other kinds and other fields are untouched", () => {
+    const definition = {
+      ...newDefinition("p"),
+      fields: [sampleToggle("hossz", "Hossz"), sampleInput("masik", "Másik")],
+    };
+
+    expect(applyLengthSourceDefaults(definition, "hossz").fields).toEqual([
+      sampleToggle("hossz", "Hossz"),
+      sampleInput("masik", "Másik"),
+    ]);
+  });
+});
+
+describe("colorCountValueErrors", () => {
+  test("an unset or dangling source is silent or flagged, fixed counts are silent", () => {
+    const definition = {
+      ...newDefinition("p"),
+      fields: [sampleMaterial("anyag", "Anyag")],
+    };
+
+    expect(colorCountValueErrors(definition)).toEqual([]);
+
+    const fromField = {
+      ...definition,
+      fields: [
+        {
+          ...sampleMaterial("anyag", "Anyag"),
+          colorCount: { kind: "from-field", fieldId: "" } as const,
+        },
+      ],
+    };
+
+    expect(colorCountValueErrors(fromField)).toEqual([]);
+
+    const dangling = {
+      ...definition,
+      fields: [
+        {
+          ...sampleMaterial("anyag", "Anyag"),
+          colorCount: { kind: "from-field", fieldId: "nincs" } as const,
+        },
+      ],
+    };
+    const danglingErrors = colorCountValueErrors(dangling);
+
+    expect(danglingErrors).toHaveLength(1);
+    expect(danglingErrors[0].fieldId).toBe("anyag");
+    expect(danglingErrors[0].message).toContain("nem létező mezőre hivatkozik");
+  });
+
+  test("a choice source's non-numeric option codes are flagged on the material field", () => {
+    const choice = sampleChoice("szinek", "Színek száma", ["2", "3", "sok"]);
+    const definition = {
+      ...newDefinition("p"),
+      fields: [
+        choice,
+        {
+          ...sampleMaterial("anyag", "Anyag"),
+          colorCount: { kind: "from-field", fieldId: "szinek" } as const,
+        },
+      ],
+    };
+    const errors = colorCountValueErrors(definition);
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0].fieldId).toBe("anyag");
+    expect(errors[0].message).toContain("„sok”");
+    expect(errors[0].message).toContain("nem pozitív egész szám");
+  });
+});
+
+describe("lengthSourceValueErrors", () => {
+  test("a unit-priced product has none", () => {
+    expect(lengthSourceValueErrors(newDefinition("p"))).toEqual([]);
+  });
+
+  test("an unchosen source is silent even when an unnamed choice field exists", () => {
+    const definition = {
+      ...withPricingMode(newDefinition("p"), "length", ""),
+      fields: [newField("choice", "", { hu: "" })],
+    };
+
+    expect(lengthSourceValueErrors(definition)).toEqual([]);
+  });
+
+  test("a missing or non-choice source has no option errors", () => {
+    const inputSource = withPricingMode(
+      { ...newDefinition("p"), fields: [sampleInput("hossz", "Hossz")] },
+      "length",
+      "hossz"
+    );
+
+    expect(lengthSourceValueErrors(inputSource)).toEqual([]);
+
+    const missingSource = withPricingMode(newDefinition("p"), "length", "nincs");
+
+    expect(lengthSourceValueErrors(missingSource)).toEqual([]);
+  });
+
+  test("option codes must be numeric, 1..10000 cm and unique", () => {
+    const source = sampleChoice("hossz", "Hossz", ["10", "250", "abc", "0", "10001", "250"]);
+    source.options[5].label = { hu: "még egy" };
+    const definition = withPricingMode(
+      { ...newDefinition("p"), fields: [source] },
+      "length",
+      "hossz"
+    );
+
+    expect(lengthSourceValueErrors(definition)).toEqual([
+      {
+        fieldId: "hossz",
+        message: "A(z) „Hossz” méteráras forrásmező „abc” opciókódja nem szám (cm).",
+      },
+      {
+        fieldId: "hossz",
+        message:
+          "A(z) „Hossz” méteráras forrásmező „0” opciókódja csak 1 és 10000 közötti egész szám (cm) lehet — 10000 cm = 100 m.",
+      },
+      {
+        fieldId: "hossz",
+        message:
+          "A(z) „Hossz” méteráras forrásmező „10001” opciókódja csak 1 és 10000 közötti egész szám (cm) lehet — 10000 cm = 100 m.",
+      },
+      { fieldId: "hossz", message: 'hossz: duplikált opciókód: "250".' },
+    ]);
+  });
+
+  test("an unlabeled source is named by its id", () => {
+    const source = sampleChoice("hossz", "", ["abc"]);
+    const definition = withPricingMode(
+      { ...newDefinition("p"), fields: [source] },
+      "length",
+      "hossz"
+    );
+
+    expect(lengthSourceValueErrors(definition)).toEqual([
+      {
+        fieldId: "hossz",
+        message: "A(z) „hossz” méteráras forrásmező „abc” opciókódja nem szám (cm).",
+      },
+    ]);
+  });
+
+  test("in-range numeric codes pass", () => {
+    const source = sampleChoice("hossz", "Hossz", ["1", "10000"]);
+    const definition = withPricingMode(
+      { ...newDefinition("p"), fields: [source] },
+      "length",
+      "hossz"
+    );
+
+    expect(lengthSourceValueErrors(definition)).toEqual([]);
+  });
+});
+
+describe("withCustomValue", () => {
+  test("enabling starts empty and preserves a given previous value", () => {
+    const field = sampleChoice("szin", "Szín", ["kek"]);
+    const previous = { pattern: String.raw`^\d+$`, placeholder: { hu: "Egyéb" } };
+
+    expect(withCustomValue(field, true).customValue).toEqual({});
+    expect(withCustomValue(field, true, previous).customValue).toEqual(previous);
+  });
+
+  test("re-enabling keeps the custom value the field already had", () => {
+    const field = {
+      ...sampleChoice("szin", "Szín", ["kek"]),
+      customValue: { pattern: String.raw`^\d+$` },
+    };
+
+    expect(withCustomValue(field, true).customValue).toEqual({ pattern: String.raw`^\d+$` });
+  });
+
+  test("disabling removes the key entirely", () => {
+    const field = {
+      ...sampleChoice("szin", "Szín", ["kek"]),
+      customValue: { pattern: String.raw`^\d+$` },
+    };
+
+    const disabled = withCustomValue(field, false);
+
+    expect(Object.hasOwn(disabled, "customValue")).toBe(false);
+    expect(disabled).toStrictEqual(sampleChoice("szin", "Szín", ["kek"]));
+  });
+});
+
+describe("withColorCountMode", () => {
+  test("fixed keeps the existing count or starts from 1", () => {
+    const counted = sampleMaterial("anyag", "Anyag");
+    counted.colorCount = { kind: "fixed", count: 3 };
+
+    expect(withColorCountMode(counted, "fixed").colorCount).toEqual({ kind: "fixed", count: 3 });
+
+    const sourced = sampleMaterial("anyag", "Anyag");
+    sourced.colorCount = { kind: "from-field", fieldId: "hossz" };
+
+    expect(withColorCountMode(sourced, "fixed").colorCount).toEqual({ kind: "fixed", count: 1 });
+  });
+
+  test("from-field takes the given field id", () => {
+    const field = sampleMaterial("anyag", "Anyag");
+
+    expect(withColorCountMode(field, "from-field", "hossz").colorCount).toEqual({
+      kind: "from-field",
+      fieldId: "hossz",
+    });
+    expect(withColorCountMode(field, "from-field").colorCount).toEqual({
+      kind: "from-field",
+      fieldId: "",
+    });
+  });
+});
+
+describe("withVisibility", () => {
+  test("sets the rule and keeps the tooltip", () => {
+    const field = sampleToggle("kapcsolo", "Kapcsoló");
+    field.tooltip = { hu: "Kapcsold be" };
+
+    const updated = withVisibility(field, { kind: "when-present", fieldId: "szin" });
+
+    expect(updated).toEqual({
+      ...field,
+      visibility: { kind: "when-present", fieldId: "szin" },
+    });
+  });
+
+  test("material fields have no visibility — the call is a no-op", () => {
+    const field = sampleMaterial("anyag", "Anyag");
+    field.tooltip = { hu: "Válassz anyagot" };
+
+    const updated = withVisibility(field, { kind: "when-present", fieldId: "szin" });
+
+    expect(updated).toBe(field);
+    expect(Object.hasOwn(updated, "visibility")).toBe(false);
+  });
+});
+
+test("trims embroidery placeholder and pattern", () => {
+  const definition = newDefinition("p");
+
+  const field = newField("embroidery", " himzes ", { hu: " Hímzés " });
+
+  if (field.kind !== "embroidery") {
+    throw new Error("expected an embroidery field");
+  }
+
+  field.placeholder = { hu: " Pl. Boglárka " };
+  field.pattern = " ^[A-Z] ";
+  definition.fields = [field];
+
+  const cleaned = sanitize(definition);
+  const cleanedEmbroidery = cleaned.fields[0];
+
+  if (cleanedEmbroidery.kind !== "embroidery") {
+    throw new Error("expected an embroidery field");
+  }
+
+  expect(cleanedEmbroidery.id).toBe("himzes");
+  expect(cleanedEmbroidery.placeholder).toEqual({ hu: "Pl. Boglárka" });
+  expect(cleanedEmbroidery.pattern).toBe("^[A-Z]");
+  expect(ProductDefinitionSchema.safeParse(cleaned).success).toBe(true);
+});
+
+describe("summaryChips", () => {
+  test("choice chips count options and flag custom values", () => {
+    const field = sampleChoice("szin", "Szín", ["kek", "piros"]);
+
+    expect(summaryChips(field)).toEqual(["2 opció"]);
+
+    field.customValue = { pattern: String.raw`^\d+$` };
+
+    expect(summaryChips(field)).toEqual(["2 opció", "egyéni érték"]);
+  });
+
+  test("input chips flag requiredness and suggestions", () => {
+    const field = sampleInput("nev", "Név");
+
+    expect(summaryChips(field)).toEqual(["kötelező"]);
+
+    field.required = false;
+
+    expect(summaryChips(field)).toEqual([]);
+
+    field.suggestions = [{ value: "Anna", label: { hu: "Anna" } }];
+
+    expect(summaryChips(field)).toEqual(["javaslatok"]);
+  });
+
+  test("toggle chips show its price", () => {
+    const field = sampleToggle("kapcsolo", "Kapcsoló");
+    field.price = 500;
+
+    expect(summaryChips(field)).toEqual(["ár bekapcsolva: 500 Ft"]);
+  });
+
+  test("material chips count options and describe the colorCount mode", () => {
+    const field = sampleMaterial("anyag", "Anyag");
+    field.options = [
+      { materialId: "pamut", price: 0 },
+      { materialId: "vaszon", price: 0 },
+    ];
+    field.colorCount = { kind: "fixed", count: 3 };
+
+    expect(summaryChips(field)).toEqual(["2 anyag", "3 szín"]);
+
+    field.colorCount = { kind: "from-field", fieldId: "hossz" };
+
+    expect(summaryChips(field)).toEqual(["2 anyag", "színszám mezőből"]);
+  });
+
+  test("embroidery chips show the pricing mode", () => {
+    const field = newField("embroidery", "himzes", { hu: "Hímzés" });
+
+    if (field.kind !== "embroidery") {
+      throw new Error("expected an embroidery field");
+    }
+
+    expect(summaryChips(field)).toEqual(["szavanként"]);
+
+    field.pricing = { kind: "flat", price: 1000 };
+
+    expect(summaryChips(field)).toEqual(["egyszeri"]);
   });
 });
