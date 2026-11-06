@@ -55,7 +55,6 @@ function matchesPattern(pattern: string | undefined, value: string): boolean {
 
 type ProblemReason =
   | { reason: "unknown-material" }
-  | { reason: "duplicate-color" }
   | { reason: "foreign-color" }
   | { reason: "too-few-colors"; required: number }
   | { reason: "text-too-long"; subject: "text" | "value" }
@@ -114,10 +113,6 @@ function fieldProblem(
 
     if (offered === undefined) {
       return { reason: "unknown-material" };
-    }
-
-    if (new Set(selection.colors).size !== selection.colors.length) {
-      return { reason: "duplicate-color" };
     }
 
     if (selection.colors.some((color) => !offered.has(color))) {
@@ -204,8 +199,6 @@ function reasonMessage(problem: Extract<SelectionProblem, { code: "invalid" }>):
   switch (problem.reason) {
     case "unknown-material":
       return "ismeretlen anyagot tartalmaz";
-    case "duplicate-color":
-      return "ugyanazt a színt többször tartalmazza";
     case "foreign-color":
       return "az anyag által nem kínált színt tartalmaz";
     case "too-few-colors":
