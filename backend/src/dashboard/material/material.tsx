@@ -198,36 +198,41 @@ function MaterialsListPage(): ReactElement {
           {error !== null && <ErrorNotice message={error} />}
           {materials !== null && materials.length === 0 && <p>Még nincs egy anyag sem.</p>}
           {materials !== null && materials.length > 0 && (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-muted-foreground border-b text-left">
-                  <th className="py-2 pr-4 font-medium">Azonosító</th>
-                  <th className="py-2 pr-4 font-medium">Név</th>
-                  <th className="py-2 pr-4 font-medium">Kép</th>
-                  <th className="py-2 pr-4 font-medium">Színek</th>
-                </tr>
-              </thead>
-              <tbody>
-                {materials.map((material) => (
-                  <tr key={material.id} className="border-b">
-                    <td className="py-2 pr-4 font-mono text-xs">{material.slug}</td>
-                    <td className="py-2 pr-4">
-                      <DetailPageButton href={`/materials/${material.id}`} label={material.label} />
-                    </td>
-                    <td className="py-2 pr-4">
-                      {material.thumbnailPreview !== null && (
-                        <img
-                          src={material.thumbnailPreview}
-                          alt={material.label}
-                          className="h-12 w-12 rounded border object-cover"
-                        />
-                      )}
-                    </td>
-                    <td className="py-2 pr-4">{material.colorCount}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-muted-foreground border-b text-left">
+                    <th className="py-2 pr-4 font-medium">Azonosító</th>
+                    <th className="py-2 pr-4 font-medium">Név</th>
+                    <th className="py-2 pr-4 font-medium">Kép</th>
+                    <th className="py-2 pr-4 font-medium">Színek</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {materials.map((material) => (
+                    <tr key={material.id} className="border-b">
+                      <td className="py-2 pr-4 font-mono text-xs">{material.slug}</td>
+                      <td className="py-2 pr-4">
+                        <DetailPageButton
+                          href={`/materials/${material.id}`}
+                          label={material.label}
+                        />
+                      </td>
+                      <td className="py-2 pr-4">
+                        {material.thumbnailPreview !== null && (
+                          <img
+                            src={material.thumbnailPreview}
+                            alt={material.label}
+                            className="h-12 w-12 rounded border object-cover"
+                          />
+                        )}
+                      </td>
+                      <td className="py-2 pr-4">{material.colorCount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </PageBlock>
       </PageLayout>
@@ -513,7 +518,7 @@ function MaterialDetailPage({ route }: { route: AnyRoute }): ReactElement {
         >
           <div className="flex flex-col gap-4">
             {colors.map((row) => (
-              <div key={row.key} className="flex items-end gap-2 rounded border p-3">
+              <div key={row.key} className="flex flex-wrap items-end gap-2 rounded border p-3">
                 <label className="flex flex-col gap-1 text-sm">
                   <span>Kód</span>
                   <Input

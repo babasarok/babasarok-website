@@ -1,0 +1,12 @@
+/* The package table atoms pin whitespace-nowrap on every cell, so a narrow
+   card can only scroll horizontally. Inside a DataTable's @container/table,
+   let cells wrap below the dashboard's mobile breakpoint (useIsMobile =
+   768px): money and quantity tokens keep non-breaking separators, so plain
+   word wrapping cannot split them. Unlayered rules outrank the Tailwind
+   utilities layer, so no !important is needed. */
+@container table (max-width: 767px) {
+  [data-slot="table-head"],
+  [data-slot="table-cell"] {
+    white-space: normal;
+  }
+}

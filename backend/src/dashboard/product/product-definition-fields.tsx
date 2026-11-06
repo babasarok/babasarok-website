@@ -261,7 +261,7 @@ function ChoiceSettings({
 
         return (
           <div key={optionIndex} className="flex flex-col gap-1">
-            <div className="flex items-end gap-2">
+            <div className="flex flex-wrap items-end gap-2">
               {showValues && (
                 <label className="flex flex-col gap-1 text-sm">
                   <span>Érték</span>
@@ -568,7 +568,7 @@ function MaterialSettings({
         </ul>
       )}
       {field.options.map((entry, entryIndex) => (
-        <div key={entryIndex} className="flex items-end gap-2">
+        <div key={entryIndex} className="flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1 text-sm">
             <span>Anyag</span>
             <NativeSelect
@@ -742,7 +742,7 @@ function SuggestionGrid({
   return (
     <div className="flex flex-col gap-2">
       {suggestions.map((suggestion, suggestionIndex) => (
-        <div key={suggestionIndex} className="flex items-end gap-2">
+        <div key={suggestionIndex} className="flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1 text-sm">
             <span>Érték</span>
             <Input

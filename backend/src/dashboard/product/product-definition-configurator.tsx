@@ -815,7 +815,7 @@ export function ConfiguratorEditor({
             {creatingNew ? (
               <>
                 <Input
-                  className="w-64"
+                  className="w-full max-w-64"
                   value={definition.id}
                   onChange={(e) => {
                     setDefinition({ ...definition, id: e.target.value });
@@ -833,7 +833,7 @@ export function ConfiguratorEditor({
             <label className="flex flex-col gap-1 text-sm">
               <span>Név</span>
               <Input
-                className="w-80"
+                className="w-full max-w-80"
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
@@ -847,7 +847,7 @@ export function ConfiguratorEditor({
           <label className="flex flex-col gap-1 text-sm">
             <span>Alapár (Ft)</span>
             <NumberInput
-              className="w-40"
+              className="w-full max-w-40"
               value={definition.basePrice}
               onChange={(basePrice) => {
                 setDefinition({ ...definition, basePrice });
@@ -870,7 +870,7 @@ export function ConfiguratorEditor({
             <label className="flex flex-col gap-1 text-sm">
               <span>Forrásmező</span>
               <NativeSelect
-                className="w-52"
+                className="w-full max-w-52"
                 value={definition.pricing.sourceFieldId}
                 onChange={(e) => {
                   changeLengthSource(e.target.value);
@@ -1014,7 +1014,7 @@ export function ConfiguratorEditor({
       >
         <fieldset disabled={pending} className="flex flex-col gap-2">
           {banned.map((rule, index) => (
-            <div key={index} className="flex items-end gap-2">
+            <div key={index} className="flex flex-wrap items-end gap-2">
               {rule.map((materialId, memberIndex) => (
                 <label key={memberIndex} className="flex flex-col gap-1 text-sm">
                   <span>{memberIndex + 1}. anyag</span>
