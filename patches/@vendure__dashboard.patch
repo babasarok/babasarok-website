@@ -10,3 +10,25 @@ index b21dbc9100f0a16faf5420c7762a97bd8d90e3b7..46b259f431bc036f9862d3229369214c
                        }))
                      : [
                            {
+diff --git a/src/lib/framework/layout-engine/page-layout.tsx b/src/lib/framework/layout-engine/page-layout.tsx
+index 9b734d06d10c37078f6416316dd736e1025b4ee7..be0cb99b8acbc67a9fac47945d4497a4d5695ccb 100644
+--- a/src/lib/framework/layout-engine/page-layout.tsx
++++ b/src/lib/framework/layout-engine/page-layout.tsx
+@@ -498,8 +498,16 @@ export function PageActionBar({
+     }
+     let visibleMergedItems = mergedItems;
+     if (isMobile && mergedItems.length >= 2) {
++        // babasarok patch: extension items stay visible on mobile — hosts style the
++        // action bar to wrap and the app shell clips overflow, so hiding custom
++        // actions (e.g. extension "create" buttons) was needless; the page's own
++        // inline items still collapse to the primary one.
++        const extensionItems = mergedItems.filter(mergedItem => mergedItem.type !== 'inline');
++
+         visibleMergedItems =
+-            primaryItemIndex >= 0 ? [mergedItems[primaryItemIndex]] : [mergedItems[mergedItems.length - 1]];
++            primaryItemIndex >= 0
++                ? [...extensionItems, mergedItems[primaryItemIndex]]
++                : [mergedItems[mergedItems.length - 1]];
+     }
+ 
+     // When the page provides its own actions, the primary slot is taken (e.g. Update/Save),
