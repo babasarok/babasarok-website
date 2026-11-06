@@ -1,42 +1,35 @@
 # Product catalog
 
-Catalogue of handmade baby products that buyers can browse. Products are managed
-as CMS content, each optionally carrying configurable fields (options,
-embroidery, material picks), and are listed on a single searchable,
-filterable product list with a detail page per product.
+Catalogue of handmade baby products that buyers can browse. Products are
+managed in Vendure (edited in the stock dashboard's product configurator
+editor), each optionally carrying configurable fields (options, embroidery,
+material picks), and are listed on a single searchable, filterable product list
+with a detail page per product. The catalog is not stored in any CMS — the
+former Tina product collections were removed after the site cutover (roadmap
+epic 4).
 
-> **Transition note (ADR 0009/0010).** During the Vendure migration the
-> commerce model above is owned by the canonical product definition stored in
-> Vendure: `product_id` ↔ the definition's `id` (the native product's
-> `productId`), `can_be_ordered` ↔ `orderable`, field kinds map to `input`,
-> `choice` (presentation `select`/`radio`/`color`), `toggle`, `material` and
-> `embroidery`, and `banned_combinations` ↔ `forbiddenMaterialCombinations`.
-> The native Product owns its name and slug (ADR 0011 decision 1): the
-> preview seed writes the Tina `title` into the native product's name, the
-> slug is seeded from the definition's `id` at creation only (the preview seed
-> then sets it to the Tina content file name, the current site URL — 8 of 33
-> differ from the product id), and the definition sync never writes the
-> product's name or slug. Generated variant names list
-> the labelled field values ("`Anyag: Pamut · Méret: Nagy · Masni`"): a toggle
-> shows its bare label when on and is omitted when off; a variant with nothing
-> to list carries the product's name, so a rename on the stock product form
-> propagates to those variants; a stock product save re-syncs only when such
-> a variant exists. The product type is a value of the public
-> `babasarok-product-type` facet on the native product (ADR 0011 decision 2),
-> not a definition field. Editorial content still maps to the native product
-> at cutover: body → `description`, `thumbnail` → featured asset, `images` →
-> assets. The remaining display fields are native Vendure custom fields (the
-> display-field
-> gap of ADR 0010, resolved): `shortDescription`, `tagline` (the Tina
-> `categories` "Alcím"), `date` ("newest first" sorting), `popularityRank` (nullable int, 1 = most
-> popular; the curated "Népszerű" sort, unranked products after ranked ones)
-> and `icon` (an Asset relation) on `Product`, plus a `galleryDescription` custom field on `Asset`
-> for the per-image gallery text — all editable in the stock dashboard, and
-> the preview seed populates them from Tina content (thumbnails and gallery
-> images upload as real assets). They stay outside the canonical
-> configurator model. "Configurator" in this spec means the
-> buyer-facing order form; the admin-side editor is the dashboard's product
-> configurator editor.
+> **Model note (ADR 0009/0010/0011).** The commerce model is owned by the
+> canonical product definition stored in Vendure: the definition's `id` is the
+> native product's `productId`, `orderable` gates buying, field kinds map to
+> `input`, `choice` (presentation `select`/`radio`/`color`), `toggle`,
+> `material` and `embroidery`, and `forbiddenMaterialCombinations` are the
+> banned material combinations. The native Product owns its name and slug
+> (ADR 0011 decision 1); the definition sync never writes them. Generated
+> variant names list the labelled field values
+> ("`Anyag: Pamut · Méret: Nagy · Masni`"): a toggle shows its bare label when
+> on and is omitted when off; a variant with nothing to list carries the
+> product's name, so a rename on the stock product form propagates to those
+> variants; a stock product save re-syncs only when such a variant exists. The
+> product type is a value of the public `babasarok-product-type` facet on the
+> native product (ADR 0011 decision 2), not a definition field. Display fields
+> are native Vendure custom fields: `shortDescription`, `tagline`, `date`
+> ("newest first" sorting), `popularityRank` (nullable int, 1 = most popular;
+> the curated "Népszerű" sort, unranked products after ranked ones) and `icon`
+> (an Asset relation) on `Product`, plus a `galleryDescription` custom field
+> on `Asset` for the per-image gallery text — all editable in the stock
+> dashboard. They stay outside the canonical configurator model.
+> "Configurator" in this spec means the buyer-facing order form; the
+> admin-side editor is the dashboard's product configurator editor.
 
 ## Requirements
 
