@@ -161,6 +161,23 @@ export function stockTable(page: Page): Locator {
     .filter({ has: page.getByRole("columnheader", { name: "Price" }) });
 }
 
+/** A configurator field card, in definition order — the only binding for
+ * freshly created rows, whose field ids are generated on save. */
+export function fieldCard(page: Page, index: number): Locator {
+  return page.locator('[data-testid="field-card"]').nth(index);
+}
+
+/** The configurator field card carrying a saved field id. */
+export function fieldCardById(page: Page, fieldId: string): Locator {
+  return page.locator(`[data-testid="field-card"][data-field-id="${fieldId}"]`);
+}
+
+/** Expands a collapsed field card via its header chevron; cards load
+ * collapsed after every page load. */
+export async function expandCard(card: Locator): Promise<void> {
+  await card.getByRole("button", { name: "Mező kibontása" }).click();
+}
+
 interface FixtureMaterial {
   slug: string;
   label: string;
