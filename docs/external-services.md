@@ -54,11 +54,16 @@ Content edits ──▶ Tina Cloud (CMS) ──▶ GitHub repo ──▶ Workers
   docker-group membership makes it work); hourly `preview-teardown.ts` plus
   crash-leftover cleanup (stale `incoming-*.tar` and `.env.cloudflare-*.tmp`
   files older than 2h are deleted).
-- **Backups: Hetzner server backups** (paid, enabled in the Hetzner Cloud
+- **Backups:** hourly prod DB dumps on the box — `deploy/infra/db-backup.ts`
+  (cron installed by the deploy) writes a compressed `pg_dump -Fc` archive to
+  `/srv/babasarok/backups` every hour and keeps 14 days. Restore a dump with
+  `pg_restore` into a scratch DB to inspect or selectively recover data. On
+  top of that: Hetzner server backups (paid, enabled in the Hetzner Cloud
   console — 7 rotating snapshots of the whole server incl. the postgres
-  volume, taken on Hetzner's schedule). This covers box loss and volume
-  corruption; single-file restores mean a full-server restore. The
-  `babasarok-prod_pgdata` volume lives only on that server.
+  volume, taken on Hetzner's schedule). The dumps cover dashboard mistakes
+  and bad edits; the Hetzner snapshots cover box loss and volume corruption,
+  but their restore is a full-server restore. The `babasarok-prod_pgdata`
+  volume lives only on that server.
 - **Monitoring: uptime.attilagreguss.co.uk** polls the prod health endpoint
   (`https://api.babasarok.net/health`, which Vendure serves) and alerts the
   owner on failure. Preview stacks are not polled.

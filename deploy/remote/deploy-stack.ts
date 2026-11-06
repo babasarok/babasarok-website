@@ -305,10 +305,11 @@ try {
     "Caddyfile",
     "preview-teardown.ts",
     "gen-networks-override.ts",
+    "db-backup.ts",
   ]) {
     copyFileSync(`${DIR}/repo/deploy/infra/${f}`, `${INFRA}/${f}`);
   }
-  for (const f of ["preview-teardown.ts", "gen-networks-override.ts"]) {
+  for (const f of ["preview-teardown.ts", "gen-networks-override.ts", "db-backup.ts"]) {
     chmodSync(`${INFRA}/${f}`, 0o755);
   }
   for (const f of ["preview-teardown.sh", "gen-networks-override.sh"]) {
@@ -345,11 +346,13 @@ try {
   // SSH session itself got here — a killed build can skip it).
   const oldCrontab = run("bash", ["-c", "crontab -l 2>/dev/null || true"]).split("\n");
   const kept = oldCrontab.filter(
-    (l) => !l.includes("preview-teardown") && !l.includes("incoming-")
+    (l) => !l.includes("preview-teardown") && !l.includes("incoming-") && !l.includes("db-backup")
   );
   const cronLine =
     "17 * * * * /srv/babasarok/infra/preview-teardown.ts >> /srv/babasarok/infra/preview-teardown.log 2>&1; find /srv/babasarok -name 'incoming-*.tar' -mmin +120 -delete; find /srv/babasarok -name '.env.cloudflare-*.tmp' -mmin +120 -delete";
-  writeFileSync(`${INFRA}/.crontab.new`, [...kept, cronLine, ""].join("\n"));
+  const backupCronLine =
+    "7 * * * * /srv/babasarok/infra/db-backup.ts >> /srv/babasarok/infra/db-backup.log 2>&1";
+  writeFileSync(`${INFRA}/.crontab.new`, [...kept, cronLine, backupCronLine, ""].join("\n"));
   execFileSync("crontab", [`${INFRA}/.crontab.new`]);
   rmSync(`${INFRA}/.crontab.new`);
 
