@@ -527,31 +527,31 @@ export function loadBearingFieldIds(definition: ProductDefinitionInput): Set<str
 /** A length source must hand the storefront a bare centimeter number: inputs
  * get the digits-only pattern, an existing choice customValue gets it too —
  * custom values are never turned on here. */
+/** The length-source field's text is validated against the digit pattern —
+ * always, overwriting whatever regex it carried before the assignment (a
+ * non-numeric pattern on a length source would price garbage). A choice
+ * without custom values keeps none: its option ids are the buyer values. */
+export function withLengthSourcePattern(field: FieldInput): FieldInput {
+  if (field.kind === "input") {
+    return { ...field, pattern: String.raw`^\d+$` };
+  }
+
+  if (field.kind === "choice" && field.customValue !== undefined) {
+    return { ...field, customValue: { ...field.customValue, pattern: String.raw`^\d+$` } };
+  }
+
+  return field;
+}
+
 export function applyLengthSourceDefaults(
   definition: ProductDefinitionInput,
   sourceFieldId: string
 ): ProductDefinitionInput {
   return {
     ...definition,
-    fields: definition.fields.map((field) => {
-      if (field.id !== sourceFieldId) {
-        return field;
-      }
-
-      if (field.kind === "input" && field.pattern === undefined) {
-        return { ...field, pattern: String.raw`^\d+$` };
-      }
-
-      if (
-        field.kind === "choice" &&
-        field.customValue !== undefined &&
-        field.customValue.pattern === undefined
-      ) {
-        return { ...field, customValue: { ...field.customValue, pattern: String.raw`^\d+$` } };
-      }
-
-      return field;
-    }),
+    fields: definition.fields.map((field) =>
+      field.id === sourceFieldId ? withLengthSourcePattern(field) : field
+    ),
   };
 }
 

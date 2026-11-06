@@ -583,7 +583,7 @@ describe("loadBearingFieldIds", () => {
 });
 
 describe("applyLengthSourceDefaults", () => {
-  test("an input source gets the digits-only pattern only when it has none", () => {
+  test("an input source always carries the digits-only pattern", () => {
     const bare = { ...newDefinition("p"), fields: [sampleInput("hossz", "Hossz")] };
     const defaulted = applyLengthSourceDefaults(bare, "hossz");
     const field = defaulted.fields[0];
@@ -595,11 +595,16 @@ describe("applyLengthSourceDefaults", () => {
     expect(field.pattern).toBe(String.raw`^\d+$`);
 
     const custom = { ...bare, fields: [{ ...sampleInput("hossz", "Hossz"), pattern: "^[0-9]+$" }] };
+    const overwritten = applyLengthSourceDefaults(custom, "hossz").fields[0];
 
-    expect(applyLengthSourceDefaults(custom, "hossz").fields[0]).toEqual(custom.fields[0]);
+    if (overwritten.kind !== "input") {
+      throw new Error("expected an input field");
+    }
+
+    expect(overwritten.pattern).toBe(String.raw`^\d+$`);
   });
 
-  test("a choice source fills only an existing customValue's missing pattern", () => {
+  test("a choice source stamps only an existing customValue's pattern", () => {
     const choice = sampleChoice("hossz", "Hossz", ["250"]);
     const bare = { ...newDefinition("p"), fields: [choice] };
 
@@ -627,10 +632,13 @@ describe("applyLengthSourceDefaults", () => {
     });
 
     const withPattern = { ...bare, fields: [{ ...choice, customValue: { pattern: "^[0-9]+$" } }] };
+    const overwritten = applyLengthSourceDefaults(withPattern, "hossz").fields[0];
 
-    expect(applyLengthSourceDefaults(withPattern, "hossz").fields[0]).toEqual(
-      withPattern.fields[0]
-    );
+    if (overwritten.kind !== "choice") {
+      throw new Error("expected a choice field");
+    }
+
+    expect(overwritten.customValue).toEqual({ pattern: String.raw`^\d+$` });
   });
 
   test("other kinds and other fields are untouched", () => {

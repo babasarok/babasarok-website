@@ -28,6 +28,7 @@ import {
   withCustomValue,
   withText,
   withVisibility,
+  withLengthSourcePattern,
   type ChoiceFieldInput,
   type ChoiceOptionInput,
   type EmbroideryFieldInput,
@@ -232,6 +233,7 @@ function ChoiceSettings({
   language,
   revealDetails,
   showValues,
+  isSource,
   sourceErrors,
   baselineOptions,
   onFieldChange,
@@ -240,6 +242,7 @@ function ChoiceSettings({
   language: string;
   revealDetails: boolean;
   showValues: boolean;
+  isSource: boolean;
   sourceErrors: string[];
   baselineOptions: ChoiceOptionInput[] | undefined;
   onFieldChange: (field: FieldInput) => void;
@@ -287,7 +290,7 @@ function ChoiceSettings({
                   );
                 }}
               />
-              {revealDetails && (
+              {revealDetails && !isSource && (
                 <>
                   <label className="flex flex-col gap-1 text-sm">
                     <span>Ár (Ft)</span>
@@ -379,7 +382,9 @@ function ChoiceSettings({
           <Switch
             checked={field.customValue !== undefined}
             onCheckedChange={(checked) => {
-              onFieldChange(withCustomValue(field, checked));
+              const next = withCustomValue(field, checked);
+
+              onFieldChange(isSource ? withLengthSourcePattern(next) : next);
             }}
           />
           <span>Egyéni érték</span>
@@ -389,6 +394,7 @@ function ChoiceSettings({
             field={field}
             customValue={field.customValue}
             language={language}
+            isSource={isSource}
             onFieldChange={onFieldChange}
           />
         )}
@@ -401,11 +407,13 @@ function CustomValueInputs({
   field,
   customValue,
   language,
+  isSource,
   onFieldChange,
 }: {
   field: ChoiceFieldInput;
   customValue: NonNullable<ChoiceFieldInput["customValue"]>;
   language: string;
+  isSource: boolean;
   onFieldChange: (field: FieldInput) => void;
 }): ReactElement {
   return (
@@ -415,6 +423,7 @@ function CustomValueInputs({
         <Input
           className="w-56 font-mono"
           value={customValue.pattern ?? ""}
+          disabled={isSource}
           onChange={(e) => {
             const value = e.target.value;
 
@@ -625,25 +634,29 @@ function MaterialSettings({
 function InputSettings({
   field,
   language,
+  isSource,
   onFieldChange,
 }: {
   field: InputFieldInput;
   language: string;
+  isSource: boolean;
   onFieldChange: (field: FieldInput) => void;
 }): ReactElement {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-end gap-2">
-        <label className="flex flex-col gap-1 text-sm">
-          <span>Ár (Ft)</span>
-          <NumberInput
-            className="w-28"
-            value={field.price}
-            onChange={(price) => {
-              onFieldChange({ ...field, price });
-            }}
-          />
-        </label>
+        {!isSource && (
+          <label className="flex flex-col gap-1 text-sm">
+            <span>Ár (Ft)</span>
+            <NumberInput
+              className="w-28"
+              value={field.price}
+              onChange={(price) => {
+                onFieldChange({ ...field, price });
+              }}
+            />
+          </label>
+        )}
         <LocalizedInput
           label="Helyettesítő szöveg"
           text={field.placeholder}
@@ -664,6 +677,7 @@ function InputSettings({
           <Input
             className="w-56 font-mono"
             value={field.pattern ?? ""}
+            disabled={isSource}
             onChange={(e) => {
               const value = e.target.value;
 
@@ -1274,6 +1288,7 @@ export function FieldEditor({
                   language={language}
                   revealDetails={revealDetails}
                   showValues={revealDetails || isSource}
+                  isSource={isSource}
                   sourceErrors={sourceValueErrors}
                   baselineOptions={baselineOptions}
                   onFieldChange={updateField}
@@ -1298,7 +1313,12 @@ export function FieldEditor({
           )}
           {field.kind === "input" && (
             <FieldSection title="Beállítások">
-              <InputSettings field={field} language={language} onFieldChange={updateField} />
+              <InputSettings
+                field={field}
+                language={language}
+                isSource={isSource}
+                onFieldChange={updateField}
+              />
             </FieldSection>
           )}
           {field.kind === "embroidery" && (
