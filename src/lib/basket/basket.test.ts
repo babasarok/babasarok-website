@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { makeField } from "../__tests__/fixtures";
 import type { Field } from "@/lib/types.svelte";
@@ -317,6 +318,8 @@ describe("placeOrder", () => {
 });
 
 describe("createBasketApi", () => {
+  const RequestBodySchema = z.object({ query: z.string() });
+
   function apiWith(
     body: unknown,
     headers: Record<string, string> = {}
@@ -387,6 +390,32 @@ describe("createBasketApi", () => {
       "Bearer old"
     );
     expect(token()).toBe("new");
+  });
+
+  it("fetches the full variant matrix through productVariants and maps the axes flat", async () => {
+    const { api, fetchMock } = apiWith({
+      data: {
+        productVariants: [
+          { id: "7", options: [{ code: "50", group: "meret" }] },
+          { id: "8", options: [{ code: "igen", group: "fodor" }] },
+        ],
+      },
+    });
+    const result = await api.productVariants("parna");
+
+    expect(result).toMatchObject({
+      ok: true,
+      value: [
+        { id: "7", options: [{ code: "50", group: "meret" }] },
+        { id: "8", options: [{ code: "igen", group: "fodor" }] },
+      ],
+    });
+    const init = fetchMock.mock.calls[0]?.[1];
+    const body = RequestBodySchema.safeParse(
+      typeof init?.body === "string" ? JSON.parse(init.body) : null
+    );
+
+    expect(body.success && body.data.query.includes("productVariants(slug: $slug)")).toBe(true);
   });
 
   it("reports malformed responses instead of throwing", async () => {

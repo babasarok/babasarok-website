@@ -5,6 +5,7 @@ import {
   ProductFieldResolver,
   productDefinitionSchema,
   ShopProductFieldResolver,
+  ShopProductVariantsResolver,
   shopProductSchema,
 } from "./product.resolver";
 import { ShopThreadColorResolver } from "./thread-color.resolver";
@@ -20,7 +21,7 @@ import { BulkVariantWriter } from "./bulk-variant-writer";
   },
   shopApiExtensions: {
     schema: shopProductSchema,
-    resolvers: [ShopProductFieldResolver, ShopThreadColorResolver],
+    resolvers: [ShopProductFieldResolver, ShopProductVariantsResolver, ShopThreadColorResolver],
   },
   providers: [ProductDefinitionService, BulkVariantWriter],
   dashboard: "../../dashboard/product/product-definition.tsx",

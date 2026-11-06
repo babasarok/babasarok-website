@@ -72,5 +72,5 @@ export type ShippingQuote = z.output<typeof ShippingQuoteSchema>;
 
 export const VariantOptionsSchema = z.object({
   id: z.string(),
-  options: z.array(z.object({ code: z.string(), group: z.object({ code: z.string() }) })),
+  options: z.array(z.object({ code: z.string(), group: z.string() })),
 });

@@ -22,7 +22,7 @@ const MATERIAL_PRICES: Record<MaterialSlug, number> = {
 
 export const COLORS = ["feher", "kek"] as const;
 
-function materialField(id: string, label: string): object {
+export function materialField(id: string, label: string): object {
   return {
     kind: "material",
     id,

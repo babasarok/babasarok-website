@@ -472,6 +472,12 @@ language as `?languageCode=` (currently `hu`).
 - `threadColors` — the values of the private thread-color facet (`id` = the
   facet value code, `label`, `hex`, `swatch`); the facet itself stays hidden
   from the shop's `facets`.
+- `productVariants(slug)` — the product's full variant matrix (`id` plus each
+  variant's option `group`/`code` pairs). Vendure's own `Product.variants`
+  field resolves with the shop list-query limit and takes no paging
+  arguments, so the configurator matches the buyer's configuration against
+  this query instead: a matrix larger than the limit must still come back
+  complete.
 - The native `Product` custom fields (`shortDescription`, `tagline`, `date`,
   `popularityRank`, `icon`) and `Asset.galleryDescription` are public.
 
@@ -479,6 +485,9 @@ language as `?languageCode=` (currently `hu`).
   - WHEN products are sorted by popularity
   - THEN ranked products come first by ascending `popularityRank` and
     unranked products follow in their existing order
+- **Scenario: Matrix larger than the list-query limit**
+  - WHEN a generated product has more variants than the shop list-query limit
+  - THEN `productVariants(slug)` returns every variant of the product
 - **Scenario: Invalid definition**
   - WHEN a response's `productDefinition` does not match the canonical schema
   - THEN the catalog read fails instead of rendering partial data
