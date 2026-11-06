@@ -20,10 +20,11 @@ ordering).
 3. **Vendure must support every product field Tina has today** (field kinds
    input/select/radio/color/toggle/embroidery/material, banned material
    combinations, length-based pricing, product groups/related products;
-   per-product discounts are dropped by owner decision, see epic 2 status). Existing Tina product content is test data for
-   the temporary preview seed and the completeness yardstick; **trimming
-   content files for schema validity is allowed** (both products and
-   materials, minimal frontmatter edits — site code/tooling stays untouched).
+   per-product discounts are dropped by owner decision, see epic 2 status).
+   Existing Tina product content was the catalog migration's source and
+   remains the completeness yardstick; **trimming content files for schema
+   validity is allowed** (both products and materials, minimal frontmatter
+   edits — site code/tooling stays untouched).
 4. **Length-based pricing is a hard requirement.** It is only phased out if it
    proves to be a really big problem — ADR 0010 shows it fits natively
    (OrderLine length + per-material per-cm prices), including un-splitting the
@@ -32,7 +33,8 @@ ordering).
    genuinely suffers (the structured model exists exactly because the stock
    variant editor cannot express this catalog).
 6. **The seed machinery is temporary and preview-only.** Prod migration at
-   cutover is a hand-migration run directly from the repo.
+   cutover is a hand-migration run directly from the repo. (Done 2026-11-06:
+   the prod hand-migration ran and the importers were removed.)
 7. **Embroidery per-word stays a special case** (a priced input field kind,
    never a variant axis).
 
@@ -60,8 +62,9 @@ Merge strategy (owner decision): backend and other invisible changes are PRs
 against `feat/vendure-materials` (PR #76); customer-facing site changes are
 PRs against `feat/site-cutover`, which branches from it. Order: merge #76 to
 `main` → one-off prod migration of all products with full-size assets →
-merge `feat/site-cutover` (which also removes the preview importers) →
-cleanups as follow-ups. A slice with both kinds splits into two PRs.
+merge the fast-sync PR (which also removes the preview importers) →
+merge `feat/site-cutover` → cleanups as follow-ups. A slice with both kinds
+splits into two PRs.
 
 - ✅ **S1 Shop-API catalog surface + site data layer** — the shop API exposes
   what the site renders (product definitions, materials and colors, thread
@@ -94,9 +97,17 @@ cleanups as follow-ups. A slice with both kinds splits into two PRs.
   `Product.description` and edits a new translatable material description;
   images reference Vendure assets by their host-relative source path and the
   site renders them as asset-server preset URLs; raw HTML is disabled; the
-  preview import carries the Tina bodies
-- ⬜ **S6 Prod cutover** — hand migration of the catalog into prod
-  (`converge-facets`, `import-facets`, products), switch, verify
+  catalog import carried the Tina bodies
+- ✅ **S6 catalog migration** (2026-11-06) — the prod hand-migration ran
+  from a dev machine: 33/33 products, 11 materials, facets, display fields,
+  groups and the szett promotion; the `[placeholder]` products stay until
+  the switch (the live checkout targets them). The importers were removed
+  with this change; prod's search index needed an admin `reindex` (the
+  indexer's incremental `update-variants` job only indexes its first
+  take-50 page — any future bulk write must reindex or page)
+- ⬜ **S6 switch & verify** — merge the site cutover, flip prod to the
+  Vendure catalog, retire the placeholders, run the epic-2
+  Vendure-complete gate and the user / owner journey click-throughs
 
 ## Post-cutover follow-ups
 
@@ -128,15 +139,11 @@ merged to main until the backend structure is settled):
   spike-proven)
 - ✅ Canonical product schema in `packages/product-definition` (PR #77)
 - ✅ Products core (definition storage, batched variant sync with drift
-  detection, migration, admin API; seed 33/33 products / 11/11 materials —
-  PR #77; previews now import a curated 7-product subset covering every
-  implemented feature, so deploys fit Cloudflare's 30-minute limit — see
-  `backend/scripts/import-products.ts`). Known issue feeding the dashboard
-  step: sync runs ~1.5–3 variants/s inside Vendure's
-  `ProductVariantService.create` (on the shared box, observed ~1/s with the
-  whole matrix buffered in one uncommitted transaction — no observable
-  progress for 20+ min on the 1344-variant product); big matrices need
-  minutes, so dashboard saves must go async (job queue)
+  detection, migration, admin API — PR #77). The variant sync used to run
+  ~1.5–3 variants/s inside Vendure's `ProductVariantService.create` (on the
+  shared box, observed ~1/s with the whole matrix buffered in one
+  uncommitted transaction — no observable progress for 20+ min on the
+  1344-variant product); the bulk writer replaces it (see S6)
 - ✅ Dashboard production pass (async job-queue sync — 576-variant save
   returns in ~130ms with background convergence; configurator page block on
   the stock product page; creation folded into the stock products list
@@ -151,8 +158,8 @@ merged to main until the backend structure is settled):
 - ✅ Facets + Collections — material/color facet values on generated variants,
   auto-managed per-material collections, and event-driven re-sync of affected
   products on material (create/rename/color/delete) changes; facets and
-  collections live in the stock dashboard, `convergeMaterialFacets` /
-  `pnpm -C backend run converge-facets` converges pre-facet databases
+  collections live in the stock dashboard; the `convergeMaterialFacets`
+  admin mutation converges pre-facet databases
 - ✅ Server-side pricing + promotions — a custom `OrderItemPriceCalculationStrategy`
   prices length/embroidery from order-line custom fields (`lengthCm`,
   `selections`), with an order interceptor rejecting unpriceable lines (no
@@ -160,15 +167,15 @@ merged to main until the backend structure is settled):
   order action) whose argless condition reads the private "Szettek"
   collection's children — groups are private Collections (members via the
   native `product-id-filter`, the set discount a `setDiscount` custom field
-  edited in the stock dashboard); the seed upserts the collections and the
-  promotion idempotently. The backend keeps its own
+  edited in the stock dashboard); the import seeded the collections and the
+  promotion. The backend keeps its own
   copy of the pricing logic; `src/lib/pricing` is untouched until cutover
   (supersedes the price-authority part of issue #71). Per-product %
   discounts are dropped (owner decision: unused); they get no Vendure home
 - ✅ Display fields — `shortDescription`, `tagline` (the Tina `categories`),
   `date` and `icon` as `Product` custom fields and gallery descriptions as an
   `Asset` custom field, editable in the stock dashboard and populated by the
-  preview seed ([ADR 0010](adr/0010-native-generated-product-model.md))
+  catalog import ([ADR 0010](adr/0010-native-generated-product-model.md))
 - ✅ Native ownership of product identity — the native Product owns its name
   and slug ([ADR 0011](adr/0011-native-ownership-and-translatable-catalog.md)
   decision 1): the canonical definition dropped its `label` (data migration
@@ -183,7 +190,7 @@ merged to main until the backend structure is settled):
   `babasarok-thread-color` facet with `hex`/`swatch` custom fields; `type`
   left the canonical definition (data migration) and `ThreadColorPaletteSchema`
   was retired; the order-line interceptor rejects unknown thread colors;
-  `import-facets` seeds both
+  the import seeded both, the owner maintains them on the stock dashboard
 - ✅ Translatable catalog text — material/color labels, subtitle and
   description are Vendure translation entities and definition text is a
   `LocalizedText` (`hu` required, others optional, hu fallback), edited in the
