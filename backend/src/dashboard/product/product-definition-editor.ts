@@ -571,6 +571,11 @@ export function lengthSourceValueErrors(
   }
 
   const sourceFieldId = definition.pricing.sourceFieldId;
+
+  if (sourceFieldId === "") {
+    return [];
+  }
+
   const source = definition.fields.find((field) => field.id === sourceFieldId);
 
   if (source === undefined || source.kind !== "choice") {

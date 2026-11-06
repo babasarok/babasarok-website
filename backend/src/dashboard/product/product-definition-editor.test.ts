@@ -659,6 +659,15 @@ describe("lengthSourceValueErrors", () => {
     expect(lengthSourceValueErrors(newDefinition("p"))).toEqual([]);
   });
 
+  test("an unchosen source is silent even when an unnamed choice field exists", () => {
+    const definition = {
+      ...withPricingMode(newDefinition("p"), "length", ""),
+      fields: [newField("choice", "", { hu: "" })],
+    };
+
+    expect(lengthSourceValueErrors(definition)).toEqual([]);
+  });
+
   test("a missing or non-choice source has no option errors", () => {
     const inputSource = withPricingMode(
       { ...newDefinition("p"), fields: [sampleInput("hossz", "Hossz")] },
