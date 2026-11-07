@@ -4,12 +4,8 @@ import { Markdown } from "astro-md-2";
 import patternSvg from "../../assets/images/service/background-pattern.svg?url";
 import TopTitle from "../ui/TopTitle.astro";
 import { getEntry } from "astro:content";
-<<<<<<< HEAD
 import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
-=======
-import { localeFromPathname } from "../../lib/i18n";
-import { createI18n } from "../../lib/i18next";
->>>>>>> e8/routing-seo
+import { createI18n } from "@/lib/i18next";
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const entry = (await getEntry(

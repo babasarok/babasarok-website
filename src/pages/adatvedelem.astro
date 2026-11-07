@@ -4,7 +4,7 @@ import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
 import { getConfig } from "../lib/config";
 import { localeFromPathname } from "../lib/i18n";
-<<<<<<< HEAD
+import { createI18n } from "../lib/i18next";
 
 const locale = localeFromPathname(Astro.url.pathname);
 const entry = (await getCollection("adatvedelem")).find(
@@ -14,20 +14,13 @@ const entry = (await getCollection("adatvedelem")).find(
 if (!entry) {
   throw new Error("Adatvedelem entry not found");
 }
-=======
-import { createI18n } from "../lib/i18next";
->>>>>>> e8/routing-seo
 
 const { Content } = await render(entry);
 const { title } = entry.data;
 
-<<<<<<< HEAD
 const config = await getConfig(locale);
-=======
-const config = await getConfig();
-const i18n = createI18n(localeFromPathname(Astro.url.pathname));
+const i18n = createI18n(locale);
 const t = i18n.t.bind(i18n);
->>>>>>> e8/routing-seo
 const address = config.address ?? null;
 ---
 
