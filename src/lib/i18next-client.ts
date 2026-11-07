@@ -39,3 +39,10 @@ export function getClientI18n(locale: Locale): Promise<I18n> {
   instances.set(locale, created);
   return created;
 }
+
+// Messages flowing through the basket layer are either a dictionary key
+// (blockers, error codes) or a server-provided sentence; resolve only the
+// former, pass the latter through untouched.
+export function translateMessage(i18n: I18n, message: string): string {
+  return i18n.exists(message) ? i18n.t(message, { defaultValue: message }) : message;
+}
