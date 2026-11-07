@@ -12,24 +12,30 @@ const complete: CheckoutFacts = {
 
 describe("checkoutRefusal", () => {
   it("accepts a complete order", () => {
-    expect(checkoutRefusal(complete)).toBeUndefined();
+    expect(checkoutRefusal(complete, "hu")).toBeUndefined();
   });
 
   it("needs no address for a method that does not require one", () => {
     expect(
-      checkoutRefusal({ ...complete, shippingMethodRequiresAddress: false, hasAddress: false })
+      checkoutRefusal(
+        { ...complete, shippingMethodRequiresAddress: false, hasAddress: false },
+        "hu"
+      )
     ).toBeUndefined();
   });
 
-  it("names every missing part", () => {
-    const refusal = checkoutRefusal({
-      lineCount: 0,
-      hasCustomer: false,
-      hasShippingMethod: false,
-      termsAccepted: false,
-      shippingMethodRequiresAddress: false,
-      hasAddress: false,
-    });
+  it("names every missing part in Hungarian", () => {
+    const refusal = checkoutRefusal(
+      {
+        lineCount: 0,
+        hasCustomer: false,
+        hasShippingMethod: false,
+        termsAccepted: false,
+        shippingMethodRequiresAddress: false,
+        hasAddress: false,
+      },
+      "hu"
+    );
 
     expect(refusal).toBe(
       "A rendelés nem adható le, hiányzik: legalább egy termék, a vevő adatai, a szállítási mód, az ÁSZF elfogadása."
@@ -37,6 +43,24 @@ describe("checkoutRefusal", () => {
   });
 
   it("requires the address of a method that needs one", () => {
-    expect(checkoutRefusal({ ...complete, hasAddress: false })).toContain("a szállítási cím");
+    expect(checkoutRefusal({ ...complete, hasAddress: false }, "hu")).toContain("a szállítási cím");
+  });
+
+  it("refuses in the request language", () => {
+    const refusal = checkoutRefusal(
+      {
+        lineCount: 0,
+        hasCustomer: false,
+        hasShippingMethod: false,
+        termsAccepted: false,
+        shippingMethodRequiresAddress: false,
+        hasAddress: false,
+      },
+      "en"
+    );
+
+    expect(refusal).toBe(
+      "The order cannot be submitted, missing: at least one product, the customer details, the delivery method, the acceptance of the terms."
+    );
   });
 });

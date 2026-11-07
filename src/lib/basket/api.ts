@@ -18,7 +18,12 @@ export interface TokenStore {
 export interface BasketApiDeps {
   fetch: typeof fetch;
   apiUrl: string;
-  languageCode: string;
+  /**
+   * The shop-API language per request: the fixed catalog language or a
+   * browser function reading the page's locale when the API outlives a
+   * single page.
+   */
+  languageCode: string | (() => string);
   tokens: TokenStore;
 }
 
@@ -140,12 +145,19 @@ function asFailure(error: unknown): Failure {
 }
 
 export function createBasketApi(deps: BasketApiDeps): BasketApi {
+  function language(): string {
+    return typeof deps.languageCode === "function" ? deps.languageCode() : deps.languageCode;
+  }
+
   async function request<Schema extends z.ZodType>(
     query: string,
     variables: Record<string, unknown>,
     schema: Schema
   ): Promise<Result<z.output<Schema>>> {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "Accept-Language": language(),
+    };
     const token = deps.tokens.get();
 
     if (token !== null) {
@@ -156,7 +168,7 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
 
     try {
       response = await deps.fetch(
-        `${deps.apiUrl}/shop-api?languageCode=${encodeURIComponent(deps.languageCode)}`,
+        `${deps.apiUrl}/shop-api?languageCode=${encodeURIComponent(language())}`,
         { method: "POST", headers, body: JSON.stringify({ query, variables }) }
       );
     } catch (error) {

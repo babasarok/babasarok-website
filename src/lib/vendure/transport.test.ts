@@ -6,9 +6,9 @@ function transportReturning(
   body: unknown,
   status = 200
 ): Parameters<typeof createShopQuery>[0] & {
-  calls: Array<{ url: string; body: unknown }>;
+  calls: Array<{ url: string; body: unknown; acceptLanguage: string | null }>;
 } {
-  const calls: Array<{ url: string; body: unknown }> = [];
+  const calls: Array<{ url: string; body: unknown; acceptLanguage: string | null }> = [];
 
   return {
     calls,
@@ -19,7 +19,13 @@ function transportReturning(
         throw new TypeError("transport must send a string url and body");
       }
 
-      calls.push({ url: input, body: JSON.parse(init.body) });
+      const headers = new Headers(init.headers);
+
+      calls.push({
+        url: input,
+        body: JSON.parse(init.body),
+        acceptLanguage: headers.get("Accept-Language"),
+      });
 
       return Promise.resolve(Response.json(body, { status }));
     },
@@ -41,6 +47,7 @@ describe("createShopQuery", () => {
       {
         url: "http://api.test/shop-api?languageCode=hu",
         body: { query: "{ n }", variables: { a: 1 } },
+        acceptLanguage: "hu",
       },
     ]);
   });
@@ -49,6 +56,21 @@ describe("createShopQuery", () => {
     const transport = transportReturning({ errors: [{ message: "a" }, { message: "b" }] });
 
     await expect(createShopQuery(transport)(request)).rejects.toThrow("a; b");
+  });
+
+  it("sends Accept-Language matching the query language", async () => {
+    const transport = transportReturning({ data: { n: 3 } });
+
+    await createShopQuery(transport)(request);
+    expect(transport.calls[0].acceptLanguage).toBe("hu");
+  });
+
+  it("overrides the configured language per request", async () => {
+    const transport = transportReturning({ data: { n: 3 } });
+
+    await createShopQuery(transport)({ ...request, languageCode: "en" });
+    expect(transport.calls[0].url).toBe("http://api.test/shop-api?languageCode=en");
+    expect(transport.calls[0].acceptLanguage).toBe("en");
   });
 
   it("throws on an HTTP error status", async () => {

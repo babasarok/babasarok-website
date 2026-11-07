@@ -1,4 +1,5 @@
 import type { OrderLine, RequestContext } from "@vendure/core";
+import { messages } from "../../shared/messages";
 import { lineRejection, type LineFacts } from "./line-rejection";
 import { valueVariantLine, type LineValuationDeps } from "./line-valuation";
 
@@ -24,12 +25,13 @@ export async function lineInvalidReason(
   line: OrderLine
 ): Promise<LineInvalidReason | undefined> {
   const productId = Number(line.productVariant.productId);
-  const productName = (await deps.productName(ctx, productId)) ?? "A termék";
+  const m = messages(ctx.languageCode);
+  const productName = (await deps.productName(ctx, productId)) ?? m.defaultProductName();
 
   if (!line.productVariant.enabled || line.productVariant.deletedAt !== null) {
     return {
       code: "VARIANT_UNAVAILABLE",
-      message: `A(z) ${productName} kiválasztott változata már nem elérhető.`,
+      message: m.variantUnavailable(productName),
     };
   }
 

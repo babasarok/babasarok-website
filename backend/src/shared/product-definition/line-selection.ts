@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { messages } from "../messages";
 
 /**
  * A buyer's selections on an order line, stored on the line's `selections`
@@ -55,26 +56,27 @@ export class LineSelectionsError extends Error {}
  * Parses the raw `selections` custom-field value (JSON or null/empty for an
  * unconfigured line) into the typed records, or throws {@link LineSelectionsError}.
  */
-export function parseLineSelections(raw: unknown): LineSelections {
+export function parseLineSelections(raw: unknown, languageCode: string): LineSelections {
   if (typeof raw !== "string" || raw.trim() === "") {
     return {};
   }
 
   let data: unknown;
+  const m = messages(languageCode);
 
   try {
     data = JSON.parse(raw);
   } catch {
-    throw new LineSelectionsError("A rendelési sor konfigurációja nem érvényes JSON.");
+    throw new LineSelectionsError(m.selectionsNotJson());
   }
 
   const parsed = LineSelectionsSchema.safeParse(data);
 
   if (!parsed.success) {
     throw new LineSelectionsError(
-      `A rendelési sor konfigurációja érvénytelen: ${parsed.error.issues
-        .map((issue) => issue.path.join("..ts"))
-        .join(", ")}`
+      m.selectionsInvalid(
+        parsed.error.issues.map((issue) => issue.path.join("..ts")).join(", ")
+      )
     );
   }
 

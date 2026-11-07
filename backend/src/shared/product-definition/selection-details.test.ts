@@ -112,8 +112,8 @@ describe("selectionDetails", () => {
     });
 
     expect(details).toEqual([
-      { label: "Hossz", value: "120 cm", depth: 0 },
-      { label: "Size", value: "Egyedi: XXL", depth: 0 },
+      { label: "Length", value: "120 cm", depth: 0 },
+      { label: "Size", value: "Custom: XXL", depth: 0 },
     ]);
   });
 

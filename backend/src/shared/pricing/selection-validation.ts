@@ -4,6 +4,7 @@ import {
   type ProductField,
 } from "../product-definition/index";
 import type { LineSelectionRecord, LineSelections } from "../product-definition/index";
+import { messages } from "../messages";
 
 /**
  * The site's configurator sets no text limits; this keeps a buyer-entered value
@@ -193,25 +194,37 @@ export function validateSelections(
   return problems;
 }
 
-const SUBJECT_HU = { text: "a szöveg", value: "az érték" } as const;
+function reasonMessage(
+  problem: Extract<SelectionProblem, { code: "invalid" }>,
+  languageCode: string
+): string {
+  const m = messages(languageCode);
 
-function reasonMessage(problem: Extract<SelectionProblem, { code: "invalid" }>): string {
   switch (problem.reason) {
     case "unknown-material":
-      return "ismeretlen anyagot tartalmaz";
+      return m.reasonUnknownMaterial();
     case "foreign-color":
-      return "az anyag által nem kínált színt tartalmaz";
+      return m.reasonForeignColor();
     case "too-few-colors":
-      return `legalább ${problem.required} színt kell választani`;
+      return m.reasonTooFewColors(problem.required);
     case "text-too-long":
-      return `${SUBJECT_HU[problem.subject]} legfeljebb ${MAX_SELECTION_TEXT_LENGTH} karakter lehet`;
+      return m.reasonTextTooLong(
+        subjectName(languageCode, problem.subject),
+        MAX_SELECTION_TEXT_LENGTH
+      );
     case "bad-format":
-      return `${SUBJECT_HU[problem.subject]} formátuma érvénytelen`;
+      return m.reasonBadFormat(subjectName(languageCode, problem.subject));
     case "unoffered-value":
-      return "nem kínált értéket tartalmaz";
+      return m.reasonUnofferedValue();
     case "custom-not-accepted":
-      return "egyedi értéket nem fogad el";
+      return m.reasonCustomNotAccepted();
   }
+}
+
+function subjectName(languageCode: string, subject: "text" | "value"): string {
+  return subject === "text"
+    ? messages(languageCode).subjectText()
+    : messages(languageCode).subjectValue();
 }
 
 export function formatSelectionProblem(
@@ -219,19 +232,20 @@ export function formatSelectionProblem(
   context: Pick<SelectionValidationInput, "definition" | "productName" | "languageCode">
 ): string {
   const { definition, productName, languageCode } = context;
+  const m = messages(languageCode);
 
   if (problem.code === "unknown-field") {
-    return `A(z) "${productName}" termék nem ismeri ezt a mezőt: ${problem.fieldId}`;
+    return m.selectionUnknownField(productName, problem.fieldId);
   }
 
   const field = definition.fields.find((candidate) => candidate.id === problem.fieldId);
   const label = field === undefined ? problem.fieldId : resolveText(field.label, languageCode);
 
   if (problem.code === "wrong-kind") {
-    return `A(z) "${productName}" "${label}" mezőjének választása nem a mező fajtájának megfelelő.`;
+    return m.selectionWrongKind(productName, label);
   }
 
-  return `A(z) "${productName}" "${label}" mezőjének választása érvénytelen: ${reasonMessage(problem)}.`;
+  return m.selectionInvalid(productName, label, reasonMessage(problem, languageCode));
 }
 
 /**

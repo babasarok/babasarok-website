@@ -1,3 +1,5 @@
+import { messages } from "../../shared/messages";
+
 export interface CheckoutFacts {
   lineCount: number;
   hasCustomer: boolean;
@@ -8,35 +10,36 @@ export interface CheckoutFacts {
 }
 
 /**
- * The Hungarian refusal naming what an order still lacks before it can be
- * placed, or undefined when it is complete.
+ * The refusal naming what an order still lacks before it can be placed, in
+ * the request language, or undefined when it is complete.
  */
-export function checkoutRefusal(facts: CheckoutFacts): string | undefined {
+export function checkoutRefusal(facts: CheckoutFacts, languageCode: string): string | undefined {
+  const m = messages(languageCode);
   const missing: string[] = [];
 
   if (facts.lineCount === 0) {
-    missing.push("legalább egy termék");
+    missing.push(m.checkoutMissingLine());
   }
 
   if (!facts.hasCustomer) {
-    missing.push("a vevő adatai");
+    missing.push(m.checkoutMissingCustomer());
   }
 
   if (!facts.hasShippingMethod) {
-    missing.push("a szállítási mód");
+    missing.push(m.checkoutMissingShippingMethod());
   }
 
   if (facts.shippingMethodRequiresAddress && !facts.hasAddress) {
-    missing.push("a szállítási cím");
+    missing.push(m.checkoutMissingAddress());
   }
 
   if (!facts.termsAccepted) {
-    missing.push("az ÁSZF elfogadása");
+    missing.push(m.checkoutMissingTerms());
   }
 
   if (missing.length === 0) {
     return undefined;
   }
 
-  return `A rendelés nem adható le, hiányzik: ${missing.join(", ")}.`;
+  return m.checkoutMissing(missing.join(", "));
 }

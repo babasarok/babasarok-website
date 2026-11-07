@@ -14,6 +14,7 @@ import {
 } from "@vendure/email-plugin";
 import { env } from "../../env";
 import { isLegacyQuoteOrder } from "../../shared/legacy-order";
+import { messages } from "../../shared/messages";
 import { loadNativeLineContent } from "./native-line-content";
 import { orderEmailView, type OrderEmailView } from "./order-email-view";
 
@@ -43,7 +44,8 @@ function adminOrderUrl(order: Order): string {
 }
 
 function onNativeOrderPlaced(
-  name: string
+  name: string,
+  subject: (event: OrderStateTransitionEvent) => string
 ): EmailEventHandler<
   string,
   EventWithAsyncData<
@@ -77,7 +79,8 @@ function onNativeOrderPlaced(
         {
           currencyCode: event.order.currencyCode,
           precision: injector.get(ConfigService).entityOptions.moneyStrategy.precision ?? 2,
-        }
+        },
+        event.ctx.languageCode
       );
 
       return {
@@ -89,16 +92,21 @@ function onNativeOrderPlaced(
       order: event.order,
       fromAddress: event.data.orderEmailFrom,
       adminOrderUrl: adminOrderUrl(event.order),
+      subject: subject(event),
       ...event.data.view,
     }));
 }
 
-export const nativeOrderConfirmationHandler = onNativeOrderPlaced("order-confirmation")
+export const nativeOrderConfirmationHandler = onNativeOrderPlaced("order-confirmation", (event) =>
+  messages(event.ctx.languageCode).orderConfirmationSubject(event.order.code)
+)
   .setRecipient((event) => event.order.customer?.emailAddress ?? "")
   .setFrom("{{ fromAddress }}")
-  .setSubject("Köszönjük a rendelésed: {{ order.code }}");
+  .setSubject("{{ subject }}");
 
-export const nativeOrderNotificationHandler = onNativeOrderPlaced("order-notification")
+export const nativeOrderNotificationHandler = onNativeOrderPlaced("order-notification", (event) =>
+  messages(event.ctx.languageCode).orderNotificationSubject(event.order.code)
+)
   .setRecipient((event) => event.data.ownerEmail)
   .setFrom("{{ fromAddress }}")
-  .setSubject("Új árajánlatkérés: {{ order.code }}");
+  .setSubject("{{ subject }}");

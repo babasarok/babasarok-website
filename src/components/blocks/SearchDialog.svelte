@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import Dialog from "@/components/ui/Dialog.svelte";
+  import { localeFromPathname, localizedPath } from "@/lib/i18n";
   import { search, setOptions, type PagefindSection } from "@/lib/pagefind";
   import { onMount } from "svelte";
   import {
@@ -32,7 +33,9 @@
   let results = $state<Hit[]>([]);
 
   function loadCatalogIndex(): Promise<CatalogSearchEntry[]> {
-    catalogIndex ??= fetch("/search-index.json")
+    catalogIndex ??= fetch(
+      localizedPath("/search-index.json", localeFromPathname(globalThis.location.pathname))
+    )
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Search index HTTP ${response.status}`);

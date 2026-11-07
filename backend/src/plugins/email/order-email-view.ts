@@ -1,3 +1,4 @@
+import { messages, messageLanguage } from "../../shared/messages";
 import type { EmailDetail } from "../../shared/product-definition/index";
 
 export interface EmailViewLine {
@@ -46,8 +47,12 @@ export interface EmailMoney {
   precision: number;
 }
 
-export function formatMoney(amount: number, { currencyCode, precision }: EmailMoney): string {
-  return new Intl.NumberFormat("hu-HU", {
+export function formatMoney(
+  amount: number,
+  { currencyCode, precision }: EmailMoney,
+  languageCode: string
+): string {
+  return new Intl.NumberFormat(`${messageLanguage(languageCode)}-HU`, {
     style: "currency",
     currency: currencyCode,
     minimumFractionDigits: precision,
@@ -64,7 +69,11 @@ function indented(details: readonly EmailDetail[]): NonNullable<EmailProductView
 }
 
 /** One line per discount that touched the order's lines, naming the products it covers. */
-export function setDiscountSummary(lines: readonly EmailViewLine[], money: EmailMoney): string {
+export function setDiscountSummary(
+  lines: readonly EmailViewLine[],
+  money: EmailMoney,
+  languageCode: string
+): string {
   const bySource = new Map<string, { description: string; amount: number; numbers: number[] }>();
 
   for (const [index, line] of lines.entries()) {
@@ -84,8 +93,8 @@ export function setDiscountSummary(lines: readonly EmailViewLine[], money: Email
   return [...bySource.values()]
     .map(
       (entry) =>
-        `${entry.description}: ${formatMoney(entry.amount, money)} (${entry.numbers
-          .map((number) => `${number}. termék`)
+        `${entry.description}: ${formatMoney(entry.amount, money, languageCode)} (${entry.numbers
+          .map((number) => messages(languageCode).productOrdinal(number))
           .join(", ")})`
     )
     .join("\n");
@@ -99,7 +108,8 @@ export function setDiscountSummary(lines: readonly EmailViewLine[], money: Email
 export function orderEmailView(
   order: EmailViewOrder,
   nativeLines: readonly NativeLineContent[],
-  money: EmailMoney
+  money: EmailMoney,
+  languageCode: string
 ): OrderEmailView {
   const shipping = order.shippingLines.at(0);
   const freed =
@@ -113,8 +123,10 @@ export function orderEmailView(
       details: indented(nativeLines[index].details),
     })),
     deliveryName: shipping?.shippingMethod.name ?? "",
-    deliveryPrice: freed ? "ingyenes" : formatMoney(shipping?.discountedPriceWithTax ?? 0, money),
-    total: formatMoney(order.totalWithTax, money),
-    setDiscountSummary: setDiscountSummary(order.lines, money),
+    deliveryPrice: freed
+      ? messages(languageCode).deliveryFree()
+      : formatMoney(shipping?.discountedPriceWithTax ?? 0, money, languageCode),
+    total: formatMoney(order.totalWithTax, money, languageCode),
+    setDiscountSummary: setDiscountSummary(order.lines, money, languageCode),
   };
 }

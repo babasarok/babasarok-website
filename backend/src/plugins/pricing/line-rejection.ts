@@ -37,7 +37,7 @@ async function selectionsError(
   let selections: LineSelections;
 
   try {
-    selections = parseLineSelections(input.customFields?.selections);
+    selections = parseLineSelections(input.customFields?.selections, input.languageCode);
   } catch (error) {
     if (error instanceof LineSelectionsError) {
       return error.message;
@@ -74,7 +74,7 @@ async function selectionsError(
   const unknown = [...colorIds].filter((colorId) => !known.has(colorId));
 
   if (unknown.length > 0) {
-    return unknownThreadColorRejection(unknown);
+    return unknownThreadColorRejection(unknown, input.languageCode);
   }
 
   return undefined;
@@ -99,7 +99,10 @@ export async function lineRejection(
   const lengthCm = typeof provided === "number" ? provided : input.storedLengthCm;
 
   if (!isValidLength(lengthCm)) {
-    return lengthMissingRejection(await facts.productName(input.productId, definition));
+    return lengthMissingRejection(
+      await facts.productName(input.productId, definition),
+      input.languageCode
+    );
   }
 
   return selectionsError(facts, input, definition);
