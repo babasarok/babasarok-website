@@ -49,6 +49,7 @@ const translation = {
   },
   basket: {
     label: "Kosár",
+    empty: "A kosár üres.",
     edit: "Szerkesztés",
     remove: "Törlés",
     browse: "Termékek böngészése",

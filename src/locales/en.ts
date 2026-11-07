@@ -55,6 +55,7 @@ const translation = {
   },
   basket: {
     label: "Basket",
+    empty: "Your basket is empty.",
     edit: "Edit",
     remove: "Delete",
     browse: "Browse products",
