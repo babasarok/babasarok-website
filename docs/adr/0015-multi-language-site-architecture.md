@@ -46,18 +46,26 @@ non-catalog Tina content, buyer-visible server messages, and order emails.
    island in this epic; its `/_server-islands/*` route rule leaves with it.
    No new `server:defer` may be added.
 
-3. **i18next core at build time, no framework integration.** `src/locales/
+3. **i18next core, typed on both sides.** `src/locales/
 {hu,en}.ts` are `as const` TS modules (JSON cannot carry the literal
    types the key checking needs). Every `t()` is typed via the
    `CustomTypeOptions` augmentation from the Hungarian source of truth, so
    an unknown key — or an interpolation variable missing from the string —
    fails `astro check`, not a visitor; `en` additionally `satisfies` a
    recursive key-shape of `hu`, so English cannot silently drop a Hungarian
-   key. Strings resolve through a per-render `createInstance` (a shared
-   mutable instance is racy under concurrent on-demand requests) in Astro
-   frontmatter; Svelte islands receive their strings as props — no
-   dictionary or i18next code ships to the browser, and the two locales
-   never bundle together. Vendure `ErrorCode` → message maps live in the
+   key. Server-side, Astro frontmatter resolves strings through a
+   per-render `createInstance` (`src/lib/i18next.ts`; a shared mutable
+   instance is racy under concurrent on-demand requests). Client islands
+   use i18next directly (`src/lib/i18next-client.ts`): one instance per
+   language, resources loaded lazily per language through
+   `i18next-resources-to-backend` over dynamic imports of the same TS
+   resource modules (single source, per-locale chunks, no JSON
+   duplication); islands await the shared instance before rendering.
+   Locale switching is a page navigation, so no reactive language store is
+   needed (`svelte-i18next` is stale since 2023-10 and rejected). Islands
+   must import the client module only via `@/lib/i18next-client` — module
+   dedup (one i18next instance per page) depends on it and is covered by a
+   cross-specifier test. Vendure `ErrorCode` → message maps live in the
    same resources, keyed by the stable error codes the server returns.
    Community Astro integrations were rejected with evidence:
    `astro-i18next` (beta, last publish 2023-03) and
