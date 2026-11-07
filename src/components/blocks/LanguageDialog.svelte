@@ -3,6 +3,7 @@
   import Icon from "@iconify/svelte";
   import Dialog from "@/components/ui/Dialog.svelte";
   import I18nGate from "@/components/ui/I18nGate.svelte";
+  import { persistLocale } from "@/lib/browser-locale";
   import { localizedPath, locales, type Locale } from "@/lib/i18n";
 
   interface Props {
@@ -58,6 +59,7 @@
                 <a
                   href={localizedPath(pathname, candidate)}
                   hreflang={candidate}
+                  onclick={() => persistLocale(candidate)}
                   class="flex items-center justify-between rounded-lg p-3 text-dark transition-colors hover:bg-sand-50"
                 >
                   {i18n.t(`languageNames.${candidate}`)}

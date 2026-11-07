@@ -269,6 +269,9 @@ importers:
       i18next:
         specifier: 26.5.10
         version: 26.5.10(typescript@6.0.3)
+      i18next-browser-languagedetector:
+        specifier: ^8.3.0
+        version: 8.3.0
       i18next-resources-to-backend:
         specifier: 1.2.4
         version: 1.2.4
@@ -7282,6 +7285,9 @@ packages:
 
   hyphenate-style-name@1.1.0:
     resolution: {integrity: sha512-WDC/ui2VVRrz3jOVi+XtjqkDjiVjTtFaAGiW37k6b+ohyQ5wYDOGkvCZa8+H0nx3gyvv0+BST9xuOgIyGQ00gw==}
+
+  i18next-browser-languagedetector@8.3.0:
+    resolution: {integrity: sha512-t7FtF+VyQ+XSy+GI1O9TXWsMzP4U2u0m27yxJcCbG4LaAbTQa3CXFXgG3LvRivS+ZoYah8yPv5NhMl+Wg6I8Fg==}
 
   i18next-fs-backend@2.6.9:
     resolution: {integrity: sha512-YZ5PQUV9xnAeh45CCSQW095wYDWZEwKse/1wr3m0z0Mij5zoCFMs67Q3M+w/9un8fUruubMR4DzETnDGH85heQ==}
@@ -20185,6 +20191,10 @@ snapshots:
       - debug
 
   hyphenate-style-name@1.1.0: {}
+
+  i18next-browser-languagedetector@8.3.0:
+    dependencies:
+      '@babel/runtime': 7.29.10
 
   i18next-fs-backend@2.6.9: {}
 

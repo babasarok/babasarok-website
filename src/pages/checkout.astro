@@ -6,14 +6,13 @@ import { getMaterials, getProductGroups, getProducts, getThreadColors } from "@/
 import { setMembersByGroup } from "@/lib/basket/setDiscounts";
 import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
 import { getEntry } from "astro:content";
-import { localeFromPathname } from "../lib/i18n";
-import { createI18n } from "../lib/i18next";
-const i18n = createI18n(localeFromPathname(Astro.url.pathname));
-const t = i18n.t.bind(i18n);
+import { createI18n } from "@/lib/i18next";
 
 export const prerender = false;
 
 const locale = localeFromPathname(Astro.url.pathname);
+const i18n = createI18n(locale);
+const t = i18n.t.bind(i18n);
 const configEntry = await getEntry("config", entryIdForLocale(locale, "config"));
 const checkout = await getEntry("checkout", entryIdForLocale(locale, "index"));
 

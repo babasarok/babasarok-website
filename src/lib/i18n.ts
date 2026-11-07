@@ -31,6 +31,21 @@ export function localizedPath(pathname: string, target: Locale): string {
 }
 
 /**
+ * First-visit language negotiation: the bare front door redirects to a
+ * stored or browser-detected preference once; the URL is authoritative
+ * everywhere else (deep links, /en/, the switcher).
+ */
+export function frontDoorRedirect(
+  pathname: string,
+  preferred: Locale | undefined
+): Locale | undefined {
+  if (!preferred || pathname !== "/") {
+    return undefined;
+  }
+  return preferred === defaultLocale ? undefined : preferred;
+}
+
+/**
  * Content-entry ids carry the locale as their first path segment
  * (`src/content/<collection>/<locale>/…`, ADR 0015 decision 4); an id without
  * a locale prefix belongs to the default locale (e.g. blog posts created at

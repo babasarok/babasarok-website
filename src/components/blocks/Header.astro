@@ -48,7 +48,11 @@ const t = i18n.t.bind(i18n);
       <div class="flex items-center gap-2 lg:hidden">
         <LanguageDialog pathname={Astro.url.pathname} locale={locale} client:load />
         <SearchDialog locale={locale} client:load />
-        {showBasket && <NavBasket checkoutHref={checkoutLink} locale={locale} anchored={false} client:load />}
+        {
+          showBasket && (
+            <NavBasket checkoutHref={checkoutLink} locale={locale} anchored={false} client:load />
+          )
+        }
         <button
           id="navbar-toggler"
           type="button"

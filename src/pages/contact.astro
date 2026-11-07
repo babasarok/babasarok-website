@@ -3,21 +3,21 @@ import { getCollection, render } from "astro:content";
 import { Image } from "astro:assets";
 import { Icon } from "astro-icon/components";
 import Base from "../layouts/Base.astro";
-import { localeFromPathname } from "../lib/i18n";
-import { createI18n } from "../lib/i18next";
-
-const i18n = createI18n(localeFromPathname(Astro.url.pathname));
-const t = i18n.t.bind(i18n);
 import PageHeader from "../components/ui/PageHeader.astro";
 import Button from "../components/ui/Button.astro";
 import { getConfig } from "../lib/config";
 import { localeFromPathname } from "../lib/i18n";
+import { createI18n } from "../lib/i18next";
 import locationIcon from "../assets/images/contact/location.svg";
 import phoneIcon from "../assets/images/contact/phone.svg";
 import socialIcon from "../assets/images/contact/social-media.svg";
 
+const locale = localeFromPathname(Astro.url.pathname);
+const i18n = createI18n(locale);
+const t = i18n.t.bind(i18n);
+
 const entry = (await getCollection("contact")).find(
-  (candidate) => candidate.id === `${localeFromPathname(Astro.url.pathname)}/_index`
+  (candidate) => candidate.id === `${locale}/_index`
 );
 
 if (!entry) {

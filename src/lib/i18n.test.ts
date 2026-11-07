@@ -3,6 +3,7 @@ import {
   defaultLocale,
   entryIdForLocale,
   entrySlugFromId,
+  frontDoorRedirect,
   localeFromEntryId,
   localeFromPathname,
   localizedPath,
@@ -27,6 +28,23 @@ describe("localeFromPathname", () => {
       expect(localeFromPathname(`/${locale}/`)).toBe(locale);
     }
   });
+});
+
+describe("frontDoorRedirect", () => {
+  const cases = [
+    { pathname: "/", preferred: undefined, expected: undefined },
+    { pathname: "/", preferred: "hu", expected: undefined },
+    { pathname: "/", preferred: "en", expected: "en" },
+    { pathname: "/en/", preferred: "hu", expected: undefined },
+    { pathname: "/en/", preferred: "en", expected: undefined },
+    { pathname: "/blog/first-post/", preferred: "en", expected: undefined },
+  ] satisfies Array<{ pathname: string; preferred?: Locale; expected?: Locale }>;
+
+  for (const { pathname, preferred, expected } of cases) {
+    it(`${pathname} with preference ${preferred ?? "none"} → ${expected ?? "stay"}`, () => {
+      expect(frontDoorRedirect(pathname, preferred)).toBe(expected);
+    });
+  }
 });
 
 describe("localizedPath", () => {
