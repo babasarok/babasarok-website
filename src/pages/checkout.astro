@@ -4,12 +4,14 @@ import PageHeader from "../components/ui/PageHeader.astro";
 import CheckoutForm from "@/components/blocks/order/CheckoutForm.svelte";
 import { getMaterials, getProductGroups, getProducts, getThreadColors } from "@/lib/catalog";
 import { setMembersByGroup } from "@/lib/basket/setDiscounts";
+import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
 import { getEntry } from "astro:content";
 
 export const prerender = false;
 
-const configEntry = await getEntry("config", "config");
-const checkout = await getEntry("checkout", "index");
+const locale = localeFromPathname(Astro.url.pathname);
+const configEntry = await getEntry("config", entryIdForLocale(locale, "config"));
+const checkout = await getEntry("checkout", entryIdForLocale(locale, "index"));
 
 if (!configEntry) {
   throw new Error("Config entry not found");

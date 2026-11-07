@@ -5,10 +5,11 @@ import { getEntry } from "astro:content";
 import NavBasket from "@/components/blocks/order/NavBasket.svelte";
 import SearchDialog from "@/components/blocks/SearchDialog.svelte";
 import LanguageDialog from "@/components/blocks/LanguageDialog.svelte";
-import { localeFromPathname } from "@/lib/i18n";
+import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
 
+const locale = localeFromPathname(Astro.url.pathname);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const config = (await getEntry("config", "config")!).data;
+const config = (await getEntry("config", entryIdForLocale(locale, "config"))!).data;
 const logo = config.logo;
 const contactLink = config.contactLink ? `/${config.contactLink}` : "/contact";
 const checkoutLink = "/checkout";
@@ -21,8 +22,6 @@ const rawMenu = config.mainMenu ?? [];
 const mainMenu = rawMenu
   .filter((item): item is NonNullable<typeof item> => item !== null)
   .toSorted((a, b) => (a.weight ?? 99) - (b.weight ?? 99));
-
-const locale = localeFromPathname(Astro.url.pathname);
 ---
 
 <nav id="navbar" class="fixed top-0 z-50">

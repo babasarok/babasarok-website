@@ -13,7 +13,7 @@ export const BlogSectionCollection: Collection = {
   path: "src/content/sections",
   format: "json",
   match: {
-    include: "blog",
+    include: "**/blog",
   },
 
   ui: {

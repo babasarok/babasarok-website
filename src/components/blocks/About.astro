@@ -4,9 +4,13 @@ import { Markdown } from "astro-md-2";
 import figureSvg from "../../assets/images/hero/figure-svg.svg?url";
 import Button from "../ui/Button.astro";
 import { getEntry } from "astro:content";
+import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const entry = await getEntry("aboutBlock", "about")!;
+const entry = (await getEntry(
+  "aboutBlock",
+  entryIdForLocale(localeFromPathname(Astro.url.pathname), "about")
+))!;
 const {
   enable,
   title,

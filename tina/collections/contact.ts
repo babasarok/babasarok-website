@@ -14,7 +14,7 @@ export const ContactCollection: Collection = {
   format: "md",
   frontmatterFormat: "yaml",
   match: {
-    include: "_index",
+    include: "**/_index",
   },
   ui: {
     allowedActions: {

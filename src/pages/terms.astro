@@ -6,8 +6,10 @@ import { getEntry, render } from "astro:content";
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
 import { getProducts } from "@/lib/catalog";
+import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
 
-const terms = await getEntry("terms", "index");
+const locale = localeFromPathname(Astro.url.pathname);
+const terms = await getEntry("terms", entryIdForLocale(locale, "index"));
 
 if (!terms) {
   throw new Error("Terms entry not found");

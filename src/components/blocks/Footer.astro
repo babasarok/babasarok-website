@@ -3,9 +3,11 @@ import { Icon } from "astro-icon/components";
 import Button from "../ui/Button.astro";
 import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
+import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const config = (await getEntry("config", "config")!).data;
+const config = // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  (await getEntry("config", entryIdForLocale(localeFromPathname(Astro.url.pathname), "config"))!)
+    .data;
 const footerLogo = config.footerLogo;
 const contactLink = config.contactLink ? `/${config.contactLink}` : "/contact";
 
