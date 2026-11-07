@@ -3,6 +3,7 @@ import { z } from "zod";
 export interface ShopTransport {
   fetch: typeof fetch;
   apiUrl: string;
+  /** The default request language; each request may override it. */
   languageCode: string;
 }
 
@@ -10,6 +11,7 @@ export interface ShopRequest<Schema extends z.ZodType> {
   query: string;
   variables?: Record<string, unknown>;
   schema: Schema;
+  languageCode?: string;
 }
 
 export type ShopQuery = <Schema extends z.ZodType>(
@@ -24,11 +26,12 @@ const EnvelopeSchema = z.object({
 });
 
 export function createShopQuery(transport: ShopTransport): ShopQuery {
-  return async ({ query, variables, schema }) => {
-    const url = `${transport.apiUrl}/shop-api?languageCode=${encodeURIComponent(transport.languageCode)}`;
+  return async ({ query, variables, schema, languageCode: requestLanguage }) => {
+    const languageCode = requestLanguage ?? transport.languageCode;
+    const url = `${transport.apiUrl}/shop-api?languageCode=${encodeURIComponent(languageCode)}`;
     const response = await transport.fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "Accept-Language": languageCode },
       body: JSON.stringify({ query, variables }),
     });
 

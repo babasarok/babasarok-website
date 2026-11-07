@@ -64,7 +64,7 @@ export async function valueVariantLine(
     productName,
     variantListPrice,
     optionCodes: new Map(productVariant.options.map((option) => [option.group.code, option.code])),
-    selections: parseLineSelections(orderLineCustomFields.selections),
+    selections: parseLineSelections(orderLineCustomFields.selections, ctx.languageCode),
     lengthCm: typeof rawLengthCm === "number" ? rawLengthCm : null,
     languageCode: ctx.languageCode,
   });

@@ -19,8 +19,14 @@ describe("hexColorError", () => {
 
 describe("unknownThreadColorRejection", () => {
   it("names the unknown color ids", () => {
-    expect(unknownThreadColorRejection(["lila", "kek"])).toBe(
+    expect(unknownThreadColorRejection(["lila", "kek"], "hu")).toBe(
       "Ismeretlen hímzőcérna-szín: lila, kek."
+    );
+  });
+
+  it("names the unknown color ids in English", () => {
+    expect(unknownThreadColorRejection(["lila", "kek"], "en")).toBe(
+      "Unknown embroidery thread colour: lila, kek."
     );
   });
 });

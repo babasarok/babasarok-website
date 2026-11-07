@@ -5,6 +5,7 @@ import {
 } from "../product-definition/index";
 import { dependencyOrder, isVisible } from "../product-definition/index";
 import type { LineSelections } from "../product-definition/index";
+import { messages } from "../messages";
 
 export interface LinePricingInput {
   definition: ProductDefinition;
@@ -27,8 +28,8 @@ export interface LinePricingInput {
 
 export class LinePricingError extends Error {}
 
-export function lengthMissingRejection(productName: string): string {
-  return `A(z) "${productName}" méteráru — a hossz (cm) megadása kötelező.`;
+export function lengthMissingRejection(productName: string, languageCode: string): string {
+  return messages(languageCode).lengthMissing(productName);
 }
 
 function countWords(text: string): number {
@@ -48,7 +49,10 @@ function choiceOptionPrice(
 
   if (option === undefined) {
     throw new LinePricingError(
-      `A(z) "${resolveText(field.label, languageCode)}" mező nem kínálja ezt az értéket: ${optionId}`
+      messages(languageCode).fieldDoesNotOfferValue(
+        resolveText(field.label, languageCode),
+        optionId
+      )
     );
   }
 
@@ -66,9 +70,7 @@ function variantAxisPrice(
   languageCode: string
 ): number {
   if (optionCode === undefined) {
-    throw new LinePricingError(
-      `A(z) "${field.id}" választása nincs rajta a kiválasztott változaton.`
-    );
+    throw new LinePricingError(messages(languageCode).choiceNotOnVariant(field.id));
   }
 
   if (field.kind === "toggle") {
@@ -80,7 +82,10 @@ function variantAxisPrice(
 
     if (option === undefined) {
       throw new LinePricingError(
-        `A(z) "${resolveText(field.label, languageCode)}" mező nem kínálja ezt az anyagot: ${optionCode}`
+        messages(languageCode).fieldDoesNotOfferMaterial(
+          resolveText(field.label, languageCode),
+          optionCode
+        )
       );
     }
 
@@ -128,22 +133,18 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
     const field = fieldById(definition.fields, fieldId);
 
     if (field === undefined) {
-      throw new LinePricingError(`A termék nem ismeri ezt a mezőt: ${fieldId}`);
+      throw new LinePricingError(messages(languageCode).unknownField(fieldId));
     }
 
     if (selection.kind === "material") {
       const optionCode = optionCodes.get(fieldId);
 
       if (optionCode === undefined) {
-        throw new LinePricingError(
-          `A(z) "${fieldId}" anyagválasztása nincs rajta a kiválasztott változaton.`
-        );
+        throw new LinePricingError(messages(languageCode).materialChoiceNotOnVariant(fieldId));
       }
 
       if (selection.materialId !== optionCode) {
-        throw new LinePricingError(
-          `A(z) "${fieldId}" anyagválasztása nem egyezik a kiválasztott változattal.`
-        );
+        throw new LinePricingError(messages(languageCode).materialChoiceMismatch(fieldId));
       }
     }
 
@@ -159,7 +160,7 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
       // text on the line, and the line prices via the variant's option code —
       // exactly what the live price showed.
       throw new LinePricingError(
-        `A(z) "${resolveText(field.label, languageCode)}" mező választása nem egyezik a kiválasztott változattal.`
+        messages(languageCode).choiceMismatch(resolveText(field.label, languageCode))
       );
     }
   }
@@ -186,9 +187,7 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
       const optionCode = optionCodes.get(field.id);
 
       if (optionCode === undefined) {
-        throw new LinePricingError(
-          `A(z) "${field.id}" választása nincs rajta a kiválasztott változaton.`
-        );
+        throw new LinePricingError(messages(languageCode).choiceNotOnVariant(field.id));
       }
 
       value = field.kind === "toggle" ? optionCode === "igen" : optionCode;
@@ -256,7 +255,7 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
     const lengthCm = input.lengthCm;
 
     if (lengthCm === null || !Number.isInteger(lengthCm) || lengthCm <= 0) {
-      throw new LinePricingError(lengthMissingRejection(productName));
+      throw new LinePricingError(lengthMissingRejection(productName, languageCode));
     }
 
     const perMeter =
@@ -289,7 +288,7 @@ export function valueConfiguredLine(input: LinePricingInput): LineValuation {
     if (error instanceof LinePricingError) {
       return {
         kind: "invalid",
-        message: `Árazási hiba (${input.productName}): ${error.message}`,
+        message: messages(input.languageCode).pricingFailure(input.productName, error.message),
       };
     }
 

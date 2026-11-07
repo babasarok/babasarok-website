@@ -1,4 +1,4 @@
-import { shopQuery } from "@/lib/vendure/client";
+import { CATALOG_LANGUAGE, shopQuery } from "@/lib/vendure/client";
 import type { ShopQuery } from "@/lib/vendure/transport";
 import {
   toMaterial,
@@ -37,7 +37,10 @@ export type {
 
 const PAGE_SIZE = 100;
 
-export async function getProducts(run: ShopQuery = shopQuery): Promise<CatalogProduct[]> {
+export async function getProducts(
+  run: ShopQuery = shopQuery,
+  languageCode: string = CATALOG_LANGUAGE
+): Promise<CatalogProduct[]> {
   const products: CatalogProduct[] = [];
   let fetched = 0;
 
@@ -46,6 +49,7 @@ export async function getProducts(run: ShopQuery = shopQuery): Promise<CatalogPr
       query: PRODUCTS_QUERY,
       variables: { skip: fetched, take: PAGE_SIZE },
       schema: ProductsResponseSchema,
+      languageCode,
     });
 
     fetched += page.items.length;
@@ -59,12 +63,14 @@ export async function getProducts(run: ShopQuery = shopQuery): Promise<CatalogPr
 
 export async function getProduct(
   slug: string,
-  run: ShopQuery = shopQuery
+  run: ShopQuery = shopQuery,
+  languageCode: string = CATALOG_LANGUAGE
 ): Promise<CatalogProductDetail | null> {
   const { product } = await run({
     query: PRODUCT_QUERY,
     variables: { slug },
     schema: ProductResponseSchema,
+    languageCode,
   });
 
   if (product === null) {
@@ -74,37 +80,48 @@ export async function getProduct(
   return toProductDetail(product);
 }
 
-export async function getMaterials(run: ShopQuery = shopQuery): Promise<CatalogMaterial[]> {
-  const { materials } = await run({ query: MATERIALS_QUERY, schema: MaterialsResponseSchema });
+export async function getMaterials(
+  run: ShopQuery = shopQuery,
+  languageCode: string = CATALOG_LANGUAGE
+): Promise<CatalogMaterial[]> {
+  const { materials } = await run({
+    query: MATERIALS_QUERY,
+    schema: MaterialsResponseSchema,
+    languageCode,
+  });
 
   return materials.map(toMaterial);
 }
 
 export async function getMaterial(
   slug: string,
-  run: ShopQuery = shopQuery
+  run: ShopQuery = shopQuery,
+  languageCode: string = CATALOG_LANGUAGE
 ): Promise<CatalogMaterial | null> {
   const { material } = await run({
     query: MATERIAL_QUERY,
     variables: { slug },
     schema: MaterialResponseSchema,
+    languageCode,
   });
 
   return material === null ? null : toMaterial(material);
 }
 
 export async function getThreadColors(
-  run: ShopQuery = shopQuery
+  run: ShopQuery = shopQuery,
+  languageCode: string = CATALOG_LANGUAGE
 ): Promise<ReturnType<typeof toThreadColors>> {
   return toThreadColors(
-    await run({ query: THREAD_COLORS_QUERY, schema: ThreadColorsResponseSchema })
+    await run({ query: THREAD_COLORS_QUERY, schema: ThreadColorsResponseSchema, languageCode })
   );
 }
 
 export async function getProductGroups(
-  run: ShopQuery = shopQuery
+  run: ShopQuery = shopQuery,
+  languageCode: string = CATALOG_LANGUAGE
 ): Promise<ReturnType<typeof toProductGroups>> {
   return toProductGroups(
-    await run({ query: PRODUCT_GROUPS_QUERY, schema: ProductGroupsResponseSchema })
+    await run({ query: PRODUCT_GROUPS_QUERY, schema: ProductGroupsResponseSchema, languageCode })
   );
 }

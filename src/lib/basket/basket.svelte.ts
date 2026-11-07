@@ -1,5 +1,5 @@
 import { PUBLIC_VENDURE_API_URL } from "astro:env/client";
-import { CATALOG_LANGUAGE } from "@/lib/vendure/client";
+import { pageLanguageCode } from "@/lib/vendure/client";
 import { createBasketApi, type LineInput, type Result } from "./api";
 import type { Order } from "./schemas";
 import { loadActiveOrder } from "./tokenRejection";
@@ -36,7 +36,7 @@ class Basket {
   readonly api = createBasketApi({
     fetch: (input, init) => fetch(input, init),
     apiUrl: PUBLIC_VENDURE_API_URL,
-    languageCode: CATALOG_LANGUAGE,
+    languageCode: () => pageLanguageCode(globalThis.location.pathname),
     tokens: this.#tokens,
   });
 

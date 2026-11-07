@@ -2,6 +2,7 @@ import type { LineSelectionRecord, LineSelections } from "./line-selection";
 import { resolveText } from "./localized-text";
 import type { ProductDefinition, ProductField } from "./product";
 import { dependencyOrder, isVisible } from "./field-visibility";
+import { messages } from "../messages";
 
 export interface SelectionDetail {
   label: string;
@@ -66,11 +67,13 @@ function selectionValue(
   }
 
   if (record.kind === "custom") {
-    return `Egyedi: ${record.value}`;
+    return messages(input.languageCode).detailCustom(record.value);
   }
 
   if (field.kind === "toggle") {
-    return record.value === "igen" ? "Igen" : "Nem";
+    const m = messages(input.languageCode);
+
+    return record.value === "igen" ? m.detailToggleOn() : m.detailToggleOff();
   }
 
   if (field.kind === "choice") {
@@ -116,7 +119,11 @@ export function selectionDetails(input: SelectionDetailsInput): SelectionDetail[
   const details: SelectionDetail[] = [];
 
   if (input.lengthCm !== null) {
-    details.push({ label: "Hossz", value: `${input.lengthCm} cm`, depth: 0 });
+    details.push({
+      label: messages(input.languageCode).detailLength(),
+      value: `${input.lengthCm} cm`,
+      depth: 0,
+    });
   }
 
   for (const field of fields) {

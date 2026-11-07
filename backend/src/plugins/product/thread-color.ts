@@ -1,3 +1,5 @@
+import { messages } from "../../shared/messages";
+
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
 export function hexColorError(value: unknown): string | undefined {
@@ -12,6 +14,9 @@ export function hexColorError(value: unknown): string | undefined {
   return undefined;
 }
 
-export function unknownThreadColorRejection(colorIds: readonly string[]): string {
-  return `Ismeretlen hímzőcérna-szín: ${colorIds.join(", ")}.`;
+export function unknownThreadColorRejection(
+  colorIds: readonly string[],
+  languageCode: string
+): string {
+  return messages(languageCode).unknownThreadColor(colorIds.join(", "));
 }

@@ -57,11 +57,14 @@ export function describeLine(
   let selections: LineSelections;
 
   try {
-    selections = parseLineSelections(rawSelections);
+    // The thrown message is discarded below, so the parse language never renders.
+    selections = parseLineSelections(rawSelections, "hu");
   } catch {
     return [];
   }
 
+  // ponytail: the details language stays Hungarian until the ui-dicts slice
+  // wires a locale prop into the order islands (ADR 0015 slice 3).
   return selectionDetails({
     definition,
     selections,
