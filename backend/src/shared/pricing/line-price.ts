@@ -27,15 +27,6 @@ export interface LinePricingInput {
 
 export class LinePricingError extends Error {}
 
-/**
- * The rejection for ordering a non-orderable (browse-only) product: the
- * interceptor returns it at the mutation boundary, the pricing walk throws it
- * as the backstop (ADR 0011 decision 5).
- */
-export function nonOrderableRejection(productName: string): string {
-  return `A(z) "${productName}" termék jelenleg nem rendelhető.`;
-}
-
 export function lengthMissingRejection(productName: string): string {
   return `A(z) "${productName}" méteráru — a hossz (cm) megadása kötelező.`;
 }
@@ -118,20 +109,16 @@ function variantAxisPrice(
  * skipped — it carries no price, it scales — and the sum multiplied by the
  * length in metres.
  *
- * Throws {@link LinePricingError} for an unpriced line: a non-orderable
- * product, a missing length, selections that reference unknown fields or list
- * an option that disagrees with the variant's options (drift or a buggy
- * storefront). A custom value on a variant-axis field prices via the variant's
- * pinned option — the storefront cannot put it on the variant matrix, so it
- * pins a listed option and stores the custom text on the line.
+ * Throws {@link LinePricingError} for an unpriced line: a missing length,
+ * selections that reference unknown fields or list an option that disagrees
+ * with the variant's options (drift or a buggy storefront). A custom value on
+ * a variant-axis field prices via the variant's pinned option — the
+ * storefront cannot put it on the variant matrix, so it pins a listed option
+ * and stores the custom text on the line.
  */
 export function computeLineUnitPrice(input: LinePricingInput): number {
   const { definition, productName, variantListPrice, optionCodes, selections, languageCode } =
     input;
-
-  if (!definition.orderable) {
-    throw new LinePricingError(nonOrderableRejection(productName));
-  }
 
   for (const [fieldId, selection] of Object.entries(selections)) {
     if (selection === undefined) {

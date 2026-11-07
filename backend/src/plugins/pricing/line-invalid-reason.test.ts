@@ -6,7 +6,6 @@ import { lineInvalidReason, type LineInvalidReasonDeps } from "./line-invalid-re
 
 const definition = ProductDefinitionSchema.parse({
   id: "parna",
-  orderable: true,
   basePrice: 9000,
   pricing: { kind: "unit" },
   forbiddenMaterialCombinations: [],
@@ -75,17 +74,6 @@ describe("lineInvalidReason", () => {
     const reason = await lineInvalidReason(depsFor(row), ctx, lineOf({ deletedAt: new Date() }));
 
     expect(reason?.code).toBe("VARIANT_UNAVAILABLE");
-  });
-
-  it("reports a product that is no longer orderable", async () => {
-    const closed = new ProductDefinition({
-      definition: { ...definition, orderable: false },
-      productId: "parna",
-    });
-
-    const reason = await lineInvalidReason(depsFor(closed), ctx, lineOf({}));
-
-    expect(reason?.code).toBe("NOT_ORDERABLE");
   });
 
   it("reports selections the definition no longer offers", async () => {

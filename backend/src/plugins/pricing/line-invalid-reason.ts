@@ -1,9 +1,8 @@
-import { nonOrderableRejection } from "../../shared/pricing/index";
 import type { OrderLine, RequestContext } from "@vendure/core";
 import { lineRejection, type LineFacts } from "./line-rejection";
 import { valueVariantLine, type LineValuationDeps } from "./line-valuation";
 
-export type LineInvalidCode = "NOT_ORDERABLE" | "VARIANT_UNAVAILABLE" | "OPTION_NOT_OFFERED";
+export type LineInvalidCode = "VARIANT_UNAVAILABLE" | "OPTION_NOT_OFFERED";
 
 export interface LineInvalidReason {
   code: LineInvalidCode;
@@ -38,10 +37,6 @@ export async function lineInvalidReason(
 
   if (definitionRow === null) {
     return undefined;
-  }
-
-  if (!definitionRow.definition.orderable) {
-    return { code: "NOT_ORDERABLE", message: nonOrderableRejection(productName) };
   }
 
   const customFields = Object.fromEntries(Object.entries(line.customFields));

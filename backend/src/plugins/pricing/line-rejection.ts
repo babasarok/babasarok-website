@@ -4,7 +4,6 @@ import { unknownThreadColorRejection } from "../product/thread-color";
 import {
   LineSelectionsError,
   lengthMissingRejection,
-  nonOrderableRejection,
   parseLineSelections,
   referencedMaterialIds,
   selectionsRejection,
@@ -91,10 +90,6 @@ export async function lineRejection(
   input: LineCheckInput
 ): Promise<string | undefined> {
   const definition = await facts.generatedDefinition(input.productId);
-
-  if (definition !== undefined && !definition.orderable) {
-    return nonOrderableRejection(await facts.productName(input.productId, definition));
-  }
 
   if (definition === undefined || definition.pricing.kind !== "length") {
     return selectionsError(facts, input, definition);

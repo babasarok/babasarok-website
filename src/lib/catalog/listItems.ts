@@ -28,7 +28,9 @@ export function cardImage(source: string, assetBase: string): SlimImage {
 }
 
 export function listedByPopularity(products: readonly CatalogProduct[]): CatalogProduct[] {
-  return byPopularity(products.filter((product) => !product.definition.hiddenInProductList));
+  // Disabled products never reach this point: the shop API's products query
+  // hard-filters `enabled: true` (Vendure's guard filter).
+  return byPopularity(products);
 }
 
 export function toProductListData(

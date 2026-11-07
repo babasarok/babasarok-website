@@ -15,7 +15,6 @@ import { run, startServer, type IntegrationServer } from "./harness";
 
 const BIG_MATRIX = {
   id: "int-nagy-matrix",
-  orderable: true,
   basePrice: 1000,
   pricing: { kind: "unit" },
   forbiddenMaterialCombinations: [],

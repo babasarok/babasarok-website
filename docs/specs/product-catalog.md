@@ -8,9 +8,13 @@ filterable product list with a detail page per product.
 > **Transition note (ADR 0009/0010).** During the Vendure migration the
 > commerce model above is owned by the canonical product definition stored in
 > Vendure: `product_id` ↔ the definition's `id` (the native product's
-> `productId`), `can_be_ordered` ↔ `orderable`, field kinds map to `input`,
+> `productId`), field kinds map to `input`,
 > `choice` (presentation `select`/`radio`/`color`), `toggle`, `material` and
 > `embroidery`, and `banned_combinations` ↔ `forbiddenMaterialCombinations`.
+> `can_be_ordered` has no definition counterpart: orderability and visibility
+> are one switch, the native product's `enabled` (owner decision 2026-11 —
+> the shop API serves only enabled products, so a disabled product is neither
+> listed nor configurable).
 > The native Product owns its name and slug (ADR 0011 decision 1): the
 > preview seed writes the Tina `title` into the native product's name, the
 > slug is seeded from the definition's `id` at creation only (the preview seed
@@ -63,10 +67,11 @@ with descriptions), a base price, and a `can_be_ordered` flag.
 
 ### Product list: search, filtering, and sorting
 
-The system SHALL provide a single product list page showing all non-hidden
+The system SHALL provide a single product list page showing all enabled
 products (no pagination), each entry linking to the product detail page, with
-its tagline as the category line. A product is hidden when its canonical
-definition sets `hiddenInProductList`; a product without a known type is
+its tagline as the category line. Visibility and orderability are one switch —
+the native product's `enabled` (the shop API serves only enabled products); a
+product without a known type is
 listed and only drops out of type filters. A product without a definition
 (e.g. a quote-order placeholder) is not a storefront product: it appears in no
 list, search, sitemap or home block, and its detail page is a 404. The page is
@@ -153,8 +158,9 @@ materials; a catalog hit replaces a Pagefind hit for the same URL.
 
 The system SHALL render a detail page per product showing its title, an image
 gallery (thumbnail plus gallery images with descriptions), its body content,
-and sharing links to social networks. Markdown descriptions render server-side with raw HTML escaped, unsafe link schemes dropped, and host-relative asset image paths (`source/ab/file.jpg`) rewritten to asset-server preset URLs. For orderable products the page SHALL
-additionally embed an order configurator for that product.
+and sharing links to social networks. Markdown descriptions render server-side with raw HTML escaped, unsafe link schemes dropped, and host-relative asset image paths (`source/ab/file.jpg`) rewritten to asset-server preset URLs. The page SHALL
+additionally embed an order configurator for that product (every product the
+shop API serves is enabled and orderable).
 
 - **Scenario: Viewing a product**
   - WHEN a visitor opens a product's detail page
@@ -203,20 +209,10 @@ order.
 
 ### Product availability for ordering
 
-The system SHALL expose only products whose `can_be_ordered` flag is set to
-the ordering UI; other products are browse-only. The server enforces the flag
-at order time: adding or adjusting a basket line for a browse-only product is
-rejected with a clear error, and the pricing step refuses to price such a line
-as the backstop (ADR 0011 decision 5).
-
-- **Scenario: Non-orderable product**
-  - WHEN a product's `can_be_ordered` flag is not set
-  - THEN the product is not offered as an option in the order form
-- **Scenario: Non-orderable product rejected at the basket**
-  - WHEN a basket add or adjust targets a product whose `orderable` flag is
-    not set
-  - THEN the mutation is rejected with a clear Hungarian error naming the
-    product by its native name
+Every product the ordering UI can reach is orderable: visibility and
+orderability are one switch (the native product's `enabled`; the shop API
+serves only enabled products). A disabled product is not listed, cannot be
+configured, and no order line can target it.
 
 ### Product page order configurator
 

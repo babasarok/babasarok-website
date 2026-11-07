@@ -22,7 +22,6 @@ import { placeOrder, type SubmitInput } from "./submit";
 
 const definition = ProductDefinitionSchema.parse({
   id: "parna",
-  orderable: true,
   basePrice: 9000,
   pricing: { kind: "unit" },
   forbiddenMaterialCombinations: [],

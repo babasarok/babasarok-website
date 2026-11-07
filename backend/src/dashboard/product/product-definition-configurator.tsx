@@ -2,9 +2,10 @@
  * The shared configurator editor: edits the canonical definition in its input
  * shape and re-validates it with the canonical schema on save; the server
  * re-derives the native option groups/variants via the queued sync, whose
- * state and staleness the SyncBadge surfaces. Create mode renders a PageLayout;
- * embedded mode renders its blocks bare so the stock page's full-width block
- * row sizes them.
+ * state and staleness the SyncBadge surfaces. Both modes render their
+ * sections bare (no cards of their own) inside the wrapper card the stock
+ * page's block system provides: create mode sits at the bottom of the stock
+ * new-product page, embedded mode at the bottom of the stock product page.
  *
  * Type-checked by src/dashboard/tsconfig.json (`check:dashboard`); at build
  * time the dashboard's vite pipeline bundles this file. The typed graphql
@@ -20,22 +21,22 @@ import {
   Badge,
   Button,
   ConfirmationDialog,
-  Input,
   NEW_ENTITY_PATH,
   NativeSelect,
   PaginatedListDataTable,
   PageBlock,
-  PageLayout,
   StatusBadge,
+  toast,
   useUserSettings,
 } from "@vendure/dashboard";
 import { defineStateEntries } from "@vendure/dashboard";
+import type { PageContextValue } from "@vendure/dashboard";
+import type { LanguageCode } from "@vendure/common/lib/generated-types";
 import {
   ProductDefinitionSchema,
   type ProductDefinitionInput,
 } from "../../shared/product-definition/index";
 import { graphql } from "@/gql";
-import { Switch } from "@/vdb/components/ui/switch.js";
 import { UnsavedChangesGuard } from "./unsaved-changes-guard";
 import { ErrorNotice, errorCodeOf, rowKey } from "../shared";
 import "./stock-image-sizes.css";
@@ -72,7 +73,6 @@ const productDefinitionQuery = graphql(`
   query ProductDefinition($productId: String!) {
     productDefinition(productId: $productId) {
       productId
-      orderable
       basePrice
       nativeProductId
       syncState
@@ -122,6 +122,16 @@ const updateProductDefinitionMutation = graphql(`
 const deleteProductDefinitionMutation = graphql(`
   mutation DeleteProductDefinition($productId: String!) {
     deleteProductDefinition(productId: $productId)
+  }
+`);
+
+/** Carries the stock new-product form's values (enabled, description, custom
+ * fields, media, facet values) onto the product the definition just created. */
+const patchCreatedProductMutation = graphql(`
+  mutation PatchCreatedProduct($input: UpdateProductInput!) {
+    updateProduct(input: $input) {
+      id
+    }
   }
 `);
 
@@ -202,12 +212,73 @@ function optionsCarryData(field: FieldInput): boolean {
   return false;
 }
 
+/** The stock form's translatable values for the dashboard's content language. */
+interface StockTranslation {
+  languageCode: string;
+  name?: string | null;
+  slug?: string | null;
+  description?: string | null;
+  customFields?: Record<string, unknown> | null;
+}
+
+/** The stock create form's values the patch carries onto the created
+ * product: CreateProductInput-shaped, so the fields UpdateProductInput
+ * accepts pass through verbatim. PageContextValue.form is typed `any` by the
+ * dashboard's own contract (page-provider.tsx), which is why the read needs
+ * one boundary cast. */
+interface StockCreateValues {
+  enabled?: boolean;
+  featuredAssetId?: string | null;
+  assetIds?: string[] | null;
+  facetValueIds?: string[] | null;
+  customFields?: {
+    popularityRank?: number | null;
+    iconId?: string | null;
+    date?: string | null;
+  } | null;
+}
+
+/** Recursively turns empty strings into null and drops null- and
+ * undefined-valued keys: the patch must not send "" to Int/ID-ish custom
+ * fields, and omitted keys mean "no change" for the freshly created product. */
+function cleanedPatchEntry(value: unknown): unknown {
+  if (typeof value === "string") {
+    return value === "" ? null : value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(cleanedPatchEntry);
+  }
+
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .map(([key, entry]) => [key, cleanedPatchEntry(entry)])
+        .filter(([, entry]) => entry !== null && entry !== undefined)
+    );
+  }
+
+  return value;
+}
+
+/** The entry-point wrapper keeps the caller's object type; the recursion
+ * above erases it because it walks `unknown`. The transform is
+ * structure-preserving, so the cast only restores what it started as. */
+function cleanedPatchValue<T extends object>(value: T): T {
+  return cleanedPatchEntry(value) as T;
+}
+
 export function ConfiguratorEditor({
   definitionId,
   mode,
+  pageForm,
 }: {
   definitionId: string;
   mode: "create" | "embedded";
+  /** The stock page's react-hook-form instance; create mode reads the native
+   * product's name/slug from it and patches the remaining values after the
+   * definition create. */
+  pageForm?: PageContextValue["form"];
 }): ReactElement {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -216,9 +287,6 @@ export function ConfiguratorEditor({
   const [definition, setDefinition] = useState<ProductDefinitionInput | null>(() =>
     creatingNew ? newDefinition("") : null
   );
-  // The native Product's name (ADR 0011 decision 1): asked for at creation,
-  // afterwards edited on the stock product form, never in this editor.
-  const [name, setName] = useState("");
   const language = useUserSettings().settings.contentLanguage;
   const [rows, setRows] = useState<FieldRow[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
@@ -327,19 +395,26 @@ export function ConfiguratorEditor({
   const snapshot = definition === null ? null : snapshotOf(definition, liveFields, banned);
   const configuratorDirty = !creatingNew && snapshot !== null && snapshot !== baseline;
 
+  // Create mode's guard: any configurator content the stock page's own
+  // unsaved-changes guard cannot see. The definition is pristine until one of
+  // its defaults changes (base price, pricing mode, orderable, hidden).
   const dirty =
+    creatingNew &&
     definition !== null &&
-    (definition.id !== "" || (creatingNew && name !== "") || rows.length > 0 || banned.length > 0);
+    (rows.length > 0 ||
+      banned.length > 0 ||
+      JSON.stringify(definition) !== JSON.stringify(newDefinition("")));
 
   const blocksLeaving = (): boolean => !pending && (creatingNew ? dirty : configuratorDirty);
 
-  useEffect(() => {
-    if (creatingNew) {
-      return;
-    }
+  // The unified save button reads this handle: on generated products it saves
+  // the configurator alongside the page form, and in create mode it is the
+  // whole create flow (definition create + stock-value patch).
+  const saveHandleKey = creatingNew ? NEW_ENTITY_PATH : definitionId;
 
-    publishConfiguratorSave(definitionId, {
-      dirty: configuratorDirty,
+  useEffect(() => {
+    publishConfiguratorSave(saveHandleKey, {
+      dirty: creatingNew ? dirty : configuratorDirty,
       save: async () => {
         if (pending) {
           return;
@@ -351,14 +426,10 @@ export function ConfiguratorEditor({
   });
 
   useEffect(() => {
-    if (creatingNew) {
-      return;
-    }
-
     return () => {
-      unpublishConfiguratorSave(definitionId);
+      unpublishConfiguratorSave(saveHandleKey);
     };
-  }, [creatingNew, definitionId]);
+  }, [saveHandleKey]);
 
   function setField(key: string, field: FieldInput): void {
     setRows((current) => {
@@ -583,6 +654,30 @@ export function ConfiguratorEditor({
     }
   }
 
+  /** The stock form's translatable values for the dashboard's content
+   * language. PageContextValue.form is typed `any` by the dashboard's own
+   * contract (page-provider.tsx), so the reads are narrowed here. */
+  function stockTranslation(): StockTranslation | undefined {
+    if (pageForm === undefined) {
+      return undefined;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any -- PageContextValue.form is typed `any` by the dashboard's own contract (page-provider.tsx)
+    const translations: any[] | undefined = pageForm.getValues("translations");
+
+    if (!Array.isArray(translations)) {
+      return undefined;
+    }
+
+    const isForLanguage = (candidate: unknown): candidate is StockTranslation =>
+      typeof candidate === "object" &&
+      candidate !== null &&
+      "languageCode" in candidate &&
+      candidate.languageCode === language;
+
+    return translations.find(isForLanguage);
+  }
+
   async function save(force: boolean): Promise<void> {
     if (definition === null) {
       return;
@@ -592,25 +687,31 @@ export function ConfiguratorEditor({
     setSaved(false);
     setDriftConflict(false);
 
+    const stock = creatingNew ? stockTranslation() : undefined;
+    const productName = (stock?.name ?? "").trim();
+    const slug = creatingNew ? (stock?.slug ?? "").trim() : definition.id;
+
     // The rows and banned pairs are the editor's authoritative state (the
     // definition state only carries the load-time values), so the payload
     // serializes from them — otherwise every field edit would be dropped.
     // Blank codes are generated from the labels here; see assignGeneratedIds.
+    // In create mode the id is the stock form's slug (the native slug is
+    // seeded from it; ADR 0011 decision 1).
     const payload = assignGeneratedIds(
       sanitize({
         ...definition,
+        id: creatingNew ? slug : definition.id,
         fields: rows.map((row) => row.field),
         forbiddenMaterialCombinations: banned.map((rule) => [...rule]),
       })
     );
     const clientErrors: string[] = [];
-    const productName = name.trim();
 
-    if (creatingNew && (payload.id === "" || productName === "")) {
-      clientErrors.push("Az azonosító és a név is kötelező.");
+    if (creatingNew && (slug === "" || productName === "")) {
+      clientErrors.push("A terméknév és a slug megadása a natív termékűrlapon kötelező.");
     }
 
-    if (creatingNew && payload.id === NEW_ENTITY_PATH) {
+    if (creatingNew && slug === NEW_ENTITY_PATH) {
       clientErrors.push("Az azonosító nem lehet „new”.");
     }
 
@@ -646,9 +747,52 @@ export function ConfiguratorEditor({
           return;
         }
 
+        const nativeId = String(created.nativeProductId);
+
+        // The stock form's remaining values (enabled, description, custom
+        // fields, media, facet values) ride onto the created product in a
+        // second, best-effort write: the product and the definition exist at
+        // this point, so a failure here must not block the navigation — the
+        // fields are editable on the product page afterwards.
+        if (pageForm !== undefined) {
+          try {
+            const values = pageForm.getValues() as StockCreateValues;
+            const input = cleanedPatchValue({
+              enabled: values.enabled,
+              featuredAssetId: values.featuredAssetId,
+              assetIds: values.assetIds,
+              facetValueIds: values.facetValueIds,
+              customFields: values.customFields,
+              translations: [
+                {
+                  // The dashboard's contentLanguage is typed `string`, the
+                  // admin API's translation input wants the LanguageCode
+                  // enum: the narrowing is safe (both come from the same
+                  // schema's language list) but not expressible without a
+                  // cast.
+                  languageCode: language as unknown as LanguageCode,
+                  name: productName,
+                  slug: stock?.slug,
+                  description: stock?.description,
+                  customFields: stock?.customFields,
+                },
+              ],
+            });
+
+            await api.query(patchCreatedProductMutation, {
+              input: { ...input, id: nativeId },
+            });
+          } catch {
+            toast.error(
+              "A termék létrejött, de a megjelenítési mezők (leírás, tulajdonságok, média) mentése nem sikerült — a termékoldalon pótolhatók.",
+              { duration: 10_000 }
+            );
+          }
+        }
+
         await navigate({
           to: "/products/$id",
-          params: { id: String(created.nativeProductId) },
+          params: { id: nativeId },
         });
       } else {
         const result = await api.query(updateProductDefinitionMutation, {
@@ -733,24 +877,8 @@ export function ConfiguratorEditor({
 
   const editor = (
     <>
-      <PageBlock
-        column="main"
-        blockId="product-definition-form"
-        title="Termék"
-        description="A mentés után a natív termékszerkezet a háttérben újragenerálódik. A mezők kiegészítő tulajdonságai (láthatósági feltételek, súgók, minták) változatlanul megőrződnek."
-      >
+      <PageBlock column="main" layout="bare">
         <div className="flex flex-wrap items-center gap-3">
-          {creatingNew && (
-            <Button
-              type="button"
-              disabled={pending}
-              onClick={() => {
-                void save(false);
-              }}
-            >
-              Létrehozás
-            </Button>
-          )}
           {!creatingNew && (
             <ConfirmationDialog
               title="Termék törlése"
@@ -810,38 +938,10 @@ export function ConfiguratorEditor({
         )}
 
         <fieldset disabled={pending} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1 text-sm">
-            <span>Azonosító</span>
-            {creatingNew ? (
-              <>
-                <Input
-                  className="w-full max-w-64"
-                  value={definition.id}
-                  onChange={(e) => {
-                    setDefinition({ ...definition, id: e.target.value });
-                  }}
-                />
-                <span className="text-muted-foreground text-xs">
-                  Végleges: a natív termék slugja létrehozáskor ebből készül. Nem lehet „new”.
-                </span>
-              </>
-            ) : (
-              <span className="font-mono text-xs wrap-anywhere">{definition.id}</span>
-            )}
-          </label>
-          {creatingNew && (
+          {!creatingNew && (
             <label className="flex flex-col gap-1 text-sm">
-              <span>Név</span>
-              <Input
-                className="w-full max-w-80"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                }}
-              />
-              <span className="text-muted-foreground text-xs">
-                A natív termék neve; mentés után a beépített termékűrlapon szerkeszthető.
-              </span>
+              <span>Azonosító</span>
+              <span className="font-mono text-xs wrap-anywhere">{definition.id}</span>
             </label>
           )}
           <label className="flex flex-col gap-1 text-sm">
@@ -889,45 +989,43 @@ export function ConfiguratorEditor({
               </span>
             </label>
           )}
-          <label className="flex items-center gap-2 text-sm">
-            <span>Rendelhető</span>
-            <Switch
-              checked={definition.orderable}
-              onCheckedChange={(checked) => {
-                setDefinition({ ...definition, orderable: checked });
-              }}
-            />
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <span>Rejtett a listában</span>
-            <Switch
-              checked={definition.hiddenInProductList === true}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  setDefinition({ ...definition, hiddenInProductList: true });
-                  return;
-                }
-
-                const { hiddenInProductList: _removed, ...rest } = definition;
-
-                setDefinition(rest);
-              }}
-            />
-          </label>
         </fieldset>
       </PageBlock>
-      <PageBlock
-        column="main"
-        blockId="product-definition-fields"
-        title="Mezők"
-        description="Minden választó, kapcsoló és anyagmező natív opciócsoportot és változatokat generál; a szabad szöveg és a hímzés értéke a rendelési sorokon tárolódik."
-      >
-        <fieldset disabled={pending} className="flex flex-col gap-4">
-          <div className="flex justify-end">
-            <Button type="button" variant="outline" onClick={toggleExpandAll}>
-              Összes kibontása/összecsukása
-            </Button>
+      <PageBlock column="main" layout="bare">
+        <div className="mb-4 flex items-start justify-between gap-2">
+          <div className="grid flex-1 gap-1">
+            <div className="text-style-card-title">Mezők</div>
+            <div className="text-muted-foreground text-sm">
+              Minden választó, kapcsoló és anyagmező natív opciócsoportot és változatokat generál; a
+              szabad szöveg és a hímzés értéke a rendelési sorokon tárolódik.
+            </div>
           </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Összes kibontása/összecsukása"
+            title="Összes kibontása/összecsukása"
+            onClick={toggleExpandAll}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="m7 15 5 5 5-5" />
+              <path d="m7 9 5-5 5 5" />
+            </svg>
+          </Button>
+        </div>
+        <fieldset disabled={pending} className="flex flex-col gap-4">
           {rows.map((row, index) => (
             <Fragment key={row.key}>
               <FieldEditor
@@ -1008,7 +1106,7 @@ export function ConfiguratorEditor({
       </PageBlock>
       <PageBlock
         column="main"
-        blockId="product-definition-banned"
+        layout="bare"
         title="Tiltott anyagkombinációk"
         description="Az itt felsorolt anyagpárok (akkor is, ha ugyanaz az anyag kétszer szerepel) nem fordulhatnak elő együtt egy választásban."
       >
@@ -1069,7 +1167,7 @@ export function ConfiguratorEditor({
       {!creatingNew && (
         <PageBlock
           column="main"
-          blockId="product-definition-generated"
+          layout="bare"
           title="Generált natív szerkezet"
           description="A szinkronizálással előállított natív opciócsoportok és változatok."
         >
@@ -1111,17 +1209,9 @@ export function ConfiguratorEditor({
     </>
   );
 
-  if (mode === "create") {
-    return (
-      <>
-        <UnsavedChangesGuard blocks={blocksLeaving} />
-        <PageLayout>{editor}</PageLayout>
-      </>
-    );
-  }
-
-  // The embedded block sits in the stock page's full-width row; a nested
-  // PageLayout would re-grid its cards into a 3/4-width main column.
+  // Both modes render bare blocks: create mode sits inside the stock
+  // new-product page's PageLayout (the block API wraps it), embedded mode in
+  // the stock product page's full-width row.
   return (
     <div className="space-y-4">
       <UnsavedChangesGuard blocks={blocksLeaving} />

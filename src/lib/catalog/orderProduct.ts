@@ -168,8 +168,13 @@ export function toOrderProduct(
   return {
     product_id: definition.id,
     title: product.name,
-    hidden_in_product_list: definition.hiddenInProductList,
-    can_be_ordered: definition.orderable,
+    // The definition carries no hidden flag any more (hiding is the native
+    // product's "enabled" switch); the key stays in the Cms shape until the
+    // Tina product backend is removed.
+    hidden_in_product_list: undefined,
+    // Orderability is the same switch; every definition-backed product the
+    // site can reach is orderable.
+    can_be_ordered: true,
     categories: product.tagline ?? undefined,
     shortDescription: product.shortDescription ?? undefined,
     type: typeCode !== undefined && isProductType(typeCode) ? typeCode : FALLBACK_TYPE,
