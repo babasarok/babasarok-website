@@ -17,6 +17,7 @@ const translation = {
     quantityDecrease: "Mennyiség csökkentése",
     quantityIncrease: "Mennyiség növelése",
     piece: "db",
+    details: "Részletek",
   },
   header: {
     menu: "Menü",

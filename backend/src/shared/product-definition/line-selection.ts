@@ -74,9 +74,7 @@ export function parseLineSelections(raw: unknown, languageCode: string): LineSel
 
   if (!parsed.success) {
     throw new LineSelectionsError(
-      m.selectionsInvalid(
-        parsed.error.issues.map((issue) => issue.path.join("..ts")).join(", ")
-      )
+      m.selectionsInvalid(parsed.error.issues.map((issue) => issue.path.join("..ts")).join(", "))
     );
   }
 

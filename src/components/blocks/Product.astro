@@ -2,7 +2,7 @@
 import { getEntry } from "astro:content";
 import { Markdown } from "astro-md-2";
 import Button from "../ui/Button.astro";
-import PopularProducts from "./PopularProducts.astro";
+import PopularProducts from "./PopularProducts.svelte";
 import { entryIdForLocale, localeFromPathname, localizedPath } from "@/lib/i18n";
 
 const locale = localeFromPathname(Astro.url.pathname);
@@ -22,7 +22,7 @@ const buttonHref = buttonTarget ? localizedPath(`/${buttonTarget}/`, locale) : u
           <Markdown of={title} />
         </div>
 
-        <PopularProducts />
+        <PopularProducts client:visible {locale} itemCount={entry.data.itemCount} />
 
         {/* All-products button */}
         <div class="mt-4 flex justify-center">

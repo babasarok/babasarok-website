@@ -23,6 +23,7 @@ const translation = {
     quantityDecrease: "Decrease quantity",
     quantityIncrease: "Increase quantity",
     piece: "pc",
+    details: "Details",
   },
   header: {
     menu: "Menu",

@@ -42,8 +42,9 @@ non-catalog Tina content, buyer-visible server messages, and order emails.
    serializable props. Server islands (`server:defer`) resolve `Astro.url`
    to `/_server-islands/…`, so URL-derived locale breaks there — and per
    priority 2 they are a last resort anyway. The one existing server island
-   (`PopularProducts`) migrates to a plain in-page component or a client
-   island in this epic; its `/_server-islands/*` route rule leaves with it.
+   (`PopularProducts`) becomes a client island: it fetches the catalog from
+   the browser at runtime, so nothing catalog-shaped is baked at build time
+   (the build must not fetch the API) and the homepage stays prerendered.
    No new `server:defer` may be added.
 
 3. **i18next core, typed on both sides.** `src/locales/
@@ -143,7 +144,8 @@ Slices, in merge order:
    config i18n + fallback + sitemap i18n + mirrored route rules,
    `Base.astro` `lang`/`og:locale`.
 2. **Routing & SEO**: language switcher, catalog-sitemap alternates,
-   per-locale search index, PopularProducts server-island migration.
+   per-locale search index, PopularProducts as a client island (see
+   decision 2).
 3. **UI dictionaries**: `src/locales/*`, string extraction across pages,
    blocks and islands, `/en/` page mirrors, en 404/500.
 4. **Tina per-locale content**: locale subfolders, collection/config

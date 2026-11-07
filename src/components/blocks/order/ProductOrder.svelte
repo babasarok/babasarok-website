@@ -138,7 +138,7 @@
 
     try {
       const next = $state.snapshot(item);
-      const selections = parseLineSelections(line.customFields?.selections ?? null);
+      const selections = parseLineSelections(line.customFields?.selections ?? null, locale);
       applySelections(next.fields, selections);
       applySelections(next.fields, partnerMaterials(params.get("syncFrom")));
       next.count = line.quantity;
@@ -173,7 +173,7 @@
       return {};
     }
 
-    const all = parseLineSelections(partner.customFields?.selections ?? null);
+    const all = parseLineSelections(partner.customFields?.selections ?? null, locale);
 
     return Object.fromEntries(
       Object.entries(all).filter(([, selection]) => selection?.kind === "material")
