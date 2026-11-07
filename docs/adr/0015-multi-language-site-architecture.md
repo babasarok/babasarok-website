@@ -125,9 +125,10 @@ non-catalog Tina content, buyer-visible server messages, and order emails.
 Slices, in merge order:
 
 1. **Foundation** (this ADR): `src/lib/i18n.ts` (locale type, pathname
-   helpers, og:locale and Vendure language-code maps — the single source
-   the config imports), astro config i18n + fallback + sitemap i18n +
-   mirrored route rules, `Base.astro` `lang`/`og:locale`.
+   helpers — client-safe, no i18next import) and `src/lib/i18next.ts` (the
+   server-side typed `createInstance`; islands never import it), astro
+   config i18n + fallback + sitemap i18n + mirrored route rules,
+   `Base.astro` `lang`/`og:locale`.
 2. **Routing & SEO**: language switcher, catalog-sitemap alternates,
    per-locale search index, PopularProducts server-island migration.
 3. **UI dictionaries**: `src/locales/*`, string extraction across pages,
