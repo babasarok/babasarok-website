@@ -17,7 +17,6 @@ const { Content } = await render(terms);
 const { title } = terms.data;
 
 const productTitles = (await getProducts())
-  .filter((p) => p.definition.orderable)
   .map((p) => p.name.trim())
   .toSorted((a, b) => a.localeCompare(b, "hu"));
 ---
