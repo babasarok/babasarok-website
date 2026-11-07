@@ -12,7 +12,7 @@ export function getClientI18n(locale: Locale): Promise<I18n> {
 
   const instance = i18next.createInstance();
   instance.use(
-    resourcesToBackend(async (language, namespace) => {
+    resourcesToBackend(async (language: string, namespace: string) => {
       if (!(locales as readonly string[]).includes(language)) {
         throw new Error(`unsupported language ${language}`);
       }
