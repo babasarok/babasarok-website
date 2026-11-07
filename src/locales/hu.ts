@@ -98,6 +98,7 @@ const translation = {
     name: "Név szerint",
     noResults: "Nincs találat",
     type: "Terméktípus",
+    sets: "Szettek",
   },
   checkout: {
     title: "Pénztár",

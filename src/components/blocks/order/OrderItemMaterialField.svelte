@@ -8,7 +8,7 @@
   import { slide } from "svelte/transition";
   import type { i18n as I18n } from "i18next";
   import I18nGate from "@/components/ui/I18nGate.svelte";
-  import type { Locale } from "@/lib/i18n";
+  import { localizedPath, type Locale } from "@/lib/i18n";
   import type { IProduct, MaterialField } from "@/lib/types.svelte";
   import { resolveColorCount } from "@/lib/product/materials";
 
@@ -103,7 +103,7 @@
                       {i18n.t("basket.viewAllColors")}
                     {/snippet}
                     <IconButton
-                      href={`/material/${materialInfo.material_id}/`}
+                      href={localizedPath(`/material/${materialInfo.material_id}/`, locale)}
                       target="_blank"
                       rel="noopener"
                       class="text-base"

@@ -4,7 +4,7 @@ import PageHeader from "../../components/ui/PageHeader.astro";
 import ProductCard from "../../components/ui/ProductCard.astro";
 import { getMaterials } from "@/lib/catalog";
 import { pageLanguageCode } from "@/lib/vendure/client";
-import { localeFromPathname } from "../../lib/i18n";
+import { localeFromPathname, localizedPath } from "../../lib/i18n";
 import { createI18n } from "../../lib/i18next";
 
 const i18n = createI18n(localeFromPathname(Astro.url.pathname));
@@ -27,7 +27,7 @@ const materials = (await getMaterials(undefined, languageCode)).toSorted((a, b) 
         {
           materials.map((material) => (
             <ProductCard
-              href={`/material/${material.slug}/`}
+              href={localizedPath(`/material/${material.slug}/`, locale)}
               title={material.label}
               image={material.thumbnailUrl ?? undefined}
               category={material.subtitle || undefined}

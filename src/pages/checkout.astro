@@ -14,7 +14,8 @@ const locale = localeFromPathname(Astro.url.pathname);
 const i18n = createI18n(locale);
 const t = i18n.t.bind(i18n);
 const configEntry = await getEntry("config", entryIdForLocale(locale, "config"));
-const checkout = await getEntry("checkout", entryIdForLocale(locale, "index"));
+// The glob loader strips a trailing "/index" from the entry id (hu/index.md → hu).
+const checkout = await getEntry("checkout", locale);
 
 if (!configEntry) {
   throw new Error("Config entry not found");

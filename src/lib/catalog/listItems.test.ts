@@ -35,7 +35,7 @@ function product(overrides: Partial<CatalogProduct> & { slug: string }): Catalog
 describe("toProductListData", () => {
   it("computes set membership through definition ids and lists only sets as options", () => {
     const groups = ProductGroupsResponseSchema.parse(productGroups).productGroups;
-    const { items, sets } = toProductListData(fixtureProducts, groups, BASE);
+    const { items, sets } = toProductListData(fixtureProducts, groups, BASE, "hu");
 
     expect(sets).toEqual([{ id: "ovis-szett", title: "Ovis szett" }]);
     expect(Object.fromEntries(items.map((item) => [item.id, item.sets]))).toEqual({
@@ -53,7 +53,8 @@ describe("toProductListData", () => {
         product({ slug: "first", popularityRank: 1 }),
       ],
       [],
-      BASE
+      BASE,
+      "hu"
     );
 
     expect(items.map((item) => item.href)).toEqual([
@@ -61,6 +62,11 @@ describe("toProductListData", () => {
       "/product/second/",
       "/product/plain/",
     ]);
+    expect(
+      toProductListData([product({ slug: "first" })], [], BASE, "en").items.map(
+        (item) => item.href
+      )[0]
+    ).toMatch(/^\/en\/product\//);
     expect(popularOrder).toEqual(["first", "second", "plain"]);
   });
 
@@ -72,7 +78,8 @@ describe("toProductListData", () => {
         product({ slug: "none" }),
       ],
       [],
-      BASE
+      BASE,
+      "hu"
     );
 
     expect(items.map((item) => item.type)).toEqual(["takaro", undefined, undefined]);
@@ -82,7 +89,8 @@ describe("toProductListData", () => {
     const { items } = toProductListData(
       [product({ slug: "a", tagline: "Alcím", thumbnailUrl: "source/ab/a.jpg" })],
       [],
-      BASE
+      BASE,
+      "hu"
     );
 
     expect(items[0]?.category).toBe("Alcím");

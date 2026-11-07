@@ -1,10 +1,11 @@
 ---
 import { Icon } from "astro-icon/components";
 import Base from "../../layouts/Base.astro";
-import { localeFromPathname } from "../../lib/i18n";
+import { localeFromPathname, localizedPath } from "../../lib/i18n";
 import { createI18n } from "../../lib/i18next";
 
-const i18n = createI18n(localeFromPathname(Astro.url.pathname));
+const locale = localeFromPathname(Astro.url.pathname);
+const i18n = createI18n(locale);
 const t = i18n.t.bind(i18n);
 import ProductGallery from "../../components/ui/ProductGallery.astro";
 import Markdown from "../../components/ui/Markdown.astro";
@@ -124,7 +125,10 @@ const shareLinks = [
         <nav class="flex items-center justify-between gap-4 sm:gap-8">
           {
             prev ? (
-              <a class="group flex items-center" href={`/product/${prev.slug}/`}>
+              <a
+                class="group flex items-center"
+                href={localizedPath(`/product/${prev.slug}/`, locale)}
+              >
                 <span class="text-dark mr-3 leading-none">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -168,7 +172,10 @@ const shareLinks = [
 
           {
             next ? (
-              <a class="group flex items-center" href={`/product/${next.slug}/`}>
+              <a
+                class="group flex items-center"
+                href={localizedPath(`/product/${next.slug}/`, locale)}
+              >
                 <span class="text-right">
                   <span class="text-body block text-sm">{t("common.next")}</span>
                   <span class="font-heading text-dark group-hover:text-sand-300 block text-xl">

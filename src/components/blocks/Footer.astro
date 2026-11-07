@@ -3,14 +3,18 @@ import { Icon } from "astro-icon/components";
 import Button from "../ui/Button.astro";
 import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
-import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
+import { entryIdForLocale, localeFromPathname, localizedPath } from "@/lib/i18n";
 import { createI18n } from "@/lib/i18next";
 
 const config = // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   (await getEntry("config", entryIdForLocale(localeFromPathname(Astro.url.pathname), "config"))!)
     .data;
 const footerLogo = config.footerLogo;
-const contactLink = config.contactLink ? `/${config.contactLink}` : "/contact";
+const locale = localeFromPathname(Astro.url.pathname);
+const contactLink = localizedPath(
+  config.contactLink ? `/${config.contactLink}` : "/contact",
+  locale
+);
 const i18n = createI18n(localeFromPathname(Astro.url.pathname));
 const t = i18n.t.bind(i18n);
 
@@ -111,7 +115,10 @@ const social = [...(config.social ?? [])]
           {
             sitemap.map((item) => (
               <li>
-                <a href={item.url ?? "/"} class="text-light hover:text-light/80">
+                <a
+                  href={localizedPath(item.url ?? "/", locale)}
+                  class="text-light hover:text-light/80"
+                >
                   {item.name}
                 </a>
               </li>

@@ -10,7 +10,7 @@
   import { imageUrl } from "@/lib/vendure/imageUrl";
   import type { i18n as I18n } from "i18next";
   import I18nGate from "@/components/ui/I18nGate.svelte";
-  import type { Locale } from "@/lib/i18n";
+  import { localizedPath, type Locale } from "@/lib/i18n";
 
   interface Props {
     locale: Locale;
@@ -99,7 +99,10 @@
           {setState.message}
           {#if setState.kind === "pending-material" && setState.syncFromLineId}
             <a
-              href={`/product/${product.slug}/?line=${line.id}&syncFrom=${setState.syncFromLineId}`}
+              href={localizedPath(
+                `/product/${product.slug}/?line=${line.id}&syncFrom=${setState.syncFromLineId}`,
+                locale
+              )}
               class="flex items-center gap-1 rounded-full border border-brown-300 px-3 py-1 font-medium transition-all hover:bg-brown-100"
             >
               <Icon icon="mdi:sync" class="shrink-0" />
@@ -109,7 +112,7 @@
           {#if setState.kind === "pending-partner"}
             {#each partnerLinks as partner (partner.slug)}
               <a
-                href={`/product/${partner.slug}/`}
+                href={localizedPath(`/product/${partner.slug}/`, locale)}
                 data-testid="set-partner-link"
                 class="flex items-center gap-1 rounded-full border border-brown-300 px-3 py-1 font-medium transition-all hover:bg-brown-100"
               >
@@ -144,7 +147,7 @@
       <div class="flex items-center justify-between border-t border-brown-100 pt-3">
         <div class="flex items-center gap-3 text-sm">
           <a
-            href={`/product/${product.slug}/?line=${line.id}`}
+            href={localizedPath(`/product/${product.slug}/?line=${line.id}`, locale)}
             class="flex items-center gap-1 font-medium text-brown-600 transition-colors hover:text-brown-700"
           >
             <Icon icon="mdi:pencil" class="shrink-0" />

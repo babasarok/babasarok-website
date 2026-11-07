@@ -8,12 +8,13 @@ import PageHeader from "../components/ui/PageHeader.astro";
 import { getProducts } from "@/lib/catalog";
 import { pageLanguageCode } from "@/lib/vendure/client";
 import { createI18n } from "@/lib/i18next";
-import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
+import { localeFromPathname } from "@/lib/i18n";
 
 const locale = localeFromPathname(Astro.url.pathname);
 const i18n = createI18n(locale);
 const t = i18n.t.bind(i18n);
-const terms = await getEntry("terms", entryIdForLocale(locale, "index"));
+// The glob loader strips a trailing "/index" from the entry id (hu/index.md → hu).
+const terms = await getEntry("terms", locale);
 
 if (!terms) {
   throw new Error("Terms entry not found");

@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { i18n as I18n } from "i18next";
   import I18nGate from "@/components/ui/I18nGate.svelte";
-  import type { Locale } from "@/lib/i18n";
+  import { localizedPath, type Locale } from "@/lib/i18n";
   import { onMount } from "svelte";
   import Icon from "@iconify/svelte";
   import { basket } from "@/lib/basket/basket.svelte";
@@ -117,7 +117,7 @@
                     </span>
                   </div>
                   <a
-                    href={`/product/${product.slug}/?line=${basketItem.id}`}
+                    href={localizedPath(`/product/${product.slug}/?line=${basketItem.id}`, locale)}
                     class="shrink-0 rounded-full p-1.5 text-brown-500 transition-colors hover:bg-brown-100"
                     aria-label={i18n.t("basket.edit")}
                   >

@@ -7,7 +7,8 @@ import { toProductListData } from "@/lib/catalog/listItems";
 import { ASSET_BASE, pageLanguageCode } from "@/lib/vendure/client";
 import { localeFromPathname } from "../../lib/i18n";
 import { createI18n } from "../../lib/i18next";
-const i18n = createI18n(localeFromPathname(Astro.url.pathname));
+const locale = localeFromPathname(Astro.url.pathname);
+const i18n = createI18n(locale);
 const t = i18n.t.bind(i18n);
 
 export const prerender = false;
@@ -17,14 +18,20 @@ const [products, groups] = await Promise.all([
   getProducts(undefined, languageCode),
   getProductGroups(undefined, languageCode),
 ]);
-const { items, sets, popularOrder } = toProductListData(products, groups, ASSET_BASE);
+const { items, sets, popularOrder } = toProductListData(products, groups, ASSET_BASE, locale);
 ---
 
 <Base title={t("pages.products")}>
   <PageHeader title={t("pages.products")} no-shapes compact />
   <section class="py-12">
     <div class="container xl:max-w-375 xl:px-3.5">
-      <ProductList client:load items={items} sets={sets} popularOrder={popularOrder} />
+      <ProductList
+        client:load
+        locale={locale}
+        items={items}
+        sets={sets}
+        popularOrder={popularOrder}
+      />
     </div>
   </section>
 </Base>

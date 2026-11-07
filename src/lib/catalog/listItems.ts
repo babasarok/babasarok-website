@@ -1,4 +1,5 @@
 import type { SlimImage } from "@/lib/order/types";
+import { localizedPath, type Locale } from "@/lib/i18n";
 import { isProductType } from "@/lib/product/productTypes";
 import type { ListProduct } from "@/lib/product-list/query";
 import { imageSrcSet, imageUrl } from "@/lib/vendure/imageUrl";
@@ -36,7 +37,8 @@ export function listedByPopularity(products: readonly CatalogProduct[]): Catalog
 export function toProductListData(
   products: readonly CatalogProduct[],
   groups: readonly CatalogProductGroup[],
-  assetBase: string
+  assetBase: string,
+  locale: Locale
 ): ProductListData {
   const sets = groups.filter((group) => group.kind === "set");
   const items = listedByPopularity(products).map((product): ProductListItem => {
@@ -50,7 +52,7 @@ export function toProductListData(
       type: typeCode !== undefined && isProductType(typeCode) ? typeCode : undefined,
       date: product.date ?? undefined,
       sets: sets.filter((set) => set.productIds.includes(id)).map((set) => set.id),
-      href: `/product/${product.slug}/`,
+      href: localizedPath(`/product/${product.slug}/`, locale),
       category: product.tagline ?? undefined,
       image: product.thumbnailUrl ? cardImage(product.thumbnailUrl, assetBase) : undefined,
     };

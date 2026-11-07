@@ -7,6 +7,7 @@ import {
   entrySlugFromId,
   localeFromEntryId,
   localeFromPathname,
+  localizedPath,
 } from "@/lib/i18n";
 import blogShape from "../../assets/images/blog/blog-shape.svg?url";
 import Button from "../ui/Button.astro";
@@ -63,7 +64,7 @@ const buttonHref = buttonTarget
         <div class="flex flex-wrap">
           {posts.map((post) => (
             <BlogCard
-              href={`/blog/${entrySlugFromId(post.id)}/`}
+              href={localizedPath(`/blog/${entrySlugFromId(post.id)}/`, locale)}
               title={post.data.title}
               image={post.data.featureImage}
               date={post.data.date}

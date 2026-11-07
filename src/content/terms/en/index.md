@@ -34,7 +34,7 @@ The language of the contract is Hungarian.
 
 The Service Provider reserves the right to unilaterally amend the provisions of this GTC by publishing the current provisions on the Website.
 
-The provision of the Service depends on the customer accepting the provisions of this GTC and being informed of the contents of the related [privacy notice](/adatvedelem).
+The provision of the Service depends on the customer accepting the provisions of this GTC and being informed of the contents of the related [privacy notice](/en/adatvedelem).
 
 The Service Provider does everything in its power to ensure the continuous operation of the website it maintains. By accepting this GTC, the customer acknowledges that the Service Provider bears no liability — and excludes it — for any potential unavailability of the website for any reason.
 
@@ -294,6 +294,6 @@ No provision of this GTC is aimed at excluding or limiting the Service Provider'
 
 The Service Provider processes the personal data made available by the Customer and handled during the use of the webshop in accordance with Regulation (EU) 2016/679 of the European Parliament and of the Council (General Data Protection Regulation, hereinafter: "GDPR") and the relevant Hungarian legislation.
 The Service Provider provides detailed information about the purposes, legal bases and duration of the processing of personal data, the rights of the data subjects and the other circumstances of the processing in a separate Data Processing Notice.
-The Data Processing Notice is available at the following link: [https://babasarok.net/adatvedelem](/adatvedelem).
+The Data Processing Notice is available at the following link: [https://babasarok.net/adatvedelem](/en/adatvedelem).
 
 Made in: Telkibánya, 23 October 2026.

@@ -103,6 +103,7 @@ const translation = {
     name: "By name",
     noResults: "No results",
     type: "Product type",
+    sets: "Sets",
   },
   checkout: {
     title: "Checkout",

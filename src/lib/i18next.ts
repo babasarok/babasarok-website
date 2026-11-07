@@ -10,6 +10,6 @@ export function createI18n(locale: Locale): I18n {
     resources,
     interpolation: { escapeValue: false },
   });
-  instance.init();
+  void instance.init();
   return instance;
 }

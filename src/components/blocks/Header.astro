@@ -5,15 +5,18 @@ import { getEntry } from "astro:content";
 import NavBasket from "@/components/blocks/order/NavBasket.svelte";
 import SearchDialog from "@/components/blocks/SearchDialog.svelte";
 import LanguageDialog from "@/components/blocks/LanguageDialog.svelte";
-import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
+import { entryIdForLocale, localeFromPathname, localizedPath } from "@/lib/i18n";
 import { createI18n } from "@/lib/i18next";
 
 const locale = localeFromPathname(Astro.url.pathname);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const config = (await getEntry("config", entryIdForLocale(locale, "config"))!).data;
 const logo = config.logo;
-const contactLink = config.contactLink ? `/${config.contactLink}` : "/contact";
-const checkoutLink = "/checkout";
+const contactLink = localizedPath(
+  config.contactLink ? `/${config.contactLink}` : "/contact",
+  locale
+);
+const checkoutLink = localizedPath("/checkout", locale);
 
 const isHome = Astro.url.pathname === "/";
 // The checkout page shows the full basket already; skip the nav basket there.
@@ -30,7 +33,7 @@ const t = i18n.t.bind(i18n);
 <nav id="navbar" class="fixed top-0 z-50">
   <div class="container">
     <div class="flex flex-wrap items-center justify-between">
-      <a href="/" class="block shrink-0">
+      <a href={localizedPath("/", locale)} class="block shrink-0">
         {
           logo && (
             <Image
@@ -73,7 +76,7 @@ const t = i18n.t.bind(i18n);
             mainMenu.map((item) => (
               <li>
                 <a
-                  href={item.url ?? "/"}
+                  href={localizedPath(item.url ?? "/", locale)}
                   class:list={[
                     "text-dark hover:text-sand-300 block p-2 text-center transition-all",
                     isHome && item.url?.includes("#") && "scroll",

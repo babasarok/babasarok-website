@@ -6,14 +6,16 @@
  * Astro content schema (`z.enum`) and `data.ts` (runtime narrowing). Add a
  * new type here once and every consumer picks it up.
  */
+import { defaultLocale, type Locale } from "@/lib/i18n";
+
 export const PRODUCT_TYPES = [
-  { value: "racsvedo", label: "Rácsvédő" },
-  { value: "takaro", label: "Takaró" },
-  { value: "lepedo", label: "Lepedő / fektető" },
-  { value: "parna", label: "Párna" },
-  { value: "babafeszek", label: "Babafészek" },
-  { value: "zsak", label: "Zsák és tároló" },
-  { value: "kiegeszito", label: "Kiegészítő" },
+  { value: "racsvedo", label: "Rácsvédő", labelEn: "Cot rail cover" },
+  { value: "takaro", label: "Takaró", labelEn: "Blanket" },
+  { value: "lepedo", label: "Lepedő / fektető", labelEn: "Sheet" },
+  { value: "parna", label: "Párna", labelEn: "Pillow" },
+  { value: "babafeszek", label: "Babafészek", labelEn: "Baby nest" },
+  { value: "zsak", label: "Zsák és tároló", labelEn: "Bag and storage" },
+  { value: "kiegeszito", label: "Kiegészítő", labelEn: "Accessories" },
 ] as const;
 
 export type ProductType = (typeof PRODUCT_TYPES)[number]["value"];
@@ -25,8 +27,12 @@ export const PRODUCT_TYPE_VALUES = PRODUCT_TYPES.map((t) => t.value) as [
 ];
 
 /** Human label for a product type value. */
-export function productTypeLabel(type: ProductType): string {
-  return PRODUCT_TYPES.find((t) => t.value === type)?.label ?? type;
+export function productTypeLabel(type: ProductType, locale: Locale = defaultLocale): string {
+  const entry = PRODUCT_TYPES.find((t) => t.value === type);
+  if (!entry) {
+    return type;
+  }
+  return locale === defaultLocale ? entry.label : entry.labelEn;
 }
 
 export function isProductType(type: string): type is ProductType {
