@@ -1,13 +1,8 @@
 import { describe, expect, it } from "vitest";
-import {
-  resolveSetDiscount,
-  isSet,
-  siblingsFor,
-  relatedGroupsFor,
-  type SetDiscountGroup,
-} from "@/lib/pricing/groups";
+import { resolveSetDiscount, isSet, siblingsFor, relatedGroupsFor } from "@/lib/order/groups";
+import type { OrderProductGroup } from "@/lib/order/types";
 
-const groups: SetDiscountGroup[] = [
+const groups: OrderProductGroup[] = [
   {
     title: "Babafészek szett",
     discount_amount: 1000,
@@ -22,7 +17,7 @@ describe("resolveSetDiscount (potential)", () => {
   });
 
   it("picks the biggest-amount set when a product is in several", () => {
-    const multi: SetDiscountGroup[] = [
+    const multi: OrderProductGroup[] = [
       { title: "Small", discount_amount: 500, products: [{ product_id: "nest" }] },
       { title: "Big", discount_amount: 2000, products: [{ product_id: "nest" }] },
     ];
@@ -30,7 +25,7 @@ describe("resolveSetDiscount (potential)", () => {
   });
 
   it("ignores a group with a zero or absent discount", () => {
-    const noDiscount: SetDiscountGroup[] = [
+    const noDiscount: OrderProductGroup[] = [
       { title: "Related", discount_amount: 0, products: [{ product_id: "nest" }] },
       { title: "Related2", products: [{ product_id: "nest" }] },
     ];
@@ -39,22 +34,22 @@ describe("resolveSetDiscount (potential)", () => {
 });
 
 describe("membership queries", () => {
-  const nestSet: SetDiscountGroup = {
+  const nestSet: OrderProductGroup = {
     title: "Babafészek szett",
     discount_amount: 1000,
     products: [{ product_id: "nest" }, { product_id: "blanket" }, { product_id: "pillow" }],
   };
-  const bigSet: SetDiscountGroup = {
+  const bigSet: OrderProductGroup = {
     title: "Nagy szett",
     discount_amount: 3000,
     products: [{ product_id: "nest" }, { product_id: "sheet" }],
   };
-  const relatedA: SetDiscountGroup = {
+  const relatedA: OrderProductGroup = {
     title: "Kapcsolódó A",
     discount_amount: 0,
     products: [{ product_id: "nest" }, { product_id: "toy" }],
   };
-  const relatedB: SetDiscountGroup = {
+  const relatedB: OrderProductGroup = {
     // Absent amount is also "related items", not a set.
     title: "Kapcsolódó B",
     products: [{ product_id: "nest" }, { product_id: "mobile" }],
@@ -78,7 +73,7 @@ describe("membership queries", () => {
       expect(siblingsFor("nest", all)).toEqual(["blanket", "pillow", "sheet"]);
     });
     it("excludes the product itself and de-duplicates across sets", () => {
-      const dup: SetDiscountGroup[] = [
+      const dup: OrderProductGroup[] = [
         { title: "A", discount_amount: 1, products: [{ product_id: "nest" }, { product_id: "x" }] },
         { title: "B", discount_amount: 1, products: [{ product_id: "nest" }, { product_id: "x" }] },
       ];

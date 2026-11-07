@@ -1,5 +1,5 @@
 import type { Injector, OrderProcess, OrderTransitionData } from "@vendure/core";
-import { isLegacyQuoteOrder } from "../quote-order/legacy-order";
+import { isLegacyQuoteOrder } from "../../shared/legacy-order";
 import { LineInvalidReasonService } from "./line-invalid-reason.service";
 
 /**

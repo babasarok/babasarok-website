@@ -15,7 +15,7 @@ import {
   resolveNumericValue,
   isFieldVisible,
 } from "@/lib/product/field";
-import { calculatePriceForItem } from "@/lib/pricing/price";
+import { priceBreakdown } from "@/lib/order/priceBreakdown";
 import { isItemValid, validateItem } from "@/lib/product/validation";
 import type { Field } from "@/lib/types.svelte";
 import { fieldError, makeField, makeProduct } from "./fixtures";
@@ -163,7 +163,7 @@ describe("isFieldVisible", () => {
 
 describe("pricing ignores hidden fields", () => {
   it("excludes a hidden field's price from the unit price", () => {
-    const hidden = calculatePriceForItem(
+    const hidden = priceBreakdown(
       makeProduct({
         price: 1000,
         fields: [
@@ -186,12 +186,11 @@ describe("pricing ignores hidden fields", () => {
         ],
       })
     );
-    expect(hidden.unitPrice).toBe(1000);
     expect(hidden.options.some((o) => o.label === "extra")).toBe(false);
   });
 
   it("includes the field's price once the dependency is met", () => {
-    const shown = calculatePriceForItem(
+    const shown = priceBreakdown(
       makeProduct({
         price: 1000,
         fields: [
@@ -214,7 +213,6 @@ describe("pricing ignores hidden fields", () => {
         ],
       })
     );
-    expect(shown.unitPrice).toBe(2400);
     expect(shown.options).toContainEqual({ label: "extra", price: 900 });
   });
 });

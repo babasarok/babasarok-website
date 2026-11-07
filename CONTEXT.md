@@ -1,12 +1,14 @@
 # Babasarok Website
 
-A catalogue and ordering site for handmade baby products. Products are CMS
-content; ordering happens per product page into a basket.
+A catalogue and ordering site for handmade baby products. Products live in
+Vendure (edited in the stock dashboard); ordering happens per product page
+into a basket.
 
 ## Language
 
 **Product**:
-A handmade baby item offered for sale, modelled as one CMS content entry.
+A handmade baby item offered for sale, modelled as one canonical product
+definition (plus its generated native product) in Vendure.
 _Avoid_: item, SKU
 
 **Product type**:

@@ -9,17 +9,18 @@ opportunities for improvement are.
 
 ## 1. Stack overview
 
-| Concern             | Technology                                                        |
-| ------------------- | ----------------------------------------------------------------- |
-| Site framework      | **Astro 7** (`output: "static"`)                                  |
-| Interactive islands | **Svelte 5** (runes), hydrated only where needed                  |
-| Styling             | **Tailwind CSS 4** (`@theme` tokens in `src/styles/global.css`)   |
-| CMS / content       | **TinaCMS** (Git-backed, Tina Cloud in prod, `--local` in dev/CI) |
-| Markdown            | MDX + a custom `remark-asset-images` plugin                       |
-| Images              | `astro:assets` (`sharp`), responsive `layout: "constrained"`      |
-| Fonts               | `astro:assets` Google font provider (Poppins, Yeseva One)         |
-| Orders              | Order configurator island → Vendure shop API (quote-order plugin) |
-| Tests               | Vitest (unit), Playwright (hydration), dist guard scripts         |
+| Concern             | Technology                                                                                   |
+| ------------------- | -------------------------------------------------------------------------------------------- |
+| Site framework      | **Astro 7** (`output: "static"`)                                                             |
+| Interactive islands | **Svelte 5** (runes), hydrated only where needed                                             |
+| Styling             | **Tailwind CSS 4** (`@theme` tokens in `src/styles/global.css`)                              |
+| Catalog             | **Vendure** (self-hosted backend; dashboard editors, shop API)                               |
+| CMS / content       | **TinaCMS** (Git-backed, Tina Cloud in prod, `--local` in dev/CI) — non-catalog content only |
+| Markdown            | MDX + a custom `remark-asset-images` plugin                                                  |
+| Images              | `astro:assets` (`sharp`), responsive `layout: "constrained"`                                 |
+| Fonts               | `astro:assets` Google font provider (Poppins, Yeseva One)                                    |
+| Orders              | Native Vendure checkout: basket = active order, server-side pricing                          |
+| Tests               | Vitest (unit), Playwright (hydration), dist guard scripts                                    |
 
 The site is a **static, build-time-first** application. Client JavaScript is
 limited to a handful of Svelte islands (most significantly the order form). This
@@ -32,51 +33,56 @@ first, standardised over bespoke, no global CSS.
 flowchart LR
     subgraph Authoring
         TinaAdmin[Tina admin /admin]
+        Dash[Vendure dashboard /dashboard]
         Git[(Git content<br/>src/content/**)]
     end
     subgraph Build[Astro build]
         TinaClient[tina/__generated__/client]
-        Data[src/lib/data.ts<br/>loaders]
-        Pages[src/pages/**<br/>Astro pages]
+        Config[src/lib/config.ts<br/>getConfig]
+        Catalog[src/lib/catalog<br/>Vendure queries + mappers]
         Collections[astro:content<br/>collections]
+        Pages[src/pages/**<br/>Astro pages]
     end
-    Browser[Static HTML + islands]
+    Browser[Static HTML + islands,<br/>catalog pages rendered on demand]
 
     TinaAdmin -->|writes md/json| Git
     Git --> TinaClient
+    TinaClient --> Config
     Git --> Collections
-    TinaClient --> Data
-    Data --> Pages
     Collections --> Pages
+    Dash --> VendureDB[(Vendure DB)]
+    VendureDB --> Catalog
+    Catalog --> Pages
     Pages -->|astro build| Browser
 ```
 
-There are **two parallel content access paths**, which is the single most
-important thing to understand about this codebase:
+Three content sources, each with one job:
 
-1. **TinaCMS path** — `src/lib/data.ts` calls the generated Tina client
-   (`tina/__generated__/client`) for `config`, `product`, `material`, and
-   `delivery_method` data. This is the source for the global config (header /
-   footer / SEO) and the order form island.
-2. **Astro content collections path** — `src/content.config.ts` defines `config`,
-   `product`, `blog`, `material`, and `contact` collections via glob loaders.
-   List pages and the landing grids use `getCollection(...)` so they get
-   `astro:assets` `ImageMetadata` and `<Image>` optimization.
-
-The same on-disk content (`src/content/**`) is read by **both** paths, with
-different shapes and different image handling. See §5 for why and the risks.
+1. **Vendure catalog** — products, materials, product groups, thread colors,
+   delivery methods and orders live in Vendure. `src/lib/catalog/*` queries the
+   shop API and maps responses into the site's shapes; catalog pages render
+   **on demand** (edge-cached ~60 s, ADR 0012), never at build time.
+2. **TinaCMS path** — Tina authors the non-catalog content (site config,
+   landing sections, blog/reference posts, contact, privacy, terms, checkout
+   copy). `src/lib/config.ts` fetches `config.json` through the generated Tina
+   client for headers/footers/SEO; the rest is read by Astro content
+   collections. Tina holds **no product data** (roadmap principle 1).
+3. **Astro content collections** — `getCollection(...)` over the same
+   `src/content` files so list pages get `astro:assets` `ImageMetadata` and
+   `<Image>` optimization.
 
 ## 3. Directory map
 
 ```
 src/
   layouts/Base.astro        # <html> shell: SEO/OG meta, favicons, fonts, Header/Footer, ClientRouter
-  pages/                    # Routes (all static)
+  pages/                    # Catalog routes render on demand (ADR 0012), the rest static
     index.astro             # Landing: Hero + Service + About + Product + Blog
     contact.astro           # Order form island + contact info
-    product/[...page].astro  + [id].astro   # Paginated list + detail
-    material/...            # Paginated list + detail
+    product/[...page].astro  + [id].astro   # Paginated list + detail (Vendure)
+    material/...            # Paginated list + detail (Vendure)
     blog/...                # Paginated list + detail
+    checkout.astro          # Native checkout island over the active order
     rss.xml.ts              # RSS feed
     site.webmanifest.ts     # PWA manifest (endpoint)
     src/                    # (Tina admin image-serving endpoint area)
@@ -86,13 +92,14 @@ src/
     ui/                     # Reusable presentational components (Button, *Card, Pagination, ...)
     blocks/ConsentBanner.svelte  # Consent banner island; gates GTM + Meta pixel loading
   lib/                      # Framework-agnostic logic + data loaders
-    data.ts                 # Tina loaders + image-ref resolution
+    config.ts               # The one Tina client read: global site config
+    catalog/                # Vendure shop-API queries, zod schemas, mappers, live pricing
     tracking.ts             # Consent storage + consent-gated GTM / Meta pixel loading
     types.svelte.ts / typeHelpers.ts / cn.ts / uuid.ts / scrollSnapper.ts
     assets/                 # resolveImage() (index.ts), tinaImageUrl, remarkAssetImages
     product/                # field{Types,Value,Visibility}, materials, validation (product-config domain)
-    pricing/                # price, setDiscount (imports product/)
-    order/                  # basket.svelte, product, queryParams, storage, submit
+    order/                  # types, basket.svelte, product, queryParams, storage, submit, groups, priceBreakdown
+    vendure/                # Shop-API transport + image URLs
     __tests__/              # Vitest specs + fixtures
   styles/                   # global.css (@theme tokens), base.css, prose.css, theme.css
   content/                  # Tina-managed md/json (the data)
@@ -110,38 +117,29 @@ title/description/OG/theme-color, emits canonical + Open Graph tags, preloads
 fonts, wires favicons through the Vite asset pipeline, and includes
 `ClientRouter` (view transitions) and the Meta Pixel.
 
-### 4.2 Content modelling (Tina + Astro collections)
+### 4.2 Content modelling (Tina, Astro collections, Vendure)
 
-- **Tina collections** (`tina/collections/*.ts`) define the editable schema:
-  global config, the five landing sections (hero/service/about/product-section/
-  blog-section), and the `product` / `material` / `blog` / `delivery-method` /
-  `contact` content types.
-- **Astro collections** (`src/content.config.ts`) re-declare a subset with Zod
-  schemas, primarily so list/detail pages can use `getCollection()` +
-  `<Image>`. Unused configurator frontmatter is stripped by Zod.
-- **Tina is the source of truth for shape.** The Astro/Zod schema can only mirror
-  what Tina stores — it never models more than the CMS can persist. Anything
-  richer (stricter unions, per-variant value types) is layered on downstream, not
-  pushed back into the schema.
-- **CMS↔Astro type reconciliation.** `src/lib/data.ts` derives an "enhanced" TS
-  type per collection from the generated Tina client, and asserts it is
-  structurally identical to the Astro `InferEntrySchema<...>` via
-  `RecursiveDiff` + `AssertTrue<IfEquals<XDiff, never>>()` (see
-  `src/lib/typeHelpers.ts`). If the two drift, the build fails at type-check —
-  hover the `XDiff` alias to see the mismatch. Loaders (`getProducts`, etc.)
-  hand-map the raw Tina result into the enhanced shape, which is the one place
-  nullable→undefined normalization and image optimization happen.
+- **Tina collections** (`tina/collections/*.ts`) define the editable schema for
+  non-catalog content: global config, the landing sections, blog/reference
+  posts, contact, privacy, terms and checkout copy. The product, material,
+  delivery-method, embroidery and product-group collections were removed with
+  the epic-4 cleanup — the catalog lives in Vendure only.
+- **Astro collections** (`src/content.config.ts`) re-declare the non-catalog
+  content with Zod schemas so pages can use `getCollection()` + `<Image>`.
+- **Order-island types.** `src/lib/order/types.ts` hand-writes the shapes the
+  order island consumes (`OrderProduct`, `OrderField`, `OrderThreadColor`,
+  …); `src/lib/catalog/orderProduct.ts` maps Vendure data into them. The
+  mappers' assignments and the components keep the types honest in both
+  directions — there is no generated schema behind them anymore.
 - **Shared value lists live in one module.** Where the same enumerated values are
   needed by the Tina schema, the Zod schema, and runtime code, they are defined
-  once and imported by all three (e.g. `src/lib/product/fieldTypes.ts` feeds the
-  Tina `type` select options, a Zod `z.enum`, and `data.ts`'s discriminant).
+  once and imported by all three (e.g. `src/lib/product/fieldTypes.ts`).
   Tina config imports these with a **relative** path — its esbuild bundling
   ignores the `@/` tsconfig alias.
-- **Discriminated unions are a runtime/form-side concern.** Because Tina stores a
-  flat record, the CMS/Zod type keeps a single shape with an enum tag. Where code
-  needs a proper discriminated union (e.g. a per-type value shape), it is built
-  by distributing over the shared tag in the app types (`src/lib/types.svelte.ts`),
-  not declared in the schema.
+- **Discriminated unions are a runtime/form-side concern.** The flat stored
+  shape keeps a single record with an enum tag; per-type value unions are built
+  by distributing over the shared tag in `src/lib/types.svelte.ts`, not
+  declared in the schema.
 
 ### 4.3 Image resolution
 
@@ -151,11 +149,7 @@ in cloud builds) while Astro wants `ImageMetadata` objects from `src/assets`.
 
 - `src/lib/assets/index.ts` `resolveImage()` normalizes both forms to a hashed
   `/_astro/...` asset.
-- `src/lib/data.ts` `resolveTinaImageRefs()` deep-walks every loaded Tina entity
-  and rewrites any image-looking string to the optimized local `src`. This is a
-  **backstop** that prevents Tina Cloud URLs leaking into client-island props
-  (rich-text `content` ASTs are the main offender).
-- `src/lib/assets/remarkAssetImages.ts` does the equivalent rewrite inside the
+- `src/lib/assets/remarkAssetImages.ts` rewrites image references inside the
   Markdown `<Content/>` pipeline.
 - `scripts/test/no-tina-cloud-urls.ts` is a CI guard that fails the build if any
   `assets.tina.io` URL survives into `dist/`.
@@ -165,19 +159,27 @@ in cloud builds) while Astro wants `ImageMetadata` objects from `src/assets`.
 The main pieces of client-side state are the product-page configurator and the
 checkout. Product pages render `<ProductOrder client:load>` to build up a basket
 item, and `checkout.astro` renders `<CheckoutForm client:load>` for the basket
-review + submission, passing in Tina-derived `products`, `deliveryMethods`, and
-`config` as plain serializable data. Domain logic is extracted into `src/lib/`:
+review + submission, passing in Vendure-derived products, delivery methods and
+thread colors plus the Tina `config` as plain serializable data. Domain logic
+is extracted into `src/lib/`:
 
-- `priceUtils.ts` — price computation
-- `materialUtils.ts` — material/color resolution (`resolveColorCount`)
-- `validation.ts` — field validation
-- `order/submit.ts` — `formatProductString` / `buildQuoteOrderInput` /
-  `submitOrder`; `order/total.ts` — delivery charging and the order total
+- `order/types.ts` — the island's data shapes, mapped from Vendure by
+  `catalog/orderProduct.ts`
+- `order/priceBreakdown.ts` — the display-only price breakdown; the
+  authoritative unit price comes from the shared pricing package via
+  `catalog/livePrice.ts` (the same logic the server prices orders with)
+- `order/groups.ts` — set/related-items grouping over catalog product groups
+- `materialUtils`/`validation` (`product/`) — material/color resolution and
+  field validation
+- `basket/` — the active order: the Vendure session token, add/adjust/remove,
+  and native submission (`basket/submit.ts`: set customer → address →
+  shipping method → order custom fields → transition to placed)
 
-Submission posts a `submitQuoteOrder` GraphQL mutation to the Vendure shop
-API (the backend stores the order and emails buyer + owner). Unit tests in
-`src/lib/__tests__/` drive `submitOrder` with a stubbed `fetch` and assert the
-exact mutation payload via inline snapshots.
+Submission runs the native Vendure order flow against the shop API (the
+backend prices every line server-side and emails buyer + owner). Unit tests in
+`src/lib/__tests__/` cover the pricing/validation logic; checkout E2E covers
+the full journey; `catalog/contract.test.ts` checks the query shapes against a
+live shop API.
 
 ### 4.5 Build & tooling specifics
 
@@ -199,29 +201,23 @@ exact mutation payload via inline snapshots.
 These are ordered roughly by impact. They are observations, not yet committed
 work.
 
-### 5.1 Reconcile the two content-access paths (highest leverage)
+### 5.1 Content-access paths (mostly resolved)
 
-The dual Tina-client / Astro-collection access of the **same** `src/content`
-files is the biggest source of accidental complexity and bug surface (it already
-caused the Tina Cloud URL leaks the `resolveTinaImageRefs` walker now guards
-against). Worth deciding on a single primary path, or at least documenting a hard
-rule for which path each page type uses and why, and adding a schema-parity check
-so Tina and Zod definitions cannot silently drift.
+The catalog's dual access paths died with the Vendure cutover: only
+non-catalog content remains, read through Astro collections with Tina as the
+authoring UI (the Tina client reads just `config`). The remaining wrinkle is
+small: the Tina schema and the Astro Zod schema for the same files can still
+drift silently — the old `AssertTrue` parity machinery only ever covered the
+catalog collections. A schema-parity check for the surviving collections would
+close it.
 
-### 5.2 Make image resolution declarative instead of defensive
+### 5.2 Image resolution defensiveness
 
-`resolveTinaImageRefs()` deep-walking entire entities and a regex-based
-"looks like an image" heuristic is a defensive workaround for not knowing which
-fields are images. A typed mapping (or generating the image-field list from the
-Tina schema) would be more maintainable and less prone to silent misses, and
-would let the CI URL guard become a true belt-and-suspenders rather than the
-primary defense.
-
-### 5.3 Type-safety gaps in `data.ts`
-
-Several loaders carry `// eslint-disable-next-line @typescript-eslint/explicit-function-return-type`.
-Deriving and exporting explicit return types (the `Cms*` types already hint at
-this) would remove the disables and make the data contracts visible at a glance.
+`resolveImage()` normalizing path-string vs Tina-Cloud URL vs content-collection
+`ImageMetadata` is defensive by necessity of two authoring sources. The CI URL
+guard (`scripts/test/no-tina-cloud-urls.ts`) is the backstop for Tina Cloud URLs
+leaking into `dist/`; shrinking the surviving Tina surface (config + non-catalog
+content only) keeps that surface auditable.
 
 ### 5.4 Build robustness
 
@@ -231,11 +227,10 @@ this) would remove the disables and make the data contracts visible at a glance.
 
 ### 5.5 Test coverage breadth
 
-Strong unit coverage exists for order-string/price/validation logic, and one
-hydration smoke test guards islands. Gaps worth filling: image-resolution
-(`resolveImage` / `resolveTinaImageRefs`) unit tests (these are the trickiest,
-most regression-prone code), and at least one end-to-end happy-path test for the
-order submission.
+Strong unit coverage exists for the order-form pricing/validation logic, and
+checkout E2E covers the order journey end to end. Gaps worth filling:
+image-resolution (`resolveImage`) unit tests — the trickiest, most
+regression-prone code.
 
 ### 5.6 Documentation & onboarding
 
@@ -249,25 +244,16 @@ de-risk onboarding for humans who don't have that memory.
 The per-type answers a field needs (value resolution, price contribution, choice
 enumeration, deep-link fill, persistence shape, validation, order-email record)
 are currently re-implemented as a `switch (field.type)` in each consumer, which
-lets the price part drift between `pricing/price.ts` and
-`pricing/validCombinations.ts` and makes a new field type an ~8-file change.
+makes a new field type an ~8-file change.
 ADR 0006 moves them into an exhaustive `Record<ProductFieldType, FieldBehavior>`
 (`src/lib/product/behavior/`) so implementation coverage is a compile error and
 usage is enforced by a lint rule. (In progress.)
 
-### 5.8 Organise the data layer by entity
+### 5.8 Island types next to their entity
 
-`src/lib/data.ts` (~800 lines) holds, for six collections, the `Cms*` type
-derivations, the Tina⇄zod parity assertions, the loaders, the image-optimisation
-calls, _and_ the product-domain build gates (`assertValidProductReferences`,
-`assertNoZeroPriceProduct`) that import from `product/` and `pricing/`. Split it
-into per-entity modules (`data/product.ts`, `data/material.ts`, …), each owning
-its enhanced type + its `IfEquals` assertion + its loader, and move the product
-build gates to `src/lib/product/buildChecks.ts`. Also split
-`src/lib/types.svelte.ts` so the product form types (`Field`, the per-type value
-shapes, `IProduct`) live next to the product entity — this completes an open task
-of ADR 0002 and removes the inverted `data.ts → types.svelte.ts` dependency.
-(Extends 5.3.)
+`src/lib/types.svelte.ts` still holds the product-form types (`Field`, the
+per-type value shapes, `IProduct`) derived from `order/types.ts`; moving them
+next to the product domain completes an open task of ADR 0002.
 
 ### 5.9 Single source of truth for the remaining discriminants
 
@@ -280,16 +266,10 @@ labels + type-guard from one `as const` list; the same treatment is missing for:
   the hard-coded `<option>`s in `ProductList.svelte`. Derive it from one list +
   a `Record<ListSort, comparator>`; the select renders from the list, so a new
   sort mode is a compile error until it is implemented _and_ offered.
-- **Set-discount status** (`pricing/setDiscount.ts`) — the
-  `"active" | "pending-partner" | "pending-material"` states are compared with
-  raw `===` in three components. A presentation record over the state gives one
-  home for the copy, tone, and action of each.
 - **Saved field shape** (`order/storage.ts`) — the persisted zod union is built
   by _exclusion_ (`PRODUCT_FIELD_TYPE_VALUES.filter(t => t !== "toggle" && …)`),
   so a new field type silently inherits the string persistence shape. Derive it
   from `valueKind` in `fieldTypes.ts` and keep it structurally identical to the
   behaviour registry's `SavedFieldValue`.
 
-Smaller: `content.config.ts` (six collections, ~380 lines) could split into
-per-collection schema modules, and `tina/collections/product.ts` (716 lines)
-could extract its per-field-type conditional-UI fragments.
+Smaller: `content.config.ts` could split into per-collection schema modules.

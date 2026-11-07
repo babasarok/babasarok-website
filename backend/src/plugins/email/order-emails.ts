@@ -13,9 +13,7 @@ import {
   type EventWithAsyncData,
 } from "@vendure/email-plugin";
 import { env } from "../../env";
-import { isLegacyQuoteOrder } from "../quote-order/legacy-order";
-import { parseProductDetails } from "../quote-order/quote-order.input";
-import { plainDeliveryName } from "./delivery-name";
+import { isLegacyQuoteOrder } from "../../shared/legacy-order";
 import { loadNativeLineContent } from "./native-line-content";
 import { orderEmailView, type OrderEmailView } from "./order-email-view";
 
@@ -43,60 +41,6 @@ async function loadChannelEmails(
 function adminOrderUrl(order: Order): string {
   return `${env.adminUrl.replace(/\/$/, "")}/orders/${order.id}`;
 }
-
-// "Order placed" for a quote shop: the submission transitions AddingItems ->
-// ArrangingPayment and there is no payment step.
-function onOrderPlaced(
-  name: string
-): EmailEventHandler<
-  string,
-  EventWithAsyncData<OrderStateTransitionEvent, { orderEmailFrom: string; ownerEmail: string }>
-> {
-  return new EmailEventListener(name)
-    .on(OrderStateTransitionEvent)
-    .filter(
-      (event) =>
-        event.toState === "ArrangingPayment" &&
-        event.fromState === "AddingItems" &&
-        isLegacyQuoteOrder(event.order)
-    )
-    .loadData(async ({ event, injector }) => {
-      const entityHydrator = injector.get(EntityHydrator);
-      await entityHydrator.hydrate(event.ctx, event.order, {
-        relations: ["lines", "customer"],
-      });
-      return loadChannelEmails(injector.get(TransactionalConnection), event.ctx);
-    })
-    .setTemplateVars((event) => ({
-      order: event.order,
-      fromAddress: event.data.orderEmailFrom,
-      adminOrderUrl: adminOrderUrl(event.order),
-      deliveryMethodName: plainDeliveryName(event.order.customFields.deliveryMethodName ?? ""),
-      // 1-based numbering keeps the per-product blocks aligned with the
-      // "1. termék: …" labels inside the client-generated set-discount summary.
-      products: event.order.lines.map((line, index) => ({
-        number: index + 1,
-        // eslint-disable-next-line @typescript-eslint/no-misused-spread -- customFields is a plain column bag at runtime; its class typing is a Vendure artifact
-        ...line.customFields,
-        quantity: line.quantity,
-        details: parseProductDetails(line.customFields.detailsJson)?.map((d) => ({
-          ...d,
-          paddingLeft: 14 + d.depth * 14,
-          indent: d.depth * 14,
-        })),
-      })),
-    }));
-}
-
-export const orderConfirmationHandler = onOrderPlaced("quote-order-confirmation")
-  .setRecipient((event) => event.order.customer?.emailAddress ?? "")
-  .setFrom("{{ fromAddress }}")
-  .setSubject("Köszönjük a rendelésed: {{ order.code }}");
-
-export const orderNotificationHandler = onOrderPlaced("quote-order-notification")
-  .setRecipient((event) => event.data.ownerEmail)
-  .setFrom("{{ fromAddress }}")
-  .setSubject("Új árajánlatkérés: {{ order.code }}");
 
 function onNativeOrderPlaced(
   name: string

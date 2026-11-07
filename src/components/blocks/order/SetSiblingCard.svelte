@@ -1,10 +1,10 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { hasConfigurableOptions } from "@/lib/order/product";
-  import type { CmsEnhancedProduct } from "@/lib/data";
+  import type { OrderProduct } from "@/lib/order/types";
 
   interface Props {
-    product: CmsEnhancedProduct;
+    product: OrderProduct;
     href?: string | undefined;
     added?: number;
     disabled?: boolean;

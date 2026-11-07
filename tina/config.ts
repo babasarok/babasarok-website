@@ -1,18 +1,12 @@
 import { defineConfig } from "tinacms";
 import { GlobalConfigCollection } from "./collections/global-config";
-import { EmbroideryConfigCollection } from "./collections/embroidery";
 import { HeroCollection } from "./collections/hero";
 import { ServiceCollection } from "./collections/service";
 import { AboutCollection } from "./collections/about";
-import { ProductSectionCollection } from "./collections/product-section";
 import { BlogSectionCollection } from "./collections/blog-section";
 import { BlogCollection } from "./collections/blog";
-import { ProductCollection } from "./collections/product";
-import { MaterialCollection } from "./collections/material";
-import { DeliveryMethodCollection } from "./collections/delivery-method";
 import { ContactCollection } from "./collections/contact";
 import { AdatvedelemCollection } from "./collections/adatvedelem";
-import { ProductGroupCollection } from "./collections/product-groups";
 import { CheckoutCollection } from "./collections/checkout";
 import { TermsCollection } from "./collections/terms";
 
@@ -46,20 +40,14 @@ export default defineConfig({
   schema: {
     collections: [
       GlobalConfigCollection,
-      EmbroideryConfigCollection,
       HeroCollection,
       ServiceCollection,
       AboutCollection,
-      ProductSectionCollection,
       BlogSectionCollection,
       BlogCollection,
-      ProductCollection,
-      MaterialCollection,
-      DeliveryMethodCollection,
       CheckoutCollection,
       ContactCollection,
       AdatvedelemCollection,
-      ProductGroupCollection,
       TermsCollection,
     ],
   },

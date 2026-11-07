@@ -1,4 +1,4 @@
-import type { CmsEnhancedProduct } from "./data";
+import type { OrderField, OrderProduct, OrderProductMaterials } from "./order/types";
 import type { ProductFieldType, StringValuedFieldType } from "./product/fieldTypes";
 export interface ValueWithError {
   value: string;
@@ -10,14 +10,6 @@ export interface ValueWithError {
 export interface ToggleValue {
   value: boolean;
   error?: string | undefined;
-}
-
-/**
- * Structured configuration for length-based pricing.
- * Replaces the fragile cross-field string matching with typed references.
- */
-export interface LengthBasedPricingConfig {
-  sourceField: string;
 }
 
 export interface ProductMaterialValue {
@@ -38,10 +30,6 @@ export interface EmbroideryValue {
   error?: string | undefined;
 }
 
-export type CmsField = NonNullable<NonNullable<CmsEnhancedProduct["fields"]>[number]>;
-export type CmsProductMaterials = NonNullable<CmsEnhancedProduct["materials"]>;
-export type CmsProductMaterial = NonNullable<NonNullable<CmsField["materials"]>[number]>;
-
 /** The runtime value shape each field `type` carries. */
 interface FieldValueByType {
   input: ValueWithError;
@@ -55,7 +43,7 @@ interface FieldValueByType {
   embroidery: EmbroideryValue;
 }
 
-type FieldOf<T extends ProductFieldType> = Omit<CmsField, "type"> & {
+type FieldOf<T extends ProductFieldType> = Omit<OrderField, "type"> & {
   type: T;
   value?: FieldValueByType[T] | undefined;
 };
@@ -73,9 +61,9 @@ export type StringValueField = Extract<Field, { type: StringValuedFieldType }>;
 /** The `material` field variant (picks one of its `materials` plus colours). */
 export type MaterialField = Extract<Field, { type: "material" }>;
 
-export interface IProduct extends Omit<CmsEnhancedProduct, "materials" | "fields"> {
+export interface IProduct extends Omit<OrderProduct, "materials" | "fields"> {
   uuid: string;
   count: number;
-  materials: CmsProductMaterials;
+  materials: OrderProductMaterials;
   fields: Field[];
 }

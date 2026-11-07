@@ -7,14 +7,14 @@
   import Color from "./common/Color.svelte";
   import Switch from "./common/Switch.svelte";
   import OrderItemMaterialField from "./OrderItemMaterialField.svelte";
-  import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
+  import type { OrderThreadColor } from "@/lib/order/types";
   import type { IProduct, StringValueField } from "@/lib/types.svelte";
   import { isFieldVisible } from "@/lib/product/field";
   import { randomUUID } from "@/lib/uuid";
 
   interface Props {
     product: IProduct;
-    threadColors: CmsEnhancedEmbroideryColor[];
+    threadColors: OrderThreadColor[];
     onChange?: ((product: IProduct) => void) | undefined;
   }
 
@@ -82,7 +82,7 @@
           {/if}
         </p>
         <div class="flex gap-1 flex-wrap">
-          {#if field.type === "radio" && "items" in field}
+          {#if field.type === "radio"}
             {@const items = field.items?.filter((item) => item != null)}
             {#each items as item (item.label)}
               {@const selected = field.value?.value === item.value}
@@ -143,7 +143,7 @@
               </div>
             {/if}
             {@render Input(field)}
-          {:else if field.type === "select" && "items" in field}
+          {:else if field.type === "select"}
             {@const items = field.items?.filter((item) => item != null)}
             <select
               value={field.value?.value}

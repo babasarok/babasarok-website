@@ -1,7 +1,11 @@
 ---
-import { getCollection, getEntry, render } from "astro:content";
+// Reads the Vendure catalog for the orderable-product list, so it renders on
+// demand (edge-cached) like the other catalog-touching pages (ADR 0012).
+export const prerender = false;
+import { getEntry, render } from "astro:content";
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
+import { getProducts } from "@/lib/catalog";
 
 const terms = await getEntry("terms", "index");
 
@@ -12,9 +16,8 @@ if (!terms) {
 const { Content } = await render(terms);
 const { title } = terms.data;
 
-const productTitles = (await getCollection("product"))
-  .filter((p) => p.data.can_be_ordered === true)
-  .map((p) => p.data.title.trim())
+const productTitles = (await getProducts())
+  .map((p) => p.name.trim())
   .toSorted((a, b) => a.localeCompare(b, "hu"));
 ---
 

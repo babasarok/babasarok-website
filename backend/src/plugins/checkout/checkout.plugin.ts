@@ -7,6 +7,7 @@ import { LineSummaryService } from "./line-summary";
 @VendurePlugin({
   imports: [PluginCommonModule],
   providers: [LineSummaryService],
+  dashboard: "../../dashboard/order-lines/order-lines.tsx",
   configuration: (appConfig) => {
     appConfig.orderOptions.process.push(new CheckoutReadinessProcess());
 

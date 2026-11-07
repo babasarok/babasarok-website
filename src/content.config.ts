@@ -1,28 +1,18 @@
 /**
- * Content is sourced from TinaCMS (see `src/lib/data.ts`), not Astro's
- * content layer, so most collections are unused at runtime. We declare
- * `config` to stop Astro auto-generating it as a Markdown collection:
- * `src/content/config` holds JSON (Tina's global config), so the default
- * Markdown glob finds nothing and warns. Pointing it at JSON silences that.
+ * Astro content collections over the Tina-edited non-catalog content
+ * (sections, blog, contact, adatvédelem, terms, checkout copy, site config).
+ * The catalog itself lives in Vendure — the site reads it through
+ * `src/lib/catalog` (see ADR 0012) — so there are no product/material
+ * collections here anymore.
  *
- * `product` is a real Astro content collection: the landing product grid
- * queries it with `getCollection('product')`. Its schema validates the fields
- * the site renders (including gallery `images`);
- * unused product-configurator frontmatter (materials, fields, pricing) is
- * stripped by Zod.
- *
- * `blog` is a real Astro content collection: the landing blog preview queries
- * it with `getCollection('blog')`. `_index.md` is excluded from the glob.
- *
- * `material` backs the `/material` list page. `_index.html` is excluded by the
- * `*.md` glob.
+ * `config` is declared to stop Astro auto-generating it as a Markdown
+ * collection: `src/content/config` holds JSON (Tina's global config), so the
+ * default Markdown glob finds nothing and warns. Pointing it at JSON silences
+ * that.
  */
 import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import z from "astro/zod";
-import type { SchemaContext } from "astro/content/config";
-import { EMBROIDERY_PRICE_UNIT_VALUES, PRODUCT_FIELD_TYPE_VALUES } from "./lib/product/fieldTypes";
-import { PRODUCT_TYPE_VALUES } from "./lib/product/productTypes";
 import { cookieCategorySchema } from "./lib/cookie";
 
 const heroBlock = defineCollection({
@@ -149,149 +139,6 @@ const config = defineCollection({
     }),
 });
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-const materialValidator = ({ image }: SchemaContext) =>
-  z.object({
-    material_id: z.string(),
-    label: z.string(),
-    categories: z.string().optional().nullable(),
-    shortDescription: z.string().optional().nullable(),
-    thumbnail: image().optional().nullable(),
-    colors: z
-      .array(
-        z.object({
-          color_id: z.string(),
-          label: z.string(),
-          hex: z.string().optional().nullable(),
-          image: image().optional().nullable(),
-        })
-      )
-      .optional()
-      .nullable(),
-  });
-
-/**
- * Product `fields` share one shape with a `type` discriminant drawn from the
- * central PRODUCT_FIELD_TYPES list. The runtime `Field` type (types.svelte.ts)
- * turns this into a per-type discriminated union so each kind can carry its own
- * value shape (see docs/embroidery-field-plan.md).
- */
-const productFieldBaseShape = {
-  name: z.string(),
-  price: z.number().optional().nullable(),
-  price_unit: z.enum(EMBROIDERY_PRICE_UNIT_VALUES).optional().nullable(),
-  label: z.string(),
-  optional: z.boolean().optional().nullable(),
-  allow_custom_value: z.boolean().optional().nullable(),
-  regex: z.string().optional().nullable(),
-  placeholder: z.string().optional().nullable(),
-  tooltip: z.string().optional().nullable(),
-  depends_on: z
-    .object({
-      field: z.string().optional().nullable(),
-      value: z.string().optional().nullable(),
-    })
-    .optional()
-    .nullable(),
-  color_count: z.string().optional().nullable(),
-  // `material` fields pick their choices from a list of materials (a reference
-  // into the `material` collection) rather than the flat `items` list.
-  materials: z
-    .array(
-      z
-        .object({
-          material_path: z.string(),
-          price: z.number(),
-        })
-        .optional()
-        .nullable()
-    )
-    .optional()
-    .nullable(),
-  items: z
-    .array(
-      z
-        .object({
-          value: z.string(),
-          label: z.string().optional().nullable(),
-          price: z.number().optional().nullable(),
-          tooltip: z.string().optional().nullable(),
-        })
-        .optional()
-        .nullable()
-    )
-    .optional()
-    .nullable(),
-};
-
-const productFieldSchema = z.object({
-  type: z.enum(PRODUCT_FIELD_TYPE_VALUES),
-  ...productFieldBaseShape,
-});
-
-const product = defineCollection({
-  loader: glob({ pattern: "*.md", base: "src/content/product" }),
-  schema: ({ image }) =>
-    z.object({
-      product_id: z.string(),
-      title: z.string(),
-      hidden_in_product_list: z.boolean().optional().nullable(),
-      can_be_ordered: z.boolean().optional().nullable(),
-      categories: z.string().optional().nullable(),
-      type: z.enum(PRODUCT_TYPE_VALUES),
-      date: z.coerce.date().optional().nullable(),
-      thumbnail: image().optional().nullable(),
-      shortDescription: z.string().optional().nullable(),
-      icon: image().optional().nullable(),
-      length_based_pricing: z
-        .object({
-          sourceField: z.string(),
-        })
-        .optional()
-        .nullable(),
-      price: z.number(),
-      discount: z.number().optional().nullable(),
-      discount_valid_until: z.coerce.date().optional().nullable(),
-      images: z
-        .array(
-          z
-            .object({
-              image: image().optional().nullable(),
-              description: z.string().optional().nullable(),
-            })
-            .optional()
-            .nullable()
-        )
-        .optional()
-        .nullable(),
-      materials: z
-        .object({
-          banned_combinations: z
-            .array(
-              z
-                .object({
-                  materials: z
-                    .array(
-                      z
-                        .object({ material_path: z.string().optional().nullable() })
-                        .optional()
-                        .nullable()
-                    )
-                    .optional()
-                    .nullable(),
-                })
-                .optional()
-                .nullable()
-            )
-            .optional()
-            .nullable(),
-        })
-        .optional()
-        .nullable(),
-      fields: z.array(productFieldSchema.optional().nullable()).optional().nullable(),
-    }),
-});
-
 const blog = defineCollection({
   loader: glob({
     pattern: "!(_index)*.md",
@@ -306,22 +153,6 @@ const blog = defineCollection({
       categories: z.string().optional(),
       tags: z.union([z.array(z.string()), z.string()]).optional(),
     }),
-});
-
-const material = defineCollection({
-  loader: glob({ pattern: "*.md", base: "src/content/material" }),
-  schema: materialValidator,
-});
-
-const deliveryMethod = defineCollection({
-  loader: glob({ pattern: "*.md", base: "src/content/delivery_method" }),
-  schema: z.object({
-    delivery_name: z.string(),
-    name: z.string(),
-    price: z.number(),
-    needs_address: z.boolean().optional().nullable(),
-    free_above: z.number().optional().nullable(),
-  }),
 });
 
 const contact = defineCollection({
@@ -339,36 +170,6 @@ const adatvedelem = defineCollection({
     cookieBannerHeading: z.string(),
     cookieBannerText: z.string(),
     cookieCategories: z.array(cookieCategorySchema),
-  }),
-});
-
-const embroidery = defineCollection({
-  loader: glob({ pattern: "embroidery.json", base: "src/content/config" }),
-  schema: ({ image }) =>
-    z.object({
-      colors: z
-        .array(
-          z.object({
-            color_id: z.string(),
-            label: z.string(),
-            hex: z.string().optional().nullable(),
-            image: image().optional().nullable(),
-          })
-        )
-        .optional()
-        .nullable(),
-    }),
-});
-
-const productGroup = defineCollection({
-  loader: glob({ pattern: "*.md", base: "src/content/product_groups" }),
-  schema: z.object({
-    title: z.string(),
-    discount_amount: z.number().int().min(0).optional().nullable(),
-    products: z
-      .array(z.object({ product: z.string() }).optional().nullable())
-      .optional()
-      .nullable(),
   }),
 });
 
@@ -391,17 +192,12 @@ const terms = defineCollection({
 
 export const collections = {
   config,
-  embroidery,
-  product,
   blog,
-  material,
   contact,
   adatvedelem,
   heroBlock,
   servicesBlock,
   aboutBlock,
-  deliveryMethod,
-  productGroup,
   checkout,
   terms,
 };

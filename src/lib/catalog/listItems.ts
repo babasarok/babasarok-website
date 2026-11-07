@@ -1,4 +1,4 @@
-import type { SlimImage } from "@/lib/data";
+import type { SlimImage } from "@/lib/order/types";
 import { isProductType } from "@/lib/product/productTypes";
 import type { ListProduct } from "@/lib/product-list/query";
 import { imageSrcSet, imageUrl } from "@/lib/vendure/imageUrl";

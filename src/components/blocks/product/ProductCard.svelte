@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { SlimImage } from "@/lib/data";
+  import type { SlimImage } from "@/lib/order/types";
 
   interface Props {
     href: string;

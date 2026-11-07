@@ -20,20 +20,20 @@
   import { findLine, lineMatches, type PriceChange } from "@/lib/basket/stale";
   import { liveUnitPrice } from "@/lib/catalog/livePrice";
   import { instantiateProduct, hasConfigurableOptions } from "@/lib/order/product";
-  import { siblingsFor, relatedGroupsFor, resolveSetDiscount } from "@/lib/pricing/groups";
+  import { siblingsFor, relatedGroupsFor, resolveSetDiscount } from "@/lib/order/groups";
   import { prefillFromParams, buildMaterialParams } from "@/lib/order/queryParams";
   import { sanitizeItem, isItemValid, validateItem } from "@/lib/product/validation";
-  import type { CmsEnhancedEmbroideryColor, CmsEnhancedProduct, CmsProductGroup } from "@/lib/data";
+  import type { OrderThreadColor, OrderProduct, OrderProductGroup } from "@/lib/order/types";
   import type { IProduct } from "@/lib/types.svelte";
 
   interface Props {
     slug: string;
-    product: CmsEnhancedProduct;
+    product: OrderProduct;
     definition: ProductDefinition;
-    products: Record<string, CmsEnhancedProduct>;
-    productGroups: CmsProductGroup[];
+    products: Record<string, OrderProduct>;
+    productGroups: OrderProductGroup[];
     slugByProductId?: Record<string, string | undefined>;
-    threadColors: CmsEnhancedEmbroideryColor[];
+    threadColors: OrderThreadColor[];
     checkoutHref?: string;
   }
 
@@ -58,7 +58,7 @@
   let priceNotice = $state<(PriceChange & { currencyCode: string }) | null>(null);
   let restored = false;
 
-  const toCatalog = (ids: string[]): CmsEnhancedProduct[] =>
+  const toCatalog = (ids: string[]): OrderProduct[] =>
     ids.filter((id) => Object.hasOwn(products, id)).map((id) => products[id]);
 
   const relatedProducts = $derived(toCatalog(siblingsFor(product.product_id, productGroups)));
@@ -275,7 +275,7 @@
     saved = await persistCurrent();
   }
 
-  async function addRelated(target: CmsEnhancedProduct): Promise<void> {
+  async function addRelated(target: OrderProduct): Promise<void> {
     if (!item || !(await persistCurrent())) {
       return;
     }

@@ -23,8 +23,6 @@ import { CloudflareEmailSender } from "./plugins/email/cloudflare-email-sender";
 import {
   nativeOrderConfirmationHandler,
   nativeOrderNotificationHandler,
-  orderConfirmationHandler,
-  orderNotificationHandler,
 } from "./plugins/email/order-emails";
 import { MaterialPlugin } from "./plugins/material/material.plugin";
 import { CheckoutPlugin } from "./plugins/checkout/checkout.plugin";
@@ -38,7 +36,6 @@ import {
 import { ProductSetPlugin } from "./plugins/product-set/product-set.plugin";
 import { ProductPlugin } from "./plugins/product/product.plugin";
 import { hexColorError } from "./plugins/product/thread-color";
-import { QuoteOrderPlugin } from "./plugins/quote-order/quote-order.plugin";
 import { ChannelSetupPlugin } from "./plugins/setup/channel-setup.plugin";
 
 // Zod's built-in validation messages surface to the owner (definition and
@@ -59,12 +56,7 @@ function emailPluginOptions(): EmailPluginOptions | EmailPluginDevModeOptions {
     templateLoader: new FileBasedTemplateLoader(path.join(__dirname, "..", "email-templates")),
     // Plain-HTML handlebars templates, not MJML.
     emailGenerator: new HandlebarsHtmlGenerator(),
-    handlers: [
-      orderConfirmationHandler,
-      orderNotificationHandler,
-      nativeOrderConfirmationHandler,
-      nativeOrderNotificationHandler,
-    ],
+    handlers: [nativeOrderConfirmationHandler, nativeOrderNotificationHandler],
     globalTemplateVars: { fromAddress: env.orderEmailFrom },
   };
 
@@ -106,8 +98,8 @@ function emailPluginOptions(): EmailPluginOptions | EmailPluginDevModeOptions {
   }
 }
 
-// A quote order is "placed" the moment the buyer submits it: the flow stops at
-// ArrangingPayment (no payment integration yet) and must not linger as an
+// An order is "placed" the moment the buyer submits checkout: the flow stops
+// at ArrangingPayment (no payment integration yet) and must not linger as an
 // active order. Revisit when Barion lands.
 export class QuoteOrderPlacedStrategy implements OrderPlacedStrategy {
   shouldSetAsPlaced(_ctx: RequestContext, fromState: string, toState: string): boolean {
@@ -183,7 +175,6 @@ export const config: VendureConfig = {
     // and worker share one database.
   },
   plugins: [
-    QuoteOrderPlugin,
     MaterialPlugin,
     ProductPlugin,
     ProductSetPlugin,
@@ -226,9 +217,10 @@ export const config: VendureConfig = {
       // with it in the GraphQL schema.
       { name: "submissionTransactionId", type: "string" },
     ],
-    // The quoted* names keep these apart from Vendure's native unitPrice /
-    // lineTotal columns, which stay 0 until the site's cutover stops quoting
-    // client-side. The pricing fields carry what the server's own pricing
+    // The quoted* fields are legacy-order snapshots (the pre-cutover quote
+    // flow wrote them; native checkout prices server-side instead). They stay
+    // so placed orders keep their stored data; nothing reads them on new
+    // orders. The pricing fields carry what the server's own pricing
     // needs (ADR 0010 delivery step 5); keep the OrderLine array contiguous —
     // gql regeneration diffs against the other branch's field edits.
     OrderLine: [

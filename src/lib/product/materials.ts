@@ -1,17 +1,12 @@
-import type {
-  CmsProductMaterial,
-  Field,
-  IProduct,
-  MaterialField,
-  ProductMaterialValue,
-} from "../types.svelte";
+import type { OrderFieldMaterial } from "../order/types";
+import type { Field, IProduct, MaterialField, ProductMaterialValue } from "../types.svelte";
 import { findFieldByName, resolveNumericValue } from "./field";
 
 /** The option in `field`'s `materials` list whose material is `materialId`. */
 export function findMaterialOption(
   field: Pick<MaterialField, "materials">,
   materialId: string | undefined
-): CmsProductMaterial | undefined {
+): OrderFieldMaterial | undefined {
   return (
     (field.materials ?? []).find((m) => m?.material_path.material_id === materialId) ?? undefined
   );
@@ -23,7 +18,7 @@ export function isMaterialInOption(option: MaterialField, materialId: string): b
 }
 
 export function resolveColorCount(
-  option: { color_count: string | null | undefined } | null,
+  option: { color_count?: string | null | undefined } | null,
   product: Pick<IProduct, "fields">
 ): number | undefined {
   if (option?.color_count == null) {
@@ -170,7 +165,7 @@ export function bannedMaterialFieldNames(fields: Field[], banned: string[][]): S
 // #endregion
 
 export function formatMaterialValue(
-  material: CmsProductMaterial | undefined,
+  material: OrderFieldMaterial | undefined,
   value: ProductMaterialValue
 ): string {
   const name = material?.material_path.label ?? value.material_id;

@@ -1,29 +1,29 @@
 /**
  * "All combinations" regression coverage for an order item.
  *
- * An OrderItem's behaviour is driven by three pure modules — pricing
- * (`priceUtils`), validation (`validation`) and colour-count resolution
- * (`materialUtils`). These tests exercise every field type and material
- * configuration the Tina schema allows (radio, select, color, input, toggle,
- * custom values, length-based pricing, single/multi colour, multiple required
- * materials, discounts) so a change in any of them surfaces here.
+ * An OrderItem's behaviour is driven by three pure modules — the price
+ * breakdown (`order/priceBreakdown`), validation (`validation`) and
+ * colour-count resolution (`materialUtils`). These tests exercise every field
+ * type and material configuration the order product shape allows (radio,
+ * select, color, input, toggle, custom values, length-based pricing,
+ * single/multi colour, multiple required materials) so a change in any of them
+ * surfaces here.
  */
 import { describe, expect, it } from "vitest";
-import { calculatePriceForItem } from "@/lib/pricing/price";
+import { priceBreakdown } from "@/lib/order/priceBreakdown";
 import { isItemValid, sanitizeItem, validateItem } from "@/lib/product/validation";
 import { resolveColorCount } from "@/lib/product/materials";
 import { fieldError, makeField, makeMaterial, makeProduct } from "./fixtures";
 
-describe("calculatePriceForItem — field combinations", () => {
+describe("priceBreakdown — field combinations", () => {
   it("uses the base price when there are no fields", () => {
-    const price = calculatePriceForItem(makeProduct({ price: 5000, count: 3 }));
+    const price = priceBreakdown(makeProduct({ price: 5000, count: 3 }));
     expect(price.basePrice.price).toBe(5000);
-    expect(price.unitPrice).toBe(5000);
-    expect(price.totalPrice).toBe(15_000);
+    expect(price.options).toHaveLength(0);
   });
 
   it("adds the selected radio option price", () => {
-    const price = calculatePriceForItem(
+    const price = priceBreakdown(
       makeProduct({
         price: 1000,
         fields: [
@@ -39,29 +39,30 @@ describe("calculatePriceForItem — field combinations", () => {
         ],
       })
     );
-    expect(price.unitPrice).toBe(1500);
     expect(price.options).toContainEqual({ label: "meret", price: 500 });
   });
 
   it("counts a toggle price only when on", () => {
-    const on = calculatePriceForItem(
+    const on = priceBreakdown(
       makeProduct({
         price: 0,
         fields: [makeField({ name: "t", type: "toggle", price: 700, value: { value: true } })],
       })
     );
-    const off = calculatePriceForItem(
+    const off = priceBreakdown(
       makeProduct({
         price: 0,
         fields: [makeField({ name: "t", type: "toggle", price: 700, value: { value: false } })],
       })
     );
-    expect(on.unitPrice).toBe(700);
-    expect(off.unitPrice).toBe(0);
+    expect(on.options).toContainEqual({ label: "t", price: 700 });
+    // A switched-off toggle still yields its (0 Ft) part; the breakdown lists
+    // it, the price display filters 0-Ft parts out.
+    expect(off.options).toEqual([{ label: "t", price: 0 }]);
   });
 
   it("counts an embroidery price only when enabled", () => {
-    const on = calculatePriceForItem(
+    const on = priceBreakdown(
       makeProduct({
         price: 0,
         fields: [
@@ -74,7 +75,7 @@ describe("calculatePriceForItem — field combinations", () => {
         ],
       })
     );
-    const off = calculatePriceForItem(
+    const off = priceBreakdown(
       makeProduct({
         price: 0,
         fields: [
@@ -87,14 +88,12 @@ describe("calculatePriceForItem — field combinations", () => {
         ],
       })
     );
-    expect(on.unitPrice).toBe(1500);
     expect(on.options).toContainEqual({ label: "himzes", price: 1500 });
-    expect(off.unitPrice).toBe(0);
     expect(off.options).toHaveLength(0);
   });
 
   it("multiplies embroidery price by word count when priced per word", () => {
-    const price = calculatePriceForItem(
+    const price = priceBreakdown(
       makeProduct({
         price: 0,
         fields: [
@@ -109,12 +108,11 @@ describe("calculatePriceForItem — field combinations", () => {
       })
     );
 
-    expect(price.unitPrice).toBe(3000);
     expect(price.options).toContainEqual({ label: "himzes", price: 3000 });
   });
 
   it("adds input and color field prices", () => {
-    const price = calculatePriceForItem(
+    const price = priceBreakdown(
       makeProduct({
         price: 100,
         fields: [
@@ -128,11 +126,12 @@ describe("calculatePriceForItem — field combinations", () => {
         ],
       })
     );
-    expect(price.unitPrice).toBe(600);
+    expect(price.options).toContainEqual({ label: "nev", price: 200 });
+    expect(price.options).toContainEqual({ label: "szin", price: 300 });
   });
 
   it("does not price the length-based source field directly", () => {
-    const price = calculatePriceForItem(
+    const price = priceBreakdown(
       makeProduct({
         price: 0,
         length_based_pricing: { sourceField: "sizes" },
@@ -147,13 +146,12 @@ describe("calculatePriceForItem — field combinations", () => {
       })
     );
     expect(price.options).toHaveLength(0);
-    expect(price.unitPrice).toBe(0);
   });
 });
 
-describe("calculatePriceForItem — material fields", () => {
+describe("priceBreakdown — material fields", () => {
   it("adds the picked material's price under the field label", () => {
-    const price = calculatePriceForItem(
+    const price = priceBreakdown(
       makeProduct({
         price: 1000,
         fields: [
@@ -167,12 +165,11 @@ describe("calculatePriceForItem — material fields", () => {
         ],
       })
     );
-    expect(price.unitPrice).toBe(3000);
     expect(price.options).toContainEqual({ label: "Anyag", price: 2000 });
   });
 
   it("contributes nothing when no material is picked yet", () => {
-    const price = calculatePriceForItem(
+    const price = priceBreakdown(
       makeProduct({
         price: 1000,
         fields: [
@@ -185,7 +182,6 @@ describe("calculatePriceForItem — material fields", () => {
         ],
       })
     );
-    expect(price.unitPrice).toBe(1000);
     // The unpriced part is present (like an unselected radio) but filtered out
     // of the breakdown, so it contributes nothing.
     expect(price.options).toEqual([{ label: "Anyag", price: undefined }]);
@@ -196,7 +192,7 @@ describe("calculatePriceForItem — material fields", () => {
       makeMaterial({ material_id: "teddy", price: 2000 }),
       makeMaterial({ material_id: "minky", price: 2500 }),
     ];
-    const price = calculatePriceForItem(
+    const price = priceBreakdown(
       makeProduct({
         price: 0,
         fields: [
@@ -217,13 +213,12 @@ describe("calculatePriceForItem — material fields", () => {
         ],
       })
     );
-    expect(price.unitPrice).toBe(4500);
     expect(price.options).toContainEqual({ label: "Anyag 1", price: 2000 });
     expect(price.options).toContainEqual({ label: "Anyag 2", price: 2500 });
   });
 
   it("scales a material field's price with length-based pricing", () => {
-    const price = calculatePriceForItem(
+    const price = priceBreakdown(
       makeProduct({
         price: 0,
         length_based_pricing: { sourceField: "sizes" },
@@ -248,14 +243,12 @@ describe("calculatePriceForItem — material fields", () => {
       throw new Error("expected length-based price");
     }
     expect(price.per_meter_price).toBe(1000);
-    expect(price.unitPrice).toBe(3000);
-    expect(price.totalPrice).toBe(3000);
   });
 });
 
-describe("calculatePriceForItem — length-based pricing", () => {
+describe("priceBreakdown — length-based pricing", () => {
   it("derives length from the source field (cm → m) and scales the price", () => {
-    const price = calculatePriceForItem(
+    const price = priceBreakdown(
       makeProduct({
         price: 0,
         length_based_pricing: { sourceField: "sizes" },
@@ -278,42 +271,28 @@ describe("calculatePriceForItem — length-based pricing", () => {
     if (!price.priced_by_length) {
       throw new Error("expected length-based price");
     }
-    expect(price.length).toBe(3);
     expect(price.per_meter_price).toBe(8000);
-    expect(price.unitPrice).toBe(24_000);
-    expect(price.totalPrice).toBe(24_000);
   });
 
-  it("leaves price undefined when the length field is empty", () => {
-    const price = calculatePriceForItem(
+  it("prices the per-meter total from the base and the visible fields, not the length source", () => {
+    const price = priceBreakdown(
       makeProduct({
-        price: 0,
+        price: 500,
         length_based_pricing: { sourceField: "sizes" },
-        fields: [makeField({ name: "sizes", type: "radio" })],
+        fields: [
+          makeField({
+            name: "sizes",
+            type: "radio",
+            items: [{ value: "300", price: 999 }],
+            value: { value: "300" },
+          }),
+        ],
       })
     );
     if (!price.priced_by_length) {
       throw new Error("expected length-based price");
     }
-    expect(price.length).toBeUndefined();
-    expect(price.totalPrice).toBeUndefined();
-  });
-});
-
-describe("calculatePriceForItem — discount", () => {
-  it("applies a discount that is still valid", () => {
-    const price = calculatePriceForItem(
-      makeProduct({ price: 10_000, count: 1, discount: 25, discount_valid_until: "2999-01-01" })
-    );
-    expect(price.totalPrice).toBe(7500);
-  });
-
-  it("ignores an expired discount", () => {
-    const price = calculatePriceForItem(
-      makeProduct({ price: 10_000, count: 1, discount: 25, discount_valid_until: "2000-01-01" })
-    );
-    expect(price.totalPrice).toBe(10_000);
-    expect(price.discountInfo).toBeUndefined();
+    expect(price.per_meter_price).toBe(500);
   });
 });
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ProductDefinition } from "@babasarok/product-definition";
-  import { calculatePriceForItem } from "@/lib/pricing/price";
+  import { priceBreakdown } from "@/lib/order/priceBreakdown";
   import { liveUnitPrice } from "@/lib/catalog/livePrice";
   import type { IProduct } from "@/lib/types.svelte";
 
@@ -11,7 +11,7 @@
 
   const { product, definition }: Props = $props();
 
-  const breakdown = $derived(calculatePriceForItem(product));
+  const breakdown = $derived(priceBreakdown(product));
 
   const unitPrice = $derived(liveUnitPrice(definition, product.title, product) ?? undefined);
 

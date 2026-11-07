@@ -155,16 +155,16 @@ discount adjustments.
   - AND an error report of kind `order` carrying the reference code is sent to
     the site's own `/client-errors` endpoint, which logs it to Workers Logs
 
-### Legacy submission (until the site cutover)
+### Legacy orders
 
-The backend SHALL keep accepting the `submitQuoteOrder` mutation (name, email,
-phone, products with `details` or `configText`, delivery method and price,
-`deliveryFree`, message, set-discount summary, total, terms, transaction id)
-because it deploys before the site; it stores the payload as-is on
-placeholder variants and the emails fall back to the stored `details` /
-`configText` / custom-field values for such orders. It, its inputs and the
-legacy-only custom fields are removed at the cutover (roadmap S5, ADR 0013
-decision 8).
+The `submitQuoteOrder` mutation and the quote-order plugin were removed after
+the native checkout replaced them (roadmap S5, ADR 0013 decision 8). Orders
+placed by the legacy flow are preserved as placed: their lines keep every
+stored snapshot custom field (`title`, `configText`, `detailsJson`,
+`selections`, `lengthCm`, the `quoted*` prices, the set-discount summary), the
+custom-field definitions stay so those columns are never dropped, and the
+dashboard order-detail extension renders them from the stored fields. No code
+re-resolves or re-prices a placed order line.
 
 ### Browser error reporting
 

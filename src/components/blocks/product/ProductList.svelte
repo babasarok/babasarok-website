@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { SlimImage } from "@/lib/data";
+  import type { SlimImage } from "@/lib/order/types";
   import type { ProductListItem } from "@/lib/catalog/listItems";
   import {
     applyListState,

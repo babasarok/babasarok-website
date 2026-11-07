@@ -3,7 +3,7 @@
  *
  * Consumed by the Tina product collection (the `type` select options), the
  * Astro content schema (`z.enum`) and `data.ts` (runtime narrowing + the
- * `CmsField` discriminant). Add a new field type here once and every consumer
+ * `OrderField` discriminant). Add a new field type here once and every consumer
  * picks it up; the derived `ProductFieldType` keeps exhaustiveness honest.
  */
 export const PRODUCT_FIELD_TYPES = [
