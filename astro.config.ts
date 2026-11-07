@@ -14,6 +14,7 @@ import { remarkAssetImages } from "./src/lib/assets/remarkAssetImages";
 import { devProxy } from "./integrations/dev-proxy";
 import { vendureDashboard } from "./integrations/vendure-dashboard";
 import { previewApiUrl } from "./src/lib/preview-url";
+import { defaultLocale, locales } from "./src/lib/i18n";
 
 const site = process.env.SITE_URL || "https://babasarok.net";
 
@@ -35,15 +36,27 @@ export default defineConfig({
   redirects: { "/home": "/" },
   // On-demand catalog pages (ADR 0012): an edit is live within maxAge, and a
   // failing backend is hidden behind stale copies for up to swr more seconds.
+  // The /en/ mirrors exist for the epic-8 locale routes (route rules support
+  // no globs, see ADR 0015); they are inert until those routes land.
   cache: { provider: cacheCloudflare() },
   routeRules: {
     "/product": { maxAge: 60, swr: 300 },
+    "/en/product": { maxAge: 60, swr: 300 },
     "/product/[id]": { maxAge: 60, swr: 300 },
+    "/en/product/[id]": { maxAge: 60, swr: 300 },
     "/material": { maxAge: 60, swr: 300 },
+    "/en/material": { maxAge: 60, swr: 300 },
     "/material/[slug]": { maxAge: 60, swr: 300 },
+    "/en/material/[slug]": { maxAge: 60, swr: 300 },
     "/_server-islands/[name]": { maxAge: 60, swr: 300 },
     "/search-index.json": { maxAge: 60, swr: 300 },
+    "/en/search-index.json": { maxAge: 60, swr: 300 },
     "/sitemap-catalog.xml": { maxAge: 3600 },
+  },
+  i18n: {
+    defaultLocale,
+    locales: [...locales],
+    fallback: { en: "hu" },
   },
   prefetch: true,
   integrations: [
@@ -51,7 +64,12 @@ export default defineConfig({
     // Builds the vendure dashboard into dist/dashboard on every build.
     vendureDashboard(),
     // Catalog pages are on demand, so the integration cannot see their urls.
-    sitemap({ customSitemaps: [`${site}/sitemap-catalog.xml`] }),
+    // The i18n option emits xhtml:link alternates per URL (sitemap-method
+    // hreflang, ADR 0015): unprefixed urls get hu-HU, /en/ urls get en.
+    sitemap({
+      customSitemaps: [`${site}/sitemap-catalog.xml`],
+      i18n: { defaultLocale, locales: { hu: "hu-HU", en: "en" } },
+    }),
     icon(),
     tina(),
     svelte(),

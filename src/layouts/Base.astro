@@ -3,6 +3,7 @@ import Header from "../components/blocks/Header.astro";
 import Footer from "../components/blocks/Footer.astro";
 import { Font } from "astro:assets";
 import { getConfig } from "../lib/config";
+import { OG_LOCALE, defaultLocale, localeFromPathname } from "../lib/i18n";
 import "../styles/global.css";
 
 // ── Favicon imports (processed by Vite asset pipeline) ───────────────────────
@@ -41,12 +42,14 @@ const config = await getConfig();
 const [adatvedelemEntry] = await getCollection("adatvedelem");
 const { cookieBannerHeading, cookieBannerText, cookieCategories } = adatvedelemEntry.data;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin);
-const ogLocale = config.ogLocale ?? "hu_HU";
+const locale = localeFromPathname(Astro.url.pathname);
+const ogLocale =
+  locale === defaultLocale ? (config.ogLocale ?? OG_LOCALE[locale]) : OG_LOCALE[locale];
 const themeColor = config.themeColor ?? "#F1D3B2";
 ---
 
 <!doctype html>
-<html lang="hu" {...rest}>
+<html lang={locale} {...rest}>
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
