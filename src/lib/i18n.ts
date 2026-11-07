@@ -14,6 +14,11 @@ export const VENDURE_LANGUAGE_CODE = {
   en: "en",
 } as const satisfies Record<Locale, string>;
 
+export function isLocale(value: string): value is Locale {
+  const candidates: readonly string[] = locales;
+  return candidates.includes(value);
+}
+
 export function localeFromPathname(pathname: string): Locale {
   const segment = pathname.split("/")[1];
   return locales.find((locale) => locale === segment) ?? defaultLocale;

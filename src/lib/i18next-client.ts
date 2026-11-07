@@ -1,6 +1,6 @@
 import i18next, { type i18n as I18n } from "i18next";
 import resourcesToBackend from "i18next-resources-to-backend";
-import { defaultLocale, locales, type Locale } from "@/lib/i18n";
+import { defaultLocale, isLocale, type Locale } from "@/lib/i18n";
 
 const resourceModules = import.meta.glob<{ default: object }>("../locales/*.ts");
 
@@ -8,19 +8,20 @@ const instances = new Map<Locale, Promise<I18n>>();
 
 export function getClientI18n(locale: Locale): Promise<I18n> {
   const pending = instances.get(locale);
-  if (pending) return pending;
+  if (pending) {
+    return pending;
+  }
 
   const instance = i18next.createInstance();
   instance.use(
     resourcesToBackend(async (language: string, namespace: string) => {
-      if (!(locales as readonly string[]).includes(language)) {
+      if (!isLocale(language)) {
         throw new Error(`unsupported language ${language}`);
       }
-      const load = resourceModules[`../locales/${language}.ts`];
-      if (!load) throw new Error(`no resource module for ${language}`);
       if (namespace !== "translation") {
         throw new Error(`unsupported namespace ${namespace}`);
       }
+      const load = resourceModules[`../locales/${language}.ts`];
       const { default: translation } = await load();
       return translation;
     })
