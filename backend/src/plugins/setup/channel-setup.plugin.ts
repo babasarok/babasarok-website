@@ -8,14 +8,17 @@ import {
   Logger,
   PluginCommonModule,
   ProductVariantPrice,
+  PromotionService,
   RequestContext,
   RequestContextService,
+  ShippingMethodService,
   TransactionalConnection,
   VendurePlugin,
   Zone,
   ZoneService,
 } from "@vendure/core";
 import { env } from "../../env";
+import { seedDelivery } from "./delivery-seed";
 import type { ID } from "@vendure/common/lib/shared-types";
 
 // Vendure refuses price calculations without channel default tax/shipping
@@ -30,7 +33,9 @@ export class ChannelSetupPlugin implements OnApplicationBootstrap {
     private channelService: ChannelService,
     private countryService: CountryService,
     private zoneService: ZoneService,
-    private requestContextService: RequestContextService
+    private requestContextService: RequestContextService,
+    private shippingMethodService: ShippingMethodService,
+    private promotionService: PromotionService
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -50,7 +55,11 @@ export class ChannelSetupPlugin implements OnApplicationBootstrap {
     }
 
     await this.ensureForint(ctx, channel);
+    await this.ensureZones(ctx, channel);
+    await seedDelivery(this.connection, this.shippingMethodService, this.promotionService, ctx);
+  }
 
+  private async ensureZones(ctx: RequestContext, channel: Channel): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- the zone relations are typed non-null but sit unset on a fresh database, which is exactly what this guard handles
     if (channel.defaultTaxZone && channel.defaultShippingZone) {
       return;

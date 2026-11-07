@@ -1,6 +1,6 @@
 /**
  * URL query-param prefill for product pages. See {@link prefillFromParams} and
- * docs — reserved keys are `uuid` and `count`; fields are keyed by name,
+ * docs — reserved keys are `line` and `count`; fields are keyed by name,
  * including `material` fields (plus their `<name>_colors` companion).
  */
 import { describe, expect, it } from "vitest";
@@ -166,7 +166,7 @@ describe("prefillFromParams", () => {
 
   it("ignores unknown keys", () => {
     const item = makeProduct({ fields: [makeField({ name: "szin", type: "color" })] });
-    prefillFromParams(item, new URLSearchParams("bogus=1&uuid=xyz"));
+    prefillFromParams(item, new URLSearchParams("bogus=1&line=xyz"));
     expect(item.fields[0].value).toBeUndefined();
   });
 });
@@ -218,5 +218,43 @@ describe("buildMaterialParams", () => {
       throw new Error("expected material field");
     }
     expect(field.value).toEqual({ material_id: "cotton", colors: ["red", "blue"] });
+  });
+
+  it("round-trips a colour id that itself contains a comma", () => {
+    const source = makeProduct({
+      fields: [
+        makeField({
+          name: "anyag",
+          type: "material",
+          materials: [
+            makeMaterial({
+              material_id: "cotton",
+              colors: [{ color_id: "Felhon alvo, feher" }, { color_id: "red" }],
+            }),
+          ],
+          value: { material_id: "cotton", colors: ["Felhon alvo, feher", "red"] },
+        }),
+      ],
+    });
+    const target = makeProduct({
+      fields: [
+        makeField({
+          name: "anyag",
+          type: "material",
+          materials: [
+            makeMaterial({
+              material_id: "cotton",
+              colors: [{ color_id: "Felhon alvo, feher" }, { color_id: "red" }],
+            }),
+          ],
+        }),
+      ],
+    });
+    prefillFromParams(target, buildMaterialParams(source));
+    const field = target.fields[0];
+    if (field.type !== "material") {
+      throw new Error("expected material field");
+    }
+    expect(field.value).toEqual({ material_id: "cotton", colors: ["Felhon alvo, feher", "red"] });
   });
 });

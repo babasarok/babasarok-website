@@ -67,6 +67,23 @@ export {
 } from "./product";
 export { byCodeUnit, canonicalJson } from "./canonical-json";
 export {
+  parseLineSelections,
+  serializeLineSelections,
+  LineSelectionsError,
+  LineSelectionRecordSchema,
+  LineSelectionsSchema,
+  type LineSelectionRecord,
+  type LineSelections,
+} from "./line-selection";
+export { dependencyOrder, isVisible } from "./field-visibility";
+export {
+  selectionDetails,
+  type EmailDetail,
+  type SelectionDetail,
+  type SelectionDetailsInput,
+  type SelectionLabels,
+} from "./selection-details";
+export {
   DiscountedProductSetSchema,
   ProductGroupDefinitionSchema,
   ProductGroupIdSchema,

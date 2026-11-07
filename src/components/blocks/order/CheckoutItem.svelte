@@ -1,143 +1,173 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { calculatePriceForItem } from "@/lib/pricing/price";
-  import { isFieldVisible } from "@/lib/product/field";
-  import { FIELD_BEHAVIORS } from "@/lib/product/behavior";
-  import type { FieldContext } from "@/lib/product/behavior";
-  import type { CmsEnhancedEmbroideryColor } from "@/lib/data";
-  import type { IProduct } from "@/lib/types.svelte";
+  import IconButton from "./common/IconButton.svelte";
+  import { describeLine, type Labels } from "@/lib/basket/lineRows";
+  import { formatMoney } from "@/lib/basket/money";
+  import type { PriceChange } from "@/lib/basket/stale";
+  import type { OrderLine } from "@/lib/basket/schemas";
+  import { lineSetState, type PartnerLink } from "@/lib/basket/setDiscounts";
+  import { ASSET_BASE } from "@/lib/vendure/client";
+  import { imageUrl } from "@/lib/vendure/imageUrl";
 
   interface Props {
-    product: IProduct;
-    threadColors: CmsEnhancedEmbroideryColor[];
-    /** Product page link (with `?uuid=…`) that re-opens this item for editing. */
-    editHref: string | undefined;
-    /** Emphasise this line while its set discount is hovered in the deals panel. */
-    highlighted?: boolean;
+    line: OrderLine;
+    currencyCode: string;
+    labels: Labels;
+    partnerLinks: PartnerLink[];
+    priceChange: PriceChange | undefined;
+    /** Emphasise this line while its set discount is hovered/pinned in the deals panel. */
+    highlighted: boolean;
+    busy: boolean;
+    onQuantity: (quantity: number) => void;
     onRemove: () => void;
   }
 
-  let { product, threadColors, editHref, highlighted, onRemove }: Props = $props();
+  let {
+    line,
+    currencyCode,
+    labels,
+    partnerLinks,
+    priceChange,
+    highlighted,
+    busy,
+    onQuantity,
+    onRemove,
+  }: Props = $props();
 
-  const price = $derived(calculatePriceForItem(product));
-
-  /** Per-option price contribution, keyed by the same label as the summary rows. */
-  const priceByLabel = $derived.by(() => {
-    const map: Record<string, number | undefined> = {};
-    for (const part of price.options) {
-      map[part.label] = part.price;
-    }
-    return map;
-  });
-
-  /** The selected, human-readable value of a field, or `undefined` to hide it. */
-  const fieldCtx: Omit<FieldContext, "banned"> = $derived({ fields: product.fields, threadColors });
-
-  const fieldRows = $derived(
-    product.fields
-      .filter((f) => isFieldVisible(f, product.fields))
-      .map((f) => ({
-        label: f.label || f.name,
-        value: FIELD_BEHAVIORS[f.type].formatValue(f, fieldCtx),
-      }))
-      .filter((row): row is { label: string; value: string } => row.value != null)
+  const product = $derived(line.productVariant.product);
+  const rows = $derived(
+    product.productDefinition
+      ? describeLine(product.productDefinition, line.customFields?.selections ?? null, labels)
+      : []
+  );
+  const setState = $derived(lineSetState(line));
+  const thumbnail = $derived(
+    product.featuredAsset ? imageUrl(product.featuredAsset.source, "card-sm", ASSET_BASE) : null
   );
 </script>
 
 <article
   class={[
     "flex flex-col gap-3 rounded-xl border bg-white p-4 shadow-sm transition-all",
-    highlighted ? "border-success-500 ring-2 ring-success-500" : "border-brown-200",
+    highlighted
+      ? "border-success-500 ring-2 ring-success-500"
+      : line.invalidReason
+        ? "border-danger-500"
+        : "border-brown-200",
   ]}
+  data-testid="checkout-line"
 >
   <div class="flex items-start gap-3">
-    {#if product.thumbnail}
-      <img
-        src={product.thumbnail.src}
-        srcset={product.thumbnail.srcSet.attribute || undefined}
-        {...product.thumbnail.attributes}
-        alt={product.title}
-        class="size-16 shrink-0 rounded-lg object-cover"
-      />
-    {:else if product.icon}
-      <div class="grid size-16 shrink-0 place-items-center rounded-lg bg-brown-50 text-brown-400">
-        <div
-          class="size-8 bg-brown-400"
-          style={`mask-image:url(${product.icon.src});mask-size:contain;mask-position:center;mask-repeat:no-repeat;-webkit-mask-image:url(${product.icon.src});-webkit-mask-size:contain;-webkit-mask-position:center;-webkit-mask-repeat:no-repeat;`}
-        ></div>
-      </div>
+    {#if thumbnail}
+      <img src={thumbnail} alt={product.name} class="size-16 shrink-0 rounded-lg object-cover" />
     {:else}
       <div class="grid size-16 shrink-0 place-items-center rounded-lg bg-brown-50 text-brown-300">
         <Icon icon="mdi:image-outline" class="text-2xl" />
       </div>
     {/if}
-
-    <div class="flex min-w-0 flex-1 flex-col">
-      <div class="flex items-start justify-between gap-2">
-        <h3 class="text-base font-medium leading-tight text-dark">{product.title}</h3>
-        <span class="shrink-0 text-sm text-brown-500">{product.count} db</span>
-      </div>
-    </div>
+    <h3 class="min-w-0 flex-1 text-base font-medium leading-tight text-dark">{product.name}</h3>
   </div>
 
-  <dl class="flex flex-col gap-1 border-t border-brown-100 pt-3 text-sm">
-    <div class="flex justify-between gap-4">
-      <dt class="text-brown-500">Alapár</dt>
-      <dd class="text-right text-dark">
-        {price.basePrice.price === undefined ? "??" : `${price.basePrice.price} Ft`}
-        {#if price.priced_by_length}/m{/if}
-      </dd>
-    </div>
-    {#each fieldRows as row (row.label)}
-      <div class="flex justify-between gap-4">
-        <dt class="text-brown-500">{row.label}</dt>
-        <dd class="text-right text-dark">
-          {row.value}
-          {#if priceByLabel[row.label]}
-            <span class="ml-1 whitespace-nowrap text-xs font-medium text-sand-700"
-              >+{priceByLabel[row.label]} Ft</span
-            >
-          {/if}
-        </dd>
-      </div>
-    {/each}
-    {#if price.discountInfo !== undefined}
-      <div class="flex justify-between gap-4">
-        <dt class="text-brown-500">Kedvezmény</dt>
-        <dd class="text-right font-medium text-green-700">
-          −{(price.discountInfo.percent / 100).toLocaleString("hu-HU", {
-            style: "percent",
-          })}
-          {#if price.discountInfo.discountAppliedCount < product.count}
-            ({price.discountInfo.discountAppliedCount} db)
-          {/if}
-        </dd>
-      </div>
-    {/if}
-  </dl>
+  {#if line.invalidReason}
+    <p
+      data-testid="line-invalid-reason"
+      class="flex items-start gap-1 rounded-lg bg-danger-50 p-2 text-sm text-danger-500"
+    >
+      <Icon icon="mdi:alert-circle" class="mt-0.5 shrink-0" />
+      {line.invalidReason.message}
+    </p>
+  {/if}
+
+  {#if setState}
+    <p
+      class="flex flex-wrap items-center gap-2 text-xs text-brown-600"
+      data-testid="line-set-state"
+    >
+      {setState.message}
+      {#if setState.kind === "pending-material" && setState.syncFromLineId}
+        <a
+          href={`/product/${product.slug}/?line=${line.id}&syncFrom=${setState.syncFromLineId}`}
+          class="flex items-center gap-1 rounded-full border border-brown-300 px-3 py-1 font-medium transition-all hover:bg-brown-100"
+        >
+          <Icon icon="mdi:sync" class="shrink-0" />
+          Anyag egyeztetése
+        </a>
+      {/if}
+      {#if setState.kind === "pending-partner"}
+        {#each partnerLinks as partner (partner.slug)}
+          <a
+            href={`/product/${partner.slug}/`}
+            data-testid="set-partner-link"
+            class="flex items-center gap-1 rounded-full border border-brown-300 px-3 py-1 font-medium transition-all hover:bg-brown-100"
+          >
+            {partner.name}
+          </a>
+        {/each}
+      {/if}
+    </p>
+  {/if}
+
+  {#if priceChange}
+    <p class="flex items-start gap-1 rounded-lg bg-warning-50 p-2 text-sm text-warning-800">
+      <Icon icon="mdi:alert-circle" class="mt-0.5 shrink-0" />
+      Az oldalon látott ár ({formatMoney(priceChange.shown, currencyCode)}) megváltozott; a
+      jelenlegi egységár: {formatMoney(priceChange.actual, currencyCode)}.
+    </p>
+  {/if}
+
+  {#if rows.length > 0}
+    <dl class="flex flex-col gap-1 border-t border-brown-100 pt-3 text-sm">
+      {#each rows as row (row.label)}
+        <div class="flex justify-between gap-4">
+          <dt class="text-brown-500">{row.label}</dt>
+          <dd class="text-right text-dark">{row.value}</dd>
+        </div>
+      {/each}
+    </dl>
+  {/if}
 
   <div class="flex items-center justify-between border-t border-brown-100 pt-3">
     <div class="flex items-center gap-3 text-sm">
-      {#if editHref}
-        <a
-          href={editHref}
-          class="flex items-center gap-1 font-medium text-brown-600 transition-colors hover:text-brown-700"
-        >
-          <Icon icon="mdi:pencil" class="shrink-0" />
-          Szerkesztés
-        </a>
-      {/if}
+      <a
+        href={`/product/${product.slug}/?line=${line.id}`}
+        class="flex items-center gap-1 font-medium text-brown-600 transition-colors hover:text-brown-700"
+      >
+        <Icon icon="mdi:pencil" class="shrink-0" />
+        Szerkesztés
+      </a>
       <button
         type="button"
         onclick={onRemove}
+        disabled={busy}
         class="flex cursor-pointer items-center gap-1 text-brown-500 transition-colors hover:text-red-600"
       >
         <Icon icon="mdi:delete-outline" class="shrink-0" />
         Törlés
       </button>
     </div>
-    <p class="text-right font-medium text-dark">
-      {price.totalPrice === undefined ? "--" : `${price.totalPrice} Ft`}
-    </p>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-1">
+        <IconButton
+          type="button"
+          aria-label="Mennyiség csökkentése"
+          disabled={busy || line.quantity <= 1}
+          onclick={() => onQuantity(line.quantity - 1)}
+        >
+          <Icon icon="mdi:minus" />
+        </IconButton>
+        <span class="text-sm select-none">{line.quantity} db</span>
+        <IconButton
+          type="button"
+          aria-label="Mennyiség növelése"
+          disabled={busy}
+          onclick={() => onQuantity(line.quantity + 1)}
+        >
+          <Icon icon="mdi:add" />
+        </IconButton>
+      </div>
+      <p class="text-right font-medium text-dark">
+        {formatMoney(line.discountedLinePriceWithTax, currencyCode)}
+      </p>
+    </div>
   </div>
 </article>

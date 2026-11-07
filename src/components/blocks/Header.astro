@@ -2,7 +2,6 @@
 import Button from "@/components/ui/Button.astro";
 import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
-import { getProductMeta } from "@/lib/data";
 import NavBasket from "@/components/blocks/order/NavBasket.svelte";
 import SearchDialog from "@/components/blocks/SearchDialog.svelte";
 
@@ -15,8 +14,6 @@ const checkoutLink = "/checkout";
 const isHome = Astro.url.pathname === "/";
 // The checkout page shows the full basket already; skip the nav basket there.
 const showBasket = !Astro.url.pathname.startsWith(checkoutLink);
-
-const productMeta = await getProductMeta();
 
 const rawMenu = config.mainMenu ?? [];
 const mainMenu = rawMenu
@@ -44,16 +41,7 @@ const mainMenu = rawMenu
 
       <div class="flex items-center gap-2 lg:hidden">
         <SearchDialog client:load />
-        {
-          showBasket && (
-            <NavBasket
-              productMeta={productMeta}
-              checkoutHref={checkoutLink}
-              anchored={false}
-              client:load
-            />
-          )
-        }
+        {showBasket && <NavBasket checkoutHref={checkoutLink} anchored={false} client:load />}
         <button
           id="navbar-toggler"
           type="button"
@@ -93,7 +81,7 @@ const mainMenu = rawMenu
           {
             showBasket && (
               <div class="hidden lg:block">
-                <NavBasket productMeta={productMeta} checkoutHref={checkoutLink} client:load />
+                <NavBasket checkoutHref={checkoutLink} client:load />
               </div>
             )
           }

@@ -6,7 +6,7 @@ import { FIELD_BEHAVIORS } from "../product/behavior";
  * deep-linked with preselected options. Mutates `item` in place; the caller is
  * expected to {@link sanitizeItem} afterwards.
  *
- * Reserved keys (not treated as options): `uuid`, `count`.
+ * Reserved keys (not treated as options): `line`, `syncFrom`, `count`.
  *
  * Scheme:
  * - `count=<n>` — item quantity (integer ≥ 1).
@@ -17,7 +17,8 @@ import { FIELD_BEHAVIORS } from "../product/behavior";
  *   — the thread colour for an embroidery field. Field names win over this
  *   pattern: a product field literally named `<name>_color` /
  * - `<materialField>_colors=<c1,c2,…>` — comma-separated colour ids for a
- *   `material` field.
+ *   `material` field. Each id is percent-encoded by the builder, so ids that
+ *   themselves contain a comma survive the split.
  *
  * Prefilled values are validated like normal selections: an unknown field
  * name, material id, or colour outside the chosen material's palette is
@@ -33,7 +34,7 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
   }
 
   for (const [key, raw] of params.entries()) {
-    if (key === "uuid" || key === "count") {
+    if (key === "line" || key === "syncFrom" || key === "count") {
       continue;
     }
 
@@ -68,6 +69,7 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
         target.value.colors = raw
           .split(",")
           .map((c) => c.trim())
+          .map(decodeColorParam)
           .filter(Boolean);
         continue;
       }
@@ -75,6 +77,19 @@ export function prefillFromParams(item: IProduct, params: URLSearchParams): void
   }
 
   discardUnofferedMaterialColors(item);
+}
+
+/**
+ * Undo the per-id `encodeURIComponent` that {@link buildMaterialParams} applies
+ * before joining with commas — a comma inside a colour id survives as `%2C`.
+ * Ids that fail to decode (legacy URLs with a raw `%`) keep their raw value.
+ */
+function decodeColorParam(id: string): string {
+  try {
+    return decodeURIComponent(id);
+  } catch {
+    return id;
+  }
 }
 
 /**
@@ -130,7 +145,9 @@ export function buildMaterialParams(item: Pick<IProduct, "fields">): URLSearchPa
     }
     params.set(field.name, value.material_id);
     if (value.colors.length > 0) {
-      params.set(`${field.name}_colors`, value.colors.join(","));
+      // Percent-encode each id before joining with commas, so a comma inside
+      // an id (real data: "Felhon alvo, feher") cannot read as a separator.
+      params.set(`${field.name}_colors`, value.colors.map((c) => encodeURIComponent(c)).join(","));
     }
   }
   return params;

@@ -9,7 +9,8 @@
  * ships a hot-link to Tina Cloud instead of a hashed local asset.
  *
  * The Tina admin SPA (`dist/admin`) legitimately talks to Tina Cloud, so it is
- * excluded.
+ * excluded, as is the Worker bundle (`dist/server`): it is code, not output,
+ * and carries source comments describing Tina URLs.
  *
  * Run after a build: `pnpm run test:dist-tina-urls`
  * Exits non-zero (and prints offenders) when any leak is found.
@@ -19,7 +20,7 @@ import { join, relative, sep } from "node:path";
 
 const DIST_DIR = "dist";
 /** Output subtrees allowed to reference Tina Cloud (relative to DIST_DIR). */
-const EXCLUDED_DIRS = ["admin"];
+const EXCLUDED_DIRS = ["admin", "server"];
 /** Only scan text-like output; images/fonts/etc. can't carry a leaked URL. */
 const TEXT_EXTENSIONS = new Set([
   ".html",

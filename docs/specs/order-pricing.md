@@ -13,9 +13,11 @@ the shared folder `backend/src/shared/pricing` (imported by the site as
 `@babasarok/pricing`, depending only on zod and the shared canonical schemas in
 `backend/src/shared/product-definition`). The backend pricing strategy
 and the order-line boundary call it; it prices a canonical `ProductDefinition`
-plus the line's selections and variant options. The site's configurator still
-runs its own Tina-shaped copy in `src/lib/pricing` until it is rewired to the
-shared code (roadmap S3), and the set discount is unaffected (a server promotion).
+plus the line's selections and variant options. The site's configurator shows a
+live unit price from the shared code (`src/lib/catalog/livePrice.ts`) and an
+option breakdown from `src/lib/pricing/price.ts` (display only); every basket
+and checkout amount is read from the Vendure order, and the set discount is a
+server promotion.
 
 Selection problems are structured (`field`, `code`, detail) and rendered by one
 formatter; a selection is also refused when a material field carries fewer
@@ -95,7 +97,7 @@ price times the quantity — no further rounding.
 
 ### No product may be sold for 0 Ft
 
-The build SHALL fail when an orderable product has any form-reachable
+The build SHALL fail when a product has any form-reachable
 configuration that prices at 0 Ft — i.e. the product could be submitted for
 free. The enumeration mirrors the order form's reachability rules: only
 visible fields (`depends_on`) count, radio/select/color selections are
@@ -107,10 +109,10 @@ the colour selection is never enumerated, since it cannot change the price;
 embroidery
 is optional, and the length source field of
 a length-priced product is judged by its per-meter price (any length would
-then sell for 0 Ft). Non-orderable (browse-only) products are exempt.
+then sell for 0 Ft).
 
 - **Scenario: Free combination exists**
-  - WHEN an orderable product's base price plus every reachable selection
+  - WHEN a product's base price plus every reachable selection
     yields 0 Ft for at least one complete configuration
   - THEN the build fails, naming the product and the offending combination(s)
 - **Scenario: Length-priced product with 0 per-meter price**
@@ -118,7 +120,7 @@ then sell for 0 Ft). Non-orderable (browse-only) products are exempt.
     option combination
   - THEN the build fails, since any length would sell for 0 Ft
 - **Scenario: No free combination**
-  - WHEN every form-reachable configuration of every orderable product prices
+  - WHEN every form-reachable configuration of every product prices
     above 0 Ft
   - THEN the build succeeds
 
@@ -139,16 +141,16 @@ then sell for 0 Ft). Non-orderable (browse-only) products are exempt.
 > visible given the variant's own picks — a field hidden by `depends_on` rides
 > the matrix but contributes nothing, so no variant charges for a selection
 > the order form cannot offer (the length walk's per-meter price obeys the
-> same rule). A basket add or adjust for a non-orderable (`orderable: false`)
-> product is likewise rejected at the mutation boundary, with the strategy
-> refusing to price it as the backstop (ADR 0011 decision 5). These
+> same rule). Visibility and orderability are one switch: the native
+> product's `enabled` — the shop API serves only enabled products, so a
+> disabled product is neither listed nor configurable (owner decision
+> 2026-11; the definition carries no separate `orderable` flag). These
 > rejections are Hungarian and name the product by its native name. An
 > embroidery selection whose `colorId` is not a value code of the private
 > `babasarok-thread-color` facet is rejected at the same boundary (ADR 0011
 > decision 3; one lookup per add/adjust, only when the line carries an
-> embroidery selection). Until the cutover
-> the site keeps quoting client-side; server-side pricing applies to orders
-> that carry those fields. An open owner question: a `customValue` choice
+> embroidery selection). The site
+> never prices a basket itself: lines carry the server's unit price. An open owner question: a `customValue` choice
 > field used as a variant axis cannot select a generated variant, and the
 > server refuses to price such a line — whether such fields may exist outside
 > length source fields is undecided; none exist in current content.
@@ -158,8 +160,7 @@ then sell for 0 Ft). Non-orderable (browse-only) products are exempt.
 #### Scenario: a stale line keeps its price
 
 - **WHEN** a line already on the order can no longer be priced from its
-  product's current definition (made non-orderable, field/option/material
-  removed)
+  product's current definition (field/option/material removed)
 - **THEN** every recalculation keeps the line's last unit price instead of
   failing, so unrelated mutations keep working
 - **AND** adding a new line that cannot be priced is still refused

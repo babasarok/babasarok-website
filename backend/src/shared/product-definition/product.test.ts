@@ -68,7 +68,6 @@ const productFixture = (
 ): z.input<typeof ProductDefinitionSchema> => ({
   id: "pamut-lepedo",
   revision: "2f8a1c",
-  orderable: true,
   basePrice: 20_000,
   pricing: { kind: "unit" },
   fields: [
@@ -244,7 +243,6 @@ describe("productRevision", () => {
   const definition: ProductDefinition = ProductDefinitionSchema.parse({
     id: "babafeszek",
     revision: "rev-1",
-    orderable: true,
     basePrice: 15_000,
     pricing: { kind: "unit" },
     fields: [
@@ -273,7 +271,6 @@ describe("productRevision", () => {
       ],
       pricing: { kind: "unit" },
       basePrice: 15_000,
-      orderable: true,
       revision: "rev-1",
       id: "babafeszek",
     });

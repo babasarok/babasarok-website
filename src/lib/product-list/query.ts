@@ -57,16 +57,15 @@ export function parseListState(search: string): ProductListViewState {
 
 /**
  * A product as seen by the list query: the minimal shape applyListState needs.
- * Anything structurally compatible (e.g. the CMS-enhanced product plus its
- * set memberships) can be passed in. `id` is the product's CMS `product_id`
- * (the list's card key and the identity the popularity order is keyed by),
- * not the content entry id.
+ * Anything structurally compatible can be passed in. `id` is the list's card
+ * key and the identity the popularity order is keyed by.
  */
 export interface ListProduct {
   id: string;
   title: string;
   shortDescription?: string | undefined | null;
-  type: ProductType;
+  /** Absent for a product without a (known) type: it only drops out of type filters. */
+  type?: ProductType | undefined;
   date?: Date | undefined | null;
   sets: string[];
 }
@@ -96,7 +95,10 @@ export function applyListState<TProduct extends ListProduct>(
     ) {
       return false;
     }
-    if (state.types.length > 0 && !state.types.includes(product.type)) {
+    if (
+      state.types.length > 0 &&
+      (product.type === undefined || !state.types.includes(product.type))
+    ) {
       return false;
     }
     if (state.sets.length > 0 && !product.sets.some((set) => state.sets.includes(set))) {

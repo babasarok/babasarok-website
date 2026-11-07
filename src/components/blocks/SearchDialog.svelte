@@ -1,24 +1,89 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import Dialog from "@/components/ui/Dialog.svelte";
-  import {
-    search,
-    setOptions,
-    type PagefindSearchFragment,
-    type PagefindSection,
-  } from "@/lib/pagefind";
+  import { search, setOptions, type PagefindSection } from "@/lib/pagefind";
   import { onMount } from "svelte";
+  import {
+    CatalogSearchIndexSchema,
+    matchCatalogEntries,
+    type CatalogSearchEntry,
+  } from "@/lib/catalog/searchIndex";
+
+  interface Hit {
+    url: string;
+    title: string;
+    section: PagefindSection | undefined;
+    excerptHtml: string | undefined;
+    excerptText: string | undefined;
+  }
+
+  const SECTION_ORDER: Record<string, number> = { product: 0, material: 1 };
 
   onMount(() => {
     void setOptions({ excerptLength: 10 });
   });
 
   let callSeq = 0;
+  let catalogIndex: Promise<CatalogSearchEntry[]> | undefined;
 
   let query = $state("");
   let searching = $state(false);
   let failed = $state(false);
-  let results = $state<PagefindSearchFragment[]>([]);
+  let results = $state<Hit[]>([]);
+
+  function loadCatalogIndex(): Promise<CatalogSearchEntry[]> {
+    catalogIndex ??= fetch("/search-index.json")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Search index HTTP ${response.status}`);
+        }
+
+        return response.json();
+      })
+      .then((json) => CatalogSearchIndexSchema.parse(json))
+      .catch((error: unknown) => {
+        catalogIndex = undefined;
+        throw error;
+      });
+
+    return catalogIndex;
+  }
+
+  async function searchPagefind(term: string): Promise<Hit[]> {
+    const response = await search(term);
+    const found = await Promise.all(response.results.map((result) => result.data()));
+
+    return found.map((fragment) => ({
+      url: fragment.url,
+      title: fragment.meta.title ?? fragment.url,
+      section: fragment.meta.section,
+      excerptHtml: fragment.excerpt,
+      excerptText: undefined,
+    }));
+  }
+
+  async function searchCatalog(term: string): Promise<Hit[]> {
+    return matchCatalogEntries(await loadCatalogIndex(), term).map((entry) => ({
+      url: entry.url,
+      title: entry.title,
+      section: entry.section,
+      excerptHtml: undefined,
+      excerptText: entry.excerpt,
+    }));
+  }
+
+  function path(url: string): string {
+    return url.replace(/\/$/, "");
+  }
+
+  function merge(catalog: Hit[], pages: Hit[]): Hit[] {
+    const catalogPaths = new Set(catalog.map((hit) => path(hit.url)));
+    const merged = [...catalog, ...pages.filter((hit) => !catalogPaths.has(path(hit.url)))];
+
+    return merged.toSorted(
+      (a, b) => (SECTION_ORDER[a.section ?? ""] ?? 2) - (SECTION_ORDER[b.section ?? ""] ?? 2)
+    );
+  }
 
   async function onInput(event: Event): Promise<void> {
     query = (event.target as HTMLInputElement).value;
@@ -34,26 +99,18 @@
 
     searching = true;
 
-    try {
-      const response = await search(term);
-      const found = await Promise.all(response.results.map((result) => result.data()));
+    const [catalog, pages] = await Promise.allSettled([searchCatalog(term), searchPagefind(term)]);
 
-      if (seq === callSeq) {
-        // Products always rank first, in their relative order; everything after in its own order.
-        results = found.toSorted(
-          (a, b) => Number(a.meta.section !== "product") - Number(b.meta.section !== "product")
-        );
-      }
-    } catch {
-      if (seq === callSeq) {
-        failed = true;
-        results = [];
-      }
-    } finally {
-      if (seq === callSeq) {
-        searching = false;
-      }
+    if (seq !== callSeq) {
+      return;
     }
+
+    failed = catalog.status === "rejected" && pages.status === "rejected";
+    results = merge(
+      catalog.status === "fulfilled" ? catalog.value : [],
+      pages.status === "fulfilled" ? pages.value : []
+    );
+    searching = false;
   }
 
   function onKeydown(event: KeyboardEvent): void {
@@ -128,19 +185,19 @@
               class="flex flex-col rounded-lg p-3 transition-colors hover:bg-sand-50"
             >
               <span class="font-medium text-dark whitespace-nowrap text-ellipsis overflow-hidden"
-                >{result.meta.title}</span
+                >{result.title}</span
               >
-              {#if result.meta.section}
-                <span class="shrink-0 text-xs text-brown-500"
-                  >{SECTION_NAME[result.meta.section]}</span
-                >
+              {#if result.section}
+                <span class="shrink-0 text-xs text-brown-500">{SECTION_NAME[result.section]}</span>
               {/if}
-              {#if result.excerpt}
+              {#if result.excerptText}
+                <span class="mt-1 block text-sm text-body">{result.excerptText}</span>
+              {:else if result.excerptHtml}
                 <span
                   class="mt-1 block text-sm text-body [&_mark]:bg-sand-100 [&_mark]:text-inherit"
                 >
                   <!-- eslint-disable-next-line svelte/no-at-html-tags - Pagefind's excerpts are entity-encoded, only <mark> is injected -->
-                  {@html result.excerpt}
+                  {@html result.excerptHtml}
                 </span>
               {/if}
             </a>

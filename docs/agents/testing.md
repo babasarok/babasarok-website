@@ -79,14 +79,24 @@ with one owner: unit-test it there, don't re-prove it across the seam.
 
 ## Where tests live
 
-| Kind                 | Location / naming                                                         | Run with                      |
-| -------------------- | ------------------------------------------------------------------------- | ----------------------------- |
-| Site/package unit    | next to the code, `src/**/*.test.ts`, `packages/*/src/**/*.test.ts`       | `pnpm test`                   |
-| Backend unit         | next to the code, `backend/src/**/*.test.ts`                              | `pnpm -C backend test`        |
-| Component            | next to the component, `*.test.ts` + `// @vitest-environment jsdom`       | `pnpm test`                   |
-| Backend integration  | not set up yet — agree the harness with the owner first                   | —                             |
-| Site E2E (hydration) | `tests/*.spec.ts`                                                         | `pnpm run test:hydration`     |
-| Dashboard E2E        | `tests/dashboard/*.spec.ts`, shared steps in `tests/dashboard/helpers.ts` | `pnpm run test:dashboard-e2e` |
+| Kind                 | Location / naming                                                         | Run with                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Site/package unit    | next to the code, `src/**/*.test.ts`, `packages/*/src/**/*.test.ts`       | `pnpm test`                                                                                               |
+| Backend unit         | next to the code, `backend/src/**/*.test.ts`                              | `pnpm -C backend test`                                                                                    |
+| Shop API contract    | `src/lib/*/contract.test.ts`, skipped unless the env var below is set     | `CATALOG_CONTRACT_API_URL=… pnpm test` (catalog), `BASKET_CONTRACT_API_URL=… pnpm test` (basket/checkout) |
+| Component            | next to the component, `*.test.ts` + `// @vitest-environment jsdom`       | `pnpm test`                                                                                               |
+| Backend integration  | `backend/integration/*.test.ts`, shared harness/fixtures beside them      | `pnpm -C backend run test:integration`                                                                    |
+| Site E2E (hydration) | `tests/*.spec.ts`                                                         | `pnpm run test:hydration`                                                                                 |
+| Dashboard E2E        | `tests/dashboard/*.spec.ts`, shared steps in `tests/dashboard/helpers.ts` | `pnpm run test:dashboard-e2e`                                                                             |
+| Checkout E2E         | `tests/checkout/*.spec.ts`, page actions in `tests/checkout/pages.ts`     | `pnpm run test:checkout-e2e`                                                                              |
+
+Contract tests need a shop API serving the **current** schema, e.g.
+`pnpm -C backend run e2e:server` (`http://localhost:4000`). They are not in CI:
+no shop API URL is configured for PR checks, and production serves the old
+schema until the site cutover (the basket test fails there on `setDiscounts`,
+`invalidReason`, `productDefinition`, …). Wiring them in needs a repo variable
+pointing at an API with the new schema (a preview deployment, or production
+after cutover), or booting the backend in the job as "Backend Integration" does.
 
 Playwright only collects `*.spec.ts`; `*.test.ts` belongs to Vitest.
 
@@ -116,6 +126,11 @@ Playwright only collects `*.spec.ts`; `*.test.ts` belongs to Vitest.
   `babasarok_e2e` database, fixed seed in `backend/e2e.env`) and the built site
   on :4100 — stop the dev backend first, the ports must be free; the servers
   are never reused.
+- **Checkout E2E** boots the same backend and the built site. On-demand
+  pages read the Tina site config at request time; a `build:local` dist asks
+  the local Tina datalayer, so run `pnpm exec tinacms dev` alongside (CI's
+  build uses Tina Cloud and needs nothing). A `build:local` while it runs
+  needs `--datalayer-port <other>`.
 
 ## Tooling
 
@@ -124,4 +139,9 @@ needs it — don't pre-install. Known choices:
 
 - Svelte component tests: `@testing-library/svelte` + `jsdom`.
 - Astro component tests: `experimental_AstroContainer` ships with `astro`.
-- Backend integration: `@vendure/testing` (Vendure's own test server).
+- Backend integration: `@vendure/testing` (Vendure's own `TestServer.bootstrap()`
+  and `SimpleGraphQLClient`, not its sqljs `init()` — see the header of
+  `backend/integration/harness.ts`). The suite boots the built server
+  (`dist/`) on postgres with the real migrations; needs the local postgres
+  container, uses its own `babasarok_int` database and file email transport
+  (`backend/integration.env`), and runs in CI as the "Backend Integration" job.

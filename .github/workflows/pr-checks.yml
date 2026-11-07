@@ -36,12 +36,17 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           typegen: ${{ matrix.typegen }}
+      # The backend build also covers the integration harness, whose imports
+      # resolve against backend/dist (it tests the built artifact the deploy
+      # runs).
+      - if: matrix.name == 'Lint'
+        run: pnpm -C backend run build
       - run: ${{ matrix.run }}
 
   # Fast unit tests for the order-form domain logic (pricing, validation,
-  # order-string formatting). These are pure functions whose only `data.ts`
-  # imports are type-only (elided at transform time), so no Tina client, Astro
-  # sync, or production build is needed — it runs straight off source.
+  # order-string formatting). No Tina client, Astro sync, or production build
+  # is needed — it runs straight off source, with the shared logic resolved
+  # as TypeScript source through vitest's aliases.
   unit:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -63,6 +68,31 @@ jobs:
       # any drift (see gql.tada docs, "Verifying committed output files").
       - run: pnpm -C backend run gql:fresh
       - run: pnpm -C backend test
+
+  # Backend integration tests: the built server against a real postgres with
+  # the real migrations, driven through the shop/admin API (backend/integration,
+  # harness in integration/harness.ts). Credentials match backend/integration.env.
+  backend-integration:
+    name: Backend Integration
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: babasarok
+          POSTGRES_PASSWORD: babasarok
+          POSTGRES_DB: babasarok_int
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm -C backend run test:integration
 
   # Real production build (`npm run build` -> `tinacms build`, talks to Tina
   # Cloud). The resulting `dist/` is uploaded so the guard jobs below can reuse
@@ -168,12 +198,13 @@ jobs:
           name: dist
           path: dist
       # e2e-server spawns backend/dist/{migrate,index}.js; the checkout has no
-      # build output. Backend tsc uses its own TypeScript 5 (which is why this
-      # job waits for `build`).
+      # build output. Backend tsc uses its own TypeScript 5 (the site build's
+      # product-definition step is why this job waits for `build`).
       - run: pnpm -C backend run build
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
       - run: pnpm run test:dashboard-e2e
+      - run: pnpm run test:checkout-e2e
 
       # API-level checks against a freshly booted e2e backend (the dashboard
       # e2e run above tears its own webServer down, so :4000 is free again):

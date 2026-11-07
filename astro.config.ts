@@ -1,6 +1,8 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig, envField, fontProviders } from "astro/config";
 import svelte from "@astrojs/svelte";
 import cloudflare from "@astrojs/cloudflare";
+import { cacheCloudflare } from "@astrojs/cloudflare/cache";
 import sitemap from "@astrojs/sitemap";
 import icon from "astro-icon";
 import tina from "@tinacms/astro/integration";
@@ -13,9 +15,11 @@ import { devProxy } from "./integrations/dev-proxy";
 import { vendureDashboard } from "./integrations/vendure-dashboard";
 import { previewApiUrl } from "./src/lib/preview-url";
 
+const site = process.env.SITE_URL || "https://babasarok.net";
+
 // https://astro.build/config
 export default defineConfig({
-  site: process.env.SITE_URL || "https://babasarok.net",
+  site,
   output: "static",
   adapter: cloudflare({
     // Build-time work (filesystem reads in prerendered endpoints, sharp image
@@ -29,12 +33,25 @@ export default defineConfig({
   // No Astro sessions; the adapter would otherwise provision a KV namespace.
   session: false,
   redirects: { "/home": "/" },
+  // On-demand catalog pages (ADR 0012): an edit is live within maxAge, and a
+  // failing backend is hidden behind stale copies for up to swr more seconds.
+  cache: { provider: cacheCloudflare() },
+  routeRules: {
+    "/product": { maxAge: 60, swr: 300 },
+    "/product/[id]": { maxAge: 60, swr: 300 },
+    "/material": { maxAge: 60, swr: 300 },
+    "/material/[slug]": { maxAge: 60, swr: 300 },
+    "/_server-islands/[name]": { maxAge: 60, swr: 300 },
+    "/search-index.json": { maxAge: 60, swr: 300 },
+    "/sitemap-catalog.xml": { maxAge: 3600 },
+  },
   prefetch: true,
   integrations: [
     devProxy(),
     // Builds the vendure dashboard into dist/dashboard on every build.
     vendureDashboard(),
-    sitemap(),
+    // Catalog pages are on demand, so the integration cannot see their urls.
+    sitemap({ customSitemaps: [`${site}/sitemap-catalog.xml`] }),
     icon(),
     tina(),
     svelte(),
@@ -80,6 +97,19 @@ export default defineConfig({
   ],
   vite: {
     plugins: [tailwindcss(), tinaAdminDevRedirect()],
+    resolve: {
+      alias: {
+        // The canonical shared schemas and pricing logic live inside the
+        // backend's source tree; these aliases keep the site importing them
+        // as TypeScript source, so no CJS dist enters the browser graph.
+        "@babasarok/product-definition": fileURLToPath(
+          new URL("backend/src/shared/product-definition/index.ts", import.meta.url)
+        ),
+        "@babasarok/pricing": fileURLToPath(
+          new URL("backend/src/shared/pricing/index.ts", import.meta.url)
+        ),
+      },
+    },
     // Bundle @tinacms/astro into the SSR build instead of resolving it
     // per-module on every cold request — otherwise each
     // `import TinaMarkdown from '@tinacms/astro/TinaMarkdown.astro'`

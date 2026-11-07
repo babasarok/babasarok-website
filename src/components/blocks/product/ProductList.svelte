@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { SlimImage } from "@/lib/data";
+  import type { ProductListItem } from "@/lib/catalog/listItems";
   import {
     applyListState,
     DEFAULT_LIST_STATE,
@@ -20,18 +21,6 @@
     title: string;
   }
 
-  /**
-   * A list item as handed over the island boundary. `date` is an ISO string
-   * (island props are JSON-serialized); `id` is the product's CMS
-   * `product_id` — also the identity the popularity order is keyed by.
-   */
-  interface ListItem extends Omit<ListProduct, "date"> {
-    date?: string | undefined;
-    href: string;
-    category?: string | undefined;
-    image?: SlimImage | undefined;
-  }
-
   interface ProductView extends ListProduct {
     href: string;
     category?: string | undefined;
@@ -39,13 +28,12 @@
   }
 
   interface Props {
-    items: ListItem[];
+    items: ProductListItem[];
     /** The catalogue's product sets, as filter options. */
     sets: SetOption[];
     /**
-     * Product ids (`product_id`) in the CMS-curated popularity order (the
-     * "Népszerű" sort). Products without a curated position follow the
-     * ordered ones.
+     * Item ids in popularity-rank order (the "Népszerű" sort). Items without
+     * a rank follow the ranked ones.
      */
     popularOrder: string[];
   }

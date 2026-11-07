@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import { randomUUID } from "@/lib/uuid";
 
   interface Props {
     "aria-label": string;
@@ -10,7 +11,7 @@
 
   let { "aria-label": ariaLabel, button, content, onClose }: Props = $props();
 
-  const id = crypto.randomUUID();
+  const id = randomUUID();
   let dialogEl: HTMLDialogElement;
 
   function close(): void {

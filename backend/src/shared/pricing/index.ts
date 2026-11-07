@@ -1,4 +1,4 @@
-export { dependencyOrder, isVisible } from "./field-visibility";
+export { dependencyOrder, isVisible } from "../product-definition/index";
 export {
   LineSelectionRecordSchema,
   LineSelectionsError,
@@ -7,7 +7,7 @@ export {
   serializeLineSelections,
   type LineSelectionRecord,
   type LineSelections,
-} from "./line-selection";
+} from "../product-definition/index";
 export {
   MAX_LINE_LENGTH_CM,
   MAX_SELECTION_TEXT_LENGTH,
@@ -22,7 +22,6 @@ export {
   computeLineUnitPrice,
   lengthMissingRejection,
   LinePricingError,
-  nonOrderableRejection,
   valueConfiguredLine,
   type LinePricingInput,
   type LineValuation,

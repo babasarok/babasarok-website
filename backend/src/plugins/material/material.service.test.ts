@@ -12,7 +12,6 @@ function definition(
 ): { name: string; definition: ProductDefinition } {
   const parsed = ProductDefinitionSchema.parse({
     id,
-    orderable: true,
     basePrice: 1000,
     pricing: { kind: "unit" },
     fields: [],

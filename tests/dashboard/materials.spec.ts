@@ -32,7 +32,6 @@ import {
 /** A definition referencing e2e-vaszon, for the delete-refusal step below. */
 const REFERENCING_FIXTURE = {
   id: "e2e-mat",
-  orderable: true,
   basePrice: 10_000,
   pricing: { kind: "unit" },
   fields: [

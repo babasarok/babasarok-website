@@ -8,9 +8,13 @@ filterable product list with a detail page per product.
 > **Transition note (ADR 0009/0010).** During the Vendure migration the
 > commerce model above is owned by the canonical product definition stored in
 > Vendure: `product_id` ↔ the definition's `id` (the native product's
-> `productId`), `can_be_ordered` ↔ `orderable`, field kinds map to `input`,
+> `productId`), field kinds map to `input`,
 > `choice` (presentation `select`/`radio`/`color`), `toggle`, `material` and
 > `embroidery`, and `banned_combinations` ↔ `forbiddenMaterialCombinations`.
+> `can_be_ordered` has no definition counterpart: orderability and visibility
+> are one switch, the native product's `enabled` (owner decision 2026-11 —
+> the shop API serves only enabled products, so a disabled product is neither
+> listed nor configurable).
 > The native Product owns its name and slug (ADR 0011 decision 1): the
 > preview seed writes the Tina `title` into the native product's name, the
 > slug is seeded from the definition's `id` at creation only (the preview seed
@@ -63,15 +67,23 @@ with descriptions), a base price, and a `can_be_ordered` flag.
 
 ### Product list: search, filtering, and sorting
 
-The system SHALL provide a single product list page showing all non-hidden
-products (no pagination), each entry linking to the product detail page, with:
+The system SHALL provide a single product list page showing all enabled
+products (no pagination), each entry linking to the product detail page, with
+its tagline as the category line. Visibility and orderability are one switch —
+the native product's `enabled` (the shop API serves only enabled products); a
+product without a known type is
+listed and only drops out of type filters. A product without a definition
+(e.g. a quote-order placeholder) is not a storefront product: it appears in no
+list, search, sitemap or home block, and its detail page is a 404. The page is
+rendered on demand and cached at the edge (60 s, 300 s stale-while-revalidate),
+and an unreachable backend shows the error page instead of partial data. With:
 
 - **Text search** over product title and short description.
 - **Filtering by product type**: multiple selections within the type
   dimension are OR-combined.
 - **Filtering by product set**: a product matches the set filter when it is
   a member of a selected set; multiple set selections are OR-combined.
-- **Sorting**: by the CMS-curated popularity order (default), newest first,
+- **Sorting**: by the `popularityRank` order (default), newest first,
   or by name (title, ascending). Products without a curated popularity
   position follow the ordered ones, name-ascending among themselves.
 
@@ -102,8 +114,8 @@ filtering, and sorting inert.
 - **Scenario: Sorting by popularity**
   - WHEN a visitor opens the product list without an explicit sort parameter,
     or selects popularity sorting
-  - THEN the list is ordered by the curated popularity sequence managed in
-    the CMS, with uncurated products following it, alphabetically
+  - THEN the list is ordered by ascending `popularityRank`, with unranked
+    products following it, alphabetically
 - **Scenario: Sorting by name**
   - WHEN a visitor selects name sorting
   - THEN the list is ordered alphabetically by title, ascending
@@ -119,12 +131,36 @@ filtering, and sorting inert.
   - THEN the full product list is shown and search, filtering, and sorting
     are inert
 
+### Material pages and home product block
+
+The material list is one on-demand page (no pagination; the former
+`/material/page/N/` URLs redirect to `/material`) of all materials ordered by
+label, each linking to `/material/<slug>/`. A material page shows the label,
+subtitle, thumbnail, colors, the markdown description (rendered via `Markdown.astro`) and previous/next
+links; an unknown slug answers 404 uncached. The home page's product block is
+a server island showing the `itemCount` (from `product.json`) most popular
+listed products; its title and button stay prerendered. Catalog images come
+from the asset server's presets as webp (`card-sm`, `card-lg`, `hero-sm`,
+`hero-md`, `hero-lg`; plain asset URLs still serve the original, any other
+preset or size is rejected).
+
+### Catalog sitemap and search
+
+`/sitemap-catalog.xml` (on demand, cached 1 h; 503 when the backend is
+unreachable, never an empty sitemap) lists the product and material detail
+pages and is referenced from `/sitemap-index.xml`. The header search dialog
+merges Pagefind results (blog, static pages) with matches from
+`/search-index.json` (on demand, cached 60 s: listed products and materials,
+searched client-side ignoring case and accents), products first, then
+materials; a catalog hit replaces a Pagefind hit for the same URL.
+
 ### Product detail page
 
 The system SHALL render a detail page per product showing its title, an image
 gallery (thumbnail plus gallery images with descriptions), its body content,
-and sharing links to social networks. For orderable products the page SHALL
-additionally embed an order configurator for that product.
+and sharing links to social networks. Markdown descriptions render server-side with raw HTML escaped, unsafe link schemes dropped, and host-relative asset image paths (`source/ab/file.jpg`) rewritten to asset-server preset URLs. The page SHALL
+additionally embed an order configurator for that product (every product the
+shop API serves is enabled and orderable).
 
 - **Scenario: Viewing a product**
   - WHEN a visitor opens a product's detail page
@@ -134,6 +170,24 @@ additionally embed an order configurator for that product.
   - WHEN a visitor opens the detail page of a product that can be ordered
   - THEN the page embeds an order configurator for that product alongside the
     gallery
+
+The detail page is one on-demand page at `/product/<slug>/` (cached 60 s with
+60 s + 300 s stale-while-revalidate like the other catalog pages). Its data
+comes from the shop API: the gallery is the product's Vendure assets as
+`hero-*` presets (the featured asset when there are none), previous/next link
+the newest-first product order, and the set and related panels come from the
+product groups. An unknown slug, or a product without a definition, answers
+404 uncached. The long description renders through one description component;
+until the markdown rendering (S7) is wired it shows nothing.
+
+The configurator is fed by the product's canonical definition (adapted to the
+configurator's field model) and shows the live unit and total price computed
+with the shared pricing package; an option the buyer has not picked yet is
+priced at the first listed option, and a length product shows no price until a
+length is entered. The standalone percentage discount is not part of the
+definition, so no discount line is shown. The add-to-basket button and adding
+set members are disabled until the Vendure basket (S5) lands; the legacy
+localStorage basket is not read or written by the page.
 
 ### Product configurator fields
 
@@ -155,20 +209,10 @@ order.
 
 ### Product availability for ordering
 
-The system SHALL expose only products whose `can_be_ordered` flag is set to
-the ordering UI; other products are browse-only. The server enforces the flag
-at order time: adding or adjusting a basket line for a browse-only product is
-rejected with a clear error, and the pricing step refuses to price such a line
-as the backstop (ADR 0011 decision 5).
-
-- **Scenario: Non-orderable product**
-  - WHEN a product's `can_be_ordered` flag is not set
-  - THEN the product is not offered as an option in the order form
-- **Scenario: Non-orderable product rejected at the basket**
-  - WHEN a basket add or adjust targets a product whose `orderable` flag is
-    not set
-  - THEN the mutation is rejected with a clear Hungarian error naming the
-    product by its native name
+Every product the ordering UI can reach is orderable: visibility and
+orderability are one switch (the native product's `enabled`; the shop API
+serves only enabled products). A disabled product is not listed, cannot be
+configured, and no order line can target it.
 
 ### Product page order configurator
 
@@ -424,6 +468,12 @@ language as `?languageCode=` (currently `hu`).
 - `threadColors` — the values of the private thread-color facet (`id` = the
   facet value code, `label`, `hex`, `swatch`); the facet itself stays hidden
   from the shop's `facets`.
+- `productVariants(slug)` — the product's full variant matrix (`id` plus each
+  variant's option `group`/`code` pairs). Vendure's own `Product.variants`
+  field resolves with the shop list-query limit and takes no paging
+  arguments, so the configurator matches the buyer's configuration against
+  this query instead: a matrix larger than the limit must still come back
+  complete.
 - The native `Product` custom fields (`shortDescription`, `tagline`, `date`,
   `popularityRank`, `icon`) and `Asset.galleryDescription` are public.
 
@@ -431,6 +481,9 @@ language as `?languageCode=` (currently `hu`).
   - WHEN products are sorted by popularity
   - THEN ranked products come first by ascending `popularityRank` and
     unranked products follow in their existing order
+- **Scenario: Matrix larger than the list-query limit**
+  - WHEN a generated product has more variants than the shop list-query limit
+  - THEN `productVariants(slug)` returns every variant of the product
 - **Scenario: Invalid definition**
   - WHEN a response's `productDefinition` does not match the canonical schema
   - THEN the catalog read fails instead of rendering partial data

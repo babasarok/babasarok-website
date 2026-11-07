@@ -3,6 +3,7 @@
     "id": "9",
     "slug": "tornazsak",
     "name": "Tornazsák",
+    "description": "**Tornazsák** leírása",
     "customFields": {
       "shortDescription": "Bölcsőde és óvodakezdésre alkalmas tornazsák.\nMérete: kb. 28x35cm (+-3cm eltérés elfogadott)",
       "tagline": null,
@@ -61,8 +62,6 @@
       },
       "revision": "cc4c851062d7cd30d3b253a5e8c745d43d56881637d68a149259db8fba5a97bd",
       "basePrice": 4000,
-      "orderable": true,
-      "hiddenInProductList": false,
       "forbiddenMaterialCombinations": []
     },
     "assets": [

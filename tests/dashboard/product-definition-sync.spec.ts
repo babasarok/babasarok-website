@@ -29,7 +29,6 @@ import {
 
 const SYNC_FIXTURE = {
   id: "e2e-s1",
-  orderable: true,
   basePrice: 15_000,
   pricing: { kind: "unit" },
   fields: [

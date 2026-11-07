@@ -23,7 +23,8 @@ import {
   type RecursivelyReplaceType,
   type RecursiveRequired,
 } from "./typeHelpers";
-import { getCollection, type InferEntrySchema } from "astro:content";
+
+import type { InferEntrySchema } from "astro:content";
 import type { ImageFunction } from "astro/content/config";
 import type { z } from "astro/zod";
 import type { GetImageResult, ImageMetadata } from "astro";
@@ -668,33 +669,6 @@ export const getProducts = async (): Promise<CmsEnhancedProduct[]> => {
   return result;
 };
 
-/** One product's page metadata, keyed off the CMS `product_id`. */
-export interface ProductMeta {
-  title: string;
-  slug: string;
-}
-
-/**
- * The shared product id → {title, slug} map, from the Astro content collection
- * (the slugs are the entry ids). Single source for the pages and the nav that
- * resolve persisted product ids into titles and product-page links.
- */
-export const getProductMeta = async (): Promise<Record<string, ProductMeta>> => {
-  const products = await getCollection("product");
-  return Object.fromEntries(
-    products.map((product) => [
-      product.data.product_id,
-      { title: product.data.title, slug: product.id },
-    ])
-  );
-};
-
-/** The product id → slug view of {@link getProductMeta}, for link building. */
-export const getProductSlugs = async (): Promise<Record<string, string>> => {
-  const meta = await getProductMeta();
-  return Object.fromEntries(Object.entries(meta).map(([id, { slug }]) => [id, slug]));
-};
-
 const transformMaterial = async (
   material: CmsOriginalMaterial
 ): Promise<RecursiveRequired<CmsEnhancedMaterial, SlimImage>> => {
@@ -735,13 +709,6 @@ export const getMaterials = async (): Promise<CmsEnhancedMaterial[]> => {
   }
 
   return result;
-};
-
-export const getDeliveryMethods = async (): Promise<CmsEnhancedDeliveryMethod[]> => {
-  const result = await client.queries.delivery_methodsConnection();
-
-  const nodes = nodesFrom(result.data.delivery_methodsConnection);
-  return nodes;
 };
 
 /** A single member of a product group ("set"). */

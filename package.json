@@ -9,6 +9,8 @@
   "scripts": {
     "dev": "concurrently -k -n db,api,dashboard,site -c gray,blue,magenta,green \"docker compose up postgres\" \"pnpm run db:wait && pnpm -C backend run dev\" \"pnpm -C backend run dashboard\" \"tinacms dev -c 'astro dev --host'\"",
     "db:wait": "until docker compose exec -T postgres pg_isready -q; do sleep 1; done",
+    "db:wipe": "docker compose down -v",
+    "db:pull-prod": "docker compose up -d postgres && pnpm run db:wait && tsx scripts/db-pull-prod.ts && pnpm -C backend run migrate",
     "build": "tinacms build -c \"astro build\"",
     "ship": "tsx scripts/deploy-backend.ts",
     "build:local": "tinacms build --local --skip-cloud-checks -c \"astro build\"",
@@ -20,6 +22,7 @@
     "test:dist-tina-urls": "tsx scripts/test/no-tina-cloud-urls.ts",
     "test:hydration": "playwright test",
     "test:dashboard-e2e": "playwright test --config playwright.dashboard.config.ts",
+    "test:checkout-e2e": "playwright test --config playwright.checkout.config.ts",
     "check": "npx astro check && npx sv check",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx,.astro,.svelte",
     "lint:style": "stylelint \"**/*.{css,astro,svelte}\"",

@@ -37,7 +37,7 @@ describe("getProducts", () => {
       type: { code: "zsak", name: "Zsák és tároló" },
       popularityRank: 22,
     });
-    expect(bag?.definition?.id).toBe("tornazsak");
+    expect(bag?.definition.id).toBe("tornazsak");
     expect(bag?.thumbnailUrl).toMatch(/^http/);
   });
 
@@ -49,6 +49,24 @@ describe("getProducts", () => {
     );
 
     expect(await getProducts(run)).toHaveLength(3);
+    expect(run.variables).toEqual([
+      { skip: 0, take: 100 },
+      { skip: 1, take: 100 },
+    ]);
+  });
+
+  it("leaves out products without a definition, still paging by fetched rows", async () => {
+    const [first, ...rest] = products.products.items;
+    const placeholder = { ...first, slug: "placeholder-x", productDefinition: null };
+    const run = runReturning(
+      { products: { totalItems: 4, items: [placeholder] } },
+      { products: { totalItems: 4, items: [first, ...rest] } }
+    );
+
+    const result = await getProducts(run);
+
+    expect(result.map((entry) => entry.slug)).not.toContain("placeholder-x");
+    expect(result).toHaveLength(3);
     expect(run.variables).toEqual([
       { skip: 0, take: 100 },
       { skip: 1, take: 100 },
@@ -75,27 +93,32 @@ describe("getProduct", () => {
     expect(result?.gallery[0]?.description).toBeNull();
   });
 
+  it("carries the markdown description", async () => {
+    expect((await getProduct("tornazsak", runReturning(product)))?.description).toBe(
+      "**Tornazsák** leírása"
+    );
+  });
+
   it("is null for an unknown slug", async () => {
     expect(await getProduct("nope", runReturning({ product: null }))).toBeNull();
   });
 
-  it("tolerates a product without images, type or definition", async () => {
+  it("tolerates a product without images or type", async () => {
     const bare = {
-      product: {
-        ...product.product,
-        featuredAsset: null,
-        facetValues: [],
-        productDefinition: null,
-        assets: [],
-      },
+      product: { ...product.product, featuredAsset: null, facetValues: [], assets: [] },
     };
 
     expect(await getProduct("tornazsak", runReturning(bare))).toMatchObject({
       thumbnailUrl: null,
       type: null,
-      definition: null,
       gallery: [],
     });
+  });
+
+  it("is null for a product without a definition", async () => {
+    const placeholder = { product: { ...product.product, productDefinition: null } };
+
+    expect(await getProduct("tornazsak", runReturning(placeholder))).toBeNull();
   });
 });
 

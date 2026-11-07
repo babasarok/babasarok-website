@@ -1,0 +1,30 @@
+---
+import Base from "../../layouts/Base.astro";
+import PageHeader from "../../components/ui/PageHeader.astro";
+import ProductCard from "../../components/ui/ProductCard.astro";
+import { getMaterials } from "@/lib/catalog";
+
+export const prerender = false;
+
+const materials = (await getMaterials()).toSorted((a, b) => a.label.localeCompare(b.label, "hu"));
+---
+
+<Base title="Anyagok">
+  <PageHeader title="Anyagok" />
+  <section class="py-25">
+    <div class="container">
+      <div class="flex flex-wrap justify-center gap-8 gap-y-12 sm:gap-y-8">
+        {
+          materials.map((material) => (
+            <ProductCard
+              href={`/material/${material.slug}/`}
+              title={material.label}
+              image={material.thumbnailUrl ?? undefined}
+              category={material.subtitle || undefined}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</Base>

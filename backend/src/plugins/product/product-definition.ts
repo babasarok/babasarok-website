@@ -173,10 +173,10 @@ function extend(
 }
 
 /**
- * The order-pricing spec's 0-Ft rule, enforced at save time: an orderable
- * product must have no form-reachable configuration that prices at 0 Ft —
- * for a length-priced product, judged by its per-meter price, since every
- * length would sell for 0 Ft. This is the server-side half of the rule; the
+ * The order-pricing spec's 0-Ft rule, enforced at save time: a product must
+ * have no form-reachable configuration that prices at 0 Ft — for a
+ * length-priced product, judged by its per-meter price, since every length
+ * would sell for 0 Ft. This is the server-side half of the rule; the
  * storefront keeps its own build-time gate over Tina content
  * (`src/lib/data.ts`) until the cutover, after which this check is the only
  * one. Price composition mirrored from the storefront: choice options,
@@ -188,10 +188,6 @@ function extend(
  * reachable configuration prices above 0 Ft.
  */
 function zeroPricePicks(definition: ProductDefinition): string[] | undefined {
-  if (!definition.orderable) {
-    return undefined;
-  }
-
   const sourceFieldId =
     definition.pricing.kind === "length" ? definition.pricing.sourceFieldId : undefined;
   const { order, cyclic } = dependencyOrder(definition.fields);

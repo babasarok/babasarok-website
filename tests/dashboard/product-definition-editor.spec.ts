@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
   CREATE_DEFINITION,
   CreatedDefinition,
+  DASHBOARD,
   DEFINITION_STATE,
   DefinitionState,
   adminApi,
@@ -16,14 +17,17 @@ import {
 } from "./helpers";
 
 /**
- * Browser-level e2e for the product-definition create and editor flows. The
- * stock products list's "Új konfigurátoros termék" action-bar button opens
- * /product-definitions/new (the only editor route); after creating, the
- * dashboard lands on the generated native product's page, where the
- * "Konfigurátor" page block is the editor home and hosts delete. The editor
- * edits the canonical definition in its input shape and re-validates it with
- * the canonical schema on save; the server re-derives the native option
- * groups/variants via the queued sync, whose state the badge surfaces.
+ * Browser-level e2e for the product-definition create and editor flows.
+ * Creation happens on the stock /products/new page: the unified save bar's
+ * "Konfigurátor" switch reveals the configurator blocks, and the unified
+ * "Létrehozás" button runs the create (definition create + the stock form's
+ * values patched onto the generated native product; the slug is the
+ * definition id). After creating, the dashboard lands on the generated native
+ * product's page, where the "Konfigurátor" page block is the editor home and
+ * hosts delete. The editor edits the canonical definition in its input shape
+ * and re-validates it with the canonical schema on save; the server
+ * re-derives the native option groups/variants via the queued sync, whose
+ * state the badge surfaces.
  *
  * Each field renders as a card (`data-testid="field-card"`) that starts
  * collapsed after every load: the header chevron opens the Alapadatok /
@@ -31,10 +35,10 @@ import {
  * the option grids between name-only and fully detailed rows (it turns on by
  * itself for load-bearing fields and fields whose rows carry data). The
  * extension's labels are hardcoded Hungarian strings; the stock product form
- * around the block renders untranslated English ("Name", "Price"), which is
- * what keeps the two forms' labels apart. The fixture materials are ensured
- * through the admin API (helpers.ts) because the material specs delete the
- * seeded ones.
+ * around the block renders untranslated English ("Product name", "Slug"),
+ * which is what keeps the two forms' labels apart. The fixture materials are
+ * ensured through the admin API (helpers.ts) because the material specs
+ * delete the seeded ones.
  */
 
 // One choice, one toggle, two material fields (the forbidden pair needs two
@@ -54,7 +58,6 @@ function materialSelect(card: Locator, index: number): Locator {
 
 interface FixtureDefinition {
   id: string;
-  orderable: boolean;
   basePrice: number;
   pricing: { kind: "unit" } | { kind: "length"; sourceFieldId: string };
   fields: Array<
@@ -103,33 +106,32 @@ async function openFixture(page: Page, definition: FixtureDefinition, name: stri
 test("the configurator product lifecycle: create, edit every field kind, delete", async ({
   page,
 }) => {
-  await test.step("login, ensure materials and open the create form", async () => {
+  await test.step("login, ensure materials and turn the Konfigurátor on", async () => {
     await login(page, "/products");
     await ensureMaterials(page, E2E_MATERIALS);
     await deleteDefinitionIfPresent(page, "e2e-f1");
 
-    await page.getByRole("button", { name: "Új konfigurátoros termék" }).click();
-    await page.waitForURL("**/dashboard/product-definitions/new");
-    await expect(
-      page.getByText("Végleges: a natív termék slugja létrehozáskor ebből készül. Nem lehet „new”.")
-    ).toBeVisible();
+    await page.goto(`${DASHBOARD}/products/new`);
+    await page.getByRole("switch", { name: "Konfigurátoros termék" }).click();
+    await expect(page.getByLabel("Alapár (Ft)")).toBeVisible();
   });
 
-  await test.step("the literal 'new' id is refused client-side", async () => {
-    await page.getByLabel("Azonosító").fill("new");
-    // "Név" is the native product's name now (ADR 0011 decision 1); filling
-    // it keeps the create's own required-fields check out of the way.
-    await page.getByLabel("Név").first().fill("E2E F1");
-    await page.getByRole("button", { name: "Létrehozás" }).click();
+  await test.step("the literal 'new' slug is refused as the definition id", async () => {
+    await page.getByLabel("Product name", { exact: true }).fill("E2E F1");
+    // The stock slug input is readonly with auto-generation; the pencil
+    // unlocks it for the manual "new" entry.
+    await page.getByRole("button", { name: "Edit slug manually" }).click();
+    await page.getByLabel("Slug", { exact: true }).fill("new");
+    await page.getByRole("button", { name: "Létrehozás", exact: true }).click();
 
     await expect(page.getByText("Az azonosító nem lehet „new”.")).toBeVisible();
-    await expect(page).toHaveURL(/product-definitions\/new$/);
+    await expect(page).toHaveURL(/products\/new$/);
   });
 
   await test.step("saving an empty field renders the zod errors readably", async () => {
-    await page.getByLabel("Azonosító").fill("e2e-f1");
+    await page.getByLabel("Slug", { exact: true }).fill("e2e-f1");
     await page.getByRole("button", { name: "+ Választó mező" }).click();
-    await page.getByRole("button", { name: "Létrehozás" }).click();
+    await page.getByRole("button", { name: "Létrehozás", exact: true }).click();
 
     await expect(page.getByText("fields.0.label.hu:")).toBeVisible();
     await expect(page.getByText("fields.0.options.0.label.hu:")).toBeVisible();
@@ -200,8 +202,10 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await page.getByLabel("2. anyag").selectOption("e2e-m2");
 
     const create = waitForMutation(page, "mutation CreateProductDefinition");
-    await page.getByRole("button", { name: "Létrehozás" }).click();
+    const patch = waitForMutation(page, "mutation PatchCreatedProduct");
+    await page.getByRole("button", { name: "Létrehozás", exact: true }).click();
     await create;
+    await patch;
 
     // The dashboard lands on the generated native product, whose configurator
     // block is now the editor home.
@@ -320,7 +324,6 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
 // option grid starts name-only.
 const CHOICE_FIXTURE: FixtureDefinition = {
   id: "e2e-b1",
-  orderable: true,
   basePrice: 15_000,
   pricing: { kind: "unit" },
   fields: [
@@ -567,51 +570,5 @@ test("the Mezők expand-all toggle opens and closes every field card", async ({ 
 
     await expect(fieldCardById(page, "meret").getByText("Speciális")).toBeVisible();
     await expect(szin.getByText("Speciális")).toBeVisible();
-  });
-});
-
-test("the Rejtett a listában switch persists through save round-trips", async ({ page }) => {
-  const fixture = { ...CHOICE_FIXTURE, id: "e2e-l1" };
-
-  await test.step("login and open the fixture's configurator block", async () => {
-    await login(page, "/products");
-    await openFixture(page, fixture, "E2E L1");
-  });
-
-  await test.step("toggling it on survives save and reload", async () => {
-    const rejtett = page.getByRole("switch", { name: "Rejtett a listában" });
-    await expect(rejtett).toHaveAttribute("aria-checked", "false");
-    await rejtett.click();
-    await expect(rejtett).toHaveAttribute("aria-checked", "true");
-
-    const update = waitForMutation(page, "mutation UpdateProductDefinition");
-    await page.getByRole("button", { name: "Frissítés", exact: true }).click();
-    await update;
-
-    await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
-    await page.reload();
-
-    await expect(page.getByRole("switch", { name: "Rejtett a listában" })).toHaveAttribute(
-      "aria-checked",
-      "true"
-    );
-  });
-
-  await test.step("toggling it off survives save and reload too", async () => {
-    const rejtett = page.getByRole("switch", { name: "Rejtett a listában" });
-    await rejtett.click();
-    await expect(rejtett).toHaveAttribute("aria-checked", "false");
-
-    const update = waitForMutation(page, "mutation UpdateProductDefinition");
-    await page.getByRole("button", { name: "Frissítés", exact: true }).click();
-    await update;
-
-    await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
-    await page.reload();
-
-    await expect(page.getByRole("switch", { name: "Rejtett a listában" })).toHaveAttribute(
-      "aria-checked",
-      "false"
-    );
   });
 });

@@ -1,61 +1,68 @@
 # Product sets
 
 Lets the shop group products into sets that carry a single flat forint discount,
-detect which basket lines form a set (material-gated, globally allocated per
+detect which basket lines form a set (material-gated, allocated per set per
 unit), and surface the formed set discounts to the buyer at basket level.
 
-> **Transition note (ADR 0009/0010).** Since the promotions step (roadmap
-> epic 2) the group content model and the set-discount application live in
-> Vendure: each group is a private Collection — the discounted sets are
-> children of the "Szettek" parent, the related-items groups of the
-> "Kapcsolódó termékek" parent — with membership in the native
-> `product-id-filter` and the flat set discount on the `setDiscount`
-> Collection custom field (positive whole Ft). A single Vendure Promotion
-> computes the allocation below: its condition takes no arguments, reads the
-> "Szettek" parent's children (label = collection name, discount = custom
-> field, members = filter), and derives each basket line's material picks
-> from the line's variant options (the authoritative material axes) with the
-> colors from the order-line `selections` — a line whose required colors are
-> missing or unprovable forms no instance. Degenerate groups (<2 members, no
-> discount) are ignored with a report, not thrown. The condition also refuses
-> to apply when more than one active promotion uses it, so the allocation is
-> never double-counted; exactly one such promotion must exist. Until the
-> cutover the site keeps rendering the basket's set-discount section and
-> related items from Tina, and order emails record the client-computed
-> summary; the per-line status surfacing (active / pending-partner /
-> pending-material with material sync), the related-items presentation, and
-> the email's per-instance provenance flip to the Vendure-owned data at
-> cutover.
+> **Transition note (ADR 0014).** Since the promotions step (roadmap
+> epic 2) the set-discount model lives entirely in Vendure Promotions: each
+> discounted set is one active Promotion — the condition
+> (`babasarok-product-set-members`) args list the member products, the
+> action (`babasarok-product-set-discount`) arg is the flat forint amount,
+> and the promotion's Hungarian name is the set label. The material gating
+> is the condition's built-in behavior: it derives each basket line's
+> material picks from the line's variant options (the authoritative material
+> axes) with the colors from the order-line `selections` — a line whose
+> required colors are missing or unprovable forms no instance. Two active
+> set promotions must not share a product (enforced at save, refused at
+> runtime); no set is hidden in Collections any more — related-items groups
+> are private Collections under the "Kapcsolódó termékek" parent (label =
+> collection name, members = the native `product-id-filter`). Degenerate
+> groups (<2 members, no amount) are ignored with a report, not thrown.
+> The checkout renders the set section and the per-line set state from the
+> shop API (`Order.setDiscounts`, `OrderLine.setState`) through one adapter
+> in `src/lib/basket/setDiscounts.ts`, never recomputing allocation in the
+> browser; it renders nothing until the API exposes those fields. The
+> per-line status surfacing (active / pending-partner / pending-material
+> with material sync), the related-items presentation, and the email's
+> per-instance provenance are Vendure-owned data.
 
 ## Requirements
 
 ### Product set content model
 
-The system SHALL model a set as a CMS product group with a title, an optional
-flat forint discount amount (a non-negative integer), and a list of member
-products. A group whose discount amount is zero or absent is not a set: it
-grants no discount and its members are surfaced as related items (cross-sell)
-rather than as a set.
+The system SHALL model a set as a Promotion whose condition args list the
+member products and whose action arg is an optional flat forint discount
+amount (a positive integer). The promotion's Hungarian name is the set's
+title. A promotion without the set action, disabled, or with a zero amount is
+not a set: it grants no discount and its members are surfaced as related
+items (cross-sell) only through a related-items collection.
 
 - **Scenario: Defining a set**
-  - WHEN an editor creates a product group with a discount amount and member
-    products
-  - THEN the group loads as a set whose formed instances each remove that flat
-    amount
-- **Scenario: Group without discount**
-  - WHEN a product group has a zero or absent discount amount
-  - THEN its members earn no set discount and it is presented as related items
+  - WHEN the owner creates a Promotion with the set condition (member
+    products), the set action (the Ft amount) and a Hungarian name
+  - THEN the group loads as a set whose formed instances each remove that
+    flat amount
+- **Scenario: Promotion without the set action or amount**
+  - WHEN a promotion has the set condition but no set action (or a zero
+    amount)
+  - THEN it grants no set discount and its members earn no set discount
+- **Scenario: Overlapping sets are refused**
+  - WHEN a second active set promotion lists a product that an active set
+    promotion already lists
+  - THEN the save is rejected with a Hungarian message, and the runtime
+    allocation refuses to apply rather than double-count
 
 ### Set discount resolution
 
-For a product that is a member of one or more discounted sets, the system
-SHALL resolve the set discount to the single set with the largest discount
-amount; discounts MUST NOT stack across sets. A product that is a member
-of no discounted set earns no set discount.
+The system SHALL NOT apply more than one set discount to the same basket
+unit. Overlapping membership is refused at save time (see the content
+model), so each product belongs to at most one discounted set; the
+allocation still treats the whole basket as one unit budget per set.
 
 - **Scenario: Product in multiple sets**
-  - WHEN a product belongs to two sets with different discount amounts
-  - THEN only the set with the larger amount is applied to that product
+  - WHEN two active set promotions would list the same product
+  - THEN the second promotion cannot be saved while the first is active
 - **Scenario: Product in no set**
   - WHEN a product in the basket is a member of no discounted set
   - THEN it earns no set discount
@@ -88,15 +95,14 @@ material selections match trivially.
 
 A **set discount instance** is one unit each of two or more distinct set
 members whose materials are pairwise compatible. The system SHALL allocate
-set units across the whole basket in one greedy pass, processing sets biggest
-discount amount first: for a set, it repeatedly forms a maximal instance
+each set's units across the whole basket in one greedy pass per set: it
+repeatedly forms a maximal instance
 (one available unit from each distinct compatible member; among
 interchangeable units it prefers the one leaving the most members joinable,
 then the most valuable unit, then basket order),
-consuming units globally — each basket unit is consumed at most once, so a
-partner line covers no more sets than it has units. Leftover units earn no
-set discount. A unit consumed by a higher-amount set is unavailable to
-lower-amount sets. Each formed instance removes its set's flat forint amount
+consuming units within the set — a partner line covers no more set instances
+than it has units. Leftover units earn no
+set discount. Each formed instance removes its set's flat forint amount
 once, clamped so it never exceeds the covered units' charged subtotal.
 
 - **Scenario: Partner line cap**
@@ -108,11 +114,6 @@ once, clamped so it never exceeds the covered units' charged subtotal.
   - WHEN an item's matching partners are all allocated to other lines
   - THEN the item reports a pending-partner state rather than an active
     discount
-- **Scenario: Biggest amount first per unit**
-  - WHEN a basket unit can belong to instances of sets with different
-    amounts
-  - THEN the higher-amount set is allocated first, and the unit is not
-    available to the lower-amount set
 - **Scenario: Deduction clamped to the covered subtotal**
   - WHEN a formed instance's flat amount exceeds the charged subtotal of its
     covered units
@@ -129,8 +130,18 @@ discount (with the winning set and covered count), pending-partner (a matching
 set sibling is not in the basket / all matching units already allocated), and
 pending-material (a sibling is present but materials differ, with a one-click
 material sync offered when the sibling's materials are available on the line).
+The shop API SHALL expose this from the same allocation the set promotion
+applies (never a second computation): `Order.setDiscounts` lists the formed
+instances (group id, Hungarian title, the amount actually removed after the
+clamp, and the member order lines with unit counts) and `OrderLine.setState`
+carries each line's state (`ACTIVE` with the winning set and covered units,
+`PENDING_PARTNER`, `PENDING_MATERIAL` with `materialSyncFromLineId` set when a
+partner line's material picks are all offered on the line, otherwise null;
+null for lines in no set). The fields reflect every active set promotion
+whose member products are disjoint from the others'; while that disjointness
+is violated the allocation refuses to apply and the fields are empty.
 The product configurator SHALL offer to add related set members, and SHALL
-present the members of any zero/absent-discount group the product belongs to as
+present the members of any related-items collection the product belongs to as
 a separate "related items" list per group.
 
 - **Scenario: Basket-level instance list**
@@ -146,7 +157,7 @@ a separate "related items" list per group.
     line offers by the same field name
   - THEN the UI offers a one-click action that copies the partner's material
     selection onto the line's matching fields
-- **Scenario: Related items for a no-discount group**
-  - WHEN a product belongs to one or more zero/absent-discount groups
-  - THEN the product page shows those groups' other members as related items,
-    one separate list per group, with no discount figure
+- **Scenario: Related items for a related collection**
+  - WHEN a product belongs to one or more related-items collections
+  - THEN the product page shows those collections' other members as related
+    items, one separate list per collection, with no discount figure

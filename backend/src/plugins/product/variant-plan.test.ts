@@ -17,7 +17,6 @@ import type { MaterialFacetData } from "./facet-plan";
 const babafeszek: ProductDefinition = ProductDefinitionSchema.parse({
   id: "babafeszek",
   revision: "rev-1",
-  orderable: true,
   basePrice: 15_000,
   pricing: { kind: "unit" },
   fields: [

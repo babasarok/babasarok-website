@@ -73,7 +73,7 @@ export function parseLineSelections(raw: unknown): LineSelections {
   if (!parsed.success) {
     throw new LineSelectionsError(
       `A rendelési sor konfigurációja érvénytelen: ${parsed.error.issues
-        .map((issue) => issue.path.join("."))
+        .map((issue) => issue.path.join("..ts"))
         .join(", ")}`
     );
   }

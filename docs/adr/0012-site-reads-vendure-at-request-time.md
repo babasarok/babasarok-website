@@ -47,7 +47,8 @@ Constraints:
    directly from the browser (no Worker invocation); `addItemToOrder` carries
    the `selections` / `lengthCm` order-line fields; the set discount is the
    server's promotion. `submitQuoteOrder` and the client-side basket pricing
-   are retired by the cutover.
+   are retired by the cutover. The backend contract is
+   [ADR 0013](0013-checkout-on-the-native-vendure-order-flow.md).
 
 ## Considered and rejected
 
@@ -68,7 +69,9 @@ Constraints:
 
 - Uncached catalog pages fail when the backend is down; prerendered pages and
   the static assets keep working.
-- The edge cache TTL is the edit-to-live delay.
+- The edge cache TTL is the edit-to-live delay: Astro route caching with the
+  Cloudflare provider (`routeRules`, 60 s max-age, 300 s stale-while-revalidate;
+  the sitemap 1 h). Error and 404 responses opt out with `cache.set(false)`.
 - Build-time image optimization (sharp) does not apply to Vendure assets;
   catalog images come from Vendure's asset server presets.
 - Prerender-only integrations stop covering catalog pages: the sitemap and

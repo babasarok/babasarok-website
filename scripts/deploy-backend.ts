@@ -102,6 +102,12 @@ try {
       keyfile,
       "-o",
       "StrictHostKeyChecking=accept-new",
+      // A stalled transfer must die (~1 min) instead of hanging the build
+      // until Cloudflare's timeout.
+      "-o",
+      "ServerAliveInterval=15",
+      "-o",
+      "ServerAliveCountMax=4",
       `${cfg.DEPLOY_USER}@${cfg.DEPLOY_HOST}`,
       ...command,
     ];

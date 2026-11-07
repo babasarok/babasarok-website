@@ -7,8 +7,8 @@
   "scripts": {
     "dev": "tsc -b && node --env-file-if-exists=.env dist/migrate.js && (tsc -b --watch --preserveWatchOutput & node --watch --env-file-if-exists=.env dist/index.js & node --watch --env-file-if-exists=.env dist/index-worker.js)",
     "dashboard": "node --env-file-if-exists=build.env --env-file-if-exists=.env ./node_modules/vite/bin/vite.js",
-    "dashboard:build": "node --env-file-if-exists=build.env --env-file-if-exists=.env ./node_modules/vite/bin/vite.js build && npx prettier --write src/gql >/dev/null",
-    "gql:fresh": "pnpm run dashboard:build >/dev/null && npx prettier --write src/gql >/dev/null && git diff --exit-code -- src/gql",
+    "dashboard:build": "node --env-file-if-exists=build.env --env-file-if-exists=.env ./node_modules/vite/bin/vite.js build",
+    "gql:fresh": "pnpm run dashboard:build >/dev/null && git diff --exit-code -- src/gql",
     "build": "tsc -b",
     "start": "node --env-file-if-exists=.env dist/index.js",
     "worker": "node --env-file-if-exists=.env dist/index-worker.js",
@@ -16,9 +16,10 @@
     "generate-migration": "node --env-file-if-exists=.env dist/generate-migration.js",
     "test:quote-roundtrip": "tsx --env-file-if-exists=.env scripts/quote-order-roundtrip.ts",
     "e2e:server": "tsx --env-file=e2e.env scripts/e2e-server.ts",
-    "check": "tsc -b && tsc -p tsconfig.scripts.json --noEmit",
+    "check": "tsc -b && tsc -p tsconfig.scripts.json --noEmit && tsc -p tsconfig.integration.json",
     "check:dashboard": "tsx scripts/check-dashboard-types.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:integration": "tsc -b && vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",
@@ -54,6 +55,7 @@
     "@tanstack/react-query": "^5.91.0",
     "@tanstack/react-router": "1.170.46",
     "@types/pg": "^8.23.1",
+    "@vendure/testing": "3.8.1",
     "gql.tada": "^1.11.4",
     "tsx": "^4.23.15",
     "typeorm": "^0.3.31",

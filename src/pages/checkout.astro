@@ -1,33 +1,46 @@
 ---
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
-import {
-  getConfig,
-  getDeliveryMethods,
-  getProducts,
-  getThreadColors,
-  getProductGroups,
-  getProductSlugs,
-  type CmsEnhancedProduct,
-  type CmsEnhancedDeliveryMethod,
-} from "../lib/data";
 import CheckoutForm from "@/components/blocks/order/CheckoutForm.svelte";
+import { getMaterials, getProductGroups, getProducts, getThreadColors } from "@/lib/catalog";
+import { setMembersByGroup } from "@/lib/basket/setDiscounts";
 import { getEntry } from "astro:content";
 
-const config = await getConfig();
+export const prerender = false;
 
-const products = await getProducts();
-const deliveryMethods = await getDeliveryMethods();
-const threadColors = await getThreadColors();
-const productGroups = await getProductGroups();
-
-// Slug lookup so the checkout can link each item back to its product page.
-const slugByProductId = await getProductSlugs();
+const configEntry = await getEntry("config", "config");
 const checkout = await getEntry("checkout", "index");
+
+if (!configEntry) {
+  throw new Error("Config entry not found");
+}
+
+const config = configEntry.data;
 
 if (!checkout) {
   throw new Error("Checkout entry not found");
 }
+
+const [materials, threadColors, products, groups] = await Promise.all([
+  getMaterials(),
+  getThreadColors(),
+  getProducts(),
+  getProductGroups(),
+]);
+const setMembers = setMembersByGroup(groups, products);
+
+const labels = {
+  materials: Object.fromEntries(
+    materials.map((material) => [
+      material.slug,
+      {
+        label: material.label,
+        colors: Object.fromEntries(material.colors.map((color) => [color.id, color.label])),
+      },
+    ])
+  ),
+  threadColors: Object.fromEntries(threadColors.map((color) => [color.id, color.label])),
+};
 ---
 
 <Base title="Pénztár">
@@ -40,24 +53,9 @@ if (!checkout) {
         contactHeading={checkout.data.contact_heading}
         basketHeading={checkout.data.basket_heading}
         messageHeading={checkout.data.message_heading}
-        products={products.reduce<Record<string, CmsEnhancedProduct>>((acc, p) => {
-          if (!p.can_be_ordered) {
-            return acc;
-          }
-          acc[p.product_id] = p;
-          return acc;
-        }, {})}
-        deliveryMethods={deliveryMethods.reduce<Record<string, CmsEnhancedDeliveryMethod>>(
-          (acc, d) => {
-            acc[d.delivery_name] = d;
-            return acc;
-          },
-          {}
-        )}
-        config={{ address: config.address }}
-        threadColors={threadColors}
-        productGroups={productGroups}
-        slugByProductId={slugByProductId}
+        labels={labels}
+        setMembers={setMembers}
+        supportEmail={config.address?.email}
         client:load
       />
     </div>

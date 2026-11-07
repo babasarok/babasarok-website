@@ -134,6 +134,7 @@ export default defineConfig([
           "./backend/tsconfig.dashboard.json",
           "./backend/src/dashboard/tsconfig.json",
           "./backend/tsconfig.scripts.json",
+          "./backend/tsconfig.integration.json",
         ],
         extraFileExtensions: [],
       },
@@ -172,26 +173,6 @@ export default defineConfig([
     },
   },
   {
-    files: ["backend/**/*.ts", "backend/**/*.tsx", "backend/**/*.mts"],
-    languageOptions: {
-      parserOptions: {
-        parser: "@typescript-eslint/parser",
-        project: [
-          "./tsconfig.json",
-          "./backend/tsconfig.json",
-          "./backend/tsconfig.dashboard.json",
-          "./backend/src/dashboard/tsconfig.json",
-          "./backend/tsconfig.scripts.json",
-        ],
-        extraFileExtensions: [],
-      },
-    },
-    rules: {
-      // Vendure plugin definitions are empty decorated classes.
-      "@typescript-eslint/no-extraneous-class": ["error", { allowEmpty: true }],
-    },
-  },
-  {
     files: ["backend/src/migrations/**/*.ts"],
     rules: {
       // TypeORM's migration generator emits `Promise<any>` signatures and
@@ -218,6 +199,14 @@ export default defineConfig([
       "unicorn/no-process-exit": "off",
       "unicorn/prefer-top-level-await": "off",
       // generate-migration.ts resolves paths relative to its compiled location.
+      "unicorn/prefer-module": "off",
+    },
+  },
+  {
+    files: ["src/pages/**/*.astro"],
+    rules: {
+      // Astro frontmatter is a function body: `return` is how a page hands
+      // back a Response (404, redirect).
       "unicorn/prefer-module": "off",
     },
   },
