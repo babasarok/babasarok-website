@@ -37,7 +37,7 @@
 </script>
 
 <I18nGate {locale}>
-  {#snippet children(i18n: I18n)}
+  {#snippet children(_i18n: I18n)}
     <div
       {...rest}
       class={[

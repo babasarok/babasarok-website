@@ -95,7 +95,7 @@ const translation = {
   checkout: {
     title: "Pénztár",
     success: "Rendelésed sikeresen elküldve! Hamarosan felvesszük veled a kapcsolatot.",
-    orderNumber: "Rendelésszám: {{code}}",
+    orderNumber: "Rendelésszám:",
     backToProducts: "Vissza a termékekhez",
     basketUnavailable: "A kosár most nem érhető el.",
     basketEmpty: "A kosarad üres.",

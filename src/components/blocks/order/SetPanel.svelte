@@ -48,6 +48,7 @@
         {#each relatedProducts as related (related.product_id)}
           {@const slug = slugByProductId[related.product_id]}
           <SetSiblingCard
+            {locale}
             product={related}
             href={slug ? `/product/${slug}/` : undefined}
             added={basketCountByProductId[related.product_id] ?? 0}

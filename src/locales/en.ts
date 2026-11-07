@@ -100,7 +100,7 @@ const translation = {
   checkout: {
     title: "Checkout",
     success: "Your order has been sent! We will contact you shortly.",
-    orderNumber: "Order number: {{code}}",
+    orderNumber: "Order number:",
     backToProducts: "Back to the products",
     basketUnavailable: "The basket is currently unavailable.",
     basketEmpty: "Your basket is empty.",

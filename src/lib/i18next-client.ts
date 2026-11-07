@@ -8,19 +8,29 @@ const instances = new Map<Locale, Promise<I18n>>();
 
 export function getClientI18n(locale: Locale): Promise<I18n> {
   const pending = instances.get(locale);
-  if (pending) return pending;
+  if (pending) {
+    return pending;
+  }
 
   const instance = i18next.createInstance();
   instance.use(
-    resourcesToBackend(async (language, namespace) => {
+    resourcesToBackend(async (language: string, namespace: string) => {
       if (!(locales as readonly string[]).includes(language)) {
         throw new Error(`unsupported language ${language}`);
       }
-      const load = resourceModules[`../locales/${language}.ts`];
-      if (!load) throw new Error(`no resource module for ${language}`);
+
+      const key = `../locales/${language}.ts`;
+
+      if (!(key in resourceModules)) {
+        throw new Error(`no resource module for ${language}`);
+      }
+
+      const load = resourceModules[key];
+
       if (namespace !== "translation") {
         throw new Error(`unsupported namespace ${namespace}`);
       }
+
       const { default: translation } = await load();
       return translation;
     })
@@ -37,4 +47,11 @@ export function getClientI18n(locale: Locale): Promise<I18n> {
 
   instances.set(locale, created);
   return created;
+}
+
+// Messages flowing through the basket layer are either a dictionary key
+// (blockers, error codes) or a server-provided sentence; resolve only the
+// former, pass the latter through untouched.
+export function translateMessage(i18n: I18n, message: string): string {
+  return i18n.exists(message) ? i18n.t(message, { defaultValue: message }) : message;
 }

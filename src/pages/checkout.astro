@@ -53,6 +53,7 @@ const labels = {
   <section class="py-12.5">
     <div class="not-prose container">
       <CheckoutForm
+        locale={localeFromPathname(Astro.url.pathname)}
         basketInfo={checkout.data.basket_note}
         contactHeading={checkout.data.contact_heading}
         basketHeading={checkout.data.basket_heading}
