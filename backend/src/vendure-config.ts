@@ -30,8 +30,8 @@ import { PricingPlugin } from "./plugins/pricing/pricing.plugin";
 import { MAX_LINE_LENGTH_CM } from "./shared/pricing/index";
 import { ServerPricingStrategy } from "./plugins/pricing/pricing-strategy";
 import {
-  productSetBasketCondition,
   productSetDiscountAction,
+  productSetMembersCondition,
 } from "./plugins/product-set/promotion";
 import { ProductSetPlugin } from "./plugins/product-set/product-set.plugin";
 import { ProductPlugin } from "./plugins/product/product.plugin";
@@ -163,7 +163,7 @@ export const config: VendureConfig = {
   },
   paymentOptions: { paymentMethodHandlers: [] },
   promotionOptions: {
-    promotionConditions: [...defaultPromotionConditions, productSetBasketCondition],
+    promotionConditions: [...defaultPromotionConditions, productSetMembersCondition],
     promotionActions: [...defaultPromotionActions, productSetDiscountAction],
   },
   dbConnectionOptions: {
@@ -337,30 +337,6 @@ export const config: VendureConfig = {
           },
         ],
         nullable: true,
-      },
-    ],
-    Collection: [
-      {
-        name: "setDiscount",
-        type: "int",
-        label: [{ languageCode: LanguageCode.hu, value: "Szett-kedvezmény (Ft)" }],
-        description: [
-          {
-            languageCode: LanguageCode.hu,
-            value:
-              "Egy képződött szett-példány által levont fix forint. Csak a Szettek alatti gyűjteményeken használatos; üresen a gyűjtemény nem szett.",
-          },
-        ],
-        nullable: true,
-        validate: (value: unknown) => {
-          if (value === null || value === undefined) {
-            return;
-          }
-
-          if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
-            return "A szett-kedvezmény pozitív egész forint lehet.";
-          }
-        },
       },
     ],
     FacetValue: [

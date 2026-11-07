@@ -9,6 +9,7 @@ import {
 import { GroupParentGuardInterceptor } from "./group-parent-guard.interceptor";
 import { ShopProductGroupResolver } from "./product-set.resolver";
 import { SetBasketService } from "./set-basket.service";
+import { SetPromotionGuardInterceptor } from "./set-promotion-guard.interceptor";
 
 const shopProductGroupSchema = gql`
   enum ProductGroupKind {
@@ -34,6 +35,7 @@ const shopProductGroupSchema = gql`
   providers: [
     SetBasketService,
     { provide: APP_INTERCEPTOR, useClass: GroupParentGuardInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: SetPromotionGuardInterceptor },
   ],
   shopApiExtensions: {
     schema: gql`

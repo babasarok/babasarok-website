@@ -1,7 +1,6 @@
-import { RELATED_PARENT_SLUG, SET_PARENT_SLUG } from "./group-parents";
+import { RELATED_PARENT_SLUG } from "./group-parents";
 
 const ROLE_BY_SLUG = new Map<string, string>([
-  [SET_PARENT_SLUG, "a szett-kedvezmények kiszámítása"],
   [RELATED_PARENT_SLUG, "a termékoldalakon megjelenő kapcsolódó termékek listája"],
 ]);
 

@@ -188,12 +188,12 @@ merged to main until the backend structure is settled):
 - ✅ Server-side pricing + promotions — a custom `OrderItemPriceCalculationStrategy`
   prices length/embroidery from order-line custom fields (`lengthCm`,
   `selections`), with an order interceptor rejecting unpriceable lines (no
-  0 Ft lines); the szett discount is a Vendure Promotion (custom condition +
-  order action) whose argless condition reads the private "Szettek"
-  collection's children — groups are private Collections (members via the
-  native `product-id-filter`, the set discount a `setDiscount` custom field
-  edited in the stock dashboard); the import seeded the collections and the
-  promotion. The backend keeps its own
+  0 Ft lines); the szett discount is one Promotion per set (custom condition +
+  order action, ADR 0014): the condition's args list the member products and
+  the action's arg the flat Ft amount, so the sets are created and edited
+  entirely in the Promotions section — membership no longer lives in
+  Collections, the related-items groups stay private Collections under the
+  "Kapcsolódó termékek" parent. The backend keeps its own
   copy of the pricing logic; `src/lib/pricing` is untouched until cutover
   (supersedes the price-authority part of issue #71). Per-product %
   discounts are dropped (owner decision: unused); they get no Vendure home

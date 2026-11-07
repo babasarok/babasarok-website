@@ -1,12 +1,13 @@
 /**
  * Seam 2: the shop API's `Order.setDiscounts` / `OrderLine.setState` against
  * what Vendure actually applied. The fields are computed by the same
- * allocation the promotion uses, but resolved in a separate GraphQL pass over
+ * allocation the promotions use, but resolved in a separate GraphQL pass over
  * the order Vendure hands to the resolvers; this checks they never drift from
  * the booked order-level discount or from the real order lines and quantities.
+ * The group ids are the promotions' ids (ADR 0014).
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { SET_PROMOTION_NAME, seedCatalog } from "./fixtures";
+import { seedCatalog } from "./fixtures";
 import { startServer, type IntegrationServer } from "./harness";
 import { elavulo, feszek, kendo, parna, szalag, takaro } from "./lines";
 import { addLine, newShopper, type Order } from "./shop";
@@ -27,11 +28,10 @@ afterAll(async () => {
 });
 
 function appliedSetDiscount(order: Order): number {
-  const discount = order.discounts.find((entry) => entry.description === SET_PROMOTION_NAME);
-
-  return discount === undefined ? 0 : -discount.amountWithTax;
+  return order.discounts
+    .filter((entry) => order.setDiscounts.some((instance) => instance.title === entry.description))
+    .reduce((sum, entry) => sum - entry.amountWithTax, 0);
 }
-
 function lineWith(order: Order, skuPart: string): Order["lines"][number] {
   const line = order.lines.find((candidate) => candidate.productVariant.sku.includes(skuPart));
 
@@ -52,8 +52,8 @@ describe("exposed set discounts and line states", () => {
     const order = await addLine(shopper, feszek(PAMUT, PAMUT));
     const instances = order.setDiscounts;
 
+    // The fészek has no partner in the basket, so only the Alap szett forms.
     expect(instances.map((instance) => [instance.title, instance.amount])).toEqual([
-      ["Duó szett", 3000],
       ["Alap szett", 1500],
     ]);
     expect(instances.reduce((sum, instance) => sum + instance.amount, 0)).toBe(
@@ -62,13 +62,8 @@ describe("exposed set discounts and line states", () => {
 
     const parnaLine = lineWith(order, "int-parna");
     const takaroLine = lineWith(order, "int-takaro");
-    const feszekLine = lineWith(order, "int-feszek");
 
     expect(instances[0]?.lines).toEqual([
-      { orderLineId: parnaLine.id, units: 1 },
-      { orderLineId: feszekLine.id, units: 1 },
-    ]);
-    expect(instances[1]?.lines).toEqual([
       { orderLineId: parnaLine.id, units: 1 },
       { orderLineId: takaroLine.id, units: 1 },
     ]);
@@ -80,10 +75,18 @@ describe("exposed set discounts and line states", () => {
       const covered = units.reduce((sum, member) => sum + member.units, 0);
 
       expect(covered).toBeLessThanOrEqual(line.quantity);
-      expect(line.setState).toMatchObject({ kind: "ACTIVE", coveredUnits: covered });
+
+      // A member line of a set that cannot form stays pending (the fészek's
+      // partner is not in the basket).
+      if (covered === 0) {
+        expect(line.setState).toMatchObject({ kind: "PENDING_PARTNER", coveredUnits: 0 });
+      } else {
+        expect(line.setState).toMatchObject({ kind: "ACTIVE", coveredUnits: covered });
+      }
     }
 
-    expect(parnaLine.setState?.groupId).toBe("int-duo-szett");
+    // The group id is the promotion's id — the same id the site keys on.
+    expect(parnaLine.setState?.groupId).toBe(instances[0]?.groupId);
   });
 
   it("exposes the clamped amount, not the set's nominal one", async () => {
@@ -112,15 +115,14 @@ describe("exposed set discounts and line states", () => {
     expect(order.setDiscounts).toHaveLength(1);
   });
 
-  it("reports pending-partner with the biggest set the line belongs to", async () => {
+  it("reports pending-partner for a member without a partner", async () => {
     const shopper = newShopper(server);
     const order = await addLine(shopper, parna(PAMUT));
 
     expect(order.setDiscounts).toEqual([]);
-    expect(order.lines[0]?.setState).toEqual({
+    expect(order.lines[0]?.setState).toMatchObject({
       kind: "PENDING_PARTNER",
-      groupId: "int-duo-szett",
-      title: "Duó szett",
+      title: "Alap szett",
       coveredUnits: 0,
       materialSyncFromLineId: null,
     });
@@ -138,30 +140,29 @@ describe("exposed set discounts and line states", () => {
       kind: "PENDING_MATERIAL",
       materialSyncFromLineId: lineWith(order, "int-parna").id,
     });
-    // The párna's biggest set is the Duó (with the fészek), which has no partner here.
-    expect(lineWith(order, "int-parna").setState).toMatchObject({
-      kind: "PENDING_PARTNER",
-      groupId: "int-duo-szett",
-    });
   });
 
   it("offers no sync when the partner has a different number of material fields", async () => {
     const shopper = newShopper(server);
 
-    await addLine(shopper, parna(LEN));
+    await addLine(shopper, elavulo(LEN));
 
     const order = await addLine(shopper, feszek(PAMUT, VASZON));
 
-    expect(lineWith(order, "int-parna").setState).toMatchObject({
+    expect(lineWith(order, "int-elavulo").setState).toMatchObject({
       kind: "PENDING_MATERIAL",
       materialSyncFromLineId: null,
     });
   });
 
-  it("has no state for a line in no set", async () => {
+  it("reports pending-partner for a member of a set that cannot form", async () => {
     const shopper = newShopper(server);
     const order = await addLine(shopper, elavulo(PAMUT));
 
-    expect(order.lines[0]?.setState).toBeNull();
+    expect(order.lines[0]?.setState).toMatchObject({
+      kind: "PENDING_PARTNER",
+      title: "Duó szett",
+      coveredUnits: 0,
+    });
   });
 });

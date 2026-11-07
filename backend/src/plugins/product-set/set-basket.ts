@@ -1,15 +1,14 @@
 import { Logger } from "@vendure/core";
 import type { ProductDefinition as CanonicalProductDefinition } from "../../shared/product-definition/index";
 import { parseLineSelections, type LineSelections } from "../../shared/pricing/index";
-import { countActivePromotionsUsing, type PromotionWindow } from "./active-promotions";
 import { materialPicks } from "./material-picks";
-import { allocateSetDiscounts, lineDiscounts, type SetInstance } from "./set-allocation";
+import { allocateSetDiscounts, type AllocationGroup, type SetInstance } from "./set-allocation";
 import { lineSetStates, type LineSetState, type StateLine } from "./set-line-states";
 
-export const PRODUCT_SET_CONDITION_CODE = "babasarok-product-set-basket";
-const PRODUCT_ID_FILTER_CODE = "product-id-filter";
+export const PRODUCT_SET_CONDITION_CODE = "babasarok-product-set-members";
+export const PRODUCT_SET_ACTION_CODE = "babasarok-product-set-discount";
 
-/** The parts of a "Szettek" child collection the group parsing reads. */
+/** The parts of a related-items collection the group parsing reads. */
 export interface SetCollection {
   translations: ReadonlyArray<{ languageCode: string; name: string; slug: string }>;
   filters: ReadonlyArray<{
@@ -19,41 +18,9 @@ export interface SetCollection {
   customFields: { setDiscount: number | null };
 }
 
-export interface BasketLine {
-  id: unknown;
-  quantity: number;
-  listPrice: number;
-  nativeProductId: number;
-  selectionsRaw: unknown;
-  options: ReadonlyArray<{ groupCode: string; code: string }>;
-}
-
-export interface DefinitionRow {
-  nativeProductId: number | null;
-  definition: CanonicalProductDefinition;
-}
-
-export interface SetGroup {
-  groupId: string;
-  label: string;
-  discount: number;
-  productIds: readonly string[];
-}
-
-function huName(
-  translations: ReadonlyArray<{ languageCode: string; name: string }>
-): string | undefined {
-  return translations.find((t) => t.languageCode === "hu")?.name;
-}
-
-function huSlug(
-  translations: ReadonlyArray<{ languageCode: string; slug: string }>
-): string | undefined {
-  return translations.find((t) => t.languageCode === "hu")?.slug;
-}
-
+/** The native product ids a collection's `product-id-filter` lists. */
 export function memberIds(filters: SetCollection["filters"]): string[] | undefined {
-  const filter = filters.find((operation) => operation.code === PRODUCT_ID_FILTER_CODE);
+  const filter = filters.find((operation) => operation.code === "product-id-filter");
   const raw = filter?.args.find((argument) => argument.name === "productIds")?.value;
 
   if (raw === undefined) {
@@ -85,64 +52,159 @@ export function memberIds(filters: SetCollection["filters"]): string[] | undefin
   return ids;
 }
 
+/** The parsed promotion behind a set: label from the Hungarian name, members
+ * and the flat amount from the condition/action args. */
+export interface PromotionSource {
+  id: string;
+  label: string;
+  /** Native product ids from the condition's `productIds` arg. */
+  memberIds: readonly string[];
+  /** The action's flat Ft amount; null when the promotion has no usable action. */
+  amount: number | null;
+}
+
+/** The promotion fields the window filter reads. */
+export interface PromotionWindow {
+  deletedAt: Date | null;
+  startsAt: Date | null;
+  endsAt: Date | null;
+  channels: ReadonlyArray<{ id: unknown }>;
+  conditions: ReadonlyArray<{ code: string }>;
+  actions: ReadonlyArray<{ code: string }>;
+}
+
+export interface BasketLine {
+  id: unknown;
+  quantity: number;
+  listPrice: number;
+  nativeProductId: number;
+  selectionsRaw: unknown;
+  options: ReadonlyArray<{ groupCode: string; code: string }>;
+}
+
+export interface DefinitionRow {
+  nativeProductId: number | null;
+  definition: CanonicalProductDefinition;
+}
+
+export interface SetGroup {
+  groupId: string;
+  label: string;
+  discount: number;
+  productIds: readonly string[];
+}
+
+export function huName(
+  translations: ReadonlyArray<{ languageCode: string; name: string }>
+): string | undefined {
+  return translations.find((t) => t.languageCode === "hu")?.name;
+}
+
+export function huSlug(
+  translations: ReadonlyArray<{ languageCode: string; slug: string }>
+): string | undefined {
+  return translations.find((t) => t.languageCode === "hu")?.slug;
+}
+
+/** The member ids from the condition args' `productIds` value. */
+export function memberIdsFromArgs(
+  args: ReadonlyArray<{ name: string; value: string }>
+): string[] | undefined {
+  const raw = args.find((argument) => argument.name === "productIds")?.value;
+
+  if (raw === undefined) {
+    return undefined;
+  }
+
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return undefined;
+  }
+
+  if (!Array.isArray(parsed)) {
+    return undefined;
+  }
+
+  const ids: string[] = [];
+
+  for (const id of parsed) {
+    if (typeof id !== "string" && typeof id !== "number") {
+      return undefined;
+    }
+
+    ids.push(String(id));
+  }
+
+  return ids;
+}
+
+/** The flat amount from the action args' `amount` value; null when unusable. */
+export function amountFromArgs(
+  args: ReadonlyArray<{ name: string; value: string }>
+): number | null {
+  const raw = args.find((argument) => argument.name === "amount")?.value;
+
+  if (raw === undefined) {
+    return null;
+  }
+
+  const amount = Number(raw);
+
+  return Number.isInteger(amount) && amount > 0 ? amount : null;
+}
+
 /**
- * The discounted sets among the "Szettek" parent's children: members from the
- * native `product-id-filter`, label = the collection's name, discount = the
- * `setDiscount` custom field. Degenerate groups (<2 members, no/zero discount,
- * unusable filter) are ignored with a report, never thrown — a half-edited
- * collection must not break basket pricing.
+ * The promotions that are live right now on the channel: not deleted, inside
+ * their window and assigned to the channel.
  */
-export function setGroups(
-  children: readonly SetCollection[],
+export function activePromotions<T extends PromotionWindow>(
+  promotions: readonly T[],
+  channelId: unknown,
+  now: Date
+): readonly T[] {
+  return promotions.filter(
+    (promotion) =>
+      promotion.deletedAt === null &&
+      (promotion.startsAt === null || promotion.startsAt <= now) &&
+      (promotion.endsAt === null || promotion.endsAt > now) &&
+      promotion.channels.some((channel) => channel.id === channelId)
+  );
+}
+
+export function promotionGroups(
+  promotions: readonly PromotionSource[],
   productIdByNativeId: ReadonlyMap<number, string>
 ): SetGroup[] {
   const groups: SetGroup[] = [];
 
-  for (const child of children) {
-    const label = huName(child.translations);
+  for (const promotion of promotions) {
+    const productIds = [
+      ...new Set(
+        promotion.memberIds.flatMap((nativeId) => {
+          const productId = productIdByNativeId.get(Number(nativeId));
 
-    if (label === undefined) {
-      continue;
-    }
+          return productId === undefined ? [] : [productId];
+        })
+      ),
+    ];
+    const discount = promotion.amount;
 
-    const nativeIds = memberIds(child.filters);
-
-    if (nativeIds === undefined) {
-      Logger.warn(`Szett-gyűjtemény "${label}": nincs termék-taglistája.`);
-      continue;
-    }
-
-    const productIds = new Set<string>();
-
-    for (const nativeId of nativeIds) {
-      const productId = productIdByNativeId.get(Number(nativeId));
-
-      if (productId !== undefined) {
-        productIds.add(productId);
-      }
-    }
-
-    const discount = child.customFields.setDiscount;
-
-    if (discount === null || discount <= 0 || productIds.size < 2) {
+    if (discount === null || discount <= 0 || productIds.length < 2) {
       Logger.info(
-        `Szett-gyűjtemény "${label}" kihagyva: ` +
+        `Szett-promóció "${promotion.label}" kihagyva: ` +
           `${discount === null || discount <= 0 ? "nincs kedvezmény" : "kevesebb mint 2 tag"}.`
       );
       continue;
     }
 
-    const groupId = huSlug(child.translations);
-
-    if (groupId === undefined) {
-      continue;
-    }
-
     groups.push({
-      groupId,
-      label,
+      groupId: promotion.id,
+      label: promotion.label,
       discount,
-      productIds: [...productIds],
+      productIds,
     });
   }
 
@@ -152,12 +214,12 @@ export function setGroups(
 /** Native product ids whose definition rows are needed to evaluate the basket. */
 export function relevantNativeProductIds(
   lines: readonly BasketLine[],
-  children: readonly SetCollection[]
+  promotions: readonly PromotionSource[]
 ): number[] {
   const ids = new Set<number>(lines.map((line) => line.nativeProductId));
 
-  for (const child of children) {
-    for (const nativeId of memberIds(child.filters) ?? []) {
+  for (const promotion of promotions) {
+    for (const nativeId of promotion.memberIds) {
       ids.add(Number(nativeId));
     }
   }
@@ -165,47 +227,54 @@ export function relevantNativeProductIds(
   return [...ids];
 }
 
+/** Whether any native product id sits in two promotions — the overlap the
+ * save-time guard forbids; the allocation refuses rather than double-count. */
+export function overlappingMemberIds(promotions: readonly PromotionSource[]): ReadonlySet<string> {
+  const counts = new Map<string, number>();
+
+  for (const promotion of promotions) {
+    for (const nativeId of promotion.memberIds) {
+      counts.set(nativeId, (counts.get(nativeId) ?? 0) + 1);
+    }
+  }
+
+  return new Set([...counts].filter(([, count]) => count > 1).map(([id]) => id));
+}
+
 export interface SetBasketState {
   total: number;
   instances: SetInstance[];
   lineStates: Map<string, LineSetState>;
-  /** Line id → the discount its covered units earn, prorated by price. */
-  lineDiscounts: Record<string, number>;
+  /** Unit prices per line — the promotion action clamps its own arg against these. */
+  unitPrices: Record<string, number>;
 }
 
 const NO_SET_BASKET: SetBasketState = {
   total: 0,
   instances: [],
   lineStates: new Map(),
-  lineDiscounts: {},
+  unitPrices: {},
 };
 
 /**
- * The one allocation behind both the promotion and the shop API's set fields:
+ * The one allocation behind both the promotions and the shop API's set fields:
  * formed instances, their total and each line's set state. Empty when the
- * condition is not backed by exactly one active promotion (with several each
- * would deduct on its own, with none nothing is deducted).
+ * active promotions overlap on a product (never double-count) or when none is
+ * active. The caller filters the promotion sources to the active window.
  */
 export function setBasketState(input: {
-  promotions: readonly PromotionWindow[];
-  channelId: unknown;
-  now: Date;
-  children: readonly SetCollection[];
+  sources: readonly PromotionSource[];
   lines: readonly BasketLine[];
   definitionRows: readonly DefinitionRow[];
 }): SetBasketState {
-  const active = countActivePromotionsUsing(
-    input.promotions,
-    PRODUCT_SET_CONDITION_CODE,
-    input.channelId,
-    input.now
-  );
+  const overlaps = overlappingMemberIds(input.sources);
 
-  if (active > 1) {
-    Logger.error(`${active} aktív szett-kedvezmény promóció létezik — egyik sem lép érvénybe.`);
-  }
+  if (overlaps.size > 0) {
+    Logger.error(
+      `Aktív szett-promóciók ugyanazt a terméket sorolják: ${[...overlaps].join(", ")}.` +
+        " Egyik sem lép érvénybe."
+    );
 
-  if (active !== 1) {
     return NO_SET_BASKET;
   }
 
@@ -270,14 +339,14 @@ export function setBasketState(input: {
     });
   }
 
-  const groups = setGroups(input.children, productIdByNativeId);
+  const groups: AllocationGroup[] = promotionGroups(input.sources, productIdByNativeId);
   const instances = allocateSetDiscounts(lines, groups);
-  const unitPrices = new Map(lines.map((line) => [line.lineId, line.unitPrice]));
+  const unitPrices = Object.fromEntries(lines.map((line) => [line.lineId, line.unitPrice]));
 
   return {
     total: instances.reduce((sum, instance) => sum + instance.amount, 0),
     instances,
     lineStates: lineSetStates(lines, groups, instances),
-    lineDiscounts: Object.fromEntries(lineDiscounts(instances, unitPrices)),
+    unitPrices,
   };
 }
