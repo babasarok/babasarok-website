@@ -8,14 +8,13 @@ import {
   TranslatorService,
 } from "@vendure/core";
 import { Query, Resolver } from "@nestjs/graphql";
-import { In } from "typeorm";
+import { IsNull, In } from "typeorm";
 import { ProductDefinition } from "../product/product.entity";
 import {
   projectGroups,
   type ProductGroupCollection,
   type ProductGroupProjection,
 } from "./product-group-projection";
-import { RELATED_PARENT_SLUG } from "./group-parents";
 import { memberIds, type PromotionSource } from "./set-basket";
 import { activeSetSources } from "./set-basket.service";
 
@@ -29,10 +28,10 @@ export class ShopProductGroupResolver {
   @Query()
   @Allow(Permission.Public)
   async productGroups(@Ctx() ctx: RequestContext): Promise<ProductGroupProjection[]> {
-    // Discounted sets live on promotions (ADR 0014), related groups on
-    // collections under the "Kapcsolódó termékek" parent.
+    // Discounted sets live on promotions (ADR 0014); related groups are the
+    // private top-level collections (every public one is material navigation).
     const sets = await activeSetSources(ctx, this.connection);
-    const related = await this.children(ctx, RELATED_PARENT_SLUG);
+    const related = await this.relatedCollections(ctx);
     const nativeIds = [
       ...sets.flatMap((promotion) => promotion.memberIds.map(Number)),
       ...related.flatMap((child) => memberIds(child.filters) ?? []),
@@ -53,32 +52,26 @@ export class ShopProductGroupResolver {
     ];
   }
 
-  private async children(
-    ctx: RequestContext,
-    parentSlug: string
-  ): Promise<ProductGroupCollection[]> {
+  private async relatedCollections(ctx: RequestContext): Promise<ProductGroupCollection[]> {
     const repository = this.connection.getRepository(ctx, Collection);
-    const parent = await repository.findOne({
-      relations: { translations: true },
-      where: { translations: { slug: parentSlug } },
-    });
+    const root = await repository.findOne({ where: { parentId: IsNull() } });
 
-    if (parent === null) {
+    if (root === null) {
       return [];
     }
 
-    const children = await repository.find({
-      where: { parentId: parent.id },
+    const collections = await repository.find({
+      where: { isPrivate: true, parentId: root.id },
       relations: { translations: true },
     });
 
-    return children.map((child) => {
-      const translated = this.translator.translate(child, ctx);
+    return collections.map((collection) => {
+      const translated = this.translator.translate(collection, ctx);
 
       return {
         slug: translated.slug,
         name: translated.name,
-        filters: child.filters,
+        filters: collection.filters,
       };
     });
   }

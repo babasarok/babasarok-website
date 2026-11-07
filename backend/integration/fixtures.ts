@@ -2,8 +2,7 @@
  * The shared fixture catalog, created through the admin API the way the owner
  * does: materials, generated products (one per field kind that matters for
  * line identity and quantity), the discounted sets as promotions (ADR 0014)
- * and the related group as a collection under the "Kapcsolódó termékek"
- * parent.
+ * and the related group as a private top-level collection.
  *
  * Prices (gross Ft): parna 5 000 (+800 szegély, +1 000 nagy), takaro 8 000,
  * feszek 12 000, szalag 2 000 per metre, kendo 400, with materials priced
@@ -286,13 +285,6 @@ async function createGroups(
   server: IntegrationServer,
   nativeIds: ReadonlyMap<ProductId, number>
 ): Promise<void> {
-  const relatedParent = await createCollection(server, {
-    slug: "kapcsolodo-termekek",
-    name: "Kapcsolódó termékek",
-    parentId: null,
-    nativeIds: [],
-  });
-
   for (const group of GROUPS) {
     const nativeIdList = group.members.map((member) => {
       const nativeId = nativeIds.get(member);
@@ -308,7 +300,7 @@ async function createGroups(
       await createCollection(server, {
         slug: group.slug,
         name: group.name,
-        parentId: relatedParent,
+        parentId: null,
         nativeIds: nativeIdList,
       });
 

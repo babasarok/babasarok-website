@@ -89,10 +89,11 @@ Two facts the owner supplied make the simpler model possible:
    `SetBasketService` aggregates the per-promotion results for the shop API
    (`Order.setDiscounts`, `OrderLine.setState` keep their shape). The group
    id surfaced to the site becomes the promotion id.
-4. **Related-items groups stay collections** (children of the
-   "Kapcsolódó termékek" parent, membership via the native
-   `product-id-filter`). The "Szettek" parent and its children are retired;
-   the group-parent guard keeps protecting "Kapcsolódó termékek" only.
+4. **Related-items groups are plain private collections**: top-level private
+   collections, membership via the native `product-id-filter`. There is no
+   grouping parent (with sets on promotions, one would group nothing) and no
+   guard: the dashboard's public top-level collections are all material
+   navigation, so `isPrivate` alone tells the two kinds apart.
 5. **The dashboard UX becomes stock end to end**: Promotions lists every set
    discount by name and amount; creating a set is creating a promotion;
    disabling a promotion removes the discount (its members surface as
@@ -109,8 +110,11 @@ Two facts the owner supplied make the simpler model possible:
    old argless promotion; create the two replacement promotions (Babafészek
    1 000 Ft with members [13,14]; Ovis szett 1 300 Ft with members [39,40]);
    drop the `setDiscount` column; remove the empty `product-id-filter` from
-   the "Kapcsolódó termékek" parent (the contents-zero bug) and delete the
-   "Szettek" parent with its children.
+   the related parent (the contents-zero bug) and delete the
+   "Szettek" parent with its children. A follow-up migration re-parents the
+   related groups to the root, deletes the "Kapcsolódó termékek" parent and
+   seeds the private collections' stored contents from their filters (the
+   recompute job had not run since the fix).
 3. **Tests** — unit specs reworked to the args model (allocation unchanged in
    math, money half moved from condition state to action arg); integration
    seam tests: discount forms via a per-set promotion, overlapping promotions

@@ -192,8 +192,8 @@ merged to main until the backend structure is settled):
   order action, ADR 0014): the condition's args list the member products and
   the action's arg the flat Ft amount, so the sets are created and edited
   entirely in the Promotions section — membership no longer lives in
-  Collections, the related-items groups stay private Collections under the
-  "Kapcsolódó termékek" parent. The backend keeps its own
+  Collections, the related-items groups are private top-level Collections
+  (no grouping parent). The backend keeps its own
   copy of the pricing logic; `src/lib/pricing` is untouched until cutover
   (supersedes the price-authority part of issue #71). Per-product %
   discounts are dropped (owner decision: unused); they get no Vendure home

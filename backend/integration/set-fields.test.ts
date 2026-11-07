@@ -7,8 +7,9 @@
  * The group ids are the promotions' ids (ADR 0014).
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { z } from "zod";
 import { seedCatalog } from "./fixtures";
-import { startServer, type IntegrationServer } from "./harness";
+import { run, startServer, type IntegrationServer } from "./harness";
 import { elavulo, feszek, kendo, parna, szalag, takaro } from "./lines";
 import { addLine, newShopper, type Order } from "./shop";
 
@@ -163,6 +164,40 @@ describe("exposed set discounts and line states", () => {
       kind: "PENDING_PARTNER",
       title: "Duó szett",
       coveredUnits: 0,
+    });
+  });
+
+  it("projects sets from the promotions and related groups from private top-level collections", async () => {
+    const { productGroups } = await run(
+      server.newShopSession(),
+      `query { productGroups { id kind label discount productIds } }`,
+      {},
+      z.object({
+        productGroups: z.array(
+          z.object({
+            id: z.string(),
+            kind: z.string(),
+            label: z.string(),
+            discount: z.number().nullable(),
+            productIds: z.array(z.string()),
+          })
+        ),
+      })
+    );
+
+    const alap = productGroups.find((group) => group.label === "Alap szett");
+
+    expect(alap).toMatchObject({
+      kind: "set",
+      discount: 1500,
+      productIds: ["int-parna", "int-takaro"],
+    });
+    expect(productGroups).toContainEqual({
+      id: "int-kiegeszito",
+      kind: "related",
+      label: "Kiegészítők",
+      discount: null,
+      productIds: ["int-parna", "int-kendo"],
     });
   });
 });
