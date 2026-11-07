@@ -4,8 +4,8 @@ import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
 import NavBasket from "@/components/blocks/order/NavBasket.svelte";
 import SearchDialog from "@/components/blocks/SearchDialog.svelte";
-import { localeFromPathname, localizedPath, locales } from "@/lib/i18n";
-import { createI18n } from "@/lib/i18next";
+import LanguageDialog from "@/components/blocks/LanguageDialog.svelte";
+import { localeFromPathname } from "@/lib/i18n";
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const config = (await getEntry("config", "config")!).data;
@@ -23,11 +23,6 @@ const mainMenu = rawMenu
   .toSorted((a, b) => (a.weight ?? 99) - (b.weight ?? 99));
 
 const locale = localeFromPathname(Astro.url.pathname);
-// locales has exactly two entries, so the find always matches.
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const otherLocale = locales.find((candidate) => candidate !== locale)!;
-const switchHref = localizedPath(Astro.url.pathname, otherLocale);
-const switchLabel = createI18n(locale).t(`languageNames.${otherLocale}`);
 ---
 
 <nav id="navbar" class="fixed top-0 z-50">
@@ -49,6 +44,7 @@ const switchLabel = createI18n(locale).t(`languageNames.${otherLocale}`);
       </a>
 
       <div class="flex items-center gap-2 lg:hidden">
+        <LanguageDialog pathname={Astro.url.pathname} locale={locale} client:load />
         <SearchDialog client:load />
         {showBasket && <NavBasket checkoutHref={checkoutLink} anchored={false} client:load />}
         <button
@@ -94,14 +90,7 @@ const switchLabel = createI18n(locale).t(`languageNames.${otherLocale}`);
               </div>
             )
           }
-          <a
-            href={switchHref}
-            hreflang={otherLocale}
-            aria-label={switchLabel}
-            class="text-dark hover:text-sand-300 self-center px-1 text-sm font-medium tracking-widest uppercase transition-all"
-          >
-            {otherLocale}
-          </a>
+          <LanguageDialog pathname={Astro.url.pathname} locale={locale} client:load />
           <Button href={contactLink} size="lg" variant="primary">Kapcsolat</Button>
         </div>
       </div>
