@@ -168,7 +168,7 @@ const config = defineCollection({
 
 const blog = defineCollection({
   loader: glob({
-    pattern: "!(_index)*.md",
+    pattern: "**/[!_]*.md",
     base: "src/content/blog",
   }),
   schema: ({ image }) =>

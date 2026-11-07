@@ -56,8 +56,6 @@ export default defineConfig({
   i18n: {
     defaultLocale,
     locales: [...locales],
-    fallback: { en: "hu" },
-    routing: { fallbackType: "rewrite" },
   },
   prefetch: true,
   integrations: [
