@@ -60,7 +60,12 @@ non-catalog Tina content, buyer-visible server messages, and order emails.
    language, resources loaded lazily per language through
    `i18next-resources-to-backend` over dynamic imports of the same TS
    resource modules (single source, per-locale chunks, no JSON
-   duplication); islands await the shared instance before rendering.
+   duplication); islands wrap their content in `I18nGate`
+   (`src/components/ui/I18nGate.svelte`) — one `{#await}` of the shared
+   instance per island, strings accessed inline as `t(...)` inside the
+   gated snippet — and a `before-hydration` integration script
+   (`integrations/i18n-preload.ts`) pre-loads the page locale so
+   hydration matches the server-rendered HTML without a key flash.
    Locale switching is a page navigation, so no reactive language store is
    needed (`svelte-i18next` is stale since 2023-10 and rejected). Islands
    must import the client module only via `@/lib/i18next-client` — module

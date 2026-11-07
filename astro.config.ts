@@ -12,6 +12,7 @@ import pagefind from "astro-pagefind";
 import { unified } from "@astrojs/markdown-remark";
 import { remarkAssetImages } from "./src/lib/assets/remarkAssetImages";
 import { devProxy } from "./integrations/dev-proxy";
+import { i18nPreload } from "./integrations/i18n-preload";
 import { vendureDashboard } from "./integrations/vendure-dashboard";
 import { previewApiUrl } from "./src/lib/preview-url";
 import { defaultLocale, locales } from "./src/lib/i18n";
@@ -60,6 +61,8 @@ export default defineConfig({
   prefetch: true,
   integrations: [
     devProxy(),
+    // Preloads the page locale's i18next resources before island hydration.
+    i18nPreload(),
     // Builds the vendure dashboard into dist/dashboard on every build.
     vendureDashboard(),
     // Catalog pages are on demand, so the integration cannot see their urls.
