@@ -38,7 +38,11 @@ describe("frontDoorRedirect", () => {
     { pathname: "/en/", preferred: "hu", expected: undefined },
     { pathname: "/en/", preferred: "en", expected: undefined },
     { pathname: "/blog/first-post/", preferred: "en", expected: undefined },
-  ] satisfies Array<{ pathname: string; preferred?: Locale; expected?: Locale }>;
+  ] satisfies Array<{
+    pathname: string;
+    preferred?: Locale | undefined;
+    expected?: Locale | undefined;
+  }>;
 
   for (const { pathname, preferred, expected } of cases) {
     it(`${pathname} with preference ${preferred ?? "none"} → ${expected ?? "stay"}`, () => {
