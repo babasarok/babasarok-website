@@ -5,6 +5,10 @@ import CheckoutForm from "@/components/blocks/order/CheckoutForm.svelte";
 import { getMaterials, getProductGroups, getProducts, getThreadColors } from "@/lib/catalog";
 import { setMembersByGroup } from "@/lib/basket/setDiscounts";
 import { getEntry } from "astro:content";
+import { localeFromPathname } from "../lib/i18n";
+import { createI18n } from "../lib/i18next";
+const i18n = createI18n(localeFromPathname(Astro.url.pathname));
+const t = i18n.t.bind(i18n);
 
 export const prerender = false;
 
@@ -43,8 +47,8 @@ const labels = {
 };
 ---
 
-<Base title="Pénztár">
-  <PageHeader title="Pénztár" breadcrumb="Pénztár" no-shapes />
+<Base title={t("checkout.title")}>
+  <PageHeader title={t("checkout.title")} breadcrumb={t("checkout.title")} no-shapes />
 
   <section class="py-12.5">
     <div class="not-prose container">
