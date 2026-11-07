@@ -108,6 +108,10 @@ an option → the missing variants appear; no manual variant work anywhere.
    parents, members via the `product-id-filter`, the set discount as a
    Collection custom field — the canonical group schemas stay the seed's
    content validation and the shape yardstick.
+   _(Group home superseded by ADR 0014: discounted sets are now one Promotion
+   per set — members and the Ft amount in the promotion's args; the
+   "Szettek" parent retires and related-items groups stay collections under
+   "Kapcsolódó termékek".)_
 7. Seed/import direction stays one-way Tina → Vendure, temporary and
    preview-only (ADR 0009); prod is hand-migrated at cutover.
 8. **Tina never stores product information — at no point in the roadmap.** No
