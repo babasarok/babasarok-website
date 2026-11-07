@@ -46,13 +46,28 @@ non-catalog Tina content, buyer-visible server messages, and order emails.
    island in this epic; its `/_server-islands/*` route rule leaves with it.
    No new `server:defer` may be added.
 
-3. **Dictionaries at build time.** `src/locales/{hu,en}.ts`, with the
-   English dictionary typed against the Hungarian one so a missing key
-   fails `astro check`, not a visitor. Astro components pick the dict by
-   locale in frontmatter; Svelte islands receive their strings as props —
-   no dictionary code ships to the browser, and the two locales never
-   bundle together. Vendure `ErrorCode` → message maps live in the same
-   dictionaries, keyed by the stable error codes the server returns.
+3. **i18next core at build time, no framework integration.** `src/locales/
+{hu,en}.ts` are `as const` TS modules (JSON cannot carry the literal
+   types the key checking needs). Every `t()` is typed via the
+   `CustomTypeOptions` augmentation from the Hungarian source of truth, so
+   an unknown key — or an interpolation variable missing from the string —
+   fails `astro check`, not a visitor; `en` additionally `satisfies` a
+   recursive key-shape of `hu`, so English cannot silently drop a Hungarian
+   key. Strings resolve through a per-render `createInstance` (a shared
+   mutable instance is racy under concurrent on-demand requests) in Astro
+   frontmatter; Svelte islands receive their strings as props — no
+   dictionary or i18next code ships to the browser, and the two locales
+   never bundle together. Vendure `ErrorCode` → message maps live in the
+   same resources, keyed by the stable error codes the server returns.
+   Community Astro integrations were rejected with evidence:
+   `astro-i18next` (beta, last publish 2023-03) and
+   `@gutenye/astro-i18next` (alive, but it imposes its own
+   `getStaticPaths`-based `[...locale]` routing that conflicts with
+   Astro-native i18n and the on-demand catalog routes, and its JSON-file
+   pattern forfeits the type safety). Key hygiene is the official
+   i18next-cli (key extraction, locale syncing, linting). i18next is
+   already the shop backend's translation framework (Vendure), so one
+   library spans both seams.
 
 4. **Tina content: directory-based localization.** Per the official Tina
    i18n guide (directory-based is recommended for markdown bodies), locale
@@ -145,3 +160,7 @@ owner review before `/en/` publish.
   https://tina.io/docs/guides/internationalization
 - Google hreflang requirements:
   https://developers.google.com/search/docs/advanced/crawling/localized-versions
+- i18next TypeScript (CustomTypeOptions, interpolation checks):
+  https://www.i18next.com/overview/typescript
+- i18next supported frameworks (Astro integrations, official CLI):
+  https://www.i18next.com/overview/supported-frameworks

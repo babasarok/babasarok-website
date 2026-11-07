@@ -266,6 +266,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      i18next:
+        specifier: 26.5.10
+        version: 26.5.10(typescript@6.0.3)
       marked:
         specifier: ^16.4.2
         version: 16.4.2
@@ -7319,6 +7322,7 @@ packages:
   image-size@0.5.5:
     resolution: {integrity: sha512-6TDAlDPZxUFCv+fuOkIoXT/V/f3Qbq8e37p+YOiYrUv3v9cc3/6x78VdfPgFVaB9dZYeLUfKgHRebpkm/oP2VQ==}
     engines: {node: '>=0.10.0'}
+    deprecated: Please migrate to image-size@2.x
     hasBin: true
 
   image-size@2.0.4:
@@ -20180,6 +20184,10 @@ snapshots:
   i18next@26.5.10(typescript@5.9.3):
     optionalDependencies:
       typescript: 5.9.3
+
+  i18next@26.5.10(typescript@6.0.3):
+    optionalDependencies:
+      typescript: 6.0.3
 
   iconv-lite@0.4.24:
     dependencies:
