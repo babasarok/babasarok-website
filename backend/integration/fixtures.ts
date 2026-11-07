@@ -1,8 +1,8 @@
 /**
  * The shared fixture catalog, created through the admin API the way the owner
  * does: materials, generated products (one per field kind that matters for
- * line identity and quantity), the product groups as collections under the
- * "Szettek" / "Kapcsolódó termékek" parents, and the set promotion.
+ * line identity and quantity), the discounted sets as promotions (ADR 0014)
+ * and the related group as a private top-level collection.
  *
  * Prices (gross Ft): parna 5 000 (+800 szegély, +1 000 nagy), takaro 8 000,
  * feszek 12 000, szalag 2 000 per metre, kendo 400, with materials priced
@@ -140,7 +140,9 @@ const PRODUCTS = [
 
 export type ProductId = (typeof PRODUCTS)[number]["definition"]["id"];
 
-export const SET_PROMOTION_NAME = "Szett kedvezmény";
+/** The discounted sets: one Promotion per group, members and amount in its
+ * args (ADR 0014). The related group stays a collection. */
+export const SET_GROUP_NAMES = ["Alap szett", "Duó szett", "Olcsó szett"] as const;
 
 const GROUPS = [
   {
@@ -152,7 +154,7 @@ const GROUPS = [
   {
     slug: "int-duo-szett",
     name: "Duó szett",
-    members: ["int-parna", "int-feszek"],
+    members: ["int-feszek", "int-elavulo"],
     discount: 3000,
   },
   {
@@ -247,13 +249,7 @@ async function createProducts(server: IntegrationServer): Promise<Map<ProductId,
 
 async function createCollection(
   server: IntegrationServer,
-  input: {
-    slug: string;
-    name: string;
-    parentId: string | null;
-    nativeIds: number[];
-    setDiscount: number | null;
-  }
+  input: { slug: string; name: string; parentId: string | null; nativeIds: number[] }
 ): Promise<string> {
   const result = await run(
     server.admin,
@@ -262,17 +258,21 @@ async function createCollection(
       input: {
         isPrivate: true,
         parentId: input.parentId,
-        filters: [
-          {
-            code: "product-id-filter",
-            arguments: [
-              { name: "productIds", value: JSON.stringify(input.nativeIds) },
-              { name: "combineWithAnd", value: JSON.stringify(true) },
-            ],
-          },
-        ],
+        // A parent holds no members; an empty product-id-filter would poison
+        // its children through inherited filters (contents compute to zero).
+        filters:
+          input.nativeIds.length === 0
+            ? []
+            : [
+                {
+                  code: "product-id-filter",
+                  arguments: [
+                    { name: "productIds", value: JSON.stringify(input.nativeIds) },
+                    { name: "combineWithAnd", value: JSON.stringify(true) },
+                  ],
+                },
+              ],
         translations: [{ languageCode: "hu", name: input.name, slug: input.slug, description: "" }],
-        customFields: { setDiscount: input.setDiscount },
       },
     },
     z.object({ createCollection: IdSchema })
@@ -285,41 +285,38 @@ async function createGroups(
   server: IntegrationServer,
   nativeIds: ReadonlyMap<ProductId, number>
 ): Promise<void> {
-  const setParent = await createCollection(server, {
-    slug: "szettek",
-    name: "Szettek",
-    parentId: null,
-    nativeIds: [],
-    setDiscount: null,
-  });
-  const relatedParent = await createCollection(server, {
-    slug: "kapcsolodo-termekek",
-    name: "Kapcsolódó termékek",
-    parentId: null,
-    nativeIds: [],
-    setDiscount: null,
-  });
-
   for (const group of GROUPS) {
-    await createCollection(server, {
-      slug: group.slug,
-      name: group.name,
-      parentId: group.discount === null ? relatedParent : setParent,
-      nativeIds: group.members.map((member) => {
-        const nativeId = nativeIds.get(member);
+    const nativeIdList = group.members.map((member) => {
+      const nativeId = nativeIds.get(member);
 
-        if (nativeId === undefined) {
-          throw new Error(`${member} has no native product.`);
-        }
+      if (nativeId === undefined) {
+        throw new Error(`${member} has no native product.`);
+      }
 
-        return nativeId;
-      }),
-      setDiscount: group.discount,
+      return nativeId;
     });
+
+    if (group.discount === null) {
+      await createCollection(server, {
+        slug: group.slug,
+        name: group.name,
+        parentId: null,
+        nativeIds: nativeIdList,
+      });
+
+      continue;
+    }
+
+    await createPromotion(server, group.name, nativeIdList, group.discount);
   }
 }
 
-async function createSetPromotion(server: IntegrationServer): Promise<void> {
+async function createPromotion(
+  server: IntegrationServer,
+  name: string,
+  nativeIds: number[],
+  discount: number
+): Promise<void> {
   const result = await run(
     server.admin,
     `mutation($input: CreatePromotionInput!) {
@@ -328,16 +325,26 @@ async function createSetPromotion(server: IntegrationServer): Promise<void> {
     {
       input: {
         enabled: true,
-        conditions: [{ code: "babasarok-product-set-basket", arguments: [] }],
-        actions: [{ code: "babasarok-product-set-discount", arguments: [] }],
-        translations: [{ languageCode: "hu", name: SET_PROMOTION_NAME }],
+        conditions: [
+          {
+            code: "babasarok-product-set-members",
+            arguments: [{ name: "productIds", value: JSON.stringify(nativeIds) }],
+          },
+        ],
+        actions: [
+          {
+            code: "babasarok-product-set-discount",
+            arguments: [{ name: "amount", value: String(discount) }],
+          },
+        ],
+        translations: [{ languageCode: "hu", name }],
       },
     },
     z.object({ createPromotion: z.object({ __typename: z.string() }) })
   );
 
   if (result.createPromotion.__typename !== "Promotion") {
-    throw new Error("The set promotion was not created.");
+    throw new Error(`The set promotion "${name}" was not created.`);
   }
 }
 
@@ -351,7 +358,6 @@ export async function seedCatalog(server: IntegrationServer): Promise<Catalog> {
   const nativeIds = await createProducts(server);
 
   await createGroups(server, nativeIds);
-  await createSetPromotion(server);
 
   return { nativeIds };
 }

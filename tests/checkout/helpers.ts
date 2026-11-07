@@ -222,40 +222,6 @@ async function nativeProductId(productId: string): Promise<number> {
   throw new Error(`A(z) ${productId} nem szinkronizálódott.`);
 }
 
-async function createCollection(input: Record<string, unknown>): Promise<string> {
-  const result = await gql(
-    `mutation($input: CreateCollectionInput!) { createCollection(input: $input) { id } }`,
-    { input },
-    z.object({ createCollection: z.object({ id: z.string() }) })
-  );
-
-  return result.createCollection.id;
-}
-
-function collectionInput(
-  name: string,
-  slug: string,
-  parentId: string | null,
-  productIds: number[],
-  setDiscount: number | null
-): Record<string, unknown> {
-  return {
-    isPrivate: true,
-    parentId,
-    filters: [
-      {
-        code: "product-id-filter",
-        arguments: [
-          { name: "productIds", value: JSON.stringify(productIds) },
-          { name: "combineWithAnd", value: JSON.stringify(true) },
-        ],
-      },
-    ],
-    translations: [{ languageCode: "hu", name, slug, description: "" }],
-    customFields: { setDiscount },
-  };
-}
-
 export const SET_TITLE = "E2E Szett";
 const SET_DISCOUNT = 1000;
 
@@ -283,17 +249,27 @@ export async function createSet(): Promise<void> {
 
   const fej = await nativeProductId("e2e-szett-fej");
   const lab = await nativeProductId("e2e-szett-lab");
-  const parent = await createCollection(collectionInput("Szettek", "szettek", null, [], null));
 
-  await createCollection(collectionInput(SET_TITLE, "e2e-szett", parent, [fej, lab], SET_DISCOUNT));
+  // A set is one promotion: members on the condition, the flat Ft amount on
+  // the action, the Hungarian name as the set label (ADR 0014).
   await gql(
     `mutation($input: CreatePromotionInput!) { createPromotion(input: $input) { __typename } }`,
     {
       input: {
         enabled: true,
-        conditions: [{ code: "babasarok-product-set-basket", arguments: [] }],
-        actions: [{ code: "babasarok-product-set-discount", arguments: [] }],
-        translations: [{ languageCode: "hu", name: "Szett kedvezmény" }],
+        conditions: [
+          {
+            code: "babasarok-product-set-members",
+            arguments: [{ name: "productIds", value: JSON.stringify([fej, lab]) }],
+          },
+        ],
+        actions: [
+          {
+            code: "babasarok-product-set-discount",
+            arguments: [{ name: "amount", value: String(SET_DISCOUNT) }],
+          },
+        ],
+        translations: [{ languageCode: "hu", name: SET_TITLE }],
       },
     },
     z.unknown()

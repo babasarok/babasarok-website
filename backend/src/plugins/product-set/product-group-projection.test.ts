@@ -7,7 +7,7 @@ const ids = new Map([
   [3, "gamma"],
 ]);
 
-function group(productIds: number[], setDiscount: number | null): ProductGroupCollection {
+function group(productIds: number[]): ProductGroupCollection {
   return {
     slug: "g",
     name: "Csoport",
@@ -17,23 +17,17 @@ function group(productIds: number[], setDiscount: number | null): ProductGroupCo
         args: [{ name: "productIds", value: JSON.stringify(productIds.map(String)) }],
       },
     ],
-    setDiscount,
   };
 }
 
-describe("projectGroups", () => {
-  it("maps native member ids to definition ids and keeps the set discount", () => {
-    expect(projectGroups("set", [group([1, 2], 500)], ids)).toEqual([
-      { id: "g", kind: "set", label: "Csoport", discount: 500, productIds: ["alpha", "beta"] },
+describe("projectGroups (related collections)", () => {
+  it("maps native member ids to definition ids as a related group", () => {
+    expect(projectGroups([group([1, 2])], ids)).toEqual([
+      { id: "g", kind: "related", label: "Csoport", discount: null, productIds: ["alpha", "beta"] },
     ]);
   });
 
   it("drops groups with fewer than two known members", () => {
-    expect(projectGroups("related", [group([1, 99], null)], ids)).toEqual([]);
-  });
-
-  it("drops sets without a positive discount but keeps related groups", () => {
-    expect(projectGroups("set", [group([1, 2], null), group([1, 2], 0)], ids)).toEqual([]);
-    expect(projectGroups("related", [group([1, 3], 700)], ids)[0]?.discount).toBeNull();
+    expect(projectGroups([group([1, 99])], ids)).toEqual([]);
   });
 });

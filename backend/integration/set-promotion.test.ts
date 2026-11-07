@@ -1,5 +1,5 @@
 /**
- * Seam 1: our set promotion (condition + action) inside Vendure's order
+ * Seam 1: our per-set promotions (condition + action) inside Vendure's order
  * calculator, driven through the shop API's active order.
  *
  * What only this level sees: real order-line ids and quantities as Vendure
@@ -8,11 +8,14 @@
  * our action, and its interplay with the native free-shipping promotion.
  * The allocation rules are unit-tested in set-allocation.test.ts; the cases
  * here are the ones where line identity and quantity decide the outcome.
+ * The fixture sets are disjoint (ADR 0014): a product is at most one set's
+ * member, so each set allocates independently.
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { SET_PROMOTION_NAME, seedCatalog } from "./fixtures";
-import { startServer, type IntegrationServer } from "./harness";
-import { feszek, kendo, parna, szalag, takaro } from "./lines";
+import { z } from "zod";
+import { run, startServer, type IntegrationServer } from "./harness";
+import { SET_GROUP_NAMES, seedCatalog, type Catalog } from "./fixtures";
+import { elavulo, feszek, kendo, parna, szalag, takaro } from "./lines";
 import { addLine, adjustLine, chooseShipping, newShopper, removeLine, type Order } from "./shop";
 
 const PAMUT = { material: "int-pamut" } as const;
@@ -20,10 +23,11 @@ const VASZON = { material: "int-vaszon" } as const;
 const LEN = { material: "int-len" } as const;
 
 let server: IntegrationServer;
+let catalog: Catalog;
 
 beforeAll(async () => {
   server = await startServer();
-  await seedCatalog(server);
+  catalog = await seedCatalog(server);
 });
 
 afterAll(async () => {
@@ -31,9 +35,9 @@ afterAll(async () => {
 });
 
 function setDiscount(order: Order): number {
-  const discount = order.discounts.find((entry) => entry.description === SET_PROMOTION_NAME);
-
-  return discount === undefined ? 0 : -discount.amountWithTax;
+  return order.discounts
+    .filter((entry) => (SET_GROUP_NAMES as readonly string[]).includes(entry.description))
+    .reduce((sum, entry) => sum - entry.amountWithTax, 0);
 }
 
 function lineWith(order: Order, skuPart: string): Order["lines"][number] {
@@ -46,7 +50,7 @@ function lineWith(order: Order, skuPart: string): Order["lines"][number] {
   return line;
 }
 
-describe("the set promotion in Vendure's order calculator", () => {
+describe("the set promotions in Vendure's order calculator", () => {
   it("re-allocates on adjust and remove when one product sits on several lines", async () => {
     const shopper = newShopper(server);
 
@@ -115,20 +119,6 @@ describe("the set promotion in Vendure's order calculator", () => {
     expect(setDiscount(order)).toBe(0);
   });
 
-  it("gives each unit to the biggest set first across overlapping sets", async () => {
-    const shopper = newShopper(server);
-
-    await addLine(shopper, parna(PAMUT));
-    await addLine(shopper, takaro(PAMUT));
-
-    let order = await addLine(shopper, feszek(PAMUT, PAMUT));
-
-    expect(setDiscount(order)).toBe(3000);
-
-    order = await addLine(shopper, parna(PAMUT, { quantity: 1, meret: "nagy" }));
-    expect(setDiscount(order)).toBe(4500);
-  });
-
   it("clamps a set's amount to the covered units' charged subtotal", async () => {
     const shopper = newShopper(server);
 
@@ -144,17 +134,17 @@ describe("the set promotion in Vendure's order calculator", () => {
   it("pairs when the smaller material selection is a subset, not otherwise", async () => {
     const subset = newShopper(server);
 
-    await addLine(subset, parna(PAMUT));
+    await addLine(subset, elavulo(PAMUT));
     expect(setDiscount(await addLine(subset, feszek(PAMUT, VASZON)))).toBe(3000);
 
     const disjoint = newShopper(server);
 
-    await addLine(disjoint, parna(LEN));
+    await addLine(disjoint, elavulo(LEN));
     expect(setDiscount(await addLine(disjoint, feszek(PAMUT, VASZON)))).toBe(0);
 
     const otherColor = newShopper(server);
 
-    await addLine(otherColor, parna({ material: "int-pamut", color: "kek" }));
+    await addLine(otherColor, elavulo({ material: "int-pamut", color: "kek" }));
     expect(setDiscount(await addLine(otherColor, feszek(PAMUT, PAMUT)))).toBe(0);
   });
 
@@ -167,16 +157,49 @@ describe("the set promotion in Vendure's order calculator", () => {
 
     let order = await chooseShipping(belowAfterDiscount, "gls-elore-utalas");
 
-    expect(order.subTotalWithTax).toBe(61_000 - 3000);
+    expect(order.subTotalWithTax).toBe(61_000 - 1500);
     expect(order.shippingWithTax).toBe(2500);
 
     const aboveAfterDiscount = newShopper(server);
 
     await addLine(aboveAfterDiscount, feszek(PAMUT, PAMUT, 5));
     await addLine(aboveAfterDiscount, parna(PAMUT));
+    await addLine(aboveAfterDiscount, takaro(PAMUT));
     order = await chooseShipping(aboveAfterDiscount, "gls-elore-utalas");
 
-    expect(setDiscount(order)).toBe(3000);
+    expect(setDiscount(order)).toBe(1500);
     expect(order.shippingWithTax).toBe(0);
+  });
+
+  it("refuses a second promotion that lists the same product", async () => {
+    const parnaId = catalog.nativeIds.get("int-parna");
+
+    await expect(
+      run(
+        server.admin,
+        `mutation($input: CreatePromotionInput!) {
+          createPromotion(input: $input) { __typename ... on ErrorResult { message } }
+        }`,
+        {
+          input: {
+            enabled: true,
+            conditions: [
+              {
+                code: "babasarok-product-set-members",
+                arguments: [{ name: "productIds", value: JSON.stringify([parnaId]) }],
+              },
+            ],
+            actions: [
+              {
+                code: "babasarok-product-set-discount",
+                arguments: [{ name: "amount", value: "999" }],
+              },
+            ],
+            translations: [{ languageCode: "hu", name: "Átfedő szett" }],
+          },
+        },
+        z.unknown()
+      )
+    ).rejects.toThrow("szett-promóció már tartalmazza ezeket a termékeket");
   });
 });

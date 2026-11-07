@@ -1,10 +1,12 @@
-import { memberIds, type SetCollection } from "./set-basket";
+import { memberIds } from "./set-basket";
 
 export interface ProductGroupCollection {
   slug: string;
   name: string;
-  filters: SetCollection["filters"];
-  setDiscount: number | null;
+  filters: ReadonlyArray<{
+    code: string;
+    args: ReadonlyArray<{ name: string; value: string }>;
+  }>;
 }
 
 export interface ProductGroupProjection {
@@ -16,12 +18,10 @@ export interface ProductGroupProjection {
 }
 
 /**
- * The shop-visible projection of a group collection: member definition ids
- * only. Groups with fewer than two known members are dropped, as are sets
- * without a positive discount (they could never form a discounted instance).
+ * The shop-visible projection of a related-items collection: member definition
+ * ids only. Groups with fewer than two known members are dropped.
  */
 export function projectGroups(
-  kind: ProductGroupProjection["kind"],
   collections: readonly ProductGroupCollection[],
   productIdByNativeId: ReadonlyMap<number, string>
 ): ProductGroupProjection[] {
@@ -37,21 +37,16 @@ export function projectGroups(
         })
       ),
     ];
-    const discount = collection.setDiscount;
 
     if (productIds.length < 2) {
       continue;
     }
 
-    if (kind === "set" && (discount === null || discount <= 0)) {
-      continue;
-    }
-
     groups.push({
       id: collection.slug,
-      kind,
+      kind: "related",
       label: collection.name,
-      discount: kind === "set" ? discount : null,
+      discount: null,
       productIds,
     });
   }
