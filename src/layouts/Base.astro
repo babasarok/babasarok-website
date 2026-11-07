@@ -124,6 +124,7 @@ const themeColor = config.themeColor ?? "#F1D3B2";
     <Footer />
     <ConsentBanner
       gtmId={GTM_ID}
+      locale={localeFromPathname(Astro.url.pathname)}
       heading={cookieBannerHeading}
       text={cookieBannerText}
       categories={cookieCategories}

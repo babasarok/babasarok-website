@@ -3,13 +3,17 @@
   import { priceBreakdown } from "@/lib/order/priceBreakdown";
   import { liveUnitPrice } from "@/lib/catalog/livePrice";
   import type { IProduct } from "@/lib/types.svelte";
+  import type { i18n as I18n } from "i18next";
+  import I18nGate from "@/components/ui/I18nGate.svelte";
+  import type { Locale } from "@/lib/i18n";
 
   interface Props {
+    locale: Locale;
     product: IProduct;
     definition: ProductDefinition;
   }
 
-  const { product, definition }: Props = $props();
+  const { locale, product, definition }: Props = $props();
 
   const breakdown = $derived(priceBreakdown(product));
 
@@ -30,62 +34,70 @@
   });
 </script>
 
-<div class="flex flex-col gap-1.5">
-  <div class="w-full h-px bg-brown-200"></div>
-  {#if hasBreakdown}
-    <div class="flex flex-col gap-1 text-xs text-brown-600">
-      <div class="flex justify-between">
-        <p>Alapár</p>
-        <p>
-          {price.basePrice.price === undefined
-            ? "??"
-            : `${price.basePrice.price.toLocaleString("hu-HU")} Ft`}
+<I18nGate {locale}>
+  {#snippet children(i18n: I18n)}
+    <div class="flex flex-col gap-1.5">
+      <div class="w-full h-px bg-brown-200"></div>
+      {#if hasBreakdown}
+        <div class="flex flex-col gap-1 text-xs text-brown-600">
+          <div class="flex justify-between">
+            <p>{i18n.t("price.base")}</p>
+            <p>
+              {price.basePrice.price === undefined
+                ? "??"
+                : `${price.basePrice.price.toLocaleString("hu-HU")} Ft`}
+              {#if price.priced_by_length}
+                /m
+              {/if}
+            </p>
+          </div>
+
+          {#each activeOptions as opt (opt.label)}
+            <div class="flex justify-between">
+              <p>{opt.label}</p>
+              <p>+{opt.price?.toLocaleString("hu-HU")} Ft</p>
+            </div>
+          {/each}
+
           {#if price.priced_by_length}
-            /m
+            <div class="flex justify-between">
+              <p>{i18n.t("price.perMeter")}</p>
+              <p>
+                {price.per_meter_price === undefined
+                  ? "??"
+                  : `${price.per_meter_price.toLocaleString("hu-HU")} Ft/m`}
+              </p>
+            </div>
+          {/if}
+
+          {#if product.count > 1 && (activeOptions.length > 0 || price.priced_by_length)}
+            <div class="flex justify-between font-medium text-brown-700">
+              <p>{i18n.t("price.perUnit")}</p>
+              <p>
+                {price.unitPrice === undefined
+                  ? "??"
+                  : `${price.unitPrice.toLocaleString("hu-HU")} Ft`}
+              </p>
+            </div>
+          {/if}
+        </div>
+
+        <div class="w-full h-px bg-brown-200"></div>
+      {/if}
+
+      <div class="flex justify-between items-baseline pt-0.5">
+        <p class="text-sm font-medium">
+          {i18n.t("price.total")}
+          {#if product.count > 1}
+            <span class="text-xs font-normal text-brown-500"
+              >({product.count} {i18n.t("common.piece")})</span
+            >
           {/if}
         </p>
+        <p class="text-base font-semibold text-brown-800">
+          {price.totalPrice === undefined ? "--" : `${price.totalPrice.toLocaleString("hu-HU")} Ft`}
+        </p>
       </div>
-
-      {#each activeOptions as opt (opt.label)}
-        <div class="flex justify-between">
-          <p>{opt.label}</p>
-          <p>+{opt.price?.toLocaleString("hu-HU")} Ft</p>
-        </div>
-      {/each}
-
-      {#if price.priced_by_length}
-        <div class="flex justify-between">
-          <p>Méterár</p>
-          <p>
-            {price.per_meter_price === undefined
-              ? "??"
-              : `${price.per_meter_price.toLocaleString("hu-HU")} Ft/m`}
-          </p>
-        </div>
-      {/if}
-
-      {#if product.count > 1 && (activeOptions.length > 0 || price.priced_by_length)}
-        <div class="flex justify-between font-medium text-brown-700">
-          <p>Egységár</p>
-          <p>
-            {price.unitPrice === undefined ? "??" : `${price.unitPrice.toLocaleString("hu-HU")} Ft`}
-          </p>
-        </div>
-      {/if}
     </div>
-
-    <div class="w-full h-px bg-brown-200"></div>
-  {/if}
-
-  <div class="flex justify-between items-baseline pt-0.5">
-    <p class="text-sm font-medium">
-      Összesen
-      {#if product.count > 1}
-        <span class="text-xs font-normal text-brown-500">({product.count} db)</span>
-      {/if}
-    </p>
-    <p class="text-base font-semibold text-brown-800">
-      {price.totalPrice === undefined ? "--" : `${price.totalPrice.toLocaleString("hu-HU")} Ft`}
-    </p>
-  </div>
-</div>
+  {/snippet}
+</I18nGate>

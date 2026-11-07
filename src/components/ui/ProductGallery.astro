@@ -19,6 +19,11 @@ interface Props {
 }
 
 const { id, images } = Astro.props;
+import { localeFromPathname } from "../../lib/i18n";
+import { createI18n } from "../../lib/i18next";
+
+const i18n = createI18n(localeFromPathname(Astro.url.pathname));
+const t = i18n.t.bind(i18n);
 
 const presets = ["hero-sm", "hero-md", "hero-lg"] as const;
 const sizes = "(min-width: 992px) 940px, 90vw";
@@ -91,14 +96,14 @@ for (const i of images.keys()) {
                 <label
                   class="bg-accent grid size-9 cursor-pointer place-items-center rounded-full text-white transition-transform hover:scale-105 active:scale-95 sm:size-10.5"
                   for={`${id}-i-${prev}`}
-                  aria-label="Előző kép"
+                  aria-label={t("common.previousImage")}
                 >
                   <Icon name="tabler:chevron-left" class="block text-xl" />
                 </label>
                 <label
                   class="bg-accent grid size-9 cursor-pointer place-items-center rounded-full text-white transition-transform hover:scale-105 active:scale-95 sm:size-10.5"
                   for={`${id}-i-${next}`}
-                  aria-label="Következő kép"
+                  aria-label={t("common.nextImage")}
                 >
                   <Icon name="tabler:chevron-right" class="block text-xl" />
                 </label>

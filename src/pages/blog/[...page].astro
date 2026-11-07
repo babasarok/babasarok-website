@@ -2,6 +2,11 @@
 import type { GetStaticPaths } from "astro";
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
+import { localeFromPathname } from "../../lib/i18n";
+import { createI18n } from "../../lib/i18next";
+
+const i18n = createI18n(localeFromPathname(Astro.url.pathname));
+const t = i18n.t.bind(i18n);
 import PageHeader from "../../components/ui/PageHeader.astro";
 import BlogCard from "../../components/ui/BlogCard.astro";
 import Pagination from "../../components/ui/Pagination.astro";
@@ -31,8 +36,8 @@ export const getStaticPaths = (async () => {
 const { items, currentPage, lastPage } = Astro.props;
 ---
 
-<Base title="Referenciamunkák">
-  <PageHeader title="Referenciamunkák" />
+<Base title={t("pages.blog")}>
+  <PageHeader title={t("pages.blog")} />
   <section class="py-25">
     <div class="container">
       <div class="flex flex-wrap">

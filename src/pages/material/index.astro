@@ -3,14 +3,19 @@ import Base from "../../layouts/Base.astro";
 import PageHeader from "../../components/ui/PageHeader.astro";
 import ProductCard from "../../components/ui/ProductCard.astro";
 import { getMaterials } from "@/lib/catalog";
+import { localeFromPathname } from "../../lib/i18n";
+import { createI18n } from "../../lib/i18next";
+
+const i18n = createI18n(localeFromPathname(Astro.url.pathname));
+const t = i18n.t.bind(i18n);
 
 export const prerender = false;
 
 const materials = (await getMaterials()).toSorted((a, b) => a.label.localeCompare(b.label, "hu"));
 ---
 
-<Base title="Anyagok">
-  <PageHeader title="Anyagok" />
+<Base title={t("pages.materials")}>
+  <PageHeader title={t("pages.materials")} />
   <section class="py-25">
     <div class="container">
       <div class="flex flex-wrap justify-center gap-8 gap-y-12 sm:gap-y-8">

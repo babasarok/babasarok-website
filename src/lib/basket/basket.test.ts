@@ -339,7 +339,7 @@ describe("createBasketApi", () => {
     return { api, fetchMock, token: () => token };
   }
 
-  it("translates the vendure defaults buyers can hit into Hungarian", async () => {
+  it("maps the vendure defaults buyers can hit to a locale dictionary key", async () => {
     const { api } = apiWith({
       data: {
         setCustomerForOrder: {
@@ -359,8 +359,7 @@ describe("createBasketApi", () => {
     expect(result).toMatchObject({
       ok: false,
       failure: {
-        reason:
-          "Ez az email cím már regisztrált fiókhoz tartozik. Kérlek, adj meg egy másik email címet.",
+        reason: "errorCodes.EMAIL_ADDRESS_CONFLICT_ERROR",
       },
     });
   });

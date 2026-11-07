@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import type { i18n as I18n } from "i18next";
-  import type { i18n as I18n } from "i18next";
   import type { Locale } from "@/lib/i18n";
   import { getClientI18n } from "@/lib/i18next-client";
 

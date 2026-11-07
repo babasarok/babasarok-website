@@ -3,6 +3,11 @@ import { getCollection, render } from "astro:content";
 import { Image } from "astro:assets";
 import { Icon } from "astro-icon/components";
 import Base from "../layouts/Base.astro";
+import { localeFromPathname } from "../lib/i18n";
+import { createI18n } from "../lib/i18next";
+
+const i18n = createI18n(localeFromPathname(Astro.url.pathname));
+const t = i18n.t.bind(i18n);
 import PageHeader from "../components/ui/PageHeader.astro";
 import Button from "../components/ui/Button.astro";
 import { getConfig } from "../lib/config";
@@ -46,7 +51,7 @@ const social = [...(config.social ?? [])]
 
   <section class="py-12.5 sm:py-25">
     <div class="container">
-      <h3 class="text-h3 text-headings mb-10">Elérhetőségek</h3>
+      <h3 class="text-h3 text-headings mb-10">{t("pages.contactHeading")}</h3>
       <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div class="h-full w-full flex-1 lg:w-auto">
           <div
@@ -59,7 +64,7 @@ const social = [...(config.social ?? [])]
                 class="absolute bottom-0 left-0 z-1 h-3/5 w-3/5"
               />
             </div>
-            <h4 class="text-h4 text-headings mb-6">Cím</h4>
+            <h4 class="text-h4 text-headings mb-6">{t("pages.addressHeading")}</h4>
             <p class="mb-0 text-sm">{address?.address}</p>
           </div>
         </div>
@@ -126,7 +131,7 @@ const social = [...(config.social ?? [])]
                 class="absolute bottom-0 left-0 z-1 h-3/5 w-3/5"
               />
             </div>
-            <h4 class="text-h4 text-headings mb-6">Közösségi Média</h4>
+            <h4 class="text-h4 text-headings mb-6">{t("pages.socialHeading")}</h4>
             <ul class="m-0 flex list-none gap-4 p-0 text-sm">
               {
                 social.map((s) => (
