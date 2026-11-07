@@ -1,5 +1,15 @@
 import gql from "graphql-tag";
-import { Allow, Ctx, Permission, Product, RequestContext, UserInputError } from "@vendure/core";
+import {
+  Allow,
+  Ctx,
+  Permission,
+  Product,
+  ProductService,
+  ProductVariant,
+  ProductVariantService,
+  RequestContext,
+  UserInputError,
+} from "@vendure/core";
 import type { ID } from "@vendure/core";
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { ProductDefinition } from "./product.entity";
@@ -39,7 +49,6 @@ export interface ProductDefinitionGraph {
   id: ID;
   productId: string;
   label: string;
-  orderable: boolean;
   basePrice: number;
   nativeProductId: number | null;
   definition: unknown;
@@ -65,7 +74,6 @@ function toGraph(
     id: row.id,
     productId: row.productId,
     label: row.label,
-    orderable: row.definition.orderable,
     basePrice: row.definition.basePrice,
     nativeProductId: row.nativeProductId,
     definition: row.definition,
@@ -221,7 +229,86 @@ export class ShopProductFieldResolver {
   }
 }
 
+interface ShopVariantOptionGraph {
+  code: string;
+  group: string;
+}
+
+/** The site-facing variant matrix entry: the variant id and its option axes. */
+interface ShopVariantOptionsGraph {
+  id: string;
+  options: ShopVariantOptionGraph[];
+}
+
+@Resolver()
+export class ShopProductVariantsResolver {
+  constructor(
+    private productService: ProductService,
+    private productVariantService: ProductVariantService
+  ) {}
+
+  /**
+   * The product's full variant matrix. Vendure's own `Product.variants` field
+   * resolves with the shop list-query limit and takes no paging arguments, so
+   * a matrix larger than the limit is invisible to the shop API — the
+   * configurator needs every variant to match the buyer's configuration.
+   */
+  @Query()
+  @Allow(Permission.Public)
+  async productVariants(
+    @Ctx() ctx: RequestContext,
+    @Args("slug") slug: string
+  ): Promise<ShopVariantOptionsGraph[]> {
+    const product = await this.productService.findOneBySlug(ctx, slug, []);
+
+    if (product === undefined || !product.enabled) {
+      return [];
+    }
+
+    const variants: ProductVariant[] = [];
+    let totalItems = Number.POSITIVE_INFINITY;
+
+    while (variants.length < totalItems) {
+      const page = await this.productVariantService.getVariantsByProductId(
+        ctx,
+        Number(product.id),
+        { skip: variants.length },
+        ["options", "options.group"]
+      );
+
+      variants.push(...page.items);
+      totalItems = page.totalItems;
+
+      if (page.items.length === 0) {
+        break;
+      }
+    }
+
+    return variants.map((variant) => ({
+      id: String(variant.id),
+      options: variant.options.map((option) => ({
+        code: option.code,
+        group: option.group.code,
+      })),
+    }));
+  }
+}
+
 export const shopProductSchema = gql`
+  type ShopVariantOption {
+    code: String!
+    group: String!
+  }
+
+  type ShopVariantOptions {
+    id: ID!
+    options: [ShopVariantOption!]!
+  }
+
+  extend type Query {
+    productVariants(slug: String!): [ShopVariantOptions!]!
+  }
+
   extend type Product {
     productDefinition: JSON
   }
@@ -247,7 +334,6 @@ export const productDefinitionSchema = gql`
     id: ID!
     productId: String!
     label: String!
-    orderable: Boolean!
     basePrice: Int!
     nativeProductId: Int
     definition: JSON!

@@ -32,7 +32,6 @@ import {
 
 const DRIFT_FIXTURE = {
   id: "e2e-d1",
-  orderable: true,
   basePrice: 15_000,
   pricing: { kind: "unit" },
   fields: [

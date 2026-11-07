@@ -11,7 +11,6 @@ import {
 
 const definition = ProductDefinitionSchema.parse({
   id: "parna",
-  orderable: true,
   basePrice: 9000,
   pricing: { kind: "unit" },
   forbiddenMaterialCombinations: [],
@@ -83,13 +82,16 @@ describe("selectionsRejection", () => {
     expect(reject({ nev: { kind: "custom", value: "a" } })).toContain("fajtájának");
   });
 
-  it("rejects unknown and duplicate material colours", () => {
+  it("rejects a foreign material colour and accepts a repeated one", () => {
     const pick = (colors: string[]): LineSelections => ({
       anyag: { kind: "material", materialId: "len", colors },
     });
 
     expect(reject(pick(["piros", "zold"]))).toContain("nem kínált színt");
-    expect(reject(pick(["piros", "piros"]))).toContain("többször");
+    // The same colour twice is a legitimate pick (e.g. Teddy/Velúr items use
+    // one colour for two parts); only a colour the material does not offer is
+    // rejected.
+    expect(reject(pick(["piros", "piros"]))).toBeUndefined();
   });
 
   it("rejects an unknown option and a custom value breaking the pattern", () => {

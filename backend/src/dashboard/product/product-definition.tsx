@@ -1,14 +1,15 @@
 /**
  * Dashboard extension for the ProductPlugin: creation of configurator products
- * via the `/product-definitions/new` route (opened from the stock products
- * list's action bar) and a configurator block embedded on the stock
+ * on the stock `/products/new` page (a Konfigurátor toggle in the unified save
+ * action-bar item reveals the configurator blocks; the unified Létrehozás
+ * button drives the create), and a configurator block embedded on the stock
  * product-detail page for products generated from a definition (ADR 0010
  * decision 3) — that block is the editor home and hosts delete.
  *
  * The editor itself lives in product-definition-configurator.tsx (with its
  * per-field editors in product-definition-fields.tsx and the pure editor
  * logic in product-definition-editor.ts). This entry file keeps only the
- * registration, the create route and page, the page query extension that
+ * registration, the create-page block, the page query extension that
  * carries the generated flag, and the stock blocks hidden on generated
  * products.
  *
@@ -16,18 +17,19 @@
  * time the dashboard's vite pipeline bundles this file.
  */
 import type { ReactElement } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import {
-  Button,
-  defineDashboardExtension,
-  NEW_ENTITY_PATH,
-  Page,
-  PageTitle,
-} from "@vendure/dashboard";
+import { useEffect } from "react";
+import { Link } from "@tanstack/react-router";
+import { defineDashboardExtension, NEW_ENTITY_PATH } from "@vendure/dashboard";
 import type { PageContextValue } from "@vendure/dashboard";
+import { Switch } from "@/vdb/components/ui/switch.js";
 import { z } from "zod";
 import { ConfiguratorEditor } from "./product-definition-configurator";
 import { ProductSaveActionBarItem } from "./product-save-action-bar-item";
+import {
+  resetConfiguratorCreate,
+  setConfiguratorCreate,
+  useConfiguratorCreate,
+} from "./product-definition-create-store";
 
 import "../shared-markdown-editor/markdown-editor-extension";
 
@@ -39,12 +41,6 @@ z.config(z.locales.hu());
 // Extensions load for side effects only (the dashboard's virtual module
 // dynamic-imports this file); the registration call must run on import.
 defineDashboardExtension({
-  routes: [
-    {
-      path: "/product-definitions/new",
-      component: () => <NewProductDefinitionPage />,
-    },
-  ],
   detailForms: [
     {
       pageId: "product-detail",
@@ -63,14 +59,40 @@ defineDashboardExtension({
     },
   ],
   pageBlocks: [
+    // The configurator sits at the bottom of the main column on both the
+    // new-product page and the product page: the layout engine renders
+    // full-width blocks first, so bottom placement rules out column "full".
+    // The edit page anchors after whichever of the two mutually exclusive
+    // stock variant blocks the product has.
     {
-      id: "product-definition-configurator",
+      id: "product-definition-create",
       title: "Konfigurátor",
-      description: "A strukturált termékmotor szerkesztője, a beépített termékoldalba ágyazva.",
       location: {
         pageId: "product-detail",
-        column: "full",
-        position: { blockId: "main-form", order: "after" },
+        column: "main",
+        position: { blockId: "custom-fields", order: "after" },
+      },
+      component: ProductDefinitionCreateBlock,
+      shouldRender: isCreatingEntity,
+    },
+    {
+      id: "product-definition-configurator-with-variants",
+      title: "Konfigurátor",
+      location: {
+        pageId: "product-detail",
+        column: "main",
+        position: { blockId: "product-variants-table", order: "after" },
+      },
+      component: ProductConfiguratorBlock,
+      shouldRender: isGeneratedProduct,
+    },
+    {
+      id: "product-definition-configurator-without-variants",
+      title: "Konfigurátor",
+      location: {
+        pageId: "product-detail",
+        column: "main",
+        position: { blockId: "generate-variants", order: "after" },
       },
       component: ProductConfiguratorBlock,
       shouldRender: isGeneratedProduct,
@@ -130,11 +152,6 @@ defineDashboardExtension({
       ),
       requiresPermission: ["UpdateProduct", "UpdateCatalog"],
     },
-    {
-      pageId: "product-list",
-      component: NewProductDefinitionActionBarItem,
-      requiresPermission: ["UpdateCatalog"],
-    },
   ],
 });
 
@@ -166,6 +183,13 @@ function isGeneratedProduct(context: PageContextValue): boolean {
   return definitionIdOf(context) !== null;
 }
 
+function isCreatingEntity(context: PageContextValue): boolean {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- PageContextValue.entity is typed `any` by the dashboard's own contract (page-provider.tsx); there is no typed alternative for extension blocks
+  const entityId: unknown = context.entity?.id;
+
+  return typeof entityId !== "string";
+}
+
 function definitionIdOf(context: PageContextValue): string | null {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- PageContextValue.entity is typed `any` by the dashboard's own contract (page-provider.tsx); there is no typed alternative for extension blocks
   const productId: unknown = context.entity?.productDefinition?.productId;
@@ -173,28 +197,45 @@ function definitionIdOf(context: PageContextValue): string | null {
   return typeof productId === "string" ? productId : null;
 }
 
-/** The stock products list's entry point for creating a configurator product. */
-function NewProductDefinitionActionBarItem(): ReactElement {
-  const navigate = useNavigate();
+/** The configurator card on the stock new-product page: the Konfigurátor
+ * switch lives here (an action-bar switch cannot make page blocks appear or
+ * disappear reactively), and the editor mounts below it when the toggle is
+ * on. The switch is a bare module store, so this block subscribes to it
+ * directly. */
+function ProductDefinitionCreateBlock({ context }: { context: PageContextValue }): ReactElement {
+  const createMode = useConfiguratorCreate();
+
+  useEffect(() => {
+    return () => {
+      resetConfiguratorCreate();
+    };
+  }, []);
 
   return (
-    <Button
-      type="button"
-      onClick={() => {
-        void navigate({ to: "/product-definitions/new" });
-      }}
-    >
-      Új konfigurátoros termék
-    </Button>
-  );
-}
-
-function NewProductDefinitionPage(): ReactElement {
-  return (
-    <Page pageId="product-definition-create">
-      <PageTitle>Új konfigurátoros termék</PageTitle>
-      <ConfiguratorEditor definitionId={NEW_ENTITY_PATH} mode="create" />
-    </Page>
+    <div className="flex flex-col gap-4">
+      <div
+        className="flex items-center gap-2"
+        title="Bekapcsolva a termék strukturált konfigurátorból jön létre (mezők, anyagok, árazás)"
+        data-testid="product-definition-create-toggle"
+      >
+        <label htmlFor="product-definition-create-toggle-input" className="text-sm font-medium">
+          Konfigurátoros termék
+        </label>
+        <Switch
+          id="product-definition-create-toggle-input"
+          checked={createMode}
+          onCheckedChange={setConfiguratorCreate}
+        />
+      </div>
+      {createMode && (
+        <ConfiguratorEditor
+          key="create"
+          definitionId={NEW_ENTITY_PATH}
+          mode="create"
+          pageForm={context.form}
+        />
+      )}
+    </div>
   );
 }
 

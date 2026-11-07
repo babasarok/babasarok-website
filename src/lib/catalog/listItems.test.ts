@@ -45,15 +45,6 @@ describe("toProductListData", () => {
     });
   });
 
-  it("omits products the definition hides from the list", () => {
-    const hidden = fixtureProducts.map((row) => ({
-      ...row,
-      definition: { ...row.definition, hiddenInProductList: true },
-    }));
-
-    expect(toProductListData(hidden, [], BASE).items).toEqual([]);
-  });
-
   it("orders by popularity rank and exposes that order", () => {
     const { items, popularOrder } = toProductListData(
       [

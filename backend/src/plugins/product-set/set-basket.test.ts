@@ -99,7 +99,6 @@ function definitionRow(nativeProductId: number, id: string): DefinitionRow {
     nativeProductId,
     definition: ProductDefinitionSchema.parse({
       id,
-      orderable: true,
       basePrice: 5000,
       pricing: { kind: "unit" },
       forbiddenMaterialCombinations: [],

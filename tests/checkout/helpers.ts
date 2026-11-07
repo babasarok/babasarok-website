@@ -52,7 +52,6 @@ async function gql<Schema extends z.ZodType>(
 export function definition(withLargeSize: boolean): Record<string, unknown> {
   return {
     id: PRODUCT_ID,
-    orderable: true,
     basePrice: 9000,
     pricing: { kind: "unit" },
     forbiddenMaterialCombinations: [],
@@ -144,7 +143,6 @@ export async function createProduct(): Promise<string> {
 function plainDefinition(id: string, basePrice: number): Record<string, unknown> {
   return {
     id,
-    orderable: true,
     basePrice,
     pricing: { kind: "unit" },
     forbiddenMaterialCombinations: [],
@@ -187,7 +185,6 @@ const SET_MATERIALS = [
 function setMemberDefinition(id: string, basePrice: number): Record<string, unknown> {
   return {
     id,
-    orderable: true,
     basePrice,
     pricing: { kind: "unit" },
     forbiddenMaterialCombinations: [],

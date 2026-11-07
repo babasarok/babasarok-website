@@ -7,7 +7,6 @@ const MATERIALS = new Set(["wellsoft", "velur"]);
 function definition(overrides: Partial<ProductDefinitionInput> = {}): ProductDefinitionInput {
   return {
     id: "teszt-termek",
-    orderable: true,
     basePrice: 1000,
     pricing: { kind: "unit" },
     fields: [],
@@ -100,7 +99,7 @@ describe("validateProductDefinition", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects an orderable product whose only configuration prices at 0 Ft", () => {
+  it("rejects a product whose only configuration prices at 0 Ft", () => {
     const result = validateProductDefinition(definition({ basePrice: 0 }), MATERIALS);
 
     expect(result).toEqual({
@@ -271,15 +270,6 @@ describe("validateProductDefinition", () => {
         ],
         forbiddenMaterialCombinations: [["wellsoft", "velur"]],
       }),
-      MATERIALS
-    );
-
-    expect(result.success).toBe(true);
-  });
-
-  it("exempts non-orderable products from the 0 Ft rule", () => {
-    const result = validateProductDefinition(
-      definition({ basePrice: 0, orderable: false }),
       MATERIALS
     );
 

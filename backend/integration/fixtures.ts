@@ -22,7 +22,7 @@ const MATERIAL_PRICES: Record<MaterialSlug, number> = {
 
 export const COLORS = ["feher", "kek"] as const;
 
-function materialField(id: string, label: string): object {
+export function materialField(id: string, label: string): object {
   return {
     kind: "material",
     id,
@@ -37,7 +37,6 @@ const PRODUCTS = [
     name: "Párna",
     definition: {
       id: "int-parna",
-      orderable: true,
       basePrice: 5000,
       pricing: { kind: "unit" },
       forbiddenMaterialCombinations: [],
@@ -68,7 +67,6 @@ const PRODUCTS = [
     name: "Takaró",
     definition: {
       id: "int-takaro",
-      orderable: true,
       basePrice: 8000,
       pricing: { kind: "unit" },
       forbiddenMaterialCombinations: [],
@@ -79,7 +77,6 @@ const PRODUCTS = [
     name: "Fészek",
     definition: {
       id: "int-feszek",
-      orderable: true,
       basePrice: 12_000,
       pricing: { kind: "unit" },
       forbiddenMaterialCombinations: [],
@@ -90,7 +87,6 @@ const PRODUCTS = [
     name: "Szalag",
     definition: {
       id: "int-szalag",
-      orderable: true,
       basePrice: 2000,
       pricing: { kind: "length", sourceFieldId: "hossz" },
       forbiddenMaterialCombinations: [],
@@ -111,7 +107,6 @@ const PRODUCTS = [
     name: "Kendő",
     definition: {
       id: "int-kendo",
-      orderable: true,
       basePrice: 400,
       pricing: { kind: "unit" },
       forbiddenMaterialCombinations: [],
@@ -122,7 +117,6 @@ const PRODUCTS = [
     name: "Elavuló",
     definition: {
       id: "int-elavulo",
-      orderable: true,
       basePrice: 6000,
       pricing: { kind: "unit" },
       forbiddenMaterialCombinations: [],

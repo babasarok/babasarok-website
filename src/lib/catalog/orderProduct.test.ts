@@ -10,7 +10,6 @@ const BASE = "https://api.example/assets/";
 
 const definition = ProductDefinitionSchema.parse({
   id: "kosar",
-  orderable: true,
   basePrice: 1000,
   pricing: { kind: "unit" },
   forbiddenMaterialCombinations: [["a", "b"]],
@@ -166,7 +165,6 @@ describe("liveUnitPrice", () => {
   it("is unpriceable for a length product until a length is entered", () => {
     const lengthDefinition = ProductDefinitionSchema.parse({
       id: "szalag",
-      orderable: true,
       basePrice: 2000,
       pricing: { kind: "length", sourceFieldId: "hossz" },
       forbiddenMaterialCombinations: [],

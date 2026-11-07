@@ -13,10 +13,9 @@ import { lineRejection } from "./line-rejection";
 /**
  * Rejects unpriceable configured lines at the mutation boundary with a clear
  * error result (OrderInterceptorError) instead of a thrown price calculation:
- * a non-orderable product cannot be ordered, a length-priced product requires
- * the line's length, and the selections must parse with embroidery thread
- * colors the thread-color facet knows (ADR 0011 decision 3). The pricing
- * strategy re-checks the first three as the backstop.
+ * a length-priced product requires the line's length, and the selections must
+ * parse with embroidery thread colors the thread-color facet knows (ADR 0011
+ * decision 3). The pricing strategy re-checks these as the backstop.
  */
 export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
   private connection!: TransactionalConnection;

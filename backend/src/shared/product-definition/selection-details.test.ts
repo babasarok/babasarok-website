@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { selectionDetails, type SelectionLabels } from "./selection-details";
 const definition = ProductDefinitionSchema.parse({
   id: "parna",
-  orderable: true,
   basePrice: 9000,
   pricing: { kind: "unit" },
   forbiddenMaterialCombinations: [],

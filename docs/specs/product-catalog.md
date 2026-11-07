@@ -10,24 +10,28 @@ epic 4).
 
 > **Model note (ADR 0009/0010/0011).** The commerce model is owned by the
 > canonical product definition stored in Vendure: the definition's `id` is the
-> native product's `productId`, `orderable` gates buying, field kinds map to
-> `input`, `choice` (presentation `select`/`radio`/`color`), `toggle`,
-> `material` and `embroidery`, and `forbiddenMaterialCombinations` are the
-> banned material combinations. The native Product owns its name and slug
-> (ADR 0011 decision 1); the definition sync never writes them. Generated
-> variant names list the labelled field values
-> ("`Anyag: Pamut · Méret: Nagy · Masni`"): a toggle shows its bare label when
-> on and is omitted when off; a variant with nothing to list carries the
-> product's name, so a rename on the stock product form propagates to those
-> variants; a stock product save re-syncs only when such a variant exists. The
-> product type is a value of the public `babasarok-product-type` facet on the
-> native product (ADR 0011 decision 2), not a definition field. Display fields
-> are native Vendure custom fields: `shortDescription`, `tagline`, `date`
-> ("newest first" sorting), `popularityRank` (nullable int, 1 = most popular;
-> the curated "Népszerű" sort, unranked products after ranked ones) and `icon`
-> (an Asset relation) on `Product`, plus a `galleryDescription` custom field
-> on `Asset` for the per-image gallery text — all editable in the stock
-> dashboard. They stay outside the canonical configurator model.
+> native product's `productId`, field kinds map to `input`, `choice`
+> (presentation `select`/`radio`/`color`), `toggle`, `material` and
+> `embroidery`, and `forbiddenMaterialCombinations` are the banned material
+> combinations. `can_be_ordered` has no definition counterpart: orderability
+> and visibility are one switch, the native product's `enabled` (owner
+> decision 2026-11 — the shop API serves only enabled products, so a disabled
+> product is neither listed nor configurable).
+> The native Product owns its name and slug (ADR 0011 decision 1); the
+> definition sync never writes them. Generated variant names list the labelled
+> field values ("`Anyag: Pamut · Méret: Nagy · Masni`"): a toggle shows its
+> bare label when on and is omitted when off; a variant with nothing to list
+> carries the product's name, so a rename on the stock product form propagates
+> to those variants; a stock product save re-syncs only when such a variant
+> exists. The product type is a value of the public
+> `babasarok-product-type` facet on the native product (ADR 0011 decision 2),
+> not a definition field. Display fields are native Vendure custom fields:
+> `shortDescription`, `tagline`, `date` ("newest first" sorting),
+> `popularityRank` (nullable int, 1 = most popular; the curated "Népszerű"
+> sort, unranked products after ranked ones) and `icon` (an Asset relation) on
+> `Product`, plus a `galleryDescription` custom field on `Asset` for the
+> per-image gallery text — all editable in the stock dashboard. They stay
+> outside the canonical configurator model.
 > "Configurator" in this spec means the buyer-facing order form; the
 > admin-side editor is the dashboard's product configurator editor.
 
@@ -56,10 +60,11 @@ with descriptions), a base price, and a `can_be_ordered` flag.
 
 ### Product list: search, filtering, and sorting
 
-The system SHALL provide a single product list page showing all non-hidden
+The system SHALL provide a single product list page showing all enabled
 products (no pagination), each entry linking to the product detail page, with
-its tagline as the category line. A product is hidden when its canonical
-definition sets `hiddenInProductList`; a product without a known type is
+its tagline as the category line. Visibility and orderability are one switch —
+the native product's `enabled` (the shop API serves only enabled products); a
+product without a known type is
 listed and only drops out of type filters. A product without a definition
 (e.g. a quote-order placeholder) is not a storefront product: it appears in no
 list, search, sitemap or home block, and its detail page is a 404. The page is
@@ -146,8 +151,9 @@ materials; a catalog hit replaces a Pagefind hit for the same URL.
 
 The system SHALL render a detail page per product showing its title, an image
 gallery (thumbnail plus gallery images with descriptions), its body content,
-and sharing links to social networks. Markdown descriptions render server-side with raw HTML escaped, unsafe link schemes dropped, and host-relative asset image paths (`source/ab/file.jpg`) rewritten to asset-server preset URLs. For orderable products the page SHALL
-additionally embed an order configurator for that product.
+and sharing links to social networks. Markdown descriptions render server-side with raw HTML escaped, unsafe link schemes dropped, and host-relative asset image paths (`source/ab/file.jpg`) rewritten to asset-server preset URLs. The page SHALL
+additionally embed an order configurator for that product (every product the
+shop API serves is enabled and orderable).
 
 - **Scenario: Viewing a product**
   - WHEN a visitor opens a product's detail page
@@ -196,20 +202,10 @@ order.
 
 ### Product availability for ordering
 
-The system SHALL expose only products whose `can_be_ordered` flag is set to
-the ordering UI; other products are browse-only. The server enforces the flag
-at order time: adding or adjusting a basket line for a browse-only product is
-rejected with a clear error, and the pricing step refuses to price such a line
-as the backstop (ADR 0011 decision 5).
-
-- **Scenario: Non-orderable product**
-  - WHEN a product's `can_be_ordered` flag is not set
-  - THEN the product is not offered as an option in the order form
-- **Scenario: Non-orderable product rejected at the basket**
-  - WHEN a basket add or adjust targets a product whose `orderable` flag is
-    not set
-  - THEN the mutation is rejected with a clear Hungarian error naming the
-    product by its native name
+Every product the ordering UI can reach is orderable: visibility and
+orderability are one switch (the native product's `enabled`; the shop API
+serves only enabled products). A disabled product is not listed, cannot be
+configured, and no order line can target it.
 
 ### Product page order configurator
 
@@ -465,6 +461,12 @@ language as `?languageCode=` (currently `hu`).
 - `threadColors` — the values of the private thread-color facet (`id` = the
   facet value code, `label`, `hex`, `swatch`); the facet itself stays hidden
   from the shop's `facets`.
+- `productVariants(slug)` — the product's full variant matrix (`id` plus each
+  variant's option `group`/`code` pairs). Vendure's own `Product.variants`
+  field resolves with the shop list-query limit and takes no paging
+  arguments, so the configurator matches the buyer's configuration against
+  this query instead: a matrix larger than the limit must still come back
+  complete.
 - The native `Product` custom fields (`shortDescription`, `tagline`, `date`,
   `popularityRank`, `icon`) and `Asset.galleryDescription` are public.
 
@@ -472,6 +474,9 @@ language as `?languageCode=` (currently `hu`).
   - WHEN products are sorted by popularity
   - THEN ranked products come first by ascending `popularityRank` and
     unranked products follow in their existing order
+- **Scenario: Matrix larger than the list-query limit**
+  - WHEN a generated product has more variants than the shop list-query limit
+  - THEN `productVariants(slug)` returns every variant of the product
 - **Scenario: Invalid definition**
   - WHEN a response's `productDefinition` does not match the canonical schema
   - THEN the catalog read fails instead of rendering partial data

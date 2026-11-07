@@ -170,8 +170,9 @@ merged to main until the backend structure is settled):
   1344-variant product); the bulk writer replaces it (see S6)
 - ✅ Dashboard production pass (async job-queue sync — 576-variant save
   returns in ~130ms with background convergence; configurator page block on
-  the stock product page; creation folded into the stock products list
-  action bar, standalone section removed; UI review pass fixed a real
+  the stock product page; creation folded into the stock new-product page
+  (Konfigurátoros termék switch in the block; unified Létrehozás button);
+  UI review pass fixed a real
   data-loss bug in save; dashboard e2e 4 specs green — PR #77). Polish pass
   closed the four spike leftovers: the configurator block spans the full
   page width (dashboard-native `column: "full"`), the stock variants

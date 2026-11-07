@@ -108,6 +108,10 @@ an option → the missing variants appear; no manual variant work anywhere.
    parents, members via the `product-id-filter`, the set discount as a
    Collection custom field — the canonical group schemas stay the seed's
    content validation and the shape yardstick.
+   _(Group home superseded by ADR 0014: discounted sets are now one Promotion
+   per set — members and the Ft amount in the promotion's args; the
+   "Szettek" parent retires and related-items groups stay collections under
+   "Kapcsolódó termékek".)_
 7. Seed/import direction stays one-way Tina → Vendure, temporary and
    preview-only (ADR 0009); prod is hand-migrated at cutover.
 8. **Tina never stores product information — at no point in the roadmap.** No
@@ -128,9 +132,10 @@ an option → the missing variants appear; no manual variant work anywhere.
 
 1. **Generated preview list rendered empty** — spike-grade defect; resolved
    in PR #77 with a paged `generatedVariants` query.
-2. **The block does not span the full page width** — resolved: the block
-   API's `column: "full"` (dashboard-native since 3.8, no patch needed) and
-   the embedded editor rendering its cards bare inside the full-width row.
+2. **The block does not span the full page width** — superseded (owner
+   decision 2026-11): the configurator sits at the bottom of the stock
+   product page's main column instead. The layout engine renders
+   full-width blocks first, so bottom placement rules out `column: "full"`.
 3. **Stock blocks (variants grid) cannot be conditionally hidden** — resolved
    via the first remedy: a `detailForms` `extendDetailDocument` adds
    `Product.productDefinition` (a ReadCatalog-gated resolver field on the
@@ -141,8 +146,11 @@ an option → the missing variants appear; no manual variant work anywhere.
    empty replacement blocks. No `pnpm patch`, no upstream change.
 4. **A separate Termékek section still exists** — resolved in PR #77
    (pulled forward at the owner's request): the standalone section is
-   removed; creation is an action-bar item on the stock products list,
-   delete lives in the configurator block.
+   removed; creation happens on the stock `/products/new` page (a
+   Konfigurátoros termék switch in the configurator block reveals the
+   editor; the unified Létrehozás action-bar button runs the create and
+   patches the stock form's values onto the generated product), delete lives
+   in the configurator block.
 
 ## Display-field coverage gap (completeness yardstick audit)
 

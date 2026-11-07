@@ -1,13 +1,20 @@
 import { useEffect, useReducer, type ReactElement } from "react";
-import { Button } from "@vendure/dashboard";
+import { Button, NEW_ENTITY_PATH } from "@vendure/dashboard";
 import type { PageContextValue } from "@vendure/dashboard";
 import { Switch } from "@/vdb/components/ui/switch.js";
-import { canUnifiedSave, planUnifiedSave } from "./product-definition-editor";
-import { getConfiguratorSave, useConfiguratorDirty } from "./product-definition-save-store";
+import { planUnifiedSave } from "./product-definition-editor";
+import { useConfiguratorCreate } from "./product-definition-create-store";
+import {
+  getConfiguratorSave,
+  useConfiguratorDirty,
+  useConfiguratorSave,
+} from "./product-definition-save-store";
 
 /** Replaces the stock product page's save button: the stock Enabled switch
  * and one Update button that saves the page form and, on generated products,
- * the configurator block together. Behaves like the stock button elsewhere. */
+ * the configurator block together. On the new-product page the button becomes
+ * the configurator create when the page's Konfigurátoros termék switch (in
+ * the configurator block) is on. Behaves like the stock button elsewhere. */
 export function ProductSaveActionBarItem({
   context,
   definitionId,
@@ -19,6 +26,10 @@ export function ProductSaveActionBarItem({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- PageContextValue.entity is typed `any` by the dashboard's own contract (page-provider.tsx)
   const entityId: unknown = context.entity?.id;
   const creating = typeof entityId !== "string";
+  const createMode = useConfiguratorCreate();
+  // The create-mode editor publishes under NEW_ENTITY_PATH (no definition id
+  // exists yet).
+  const configuratorSave = useConfiguratorSave(creating ? NEW_ENTITY_PATH : (definitionId ?? ""));
   const configuratorDirty = useConfiguratorDirty(definitionId ?? "");
   const [, rerender] = useReducer((tick: number) => tick + 1, 0);
 
@@ -62,8 +73,18 @@ export function ProductSaveActionBarItem({
       </div>
       <Button
         type="button"
-        disabled={!canUnifiedSave(state)}
+        disabled={creating && createMode && configuratorSave === undefined}
         onClick={(event) => {
+          if (creating) {
+            if (createMode) {
+              void getConfiguratorSave(NEW_ENTITY_PATH)?.save();
+              return;
+            }
+
+            event.currentTarget.form?.requestSubmit();
+            return;
+          }
+
           const plan = planUnifiedSave(state);
 
           if (plan.savePage) {

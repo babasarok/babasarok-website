@@ -306,10 +306,9 @@ describe("sanitize", () => {
 });
 
 describe("newDefinition", () => {
-  test("starts orderable, unit-priced and empty", () => {
+  test("starts unit-priced and empty", () => {
     expect(newDefinition("e2e-x")).toEqual({
       id: "e2e-x",
-      orderable: true,
       basePrice: 0,
       pricing: { kind: "unit" },
       fields: [],

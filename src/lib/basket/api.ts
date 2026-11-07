@@ -285,9 +285,9 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
       ),
     async productVariants(slug) {
       const result = await request(
-        `query Variants($slug: String!) { product(slug: $slug) { variants { id options { code group { code } } } } }`,
+        `query Variants($slug: String!) { productVariants(slug: $slug) { id options { code group } } }`,
         { slug },
-        z.object({ product: z.object({ variants: z.array(VariantOptionsSchema) }).nullable() })
+        z.object({ productVariants: z.array(VariantOptionsSchema) })
       );
 
       if (!result.ok) {
@@ -296,13 +296,7 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
 
       return {
         ok: true,
-        value: (result.value.product?.variants ?? []).map((variant) => ({
-          id: variant.id,
-          options: variant.options.map((option) => ({
-            group: option.group.code,
-            code: option.code,
-          })),
-        })),
+        value: result.value.productVariants,
       };
     },
     async eligibleShippingMethods() {

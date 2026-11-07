@@ -27,10 +27,9 @@ export const ProductFieldSchema = z.discriminatedUnion("kind", [
 export const ProductDefinitionSchema = z.strictObject({
   id: ProductIdSchema,
   revision: ProductRevisionSchema.optional(),
-  orderable: z.boolean(),
-  // Storefront listing maps this at cutover; it is deliberately not Vendure's
-  // native product visibility.
-  hiddenInProductList: z.boolean().optional(),
+  // Orderability is the native product's "enabled" switch: the shop API only
+  // serves enabled products, so a disabled product is neither shown nor
+  // orderable (owner decision 2026-11: one switch governs both).
   basePrice: MoneySchema,
   pricing: ProductPricingSchema,
   fields: z.array(ProductFieldSchema),

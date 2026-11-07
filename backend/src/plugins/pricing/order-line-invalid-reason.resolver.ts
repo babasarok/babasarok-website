@@ -20,7 +20,6 @@ export class OrderLineInvalidReasonResolver {
 
 export const lineInvalidReasonSchema = gql`
   enum LineInvalidCode {
-    NOT_ORDERABLE
     VARIANT_UNAVAILABLE
     OPTION_NOT_OFFERED
   }

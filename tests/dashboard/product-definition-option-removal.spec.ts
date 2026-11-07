@@ -28,7 +28,6 @@ import {
 
 const REMOVAL_FIXTURE = {
   id: "e2e-o1",
-  orderable: true,
   basePrice: 15_000,
   pricing: { kind: "unit" },
   fields: [
@@ -191,7 +190,6 @@ test("removing a whole variant-axis field deletes its native group and resyncs",
 
   const wholeFieldFixture = {
     id: "e2e-o2",
-    orderable: true,
     basePrice: 15_000,
     pricing: { kind: "unit" },
     fields: [

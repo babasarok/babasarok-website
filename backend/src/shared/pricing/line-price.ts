@@ -27,15 +27,6 @@ export interface LinePricingInput {
 
 export class LinePricingError extends Error {}
 
-/**
- * The rejection for ordering a non-orderable (browse-only) product: the
- * interceptor returns it at the mutation boundary, the pricing walk throws it
- * as the backstop (ADR 0011 decision 5).
- */
-export function nonOrderableRejection(productName: string): string {
-  return `A(z) "${productName}" termék jelenleg nem rendelhető.`;
-}
-
 export function lengthMissingRejection(productName: string): string {
   return `A(z) "${productName}" méteráru — a hossz (cm) megadása kötelező.`;
 }
@@ -118,18 +109,16 @@ function variantAxisPrice(
  * skipped — it carries no price, it scales — and the sum multiplied by the
  * length in metres.
  *
- * Throws {@link LinePricingError} for an unpriced line: a non-orderable
- * product, a missing length, selections that reference unknown fields or
- * disagree with the variant's options (drift or a buggy storefront), or a
- * custom value on a field the variant matrix carries.
+ * Throws {@link LinePricingError} for an unpriced line: a missing length,
+ * selections that reference unknown fields or list an option that disagrees
+ * with the variant's options (drift or a buggy storefront). A custom value on
+ * a variant-axis field prices via the variant's pinned option — the
+ * storefront cannot put it on the variant matrix, so it pins a listed option
+ * and stores the custom text on the line.
  */
 export function computeLineUnitPrice(input: LinePricingInput): number {
   const { definition, productName, variantListPrice, optionCodes, selections, languageCode } =
     input;
-
-  if (!definition.orderable) {
-    throw new LinePricingError(nonOrderableRejection(productName));
-  }
 
   for (const [fieldId, selection] of Object.entries(selections)) {
     if (selection === undefined) {
@@ -161,13 +150,16 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
     if (
       field.kind === "choice" &&
       field.presentation !== "color" &&
-      (selection.kind === "custom" || selection.kind === "option") &&
+      selection.kind === "option" &&
       selection.value !== optionCodes.get(fieldId)
     ) {
-      // A custom value cannot select a generated variant: the matrix only
-      // carries the listed options. Refuse to price rather than sell it.
+      // A listed option the variant doesn't carry is drift or a buggy
+      // storefront — refuse to price. A custom value cannot be in the matrix:
+      // the storefront pins a listed variant for it and stores the custom
+      // text on the line, and the line prices via the variant's option code —
+      // exactly what the live price showed.
       throw new LinePricingError(
-        `A(z) "${resolveText(field.label, languageCode)}" mező választása nem egyezik a kiválasztott változattal, az egyedi értéket a változat-mátrix nem tudja árazni.`
+        `A(z) "${resolveText(field.label, languageCode)}" mező választása nem egyezik a kiválasztott változattal.`
       );
     }
   }

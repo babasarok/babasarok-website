@@ -49,3 +49,7 @@ function subscribe(listener: () => void): () => void {
 export function useConfiguratorDirty(definitionId: string): boolean {
   return useSyncExternalStore(subscribe, () => handles.get(definitionId)?.dirty ?? false);
 }
+
+export function useConfiguratorSave(definitionId: string): ConfiguratorSaveHandle | undefined {
+  return useSyncExternalStore(subscribe, () => handles.get(definitionId));
+}

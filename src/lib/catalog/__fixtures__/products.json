@@ -143,8 +143,6 @@
           },
           "revision": "55e4903ab0a922a377b7f4337d92d3ef7b548e174a7aa915f3a7627d5d3dc307",
           "basePrice": 7500,
-          "orderable": true,
-          "hiddenInProductList": false,
           "forbiddenMaterialCombinations": [["wellsoft", "wellsoft"]]
         }
       },
@@ -207,8 +205,6 @@
           },
           "revision": "d786c621b248722f1b3515c83202c9f5ce8f5608579f5ac84a03070556e966e1",
           "basePrice": 9500,
-          "orderable": true,
-          "hiddenInProductList": false,
           "forbiddenMaterialCombinations": []
         }
       },
@@ -274,8 +270,6 @@
           },
           "revision": "cc4c851062d7cd30d3b253a5e8c745d43d56881637d68a149259db8fba5a97bd",
           "basePrice": 4000,
-          "orderable": true,
-          "hiddenInProductList": false,
           "forbiddenMaterialCombinations": []
         }
       }

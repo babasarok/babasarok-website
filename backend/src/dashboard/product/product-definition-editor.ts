@@ -449,7 +449,6 @@ export function sanitize(definition: ProductDefinitionInput): ProductDefinitionI
 export function newDefinition(id: string): ProductDefinitionInput {
   return {
     id,
-    orderable: true,
     basePrice: 0,
     pricing: { kind: "unit" },
     fields: [],

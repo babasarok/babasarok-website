@@ -7,10 +7,9 @@ import { lineRejection, type LineFacts } from "./line-rejection";
 
 type Definition = ProductDefinition;
 
-function define(orderable: boolean, pricing: unknown): Definition {
+function define(pricing: unknown): Definition {
   return ProductDefinitionSchema.parse({
     id: "parna",
-    orderable,
     basePrice: 9000,
     pricing,
     forbiddenMaterialCombinations: [],
@@ -35,8 +34,8 @@ function factsFor(definition?: Definition, threadColors: string[] = ["piros"]): 
   };
 }
 
-const unit = define(true, { kind: "unit" });
-const length = define(true, { kind: "length", sourceFieldId: "hossz" });
+const unit = define({ kind: "unit" });
+const length = define({ kind: "length", sourceFieldId: "hossz" });
 function selected(colorId: string): string {
   return JSON.stringify({ himzes: { kind: "embroidery", text: "szia", colorId } });
 }
@@ -59,13 +58,6 @@ describe("lineRejection", () => {
     const rejection = await check(factsFor(), { selections: selected("lila") });
 
     expect(rejection).toContain("lila");
-  });
-
-  it("refuses a non-orderable product by name", async () => {
-    const rejection = await check(factsFor(define(false, { kind: "unit" })));
-
-    expect(rejection).toContain("Párna");
-    expect(rejection).toContain("nem rendelhető");
   });
 
   it("requires a positive integer length for length-priced products", async () => {
