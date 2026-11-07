@@ -11,277 +11,252 @@
   import type { IProduct, StringValueField } from "@/lib/types.svelte";
   import { isFieldVisible } from "@/lib/product/field";
   import { randomUUID } from "@/lib/uuid";
+  import type { i18n as I18n } from "i18next";
+  import I18nGate from "@/components/ui/I18nGate.svelte";
+  import type { Locale } from "@/lib/i18n";
 
   interface Props {
+    locale: Locale;
     product: IProduct;
     threadColors: OrderThreadColor[];
     onChange?: ((product: IProduct) => void) | undefined;
   }
 
-  const { product, threadColors, onChange }: Props = $props();
+  const { locale, product, threadColors, onChange }: Props = $props();
 </script>
 
-{#snippet Input(field: StringValueField)}
-  {#if field.type === "input" || field.value?.is_custom}
-    {@const id = randomUUID()}
-    <TextInput
-      type="text"
-      value={field.value?.value ?? ""}
-      list={field.type === "input" && field.items ? id : undefined}
-      placeholder={field.placeholder ?? undefined}
-      oninput={(e) => {
-        if (!(e.target instanceof HTMLInputElement)) {
-          return;
-        }
+<I18nGate {locale}>
+  {#snippet children(i18n: I18n)}
+    {#snippet Input(field: StringValueField)}
+      {#if field.type === "input" || field.value?.is_custom}
+        {@const id = randomUUID()}
+        <TextInput
+          type="text"
+          value={field.value?.value ?? ""}
+          list={field.type === "input" && field.items ? id : undefined}
+          placeholder={field.placeholder ?? undefined}
+          oninput={(e) => {
+            if (!(e.target instanceof HTMLInputElement)) {
+              return;
+            }
 
-        const result = product;
-        const fieldToUpdate = result.fields.find((f) => f.name === field.name);
-        if (fieldToUpdate) {
-          fieldToUpdate.value = {
-            value: e.target.value,
-            is_custom: field.value?.is_custom || false,
-          };
-          onChange?.(result);
-        }
-      }}
-    />
-    {#if field.type === "input" && field.items}
-      {@const items = field.items.filter((item) => item != null)}
-      <datalist {id}>
-        {#each items as item (item.label)}
-          <option value={item.value}>{item.label}</option>
-        {/each}
-      </datalist>
-    {/if}
-  {/if}
-{/snippet}
-
-{#snippet priceTag(price: number | undefined | null)}
-  {#if price}
-    <span class="text-xs font-medium whitespace-nowrap opacity-70">+{price} Ft</span>
-  {/if}
-{/snippet}
-
-<!-- Generic fields -->
-<div class="flex flex-col">
-  {#each product.fields as field (field.name)}
-    {#if isFieldVisible(field, product.fields)}
-      <div class="flex flex-col gap-1 mt-2 first:mt-0" transition:slide>
-        <p class="text-sm text-brown-500 inline-flex items-center gap-1">
-          {field.label || field.name}
-          {#if field.tooltip}
-            <Tooltip contentProps={{ class: "inline-block" }}>
-              {#snippet content()}
-                {field.tooltip}
-              {/snippet}
-              <Icon
-                icon="material-symbols:question-mark-rounded"
-                class="rounded-full bg-accent text-white p-0.5 text-sm leading-none"
-              />
-            </Tooltip>
-          {/if}
-        </p>
-        <div class="flex gap-1 flex-wrap">
-          {#if field.type === "radio"}
-            {@const items = field.items?.filter((item) => item != null)}
+            const result = product;
+            const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+            if (fieldToUpdate) {
+              fieldToUpdate.value = {
+                value: e.target.value,
+                is_custom: field.value?.is_custom || false,
+              };
+              onChange?.(result);
+            }
+          }}
+        />
+        {#if field.type === "input" && field.items}
+          {@const items = field.items.filter((item) => item != null)}
+          <datalist {id}>
             {#each items as item (item.label)}
-              {@const selected = field.value?.value === item.value}
-              {#snippet button(hasTooltip: boolean)}
-                <Button
-                  type="button"
-                  class="flex items-center gap-0.5"
-                  {selected}
-                  onclick={() => {
-                    const result = product;
-                    const fieldToUpdate = result.fields.find((f) => f.name === field.name);
-                    if (fieldToUpdate) {
-                      fieldToUpdate.value = {
-                        value: item.value,
-                        is_custom: false,
-                      };
-                      onChange?.(result);
-                    }
-                  }}
-                >
-                  {item.label || item.value}
-                  {@render priceTag(item.price)}
-                  {#if hasTooltip}
-                    <Icon icon="material-symbols:question-mark-rounded" class="text-xs" />
-                  {/if}
-                </Button>
-              {/snippet}
-              {#if item.tooltip}
+              <option value={item.value}>{item.label}</option>
+            {/each}
+          </datalist>
+        {/if}
+      {/if}
+    {/snippet}
+
+    {#snippet priceTag(price: number | undefined | null)}
+      {#if price}
+        <span class="text-xs font-medium whitespace-nowrap opacity-70">+{price} Ft</span>
+      {/if}
+    {/snippet}
+
+    <!-- Generic fields -->
+    <div class="flex flex-col">
+      {#each product.fields as field (field.name)}
+        {#if isFieldVisible(field, product.fields)}
+          <div class="flex flex-col gap-1 mt-2 first:mt-0" transition:slide>
+            <p class="text-sm text-brown-500 inline-flex items-center gap-1">
+              {field.label || field.name}
+              {#if field.tooltip}
                 <Tooltip contentProps={{ class: "inline-block" }}>
                   {#snippet content()}
-                    {item.tooltip}
+                    {field.tooltip}
                   {/snippet}
-                  {@render button(true)}
+                  <Icon
+                    icon="material-symbols:question-mark-rounded"
+                    class="rounded-full bg-accent text-white p-0.5 text-sm leading-none"
+                  />
                 </Tooltip>
-              {:else}
-                {@render button(false)}
               {/if}
-            {/each}
-            {#if field.allow_custom_value}
-              <div transition:slide>
-                <Button
-                  type="button"
-                  selected={field.value?.is_custom ?? false}
-                  onclick={() => {
-                    const result = product;
-                    const fieldToUpdate = result.fields.find((f) => f.name === field.name);
-                    if (fieldToUpdate) {
-                      fieldToUpdate.value = {
-                        value: "",
-                        is_custom: true,
-                      };
-                      onChange?.(result);
-                    }
-                  }}
-                >
-                  Egyedi
-                </Button>
-              </div>
-            {/if}
-            {@render Input(field)}
-          {:else if field.type === "select"}
-            {@const items = field.items?.filter((item) => item != null)}
-            <select
-              value={field.value?.value}
-              onchange={(e) => {
-                if (!(e.target instanceof HTMLSelectElement)) {
-                  return;
-                }
-
-                const result = product;
-                const fieldToUpdate = result.fields.find((f) => f.name === field.name);
-                if (fieldToUpdate) {
-                  fieldToUpdate.value = {
-                    value: e.target.value,
-                    is_custom: false,
-                  };
-                  onChange?.(result);
-                }
-              }}
-            >
-              <option value="" disabled selected>{field.placeholder || "Válassz egy opciót"}</option
-              >
-              {#each items as item (item.label)}
-                <option value={item.value}>
-                  {item.label || item.value}{item.price ? ` (+${item.price} Ft)` : ""}
-                </option>
-              {/each}
-            </select>
-          {:else if field.type === "input"}
-            {@render Input(field)}
-          {:else if field.type === "color"}
-            {@const items = field.items?.filter((item) => item != null)}
+            </p>
             <div class="flex gap-1 flex-wrap">
-              {#each items as item (item.label)}
-                {@const selected = field.value?.value === item.value}
-                <Color
-                  color={{
-                    color_id: item.value,
-                    hex: item.value,
-                    label: item.price
-                      ? `${item.label ?? item.value} (+${item.price} Ft)`
-                      : (item.label ?? undefined),
-                  }}
-                  {selected}
-                  onclick={(color_id) => {
-                    const result = product;
-                    const fieldToUpdate = result.fields.find((f) => f.name === field.name);
-                    if (fieldToUpdate) {
-                      fieldToUpdate.value = {
-                        value: color_id,
-                        is_custom: false,
-                      };
-                      onChange?.(result);
-                    }
-                  }}
-                />
-              {/each}
-              {#if field.allow_custom_value}
-                <div transition:slide>
-                  <Button
-                    type="button"
-                    selected={field.value?.is_custom ?? false}
-                    onclick={() => {
-                      const result = product;
-                      const fieldToUpdate = result.fields.find((f) => f.name === field.name);
-                      if (fieldToUpdate) {
-                        fieldToUpdate.value = {
-                          value: "",
-                          is_custom: true,
-                        };
-                        onChange?.(result);
-                      }
-                    }}
-                  >
-                    Egyedi
-                  </Button>
-                </div>
-              {/if}
-            </div>
-            {@render Input(field)}
-          {:else if field.type === "toggle"}
-            <div class="flex items-center gap-2">
-              <Switch
-                checked={field.value?.value ?? false}
-                onchange={(e) => {
-                  if (!(e.target instanceof HTMLInputElement)) {
-                    return;
-                  }
-
-                  const result = product;
-                  const fieldToUpdate = result.fields.find((f) => f.name === field.name);
-                  if (fieldToUpdate) {
-                    fieldToUpdate.value = {
-                      value: e.target.checked,
-                    };
-                    onChange?.(result);
-                  }
-                }}
-              />
-              {@render priceTag(field.price)}
-            </div>
-          {:else if field.type === "embroidery"}
-            <div class="flex flex-col gap-2">
-              <div class="flex items-center gap-2">
-                <Switch
-                  checked={field.value?.enabled ?? false}
+              {#if field.type === "radio"}
+                {@const items = field.items?.filter((item) => item != null)}
+                {#each items as item (item.label)}
+                  {@const selected = field.value?.value === item.value}
+                  {#snippet button(hasTooltip: boolean)}
+                    <Button
+                      type="button"
+                      class="flex items-center gap-0.5"
+                      {selected}
+                      onclick={() => {
+                        const result = product;
+                        const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                        if (fieldToUpdate) {
+                          fieldToUpdate.value = {
+                            value: item.value,
+                            is_custom: false,
+                          };
+                          onChange?.(result);
+                        }
+                      }}
+                    >
+                      {item.label || item.value}
+                      {@render priceTag(item.price)}
+                      {#if hasTooltip}
+                        <Icon icon="material-symbols:question-mark-rounded" class="text-xs" />
+                      {/if}
+                    </Button>
+                  {/snippet}
+                  {#if item.tooltip}
+                    <Tooltip contentProps={{ class: "inline-block" }}>
+                      {#snippet content()}
+                        {item.tooltip}
+                      {/snippet}
+                      {@render button(true)}
+                    </Tooltip>
+                  {:else}
+                    {@render button(false)}
+                  {/if}
+                {/each}
+                {#if field.allow_custom_value}
+                  <div transition:slide>
+                    <Button
+                      type="button"
+                      selected={field.value?.is_custom ?? false}
+                      onclick={() => {
+                        const result = product;
+                        const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                        if (fieldToUpdate) {
+                          fieldToUpdate.value = {
+                            value: "",
+                            is_custom: true,
+                          };
+                          onChange?.(result);
+                        }
+                      }}
+                    >
+                      Egyedi
+                    </Button>
+                  </div>
+                {/if}
+                {@render Input(field)}
+              {:else if field.type === "select"}
+                {@const items = field.items?.filter((item) => item != null)}
+                <select
+                  value={field.value?.value}
                   onchange={(e) => {
-                    if (!(e.target instanceof HTMLInputElement)) {
+                    if (!(e.target instanceof HTMLSelectElement)) {
                       return;
                     }
 
                     const result = product;
                     const fieldToUpdate = result.fields.find((f) => f.name === field.name);
-                    if (fieldToUpdate?.type === "embroidery") {
+                    if (fieldToUpdate) {
                       fieldToUpdate.value = {
-                        enabled: e.target.checked,
-                        text: field.value?.text ?? { value: "" },
-                        color: field.value?.color ?? { color: "" },
+                        value: e.target.value,
+                        is_custom: false,
                       };
                       onChange?.(result);
                     }
                   }}
-                />
-                {#if field.price}
-                  <span class="text-xs font-medium whitespace-nowrap text-sand-700">
-                    +{field.price} Ft{field.price_unit === "word" ? " / szó" : ""}
-                  </span>
-                {/if}
-              </div>
-              {#if field.value?.enabled}
-                {@const embroideryValue = field.value}
-                <div class="flex flex-col gap-2" transition:slide>
-                  <div class="flex flex-col gap-1">
-                    <p class="text-sm text-brown-500">Szöveg</p>
-                    <TextInput
-                      type="text"
-                      value={embroideryValue.text.value}
-                      placeholder={field.placeholder ?? undefined}
-                      oninput={(e) => {
+                >
+                  <option value="" disabled selected
+                    >{field.placeholder || i18n.t("basket.selectOption")}</option
+                  >
+                  {#each items as item (item.label)}
+                    <option value={item.value}>
+                      {item.label || item.value}{item.price ? ` (+${item.price} Ft)` : ""}
+                    </option>
+                  {/each}
+                </select>
+              {:else if field.type === "input"}
+                {@render Input(field)}
+              {:else if field.type === "color"}
+                {@const items = field.items?.filter((item) => item != null)}
+                <div class="flex gap-1 flex-wrap">
+                  {#each items as item (item.label)}
+                    {@const selected = field.value?.value === item.value}
+                    <Color
+                      color={{
+                        color_id: item.value,
+                        hex: item.value,
+                        label: item.price
+                          ? `${item.label ?? item.value} (+${item.price} Ft)`
+                          : (item.label ?? undefined),
+                      }}
+                      {selected}
+                      onclick={(color_id) => {
+                        const result = product;
+                        const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                        if (fieldToUpdate) {
+                          fieldToUpdate.value = {
+                            value: color_id,
+                            is_custom: false,
+                          };
+                          onChange?.(result);
+                        }
+                      }}
+                    />
+                  {/each}
+                  {#if field.allow_custom_value}
+                    <div transition:slide>
+                      <Button
+                        type="button"
+                        selected={field.value?.is_custom ?? false}
+                        onclick={() => {
+                          const result = product;
+                          const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                          if (fieldToUpdate) {
+                            fieldToUpdate.value = {
+                              value: "",
+                              is_custom: true,
+                            };
+                            onChange?.(result);
+                          }
+                        }}
+                      >
+                        Egyedi
+                      </Button>
+                    </div>
+                  {/if}
+                </div>
+                {@render Input(field)}
+              {:else if field.type === "toggle"}
+                <div class="flex items-center gap-2">
+                  <Switch
+                    checked={field.value?.value ?? false}
+                    onchange={(e) => {
+                      if (!(e.target instanceof HTMLInputElement)) {
+                        return;
+                      }
+
+                      const result = product;
+                      const fieldToUpdate = result.fields.find((f) => f.name === field.name);
+                      if (fieldToUpdate) {
+                        fieldToUpdate.value = {
+                          value: e.target.checked,
+                        };
+                        onChange?.(result);
+                      }
+                    }}
+                  />
+                  {@render priceTag(field.price)}
+                </div>
+              {:else if field.type === "embroidery"}
+                <div class="flex flex-col gap-2">
+                  <div class="flex items-center gap-2">
+                    <Switch
+                      checked={field.value?.enabled ?? false}
+                      onchange={(e) => {
                         if (!(e.target instanceof HTMLInputElement)) {
                           return;
                         }
@@ -290,55 +265,93 @@
                         const fieldToUpdate = result.fields.find((f) => f.name === field.name);
                         if (fieldToUpdate?.type === "embroidery") {
                           fieldToUpdate.value = {
-                            enabled: true,
-                            text: { ...embroideryValue.text, value: e.target.value },
-                            color: embroideryValue.color,
+                            enabled: e.target.checked,
+                            text: field.value?.text ?? { value: "" },
+                            color: field.value?.color ?? { color: "" },
                           };
                           onChange?.(result);
                         }
                       }}
                     />
-                    {#if embroideryValue.text.error}
-                      <p class="text-sm text-red-500">{embroideryValue.text.error}</p>
+                    {#if field.price}
+                      <span class="text-xs font-medium whitespace-nowrap text-sand-700">
+                        +{field.price} Ft{field.price_unit === "word"
+                          ? i18n.t("basket.perWord")
+                          : ""}
+                      </span>
                     {/if}
                   </div>
-                  <div class="flex flex-col gap-1">
-                    <p class="text-sm text-brown-500">Cérna szín</p>
-                    <div class="flex gap-1 flex-wrap leading-0">
-                      {#each threadColors as color (color.color_id)}
-                        <Color
-                          {color}
-                          selected={embroideryValue.color.color === color.color_id}
-                          onclick={(colorId) => {
+                  {#if field.value?.enabled}
+                    {@const embroideryValue = field.value}
+                    <div class="flex flex-col gap-2" transition:slide>
+                      <div class="flex flex-col gap-1">
+                        <p class="text-sm text-brown-500">{i18n.t("basket.text")}</p>
+                        <TextInput
+                          type="text"
+                          value={embroideryValue.text.value}
+                          placeholder={field.placeholder ?? undefined}
+                          oninput={(e) => {
+                            if (!(e.target instanceof HTMLInputElement)) {
+                              return;
+                            }
+
                             const result = product;
                             const fieldToUpdate = result.fields.find((f) => f.name === field.name);
                             if (fieldToUpdate?.type === "embroidery") {
                               fieldToUpdate.value = {
                                 enabled: true,
-                                text: embroideryValue.text,
-                                color: { color: colorId },
+                                text: { ...embroideryValue.text, value: e.target.value },
+                                color: embroideryValue.color,
                               };
                               onChange?.(result);
                             }
                           }}
                         />
-                      {/each}
+                        {#if embroideryValue.text.error}
+                          <p class="text-sm text-red-500">{embroideryValue.text.error}</p>
+                        {/if}
+                      </div>
+                      <div class="flex flex-col gap-1">
+                        <p class="text-sm text-brown-500">{i18n.t("basket.threadColor")}</p>
+                        <div class="flex gap-1 flex-wrap leading-0">
+                          {#each threadColors as color (color.color_id)}
+                            <Color
+                              {color}
+                              selected={embroideryValue.color.color === color.color_id}
+                              onclick={(colorId) => {
+                                const result = product;
+                                const fieldToUpdate = result.fields.find(
+                                  (f) => f.name === field.name
+                                );
+                                if (fieldToUpdate?.type === "embroidery") {
+                                  fieldToUpdate.value = {
+                                    enabled: true,
+                                    text: embroideryValue.text,
+                                    color: { color: colorId },
+                                  };
+                                  onChange?.(result);
+                                }
+                              }}
+                            />
+                          {/each}
+                        </div>
+                        {#if embroideryValue.color.error}
+                          <p class="text-sm text-red-500">{embroideryValue.color.error}</p>
+                        {/if}
+                      </div>
                     </div>
-                    {#if embroideryValue.color.error}
-                      <p class="text-sm text-red-500">{embroideryValue.color.error}</p>
-                    {/if}
-                  </div>
+                  {/if}
                 </div>
+              {:else}
+                <OrderItemMaterialField {product} {field} {onChange} {locale} />
               {/if}
             </div>
-          {:else}
-            <OrderItemMaterialField {product} {field} {onChange} />
-          {/if}
-        </div>
-        {#if field.value?.error}
-          <p class="text-sm text-red-500">{field.value.error}</p>
+            {#if field.value?.error}
+              <p class="text-sm text-red-500">{field.value.error}</p>
+            {/if}
+          </div>
         {/if}
-      </div>
-    {/if}
-  {/each}
-</div>
+      {/each}
+    </div>
+  {/snippet}
+</I18nGate>

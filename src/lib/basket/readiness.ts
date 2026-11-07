@@ -27,37 +27,36 @@ export function checkoutBlocker(
   draft: CheckoutDraft
 ): CheckoutBlocker | undefined {
   if (order === null || order.lines.length === 0) {
-    return { field: "lines", message: "A kosarad üres." };
+    return { field: "lines", message: "blockers.empty" };
   }
 
   if (order.lines.some((line) => line.invalidReason !== null)) {
     return {
       field: "invalid",
-      message:
-        "Néhány termék már nem rendelhető így. Szerkeszd vagy told ki a megjelölt tételeket, utána leadhatod a rendelést.",
+      message: "blockers.invalid",
     };
   }
 
   if (draft.lastName.trim() === "" || draft.firstName.trim() === "") {
-    return { field: "name", message: "Kérem, add meg a teljes neved." };
+    return { field: "name", message: "blockers.name" };
   }
 
   if (draft.email.trim() === "") {
-    return { field: "email", message: "Kérem, add meg az email címed." };
+    return { field: "email", message: "blockers.email" };
   }
 
   if (!draft.termsAccepted) {
-    return { field: "terms", message: "Az ÁSZF elfogadása kötelező." };
+    return { field: "terms", message: "blockers.terms" };
   }
 
   const method = selectedMethod(methods, draft.shippingMethodId);
 
   if (method === undefined) {
-    return { field: "method", message: "Kérem, válassz egy szállítási módot." };
+    return { field: "method", message: "blockers.method" };
   }
 
   if (method.customFields?.requiresAddress === true && draft.address.trim() === "") {
-    return { field: "address", message: "Kérem, add meg a szállítási címet a szállítási módhoz." };
+    return { field: "address", message: "blockers.address" };
   }
 
   return undefined;

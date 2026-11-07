@@ -89,9 +89,9 @@ const ORDER_FIELDS = `
   }
 `;
 
-const HUNGARIAN_ERRORS: Record<string, string> = {
-  EMAIL_ADDRESS_CONFLICT_ERROR:
-    "Ez az email cím már regisztrált fiókhoz tartozik. Kérlek, adj meg egy másik email címet.",
+// Vendure ErrorCode → i18next key; islands translate via their client i18n.
+const ERROR_KEYS: Record<string, string> = {
+  EMAIL_ADDRESS_CONFLICT_ERROR: "errorCodes.EMAIL_ADDRESS_CONFLICT_ERROR",
 };
 
 const ERROR_FIELDS = `__typename ... on ErrorResult { errorCode message }`;
@@ -236,7 +236,7 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
 
     const hungarian =
       "errorCode" in payload && typeof payload.errorCode === "string"
-        ? HUNGARIAN_ERRORS[payload.errorCode]
+        ? ERROR_KEYS[payload.errorCode]
         : undefined;
 
     const message =
