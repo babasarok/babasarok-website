@@ -1,29 +1,34 @@
 import { describe, expect, it } from "vitest";
-import materials from "./__fixtures__/materials.json";
-import products from "./__fixtures__/products.json";
-import { toMaterial, toProduct } from "./mappers";
-import { MaterialsResponseSchema, ProductsResponseSchema } from "./schemas";
 import { buildCatalogSitemap } from "./sitemap";
+import type { CatalogMaterial, CatalogProduct } from "./mappers";
 
-const catalogProducts = ProductsResponseSchema.parse(products).products.items.flatMap(
-  (row) => toProduct(row) ?? []
-);
-const catalogMaterials = MaterialsResponseSchema.parse(materials).materials.map(toMaterial);
+// Seam: the custom on-demand catalog sitemap vs. the sitemap integration's
+// hreflang values (astro.config i18n: hu-HU unprefixed, en under /en/).
+const product = {
+  slug: "p&l",
+} as CatalogProduct;
+const material = {
+  slug: "m",
+} as CatalogMaterial;
 
 describe("buildCatalogSitemap", () => {
-  const xml = buildCatalogSitemap("https://babasarok.net", catalogProducts, catalogMaterials);
+  it("lists hu and en alternates on every url, matching the integration hreflang", () => {
+    const xml = buildCatalogSitemap("https://example.com", [product], [material]);
 
-  it("lists every product and material detail page as an absolute url", () => {
-    expect(xml).toContain("<loc>https://babasarok.net/product/kismama-parna/</loc>");
-    expect(xml.match(/<loc>/g)).toHaveLength(catalogProducts.length + catalogMaterials.length);
-  });
-
-  it("escapes xml special characters", () => {
-    const [first] = catalogProducts;
-
-    expect(first).toBeDefined();
-    expect(buildCatalogSitemap("https://x.test", [{ ...first, slug: "a&b" }], [])).toContain(
-      "a&amp;b"
+    expect(xml).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
+    expect(xml).toContain("<loc>https://example.com/product/p&amp;l/</loc>");
+    expect(xml).toContain(
+      '<xhtml:link rel="alternate" hreflang="hu-HU" href="https://example.com/product/p&amp;l/"/>'
+    );
+    expect(xml).toContain(
+      '<xhtml:link rel="alternate" hreflang="en" href="https://example.com/en/product/p&amp;l/"/>'
+    );
+    expect(xml).toContain("<loc>https://example.com/material/m/</loc>");
+    expect(xml).toContain(
+      '<xhtml:link rel="alternate" hreflang="hu-HU" href="https://example.com/material/m/"/>'
+    );
+    expect(xml).toContain(
+      '<xhtml:link rel="alternate" hreflang="en" href="https://example.com/en/material/m/"/>'
     );
   });
 });

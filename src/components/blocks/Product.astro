@@ -18,9 +18,7 @@ const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
           <Markdown of={title} />
         </div>
 
-        <PopularProducts server:defer>
-          <div slot="fallback" class="min-h-96" />
-        </PopularProducts>
+        <PopularProducts />
 
         {/* All-products button */}
         <div class="mt-4 flex justify-center">

@@ -48,7 +48,6 @@ export default defineConfig({
     "/en/material": { maxAge: 60, swr: 300 },
     "/material/[slug]": { maxAge: 60, swr: 300 },
     "/en/material/[slug]": { maxAge: 60, swr: 300 },
-    "/_server-islands/[name]": { maxAge: 60, swr: 300 },
     "/search-index.json": { maxAge: 60, swr: 300 },
     "/en/search-index.json": { maxAge: 60, swr: 300 },
     "/sitemap-catalog.xml": { maxAge: 3600 },
