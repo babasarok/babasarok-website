@@ -180,6 +180,12 @@ const translation = {
     colorsNotice:
       "The colors may differ in reality, and shade variations can occur compared to what is seen in the images.",
     jumpToProduct: "Jump to the product",
+    home: "Home",
+    all: "All posts",
+    orderNow: "Continue to order",
+    browse: "Browse the products",
+    phoneEmail: "Phone & Email",
+    orderableProducts: "List of purchasable products",
   },
 } as const satisfies ShapeOf<typeof hu>;
 

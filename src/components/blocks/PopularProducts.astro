@@ -1,17 +1,25 @@
 ---
-import productSection from "../../content/sections/product.json";
+import { getEntry } from "astro:content";
 import ProductCard from "../ui/ProductCard.astro";
 import { getProducts } from "@/lib/catalog";
 import { listedByPopularity } from "@/lib/catalog/listItems";
+import { entryIdForLocale, localeFromPathname, localizedPath } from "@/lib/i18n";
+import { pageLanguageCode } from "@/lib/vendure/client";
 
-const products = listedByPopularity(await getProducts()).slice(0, productSection.itemCount);
+const locale = localeFromPathname(Astro.url.pathname);
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const entry = (await getEntry("productBlock", entryIdForLocale(locale, "product")))!;
+
+const products = listedByPopularity(
+  await getProducts(undefined, pageLanguageCode(Astro.url.pathname))
+).slice(0, entry.data.itemCount);
 ---
 
 <div class="flex flex-wrap justify-center gap-8 gap-y-12 sm:gap-y-8">
   {
     products.map((product) => (
       <ProductCard
-        href={`/product/${product.slug}/`}
+        href={localizedPath(`/product/${product.slug}/`, locale)}
         title={product.name}
         image={product.thumbnailUrl ?? undefined}
         category={product.tagline ?? undefined}

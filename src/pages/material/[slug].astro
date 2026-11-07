@@ -10,10 +10,15 @@ import FloatingShapes from "../../components/ui/FloatingShapes.astro";
 import Markdown from "../../components/ui/Markdown.astro";
 import VendureImage from "../../components/ui/VendureImage.astro";
 import { getMaterials } from "@/lib/catalog";
+import { pageLanguageCode } from "@/lib/vendure/client";
 
 export const prerender = false;
 
-const materials = (await getMaterials()).toSorted((a, b) => a.label.localeCompare(b.label, "hu"));
+const languageCode = pageLanguageCode(Astro.url.pathname);
+const locale = localeFromPathname(Astro.url.pathname);
+const materials = (await getMaterials(undefined, languageCode)).toSorted((a, b) =>
+  a.label.localeCompare(b.label, locale)
+);
 const slug = Astro.params.slug;
 const index = materials.findIndex((candidate) => candidate.slug === slug);
 const material = materials.find((candidate) => candidate.slug === slug);

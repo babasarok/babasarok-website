@@ -1,16 +1,8 @@
 ---
 import type { GetStaticPaths } from "astro";
 import { getCollection } from "astro:content";
-import Base from "../../layouts/Base.astro";
-import { localeFromPathname } from "../../lib/i18n";
-import { createI18n } from "../../lib/i18next";
-
-const i18n = createI18n(localeFromPathname(Astro.url.pathname));
-const t = i18n.t.bind(i18n);
-import PageHeader from "../../components/ui/PageHeader.astro";
-import BlogCard from "../../components/ui/BlogCard.astro";
-import Pagination from "../../components/ui/Pagination.astro";
-import { defaultLocale, entrySlugFromId, localeFromEntryId } from "@/lib/i18n";
+import BlogIndexPage from "@/components/pages/BlogIndexPage.astro";
+import { defaultLocale, localeFromEntryId } from "@/lib/i18n";
 
 export const getStaticPaths = (async () => {
   const PAGE_SIZE = 6;
@@ -32,28 +24,6 @@ export const getStaticPaths = (async () => {
     };
   });
 }) satisfies GetStaticPaths;
-
-const { items, currentPage, lastPage } = Astro.props;
 ---
 
-<Base title={t("pages.blog")}>
-  <PageHeader title={t("pages.blog")} />
-  <section class="py-25">
-    <div class="container">
-      <div class="flex flex-wrap">
-        {
-          items.map((post) => (
-            <BlogCard
-              href={`/blog/${entrySlugFromId(post.id)}/`}
-              title={post.data.title}
-              image={post.data.featureImage}
-              date={post.data.date}
-              spacing="page"
-            />
-          ))
-        }
-      </div>
-      <Pagination currentPage={currentPage} lastPage={lastPage} basePath="/blog" />
-    </div>
-  </section>
-</Base>
+<BlogIndexPage {...Astro.props} />

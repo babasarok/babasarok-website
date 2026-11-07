@@ -17,11 +17,12 @@ import {
   getThreadColors,
 } from "@/lib/catalog";
 import { toOrderGroups, toOrderProduct, toOrderThreadColors } from "@/lib/catalog/orderProduct";
-import { ASSET_BASE } from "@/lib/vendure/client";
+import { ASSET_BASE, pageLanguageCode } from "@/lib/vendure/client";
 
 export const prerender = false;
 
-const product = await getProduct(Astro.params.id ?? "");
+const languageCode = pageLanguageCode(Astro.url.pathname);
+const product = await getProduct(Astro.params.id ?? "", undefined, languageCode);
 
 if (product === null) {
   Astro.cache.set(false);
@@ -30,10 +31,10 @@ if (product === null) {
 }
 
 const [products, groups, materials, threadColors] = await Promise.all([
-  getProducts(),
-  getProductGroups(),
-  getMaterials(),
-  getThreadColors(),
+  getProducts(undefined, languageCode),
+  getProductGroups(undefined, languageCode),
+  getMaterials(undefined, languageCode),
+  getThreadColors(undefined, languageCode),
 ]);
 
 const { definition, name: title, shortDescription } = product;

@@ -3,6 +3,7 @@ import Base from "../../layouts/Base.astro";
 import PageHeader from "../../components/ui/PageHeader.astro";
 import ProductCard from "../../components/ui/ProductCard.astro";
 import { getMaterials } from "@/lib/catalog";
+import { pageLanguageCode } from "@/lib/vendure/client";
 import { localeFromPathname } from "../../lib/i18n";
 import { createI18n } from "../../lib/i18next";
 
@@ -11,7 +12,11 @@ const t = i18n.t.bind(i18n);
 
 export const prerender = false;
 
-const materials = (await getMaterials()).toSorted((a, b) => a.label.localeCompare(b.label, "hu"));
+const languageCode = pageLanguageCode(Astro.url.pathname);
+const locale = localeFromPathname(Astro.url.pathname);
+const materials = (await getMaterials(undefined, languageCode)).toSorted((a, b) =>
+  a.label.localeCompare(b.label, locale)
+);
 ---
 
 <Base title={t("pages.materials")}>

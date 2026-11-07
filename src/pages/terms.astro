@@ -6,9 +6,13 @@ import { getEntry, render } from "astro:content";
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
 import { getProducts } from "@/lib/catalog";
+import { pageLanguageCode } from "@/lib/vendure/client";
+import { createI18n } from "@/lib/i18next";
 import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
 
 const locale = localeFromPathname(Astro.url.pathname);
+const i18n = createI18n(locale);
+const t = i18n.t.bind(i18n);
 const terms = await getEntry("terms", entryIdForLocale(locale, "index"));
 
 if (!terms) {
@@ -18,9 +22,9 @@ if (!terms) {
 const { Content } = await render(terms);
 const { title } = terms.data;
 
-const productTitles = (await getProducts())
+const productTitles = (await getProducts(undefined, pageLanguageCode(Astro.url.pathname)))
   .map((p) => p.name.trim())
-  .toSorted((a, b) => a.localeCompare(b, "hu"));
+  .toSorted((a, b) => a.localeCompare(b, locale));
 ---
 
 <Base title={title}>
@@ -31,7 +35,7 @@ const productTitles = (await getProducts())
       <div class="prose mx-auto max-w-none">
         <Content />
 
-        <h2>Megvásárolható termékek listája</h2>
+        <h2>{t("pages.orderableProducts")}</h2>
         <ul>
           {productTitles.map((t) => <li>{t}</li>)}
         </ul>

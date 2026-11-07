@@ -175,6 +175,12 @@ const translation = {
     colorsNotice:
       "A színek a valóságban eltérhetnek illetve árnyalatban változások előfordulhatnak a képeken látottaktól.",
     jumpToProduct: "Ugrás a termékre",
+    home: "Főoldal",
+    all: "Összes",
+    orderNow: "Tovább a rendeléshez",
+    browse: "Böngészd a termékeket",
+    phoneEmail: "Telefon & Email",
+    orderableProducts: "Megvásárolható termékek listája",
   },
 } as const;
 

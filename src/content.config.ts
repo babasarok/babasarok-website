@@ -63,6 +63,17 @@ const aboutBlock = defineCollection({
     }),
 });
 
+const productBlock = defineCollection({
+  loader: glob({ pattern: "**/product.json", base: "src/content/sections" }),
+  schema: z.object({
+    enable: z.boolean().optional(),
+    title: z.string(),
+    itemCount: z.number(),
+    buttonName: z.string(),
+    buttonTarget: z.string(),
+  }),
+});
+
 const blogSectionBlock = defineCollection({
   loader: glob({ pattern: "**/blog.json", base: "src/content/sections" }),
   schema: z.object({
@@ -214,6 +225,7 @@ export const collections = {
   heroBlock,
   servicesBlock,
   aboutBlock,
+  productBlock,
   blogSectionBlock,
   checkout,
   terms,

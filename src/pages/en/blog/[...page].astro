@@ -1,0 +1,29 @@
+---
+import type { GetStaticPaths } from "astro";
+import { getCollection } from "astro:content";
+import BlogIndexPage from "@/components/pages/BlogIndexPage.astro";
+import { localeFromEntryId } from "@/lib/i18n";
+
+export const getStaticPaths = (async () => {
+  const PAGE_SIZE = 6;
+  const posts = (await getCollection("blog"))
+    .filter((post) => localeFromEntryId(post.id) === "en")
+    .toSorted((a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0));
+
+  const lastPage = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+
+  return Array.from({ length: lastPage }, (_, i) => {
+    const currentPage = i + 1;
+    return {
+      params: { page: currentPage === 1 ? undefined : `page/${currentPage}` },
+      props: {
+        items: posts.slice(i * PAGE_SIZE, (i + 1) * PAGE_SIZE),
+        currentPage,
+        lastPage,
+      },
+    };
+  });
+}) satisfies GetStaticPaths;
+---
+
+<BlogIndexPage {...Astro.props} />
