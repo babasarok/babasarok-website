@@ -13,7 +13,7 @@ export const TermsCollection: Collection = {
   format: "md",
   frontmatterFormat: "yaml",
   match: {
-    include: "index",
+    include: "**/index",
   },
   ui: {
     allowedActions: {

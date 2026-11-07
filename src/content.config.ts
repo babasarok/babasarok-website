@@ -9,6 +9,11 @@
  * collection: `src/content/config` holds JSON (Tina's global config), so the
  * default Markdown glob finds nothing and warns. Pointing it at JSON silences
  * that.
+ *
+ * Every collection is directory-localized (ADR 0015 decision 4): the locale
+ * lives as the first path segment under the collection root
+ * (`src/content/<collection>/<locale>/…`), and consumers pick their locale's
+ * entry through the helpers in `src/lib/i18n.ts`.
  */
 import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
@@ -16,7 +21,7 @@ import z from "astro/zod";
 import { cookieCategorySchema } from "./lib/cookie";
 
 const heroBlock = defineCollection({
-  loader: glob({ pattern: "hero.md", base: "src/content/sections" }),
+  loader: glob({ pattern: "**/hero.md", base: "src/content/sections" }),
   schema: ({ image }) =>
     z.object({
       topTitle: z.string(),
@@ -28,7 +33,7 @@ const heroBlock = defineCollection({
 });
 
 const servicesBlock = defineCollection({
-  loader: glob({ pattern: "service.json", base: "src/content/sections" }),
+  loader: glob({ pattern: "**/service.json", base: "src/content/sections" }),
   schema: ({ image }) =>
     z.object({
       enable: z.boolean().optional(),
@@ -44,7 +49,7 @@ const servicesBlock = defineCollection({
 });
 
 const aboutBlock = defineCollection({
-  loader: glob({ pattern: "about.json", base: "src/content/sections" }),
+  loader: glob({ pattern: "**/about.json", base: "src/content/sections" }),
   schema: ({ image }) =>
     z.object({
       enable: z.boolean().optional(),
@@ -58,8 +63,19 @@ const aboutBlock = defineCollection({
     }),
 });
 
+const blogSectionBlock = defineCollection({
+  loader: glob({ pattern: "**/blog.json", base: "src/content/sections" }),
+  schema: z.object({
+    enable: z.boolean().optional(),
+    topTitle: z.string().optional(),
+    title: z.string(),
+    buttonName: z.string().optional(),
+    buttonTarget: z.string().optional(),
+  }),
+});
+
 const config = defineCollection({
-  loader: glob({ pattern: "config.json", base: "src/content/config" }),
+  loader: glob({ pattern: "**/config.json", base: "src/content/config" }),
   schema: ({ image }) =>
     z.object({
       title: z.string(),
@@ -156,7 +172,7 @@ const blog = defineCollection({
 });
 
 const contact = defineCollection({
-  loader: glob({ pattern: "_index.md", base: "src/content/contact" }),
+  loader: glob({ pattern: "**/_index.md", base: "src/content/contact" }),
   schema: z.object({
     title: z.string(),
     breadcrumb: z.string().optional(),
@@ -164,7 +180,7 @@ const contact = defineCollection({
 });
 
 const adatvedelem = defineCollection({
-  loader: glob({ pattern: "_index.md", base: "src/content/adatvedelem" }),
+  loader: glob({ pattern: "**/_index.md", base: "src/content/adatvedelem" }),
   schema: z.object({
     title: z.string(),
     cookieBannerHeading: z.string(),
@@ -174,7 +190,7 @@ const adatvedelem = defineCollection({
 });
 
 const checkout = defineCollection({
-  loader: glob({ pattern: "index.md", base: "src/content/checkout" }),
+  loader: glob({ pattern: "**/index.md", base: "src/content/checkout" }),
   schema: z.object({
     basket_note: z.string().optional(),
     contact_heading: z.string(),
@@ -184,7 +200,7 @@ const checkout = defineCollection({
 });
 
 const terms = defineCollection({
-  loader: glob({ pattern: "index.md", base: "src/content/terms" }),
+  loader: glob({ pattern: "**/index.md", base: "src/content/terms" }),
   schema: z.object({
     title: z.string(),
   }),
@@ -198,6 +214,7 @@ export const collections = {
   heroBlock,
   servicesBlock,
   aboutBlock,
+  blogSectionBlock,
   checkout,
   terms,
 };

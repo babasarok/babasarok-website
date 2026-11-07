@@ -12,7 +12,7 @@ export const AboutCollection: Collection = {
   path: "src/content/sections",
   format: "json",
   match: {
-    include: "about",
+    include: "**/about",
   },
 
   ui: {

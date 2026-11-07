@@ -6,15 +6,23 @@ import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
 import Button from "../components/ui/Button.astro";
 import { getConfig } from "../lib/config";
+import { localeFromPathname } from "../lib/i18n";
 import locationIcon from "../assets/images/contact/location.svg";
 import phoneIcon from "../assets/images/contact/phone.svg";
 import socialIcon from "../assets/images/contact/social-media.svg";
 
-const [entry] = await getCollection("contact");
+const entry = (await getCollection("contact")).find(
+  (candidate) => candidate.id === `${localeFromPathname(Astro.url.pathname)}/_index`
+);
+
+if (!entry) {
+  throw new Error("Contact entry not found");
+}
+
 const { Content } = await render(entry);
 const { title, breadcrumb } = entry.data;
 
-const config = await getConfig();
+const config = await getConfig(localeFromPathname(Astro.url.pathname));
 const address = config.address ?? null;
 const social = [...(config.social ?? [])]
   .filter((s): s is NonNullable<typeof s> => !!s && !!s.icon)

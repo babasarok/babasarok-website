@@ -7,7 +7,7 @@ export const GlobalConfigCollection: Collection = {
   format: "json",
 
   match: {
-    include: "config",
+    include: "**/config",
   },
   ui: {
     global: true,

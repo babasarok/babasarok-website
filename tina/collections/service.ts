@@ -13,7 +13,7 @@ export const ServiceCollection: Collection = {
   path: "src/content/sections",
   format: "json",
   match: {
-    include: "service",
+    include: "**/service",
   },
 
   ui: {

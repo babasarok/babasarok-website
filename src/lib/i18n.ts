@@ -24,3 +24,24 @@ export function localizedPath(pathname: string, target: Locale): string {
   const rest = current === defaultLocale ? pathname : pathname.slice(current.length + 1);
   return target === defaultLocale ? rest : `/${target}${rest}`;
 }
+
+/**
+ * Content-entry ids carry the locale as their first path segment
+ * (`src/content/<collection>/<locale>/…`, ADR 0015 decision 4); an id without
+ * a locale prefix belongs to the default locale (e.g. blog posts created at
+ * the collection root by the Tina editor).
+ */
+export function localeFromEntryId(entryId: string): Locale {
+  const [head] = entryId.split("/");
+  return locales.find((locale) => locale === head) ?? defaultLocale;
+}
+
+export function entryIdForLocale(locale: Locale, name: string): string {
+  return `${locale}/${name}`;
+}
+
+export function entrySlugFromId(entryId: string): string {
+  const [head] = entryId.split("/");
+  const headLocale = locales.find((locale) => locale === head);
+  return headLocale ? entryId.slice(headLocale.length + 1) : entryId;
+}

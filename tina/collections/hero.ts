@@ -12,7 +12,7 @@ export const HeroCollection: Collection = {
   path: "src/content/sections",
   format: "md",
   match: {
-    include: "hero",
+    include: "**/hero",
   },
 
   ui: {

@@ -3,12 +3,21 @@ import { getCollection, render } from "astro:content";
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
 import { getConfig } from "../lib/config";
+import { localeFromPathname } from "../lib/i18n";
 
-const [entry] = await getCollection("adatvedelem");
+const locale = localeFromPathname(Astro.url.pathname);
+const entry = (await getCollection("adatvedelem")).find(
+  (candidate) => candidate.id === `${locale}/_index`
+);
+
+if (!entry) {
+  throw new Error("Adatvedelem entry not found");
+}
+
 const { Content } = await render(entry);
 const { title } = entry.data;
 
-const config = await getConfig();
+const config = await getConfig(locale);
 const address = config.address ?? null;
 ---
 

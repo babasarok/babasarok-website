@@ -1,0 +1,101 @@
+{
+  "title": "Babasarok",
+  "description": "Unique, handmade baby gear",
+  "ogLocale": "en_GB",
+  "themeColor": "#F1D3B2",
+  "mainMenu": [
+    {
+      "name": "Home",
+      "url": "/en/",
+      "weight": 1
+    },
+    {
+      "name": "About us",
+      "url": "/en/#about",
+      "weight": 4
+    },
+    {
+      "name": "Products",
+      "url": "/en/product/",
+      "weight": 5
+    },
+    {
+      "name": "Reference pieces",
+      "url": "/en/#blog",
+      "weight": 7
+    },
+    {
+      "name": "Materials",
+      "url": "/en/material/",
+      "weight": 8
+    }
+  ],
+  "sitemapMenu": [
+    {
+      "name": "Home",
+      "url": "/en/",
+      "weight": 1
+    },
+    {
+      "name": "Contact",
+      "url": "/en/contact",
+      "weight": 2
+    },
+    {
+      "name": "Products",
+      "url": "/en/product",
+      "weight": 3
+    },
+    {
+      "name": "Reference pieces",
+      "url": "/en/blog",
+      "weight": 4
+    },
+    {
+      "name": "Privacy policy",
+      "url": "/en/adatvedelem",
+      "weight": 5
+    },
+    {
+      "name": "GTC",
+      "url": "/en/terms",
+      "weight": 6
+    }
+  ],
+  "pagination": {
+    "pagerSize": 6
+  },
+  "titleSeparator": "-",
+  "titleAddition": "Unique, handmade baby gear",
+  "blogPageURL": "blog",
+  "logo": "/src/assets/images/site-navigation/logo.webp",
+  "footerLogo": "/src/assets/images/site-navigation/logo-dark.webp",
+  "contactLink": "contact",
+  "copyright": "Babasarok 2026",
+  "fabformURL": "1ffa9477-1db3-47f2-bc9e-1226e3a3b858",
+  "footerContact": {
+    "topTitle": "Contact",
+    "title": "Order now!",
+    "button": "Get in touch here"
+  },
+  "address": {
+    "phone": "+36 30 2121 709",
+    "email": "halminoemi99@gmail.com",
+    "address": "Kossuth út 11/a, 3896 Telkibánya, Hungary"
+  },
+  "social": [
+    {
+      "icon": "streamline-logos:facebook-logo-2",
+      "url": "https://www.facebook.com/share/1AsACc4DuU/?mibextid=wwXIfr"
+    },
+    {
+      "icon": "fa:instagram",
+      "url": "https://www.instagram.com/babasarokk/"
+    },
+    {
+      "icon": "fa-brands:tiktok",
+      "url": "https://www.tiktok.com/@halminoemi99?_t=ZG-8wgf8AuszwG&_r=1",
+      "weight": 1
+    }
+  ]
+}

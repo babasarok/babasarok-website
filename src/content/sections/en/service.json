@@ -1,0 +1,27 @@
+{
+  "enable": true,
+  "topTitle": "Product types",
+  "title": "## A short product guide\n",
+  "service": [
+    {
+      "content": "#### Braided rail guard\nThe braided rail guard is not only a stylish accessory for your cot, it also offers practical protection. Its soft, puffy material protects the baby's head from bumping into the rails — especially once your little one starts to turn over.\n",
+      "image": "/src/assets/Noémi-11.webp"
+    },
+    {
+      "content": "#### Baby nest set\nThe baby nest's snug, embracing shape creates a womb-like environment that soothes the baby and supports restful sleep. The set contains the baby nest, a pillow and a blanket — everything needed for comfortable rest.\n",
+      "image": "/src/assets/671B3D9F-107D-4217-A99F-36C49B3AFF46.png"
+    },
+    {
+      "content": "#### Summer blanket\nThe double-gauze summer blanket is the ideal choice in the summer heat, when even the tiniest ones feel uncomfortable in the warmth. Use it as a two-layer blanket or a single-layer cotton duvet cover — and many babies love it as a \"cuddle cloth\" too.\n",
+      "image": "/src/assets/IMG_4006.jpeg"
+    },
+    {
+      "content": "#### Pregnancy pillow\nThis versatile pillow not only provides comfort while breastfeeding, it also gives the growing bump perfect support during pregnancy. While nursing it relieves back and neck pain while supporting the baby's correct positioning.\n",
+      "image": "/src/assets/IMG_6927.webp"
+    },
+    {
+      "content": "#### Pacifier and teether chains\nSilicone pacifier and teether chains are perfect for keeping the pacifier always within the baby's reach — no worries if it drops — and they also help ease the discomfort of teething. Stylish and practical!\n",
+      "image": "/src/assets/IMG_7060.webp"
+    }
+  ]
+}
