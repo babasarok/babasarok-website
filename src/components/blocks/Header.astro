@@ -98,9 +98,9 @@ const switchLabel = createI18n(locale).t(`languageNames.${otherLocale}`);
             href={switchHref}
             hreflang={otherLocale}
             aria-label={switchLabel}
-            class="text-dark hover:text-sand-300 block p-2 text-center transition-all"
+            class="text-dark hover:text-sand-300 self-center px-1 text-sm font-medium tracking-widest uppercase transition-all"
           >
-            {switchLabel}
+            {otherLocale}
           </a>
           <Button href={contactLink} size="lg" variant="primary">Kapcsolat</Button>
         </div>
