@@ -165,7 +165,7 @@ describe("material-write sync fan-out", () => {
            WHERE "queueName" = 'product-definition-sync' AND (data::jsonb)->>'productId' = $1`,
           [productId]
         );
-        return result.rows[0].n;
+        return result.rows.at(0)?.n ?? 0;
       };
       const pending = async (): Promise<number> => {
         const result = await pool.query<{ n: number }>(
@@ -174,7 +174,7 @@ describe("material-write sync fan-out", () => {
              AND (data::jsonb)->>'productId' = $1`,
           [productId]
         );
-        return result.rows[0].n;
+        return result.rows.at(0)?.n ?? 0;
       };
 
       // The material events dispatch asynchronously (seconds later under the
