@@ -55,9 +55,12 @@ const relatedIds = new Set(
 const orderCatalog = Object.fromEntries(
   products
     .filter((candidate) => relatedIds.has(candidate.definition.id))
-    .map((candidate) => [candidate.definition.id, toOrderProduct(candidate, materials, ASSET_BASE)])
+    .map((candidate) => [
+      candidate.definition.id,
+      toOrderProduct(candidate, materials, ASSET_BASE, languageCode),
+    ])
 );
-const orderProduct = toOrderProduct(product, materials, ASSET_BASE);
+const orderProduct = toOrderProduct(product, materials, ASSET_BASE, languageCode);
 const slugByProductId = Object.fromEntries(
   products.map((candidate) => [candidate.definition.id, candidate.slug])
 );

@@ -52,24 +52,23 @@ function asMaps(labels: Labels): SelectionLabels {
 export function describeLine(
   definition: ProductDefinition,
   rawSelections: string | null,
-  labels: Labels
+  labels: Labels,
+  languageCode: string
 ): LineRow[] {
   let selections: LineSelections;
 
   try {
     // The thrown message is discarded below, so the parse language never renders.
-    selections = parseLineSelections(rawSelections, "hu");
+    selections = parseLineSelections(rawSelections, languageCode);
   } catch {
     return [];
   }
 
-  // ponytail: the details language stays Hungarian until the ui-dicts slice
-  // wires a locale prop into the order islands (ADR 0015 slice 3).
   return selectionDetails({
     definition,
     selections,
     lengthCm: null,
     labels: asMaps(labels),
-    languageCode: "hu",
+    languageCode,
   }).map(({ label, value }) => ({ label, value }));
 }

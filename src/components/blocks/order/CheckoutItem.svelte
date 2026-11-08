@@ -10,7 +10,7 @@
   import { imageUrl } from "@/lib/vendure/imageUrl";
   import type { i18n as I18n } from "i18next";
   import I18nGate from "@/components/ui/I18nGate.svelte";
-  import { localizedPath, type Locale } from "@/lib/i18n";
+  import { localizedPath, VENDURE_LANGUAGE_CODE, type Locale } from "@/lib/i18n";
 
   interface Props {
     locale: Locale;
@@ -42,7 +42,12 @@
   const product = $derived(line.productVariant.product);
   const rows = $derived(
     product.productDefinition
-      ? describeLine(product.productDefinition, line.customFields?.selections ?? null, labels)
+      ? describeLine(
+          product.productDefinition,
+          line.customFields?.selections ?? null,
+          labels,
+          VENDURE_LANGUAGE_CODE[locale]
+        )
       : []
   );
   const setState = $derived(lineSetState(line));
