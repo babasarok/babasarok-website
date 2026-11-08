@@ -608,6 +608,28 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     }
   }
 
+  /**
+   * Whether a not-yet-started sync job for the product sits in the queue.
+   * Uninspectable strategies fail open: enqueue unconditionally, as before.
+   */
+  private async hasQueuedSync(productId: string): Promise<boolean> {
+    const strategy = this.configService.jobQueueOptions.jobQueueStrategy;
+
+    if (
+      !(strategy instanceof PollingJobQueueStrategy) ||
+      !isInspectableJobQueueStrategy(strategy)
+    ) {
+      return false;
+    }
+
+    const jobs = await allJobs(strategy, {
+      queueName: { eq: SYNC_QUEUE_NAME },
+      state: { in: ["PENDING", "RETRYING"] },
+    });
+
+    return jobs.some((job) => SyncJobDataSchema.parse(job.data).productId === productId);
+  }
+
   /** Queues a sync after the definition write committed. */
   private async enqueueSync(
     ctx: RequestContext,
@@ -616,6 +638,16 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   ): Promise<void> {
     if (this.syncQueue === null) {
       throw new Error("A termékszinkronizáló sor még nem áll rendelkezésre.");
+    }
+
+    // One queued job covers any number of later changes: the job re-reads the
+    // definition and the materials when it runs. Without this, a material
+    // write burst enqueues the same product once per referencing material and
+    // the sequential worker chews through duplicate heavy syncs. A RUNNING job
+    // must not swallow the follow-up (it read its state at start, so a save
+    // that lands mid-run still queues its own pass) — hence not-started only.
+    if (await this.hasQueuedSync(productId)) {
+      return;
     }
 
     try {

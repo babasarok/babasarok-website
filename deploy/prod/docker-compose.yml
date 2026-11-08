@@ -8,6 +8,9 @@ services:
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
+    # One runaway container must not starve the box: the 2026-11-08 incident
+    # had a sync-job OOM loop fill RAM+swap until the OS OOM-killed the API.
+    mem_limit: 1g
     environment:
       POSTGRES_USER: babasarok
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -39,6 +42,8 @@ services:
   vendure:
     build: ./repo
     restart: unless-stopped
+    # ~300 MB steady; the cap contains a leak instead of the box.
+    mem_limit: 1g
     # The edge Caddy sits on every stack's network; the per-stack alias keeps
     # the hostname→stack routing unambiguous (bare `vendure` would be a
     # cross-network DNS coin-flip).
@@ -82,8 +87,16 @@ services:
       - .env.cloudflare
     environment:
       NODE_ENV: production
+      # A single variant sync of a big product (1000+ variants) peaks above
+      # the ~2 GB default heap and OOM-looped the worker on 2026-11-08. 3 GB
+      # lets those syncs finish; mem_limit (= memswap_limit, swap forbidden)
+      # turns a worse runaway into a contained worker restart instead of an
+      # OS-wide memory panic that kills the API.
+      NODE_OPTIONS: --max-old-space-size=3072
       DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/babasarok
     command: ["node", "dist/index-worker.js"]
+    mem_limit: 3584m
+    memswap_limit: 3584m
     stop_grace_period: 30s
     # The worker has no HTTP listener (it polls the DB job queue), so probe
     # its one critical dependency instead: a DB round-trip with its own
