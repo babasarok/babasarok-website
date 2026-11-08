@@ -52,5 +52,6 @@
     ],
     "unwantedRecommendations": []
   },
-  "typescript.native-preview.tsdk": "node_modules/@typescript/native-preview"
+  "typescript.native-preview.tsdk": "node_modules/@typescript/native-preview",
+  "i18n-ally.localesPaths": ["src/locales"]
 }
