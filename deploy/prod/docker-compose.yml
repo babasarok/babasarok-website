@@ -42,8 +42,13 @@ services:
   vendure:
     build: ./repo
     restart: unless-stopped
-    # ~300 MB steady; the cap contains a leak instead of the box.
-    mem_limit: 1g
+    # The Node heap flag must sit BELOW the cgroup cap: with the default heap
+    # (~2 GB) over a 1 GB cap, memory pressure turns into a GC death spiral
+    # (100% CPU, requests hang) instead of a clean Node OOM restart. 1.5 GB
+    # heap under a 2 GB cap leaves room for legit admin read spikes (bulk
+    # definition reads peak ~600 MB over the ~300 MB steady).
+    mem_limit: 2g
+    memswap_limit: 2g
     # The edge Caddy sits on every stack's network; the per-stack alias keeps
     # the hostname→stack routing unambiguous (bare `vendure` would be a
     # cross-network DNS coin-flip).
@@ -56,6 +61,8 @@ services:
       - .env.cloudflare
     environment:
       NODE_ENV: production
+      # Heap flag below the cgroup cap — see the mem_limit comment above.
+      NODE_OPTIONS: --max-old-space-size=1536
       DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/babasarok
     depends_on:
       postgres:
