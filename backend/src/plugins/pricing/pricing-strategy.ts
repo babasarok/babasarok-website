@@ -1,4 +1,4 @@
-import { EntityHydrator, idsAreEqual, type PriceCalculationResult } from "@vendure/core";
+import { idsAreEqual, type PriceCalculationResult } from "@vendure/core";
 import type {
   Injector,
   Order,
@@ -68,10 +68,7 @@ export class ServerPricingStrategy implements OrderItemPriceCalculationStrategy 
   private deps!: LineValuationDeps;
 
   init(injector: Injector): void {
-    this.deps = lineValuationDeps(
-      injector.get(TransactionalConnection),
-      injector.get(EntityHydrator)
-    );
+    this.deps = lineValuationDeps(injector.get(TransactionalConnection));
   }
 
   calculateUnitPrice(

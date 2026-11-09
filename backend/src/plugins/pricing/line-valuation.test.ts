@@ -36,29 +36,18 @@ const ctx = new RequestContext({
 const deps: LineValuationDeps = {
   findDefinition: async () => new ProductDefinition({ definition, productId: "parna" }),
   productName: async () => "Párna",
-  variantOptionCodes: async () => new Map([["meret", "nagy"]]),
 };
 
 const nagyVariant = new ProductVariant({ id: 7, productId: 3, listPrice: 1500 });
 
 describe("valueVariantLine", () => {
-  it("prices a line whose selections pick its variant", async () => {
-    const selections = JSON.stringify({ meret: { kind: "option", value: "nagy" } });
-
-    expect(await valueVariantLine(deps, ctx, nagyVariant, { selections })).toEqual({
-      kind: "priced",
-      price: 1500,
-    });
-  });
-
   it.each([
-    ["no selection", {}],
-    ["a custom value", { meret: { kind: "custom", value: "xyz" } }],
-  ])("refuses a variant other than the one %s implies", async (_name, selections) => {
-    const valuation = await valueVariantLine(deps, ctx, nagyVariant, {
-      selections: JSON.stringify(selections),
-    });
-
-    expect(valuation.kind).toBe("invalid");
+    ["the picked option", { meret: { kind: "option", value: "nagy" } }, 1500],
+    ["the default without a selection", {}, 1000],
+    ["the default for an unlisted custom value", { meret: { kind: "custom", value: "xyz" } }, 1000],
+  ])("prices %s, whatever the variant", async (_name, selections, price) => {
+    expect(
+      await valueVariantLine(deps, ctx, nagyVariant, { selections: JSON.stringify(selections) })
+    ).toEqual({ kind: "priced", price });
   });
 });

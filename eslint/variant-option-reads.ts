@@ -12,7 +12,6 @@ export const variantOptionReadSelectors = [
 
 /** The remaining uses of the variant matrix (ADR 0016); entries only ever leave. */
 export const variantOptionReadAllowlist = [
-  "backend/src/plugins/pricing/variant-agreement.ts",
   "backend/src/plugins/product/product-definition.service.ts",
   "backend/src/plugins/product/product.resolver.ts",
   "backend/src/plugins/product/sync-state.ts",

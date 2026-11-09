@@ -149,10 +149,8 @@ then sell for 0 Ft).
 > the generated variants carry as their list price), plus the non-axis
 > parts — a field hidden by `depends_on` contributes nothing, so no line
 > charges for a selection the order form cannot offer (the length walk's
-> per-meter price obeys the same rule). While generated variants exist, a
-> line's variant must match the choices its selections imply, defaults
-> included (a missing selection or an unlisted custom value implies the
-> default option); otherwise the line is invalid. Visibility and orderability are one switch: the native
+> per-meter price obeys the same rule). The line's variant plays no part in
+> its price. Visibility and orderability are one switch: the native
 > product's `enabled` — the shop API serves only enabled products, so a
 > disabled product is neither listed nor configurable (owner decision
 > 2026-11; the definition carries no separate `orderable` flag). These

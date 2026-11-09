@@ -4,7 +4,7 @@ import tseslint from "typescript-eslint";
 import { describe, expect, it } from "vitest";
 import { variantOptionReadAllowlist, variantOptionReadSelectors } from "./variant-option-reads";
 
-const ALLOWLIST_SIZE = 6;
+const ALLOWLIST_SIZE = 5;
 
 function violations(code: string): number {
   const linter = new Linter({ configType: "flat" });
