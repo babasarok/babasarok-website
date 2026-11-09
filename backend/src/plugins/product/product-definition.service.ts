@@ -88,6 +88,8 @@ import {
 } from "./variant-plan";
 import { BulkVariantWriter } from "./bulk-variant-writer";
 import type { PlannedVariantCreate } from "./bulk-variant-writer";
+import { loadVariantMatrix, type MatrixVariant } from "./variant-matrix-loader";
+import { pruneTranslations, type KeptLanguages } from "./prune-translations";
 
 function labelAsName(translation: { languageCode: LanguageCode; label: string }): {
   languageCode: LanguageCode;
@@ -980,6 +982,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     const plannedByCode = new Map(plan.optionGroups.map((group) => [group.code, group]));
     const optionIdsByGroupCode = new Map<string, Map<string, number>>();
     const removals: OptionGroupRemovals = { options: [], groups: [] };
+    const keptGroups: KeptLanguages[] = [];
+    const keptOptions: KeptLanguages[] = [];
 
     for (const group of product.optionGroups) {
       if (group.deletedAt !== null) {
@@ -994,6 +998,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       }
 
       optionIdsByGroupCode.set(group.code, new Map());
+      keptGroups.push({ baseId: Number(group.id), languages: Object.keys(planned.name) });
 
       if (!sameText(textOf(group.translations, group.code), planned.name)) {
         await this.optionGroupService.update(ctx, {
@@ -1023,6 +1028,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
         plannedOptions.delete(option.code);
         optionIds.set(option.code, Number(option.id));
+        keptOptions.push({ baseId: Number(option.id), languages: Object.keys(plannedOption.name) });
 
         if (!sameText(textOf(option.translations, option.code), plannedOption.name)) {
           await this.optionService.update(ctx, {
@@ -1066,6 +1072,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         optionIds.set(plannedOption.code, Number(created.id));
       }
     }
+
+    const manager = this.connection.getRepository(ctx, Product).manager;
+    await pruneTranslations(manager, "product_option_group_translation", keptGroups);
+    await pruneTranslations(manager, "product_option_translation", keptOptions);
 
     return { optionIdsByGroupCode, removals };
   }
@@ -1177,19 +1187,14 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       return ids;
     };
 
-    const existing = await this.connection.getRepository(ctx, ProductVariant).find({
-      where: { product: { id: nativeProductId }, deletedAt: IsNull() },
-      relations: {
-        options: true,
-        translations: true,
-        productVariantPrices: true,
-        facetValues: true,
-      },
-    });
+    const existing = await loadVariantMatrix(
+      this.connection.getRepository(ctx, ProductVariant).manager,
+      nativeProductId
+    );
     const plannedBySku = new Map(plan.variants.map((variant) => [variant.sku, variant]));
     const existingBySku = new Map(existing.map((variant) => [variant.sku, variant]));
-    const channelPrice = (variant: ProductVariant): number =>
-      variant.productVariantPrices.find((price) => price.channelId === ctx.channelId)?.price ?? 0;
+    const channelPrice = (variant: MatrixVariant): number =>
+      variant.prices.find((price) => price.channelId === Number(ctx.channelId))?.price ?? 0;
 
     const missing = plan.variants.filter((variant) => !existingBySku.has(variant.sku));
 
@@ -1203,12 +1208,12 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       }
 
       const plannedOptionIds = optionIdsFor(planned);
-      const actualOptionIds = new Set(variant.options.map((option) => Number(option.id)));
+      const actualOptionIds = new Set(variant.options.map((option) => option.id));
       const optionsChanged =
         actualOptionIds.size !== plannedOptionIds.length ||
         plannedOptionIds.some((optionId) => !actualOptionIds.has(optionId));
       const plannedFacetIds = facetValueIdsFor(variant.sku);
-      const actualFacetIds = new Set(variant.facetValues.map((value) => Number(value.id)));
+      const actualFacetIds = new Set(variant.facetValues.map((value) => value.id));
       const facetsChanged =
         actualFacetIds.size !== plannedFacetIds.length ||
         plannedFacetIds.some((facetValueId) => !actualFacetIds.has(facetValueId));
@@ -1256,7 +1261,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       if (bulk) {
         await this.bulkVariantWriter.softDelete(
           ctx,
-          stale.map((variant) => Number(variant.id))
+          stale.map((variant) => variant.id)
         );
       } else {
         await this.variantService.softDelete(
@@ -1281,6 +1286,27 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
       progress.advance(updates.length);
     }
+
+    const keptVariants = existing.flatMap((variant) => {
+      const planned = plannedBySku.get(variant.sku);
+
+      if (planned === undefined) {
+        return [];
+      }
+
+      const languages = Object.keys(planned.name);
+      const hasRemovedLanguage = variant.translations.some(
+        (translation) => !languages.includes(translation.languageCode)
+      );
+
+      return hasRemovedLanguage ? [{ baseId: variant.id, languages }] : [];
+    });
+
+    await pruneTranslations(
+      this.connection.getRepository(ctx, ProductVariant).manager,
+      "product_variant_translation",
+      keptVariants
+    );
 
     if (missing.length > 0) {
       const plannedCreates: PlannedVariantCreate[] = missing.map((variant) => ({
@@ -1369,7 +1395,6 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     const product = await this.connection.getRepository(ctx, Product).findOne({
       where: { id: nativeProductId, deletedAt: IsNull() },
       relations: {
-        translations: true,
         optionGroups: { translations: true, options: { translations: true } },
       },
     });
@@ -1378,15 +1403,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       throw new Error(`A natív termék eltűnt: ${nativeProductId}`);
     }
 
-    const variants = await this.connection.getRepository(ctx, ProductVariant).find({
-      where: { product: { id: nativeProductId }, deletedAt: IsNull() },
-      relations: {
-        options: { group: true },
-        translations: true,
-        productVariantPrices: true,
-        facetValues: true,
-      },
-    });
+    const variants = await loadVariantMatrix(
+      this.connection.getRepository(ctx, ProductVariant).manager,
+      nativeProductId
+    );
 
     return {
       optionGroups: product.optionGroups
@@ -1405,10 +1425,9 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         sku: variant.sku,
         name: textOf(variant.translations, variant.sku),
         price:
-          variant.productVariantPrices.find((price) => price.channelId === ctx.channelId)?.price ??
-          0,
+          variant.prices.find((price) => price.channelId === Number(ctx.channelId))?.price ?? 0,
         options: variant.options.map((option) => ({
-          groupCode: option.group.code,
+          groupCode: option.groupCode,
           optionCode: option.code,
         })),
         facetValues: variant.facetValues.map((value) => value.code),
