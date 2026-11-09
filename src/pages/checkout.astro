@@ -1,18 +1,12 @@
 ---
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
-import CheckoutForm from "@/components/blocks/order/CheckoutForm.svelte";
-import { getMaterials, getProductGroups, getProducts, getThreadColors } from "@/lib/catalog";
-import { setMembersByGroup } from "@/lib/basket/setDiscounts";
+import CheckoutSection from "@/components/blocks/catalog/CheckoutSection.svelte";
 import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
-import { pageLanguageCode } from "@/lib/vendure/client";
 import { getEntry } from "astro:content";
 import { createI18n } from "@/lib/i18next";
 
-export const prerender = false;
-
 const locale = localeFromPathname(Astro.url.pathname);
-const languageCode = pageLanguageCode(Astro.url.pathname);
 const i18n = createI18n(locale);
 const t = i18n.t.bind(i18n);
 const configEntry = await getEntry("config", entryIdForLocale(locale, "config"));
@@ -28,27 +22,6 @@ const config = configEntry.data;
 if (!checkout) {
   throw new Error("Checkout entry not found");
 }
-
-const [materials, threadColors, products, groups] = await Promise.all([
-  getMaterials(undefined, languageCode),
-  getThreadColors(undefined, languageCode),
-  getProducts(undefined, languageCode),
-  getProductGroups(undefined, languageCode),
-]);
-const setMembers = setMembersByGroup(groups, products);
-
-const labels = {
-  materials: Object.fromEntries(
-    materials.map((material) => [
-      material.slug,
-      {
-        label: material.label,
-        colors: Object.fromEntries(material.colors.map((color) => [color.id, color.label])),
-      },
-    ])
-  ),
-  threadColors: Object.fromEntries(threadColors.map((color) => [color.id, color.label])),
-};
 ---
 
 <Base title={t("checkout.title")}>
@@ -56,14 +29,12 @@ const labels = {
 
   <section class="py-12.5">
     <div class="not-prose container">
-      <CheckoutForm
-        locale={localeFromPathname(Astro.url.pathname)}
+      <CheckoutSection
+        {locale}
         basketInfo={checkout.data.basket_note}
         contactHeading={checkout.data.contact_heading}
         basketHeading={checkout.data.basket_heading}
         messageHeading={checkout.data.message_heading}
-        labels={labels}
-        setMembers={setMembers}
         supportEmail={config.address?.email}
         client:load
       />

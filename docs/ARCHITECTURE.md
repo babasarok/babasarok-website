@@ -43,7 +43,7 @@ flowchart LR
         Collections[astro:content<br/>collections]
         Pages[src/pages/**<br/>Astro pages]
     end
-    Browser[Static HTML + islands,<br/>catalog pages rendered on demand]
+    Browser[Static HTML + islands,<br/>catalog islands load from the shop API]
 
     TinaAdmin -->|writes md/json| Git
     Git --> TinaClient
@@ -60,13 +60,17 @@ Three content sources, each with one job:
 
 1. **Vendure catalog** — products, materials, product groups, thread colors,
    delivery methods and orders live in Vendure. `src/lib/catalog/*` queries the
-   shop API and maps responses into the site's shapes; catalog pages render
-   **on demand** (edge-cached ~60 s, ADR 0012), never at build time.
+   shop API and maps responses into the site's shapes. Catalog pages are
+   static shells whose islands load the catalog **in the browser** through
+   the catalog store (ADR 0017), never at build time; only the product and
+   material detail routes render on demand, so crawlers get the item's meta.
 2. **TinaCMS path** — Tina authors the non-catalog content (site config,
    landing sections, blog/reference posts, contact, privacy, terms, checkout
    copy). `src/lib/config.ts` fetches `config.json` through the generated Tina
-   client for headers/footers/SEO; the rest is read by Astro content
-   collections. Tina holds **no product data** (roadmap principle 1).
+   client for a few prerendered pages; the layout, header and footer read the
+   same file through the `config` collection, so no page reads Tina at request
+   time. The rest is read by Astro content collections. Tina holds **no product
+   data** (roadmap principle 1).
 3. **Astro content collections** — `getCollection(...)` over the same
    `src/content` files so list pages get `astro:assets` `ImageMetadata` and
    `<Image>` optimization.
@@ -76,7 +80,7 @@ Three content sources, each with one job:
 ```
 src/
   layouts/Base.astro        # <html> shell: SEO/OG meta, favicons, fonts, Header/Footer, ClientRouter
-  pages/                    # Catalog routes render on demand (ADR 0012), the rest static
+  pages/                    # Static; only catalog detail routes render on demand (ADR 0017)
     index.astro             # Landing: Hero + Service + About + Product + Blog
     contact.astro           # Order form island + contact info
     product/[...page].astro  + [id].astro   # Paginated list + detail (Vendure)

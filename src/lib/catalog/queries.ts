@@ -8,13 +8,15 @@ const PRODUCT_FIELDS = `
   productDefinition
 `;
 
-export const PRODUCTS_QUERY = `
-  query CatalogProducts($skip: Int!, $take: Int!) {
-    products(options: { skip: $skip, take: $take }) {
-      totalItems
-      items { ${PRODUCT_FIELDS} }
-    }
+const PRODUCTS_PAGE = `
+  products(options: { skip: $skip, take: $take }) {
+    totalItems
+    items { ${PRODUCT_FIELDS} }
   }
+`;
+
+export const PRODUCTS_QUERY = `
+  query CatalogProducts($skip: Int!, $take: Int!) { ${PRODUCTS_PAGE} }
 `;
 
 export const PRODUCT_QUERY = `
@@ -42,10 +44,15 @@ export const MATERIAL_QUERY = `
   query CatalogMaterial($slug: String!) { material(slug: $slug) { ${MATERIAL_FIELDS} } }
 `;
 
-export const THREAD_COLORS_QUERY = `
-  query CatalogThreadColors { threadColors { id label hex swatch { source } } }
-`;
+const THREAD_COLORS = `threadColors { id label hex swatch { source } }`;
 
-export const PRODUCT_GROUPS_QUERY = `
-  query CatalogProductGroups { productGroups { id kind label discount productIds } }
+const PRODUCT_GROUPS = `productGroups { id kind label discount productIds }`;
+
+export const CATALOG_QUERY = `
+  query Catalog($skip: Int!, $take: Int!) {
+    ${PRODUCTS_PAGE}
+    materials { ${MATERIAL_FIELDS} }
+    ${THREAD_COLORS}
+    ${PRODUCT_GROUPS}
+  }
 `;

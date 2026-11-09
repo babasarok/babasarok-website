@@ -1,0 +1,26 @@
+---
+import Base from "@/layouts/Base.astro";
+import ProductDetail from "@/components/blocks/catalog/ProductDetail.svelte";
+import { pageHead, type CrawlerMeta } from "@/lib/catalog/crawlerMeta";
+import { localeFromPathname } from "@/lib/i18n";
+import { createI18n } from "@/lib/i18next";
+
+interface Props {
+  slug: string;
+  meta: CrawlerMeta;
+}
+
+const { slug, meta } = Astro.props;
+const locale = localeFromPathname(Astro.url.pathname);
+const i18n = createI18n(locale);
+const shareUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;
+const head = pageHead(meta, i18n.t("pages.products"));
+---
+
+<Base title={head.title} description={head.description} image={head.image} isArticle>
+  <section class="relative overflow-hidden pt-30 pb-25 sm:pt-50">
+    <div class="container">
+      <ProductDetail {locale} {slug} {shareUrl} client:load />
+    </div>
+  </section>
+</Base>

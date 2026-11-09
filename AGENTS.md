@@ -74,6 +74,9 @@ These are listed in priority order. When values conflict, prefer the one higher 
   older-but-safe approach, flag newer standard APIs that could replace it as a
   possible TODO.
 - **Data fetching:** in Astro frontmatter (the `---` block), not in client-side code.
+  Exception: the Vendure catalog loads in the browser through the catalog store
+  (`src/lib/catalog/store.ts`), so pages never wait for the backend
+  ([ADR 0017](docs/adr/0017-static-catalog-shells.md); enforced by ESLint).
 - **Astro component shape:** define a `Props` interface at the top of each
   `.astro` component (for caller type-checking, even when not destructured).
 - **No sidestepping type-checking:** no type casts, non-null assertions, or

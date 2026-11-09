@@ -67,9 +67,10 @@ the native product's `enabled` (the shop API serves only enabled products); a
 product without a known type is
 listed and only drops out of type filters. A product without a definition
 is not a storefront product: it appears in no
-list, search, sitemap or home block, and its detail page is a 404. The page is
-rendered on demand and cached at the edge (60 s, 300 s stale-while-revalidate),
-and an unreachable backend shows the error page instead of partial data. With:
+list, search, sitemap or home block, and its detail page shows "not found". The
+page is a prerendered shell whose list island loads the catalog in the browser
+(ADR 0017): a skeleton first, then the list; an unreachable backend shows an
+inline error with a retry instead of partial data. With:
 
 - **Text search** over product title and short description.
 - **Filtering by product type**: multiple selections within the type
@@ -85,9 +86,8 @@ be expressed in URL query parameters; the page SHALL apply them on load and
 update them as the visitor changes the view, so any filtered view is
 shareable. Dimensions are AND-combined with each other and with the search
 text. When no product matches, the list SHALL show an empty state with a way
-to clear the filters. When JavaScript is unavailable, the page SHALL render
-the full product list (in the default popularity order) with search,
-filtering, and sorting inert.
+to clear the filters. The list needs JavaScript (ADR 0017): without it the
+page shows its header and skeleton only.
 
 - **Scenario: Browsing the catalogue**
   - WHEN a visitor opens the product list
@@ -119,20 +119,20 @@ filtering, and sorting inert.
 - **Scenario: No matching products**
   - WHEN no product matches the active search and filters
   - THEN an empty state is shown with an affordance to clear the filters
-- **Scenario: No JavaScript**
-  - WHEN the product list is rendered without JavaScript
-  - THEN the full product list is shown and search, filtering, and sorting
-    are inert
+- **Scenario: Backend unreachable**
+  - WHEN the catalog cannot be loaded
+  - THEN the list shows an error with a retry button instead of products
 
 ### Material pages and home product block
 
-The material list is one on-demand page (no pagination; the former
-`/material/page/N/` URLs redirect to `/material`) of all materials ordered by
-label, each linking to `/material/<slug>/`. A material page shows the label,
-subtitle, thumbnail, colors, the markdown description (rendered via `Markdown.astro`) and previous/next
-links; an unknown slug answers 404 uncached. The home page's product block is
-a server island showing the `itemCount` (from `product.json`) most popular
-listed products; its title and button stay prerendered. Catalog images come
+The material list is one prerendered page (no pagination; the former
+`/material/page/N/` URLs redirect to `/material`) whose island lists all
+materials ordered by label, each linking to `/material/<slug>/`. A material
+page shows the label, subtitle, thumbnail, colors, the markdown description
+(rendered via `Markdown.svelte`) and previous/next links; an unknown slug shows
+"not found" (crawlers get a 404, see the detail page below). The home page's
+product block is a client island showing the `itemCount` (from `product.json`)
+most popular listed products; its title and button stay prerendered. Catalog images come
 from the asset server's presets as webp (`card-sm`, `card-lg`, `hero-sm`,
 `hero-md`, `hero-lg`; plain asset URLs still serve the original, any other
 preset or size is rejected).
@@ -151,7 +151,7 @@ materials; a catalog hit replaces a Pagefind hit for the same URL.
 
 The system SHALL render a detail page per product showing its title, an image
 gallery (thumbnail plus gallery images with descriptions), its body content,
-and sharing links to social networks. Markdown descriptions render server-side with raw HTML escaped, unsafe link schemes dropped, and host-relative asset image paths (`source/ab/file.jpg`) rewritten to asset-server preset URLs. The page SHALL
+and sharing links to social networks. Markdown descriptions render in the browser with raw HTML escaped, unsafe link schemes dropped, and host-relative asset image paths (`source/ab/file.jpg`) rewritten to asset-server preset URLs. The page SHALL
 additionally embed an order configurator for that product (every product the
 shop API serves is enabled and orderable).
 
@@ -164,14 +164,32 @@ shop API serves is enabled and orderable).
   - THEN the page embeds an order configurator for that product alongside the
     gallery
 
-The detail page is one on-demand page at `/product/<slug>/` (cached 60 s with
-60 s + 300 s stale-while-revalidate like the other catalog pages). Its data
-comes from the shop API: the gallery is the product's Vendure assets as
-`hero-*` presets (the featured asset when there are none), previous/next link
-the newest-first product order, and the set and related panels come from the
-product groups. An unknown slug, or a product without a definition, answers
-404 uncached. The long description renders through one description component;
-until the markdown rendering (S7) is wired it shows nothing.
+The detail page is one on-demand page at `/product/<slug>/` that never waits
+for the backend for a visitor (ADR 0017): it answers a shell at once and its
+island loads the product and the shared catalog in the browser, showing a
+skeleton, then the page (and the product name as the tab title), an inline
+error with a retry when the backend is unreachable, or "not found" for an
+unknown slug or a product without a definition. Its data comes from the shop
+API: the gallery is the product's Vendure assets as `hero-*` presets (the
+featured asset when there are none), previous/next link the newest-first
+product order, and the set and related panels come from the product groups.
+Search and link-preview crawlers (recognised by user agent) instead wait for
+the item: their HTML carries its title, short description and preview image,
+an unknown slug answers 404 and an unreachable backend 503. Material pages
+behave the same way.
+
+- **Scenario: Sharing a product link**
+  - WHEN a link-preview crawler fetches a product's detail page
+  - THEN the HTML head carries the product's name, short description and
+    image
+- **Scenario: Opening a product**
+  - WHEN a visitor opens a product's detail page
+  - THEN the page frame shows at once with a loading skeleton, replaced by the
+    product once the catalog has loaded
+- **Scenario: Browsing between catalog pages**
+  - WHEN a visitor moves between catalog pages within a minute
+  - THEN the catalog already loaded is shown without waiting, and data older
+    than a minute is refreshed in the background
 
 The configurator is fed by the product's canonical definition (adapted to the
 configurator's field model) and shows the live unit and total price computed

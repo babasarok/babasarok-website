@@ -1,7 +1,21 @@
 ---
-import Page from "@/pages/material/[slug].astro";
+import MaterialDetailPage from "@/components/pages/MaterialDetailPage.astro";
+import { crawlerFailure, crawlerMeta } from "@/lib/catalog/crawlerMeta";
+import { localeFromPathname } from "@/lib/i18n";
 
 export const prerender = false;
+
+const slug = Astro.params.slug ?? "";
+const meta = await crawlerMeta(Astro.request, {
+  kind: "material",
+  slug,
+  locale: localeFromPathname(Astro.url.pathname),
+});
+const failure = crawlerFailure(meta);
+
+if (failure !== null) {
+  return failure;
+}
 ---
 
-<Page />
+<MaterialDetailPage {slug} {meta} />

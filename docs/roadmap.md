@@ -102,7 +102,7 @@ splits into two PRs.
     server-side by one service shared with the promotion (backend integration
     tests: `pnpm -C backend run test:integration`). Contact details are saved
     onto the active order and pre-filled from it, never kept in the browser)
-    Stale-page UX (owner requirement, catalog pages are cached ~60 s): a
+    Stale-page UX (owner requirement, catalog data shown can be ~60 s old): a
     changed price shows the server price on the line with a visible notice; a
     line whose option is no longer offered is marked with the reason and can be
     edited or removed, and checkout is blocked until it is resolved (never
@@ -138,11 +138,14 @@ splits into two PRs.
   (`src/lib/pricing`) is gone too: the order island's unit price comes from the
   shared pricing package (`catalog/livePrice`) and only the display breakdown +
   set-grouping helpers remain, moved to `src/lib/order/`.
-- **Edge-cache verification** — on the deployed site, request a catalog page
-  (`/product`), a material page and an asset preset URL twice: the second
-  response shows `CF-Cache-Status: HIT`; after 60 s a request is served stale
-  (`UPDATING`/`STALE`) and refreshed; after 360 s with the backend stopped the
-  page shows the error page. Record whether asset URLs are edge-cached at all
+- **Static catalog shells** ([ADR 0017](adr/0017-static-catalog-shells.md),
+  proposed) — catalog pages stop waiting for the backend: HTML pages are
+  prerendered, catalog islands load the catalog in the browser through a
+  nanostores catalog store shared across ClientRouter navigations, and only the
+  detail routes render on demand so crawlers get the item's meta.
+- **Edge-cache verification** — on the deployed site, request
+  `/search-index.json` and an asset preset URL twice: the second response shows
+  `CF-Cache-Status: HIT`. Record whether asset URLs are edge-cached at all
   (they are served by the VPS); if not, decide on a cache rule for `/assets`.
 
 - **Popularity from real past orders** — derive `popularityRank` from actual

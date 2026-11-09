@@ -2,8 +2,13 @@
 import Header from "../components/blocks/Header.astro";
 import Footer from "../components/blocks/Footer.astro";
 import { Font } from "astro:assets";
-import { getConfig } from "../lib/config";
-import { OG_LOCALE, defaultLocale, localeFromEntryId, localeFromPathname } from "../lib/i18n";
+import {
+  OG_LOCALE,
+  defaultLocale,
+  entryIdForLocale,
+  localeFromEntryId,
+  localeFromPathname,
+} from "../lib/i18n";
 import "../styles/global.css";
 
 // ── Favicon imports (processed by Vite asset pipeline) ───────────────────────
@@ -14,7 +19,7 @@ import appleTouchIcon from "../assets/favicons/apple-touch-icon.png?url";
 import safariPinnedTab from "../assets/favicons/safari-pinned-tab.svg?url";
 import { ClientRouter } from "astro:transitions";
 import { GTM_ID } from "astro:env/client";
-import { getCollection } from "astro:content";
+import { getCollection, getEntry } from "astro:content";
 import ConsentBanner from "@/components/blocks/ConsentBanner.svelte";
 import type { HTMLAttributes } from "astro/types";
 
@@ -22,7 +27,7 @@ interface Props extends HTMLAttributes<"html"> {
   title: string;
   description?: string | null | undefined;
   /** Absolute URL for og:image */
-  image?: string;
+  image?: string | undefined;
   /** Set to true on blog/product detail pages */
   isArticle?: boolean;
   /** Override robots directive, default: "index, follow" */
@@ -39,7 +44,13 @@ const {
 } = Astro.props;
 
 const locale = localeFromPathname(Astro.url.pathname);
-const config = await getConfig(locale);
+const configEntry = await getEntry("config", entryIdForLocale(locale, "config"));
+
+if (!configEntry) {
+  throw new Error("Config entry not found for locale");
+}
+
+const config = configEntry.data;
 const adatvedelemEntry = (await getCollection("adatvedelem")).find(
   (entry) => localeFromEntryId(entry.id) === locale
 );
