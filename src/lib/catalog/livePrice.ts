@@ -20,7 +20,7 @@ function enteredString(field: Field | undefined): string | undefined {
 /**
  * The unit price (Ft) the shared pricing package gives the configured item —
  * from the same selections the basket line carries — or null while it is
- * unpriceable (e.g. no length yet). Variant-axis fields the buyer has not
+ * unpriceable (e.g. no length yet). Axis fields the buyer has not
  * picked yet price at their first listed option.
  */
 export function liveUnitPrice(

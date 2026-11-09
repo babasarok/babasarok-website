@@ -38,7 +38,7 @@ import {
 } from "../../shared/product-definition/index";
 import { graphql } from "@/gql";
 import { UnsavedChangesGuard } from "./unsaved-changes-guard";
-import { ErrorNotice, errorCodeOf, rowKey } from "../shared";
+import { ErrorNotice, rowKey } from "../shared";
 import "./stock-image-sizes.css";
 import { FieldEditor, NumberInput } from "./product-definition-fields";
 import {
@@ -77,10 +77,6 @@ const productDefinitionQuery = graphql(`
       nativeProductId
       syncState
       syncError
-      syncProgress {
-        done
-        total
-      }
       stale
       driftDetails {
         kind
@@ -110,8 +106,8 @@ const createProductDefinitionMutation = graphql(`
 `);
 
 const updateProductDefinitionMutation = graphql(`
-  mutation UpdateProductDefinition($productId: String!, $definition: JSON!, $force: Boolean) {
-    updateProductDefinition(productId: $productId, definition: $definition, force: $force) {
+  mutation UpdateProductDefinition($productId: String!, $definition: JSON!) {
+    updateProductDefinition(productId: $productId, definition: $definition) {
       productId
       syncState
       syncError
@@ -154,7 +150,6 @@ interface SyncInfo {
   error: string | null;
   stale: boolean;
   details: Array<{ kind: string; label: string }>;
-  progress: { done: number; total: number } | null;
 }
 
 const syncStateDictionary = defineStateEntries({
@@ -168,11 +163,7 @@ function SyncBadge({ sync }: { sync: SyncInfo | null }): ReactElement {
     return <></>;
   }
 
-  const baseLabel = syncStateDictionary.labelFor(sync.state);
-  const stateLabel =
-    sync.state === "pending" && sync.progress !== null
-      ? `${baseLabel} ${sync.progress.done} / ${sync.progress.total}`
-      : baseLabel;
+  const stateLabel = syncStateDictionary.labelFor(sync.state);
 
   return (
     <span className="flex items-center gap-2">
@@ -180,9 +171,7 @@ function SyncBadge({ sync }: { sync: SyncInfo | null }): ReactElement {
         {stateLabel}
       </StatusBadge>
       {sync.stale && sync.state !== "pending" && (
-        <Badge variant="warning">
-          Elavult — mentés csak a natív módosítások felülírásával lehetséges
-        </Badge>
+        <Badge variant="warning">Elavult — a következő mentés frissíti a változatot</Badge>
       )}
     </span>
   );
@@ -298,7 +287,6 @@ export function ConfiguratorEditor({
   const [pending, setPending] = useState(false);
   const [errors, setErrors] = useState<string[] | null>(null);
   const [saved, setSaved] = useState(false);
-  const [driftConflict, setDriftConflict] = useState(false);
   const [kindSwitchKey, setKindSwitchKey] = useState<{
     key: string;
     kind: FieldKind;
@@ -351,7 +339,6 @@ export function ConfiguratorEditor({
           error: result.productDefinition.syncError,
           stale: result.productDefinition.stale,
           details: result.productDefinition.driftDetails ?? [],
-          progress: result.productDefinition.syncProgress,
         });
 
         if (result.productDefinition.syncState === "pending") {
@@ -419,7 +406,7 @@ export function ConfiguratorEditor({
           return;
         }
 
-        await save(false);
+        await save();
       },
     });
   });
@@ -625,7 +612,6 @@ export function ConfiguratorEditor({
           error: result.productDefinition.syncError,
           stale: result.productDefinition.stale,
           details: result.productDefinition.driftDetails ?? [],
-          progress: result.productDefinition.syncProgress,
         };
         setSync(next);
 
@@ -677,14 +663,13 @@ export function ConfiguratorEditor({
     return translations.find(isForLanguage);
   }
 
-  async function save(force: boolean): Promise<void> {
+  async function save(): Promise<void> {
     if (definition === null) {
       return;
     }
 
     setErrors(null);
     setSaved(false);
-    setDriftConflict(false);
 
     const stock = creatingNew ? stockTranslation() : undefined;
     const productName = (stock?.name ?? "").trim();
@@ -797,14 +782,12 @@ export function ConfiguratorEditor({
         const result = await api.query(updateProductDefinitionMutation, {
           productId: definitionId,
           definition: validated,
-          force,
         });
         setSync({
           state: result.updateProductDefinition.syncState,
           error: result.updateProductDefinition.syncError,
           stale: false,
           details: [],
-          progress: null,
         });
         // Adopt the saved payload (with the generated codes filled in) so the
         // next save keeps them stable instead of regenerating from labels.
@@ -819,10 +802,6 @@ export function ConfiguratorEditor({
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       setErrors(message.split("\n"));
-
-      if (errorCodeOf(err) === "PRODUCT_DEFINITION_NATIVE_DRIFT") {
-        setDriftConflict(true);
-      }
     } finally {
       setPending(false);
     }
@@ -902,26 +881,6 @@ export function ConfiguratorEditor({
           </ul>
         )}
         {errors !== null && <ErrorNotice message={errors.join("\n")} />}
-        {driftConflict && (
-          <Alert variant="destructive">
-            <AlertTitle>
-              A natív termék opciói, változatai vagy árai a szinkronizáláson kívül módosultak. A
-              mentés a szinkronizálással felülírja ezeket.
-            </AlertTitle>
-            <div className="mt-2">
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={pending}
-                onClick={() => {
-                  void save(true);
-                }}
-              >
-                Natív módosítások felülírása
-              </Button>
-            </div>
-          </Alert>
-        )}
         {saved && (
           <Alert>
             <AlertTitle>Mentés sikeres — a szinkronizálás fut.</AlertTitle>

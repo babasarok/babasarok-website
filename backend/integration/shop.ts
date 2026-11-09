@@ -269,10 +269,6 @@ export async function adminVariant(
   return variant;
 }
 
-export function sku(product: ProductId, ...optionCodes: string[]): string {
-  return optionCodes.length === 0 ? product : `${product}--${optionCodes.join("-")}`;
-}
-
 export async function chooseShipping(shopper: Shopper, code: string): Promise<Order> {
   const { eligibleShippingMethods } = await run(
     shopper.client,
@@ -512,7 +508,7 @@ async function updateDefinition(
   await run(
     server.admin,
     `mutation($productId: String!, $definition: JSON!) {
-      updateProductDefinition(productId: $productId, definition: $definition, force: true) { productId }
+      updateProductDefinition(productId: $productId, definition: $definition) { productId }
     }`,
     { productId, definition: edit(productDefinition.definition) },
     z.unknown()

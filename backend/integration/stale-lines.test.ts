@@ -64,6 +64,7 @@ describe("stale basket lines", () => {
     expect(flagged.lines[0]?.invalidReason?.message).toContain("már nem elérhető");
 
     await removeLine(shopper, flagged.lines[0]?.id ?? "");
+    await setVariantEnabled(server, stale.sku, true);
 
     const replaced = await addLine(shopper, elavulo(PAMUT, "nagy"));
 
@@ -108,13 +109,10 @@ describe("stale basket lines", () => {
 
     const flagged = await activeOrder(shopper);
 
-    expect(flagged.lines[0]?.invalidReason).toEqual({
-      code: "VARIANT_UNAVAILABLE",
-      message: "A(z) Elavuló kiválasztott változata már nem elérhető.",
-    });
+    expect(flagged.lines[0]?.invalidReason?.code).toBe("OPTION_NOT_OFFERED");
+    expect(flagged.lines[0]?.invalidReason?.message).toContain("nem kínálja ezt az értéket: nagy");
     expect(await transitionTo(shopper, "ArrangingPayment")).toEqual({
-      refusal:
-        'Cannot transition to "ArrangingPayment" because the Order contains ProductVariants which are no longer available',
+      refusal: flagged.lines[0]?.invalidReason?.message,
     });
 
     await removeLine(shopper, flagged.lines[0]?.id ?? "");

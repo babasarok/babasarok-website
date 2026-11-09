@@ -21,7 +21,7 @@ import { run, startServer, type IntegrationServer } from "./harness";
 let server: IntegrationServer;
 let api: AdminApi;
 
-const OPTIONS = { force: false, pollMs: 250, syncTimeoutMs: 120_000 };
+const OPTIONS = { pollMs: 250, syncTimeoutMs: 120_000 };
 
 async function strings(language: string): Promise<TranslatableString[]> {
   return translatableStrings(await readCatalogSnapshot(api, { definitions: true }), language);

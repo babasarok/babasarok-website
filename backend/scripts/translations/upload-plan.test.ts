@@ -88,8 +88,7 @@ describe("planUpload", () => {
   it("adds the language next to Hungarian, copying the slug onto a new product row", () => {
     const plan = planUpload(
       snapshot(),
-      file([{ key: "product|7|name", source: "Párna", translation: "Kissen" }]),
-      { force: false }
+      file([{ key: "product|7|name", source: "Párna", translation: "Kissen" }])
     );
 
     expect(plan.operations).toEqual([
@@ -114,13 +113,7 @@ describe("planUpload", () => {
 
     expect(
       refusal(() =>
-        planUpload(
-          live,
-          file([{ key: "product|7|name", source: "Párna", translation: "Kissen" }]),
-          {
-            force: false,
-          }
-        )
+        planUpload(live, file([{ key: "product|7|name", source: "Párna", translation: "Kissen" }]))
       )
     ).toEqual([expect.stringContaining('already translated as "Polster"')]);
   });
@@ -131,8 +124,7 @@ describe("planUpload", () => {
 
     const plan = planUpload(
       live,
-      file([{ key: "product|7|name", source: "Párna", translation: "Kissen" }]),
-      { force: false }
+      file([{ key: "product|7|name", source: "Párna", translation: "Kissen" }])
     );
 
     expect(plan).toEqual({ operations: [], alreadyDone: ["product|7|name"] });
@@ -146,8 +138,7 @@ describe("planUpload", () => {
           file([
             { key: "product|7|name", source: "Régi párna", translation: "Kissen" },
             { key: "material|minky|label", source: "Minky", translation: "Minky" },
-          ]),
-          { force: false }
+          ])
         )
       )
     ).toEqual([expect.stringContaining("the Hungarian source changed")]);
@@ -166,8 +157,7 @@ describe("planUpload", () => {
               source: "Terméktípus",
               translation: "Produkttyp",
             },
-          ]),
-          { force: false }
+          ])
         )
       )
     ).toEqual([
@@ -183,8 +173,7 @@ describe("planUpload", () => {
       file([
         { key: "material|minky|label", source: "Minky", translation: "Minky" },
         { key: "materialColor|minky/piros|label", source: "Piros", translation: "Rot" },
-      ]),
-      { force: false }
+      ])
     );
 
     expect(plan.operations[0]?.variables).toEqual({
@@ -222,14 +211,13 @@ describe("planUpload", () => {
       refusal(() =>
         planUpload(
           snapshot(),
-          file([{ key: "material|minky|subtitle", source: "Pihe", translation: "Flauschig" }]),
-          { force: false }
+          file([{ key: "material|minky|subtitle", source: "Pihe", translation: "Flauschig" }])
         )
       )
     ).toEqual([expect.stringContaining("translate the label too")]);
   });
 
-  it("adds the language to the definition's text objects and passes force through", () => {
+  it("adds the language to the definition's text objects", () => {
     const plan = planUpload(
       snapshot(),
       file([
@@ -239,8 +227,7 @@ describe("planUpload", () => {
           source: "Kicsi",
           translation: "Klein",
         },
-      ]),
-      { force: true }
+      ])
     );
 
     expect(plan.operations).toEqual([
@@ -249,7 +236,6 @@ describe("planUpload", () => {
         productId: "parna",
         variables: {
           productId: "parna",
-          force: true,
           definition: {
             fields: [
               {

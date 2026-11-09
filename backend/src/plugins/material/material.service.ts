@@ -28,8 +28,6 @@ import {
   MaterialTranslation,
 } from "./material.entity";
 import { MaterialEvent } from "./material.event";
-import { AuditEntryEvent, auditActor } from "../audit/audit.event";
-import { variantRelevantChange } from "./variant-relevant";
 import { lockMaterials } from "./material-lock";
 import { validateMaterialInput, type MaterialInputData } from "./material-definition";
 
@@ -201,22 +199,7 @@ export class MaterialService {
       return updated;
     });
 
-    if (variantRelevantChange(existing, material)) {
-      await this.eventBus.publish(new MaterialEvent(ctx, "updated", material.slug));
-    } else {
-      // Label-only edits publish no MaterialEvent; the audit log still records
-      // the change (ADR 0015).
-      await this.eventBus.publish(
-        new AuditEntryEvent(ctx, {
-          entityType: "material",
-          entityKey: material.slug,
-          action: "updated",
-          summary: null,
-          source: "admin",
-          actor: auditActor(ctx),
-        })
-      );
-    }
+    await this.eventBus.publish(new MaterialEvent(ctx, "updated", material.slug));
 
     return material;
   }

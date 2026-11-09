@@ -1,21 +1,10 @@
 import gql from "graphql-tag";
-import {
-  Allow,
-  Ctx,
-  Permission,
-  Product,
-  ProductService,
-  ProductVariant,
-  ProductVariantService,
-  RequestContext,
-  UserInputError,
-} from "@vendure/core";
+import { Allow, Ctx, Permission, Product, RequestContext, UserInputError } from "@vendure/core";
 import type { ID } from "@vendure/core";
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { ProductDefinition } from "./product.entity";
 import { shopThreadColorTypes } from "./thread-color.resolver";
 import { ProductDefinitionService } from "./product-definition.service";
-import type { SyncProgress } from "./sync-progress";
 
 /** Mirrors the dashboard's PaginatedListDataTable contract (spike-proven). */
 interface GeneratedVariantListOptionsInput {
@@ -54,7 +43,6 @@ export interface ProductDefinitionGraph {
   definition: unknown;
   syncState: string;
   syncError: string | null;
-  syncProgress: SyncProgress | null;
   stale: boolean;
   driftDetails: ProductDefinitionDriftGraph[];
 }
@@ -67,8 +55,7 @@ export interface ProductDefinitionDriftGraph {
 function toGraph(
   row: ProductDefinition,
   stale: boolean,
-  driftDetails: ProductDefinitionDriftGraph[] = [],
-  syncProgress: SyncProgress | null = null
+  driftDetails: ProductDefinitionDriftGraph[] = []
 ): ProductDefinitionGraph {
   return {
     id: row.id,
@@ -79,7 +66,6 @@ function toGraph(
     definition: row.definition,
     syncState: row.syncState,
     syncError: row.syncError,
-    syncProgress,
     stale,
     driftDetails,
   };
@@ -119,18 +105,10 @@ export class ProductDefinitionResolver {
       return null;
     }
 
-    const analysis = (await this.productDefinitionService.driftAnalysis(ctx, [row])).get(
-      row.productId
-    );
+    const drift =
+      (await this.productDefinitionService.driftAnalysis(ctx, [row])).get(row.productId) ?? [];
 
-    return toGraph(
-      row,
-      analysis?.stale ?? false,
-      analysis?.details ?? [],
-      row.syncState === "pending"
-        ? await this.productDefinitionService.syncProgress(productId)
-        : null
-    );
+    return toGraph(row, drift.length > 0, drift);
   }
 
   @Query()
@@ -167,14 +145,12 @@ export class ProductDefinitionResolver {
   async updateProductDefinition(
     @Ctx() ctx: RequestContext,
     @Args("productId") productId: string,
-    @Args("definition") definition: unknown,
-    @Args("force", { nullable: true }) force: boolean | null
+    @Args("definition") definition: unknown
   ): Promise<ProductDefinitionGraph> {
     const row = await this.productDefinitionService.updateProductDefinition(
       ctx,
       productId,
-      definition,
-      force
+      definition
     );
     const staleness = await this.productDefinitionService.staleness(ctx, [row]);
 
@@ -229,86 +205,7 @@ export class ShopProductFieldResolver {
   }
 }
 
-interface ShopVariantOptionGraph {
-  code: string;
-  group: string;
-}
-
-/** The site-facing variant matrix entry: the variant id and its option axes. */
-interface ShopVariantOptionsGraph {
-  id: string;
-  options: ShopVariantOptionGraph[];
-}
-
-@Resolver()
-export class ShopProductVariantsResolver {
-  constructor(
-    private productService: ProductService,
-    private productVariantService: ProductVariantService
-  ) {}
-
-  /**
-   * The product's full variant matrix. Vendure's own `Product.variants` field
-   * resolves with the shop list-query limit and takes no paging arguments, so
-   * a matrix larger than the limit is invisible to the shop API — the
-   * configurator needs every variant to match the buyer's configuration.
-   */
-  @Query()
-  @Allow(Permission.Public)
-  async productVariants(
-    @Ctx() ctx: RequestContext,
-    @Args("slug") slug: string
-  ): Promise<ShopVariantOptionsGraph[]> {
-    const product = await this.productService.findOneBySlug(ctx, slug, []);
-
-    if (product === undefined || !product.enabled) {
-      return [];
-    }
-
-    const variants: ProductVariant[] = [];
-    let totalItems = Number.POSITIVE_INFINITY;
-
-    while (variants.length < totalItems) {
-      const page = await this.productVariantService.getVariantsByProductId(
-        ctx,
-        Number(product.id),
-        { skip: variants.length },
-        ["options", "options.group"]
-      );
-
-      variants.push(...page.items);
-      totalItems = page.totalItems;
-
-      if (page.items.length === 0) {
-        break;
-      }
-    }
-
-    return variants.map((variant) => ({
-      id: String(variant.id),
-      options: variant.options.map((option) => ({
-        code: option.code,
-        group: option.group.code,
-      })),
-    }));
-  }
-}
-
 export const shopProductSchema = gql`
-  type ShopVariantOption {
-    code: String!
-    group: String!
-  }
-
-  type ShopVariantOptions {
-    id: ID!
-    options: [ShopVariantOption!]!
-  }
-
-  extend type Query {
-    productVariants(slug: String!): [ShopVariantOptions!]!
-  }
-
   extend type Product {
     productDefinition: JSON
   }
@@ -325,11 +222,6 @@ export const productDefinitionSchema = gql`
     label: String!
   }
 
-  type ProductDefinitionSyncProgress {
-    done: Int!
-    total: Int!
-  }
-
   type ProductDefinition implements Node {
     id: ID!
     productId: String!
@@ -339,7 +231,6 @@ export const productDefinitionSchema = gql`
     definition: JSON!
     syncState: String!
     syncError: String
-    syncProgress: ProductDefinitionSyncProgress
     stale: Boolean!
     driftDetails: [ProductDefinitionDrift!]
   }
@@ -402,11 +293,7 @@ export const productDefinitionSchema = gql`
 
   extend type Mutation {
     createProductDefinition(definition: JSON!, name: String!): ProductDefinition!
-    updateProductDefinition(
-      productId: String!
-      definition: JSON!
-      force: Boolean
-    ): ProductDefinition!
+    updateProductDefinition(productId: String!, definition: JSON!): ProductDefinition!
     deleteProductDefinition(productId: String!): Boolean!
   }
 `;

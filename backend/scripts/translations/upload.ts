@@ -17,17 +17,11 @@ import { verificationProblems } from "./verify-upload";
 
 const SYNC_QUEUE = "product-definition-sync";
 
-/** Writes that enqueue definition syncs: the definition, a material it references, a product rename. */
-const SYNCING_CATEGORIES: ReadonlySet<StringCategory> = new Set([
-  "product",
-  "material",
-  "definition",
-]);
+/** Writes that enqueue definition syncs: the definition and a product rename. */
+const SYNCING_CATEGORIES: ReadonlySet<StringCategory> = new Set(["product", "definition"]);
 
 export interface UploadOptions {
   write: boolean;
-  /** Overwrite native drift on definitions (the owner's direct variant edits). */
-  force: boolean;
   log: (line: string) => void;
   pollMs: number;
   syncTimeoutMs: number;
@@ -39,7 +33,6 @@ const SyncStateSchema = z.object({
   productDefinition: z.object({
     syncState: z.string(),
     syncError: z.string().nullable(),
-    stale: z.boolean(),
   }),
 });
 
@@ -109,34 +102,12 @@ async function definitionState(
   productId: string
 ): Promise<z.infer<typeof SyncStateSchema>["productDefinition"]> {
   const { productDefinition } = await api.request(
-    `query($productId: String!) { productDefinition(productId: $productId) { syncState syncError stale } }`,
+    `query($productId: String!) { productDefinition(productId: $productId) { syncState syncError } }`,
     { productId },
     SyncStateSchema
   );
 
   return productDefinition;
-}
-
-/** A stale definition would make the forced save overwrite the owner's native edits. */
-async function assertDefinitionsInSync(api: AdminApi, plan: UploadPlan): Promise<void> {
-  const stale: string[] = [];
-
-  for (const operation of plan.operations) {
-    if (operation.category !== "definition") {
-      continue;
-    }
-
-    if ((await definitionState(api, operation.productId)).stale) {
-      stale.push(operation.productId);
-    }
-  }
-
-  if (stale.length > 0) {
-    throw new Error(
-      `these definitions have native drift: ${stale.join(", ")}. Review it on each definition's dashboard page; ` +
-        `re-run with --force only if overwriting it is intended. Nothing was written.`
-    );
-  }
 }
 
 async function apply(api: AdminApi, operation: UploadOperation): Promise<void> {
@@ -194,13 +165,9 @@ export async function runUpload(
 
   const snapshot = await readCatalogSnapshot(api, { definitions: readsDefinitions(file) });
   const before = translatableStrings(snapshot, file.language);
-  const plan = planUpload(snapshot, file, { force: options.force });
+  const plan = planUpload(snapshot, file);
 
   describePlan(plan, options);
-
-  if (!options.force) {
-    await assertDefinitionsInSync(api, plan);
-  }
 
   if (!options.write) {
     for (const operation of plan.operations) {
@@ -266,7 +233,7 @@ export async function verifyUpload(
   log: (line: string) => void
 ): Promise<void> {
   const snapshot = await readCatalogSnapshot(api, { definitions: readsDefinitions(file) });
-  const plan = planUpload(snapshot, file, { force: false });
+  const plan = planUpload(snapshot, file);
   const missing = plan.operations.flatMap((operation) => operation.writes.map((w) => w.key));
 
   if (missing.length > 0) {

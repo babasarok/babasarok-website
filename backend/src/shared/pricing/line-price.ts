@@ -48,7 +48,7 @@ function choiceOptionPrice(
   return option.price;
 }
 
-/** The price a variant-axis field contributes for the chosen option code. */
+/** The price a axis field contributes for the chosen option code. */
 function axisPrice(field: AxisField, optionCode: string, languageCode: string): number {
   if (field.kind === "toggle") {
     return optionCode === "igen" ? field.price : 0;
@@ -72,15 +72,15 @@ function axisPrice(field: AxisField, optionCode: string, languageCode: string): 
 /**
  * The unit price of a configured order line in whole forints, computed from
  * the product definition and the line's selections (order-pricing spec). The
- * variant-axis fields price at the codes {@link axisCodes} reads from the
+ * axis fields price at the codes {@link axisCodes} reads from the
  * selections.
  *
- * Non-length products: base price plus every variant-axis option visible
+ * Non-length products: base price plus every axis option visible
  * given the axis picks alone, plus color-choice picks, visible input fields
  * (their price applies even while empty), and embroidery (flat, or per word
  * of the entered text).
  *
- * Length-priced products: base price plus every variant-axis option visible
+ * Length-priced products: base price plus every axis option visible
  * given all picks, with the length source field skipped — it carries no
  * price, it scales — plus the same extras, multiplied by the length in metres.
  *

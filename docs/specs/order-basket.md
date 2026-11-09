@@ -10,7 +10,8 @@ survive page reloads and revisits and every amount comes from the server
 ### Basket lines
 
 The system SHALL represent the basket as the Vendure active order of a guest
-session, each line referencing a product variant and carrying the order-line
+session, each line referencing the product's one native variant (ADR 0016)
+and carrying the order-line
 custom fields `selections` (the buyer's field values, including the
 `material` picks and their colours, as JSON) and `lengthCm` (length-priced
 products). Lines are changed with `addItemToOrder`, `adjustOrderLine` and
@@ -21,10 +22,10 @@ and `currencyCode` (nothing in the API is currency-specific).
 - **Scenario: Adding a product**
   - WHEN a buyer configures a product (quantity, options, materials) and adds
     it to the order
-  - THEN the order holds a line for that variant carrying exactly those
-    `selections`, priced by the server
+  - THEN the order holds a line for the product's variant carrying exactly
+    those `selections`, priced by the server
 - **Scenario: Adding a duplicate line**
-  - WHEN a buyer adds a line identical to an existing one (same variant,
+  - WHEN a buyer adds a line identical to an existing one (same product,
     `selections` and `lengthCm`)
   - THEN the quantities merge into a single line rather than creating a
     duplicate
@@ -87,7 +88,7 @@ removed once), not migrated.
 The system SHALL expose on every shop-API `OrderLine` an `invalidReason`
 (`{ code, message }`, null when the line is fine) with the codes
 `NOT_ORDERABLE` (the product is no longer orderable), `VARIANT_UNAVAILABLE`
-(the variant is disabled or deleted) and `OPTION_NOT_OFFERED` (the line's
+(the product's variant is disabled or deleted) and `OPTION_NOT_OFFERED` (the line's
 `selections`/`lengthCm` no longer fit the product definition or cannot be
 priced); `message` is Hungarian and buyer-facing. A line keeps the price it
 had when it was added or last adjusted; the site compares `unitPriceWithTax`
@@ -119,7 +120,7 @@ The system SHALL edit a basket line by opening its product page with
 `?line=<order line id>`, prefilled from the line's `selections` and quantity.
 Saving adjusts the quantity when the configuration is unchanged; otherwise it
 adds the new configuration and then removes the old line (Vendure cannot change
-a line's variant), so a refused add leaves the old line intact.
+a line's custom fields in place), so a refused add leaves the old line intact.
 
 ### Shared live basket
 

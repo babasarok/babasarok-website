@@ -10,14 +10,14 @@ export type AxisField =
   | Extract<ProductField, { kind: "material" }>
   | Extract<ProductField, { kind: "choice" }>;
 
-/** Field id → the option code the line picks on that variant-axis field. */
+/** Field id → the option code the line picks on that axis field. */
 export type AxisCodes = ReadonlyMap<string, string>;
 
 export type AxisCodesResult = { ok: true; codes: AxisCodes } | { ok: false; message: string };
 
 type AxisCodeResult = { ok: true; code: string } | { ok: false; message: string };
 
-/** Non-color choices, toggles and materials: the fields generated into variant options. */
+/** Non-color choices, toggles and materials: the fields that always resolve to one listed option. */
 export function isAxisField(field: ProductField): field is AxisField {
   return (
     field.kind === "material" ||
@@ -113,7 +113,7 @@ function axisCode(
 }
 
 /**
- * The option code of every variant-axis field, read from the line's
+ * The option code of every axis field, read from the line's
  * selections. A field without a selection takes the configurator's default —
  * `nem` for a toggle, the first listed option otherwise — and so does a
  * custom value that names no listed option. A selection the field does not

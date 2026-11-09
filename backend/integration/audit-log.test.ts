@@ -192,8 +192,7 @@ describe("the audit log over the admin write path", () => {
       throw new Error("int-pamut was not seeded.");
     }
 
-    // A subtitle change is not variant-relevant (the sync reads labels and
-    // colors only): no MaterialEvent fires, yet the log must see the edit.
+    // A subtitle-only change touches nothing a product reads, yet the log must see it.
     const input = {
       slug: material.slug,
       translations: material.translations.map((t) => ({

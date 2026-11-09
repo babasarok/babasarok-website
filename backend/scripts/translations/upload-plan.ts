@@ -29,7 +29,7 @@ export const MUTATIONS = {
   updateCollection: `mutation($input: UpdateCollectionInput!) { updateCollection(input: $input) { __typename } }`,
   updatePromotion: `mutation($input: UpdatePromotionInput!) { updatePromotion(input: $input) { __typename ... on ErrorResult { errorCode message } } }`,
   updateShippingMethod: `mutation($input: UpdateShippingMethodInput!) { updateShippingMethod(input: $input) { __typename } }`,
-  updateProductDefinition: `mutation($productId: String!, $definition: JSON!, $force: Boolean) { updateProductDefinition(productId: $productId, definition: $definition, force: $force) { __typename } }`,
+  updateProductDefinition: `mutation($productId: String!, $definition: JSON!) { updateProductDefinition(productId: $productId, definition: $definition) { __typename } }`,
 } as const;
 
 export type MutationName = keyof typeof MUTATIONS;
@@ -96,11 +96,7 @@ function fileProblems(file: TranslationFile): string[] {
  * since the extract, or an unknown key refuses the whole plan.
  * Every file entry ends up in exactly one write or in `alreadyDone`.
  */
-export function planUpload(
-  snapshot: CatalogSnapshot,
-  file: TranslationFile,
-  options: { force: boolean }
-): UploadPlan {
+export function planUpload(snapshot: CatalogSnapshot, file: TranslationFile): UploadPlan {
   const language = file.language;
   const problems = fileProblems(file);
   const live = new Map(translatableStrings(snapshot, language).map((s) => [s.key, s]));
@@ -141,7 +137,7 @@ export function planUpload(
     throw new UploadPlanError(problems);
   }
 
-  const operations = buildOperations(snapshot, language, pending, options);
+  const operations = buildOperations(snapshot, language, pending);
   const planned = new Set(
     operations.flatMap((operation) => operation.writes.map((write) => write.key))
   );
@@ -205,8 +201,7 @@ function slugDefaults(
 function buildOperations(
   snapshot: CatalogSnapshot,
   language: string,
-  pending: ReadonlyMap<string, PlannedWrite>,
-  options: { force: boolean }
+  pending: ReadonlyMap<string, PlannedWrite>
 ): UploadOperation[] {
   const operations: UploadOperation[] = [];
 
@@ -389,7 +384,7 @@ function buildOperations(
       productId,
       entity: `definition ${productId}`,
       mutation: "updateProductDefinition",
-      variables: { productId, definition: updated, force: options.force },
+      variables: { productId, definition: updated },
       writes,
     });
   }

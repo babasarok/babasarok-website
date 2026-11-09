@@ -1,8 +1,7 @@
 import type { ProductDefinition } from "@babasarok/product-definition";
-import { axisCodes, serializeLineSelections, type LineSelections } from "@babasarok/pricing";
+import { serializeLineSelections, type LineSelections } from "@babasarok/pricing";
 import { isFieldVisible } from "@/lib/product/field";
 import type { Field } from "@/lib/types.svelte";
-import type { VariantOptions } from "./api";
 
 export interface ConfiguredLine {
   variantId: string;
@@ -10,10 +9,8 @@ export interface ConfiguredLine {
   lengthCm: number | undefined;
 }
 
-export type LineBuild = { ok: true; line: ConfiguredLine } | { ok: false; message: string };
-
-export const UNAVAILABLE_COMBINATION =
-  "Ez a beállítás-kombináció jelenleg nem rendelhető. Töltsd újra az oldalt, hátha változott a kínálat.";
+export const PRODUCT_UNAVAILABLE =
+  "Ez a termék jelenleg nem rendelhető. Töltsd újra az oldalt, hátha változott a kínálat.";
 
 function selectionFor(field: Field): LineSelections[string] {
   switch (field.type) {
@@ -75,26 +72,6 @@ function enteredValue(field: Field | undefined): string | undefined {
   }
 }
 
-export function pickVariant(
-  definition: ProductDefinition,
-  fields: Field[],
-  variants: readonly VariantOptions[]
-): VariantOptions | undefined {
-  const derived = axisCodes(definition, buildSelections(fields), "hu");
-
-  if (!derived.ok) {
-    return undefined;
-  }
-
-  const wanted = [...derived.codes];
-
-  return variants.find((variant) =>
-    wanted.every(([group, code]) =>
-      variant.options.some((option) => option.group === group && option.code === code)
-    )
-  );
-}
-
 function lengthOf(definition: ProductDefinition, fields: Field[]): number | undefined {
   if (definition.pricing.kind !== "length") {
     return undefined;
@@ -108,24 +85,16 @@ function lengthOf(definition: ProductDefinition, fields: Field[]): number | unde
   return Number.isNaN(length) ? undefined : length;
 }
 
+/** The order line for the configured fields on the product's one variant. */
 export function buildLine(
   definition: ProductDefinition,
   fields: Field[],
-  variants: readonly VariantOptions[]
-): LineBuild {
-  const variant = pickVariant(definition, fields, variants);
-
-  if (variant === undefined) {
-    return { ok: false, message: UNAVAILABLE_COMBINATION };
-  }
-
+  variantId: string
+): ConfiguredLine {
   return {
-    ok: true,
-    line: {
-      variantId: variant.id,
-      selections: serializeLineSelections(buildSelections(fields)),
-      lengthCm: lengthOf(definition, fields),
-    },
+    variantId,
+    selections: serializeLineSelections(buildSelections(fields)),
+    lengthCm: lengthOf(definition, fields),
   };
 }
 

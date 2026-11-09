@@ -7,11 +7,7 @@ import svelte from "eslint-plugin-svelte";
 import svelteConfig from "./svelte.config";
 
 import { defineConfig, globalIgnores } from "eslint/config";
-import {
-  variantOptionReadAllowlist,
-  variantOptionReadFiles,
-  variantOptionReadSelectors,
-} from "./eslint/variant-option-reads";
+import { variantOptionReadFiles, variantOptionReadSelectors } from "./eslint/variant-option-reads";
 
 const noExtensionImports = {
   regex: String.raw`^\.{1,2}/.*\.[cm]?[jt]sx?$`,
@@ -224,7 +220,6 @@ export default defineConfig([
   },
   {
     files: variantOptionReadFiles,
-    ignores: variantOptionReadAllowlist,
     rules: {
       "no-restricted-syntax": ["error", ...variantOptionReadSelectors],
     },
