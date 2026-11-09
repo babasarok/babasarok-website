@@ -4,7 +4,7 @@ import { SET_LINE_FIELDS, SET_ORDER_FIELDS } from "./setDiscounts";
 import {
   OrderSchema,
   ShippingQuoteSchema,
-  VariantOptionsSchema,
+  ProductVariantIdsSchema,
   type Order,
   type ShippingQuote,
 } from "./schemas";
@@ -55,17 +55,13 @@ export interface OrderCustomFieldsInput {
   submissionTransactionId?: string;
 }
 
-export interface VariantOptions {
-  id: string;
-  options: Array<{ group: string; code: string }>;
-}
-
 export interface BasketApi {
   activeOrder(): Promise<Result<Order | null>>;
   addItem(input: LineInput): Promise<Result<Order>>;
   adjustLine(orderLineId: string, quantity: number): Promise<Result<Order>>;
   removeLine(orderLineId: string): Promise<Result<Order>>;
-  productVariants(slug: string): Promise<Result<VariantOptions[]>>;
+  /** The id of the product's one variant, or undefined when it is not orderable. */
+  productVariantId(slug: string): Promise<Result<string | undefined>>;
   eligibleShippingMethods(): Promise<Result<ShippingQuote[]>>;
   setCustomer(input: CustomerInput): Promise<Result<Order>>;
   setShippingAddress(streetLine1: string, countryCode: string): Promise<Result<Order>>;
@@ -295,21 +291,18 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
         { id: orderLineId },
         INTERCEPTOR_FIELDS
       ),
-    async productVariants(slug) {
+    async productVariantId(slug) {
       const result = await request(
-        `query Variants($slug: String!) { productVariants(slug: $slug) { id options { code group } } }`,
+        `query ProductVariant($slug: String!) { product(slug: $slug) { variants { id } } }`,
         { slug },
-        z.object({ productVariants: z.array(VariantOptionsSchema) })
+        ProductVariantIdsSchema
       );
 
       if (!result.ok) {
         return result;
       }
 
-      return {
-        ok: true,
-        value: result.value.productVariants,
-      };
+      return { ok: true, value: result.value.product?.variants.at(0)?.id };
     },
     async eligibleShippingMethods() {
       const result = await request(

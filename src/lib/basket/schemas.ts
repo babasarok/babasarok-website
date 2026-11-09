@@ -70,7 +70,6 @@ export const ShippingQuoteSchema = z.object({
 
 export type ShippingQuote = z.output<typeof ShippingQuoteSchema>;
 
-export const VariantOptionsSchema = z.object({
-  id: z.string(),
-  options: z.array(z.object({ code: z.string(), group: z.string() })),
+export const ProductVariantIdsSchema = z.object({
+  product: z.object({ variants: z.array(z.object({ id: z.string() })) }).nullable(),
 });

@@ -40,11 +40,16 @@ function setDiscount(order: Order): number {
     .reduce((sum, entry) => sum - entry.amountWithTax, 0);
 }
 
-function lineWith(order: Order, skuPart: string): Order["lines"][number] {
-  const line = order.lines.find((candidate) => candidate.productVariant.sku.includes(skuPart));
+function lineWith(order: Order, product: string, material?: string): Order["lines"][number] {
+  const line = order.lines.find(
+    (candidate) =>
+      candidate.productVariant.sku === product &&
+      (material === undefined ||
+        candidate.customFields.selections?.includes(`"${material}"`) === true)
+  );
 
   if (line === undefined) {
-    throw new Error(`No line with ${skuPart}`);
+    throw new Error(`No ${product} line in ${material ?? "any material"}`);
   }
 
   return line;
@@ -62,13 +67,13 @@ describe("the set promotions in Vendure's order calculator", () => {
     expect(order.lines).toHaveLength(3);
     expect(setDiscount(order)).toBe(1500);
 
-    order = await adjustLine(shopper, lineWith(order, "int-takaro").id, 2);
+    order = await adjustLine(shopper, lineWith(order, "int-takaro", "int-pamut").id, 2);
     expect(setDiscount(order)).toBe(3000);
 
-    order = await adjustLine(shopper, lineWith(order, "int-takaro").id, 3);
+    order = await adjustLine(shopper, lineWith(order, "int-takaro", "int-pamut").id, 3);
     expect(setDiscount(order)).toBe(3000);
 
-    order = await removeLine(shopper, lineWith(order, "int-pamut-nem-kicsi").id);
+    order = await removeLine(shopper, lineWith(order, "int-parna", "int-pamut").id);
     expect(setDiscount(order)).toBe(0);
   });
 

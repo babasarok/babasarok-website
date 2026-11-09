@@ -24,7 +24,6 @@ function depsFor(row: ProductDefinition | null): LineInvalidReasonDeps {
   return {
     findDefinition: async () => row,
     productName: async () => "Párna",
-    hydrateOptions: () => Promise.resolve(),
     lineFacts: () => ({
       generatedDefinition: async () => row?.definition,
       productName: async () => "Párna",

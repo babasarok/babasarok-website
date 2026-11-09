@@ -21,14 +21,6 @@ export class ProductDefinition extends VendureEntity {
   @Column({ type: "integer", nullable: true })
   nativeProductId!: number | null;
 
-  /** Hash of the definition state the last successful sync derived. */
-  @Column({ type: "varchar", nullable: true })
-  syncedDefinitionHash!: string | null;
-
-  /** Hash of the native option-group/variant state the last sync produced. */
-  @Column({ type: "varchar", nullable: true })
-  syncedNativeStateHash!: string | null;
-
   /** The queued/failed/done state of the definition→native sync. The default
    * only exists for the migration's backfill; every write sets it explicitly. */
   @Column({ type: "varchar", default: "synced" })

@@ -43,7 +43,7 @@ ordering).
 | #   | Epic                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Status                                                                                                          |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
 | 1   | **Deploy Vendure, use it exactly how we used web3forms** — self-hosted backend receiving order requests, nothing more                                                                                                                                                                                                                                                                                                                                                                                                                                                          | done                                                                                                            |
-| 2   | **Implement the product catalog fully in Vendure with a good, manageable admin UX — this epic.** Includes set discounts. The delivery plan lives in [ADR 0010](adr/0010-native-generated-product-model.md) (product model: native-with-generation; dashboard configurator, facets/collections, promotions, set discounts) with the migration architecture in [ADR 0009](adr/0009-side-by-side-vendure-catalog-migration.md). Materials are already ported (PR #76)                                                                                                             | in progress                                                                                                     |
+| 2   | **Implement the product catalog fully in Vendure with a good, manageable admin UX — this epic.** Includes set discounts. The delivery plan lives in [ADR 0010](adr/0010-native-generated-product-model.md) (product model: native-with-generation; dashboard configurator, facets/collections, promotions, set discounts) with the migration architecture in [ADR 0009](adr/0009-side-by-side-vendure-catalog-migration.md). Materials are already ported (PR #76). Variant matrix retirement: [ADR 0016 plan](#adr-0016-plan-one-variant-per-configurable-product)            | in progress                                                                                                     |
 | 3   | **Move the Astro site over to Vendure** — show products from Vendure, place orders the new way against the epic-2 order-line fields and server pricing (quote/order handover). Plan: [Epic 3 plan](#epic-3-plan-site-cutover)                                                                                                                                                                                                                                                                                                                                                  | done (2026-11-07)                                                                                               |
 | 4   | **Remove the product Tina backend** — delete the product collections and their tooling once the site no longer reads them                                                                                                                                                                                                                                                                                                                                                                                                                                                      | done (2026-11-06)                                                                                               |
 | 5   | **Order resolution management** — the owner works orders in the Vendure dashboard: manual order-line stage changes (paid, order sent, fulfilled, …). Drives the later steps                                                                                                                                                                                                                                                                                                                                                                                                    | not started                                                                                                     |
@@ -180,11 +180,8 @@ merged to main until the backend structure is settled):
   products (the generated flag rides the stock page's own extended query —
   no `pnpm patch` needed), drift details are listed under the stale badge,
   and zod validation messages are localized to Hungarian
-- ✅ Facets + Collections — material/color facet values on generated variants,
-  auto-managed per-material collections, and event-driven re-sync of affected
-  products on material (create/rename/color/delete) changes; facets and
-  collections live in the stock dashboard; the `convergeMaterialFacets`
-  admin mutation converges pre-facet databases
+- ✅ Facets + Collections — later removed with the variant matrix (ADR 0016
+  step 4): no material/color facets or per-material collections remain
 - ✅ Server-side pricing + promotions — a custom `OrderItemPriceCalculationStrategy`
   prices length/embroidery from order-line custom fields (`lengthCm`,
   `selections`), with an order interceptor rejecting unpriceable lines (no
@@ -219,8 +216,8 @@ merged to main until the backend structure is settled):
 - ✅ Translatable catalog text — material/color labels, subtitle and
   description are Vendure translation entities and definition text is a
   `LocalizedText` (`hu` required, others optional, hu fallback), edited in the
-  dashboard's content language; generated options, variants and mirrored
-  facet values carry every language
+  dashboard's content language; the generated variant carries the product
+  name in every language
   ([ADR 0011](adr/0011-native-ownership-and-translatable-catalog.md)
   decision 6)
 - ⬜ Vendure-complete gate — catalog fully manageable in the Vendure dashboard,
@@ -232,6 +229,37 @@ merged to main until the backend structure is settled):
   sync (see S6, 2026-11-06) lands, full syncs drop to seconds and this
   matters much less
 
+## ADR 0016 plan (one variant per configurable product)
+
+Part of epic 2. Decision and rationale:
+[ADR 0016](adr/0016-one-variant-per-configurable-product.md) (accepted
+2026-11-09; supersedes ADR 0010 decision 1 and the variant/facet part of
+decision 6). Each step ships alone:
+
+All seven steps are implemented in PR #108; the two migrations
+(`1794300000000-drop-material-facets-and-collections`,
+`1794400000000-one-variant-per-product`) run at its deploy and were rehearsed
+on a copy of production (`backend/integration/rehearse-one-variant.test.ts`).
+
+- ✅ **1. Selections authoritative** — pricing, set discounts and line
+  validity read the selections + definition (`axisCodes`)
+- ✅ **2. Server refuses forbidden material combinations** from the
+  selections, at add/adjust and as an `OPTION_NOT_OFFERED` reason
+- ✅ **3. Variant agreement check retired**
+- ✅ **4. Material collections and Material/Color facets dropped** (owner:
+  no material/color browsing, now or later) — migration
+- ✅ **5. Single variant** — the sync keeps one variant per generated
+  product; a migration soft-deletes the matrix and moves active basket lines
+  onto the new variant
+- ✅ **6. Dashboard** — order lines show the product and its configuration;
+  no generated-variants list
+- ✅ **7. Cleanup** — matrix generation, option groups, drift hashing,
+  `productVariants(slug)`, `pickVariant` and the material facet sync are
+  gone
+
+Remaining uses of the old way: none. The ESLint rule
+(`eslint/variant-option-reads.ts`) blocks reading a variant's options again.
+
 ## Epic 8 plan (English / multi-language)
 
 Owner requirement: the site will support multiple languages (English first).
@@ -239,7 +267,7 @@ Build on what exists; do not relitigate the catalog decision:
 
 - Already translatable (ADR 0011 decision 6): material/colour labels and
   descriptions, definition text (`LocalizedText`, hu required, hu fallback),
-  generated options, variants and mirrored facet values. The shop API takes a
+  the generated variant's name (the product's). The shop API takes a
   `languageCode` per request and the site's API client already passes one.
 - To translate for epic 8:
   - Site UI strings — every hardcoded Hungarian string in the site

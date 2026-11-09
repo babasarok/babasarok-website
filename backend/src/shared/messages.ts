@@ -19,14 +19,10 @@ const hu = {
     `A(z) "${fieldLabel}" mező nem kínálja ezt az értéket: ${optionId}`,
   fieldDoesNotOfferMaterial: (fieldLabel: string, materialId: string): string =>
     `A(z) "${fieldLabel}" mező nem kínálja ezt az anyagot: ${materialId}`,
-  choiceNotOnVariant: (fieldId: string): string =>
-    `A(z) "${fieldId}" választása nincs rajta a kiválasztott változaton.`,
-  materialChoiceNotOnVariant: (fieldId: string): string =>
-    `A(z) "${fieldId}" anyagválasztása nincs rajta a kiválasztott változaton.`,
-  materialChoiceMismatch: (fieldId: string): string =>
-    `A(z) "${fieldId}" anyagválasztása nem egyezik a kiválasztott változattal.`,
-  choiceMismatch: (fieldLabel: string): string =>
-    `A(z) "${fieldLabel}" mező választása nem egyezik a kiválasztott változattal.`,
+  fieldHasNoOptions: (fieldLabel: string): string =>
+    `A(z) "${fieldLabel}" mezőnek nincs választható értéke.`,
+  forbiddenCombination: (productName: string, materialIds: string): string =>
+    `A(z) "${productName}" termék ebben az anyagkombinációban nem rendelhető: ${materialIds}.`,
   unknownField: (fieldId: string): string => `A termék nem ismeri ezt a mezőt: ${fieldId}`,
   selectionsNotJson: (): string => "A rendelési sor konfigurációja nem érvényes JSON.",
   selectionsInvalid: (issues: string): string =>
@@ -77,13 +73,9 @@ const en: Messages = {
     `The "${fieldLabel}" field does not offer this value: ${optionId}`,
   fieldDoesNotOfferMaterial: (fieldLabel, materialId) =>
     `The "${fieldLabel}" field does not offer this material: ${materialId}`,
-  choiceNotOnVariant: (fieldId) => `The "${fieldId}" choice is not on the selected variant.`,
-  materialChoiceNotOnVariant: (fieldId) =>
-    `The "${fieldId}" material choice is not on the selected variant.`,
-  materialChoiceMismatch: (fieldId) =>
-    `The "${fieldId}" material choice does not match the selected variant.`,
-  choiceMismatch: (fieldLabel) =>
-    `The "${fieldLabel}" field's choice does not match the selected variant.`,
+  fieldHasNoOptions: (fieldLabel) => `The "${fieldLabel}" field has no selectable options.`,
+  forbiddenCombination: (productName, materialIds) =>
+    `The "${productName}" product cannot be ordered in this material combination: ${materialIds}.`,
   unknownField: (fieldId) => `The product does not know this field: ${fieldId}`,
   selectionsNotJson: () => "The order line configuration is not valid JSON.",
   selectionsInvalid: (issues) => `The order line configuration is invalid: ${issues}`,

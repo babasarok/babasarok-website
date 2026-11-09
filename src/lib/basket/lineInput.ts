@@ -1,19 +1,13 @@
-import type { ProductDefinition, ProductField } from "@babasarok/product-definition";
+import type { ProductDefinition } from "@babasarok/product-definition";
 import { serializeLineSelections, type LineSelections } from "@babasarok/pricing";
 import { isFieldVisible } from "@/lib/product/field";
 import type { Field } from "@/lib/types.svelte";
-import type { VariantOptions } from "./api";
 
 export interface ConfiguredLine {
   variantId: string;
   selections: string;
   lengthCm: number | undefined;
 }
-
-export type LineBuild = { ok: true; line: ConfiguredLine } | { ok: false; message: string };
-
-export const UNAVAILABLE_COMBINATION =
-  "Ez a beállítás-kombináció jelenleg nem rendelhető. Töltsd újra az oldalt, hátha változott a kínálat.";
 
 function selectionFor(field: Field): LineSelections[string] {
   switch (field.type) {
@@ -75,64 +69,6 @@ function enteredValue(field: Field | undefined): string | undefined {
   }
 }
 
-function axisCode(definitionField: ProductField, entered: Field | undefined): string | undefined {
-  if (definitionField.kind === "toggle") {
-    return enteredValue(entered) ?? "nem";
-  }
-
-  if (definitionField.kind === "material") {
-    const picked = enteredValue(entered);
-
-    return definitionField.options.find((option) => option.materialId === picked)?.materialId;
-  }
-
-  if (definitionField.kind === "choice" && definitionField.presentation !== "color") {
-    const picked = enteredValue(entered);
-
-    return definitionField.options.find((option) => option.id === picked)?.id;
-  }
-
-  return undefined;
-}
-
-function firstOptionCode(field: ProductField): string | undefined {
-  if (field.kind === "material") {
-    return field.options[0]?.materialId;
-  }
-
-  if (field.kind === "choice") {
-    return field.options[0]?.id;
-  }
-
-  return undefined;
-}
-
-function isAxis(field: ProductField): boolean {
-  return (
-    field.kind === "toggle" ||
-    field.kind === "material" ||
-    (field.kind === "choice" && field.presentation !== "color")
-  );
-}
-
-export function pickVariant(
-  definition: ProductDefinition,
-  fields: Field[],
-  variants: readonly VariantOptions[]
-): VariantOptions | undefined {
-  const wanted = definition.fields.filter(isAxis).map((field) => {
-    const entered = fields.find((candidate) => candidate.name === field.id);
-
-    return { group: field.id, code: axisCode(field, entered) ?? firstOptionCode(field) };
-  });
-
-  return variants.find((variant) =>
-    wanted.every((axis) =>
-      variant.options.some((option) => option.group === axis.group && option.code === axis.code)
-    )
-  );
-}
-
 function lengthOf(definition: ProductDefinition, fields: Field[]): number | undefined {
   if (definition.pricing.kind !== "length") {
     return undefined;
@@ -146,24 +82,16 @@ function lengthOf(definition: ProductDefinition, fields: Field[]): number | unde
   return Number.isNaN(length) ? undefined : length;
 }
 
+/** The order line for the configured fields on the product's one variant. */
 export function buildLine(
   definition: ProductDefinition,
   fields: Field[],
-  variants: readonly VariantOptions[]
-): LineBuild {
-  const variant = pickVariant(definition, fields, variants);
-
-  if (variant === undefined) {
-    return { ok: false, message: UNAVAILABLE_COMBINATION };
-  }
-
+  variantId: string
+): ConfiguredLine {
   return {
-    ok: true,
-    line: {
-      variantId: variant.id,
-      selections: serializeLineSelections(buildSelections(fields)),
-      lengthCm: lengthOf(definition, fields),
-    },
+    variantId,
+    selections: serializeLineSelections(buildSelections(fields)),
+    lengthCm: lengthOf(definition, fields),
   };
 }
 

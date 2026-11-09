@@ -35,11 +35,27 @@ export const DefinitionState = z.object({
   productDefinition: z.object({ nativeProductId: z.number().nullable() }).nullable(),
 });
 
-export const GeneratedVariants = z.object({
-  generatedVariants: z.object({
-    items: z.array(z.object({ id: z.string(), name: z.string() })),
-  }),
+const NativeVariants = z.object({
+  product: z
+    .object({
+      optionGroups: z.array(z.object({ code: z.string() })),
+      variants: z.array(z.object({ id: z.string(), sku: z.string(), price: z.number() })),
+    })
+    .nullable(),
 });
+
+const NATIVE_VARIANTS = `query NativeVariantsE2E($id: ID!) {
+  product(id: $id) {
+    optionGroups {
+      code
+    }
+    variants {
+      id
+      sku
+      price
+    }
+  }
+}`;
 
 export const UpdatedVariant = z.object({
   updateProductVariant: z.object({ id: z.string() }),
@@ -221,12 +237,29 @@ export const DEFINITION_STATE = `query ProductDefinitionE2E($productId: String!)
   }
 }`;
 
-/** The configurator's generated-variants table (its Hungarian price column
- * keeps it apart from the stock variants table on the same page). */
-export function generatedTable(page: Page): Locator {
-  return page
-    .locator('[data-slot="data-table"]')
-    .filter({ has: page.getByRole("columnheader", { name: "Ár (Ft)" }) });
+/** The generated product's native option groups and live variants (ADR 0016: none and one). */
+export async function nativeVariants(
+  page: Page,
+  nativeProductId: number
+): Promise<{
+  optionGroups: string[];
+  variants: Array<{ id: string; sku: string; price: number }>;
+}> {
+  const { product } = await adminApi(
+    page,
+    NATIVE_VARIANTS,
+    { id: nativeProductId },
+    NativeVariants
+  );
+
+  if (product === null) {
+    throw new Error(`Nincs natív termék: ${nativeProductId}`);
+  }
+
+  return {
+    optionGroups: product.optionGroups.map((group) => group.code),
+    variants: product.variants,
+  };
 }
 
 /** The stock product page's own variants table (Money-formatted prices). */

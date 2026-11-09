@@ -4,10 +4,8 @@ import { messages } from "../messages";
 /**
  * A buyer's selections on an order line, stored on the line's `selections`
  * custom field as JSON. One record per field the buyer acted on, keyed by the
- * canonical field id. Fields that ride on the variant (non-color choices,
- * toggles, material picks) are recorded too, so the line carries the complete
- * configuration — but only their colors live nowhere else: the material pick
- * itself is also a variant option.
+ * canonical field id. The records are the line's complete configuration:
+ * pricing, set discounts and line validity read them, never the variant.
  */
 const InputSelectionSchema = z.strictObject({
   kind: z.literal("input"),

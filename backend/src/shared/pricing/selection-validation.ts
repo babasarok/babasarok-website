@@ -5,6 +5,8 @@ import {
 } from "../product-definition/index";
 import type { LineSelectionRecord, LineSelections } from "../product-definition/index";
 import { messages } from "../messages";
+import { axisCodes } from "./axis-codes";
+import { completesForbiddenCombination } from "./banned-combinations";
 
 /**
  * The site's configurator sets no text limits; this keeps a buyer-entered value
@@ -66,7 +68,8 @@ type ProblemReason =
 export type SelectionProblem =
   | { code: "unknown-field"; fieldId: string }
   | { code: "wrong-kind"; fieldId: string }
-  | ({ code: "invalid"; fieldId: string } & ProblemReason);
+  | ({ code: "invalid"; fieldId: string } & ProblemReason)
+  | { code: "forbidden-combination"; materialIds: readonly string[] };
 
 function requiredColorCount(
   field: Extract<ProductField, { kind: "material" }>,
@@ -191,7 +194,36 @@ export function validateSelections(
     }
   }
 
+  const forbidden = forbiddenCombinationProblem(definition, selections);
+
+  if (forbidden !== undefined) {
+    problems.push(forbidden);
+  }
+
   return problems;
+}
+
+function forbiddenCombinationProblem(
+  definition: ProductDefinition,
+  selections: LineSelections
+): SelectionProblem | undefined {
+  const derived = axisCodes(definition, selections, "hu");
+
+  if (!derived.ok) {
+    return undefined;
+  }
+
+  const materialIds = definition.fields.flatMap((field) => {
+    const code = field.kind === "material" ? derived.codes.get(field.id) : undefined;
+
+    return code === undefined ? [] : [code];
+  });
+
+  if (!completesForbiddenCombination(materialIds, definition.forbiddenMaterialCombinations)) {
+    return undefined;
+  }
+
+  return { code: "forbidden-combination", materialIds };
 }
 
 function reasonMessage(
@@ -233,6 +265,10 @@ export function formatSelectionProblem(
 ): string {
   const { definition, productName, languageCode } = context;
   const m = messages(languageCode);
+
+  if (problem.code === "forbidden-combination") {
+    return m.forbiddenCombination(productName, problem.materialIds.join(", "));
+  }
 
   if (problem.code === "unknown-field") {
     return m.selectionUnknownField(productName, problem.fieldId);

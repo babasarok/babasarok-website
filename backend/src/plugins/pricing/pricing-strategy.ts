@@ -1,4 +1,4 @@
-import { EntityHydrator, idsAreEqual, type PriceCalculationResult } from "@vendure/core";
+import { idsAreEqual, type PriceCalculationResult } from "@vendure/core";
 import type {
   Injector,
   Order,
@@ -29,13 +29,7 @@ export async function calculateUnitPrice(
   orderLineCustomFields: { [key: string]: unknown },
   order: Order
 ): Promise<PriceCalculationResult> {
-  const valuation = await valueVariantLine(
-    deps,
-    ctx,
-    productVariant,
-    orderLineCustomFields,
-    productVariant.listPrice
-  );
+  const valuation = await valueVariantLine(deps, ctx, productVariant, orderLineCustomFields);
 
   if (valuation.kind === "passThrough") {
     return {
@@ -74,10 +68,7 @@ export class ServerPricingStrategy implements OrderItemPriceCalculationStrategy 
   private deps!: LineValuationDeps;
 
   init(injector: Injector): void {
-    this.deps = lineValuationDeps(
-      injector.get(TransactionalConnection),
-      injector.get(EntityHydrator)
-    );
+    this.deps = lineValuationDeps(injector.get(TransactionalConnection));
   }
 
   calculateUnitPrice(

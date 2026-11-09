@@ -198,3 +198,54 @@ describe("validateSelections", () => {
     ).toEqual([]);
   });
 });
+
+describe("forbidden material combinations", () => {
+  const twoFields = ProductDefinitionSchema.parse({
+    id: "feszek",
+    basePrice: 9000,
+    pricing: { kind: "unit" },
+    forbiddenMaterialCombinations: [["wellsoft", "wellsoft"]],
+    fields: ["kulso", "belso"].map((id) => ({
+      kind: "material",
+      id,
+      label: { hu: id },
+      options: [
+        { materialId: "wellsoft", price: 0 },
+        { materialId: "pamut", price: 0 },
+      ],
+      colorCount: { kind: "fixed", count: 1 },
+    })),
+  });
+
+  function rejectPicks(selections: LineSelections): string | undefined {
+    return selectionsRejection({
+      definition: twoFields,
+      productName: "Fészek",
+      selections,
+      materialColors: new Map([
+        ["wellsoft", new Set(["piros"])],
+        ["pamut", new Set(["piros"])],
+      ]),
+      languageCode: "hu",
+    });
+  }
+
+  it("refuses picks that complete a forbidden combination, defaults included", () => {
+    expect(
+      rejectPicks({
+        kulso: { kind: "material", materialId: "wellsoft", colors: ["piros"] },
+        belso: { kind: "material", materialId: "wellsoft", colors: ["piros"] },
+      })
+    ).toBe('A(z) "Fészek" termék ebben az anyagkombinációban nem rendelhető: wellsoft, wellsoft.');
+    expect(rejectPicks({})).toMatch(/anyagkombinációban nem rendelhető/);
+  });
+
+  it("accepts picks that complete no forbidden combination", () => {
+    expect(
+      rejectPicks({
+        kulso: { kind: "material", materialId: "wellsoft", colors: ["piros"] },
+        belso: { kind: "material", materialId: "pamut", colors: ["piros"] },
+      })
+    ).toBeUndefined();
+  });
+});

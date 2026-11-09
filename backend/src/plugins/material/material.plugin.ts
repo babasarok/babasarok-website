@@ -13,7 +13,6 @@ import {
   ShopMaterialResolver,
   shopMaterialSchema,
 } from "./material.resolver";
-import { MaterialFacetSync } from "./material-facet-sync";
 import { MaterialService } from "./material.service";
 
 @VendurePlugin({
@@ -27,7 +26,7 @@ import { MaterialService } from "./material.service";
     schema: shopMaterialSchema,
     resolvers: [ShopMaterialResolver, MaterialFieldResolver, MaterialColorResolver],
   },
-  providers: [MaterialFacetSync, MaterialService],
+  providers: [MaterialService],
   dashboard: "../../dashboard/material/material.tsx",
 })
 export class MaterialPlugin {}

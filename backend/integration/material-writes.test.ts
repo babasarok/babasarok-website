@@ -1,14 +1,9 @@
 /**
- * Seam: the material-write event fan-out vs. the sync queue. A material write
- * queues a definition sync for every product referencing that material, so a
- * bulk material write (a script, not the dashboard's one-at-a-time form) fires
- * N events back to back — without a dedup each event enqueues its own job for
- * the same product, and the sequential worker chews through duplicates (each
- * heavy sync can OOM it; the 2026-11-08 incident burst-queued 36 jobs). A
- * queued not-yet-started job re-reads the definition and materials when it
- * runs, so one pending job covers every material change that lands before it
- * starts: three concurrent material writes must produce a single automatic
- * sync job, i.e. two jobs total for the definition (its owner-save + one).
+ * Seam: material writes vs. the definition-sync queue. Generated products no
+ * longer carry anything a material write changes (ADR 0016: one variant, no
+ * option groups, no material facets), so a material write must enqueue no
+ * definition sync at all — a burst of material writes once queued a sync per
+ * referencing product and OOM-ed the worker (the 2026-11-08 incident).
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Pool } from "pg";
@@ -17,8 +12,8 @@ import { materialField, seedCatalog } from "./fixtures";
 import { run, startServer, type IntegrationServer } from "./harness";
 import { env } from "../dist/env";
 
-const DEDUP_MATRIX = {
-  id: "int-dedup-matrix",
+const REFERENCING = {
+  id: "int-anyagot-hasznal",
   basePrice: 1000,
   pricing: { kind: "unit" },
   forbiddenMaterialCombinations: [],
@@ -101,7 +96,7 @@ beforeAll(async () => {
     `mutation($definition: JSON!, $name: String!) {
       createProductDefinition(definition: $definition, name: $name) { productId }
     }`,
-    { definition: DEDUP_MATRIX, name: "Dedup mátrix" },
+    { definition: REFERENCING, name: "Anyagot használ" },
     CreatedSchema
   );
   productId = created.createProductDefinition.productId;
@@ -112,8 +107,8 @@ afterAll(async () => {
   await server.stop();
 });
 
-describe("material-write sync fan-out", () => {
-  it("three concurrent material writes queue one automatic sync", async () => {
+describe("material writes", () => {
+  it("queue no definition sync for the products referencing the material", async () => {
     const { materials } = await run(
       server.admin,
       `query { materials { id slug translations { languageCode label } colors { id hex translations { languageCode label } } } }`,
@@ -126,8 +121,6 @@ describe("material-write sync fan-out", () => {
       throw new Error("int-pamut was not seeded.");
     }
 
-    // A label change is what makes the update variant-relevant (a no-op write
-    // publishes no event) — on prod this was the en labels being added.
     const input = {
       slug: material.slug,
       translations: material.translations.map((t) => ({
@@ -141,8 +134,6 @@ describe("material-write sync fan-out", () => {
       })),
     };
 
-    // Three events back to back: inside the job queue's 200 ms poll interval,
-    // so the first automatic job is still not started when the other two fire.
     await Promise.all(
       Array.from({ length: 3 }, () =>
         run(
@@ -153,8 +144,6 @@ describe("material-write sync fan-out", () => {
         )
       )
     );
-
-    await waitForSync();
 
     const pool = new Pool({ connectionString: env.databaseUrl, max: 1 });
 
@@ -167,34 +156,13 @@ describe("material-write sync fan-out", () => {
         );
         return result.rows.at(0)?.n ?? 0;
       };
-      const pending = async (): Promise<number> => {
-        const result = await pool.query<{ n: number }>(
-          `SELECT COUNT(*)::int AS n FROM job_record
-           WHERE "queueName" = 'product-definition-sync' AND state IN ('PENDING', 'RETRYING')
-             AND (data::jsonb)->>'productId' = $1`,
-          [productId]
-        );
-        return result.rows.at(0)?.n ?? 0;
-      };
 
       // The material events dispatch asynchronously (seconds later under the
-      // test server), so wait until at least one automatic job has landed and
-      // the product's queue slice is stable and drained before counting.
-      let last = -1;
+      // test server): give a fan-out time to land before counting.
+      await new Promise((resolve) => setTimeout(resolve, 5000));
 
-      for (let attempt = 0; attempt < 60; attempt += 1) {
-        const total = await count();
-
-        if (total >= 2 && total === last && (await pending()) === 0) {
-          break;
-        }
-
-        last = total;
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      }
-
-      // The owner-save job plus exactly one automatic job.
-      expect(await count()).toBe(2);
+      // The owner-save job of the definition's creation only.
+      expect(await count()).toBe(1);
     } finally {
       await pool.end();
     }

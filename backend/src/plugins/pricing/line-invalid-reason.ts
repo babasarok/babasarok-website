@@ -42,7 +42,7 @@ export async function lineInvalidReason(
   }
 
   const customFields = Object.fromEntries(Object.entries(line.customFields));
-  const valuation = await valueVariantLine(deps, ctx, line.productVariant, customFields, 0);
+  const valuation = await valueVariantLine(deps, ctx, line.productVariant, customFields);
 
   if (valuation.kind === "invalid") {
     return { code: "OPTION_NOT_OFFERED", message: valuation.message };

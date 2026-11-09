@@ -5,12 +5,10 @@ import {
   ProductFieldResolver,
   productDefinitionSchema,
   ShopProductFieldResolver,
-  ShopProductVariantsResolver,
   shopProductSchema,
 } from "./product.resolver";
 import { ShopThreadColorResolver } from "./thread-color.resolver";
 import { ProductDefinitionService } from "./product-definition.service";
-import { BulkVariantWriter } from "./bulk-variant-writer";
 
 @VendurePlugin({
   imports: [PluginCommonModule],
@@ -21,9 +19,9 @@ import { BulkVariantWriter } from "./bulk-variant-writer";
   },
   shopApiExtensions: {
     schema: shopProductSchema,
-    resolvers: [ShopProductFieldResolver, ShopProductVariantsResolver, ShopThreadColorResolver],
+    resolvers: [ShopProductFieldResolver, ShopThreadColorResolver],
   },
-  providers: [ProductDefinitionService, BulkVariantWriter],
+  providers: [ProductDefinitionService],
   dashboard: "../../dashboard/product/product-definition.tsx",
 })
 export class ProductPlugin {}

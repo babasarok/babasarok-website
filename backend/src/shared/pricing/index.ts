@@ -27,3 +27,10 @@ export {
   type LineValuation,
 } from "./line-price";
 export { completesForbiddenCombination, forbiddenMaterialFieldIds } from "./banned-combinations";
+export {
+  axisCodes,
+  isAxisField,
+  type AxisCodes,
+  type AxisCodesResult,
+  type AxisField,
+} from "./axis-codes";

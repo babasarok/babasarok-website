@@ -36,6 +36,7 @@ import {
 } from "./plugins/product-set/promotion";
 import { ProductSetPlugin } from "./plugins/product-set/product-set.plugin";
 import { ProductPlugin } from "./plugins/product/product.plugin";
+import { AuditPlugin } from "./plugins/audit/audit.plugin";
 import { hexColorError } from "./plugins/product/thread-color";
 import { ChannelSetupPlugin } from "./plugins/setup/channel-setup.plugin";
 
@@ -179,6 +180,7 @@ export const config: VendureConfig = {
     MaterialPlugin,
     ProductPlugin,
     ProductSetPlugin,
+    AuditPlugin,
     PricingPlugin,
     CheckoutPlugin,
     ChannelSetupPlugin,

@@ -1,7 +1,11 @@
 import type { ProductDefinition } from "../product-definition/index";
 import { ProductDefinitionSchema } from "../product-definition/index";
 import { describe, expect, it } from "vitest";
-import { LineSelectionsError, parseLineSelections } from "../product-definition/index";
+import {
+  LineSelectionsError,
+  parseLineSelections,
+  type LineSelections,
+} from "../product-definition/index";
 import { computeLineUnitPrice, LinePricingError, valueConfiguredLine } from "./line-price";
 
 const unitProduct = ProductDefinitionSchema.parse({
@@ -124,25 +128,24 @@ const lengthProduct = ProductDefinitionSchema.parse({
   ],
 });
 
-const unitCodes = (
-  meret: string,
-  fodor: "igen" | "nem",
-  anyag: string
-): ReadonlyMap<string, string> =>
-  new Map([
-    ["meret", meret],
-    ["fodor", fodor],
-    ["anyag", anyag],
-  ]);
+const unitSelections = (meret: string, fodor: "igen" | "nem", anyag: string): LineSelections => ({
+  meret: { kind: "option", value: meret },
+  fodor: { kind: "option", value: fodor },
+  anyag: { kind: "material", materialId: anyag, colors: [] },
+});
+
+const lengthSelections = (sizes: string, fonas: string, anyag: string): LineSelections => ({
+  sizes: { kind: "option", value: sizes },
+  fonas: { kind: "option", value: fonas },
+  anyag: { kind: "material", materialId: anyag, colors: [] },
+});
 
 describe("computeLineUnitPrice", () => {
   it("reproduces the variant's synced price for a plain option combination", () => {
     const price = computeLineUnitPrice({
       productName: "Termék",
       definition: unitProduct,
-      variantListPrice: 9000 + 2000 + 1800 + 3000,
-      optionCodes: unitCodes("50", "igen", "wellsoft"),
-      selections: {},
+      selections: unitSelections("50", "igen", "wellsoft"),
       lengthCm: null,
       languageCode: "hu",
     });
@@ -154,35 +157,35 @@ describe("computeLineUnitPrice", () => {
     const withPick = computeLineUnitPrice({
       productName: "Termék",
       definition: unitProduct,
-      variantListPrice: 9000,
-      optionCodes: unitCodes("40", "igen", "minky"),
-      selections: { szin: { kind: "option", value: "piros" } },
+      selections: {
+        ...unitSelections("40", "igen", "minky"),
+        szin: { kind: "option", value: "piros" },
+      },
       lengthCm: null,
       languageCode: "hu",
     });
 
-    expect(withPick).toBe(9500);
+    expect(withPick).toBe(9000 + 1800 + 500);
 
     const withoutPick = computeLineUnitPrice({
       productName: "Termék",
       definition: unitProduct,
-      variantListPrice: 9000,
-      optionCodes: unitCodes("40", "igen", "minky"),
-      selections: {},
+      selections: unitSelections("40", "igen", "minky"),
       lengthCm: null,
       languageCode: "hu",
     });
 
-    expect(withoutPick).toBe(9000);
+    expect(withoutPick).toBe(9000 + 1800);
   });
 
   it("adds a visible input's price even while empty, and hides dependents", () => {
     const price = computeLineUnitPrice({
       productName: "Termék",
       definition: unitProduct,
-      variantListPrice: 9000,
-      optionCodes: unitCodes("40", "nem", "minky"),
-      selections: { felirat: { kind: "input", value: "" } },
+      selections: {
+        ...unitSelections("40", "nem", "minky"),
+        felirat: { kind: "input", value: "" },
+      },
       lengthCm: null,
       languageCode: "hu",
     });
@@ -194,9 +197,8 @@ describe("computeLineUnitPrice", () => {
     const price = computeLineUnitPrice({
       productName: "Termék",
       definition: unitProduct,
-      variantListPrice: 9000,
-      optionCodes: unitCodes("40", "nem", "minky"),
       selections: {
+        ...unitSelections("40", "nem", "minky"),
         hímzés: { kind: "embroidery", text: "  kis  Ana ", colorId: "piros" },
       },
       lengthCm: null,
@@ -210,9 +212,7 @@ describe("computeLineUnitPrice", () => {
     const price = computeLineUnitPrice({
       productName: "Termék",
       definition: unitProduct,
-      variantListPrice: 9000,
-      optionCodes: unitCodes("40", "nem", "minky"),
-      selections: {},
+      selections: unitSelections("40", "nem", "minky"),
       lengthCm: null,
       languageCode: "hu",
     });
@@ -224,13 +224,10 @@ describe("computeLineUnitPrice", () => {
     const price = computeLineUnitPrice({
       productName: "Termék",
       definition: lengthProduct,
-      variantListPrice: 0,
-      optionCodes: new Map([
-        ["sizes", "380"],
-        ["fonas", "6"],
-        ["anyag", "teddy"],
-      ]),
-      selections: { hímzés: { kind: "embroidery", text: "Ana", colorId: "piros" } },
+      selections: {
+        ...lengthSelections("380", "6", "teddy"),
+        hímzés: { kind: "embroidery", text: "Ana", colorId: "piros" },
+      },
       lengthCm: 380,
       languageCode: "hu",
     });
@@ -249,9 +246,7 @@ describe("computeLineUnitPrice", () => {
       computeLineUnitPrice({
         productName: "Termék",
         definition: perMetre995,
-        variantListPrice: 0,
-        optionCodes: new Map([["sizes", "380"]]),
-        selections: {},
+        selections: { sizes: { kind: "option", value: "380" } },
         lengthCm: 335,
         languageCode: "hu",
       })
@@ -263,33 +258,17 @@ describe("computeLineUnitPrice", () => {
       computeLineUnitPrice({
         productName: "Termék",
         definition: lengthProduct,
-        variantListPrice: 0,
-        optionCodes: new Map([
-          ["sizes", "200"],
-          ["fonas", "3"],
-          ["anyag", "velur"],
-        ]),
-        selections: {},
+        selections: lengthSelections("200", "3", "velur"),
         lengthCm: null,
         languageCode: "hu",
       })
     ).toThrow(LinePricingError);
   });
 
-  it("prices a custom value on a variant-axis field like the variant's pinned option", () => {
-    // The storefront cannot put a custom value on a variant: it pins a listed
-    // option's variant and stores the custom text on the line. The line prices
-    // via the pinned option — what the live price already showed — while the
-    // custom text rides the stored selections (configText, emails).
+  it("prices a custom value on a variant-axis field at the first listed option", () => {
     const price = computeLineUnitPrice({
       productName: "Termék",
       definition: lengthProduct,
-      variantListPrice: 0,
-      optionCodes: new Map([
-        ["sizes", "200"],
-        ["fonas", "3"],
-        ["anyag", "velur"],
-      ]),
       selections: {
         sizes: { kind: "custom", value: "240" },
         fonas: { kind: "custom", value: "7" },
@@ -298,18 +277,18 @@ describe("computeLineUnitPrice", () => {
       languageCode: "hu",
     });
 
-    // (base 0 + fonás "3" 8000 Ft/m) × 2.4 m; the custom values ride along.
     expect(price).toBe(19_200);
   });
 
-  it("refuses selections that disagree with the variant", () => {
+  it("refuses a material the field does not offer", () => {
     expect(() =>
       computeLineUnitPrice({
         productName: "Termék",
         definition: unitProduct,
-        variantListPrice: 9000,
-        optionCodes: unitCodes("40", "nem", "minky"),
-        selections: { anyag: { kind: "material", materialId: "wellsoft", colors: [] } },
+        selections: {
+          ...unitSelections("40", "nem", "minky"),
+          anyag: { kind: "material", materialId: "nincs", colors: [] },
+        },
         lengthCm: null,
         languageCode: "hu",
       })
@@ -321,9 +300,10 @@ describe("computeLineUnitPrice", () => {
       computeLineUnitPrice({
         productName: "Termék",
         definition: unitProduct,
-        variantListPrice: 9000,
-        optionCodes: unitCodes("40", "nem", "minky"),
-        selections: { nincs: { kind: "input", value: "x" } },
+        selections: {
+          ...unitSelections("40", "nem", "minky"),
+          nincs: { kind: "input", value: "x" },
+        },
         lengthCm: null,
         languageCode: "hu",
       })
@@ -335,13 +315,7 @@ describe("computeLineUnitPrice", () => {
       computeLineUnitPrice({
         productName: "Fonott rácsvédő",
         definition: lengthProduct,
-        variantListPrice: 0,
-        optionCodes: new Map([
-          ["sizes", "200"],
-          ["fonas", "3"],
-          ["anyag", "teddy"],
-        ]),
-        selections: {},
+        selections: lengthSelections("200", "3", "teddy"),
         lengthCm: null,
         languageCode: "hu",
       })
@@ -403,30 +377,22 @@ describe("length per-material pricing", () => {
     const hidden = computeLineUnitPrice({
       productName: "Termék",
       definition,
-      variantListPrice: 0,
-      optionCodes: new Map([
-        ["sizes", "200"],
-        ["fonas", "3"],
-        ["anyag", "velur"],
-        ["gumiparositas", "nem"],
-        ["masni", "igen"],
-      ]),
-      selections: {},
+      selections: {
+        ...lengthSelections("200", "3", "velur"),
+        gumiparositas: { kind: "option", value: "nem" },
+        masni: { kind: "option", value: "igen" },
+      },
       lengthCm: 200,
       languageCode: "hu",
     });
     const visible = computeLineUnitPrice({
       productName: "Termék",
       definition,
-      variantListPrice: 0,
-      optionCodes: new Map([
-        ["sizes", "200"],
-        ["fonas", "3"],
-        ["anyag", "velur"],
-        ["gumiparositas", "igen"],
-        ["masni", "igen"],
-      ]),
-      selections: {},
+      selections: {
+        ...lengthSelections("200", "3", "velur"),
+        gumiparositas: { kind: "option", value: "igen" },
+        masni: { kind: "option", value: "igen" },
+      },
       lengthCm: 200,
       languageCode: "hu",
     });
@@ -439,26 +405,14 @@ describe("length per-material pricing", () => {
     const teddy = computeLineUnitPrice({
       productName: "Termék",
       definition: lengthProduct,
-      variantListPrice: 0,
-      optionCodes: new Map([
-        ["sizes", "200"],
-        ["fonas", "3"],
-        ["anyag", "teddy"],
-      ]),
-      selections: {},
+      selections: lengthSelections("200", "3", "teddy"),
       lengthCm: 200,
       languageCode: "hu",
     });
     const velur = computeLineUnitPrice({
       productName: "Termék",
       definition: lengthProduct,
-      variantListPrice: 0,
-      optionCodes: new Map([
-        ["sizes", "200"],
-        ["fonas", "3"],
-        ["anyag", "velur"],
-      ]),
-      selections: {},
+      selections: lengthSelections("200", "3", "velur"),
       lengthCm: 200,
       languageCode: "hu",
     });
@@ -479,8 +433,6 @@ describe("definition sanity", () => {
 describe("valueConfiguredLine", () => {
   const input = {
     productName: "Párna",
-    variantListPrice: 9000,
-    optionCodes: new Map<string, string>(),
     selections: {},
     lengthCm: null,
     languageCode: "hu",

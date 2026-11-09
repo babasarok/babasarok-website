@@ -211,19 +211,17 @@
   }
 
   async function upsertLine(current: IProduct): Promise<boolean> {
-    const variants = await basket.api.productVariants(slug);
+    const variantId = await basket.api.productVariantId(slug);
 
-    if (!variants.ok) {
-      return refuse(variants.failure.reason);
+    if (!variantId.ok) {
+      return refuse(variantId.failure.reason);
     }
 
-    const built = buildLine(definition, current.fields, variants.value);
-
-    if (!built.ok) {
-      return refuse(built.message);
+    if (variantId.value === undefined) {
+      return refuse("errors.notOrderable");
     }
 
-    const { line } = built;
+    const line = buildLine(definition, current.fields, variantId.value);
     const existing = basket.order?.lines.find((candidate) => candidate.id === editingLineId);
     const unchanged = existing !== undefined && lineMatches(existing, line);
     const result = await (existing && unchanged
@@ -301,22 +299,20 @@
     busy = true;
 
     try {
-      const variants = await basket.api.productVariants(targetSlug);
+      const variantId = await basket.api.productVariantId(targetSlug);
 
-      if (!variants.ok) {
-        refuse(variants.failure.reason);
+      if (!variantId.ok) {
+        refuse(variantId.failure.reason);
         return;
       }
 
-      const variant = variants.value.at(0);
-
-      if (!variant) {
+      if (variantId.value === undefined) {
         refuse("errors.notOrderable");
         return;
       }
 
       const result = await basket.add({
-        productVariantId: variant.id,
+        productVariantId: variantId.value,
         quantity: 1,
         customFields: { selections: "{}" },
       });

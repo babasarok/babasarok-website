@@ -75,7 +75,7 @@ export class SetBasketService {
 
     const stored = await this.connection.getRepository(ctx, OrderLine).find({
       where: { order: { id: order.id } },
-      relations: { productVariant: { options: { group: true } } },
+      relations: { productVariant: true },
       order: { id: "ASC" },
     });
     const inFlight = new Map(
@@ -90,10 +90,6 @@ export class SetBasketService {
         listPrice: current.listPrice,
         nativeProductId: Number(line.productVariant.productId),
         selectionsRaw: line.customFields.selections,
-        options: line.productVariant.options.map((option) => ({
-          groupCode: option.group.code,
-          code: option.code,
-        })),
       };
     });
     const definitionRows = await this.connection.getRepository(ctx, ProductDefinition).find({

@@ -23,7 +23,6 @@ import {
   ConfirmationDialog,
   NEW_ENTITY_PATH,
   NativeSelect,
-  PaginatedListDataTable,
   PageBlock,
   StatusBadge,
   toast,
@@ -38,7 +37,7 @@ import {
 } from "../../shared/product-definition/index";
 import { graphql } from "@/gql";
 import { UnsavedChangesGuard } from "./unsaved-changes-guard";
-import { ErrorNotice, errorCodeOf, rowKey } from "../shared";
+import { ErrorNotice, rowKey } from "../shared";
 import "./stock-image-sizes.css";
 import { FieldEditor, NumberInput } from "./product-definition-fields";
 import {
@@ -77,10 +76,6 @@ const productDefinitionQuery = graphql(`
       nativeProductId
       syncState
       syncError
-      syncProgress {
-        done
-        total
-      }
       stale
       driftDetails {
         kind
@@ -110,8 +105,8 @@ const createProductDefinitionMutation = graphql(`
 `);
 
 const updateProductDefinitionMutation = graphql(`
-  mutation UpdateProductDefinition($productId: String!, $definition: JSON!, $force: Boolean) {
-    updateProductDefinition(productId: $productId, definition: $definition, force: $force) {
+  mutation UpdateProductDefinition($productId: String!, $definition: JSON!) {
+    updateProductDefinition(productId: $productId, definition: $definition) {
       productId
       syncState
       syncError
@@ -135,27 +130,11 @@ const patchCreatedProductMutation = graphql(`
   }
 `);
 
-const generatedVariantsQuery = graphql(`
-  query GeneratedVariants($productDefinitionId: String!, $options: GeneratedVariantListOptions!) {
-    generatedVariants(productDefinitionId: $productDefinitionId, options: $options) {
-      items {
-        id
-        name
-        code
-        price
-        facets
-      }
-      totalItems
-    }
-  }
-`);
-
 interface SyncInfo {
   state: string;
   error: string | null;
   stale: boolean;
   details: Array<{ kind: string; label: string }>;
-  progress: { done: number; total: number } | null;
 }
 
 const syncStateDictionary = defineStateEntries({
@@ -169,11 +148,7 @@ function SyncBadge({ sync }: { sync: SyncInfo | null }): ReactElement {
     return <></>;
   }
 
-  const baseLabel = syncStateDictionary.labelFor(sync.state);
-  const stateLabel =
-    sync.state === "pending" && sync.progress !== null
-      ? `${baseLabel} ${sync.progress.done} / ${sync.progress.total}`
-      : baseLabel;
+  const stateLabel = syncStateDictionary.labelFor(sync.state);
 
   return (
     <span className="flex items-center gap-2">
@@ -181,9 +156,7 @@ function SyncBadge({ sync }: { sync: SyncInfo | null }): ReactElement {
         {stateLabel}
       </StatusBadge>
       {sync.stale && sync.state !== "pending" && (
-        <Badge variant="warning">
-          Elavult — mentés csak a natív módosítások felülírásával lehetséges
-        </Badge>
+        <Badge variant="warning">Elavult — a következő mentés frissíti a változatot</Badge>
       )}
     </span>
   );
@@ -299,16 +272,11 @@ export function ConfiguratorEditor({
   const [pending, setPending] = useState(false);
   const [errors, setErrors] = useState<string[] | null>(null);
   const [saved, setSaved] = useState(false);
-  const [driftConflict, setDriftConflict] = useState(false);
   const [kindSwitchKey, setKindSwitchKey] = useState<{
     key: string;
     kind: FieldKind;
     label: string;
   } | null>(null);
-  const [variantPage, setVariantPage] = useState(1);
-  const [variantPageSize, setVariantPageSize] = useState(20);
-  // Structural SortingState (the dashboard package doesn't re-export the type).
-  const [variantSorting, setVariantSorting] = useState<Array<{ id: string; desc: boolean }>>([]);
   const pollRun = useRef(0);
 
   useEffect(() => {
@@ -352,7 +320,6 @@ export function ConfiguratorEditor({
           error: result.productDefinition.syncError,
           stale: result.productDefinition.stale,
           details: result.productDefinition.driftDetails ?? [],
-          progress: result.productDefinition.syncProgress,
         });
 
         if (result.productDefinition.syncState === "pending") {
@@ -420,7 +387,7 @@ export function ConfiguratorEditor({
           return;
         }
 
-        await save(false);
+        await save();
       },
     });
   });
@@ -626,7 +593,6 @@ export function ConfiguratorEditor({
           error: result.productDefinition.syncError,
           stale: result.productDefinition.stale,
           details: result.productDefinition.driftDetails ?? [],
-          progress: result.productDefinition.syncProgress,
         };
         setSync(next);
 
@@ -678,14 +644,13 @@ export function ConfiguratorEditor({
     return translations.find(isForLanguage);
   }
 
-  async function save(force: boolean): Promise<void> {
+  async function save(): Promise<void> {
     if (definition === null) {
       return;
     }
 
     setErrors(null);
     setSaved(false);
-    setDriftConflict(false);
 
     const stock = creatingNew ? stockTranslation() : undefined;
     const productName = (stock?.name ?? "").trim();
@@ -798,14 +763,12 @@ export function ConfiguratorEditor({
         const result = await api.query(updateProductDefinitionMutation, {
           productId: definitionId,
           definition: validated,
-          force,
         });
         setSync({
           state: result.updateProductDefinition.syncState,
           error: result.updateProductDefinition.syncError,
           stale: false,
           details: [],
-          progress: null,
         });
         // Adopt the saved payload (with the generated codes filled in) so the
         // next save keeps them stable instead of regenerating from labels.
@@ -820,10 +783,6 @@ export function ConfiguratorEditor({
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       setErrors(message.split("\n"));
-
-      if (errorCodeOf(err) === "PRODUCT_DEFINITION_NATIVE_DRIFT") {
-        setDriftConflict(true);
-      }
     } finally {
       setPending(false);
     }
@@ -903,26 +862,6 @@ export function ConfiguratorEditor({
           </ul>
         )}
         {errors !== null && <ErrorNotice message={errors.join("\n")} />}
-        {driftConflict && (
-          <Alert variant="destructive">
-            <AlertTitle>
-              A natív termék opciói, változatai vagy árai a szinkronizáláson kívül módosultak. A
-              mentés a szinkronizálással felülírja ezeket.
-            </AlertTitle>
-            <div className="mt-2">
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={pending}
-                onClick={() => {
-                  void save(true);
-                }}
-              >
-                Natív módosítások felülírása
-              </Button>
-            </div>
-          </Alert>
-        )}
         {saved && (
           <Alert>
             <AlertTitle>Mentés sikeres — a szinkronizálás fut.</AlertTitle>
@@ -1164,48 +1103,6 @@ export function ConfiguratorEditor({
           </div>
         </fieldset>
       </PageBlock>
-      {!creatingNew && (
-        <PageBlock
-          column="main"
-          layout="bare"
-          title="Generált natív szerkezet"
-          description="A szinkronizálással előállított natív opciócsoportok és változatok."
-        >
-          <div className="flex flex-col gap-4">
-            <PaginatedListDataTable
-              listQuery={generatedVariantsQuery}
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment -- under the repo's TS 6 (eslint's parser) the PaginatedListDataTable generics fall back to `any`; tsc 5.9 (check:dashboard, the gate for dashboard extensions) type-checks this concretely and passes
-              transformQueryKey={(queryKey) => [definitionId, ...queryKey]}
-              transformVariables={(variables) => ({
-                productDefinitionId: definitionId,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- under the repo's TS 6 (eslint's parser) the PaginatedListDataTable generics fall back to `any`; tsc 5.9 (check:dashboard, the gate for dashboard extensions) type-checks this concretely and passes
-                options: variables.options,
-              })}
-              page={variantPage}
-              itemsPerPage={variantPageSize}
-              sorting={variantSorting}
-              onPageChange={(_table, page, perPage) => {
-                setVariantPage(page);
-                setVariantPageSize(perPage);
-              }}
-              onSortChange={(_table, sorting) => {
-                setVariantSorting(sorting);
-              }}
-              customizeColumns={{
-                id: { header: "ID", enableSorting: false },
-                name: { header: "Név", enableSorting: false },
-                // The variant's SKU arrives as "code": a column literally
-                // named "sku" collides with the product-detail page's shipped
-                // table settings (the stock variants table hides it by
-                // default) and would render hidden with an unfetched value.
-                code: { header: "SKU", enableSorting: false },
-                price: { header: "Ár (Ft)", enableSorting: false },
-                facets: { header: "Tulajdonságok", enableSorting: false },
-              }}
-            />
-          </div>
-        </PageBlock>
-      )}
     </>
   );
 
