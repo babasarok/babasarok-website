@@ -12,6 +12,9 @@ lerna-debug.log*
 .impeccable
 .prototools
 
+# Translation exchange files (backend/scripts/translations): Vendure is the source of truth
+backend/translations/
+
 # TinaCMS generated output (also covered by tina/.gitignore)
 tina/__generated__
 
