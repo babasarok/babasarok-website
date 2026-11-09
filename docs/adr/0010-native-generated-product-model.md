@@ -68,6 +68,8 @@ an option → the missing variants appear; no manual variant work anywhere.
    Vendure structure from it: option groups per field (toggles as two-option
    groups), variants for the full combination matrix with banned
    combinations omitted, prices = base + Σ option prices.
+   _(Variant matrix superseded by ADR 0016: one native variant per
+   configurable product; the choices live only in the line selections.)_
 2. **The structured model is the single authority.** Native-side edits to
    generated products' option groups, variants and prices are overwritten by
    the next sync. The production sync must detect native-side drift
@@ -112,6 +114,8 @@ an option → the missing variants appear; no manual variant work anywhere.
    per set — members and the Ft amount in the promotion's args; the
    "Szettek" parent retires and related-items groups stay collections under
    "Kapcsolódó termékek".)_
+   _(Facets on variants and the facet-based material collections superseded
+   by ADR 0016: dropped, not moved to product level.)_
 7. Seed/import direction stays one-way Tina → Vendure, temporary and
    preview-only (ADR 0009); prod is hand-migrated at cutover.
 8. **Tina never stores product information — at no point in the roadmap.** No

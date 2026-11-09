@@ -1,6 +1,6 @@
 # ADR 0016: One native variant per configurable product — choices live only in line selections
 
-- **Status:** proposed
+- **Status:** accepted (accepted by the owner on 2026-11-09)
 - **Date:** 2026-11-09
 
 ## Context
@@ -31,20 +31,31 @@ configurators (cited in ADR 0010; not re-verified for this ADR).
 
 What reads the generated variants today:
 
-| Consumer | Reads | Evidence |
-| --- | --- | --- |
-| Add-to-cart | the whole matrix via the paged `productVariants(slug)` shop query; picks the variant whose options match the axes, refuses when none matches | `backend/src/plugins/product/product.resolver.ts:258,309`, `src/lib/basket/lineInput.ts:118-157` |
-| Server pricing | `variant.options` codes + variant list price as input to `valueConfiguredLine` | `backend/src/plugins/pricing/line-valuation.ts:32,66` |
-| Line validity | `VARIANT_UNAVAILABLE` (variant disabled/deleted), `OPTION_NOT_OFFERED` | `backend/src/plugins/pricing/line-invalid-reason.ts:5,31,46,56`; site relinks by variant id in `src/lib/basket/stale.ts` |
-| Set discounts | material axes from `variant.options` ("authoritative") | `backend/src/plugins/product-set/material-picks.ts:40`, `set-basket.service.ts:78-93`, `set-basket.ts:314-336` |
-| Material collections | facet values on variants | `backend/src/plugins/material/material-facet-sync.ts:125,226`, prefix in `backend/src/plugins/product/facet-plan.ts:13` |
-| Dashboard | order lines link to `/product-variants/:id`; generated products show a `generatedVariants` list | `backend/src/dashboard/product/` |
+| Consumer                        | Reads                                                                                                                                                            | Evidence                                                                                                                                                         |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add-to-cart                     | the whole matrix via the paged `productVariants(slug)` shop query; picks the variant whose options match the axes, refuses when none matches                     | `backend/src/plugins/product/product.resolver.ts:258,309`, `src/lib/basket/lineInput.ts:118-157`                                                                 |
+| Server pricing                  | `variant.options` codes (axis values, and a refusal when a material/choice selection disagrees with the variant) + the variant list price as the non-length base | `backend/src/plugins/pricing/line-valuation.ts:32,66`, `backend/src/shared/pricing/line-price.ts:119-279`                                                        |
+| Line validity                   | `VARIANT_UNAVAILABLE` (variant disabled/deleted), `OPTION_NOT_OFFERED` via the same valuation                                                                    | `backend/src/plugins/pricing/line-invalid-reason.ts:5,31,46,56`; the site matches its just-added line by variant id + selections in `src/lib/basket/stale.ts:51` |
+| Forbidden material combinations | **only** the matrix: banned variants are not generated; no server check reads `forbiddenMaterialCombinations` for order lines                                    | `backend/src/plugins/product/variant-plan.ts:191`; absent from `line-rejection.ts` and `shared/pricing/selection-validation.ts`                                  |
+| Set discounts                   | material axes from `variant.options` ("authoritative")                                                                                                           | `backend/src/plugins/product-set/material-picks.ts:40`, `set-basket.service.ts:78-93`, `set-basket.ts:314-336`                                                   |
+| Material collections            | facet values on variants                                                                                                                                         | `backend/src/plugins/material/material-facet-sync.ts:125,226`, prefix in `backend/src/plugins/product/facet-plan.ts:13`                                          |
+| Dashboard                       | order lines link to `/product-variants/:id`; generated products show a `generatedVariants` list                                                                  | `backend/src/dashboard/order-lines/order-lines.tsx:74`, `backend/src/dashboard/product/`                                                                         |
 
 Already independent of variants: line selections and `lengthCm` custom fields
 (`backend/src/vendure-config.ts:235,241`), emails and checkout summaries
-(built from selections + definition labels), banned-combination checks (also
-re-run server-side from the definition), live site prices (shared pricing
-package). Inventory is not a consumer (`trackInventory` forced off).
+(built from selections + definition labels, ADR 0013 decision 7), the
+selection validation at add/adjust (`line-rejection.ts`), live site prices
+(shared pricing package, `src/lib/catalog/livePrice.ts`, which already
+derives the variant price from the definition). Inventory is not a consumer
+(`trackInventory` forced off). Stored line prices change only on add/adjust
+(ADR 0013 decision 6), so moving the price inputs does not reprice baskets.
+
+What the selections already carry (`src/lib/basket/lineInput.ts:18-58`):
+one record per _visible_ field — toggles always (`igen`/`nem`), choices and
+materials once picked. `pickVariant` (`lineInput.ts:118-132`) fills the
+gaps: an unpicked choice/material or a custom value takes the first listed
+option, an absent toggle `nem`. Those defaults are therefore the axis values
+of today's lines whenever a selection is absent.
 
 **Material collections have no consumer.** Nothing in `src/` queries
 collections (the only `collection` hits are Tina content-collection
@@ -52,7 +63,9 @@ comments), the site reads product-level facet values only for the type facet
 (`src/lib/catalog/`), set discounts are promotions keyed by product ids
 (ADR 0014), and the only references to the `material-` prefix are its
 definition and the sync that maintains it. Search is build-time Pagefind
-(ADR 0004); `DefaultSearchPlugin` serves the admin only.
+(ADR 0004); `DefaultSearchPlugin` serves the admin only. (The product-sets
+spec's "public top-level collections are material navigation" describes an
+intent, not a consumer.)
 
 ## What matters (ranked)
 
@@ -71,7 +84,7 @@ definition and the sync that maintains it. Search is build-time Pagefind
 (1) Safe at today's size, but the failure mode remains structural — the next
 option, language or channel multiplies rows, and pacing rules for bulk writes
 stay a human discipline. (2) Proven. (3) Unchanged. (4) Keeps two
-representations of every choice (variant options *and* selections) that four
+representations of every choice (variant options _and_ selections) that four
 consumers must keep agreeing. (5) Zero. (6) Epic 9 multiplies price rows and
 must decide where SK prices come from for every generated variant.
 
@@ -86,8 +99,9 @@ selections.** The sync maintains one variant (base price, names), no option
 groups. Pricing, set discounts and validation read `selections` + definition.
 (1) Rows scale with product count; the matrix-sized sync, loader and drift
 detection go away. (2) Pricing already works from definition + selections;
-set discounts and validation switch their axis source; banned combinations
-are already re-checked from the definition. Placed orders keep their
+set discounts and validation switch their axis source; forbidden material
+combinations need a new server check from the selections (today only the
+missing variant enforces them). Placed orders keep their
 (disabled) historical variants. (3) Order lines show selection labels instead
 of a variant name; the generated-variants list disappears. Per-combination
 disable via the dashboard is not a current feature (the sync does not manage
@@ -102,15 +116,15 @@ material still multiplies. (2) Keeps the dual representation. (4) Least
 code change but keeps every seam. Only worth it if material-level native
 variants had a consumer — they don't.
 
-## Decision (proposed)
+## Decision
 
 **Option C.** The variant matrix buys facet-based collections nobody reads,
 at the cost of the system's main operational risk and a duplicated
-representation of every choice. Would supersede **ADR 0010 decision 1**
+representation of every choice. Supersedes **ADR 0010 decision 1**
 (variants for the full matrix, prices = base + Σ option prices — becomes one
 variant at the base price), the **variant part of decision 6** (Material/Color
-facets on variants and facet-based material collections — dropped, or moved
-to product level if a consumer appears), and the "Facets + Collections"
+facets on variants and facet-based material collections — dropped, not moved
+to product level; owner decision below), and the "Facets + Collections"
 delivery step's variant scope. Decisions 2–5, 7, 8 stand; decision 5 extends
 to every field.
 
@@ -118,42 +132,82 @@ to every field.
 
 Each step ships alone; the system is correct after each.
 
-1. **Readers go selection-first.** Pricing (`line-valuation.ts`), set
-   discounts (`material-picks.ts`, `set-basket.service.ts`, `set-basket.ts`)
-   and validity (`line-invalid-reason.ts`) derive axes from `selections` +
-   definition. Prove equivalence on today's matrix: for every generated
-   variant, axes from its options == axes from selections. **Guard:** a test
-   that greps `backend/src` for `variant.options` / `options.group` relation
-   loads, with an allowlist of remaining uses that only shrinks.
-2. **Site sends full selections** for axis fields (it already sends
-   `selections`; confirm every axis is included) — still to the matched
-   variant.
-3. **Drop material collections** and their facet sync (no consumer, see
-   Context). Migration deletes the `material-*` collections; facet values on
-   historical variants are left alone.
-4. **Single variant.** Sync creates/keeps one "configurable" variant per
-   generated product and disables (soft-deletes) the rest; placed orders keep
-   theirs. The site adds to the single variant; `productVariants(slug)` and
-   `pickVariant` are removed. **Basket migration:** active orders whose lines
-   point at a generated variant are relinked to the product's single variant
-   with selections derived from the old variant's options; anything
-   unresolvable is flagged `VARIANT_UNAVAILABLE` (existing reason, site
-   already handles it). **Guard:** the sync refuses to create a second
-   variant for a generated product (test).
-5. **Dashboard.** Order lines show selection labels and link to the
+1. **Selections are authoritative for pricing, set discounts and line
+   validity.** One shared function derives the axis values from the
+   selections and the definition with `pickVariant`'s defaults (absent toggle
+   → `nem`, absent choice/material or custom value → first listed option; a
+   listed value the field does not offer is refused). Pricing computes the
+   non-length base as base price + visible axis option prices — the walk
+   length-priced products already use — instead of the variant list price;
+   the set gate reads its material picks from the same derivation. The
+   variant still exists and is still checked for agreement with the
+   selections (the existing refusal, kept so nothing a buyer can do changes),
+   in one allowlisted module. Buyer-visible behaviour is unchanged, except
+   that during a sync lag the server now charges the definition's price (what
+   the configurator showed) instead of the stale variant price. Caveat: a
+   field whose visibility depends on a _hidden_ axis field could see a
+   different value (the site omits hidden fields from the selections); no
+   current definition has such a chain. **Guard:** an ESLint
+   `no-restricted-syntax` rule blocks variant-option reads (`variant.options`,
+   `productVariant.options`, `options`/`options.group` relation loads) with
+   an allowlist of the remaining uses (listed below); a unit test fails when
+   an allowlisted file no longer needs its entry or when an entry is added.
+2. **Server refuses forbidden material combinations** from the selections at
+   add/adjust and as an `OPTION_NOT_OFFERED` reason — today only the absent
+   variant enforces them, which step 5 removes.
+3. **Variant agreement check retired.** With 1–2 in place the server no
+   longer needs the variant to agree with the selections; drop the check
+   (allowlist shrinks).
+4. **Drop material collections and the Material/Color facets** (no
+   consumer, see Context; owner: no material/color browsing, now or later):
+   a migration deletes the `material-*` collections, the sync stops writing
+   facet values on variants, and the material facet sync and
+   `convergeMaterialFacets` go away; facet values on historical variants are
+   left alone or removed with the facets.
+5. **Single variant.** The sync keeps one variant per generated product at
+   the base price and soft-deletes the rest; placed orders keep theirs. The
+   site adds to the single variant; `productVariants(slug)` and `pickVariant`
+   are removed. **Basket migration:** lines of active (not placed) orders
+   that point at a generated variant are relinked to the product's single
+   variant; their selections already carry everything step 1 reads and their
+   stored prices stay (ADR 0013 decision 6). Lines that cannot be relinked
+   surface as `VARIANT_UNAVAILABLE`, which the site already handles.
+   **Guard:** the sync refuses to create a second variant for a generated
+   product (test).
+6. **Dashboard.** Order lines show selection labels and link to the
    product; the generated-variants list is removed.
-6. **Cleanup.** Matrix generation, drift hashing over variants, flat
-   matrix loader, the allowlist (empty) — deleted.
+7. **Cleanup.** Matrix generation, option groups, drift hashing over
+   variants, the flat matrix loader, the allowlist (empty) — deleted.
 
-Verification before prod for steps 3–4: `pnpm run db:pull-prod` into the
-prod-parity sim, run the migration, compare every active order's totals
-before/after (must be equal), check placed orders still render, and pace the
-production run per the bulk-write rule in AGENTS.md (watch `job_record`).
+Verification before prod for steps 4–5: on a local copy of production
+(`pnpm run db:pull-prod`, run by the owner), run the migration, compare every
+active order's line prices and totals before/after (must be equal), check
+placed orders still render in the dashboard, and pace the production run per
+the bulk-write rule in AGENTS.md (watch `job_record`).
 
-## Open questions for the owner
+### Remaining uses of the old way (the step-1 allowlist)
 
-- Do you ever want to disable a single combination (not ban it for all)?
-- Should materials/colors be browsable on the future site (would need
-  product-level facets, not variants)?
-- Is a variant SKU per combination needed for anything external
-  (invoicing, Barion, accounting) in epic 7?
+- `backend/src/plugins/pricing/variant-agreement.ts` — the agreement check
+  (step 3).
+- `backend/src/plugins/product/` sync, plan, drift and resolver files that
+  generate, compare and serve the matrix (steps 5, 7).
+- `src/lib/basket/lineInput.ts` — `pickVariant` (step 5).
+
+## Owner answers (2026-11-09)
+
+- **No per-combination disable.** Not needed now; when it is, it becomes an
+  entry in the definition's `forbiddenMaterialCombinations` — no separate
+  per-combination switch.
+- **No material/color browsing on the site, now or later.** Step 4 drops the
+  material collections and the Material/Color facets outright; they do not
+  move to the product level.
+
+## Open questions
+
+- **Per-combination SKUs for invoicing/payments (epic 7).** Unknown whether
+  Hungarian invoicing (NAV Online Számla) needs an item code per combination;
+  the legal requirement is being researched separately and must be answered
+  before step 5 (single variant). A per-combination SKU list is likely
+  infeasible for the same reason as the matrix, so the design keeps a
+  per-line SKU computable from the product and its selections (a pure
+  function of the definition), with no matrix needed.
