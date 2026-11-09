@@ -1,23 +1,10 @@
 import gql from "graphql-tag";
-import { Allow, Ctx, Permission, Product, RequestContext, UserInputError } from "@vendure/core";
+import { Allow, Ctx, Permission, Product, RequestContext } from "@vendure/core";
 import type { ID } from "@vendure/core";
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { ProductDefinition } from "./product.entity";
 import { shopThreadColorTypes } from "./thread-color.resolver";
 import { ProductDefinitionService } from "./product-definition.service";
-
-/** Mirrors the dashboard's PaginatedListDataTable contract (spike-proven). */
-interface GeneratedVariantListOptionsInput {
-  skip?: number | null;
-  take?: number | null;
-  sort?: unknown;
-  filter?: unknown;
-}
-
-interface GeneratedVariantListGraph {
-  items: Array<{ id: string; name: string; code: string; price: number }>;
-  totalItems: number;
-}
 
 /** Mirrors the dashboard's PaginatedListDataTable contract (spike-proven). */
 interface ProductDefinitionListOptionsInput {
@@ -109,22 +96,6 @@ export class ProductDefinitionResolver {
       (await this.productDefinitionService.driftAnalysis(ctx, [row])).get(row.productId) ?? [];
 
     return toGraph(row, drift.length > 0, drift);
-  }
-
-  @Query()
-  @Allow(Permission.UpdateCatalog)
-  async generatedVariants(
-    @Ctx() ctx: RequestContext,
-    @Args("productDefinitionId") productDefinitionId: string,
-    @Args("options") options: GeneratedVariantListOptionsInput
-  ): Promise<GeneratedVariantListGraph> {
-    const row = await this.productDefinitionService.productDefinition(ctx, productDefinitionId);
-
-    if (row === null) {
-      throw new UserInputError(`Nincs termék ezzel az azonosítóval: ${productDefinitionId}`);
-    }
-
-    return this.productDefinitionService.generatedVariantList(ctx, row, options);
   }
 
   @Mutation()
@@ -235,23 +206,6 @@ export const productDefinitionSchema = gql`
     driftDetails: [ProductDefinitionDrift!]
   }
 
-  type GeneratedVariant implements Node {
-    id: ID!
-    name: String!
-    # "code", not "sku": the dashboard's shipped table settings for the
-    # product-detail page hide a column literally named "sku" (the stock
-    # variants table's default), and a table column inherits the page's
-    # settings by id — a colliding name renders as a hidden column and the
-    # table's minimal-query rewrite stops fetching it.
-    code: String!
-    price: Int!
-  }
-
-  type GeneratedVariantList implements PaginatedList {
-    items: [GeneratedVariant!]!
-    totalItems: Int!
-  }
-
   type ProductDefinitionList implements PaginatedList {
     items: [ProductDefinition!]!
     totalItems: Int!
@@ -267,24 +221,9 @@ export const productDefinitionSchema = gql`
     filter: JSON
   }
 
-  input GeneratedVariantListOptions {
-    # Non-null with defaults: the dashboard's PaginatedListDataTable contract
-    # types skip/take as plain numbers, so nullable fields fail its constraint.
-    skip: Int! = 0
-    take: Int! = 20
-    # The dashboard's PaginatedListDataTable always sends sort/filter keys;
-    # JSON keeps the input tolerant.
-    sort: JSON
-    filter: JSON
-  }
-
   extend type Query {
     productDefinition(productId: String!): ProductDefinition
     productDefinitions(options: ProductDefinitionListOptions!): ProductDefinitionList!
-    generatedVariants(
-      productDefinitionId: String!
-      options: GeneratedVariantListOptions!
-    ): GeneratedVariantList!
   }
 
   extend type Product {

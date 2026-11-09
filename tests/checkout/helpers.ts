@@ -161,11 +161,10 @@ export async function createPricedProduct(): Promise<void> {
 
 export async function raisePrice(): Promise<void> {
   await gql(
-    `mutation U($productId: String!, $definition: JSON!, $force: Boolean) { updateProductDefinition(productId: $productId, definition: $definition, force: $force) { productId } }`,
+    `mutation U($productId: String!, $definition: JSON!) { updateProductDefinition(productId: $productId, definition: $definition) { productId } }`,
     {
       productId: PRICED_PRODUCT_ID,
       definition: plainDefinition(PRICED_PRODUCT_ID, PRICED_AFTER),
-      force: true,
     },
     z.unknown()
   );
@@ -280,8 +279,8 @@ export async function createSet(): Promise<void> {
 
 export async function withdrawLargeSize(): Promise<void> {
   await gql(
-    `mutation U($productId: String!, $definition: JSON!, $force: Boolean) { updateProductDefinition(productId: $productId, definition: $definition, force: $force) { productId } }`,
-    { productId: PRODUCT_ID, definition: definition(false), force: true },
+    `mutation U($productId: String!, $definition: JSON!) { updateProductDefinition(productId: $productId, definition: $definition) { productId } }`,
+    { productId: PRODUCT_ID, definition: definition(false) },
     z.unknown()
   );
 }

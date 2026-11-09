@@ -7,9 +7,11 @@
  * - the order items table renders the configText custom field — the product's
  *   selected options, one option per line — as pre-formatted multi-line text
  *   instead of a single long line;
- * - the product-variant column also shows the product's name (the built-in
- *   table selects the variant name only), fetched through the detail-document
- *   extension below.
+ * - the product-variant column shows the product's name linked to the product
+ *   (a configurable product has one variant; its choices are the configText,
+ *   ADR 0016) — the built-in table selects the variant only, so the product
+ *   comes through the detail-document extension below. A line of an order
+ *   placed before ADR 0016 also names its historical variant.
  */
 import { defineDashboardExtension } from "@vendure/dashboard";
 import { type ResultOf, graphql } from "@/gql";
@@ -24,6 +26,7 @@ const orderDetailExtension = graphql(`
           id
           name
           product {
+            id
             name
           }
         }
@@ -64,15 +67,19 @@ defineDashboardExtension({
 
             return (
               <div className="flex flex-col items-start gap-0.5 py-1">
-                <span className="text-muted-foreground text-xs">{value.product.name}</span>
-                {/* The button molecule is whitespace-nowrap; a long variant name
-                    would force the cell to one line and squeeze configText into
+                {/* The button molecule is whitespace-nowrap; a long name would
+                    force the cell to one line and squeeze configText into
                     wrapping its every line — re-allow wrapping on the label. */}
                 <DetailPageButton
-                  id={value.id}
-                  label={<span className="break-words whitespace-pre-wrap">{value.name}</span>}
-                  href={`/product-variants/${value.id}`}
+                  id={value.product.id}
+                  label={
+                    <span className="break-words whitespace-pre-wrap">{value.product.name}</span>
+                  }
+                  href={`/products/${value.product.id}`}
                 />
+                {value.name !== value.product.name && (
+                  <span className="text-muted-foreground text-xs">{value.name}</span>
+                )}
               </div>
             );
           },

@@ -11,8 +11,8 @@ import {
   expandCard,
   fieldCard,
   fieldCardById,
-  generatedTable,
   login,
+  nativeVariants,
   waitForMutation,
 } from "./helpers";
 
@@ -42,12 +42,15 @@ import {
  */
 
 // One choice, one toggle, two material fields (the forbidden pair needs two
-// groups to be coverable), one input and one embroidery field: 2×2×2×2 = 16
-// planned variants, of which the m1+m2 rule omits 8.
+// material fields to be coverable), one input and one embroidery field.
 const E2E_MATERIALS = [
   { slug: "e2e-m1", label: "Gyapjú" },
   { slug: "e2e-m2", label: "Len" },
 ];
+
+function productIdFromUrl(url: string): number {
+  return Number(/\/products\/(\d+)/.exec(url)?.[1]);
+}
 
 /** The material-picker select inside a material field card's option rows.
  * Role-based with an exact name: getByLabel substring-matches the field-type
@@ -212,41 +215,20 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await page.waitForURL(/\/dashboard\/products\/\d+$/);
   });
 
-  await test.step("the sync settles and the generated variants carry the definition", async () => {
-    // No pending assertion here: the batched sync settles in well under a
+  await test.step("the sync settles on the product's one variant", async () => {
+    // No pending assertion here: the one-variant sync settles in well under a
     // second, so the badge may already read synced by the time the block
     // loads. The pending transition is asserted after a save below, where
     // the mutation response pins it deterministically.
     await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
 
-    await page.reload();
+    const native = await nativeVariants(page, productIdFromUrl(page.url()));
 
-    const generated = generatedTable(page);
-    // 16 planned combinations minus the 8 the m1+m2 rule omits.
-    await expect(generated.getByRole("row", { name: /Szín: / })).toHaveCount(8);
-    await expect(
-      generated.getByRole("row", { name: /Külső anyag: Gyapjú · Belső anyag: Len/ })
-    ).toHaveCount(0);
-    await expect(
-      generated.getByRole("row", { name: /Külső anyag: Len · Belső anyag: Gyapjú/ })
-    ).toHaveCount(0);
-
-    const kek = generated.getByRole("row", {
-      name: /Szín: Kék · Külső anyag: Gyapjú · Belső anyag: Gyapjú(?! ·)/,
-    });
-    await expect(kek).toContainText("e2e-f1--kek-nem-e2e-m1-e2e-m1");
-    await expect(kek).toContainText("15000");
-
-    const piros = generated.getByRole("row", {
-      name: /Szín: Piros · Ajándék csomagolás · Külső anyag: Len · Belső anyag: Len(?! ·)/,
-    });
-    await expect(piros).toContainText("e2e-f1--piros-igen-e2e-m2-e2e-m2");
-    await expect(piros).toContainText("16750");
+    expect(native.optionGroups).toEqual([]);
+    expect(native.variants).toEqual([expect.objectContaining({ sku: "e2e-f1", price: 15_000 })]);
   });
 
-  await test.step("editing option rows and adding a field re-syncs on save", async () => {
-    // The renamed option keeps its code: the variant name changes, the SKU
-    // (built from codes) does not.
+  await test.step("editing option rows and adding a field persists on save", async () => {
     const szin = fieldCard(page, 0);
     await expandCard(szin);
     await szin.getByLabel("Név").nth(1).fill("Zafír");
@@ -287,21 +269,14 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
 
     await expect(page.getByLabel("Product name", { exact: true })).toHaveValue("E2E F1 átnevezve");
 
-    const generated = generatedTable(page);
-    await expect(generated.getByRole("row", { name: /Szín: / })).toHaveCount(8);
-
-    const zafir = generated.getByRole("row", {
-      name: /Szín: Zafír · Külső anyag: Gyapjú · Belső anyag: Gyapjú · Méret: S/,
-    });
-    await expect(zafir).toContainText("e2e-f1--kek-nem-e2e-m1-e2e-m1-s");
-    await expect(zafir).toContainText("15000");
-
-    const piros = generated.getByRole("row", {
-      name: /Szín: Piros · Ajándék csomagolás · Külső anyag: Len · Belső anyag: Len · Méret: S/,
-    });
-    // 15000 base + Piros 700 (raised from 500 in this step) + toggle 1200
-    // (raised from 1000) + Len 250 + S 0.
-    await expect(piros).toContainText("17150");
+    const szinAfter = fieldCard(page, 0);
+    await expandCard(szinAfter);
+    await expect(szinAfter.getByLabel("Név").nth(1)).toHaveValue("Zafír");
+    await expect(szinAfter.getByLabel("Ár (Ft)").nth(1)).toHaveValue("700");
+    const meretAfter = fieldCard(page, 6);
+    await expandCard(meretAfter);
+    await expect(meretAfter.getByLabel("Név").first()).toHaveValue("Méret");
+    expect((await nativeVariants(page, productIdFromUrl(page.url()))).variants).toHaveLength(1);
   });
 
   await test.step("delete asks for confirmation and removes the native product", async () => {

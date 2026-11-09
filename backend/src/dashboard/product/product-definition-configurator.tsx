@@ -23,7 +23,6 @@ import {
   ConfirmationDialog,
   NEW_ENTITY_PATH,
   NativeSelect,
-  PaginatedListDataTable,
   PageBlock,
   StatusBadge,
   toast,
@@ -127,20 +126,6 @@ const patchCreatedProductMutation = graphql(`
   mutation PatchCreatedProduct($input: UpdateProductInput!) {
     updateProduct(input: $input) {
       id
-    }
-  }
-`);
-
-const generatedVariantsQuery = graphql(`
-  query GeneratedVariants($productDefinitionId: String!, $options: GeneratedVariantListOptions!) {
-    generatedVariants(productDefinitionId: $productDefinitionId, options: $options) {
-      items {
-        id
-        name
-        code
-        price
-      }
-      totalItems
     }
   }
 `);
@@ -292,10 +277,6 @@ export function ConfiguratorEditor({
     kind: FieldKind;
     label: string;
   } | null>(null);
-  const [variantPage, setVariantPage] = useState(1);
-  const [variantPageSize, setVariantPageSize] = useState(20);
-  // Structural SortingState (the dashboard package doesn't re-export the type).
-  const [variantSorting, setVariantSorting] = useState<Array<{ id: string; desc: boolean }>>([]);
   const pollRun = useRef(0);
 
   useEffect(() => {
@@ -1122,47 +1103,6 @@ export function ConfiguratorEditor({
           </div>
         </fieldset>
       </PageBlock>
-      {!creatingNew && (
-        <PageBlock
-          column="main"
-          layout="bare"
-          title="Generált natív szerkezet"
-          description="A szinkronizálással előállított natív opciócsoportok és változatok."
-        >
-          <div className="flex flex-col gap-4">
-            <PaginatedListDataTable
-              listQuery={generatedVariantsQuery}
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment -- under the repo's TS 6 (eslint's parser) the PaginatedListDataTable generics fall back to `any`; tsc 5.9 (check:dashboard, the gate for dashboard extensions) type-checks this concretely and passes
-              transformQueryKey={(queryKey) => [definitionId, ...queryKey]}
-              transformVariables={(variables) => ({
-                productDefinitionId: definitionId,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- under the repo's TS 6 (eslint's parser) the PaginatedListDataTable generics fall back to `any`; tsc 5.9 (check:dashboard, the gate for dashboard extensions) type-checks this concretely and passes
-                options: variables.options,
-              })}
-              page={variantPage}
-              itemsPerPage={variantPageSize}
-              sorting={variantSorting}
-              onPageChange={(_table, page, perPage) => {
-                setVariantPage(page);
-                setVariantPageSize(perPage);
-              }}
-              onSortChange={(_table, sorting) => {
-                setVariantSorting(sorting);
-              }}
-              customizeColumns={{
-                id: { header: "ID", enableSorting: false },
-                name: { header: "Név", enableSorting: false },
-                // The variant's SKU arrives as "code": a column literally
-                // named "sku" collides with the product-detail page's shipped
-                // table settings (the stock variants table hides it by
-                // default) and would render hidden with an unfetched value.
-                code: { header: "SKU", enableSorting: false },
-                price: { header: "Ár (Ft)", enableSorting: false },
-              }}
-            />
-          </div>
-        </PageBlock>
-      )}
     </>
   );
 

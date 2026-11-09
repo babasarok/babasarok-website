@@ -366,45 +366,6 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     }
   );
 
-  /** The native variants a sync generates, paged for the dashboard's variant table. */
-  async generatedVariantList(
-    ctx: RequestContext,
-    row: ProductDefinition,
-    options: { skip?: number | null; take?: number | null } | null
-  ): Promise<{
-    items: Array<{ id: string; name: string; code: string; price: number }>;
-    totalItems: number;
-  }> {
-    const skip = Math.max(options?.skip ?? 0, 0);
-    const take = Math.min(Math.max(options?.take ?? 20, 1), 100);
-
-    if (row.nativeProductId === null) {
-      return { items: [], totalItems: 0 };
-    }
-
-    const [variants, totalItems] = await this.connection
-      .getRepository(ctx, ProductVariant)
-      .findAndCount({
-        where: { product: { id: row.nativeProductId }, deletedAt: IsNull() },
-        relations: { translations: true, productVariantPrices: true },
-        order: { id: "ASC" },
-        skip,
-        take,
-      });
-
-    return {
-      totalItems,
-      items: variants.map((variant) => ({
-        id: String(variant.id),
-        name: huName(variant.translations) ?? variant.sku,
-        code: variant.sku,
-        price:
-          variant.productVariantPrices.find((price) => price.channelId === ctx.channelId)?.price ??
-          0,
-      })),
-    };
-  }
-
   /** Whether a sync would change the native variant right now. */
   async staleness(ctx: RequestContext, rows: ProductDefinition[]): Promise<Map<string, boolean>> {
     const analysis = await this.driftAnalysis(ctx, rows);
