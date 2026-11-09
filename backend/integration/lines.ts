@@ -1,6 +1,6 @@
 /** Line specs for the fixture products: one builder per product, taking what the buyer picks. */
 import type { MaterialSlug } from "./fixtures";
-import { materialSelection, sku, type LineSpec } from "./shop";
+import { materialSelection, type LineSpec } from "./shop";
 
 interface Pick {
   material: MaterialSlug;
@@ -18,7 +18,7 @@ export function parna(
   const meret = options.meret ?? "kicsi";
 
   return {
-    sku: sku("int-parna", material.material, options.szegely === true ? "igen" : "nem", meret),
+    sku: "int-parna",
     quantity: options.quantity ?? 1,
     selections: {
       anyag: pick(material),
@@ -30,7 +30,7 @@ export function parna(
 
 export function takaro(material: Pick, quantity = 1): LineSpec {
   return {
-    sku: sku("int-takaro", material.material),
+    sku: "int-takaro",
     quantity,
     selections: { anyag: pick(material) },
   };
@@ -38,23 +38,23 @@ export function takaro(material: Pick, quantity = 1): LineSpec {
 
 export function feszek(kulso: Pick, belso: Pick, quantity = 1): LineSpec {
   return {
-    sku: sku("int-feszek", kulso.material, belso.material),
+    sku: "int-feszek",
     quantity,
     selections: { kulso: pick(kulso), belso: pick(belso) },
   };
 }
 
 export function szalag(lengthCm: number, quantity = 1): LineSpec {
-  return { sku: sku("int-szalag", "100"), quantity, lengthCm };
+  return { sku: "int-szalag", quantity, lengthCm };
 }
 
 export function kendo(quantity = 1): LineSpec {
-  return { sku: sku("int-kendo"), quantity };
+  return { sku: "int-kendo", quantity };
 }
 
 export function elavulo(material: Pick, meret: "kicsi" | "nagy" = "kicsi", quantity = 1): LineSpec {
   return {
-    sku: sku("int-elavulo", material.material, meret),
+    sku: "int-elavulo",
     quantity,
     selections: { anyag: pick(material), meret: { kind: "option", value: meret } },
   };

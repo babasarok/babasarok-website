@@ -45,7 +45,7 @@ describe.skipIf(apiUrl === undefined)("basket contract against the live shop API
     });
     await api.adjustLine("1", 1);
     await api.removeLine("1");
-    await api.productVariants("contract-test");
+    await api.productVariantId("contract-test");
     await api.eligibleShippingMethods();
     await api.setCustomer({
       emailAddress: "contract@example.com",

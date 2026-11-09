@@ -32,7 +32,6 @@ function depsFor(row: ProductDefinition | null): LineValuationDeps {
   return {
     findDefinition: async () => row,
     productName: async () => "",
-    hydrateOptions: () => Promise.resolve(),
   };
 }
 

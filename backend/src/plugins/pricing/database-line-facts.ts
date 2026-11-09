@@ -3,7 +3,7 @@ import type { RequestContext, TransactionalConnection } from "@vendure/core";
 import type { ProductDefinition as CanonicalProductDefinition } from "../../shared/product-definition/index";
 import { In } from "typeorm";
 import { MaterialColor } from "../material/material.entity";
-import { THREAD_COLOR_FACET_CODE } from "../product/facet-plan";
+import { THREAD_COLOR_FACET_CODE } from "../product/facet-codes";
 import { nativeProductNames } from "../product/native-names";
 import { ProductDefinition } from "../product/product.entity";
 import type { LineFacts } from "./line-rejection";

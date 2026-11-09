@@ -3,9 +3,7 @@ import { definitionsToRequeue } from "./sync-recovery";
 
 describe("definitionsToRequeue", () => {
   it("re-queues pending definitions without a queued job", () => {
-    expect(
-      definitionsToRequeue(["a", "b", "c"], [{ productId: "b", origin: "automatic" }])
-    ).toEqual(["a", "c"]);
+    expect(definitionsToRequeue(["a", "b", "c"], [{ productId: "b" }])).toEqual(["a", "c"]);
   });
 
   it("ignores job data it cannot parse", () => {

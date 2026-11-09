@@ -18,12 +18,12 @@ epic 4).
 > decision 2026-11 — the shop API serves only enabled products, so a disabled
 > product is neither listed nor configurable).
 > The native Product owns its name and slug (ADR 0011 decision 1); the
-> definition sync never writes them. Generated variant names list the labelled
-> field values ("`Anyag: Pamut · Méret: Nagy · Masni`"): a toggle shows its
-> bare label when on and is omitted when off; a variant with nothing to list
-> carries the product's name, so a rename on the stock product form propagates
-> to those variants; a stock product save re-syncs only when such a variant
-> exists. The product type is a value of the public
+> definition sync never writes them. A generated product carries exactly one
+> native variant ([ADR 0016](../adr/0016-one-variant-per-configurable-product.md)):
+> SKU = the definition id, name = the native product's name in every language,
+> price = the base price (display only — orders price from the definition and
+> the line's selections); no option groups. A rename on the stock product form
+> re-syncs it; a stock product save without a name does not. The product type is a value of the public
 > `babasarok-product-type` facet on the native product (ADR 0011 decision 2),
 > not a definition field. Display fields are native Vendure custom fields:
 > `shortDescription`, `tagline`, `date` ("newest first" sorting),
@@ -239,68 +239,30 @@ validated against the product's options like normal selections.
   - WHEN a query parameter references an unknown field, option, or material
   - THEN it is ignored and the configurator starts unselected for that part
 
-### Facets and collections (Vendure catalog)
+### No material or colour browsing
 
-> Transition note (ADR 0010 delivery step 4). The Vendure-native catalog
-> owns browsing facets and collections. Colors are order-line selections,
-> not variant axes — the Color facet describes the colors a variant can be
-> ordered in, derived from the variant's chosen materials.
+The catalog SHALL carry no material or colour facets and no per-material
+collections ([ADR 0016](../adr/0016-one-variant-per-configurable-product.md)):
+colours and materials are order-line selections, and browsing or filtering
+by them is out of scope (owner decision).
 
-The Vendure catalog SHALL expose two sync-owned facets on generated product
-variants: **Anyag** (`babasarok-material`, one value per material, code =
-material slug) and **Szín** (`babasarok-color`, one value per
-material-color, code = `<material-slug>--<color-id>`). Facet value names
-follow the material/color labels.
+Material writes SHALL enqueue no definition sync: nothing native a
+generated product carries depends on a material.
 
-Every generated variant SHALL carry the facet values of the materials its
-configuration picks, plus every color facet value of those materials. The
-facet assignment is part of the definition sync: native-side facet edits
-count as drift and are overwritten by the next sync.
+### The generated variant
 
-Material writes SHALL propagate automatically, without a definition save:
+The definition sync SHALL keep exactly one live native variant per generated
+product (see the model note) and update it in place; a product with more
+than one live variant fails its sync rather than guessing. A definition is
+stale while its variant differs from the plan (missing, extra, SKU, name in
+any language, price); the configurator lists the differences, and the next
+save restores the planned variant.
 
-- **Scenario: Material created or renamed**
-  - WHEN a material is created or its label changes
-  - THEN its facet values and the per-material collection follow (created or
-    renamed to the material's label)
-- **Scenario: Material colors change**
-  - WHEN colors are added to, renamed on, or removed from a material
-  - THEN the material's color facet values follow, and every product
-    definition referencing the material re-syncs, so its variants carry the
-    correct color facets
-- **Scenario: Material edit the sync does not read**
-  - WHEN a material update leaves its label and its colors' ids and labels
-    unchanged (e.g. only the description or images change)
-  - THEN no product definition re-syncs
-- **Scenario: Automatic sync meets native edits**
-  - WHEN a sync triggered by a material change or a stock product rename
-    (not by a definition save) finds the native options, variants or prices
-    edited outside the sync
-  - THEN it writes nothing and marks the definition's sync failed with the
-    drift message; stock product updates that carry no name never trigger a
-    sync, and an automatic sync whose plan already equals the native state
-    writes nothing
-- **Scenario: Material deleted**
-  - WHEN a material that no definition references is deleted
-  - THEN its facet values and its collection are deleted with it
-
-For every material the catalog SHALL maintain an auto-managed collection
-(slug `material-<material-slug>`, named after the material) containing the
-variants that carry that material's facet value (facet-value filter,
-containsAny). Its filter is written at creation and not overwritten
-afterwards; renames propagate, manual content edits are the owner's.
-
-Convergence for databases that predate the facet sync SHALL be idempotent
-and re-run safe: the `convergeMaterialFacets` admin mutation brings every
-material's facet values and collection in line and re-syncs every
-referencing product. A missing facet value fails a product sync with a
-clear error pointing at the convergence step, rather than silently creating
-or skipping.
-
-- **Scenario: Facet value missing at sync time**
-  - WHEN a product sync cannot resolve a facet value it should assign
-  - THEN the sync fails with an error naming the value and the convergence
-    step, and the dashboard shows the failed sync state
+- **Scenario: Variant price edited on the stock page**
+  - WHEN the owner edits the generated variant's price outside the
+    configurator
+  - THEN the definition shows as stale with a price difference, and the next
+    configurator save writes the base price back
 
 ### Owner-maintained facets (product type, thread colors)
 
@@ -343,10 +305,8 @@ Owner-entered catalog text SHALL be translatable (ADR 0011 decision 6):
   not text. The configurator edits the current content language and shows the
   Hungarian text as the placeholder; saving a definition without `hu` is
   rejected.
-- Generated option groups, options and variants, and the facet values and
-  per-material collections mirrored from materials, are written with one
-  translation per language present. A variant's name uses the native
-  product's name in that language.
+- A generated variant is written with one translation per language of the
+  native product's name, and loses the languages the product no longer has.
 - Server messages that name a definition field or option use the request
   language.
 
@@ -361,8 +321,8 @@ Owner-entered catalog text SHALL be translatable (ADR 0011 decision 6):
     removes it
 - **Scenario: Material translated**
   - WHEN a material is saved with an English label
-  - THEN its material facet value, its collection and its generated option
-    carry the English name next to the Hungarian one
+  - THEN its label resolves in English wherever a buyer-facing text names
+    it, next to the Hungarian one
 
 ### Definition lifecycle with the native product
 
@@ -386,8 +346,8 @@ generated product, replacing the stock one (the Enabled switch is kept). It
 saves the page form (name, slug, description, enabled …) when that is dirty
 and valid, and the configurator editor when it has unsaved changes; each
 shows its own errors, and one failing does not stop the other. The
-configurator block has no save button of its own (delete, the sync status and
-the drift-conflict force-save remain); on a non-generated product the button
+configurator block has no save button of its own (delete and the sync status
+remain); on a non-generated product the button
 behaves as the stock one. Navigating away or reloading with unsaved
 configurator changes asks for confirmation, like the stock form does.
 
@@ -403,27 +363,12 @@ configurator changes asks for confirmation, like the stock form does.
   - AND the user navigates away or reloads the page
   - THEN a confirmation is asked before the changes are discarded
 
-### Variant sync progress
-
-The system SHALL report the progress of a running variant sync as finished
-out of total work units (variant creates, updates and removals), readable
-while the sync's single transaction is still open. The configurator's sync
-status SHALL show it next to the pending label.
-
-- **Scenario: Running sync**
-  - WHEN a sync is pending and its job has reported progress
-  - THEN the configurator shows "Szinkronizálás… 340 / 1400", refreshed by its
-    existing poll
-- **Scenario: No progress reported yet**
-  - WHEN a sync is pending but its job has not started or reported
-  - THEN the configurator shows the plain pending label
-
 ### Sync recovery
 
 The worker SHALL, on start, fail the sync jobs a previous worker left
 running and re-queue every definition whose sync is pending without a queued
 job. The re-queued sync restarts from zero (the interrupted transaction rolled
-back) and runs as an automatic sync, so it never overwrites native drift.
+back).
 This assumes a single worker. The worker's stop grace period SHALL exceed
 Vendure's 20 s shutdown wait so a redeploy defers the running job.
 
@@ -448,8 +393,9 @@ language as `?languageCode=` (currently `hu`).
   products of that request. The site validates it with the shared canonical
   schema (`backend/src/shared/product-definition`, imported as
   `@babasarok/product-definition`) and resolves its `LocalizedText`
-  with `resolveText`. Products without generated variants are still listed;
-  the page decides orderability.
+  with `resolveText`. The configurator adds to the product's one variant,
+  read with the stock `product(slug) { variants { id } }`; the page decides
+  orderability.
 - `materials` / `material(slug)` — materials with request-language
   `label`/`subtitle`/`description`, thumbnail and colors (`id`, `label`,
   `hex`, `asset`).
@@ -461,12 +407,6 @@ language as `?languageCode=` (currently `hu`).
 - `threadColors` — the values of the private thread-color facet (`id` = the
   facet value code, `label`, `hex`, `swatch`); the facet itself stays hidden
   from the shop's `facets`.
-- `productVariants(slug)` — the product's full variant matrix (`id` plus each
-  variant's option `group`/`code` pairs). Vendure's own `Product.variants`
-  field resolves with the shop list-query limit and takes no paging
-  arguments, so the configurator matches the buyer's configuration against
-  this query instead: a matrix larger than the limit must still come back
-  complete.
 - The native `Product` custom fields (`shortDescription`, `tagline`, `date`,
   `popularityRank`, `icon`) and `Asset.galleryDescription` are public.
 
@@ -474,9 +414,6 @@ language as `?languageCode=` (currently `hu`).
   - WHEN products are sorted by popularity
   - THEN ranked products come first by ascending `popularityRank` and
     unranked products follow in their existing order
-- **Scenario: Matrix larger than the list-query limit**
-  - WHEN a generated product has more variants than the shop list-query limit
-  - THEN `productVariants(slug)` returns every variant of the product
 - **Scenario: Invalid definition**
   - WHEN a response's `productDefinition` does not match the canonical schema
   - THEN the catalog read fails instead of rendering partial data

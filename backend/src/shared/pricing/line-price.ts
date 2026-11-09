@@ -5,19 +5,12 @@ import {
 } from "../product-definition/index";
 import { dependencyOrder, isVisible } from "../product-definition/index";
 import type { LineSelections } from "../product-definition/index";
+import { axisCodes, isAxisField, type AxisCodes, type AxisField } from "./axis-codes";
 
 export interface LinePricingInput {
   definition: ProductDefinition;
   /** The native product's name, which buyer-facing messages call it by. */
   productName: string;
-  /**
-   * The variant's channel list price: base price plus every visible variant-axis
-   * option (choices, toggles, material picks) as synced from the definition.
-   * Zero on length-priced products, whose price the walk derives instead.
-   */
-  variantListPrice: number;
-  /** Option-group code (the canonical field id) → chosen option code. */
-  optionCodes: ReadonlyMap<string, string>;
   selections: LineSelections;
   /** The buyer-entered length in centimetres; null when not entered. */
   lengthCm: number | null;
@@ -55,22 +48,8 @@ function choiceOptionPrice(
   return option.price;
 }
 
-/**
- * The price a variant-axis field (non-color choice, toggle, material) contributes
- * for the variant's chosen option. Every generated variant carries an option per
- * such field, so a missing code means native drift.
- */
-function variantAxisPrice(
-  field: ProductField,
-  optionCode: string | undefined,
-  languageCode: string
-): number {
-  if (optionCode === undefined) {
-    throw new LinePricingError(
-      `A(z) "${field.id}" választása nincs rajta a kiválasztott változaton.`
-    );
-  }
-
+/** The price a axis field contributes for the chosen option code. */
+function axisPrice(field: AxisField, optionCode: string, languageCode: string): number {
   if (field.kind === "toggle") {
     return optionCode === "igen" ? field.price : 0;
   }
@@ -87,125 +66,63 @@ function variantAxisPrice(
     return option.price;
   }
 
-  if (field.kind === "choice") {
-    return choiceOptionPrice(field, optionCode, languageCode);
-  }
-
-  return 0;
+  return choiceOptionPrice(field, optionCode, languageCode);
 }
 
 /**
  * The unit price of a configured order line in whole forints, computed from
- * the product definition and the line's selections (order-pricing spec).
+ * the product definition and the line's selections (order-pricing spec). The
+ * axis fields price at the codes {@link axisCodes} reads from the
+ * selections.
  *
- * Non-length products start from the variant's synced list price — base price
- * plus every visible variant-axis option — and add what never becomes a variant
- * axis: color-choice picks, visible input fields (their price applies even while
- * empty), and embroidery (flat, or per word of the entered text).
+ * Non-length products: base price plus every axis option visible
+ * given the axis picks alone, plus color-choice picks, visible input fields
+ * (their price applies even while empty), and embroidery (flat, or per word
+ * of the entered text).
  *
- * Length-priced products walk the definition instead (their variants sit at
- * 0 Ft): base price plus every variant-axis option price visible given the
- * variant's picks — matching the synced matrix — with the length source field
- * skipped — it carries no price, it scales — and the sum multiplied by the
- * length in metres.
+ * Length-priced products: base price plus every axis option visible
+ * given all picks, with the length source field skipped — it carries no
+ * price, it scales — plus the same extras, multiplied by the length in metres.
  *
- * Throws {@link LinePricingError} for an unpriced line: a missing length,
- * selections that reference unknown fields or list an option that disagrees
- * with the variant's options (drift or a buggy storefront). A custom value on
- * a variant-axis field prices via the variant's pinned option — the
- * storefront cannot put it on the variant matrix, so it pins a listed option
- * and stores the custom text on the line.
+ * Throws {@link LinePricingError} for an unpriced line: a missing length, a
+ * selection of an unknown field, or one its field does not offer.
  */
 export function computeLineUnitPrice(input: LinePricingInput): number {
-  const { definition, productName, variantListPrice, optionCodes, selections, languageCode } =
-    input;
+  const { definition, productName, selections, languageCode } = input;
 
-  for (const [fieldId, selection] of Object.entries(selections)) {
-    if (selection === undefined) {
-      continue;
-    }
-
-    const field = fieldById(definition.fields, fieldId);
-
-    if (field === undefined) {
+  for (const fieldId of Object.keys(selections)) {
+    if (fieldById(definition.fields, fieldId) === undefined) {
       throw new LinePricingError(`A termék nem ismeri ezt a mezőt: ${fieldId}`);
-    }
-
-    if (selection.kind === "material") {
-      const optionCode = optionCodes.get(fieldId);
-
-      if (optionCode === undefined) {
-        throw new LinePricingError(
-          `A(z) "${fieldId}" anyagválasztása nincs rajta a kiválasztott változaton.`
-        );
-      }
-
-      if (selection.materialId !== optionCode) {
-        throw new LinePricingError(
-          `A(z) "${fieldId}" anyagválasztása nem egyezik a kiválasztott változattal.`
-        );
-      }
-    }
-
-    if (
-      field.kind === "choice" &&
-      field.presentation !== "color" &&
-      selection.kind === "option" &&
-      selection.value !== optionCodes.get(fieldId)
-    ) {
-      // A listed option the variant doesn't carry is drift or a buggy
-      // storefront — refuse to price. A custom value cannot be in the matrix:
-      // the storefront pins a listed variant for it and stores the custom
-      // text on the line, and the line prices via the variant's option code —
-      // exactly what the live price showed.
-      throw new LinePricingError(
-        `A(z) "${resolveText(field.label, languageCode)}" mező választása nem egyezik a kiválasztott változattal.`
-      );
     }
   }
 
+  const derived = axisCodes(definition, selections, languageCode);
+
+  if (!derived.ok) {
+    throw new LinePricingError(derived.message);
+  }
+
+  const codes = derived.codes;
   const sourceFieldId =
     definition.pricing.kind === "length" ? definition.pricing.sourceFieldId : undefined;
 
   const { order, cyclic } = dependencyOrder(definition.fields);
   const knownFieldIds = new Set(definition.fields.map((field) => field.id));
+  const axisValues = new Map<string, string | boolean>();
   const values = new Map<string, string | boolean>();
-  const isVariantAxis = (field: ProductField): boolean =>
-    field.kind === "material" ||
-    field.kind === "toggle" ||
-    (field.kind === "choice" && field.presentation !== "color");
 
   for (const field of order) {
-    if (field.id === sourceFieldId) {
+    const value = fieldValue(field, codes, selections);
+
+    if (value === undefined) {
       continue;
     }
 
-    let value: string | boolean | undefined;
-
-    if (isVariantAxis(field)) {
-      const optionCode = optionCodes.get(field.id);
-
-      if (optionCode === undefined) {
-        throw new LinePricingError(
-          `A(z) "${field.id}" választása nincs rajta a kiválasztott változaton.`
-        );
-      }
-
-      value = field.kind === "toggle" ? optionCode === "igen" : optionCode;
-    } else if (field.kind === "input") {
-      const selection = selections[field.id];
-
-      value = selection?.kind === "input" ? selection.value : undefined;
-    } else if (field.kind === "choice") {
-      const selection = selections[field.id];
-
-      value =
-        selection !== undefined && (selection.kind === "option" || selection.kind === "custom")
-          ? selection.value
-          : undefined;
+    if (isAxisField(field)) {
+      axisValues.set(field.id, value);
     }
 
-    if (value !== undefined) {
+    if (field.id !== sourceFieldId) {
       values.set(field.id, value);
     }
   }
@@ -252,6 +169,8 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
     }
   }
 
+  const extras = lineParts.reduce((sum, part) => sum + part, 0);
+
   if (definition.pricing.kind === "length") {
     const lengthCm = input.lengthCm;
 
@@ -261,26 +180,87 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
 
     const perMeter =
       definition.basePrice +
-      order.reduce(
-        (sum, field) =>
-          field.id === sourceFieldId ||
-          !isVariantAxis(field) ||
-          !isVisible(field, cyclic, knownFieldIds, values)
-            ? sum
-            : sum + variantAxisPrice(field, optionCodes.get(field.id), languageCode),
-        0
+      axisSum(
+        order,
+        codes,
+        languageCode,
+        (field) => field.id !== sourceFieldId && isVisible(field, cyclic, knownFieldIds, values)
       );
 
-    return Math.round(
-      (perMeter + lineParts.reduce((sum, part) => sum + part, 0)) * (lengthCm / 100)
-    );
+    return Math.round((perMeter + extras) * (lengthCm / 100));
   }
 
-  return Math.round(variantListPrice + lineParts.reduce((sum, part) => sum + part, 0));
+  const axisTotal = axisSum(order, codes, languageCode, (field) =>
+    isVisible(field, cyclic, knownFieldIds, axisValues)
+  );
+
+  return Math.round(definition.basePrice + axisTotal + extras);
+}
+
+function fieldValue(
+  field: ProductField,
+  codes: AxisCodes,
+  selections: LineSelections
+): string | boolean | undefined {
+  const selection = selections[field.id];
+
+  if (field.kind === "input") {
+    return selection?.kind === "input" ? selection.value : undefined;
+  }
+
+  if (field.kind === "choice" && field.presentation === "color") {
+    if (selection?.kind === "option" || selection?.kind === "custom") {
+      return selection.value;
+    }
+
+    return undefined;
+  }
+
+  if (!isAxisField(field)) {
+    return undefined;
+  }
+
+  const code = codes.get(field.id);
+
+  if (field.kind === "toggle") {
+    return code === "igen";
+  }
+
+  return code;
+}
+
+function axisSum(
+  fields: readonly ProductField[],
+  codes: AxisCodes,
+  languageCode: string,
+  counts: (field: AxisField) => boolean
+): number {
+  let sum = 0;
+
+  for (const field of fields) {
+    if (!isAxisField(field) || !counts(field)) {
+      continue;
+    }
+
+    const code = codes.get(field.id);
+
+    if (code === undefined) {
+      continue;
+    }
+
+    sum += axisPrice(field, code, languageCode);
+  }
+
+  return sum;
 }
 
 export type LineValuation =
   { kind: "priced"; price: number } | { kind: "invalid"; message: string };
+
+/** The buyer-facing message for a configured line its definition cannot price. */
+export function unpricedLineMessage(productName: string, detail: string): string {
+  return `Árazási hiba (${productName}): ${detail}`;
+}
 
 export function valueConfiguredLine(input: LinePricingInput): LineValuation {
   try {
@@ -289,7 +269,7 @@ export function valueConfiguredLine(input: LinePricingInput): LineValuation {
     if (error instanceof LinePricingError) {
       return {
         kind: "invalid",
-        message: `Árazási hiba (${input.productName}): ${error.message}`,
+        message: unpricedLineMessage(input.productName, error.message),
       };
     }
 

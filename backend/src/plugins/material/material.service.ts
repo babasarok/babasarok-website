@@ -28,9 +28,6 @@ import {
   MaterialTranslation,
 } from "./material.entity";
 import { MaterialEvent } from "./material.event";
-import { AuditEntryEvent, auditActor } from "../audit/audit.event";
-import { variantRelevantChange } from "./variant-relevant";
-import { MaterialFacetSync } from "./material-facet-sync";
 import { lockMaterials } from "./material-lock";
 import { validateMaterialInput, type MaterialInputData } from "./material-definition";
 
@@ -100,7 +97,6 @@ export class MaterialService {
   constructor(
     private connection: TransactionalConnection,
     private eventBus: EventBus,
-    private facetSync: MaterialFacetSync,
     private translatableSaver: TranslatableSaver,
     private translator: TranslatorService
   ) {}
@@ -165,7 +161,6 @@ export class MaterialService {
       });
       await this.replaceColors(txCtx, material, definition.colors);
       const updated = await txRepo.findOneByOrFail({ slug: definition.id });
-      await this.facetSync.upsert(txCtx, updated);
 
       return updated;
     });
@@ -200,27 +195,11 @@ export class MaterialService {
       const material = await txRepo.findOneByOrFail({ id });
       await this.replaceColors(txCtx, material, definition.colors);
       const updated = await txRepo.findOneByOrFail({ id });
-      await this.facetSync.upsert(txCtx, updated);
 
       return updated;
     });
 
-    if (variantRelevantChange(existing, material)) {
-      await this.eventBus.publish(new MaterialEvent(ctx, "updated", material.slug));
-    } else {
-      // Label-only edits publish no MaterialEvent; the audit log still records
-      // the change (ADR 0015).
-      await this.eventBus.publish(
-        new AuditEntryEvent(ctx, {
-          entityType: "material",
-          entityKey: material.slug,
-          action: "updated",
-          summary: null,
-          source: "admin",
-          actor: auditActor(ctx),
-        })
-      );
-    }
+    await this.eventBus.publish(new MaterialEvent(ctx, "updated", material.slug));
 
     return material;
   }
@@ -256,28 +235,11 @@ export class MaterialService {
         throw error;
       }
 
-      await this.facetSync.remove(txCtx, material);
       await this.connection.getRepository(txCtx, Material).delete({ id });
     });
 
     await this.eventBus.publish(new MaterialEvent(ctx, "deleted", material.slug));
     return true;
-  }
-
-  /**
-   * Idempotent convergence for databases predating the facet sync: brings
-   * every material's facet values and auto-managed collection up to date and
-   * re-syncs every product referencing a material. Re-run safe.
-   */
-  async convergeFacets(ctx: RequestContext): Promise<number> {
-    const materials = await this.connection.getRepository(ctx, Material).find();
-
-    for (const material of materials) {
-      await this.facetSync.upsert(ctx, material);
-      await this.eventBus.publish(new MaterialEvent(ctx, "updated", material.slug));
-    }
-
-    return materials.length;
   }
 
   private thumbnailRef(definition: MaterialDefinition): { id: number } | null {

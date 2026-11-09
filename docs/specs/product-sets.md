@@ -11,14 +11,15 @@ unit), and surface the formed set discounts to the buyer at basket level.
 > action (`babasarok-product-set-discount`) arg is the flat forint amount,
 > and the promotion's Hungarian name is the set label. The material gating
 > is the condition's built-in behavior: it derives each basket line's
-> material picks from the line's variant options (the authoritative material
-> axes) with the colors from the order-line `selections` — a line whose
-> required colors are missing or unprovable forms no instance. Two active
+> material picks and their colors from the order-line `selections` (an
+> unpicked material field counts as its first listed material, as in
+> pricing; ADR 0016) — a line whose required colors are missing or
+> unprovable, or whose selections its definition does not offer, forms no
+> instance. Two active
 > set promotions must not share a product (enforced at save, refused at
 > runtime); no set is hidden in Collections any more — related-items groups
 > are private top-level Collections (label = collection name, members = the
-> native `product-id-filter`; public top-level collections are material
-> navigation, so `isPrivate` is the whole distinction). Degenerate
+> native `product-id-filter`). Degenerate
 > groups (<2 members, no amount) are ignored with a report, not thrown.
 > The checkout renders the set section and the per-line set state from the
 > shop API (`Order.setDiscounts`, `OrderLine.setState`) through one adapter

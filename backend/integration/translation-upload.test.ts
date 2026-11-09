@@ -5,8 +5,6 @@
  * GraphQL that no type checks against the schema, and the upload paces itself
  * on the real definition-sync queue. One run adds a language to every entity
  * kind it handles, leaves Hungarian untouched and is a no-op when re-run.
- * It also covers the material sync giving the material collection a new
- * language (a collection translation needs a description, NOT NULL).
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -23,7 +21,7 @@ import { run, startServer, type IntegrationServer } from "./harness";
 let server: IntegrationServer;
 let api: AdminApi;
 
-const OPTIONS = { force: false, pollMs: 250, syncTimeoutMs: 120_000 };
+const OPTIONS = { pollMs: 250, syncTimeoutMs: 120_000 };
 
 async function strings(language: string): Promise<TranslatableString[]> {
   return translatableStrings(await readCatalogSnapshot(api, { definitions: true }), language);
@@ -58,7 +56,7 @@ describe("translations upload", () => {
     const file: TranslationFile = {
       language: "de",
       strings: before
-        .filter((string) => !string.derived && string.current === undefined)
+        .filter((string) => string.current === undefined)
         .map(({ key, source }) => ({ key, source, translation: `DE ${source}` })),
     };
 
@@ -88,7 +86,6 @@ describe("translations upload", () => {
     expect(after.map(({ key, source }) => [key, source])).toEqual(
       expect.arrayContaining(before.map(({ key, source }) => [key, source]))
     );
-    expect(after.filter((string) => string.derived && string.current === undefined)).toEqual([]);
 
     const rerun: string[] = [];
 

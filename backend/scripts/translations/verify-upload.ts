@@ -25,7 +25,7 @@ export function verificationProblems(
     }
   }
 
-  for (const previous of before.filter((string) => !string.derived)) {
+  for (const previous of before) {
     const live = afterByKey.get(previous.key);
 
     if (live === undefined) {

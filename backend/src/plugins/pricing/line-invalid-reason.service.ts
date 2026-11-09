@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { EntityHydrator, OrderLine, TransactionalConnection } from "@vendure/core";
+import { OrderLine, TransactionalConnection } from "@vendure/core";
 import type { ID, RequestContext } from "@vendure/core";
 import { DatabaseLineFacts } from "./database-line-facts";
 import {
@@ -13,12 +13,9 @@ import { lineValuationDeps } from "./line-valuation";
 export class LineInvalidReasonService {
   private deps: LineInvalidReasonDeps;
 
-  constructor(
-    private connection: TransactionalConnection,
-    entityHydrator: EntityHydrator
-  ) {
+  constructor(private connection: TransactionalConnection) {
     this.deps = {
-      ...lineValuationDeps(connection, entityHydrator),
+      ...lineValuationDeps(connection),
       lineFacts: (ctx) => new DatabaseLineFacts(connection, ctx),
     };
   }

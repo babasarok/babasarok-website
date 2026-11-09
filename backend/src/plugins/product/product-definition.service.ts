@@ -3,15 +3,10 @@ import {
   ChannelService,
   DefaultSlugStrategy,
   EventBus,
-  FacetValue,
-  I18nError,
   LanguageCode,
   Logger,
-  LogLevel,
   Product,
   ProductEvent,
-  ProductOptionGroupService,
-  ProductOptionService,
   ProductService,
   ProductVariant,
   ProductVariantService,
@@ -21,12 +16,11 @@ import {
   UserInputError,
 } from "@vendure/core";
 import type { InspectableJobQueueStrategy, Job, JobQueue } from "@vendure/core";
-import type { ID } from "@vendure/common/lib/shared-types";
 import type {
   JobFilterParameter,
   UpdateProductVariantInput,
 } from "@vendure/common/lib/generated-types";
-import { DeletionResult, GlobalFlag } from "@vendure/common/lib/generated-types";
+import { GlobalFlag } from "@vendure/common/lib/generated-types";
 import {
   ConfigService,
   isInspectableJobQueueStrategy,
@@ -39,64 +33,28 @@ import type {
   LocalizedText,
   ProductDefinition as CanonicalProductDefinition,
 } from "../../shared/product-definition/index";
-import { canonicalJson, LabelSchema } from "../../shared/product-definition/index";
+import { LabelSchema } from "../../shared/product-definition/index";
 // The node-only entry: productRevision needs node:crypto, which must not reach
 // the dashboard's browser bundle through the main barrel.
 import { productRevision } from "../../shared/product-definition/node";
 import { materialReferenceSlugs, toLanguageCode } from "../material/material.service";
-import { MaterialEvent } from "../material/material.event";
 import { Material } from "../material/material.entity";
 import { lockMaterials } from "../material/material-lock";
 import { AuditEntryEvent, auditActor } from "../audit/audit.event";
 import { sortDefinitions } from "./definition-sort";
 import { deletedNativeProductId, updatedNativeProductId } from "./product-event";
-import {
-  type AutomaticSyncDecision,
-  automaticSyncDecision,
-  SyncJobDataSchema,
-  updateInputCarriesName,
-  type SyncJobData,
-} from "./sync-decision";
-import {
-  COLOR_FACET_CODE,
-  MATERIAL_FACET_CODE,
-  plannedVariantFacetCodes,
-  type MaterialFacetData,
-} from "./facet-plan";
+import { SyncJobDataSchema, updateInputCarriesName, type SyncJobData } from "./sync-job";
 import { validateProductDefinition } from "./product-definition";
 import { ProductDefinition } from "./product.entity";
 import { memoPerRequest } from "./request-memo";
-import {
-  nativeStateHash,
-  nativeStateDiff,
-  type NativeProductState,
-  type NativeStateDiff,
-} from "./sync-state";
 import { definitionsToRequeue } from "./sync-recovery";
-import {
-  createProgressCounter,
-  progressOfJobData,
-  progressPercent,
-  type SyncProgress,
-} from "./sync-progress";
 import { huName, nativeProductTexts, textOf } from "./native-names";
 import {
-  plannedNativeState,
-  planVariantCombinations,
-  variantNamesUseProductName,
-  type VariantPlan,
-} from "./variant-plan";
-import { BulkVariantWriter } from "./bulk-variant-writer";
-import type { PlannedVariantCreate } from "./bulk-variant-writer";
-import { loadVariantMatrix, type MatrixVariant } from "./variant-matrix-loader";
-import { pruneTranslations, type KeptLanguages } from "./prune-translations";
-
-function labelAsName(translation: { languageCode: LanguageCode; label: string }): {
-  languageCode: LanguageCode;
-  name: string;
-} {
-  return { languageCode: translation.languageCode, name: translation.label };
-}
+  plannedVariant,
+  variantDrift,
+  type VariantDrift,
+  type VariantState,
+} from "./single-variant";
 
 function nameTranslations(
   text: LocalizedText
@@ -107,28 +65,8 @@ function nameTranslations(
   }));
 }
 
-function sameText(a: LocalizedText, b: LocalizedText): boolean {
-  return canonicalJson(a) === canonicalJson(b);
-}
-
-/** The variant writes per ProductVariantService call — the spike's per-variant loop is not shippable. */
-const BATCH_SIZE = 100;
-
-/** Options and groups the plan no longer has. Their deletion waits for the
- * variant writes, because Vendure's option delete reports NOT_DELETED while
- * active variants still use the option instead of failing. */
-interface OptionGroupRemovals {
-  options: Array<{ id: ID; code: string }>;
-  groups: Array<{ id: ID; code: string }>;
-}
-
-/** Drift refusal with a machine-readable code: the dashboard keys its
- * force-confirmation UX off `extensions.code`, not the message text. */
-class NativeDriftError extends I18nError {
-  constructor(message: string) {
-    super(message, {}, "PRODUCT_DEFINITION_NATIVE_DRIFT", LogLevel.Warn);
-  }
-}
+/** Jobs per page when inspecting the queue, within Vendure's list-query limit. */
+const JOB_PAGE_SIZE = 100;
 
 /** The job queue processes jobs strictly sequentially (Vendure's default concurrency 1),
  * so a re-save while a sync is running simply queues a second pass. */
@@ -142,10 +80,10 @@ async function allJobs(
   const jobs: Job[] = [];
 
   for (;;) {
-    const page = await strategy.findMany({ filter, skip: jobs.length, take: BATCH_SIZE });
+    const page = await strategy.findMany({ filter, skip: jobs.length, take: JOB_PAGE_SIZE });
     jobs.push(...page.items);
 
-    if (page.items.length < BATCH_SIZE) {
+    if (page.items.length < JOB_PAGE_SIZE) {
       return jobs;
     }
   }
@@ -159,16 +97,13 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   constructor(
     private connection: TransactionalConnection,
     private productService: ProductService,
-    private optionGroupService: ProductOptionGroupService,
-    private optionService: ProductOptionService,
     private variantService: ProductVariantService,
     private jobQueueService: JobQueueService,
     private configService: ConfigService,
     private requestContextService: RequestContextService,
     private channelService: ChannelService,
     private eventBus: EventBus,
-    private processContext: ProcessContext,
-    private bulkVariantWriter: BulkVariantWriter
+    private processContext: ProcessContext
   ) {}
 
   /** The server process only enqueues; the worker process runs the syncs. */
@@ -176,18 +111,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     this.syncQueue = await this.jobQueueService.createQueue({
       name: SYNC_QUEUE_NAME,
       process: async (job) => {
-        const data = SyncJobDataSchema.parse(job.data);
-
-        await this.processSyncJob(data, (progress) => {
-          // Persisted by the job queue on its own connection, outside the sync transaction.
-          Object.assign(job.data, { progress });
-          job.setProgress(progressPercent(progress));
-        });
+        await this.processSyncJob(SyncJobDataSchema.parse(job.data));
       },
-    });
-
-    this.eventBus.ofType(MaterialEvent).subscribe((event) => {
-      void this.onMaterialEvent(event);
     });
 
     this.eventBus.ofType(ProductEvent).subscribe((event) => {
@@ -209,8 +134,6 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
    * Heals syncs a crashed or killed worker left behind: its RUNNING jobs are
    * failed and every pending definition without a queued job is re-queued.
    * The interrupted transaction rolled back, so a fresh run restarts from zero.
-   * Re-queued as "automatic": it never overwrites native drift, and an
-   * interrupted owner save already passed its save-time drift check.
    */
   private async recoverInterruptedSyncs(): Promise<void> {
     const strategy = this.configService.jobQueueOptions.jobQueueStrategy;
@@ -248,7 +171,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     );
 
     for (const productId of productIds) {
-      await this.syncQueue.add({ productId, origin: "automatic", actor: null });
+      await this.syncQueue.add({ productId, actor: null });
     }
   }
 
@@ -290,28 +213,6 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     return row;
   }
 
-  /** The latest progress a running sync job of this definition reported. */
-  async syncProgress(productId: string): Promise<SyncProgress | null> {
-    const strategy = this.configService.jobQueueOptions.jobQueueStrategy;
-
-    if (!isInspectableJobQueueStrategy(strategy)) {
-      return null;
-    }
-
-    const { items } = await strategy.findMany({
-      filter: { queueName: { eq: SYNC_QUEUE_NAME }, state: { eq: "RUNNING" } },
-    });
-    const job = items.find(
-      (candidate) => SyncJobDataSchema.parse(candidate.data).productId === productId
-    );
-
-    if (job === undefined) {
-      return null;
-    }
-
-    return progressOfJobData(job.data);
-  }
-
   async createProductDefinition(
     ctx: RequestContext,
     input: unknown,
@@ -345,7 +246,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     });
 
     row.label = parsedName.data;
-    await this.enqueueSync(ctx, row.productId, "owner-save");
+    await this.enqueueSync(ctx, row.productId);
     await this.publishDefinitionAudit(ctx, row.productId, "created", parsedName.data);
 
     return row;
@@ -354,8 +255,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   async updateProductDefinition(
     ctx: RequestContext,
     productId: string,
-    input: unknown,
-    force?: boolean | null
+    input: unknown
   ): Promise<ProductDefinition> {
     const repo = this.connection.getRepository(ctx, ProductDefinition);
     const existing = await repo.findOneBy({ productId });
@@ -368,12 +268,6 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
     if (preliminary.id !== productId) {
       throw new UserInputError("A termékazonosító nem módosítható.");
-    }
-
-    // While a sync is pending the recorded hashes do not describe the native
-    // product, so drift detection only guards settled states.
-    if (existing.nativeProductId !== null && existing.syncState !== "pending") {
-      await this.assertNoNativeDrift(ctx, existing.nativeProductId, existing, force === true);
     }
 
     const row = await this.connection.withTransaction(ctx, async (txCtx) => {
@@ -393,7 +287,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     });
 
     await this.withNativeLabels(ctx, [row]);
-    await this.enqueueSync(ctx, row.productId, "owner-save");
+    await this.enqueueSync(ctx, row.productId);
     await this.publishDefinitionAudit(ctx, row.productId, "updated", row.label);
 
     return row;
@@ -472,131 +366,48 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     }
   );
 
-  /** The native variants a sync generates, paged for the dashboard's variant table. */
-  async generatedVariantList(
-    ctx: RequestContext,
-    row: ProductDefinition,
-    options: { skip?: number | null; take?: number | null } | null
-  ): Promise<{
-    items: Array<{ id: string; name: string; code: string; price: number; facets: string }>;
-    totalItems: number;
-  }> {
-    const skip = Math.max(options?.skip ?? 0, 0);
-    const take = Math.min(Math.max(options?.take ?? 20, 1), 100);
-
-    if (row.nativeProductId === null) {
-      return { items: [], totalItems: 0 };
-    }
-
-    const [variants, totalItems] = await this.connection
-      .getRepository(ctx, ProductVariant)
-      .findAndCount({
-        where: { product: { id: row.nativeProductId }, deletedAt: IsNull() },
-        relations: { translations: true, productVariantPrices: true, facetValues: true },
-        order: { id: "ASC" },
-        skip,
-        take,
-      });
-
-    return {
-      totalItems,
-      items: variants.map((variant) => ({
-        id: String(variant.id),
-        name: huName(variant.translations) ?? variant.sku,
-        code: variant.sku,
-        price:
-          variant.productVariantPrices.find((price) => price.channelId === ctx.channelId)?.price ??
-          0,
-        facets: [
-          ...new Set(variant.facetValues.map((value) => huName(value.translations) ?? value.code)),
-        ].join(", "),
-      })),
-    };
-  }
-
-  /**
-   * Whether a sync would change the native product right now: the definition,
-   * the referenced materials or the native product itself moved since the last
-   * sync. Pure planned-vs-actual comparison, so it needs no stored hashes.
-   */
+  /** Whether a sync would change the native variant right now. */
   async staleness(ctx: RequestContext, rows: ProductDefinition[]): Promise<Map<string, boolean>> {
     const analysis = await this.driftAnalysis(ctx, rows);
-    const flags = new Map<string, boolean>();
 
-    for (const [productId, result] of analysis) {
-      flags.set(productId, result.stale);
-    }
-
-    return flags;
+    return new Map([...analysis].map(([productId, drift]) => [productId, drift.length > 0]));
   }
 
   /**
-   * Staleness plus the drift-detail entries behind it (the drift-detail
-   * display): what a sync would change on the native product right now.
-   * Details are empty when the state is not stale.
+   * What a sync would change on each definition's native variant right now:
+   * the definition, the product's name or the variant itself moved since the
+   * last sync. Empty when the native variant matches the plan.
    */
   async driftAnalysis(
     ctx: RequestContext,
     rows: ProductDefinition[]
-  ): Promise<Map<string, { stale: boolean; details: NativeStateDiff[] }>> {
-    const materialData = await this.materialData(ctx);
-    const names = await this.nativeNames(ctx, rows);
-    const analysis = new Map<string, { stale: boolean; details: NativeStateDiff[] }>();
+  ): Promise<Map<string, VariantDrift[]>> {
+    const nativeIds = rows.flatMap((row) =>
+      row.nativeProductId === null ? [] : [row.nativeProductId]
+    );
+    const names = await nativeProductTexts(this.connection, ctx, nativeIds);
+    const variants = await this.liveVariants(ctx, nativeIds);
+    const analysis = new Map<string, VariantDrift[]>();
 
     for (const row of rows) {
       if (row.nativeProductId === null) {
-        analysis.set(row.productId, { stale: false, details: [] });
+        analysis.set(row.productId, []);
         continue;
       }
 
-      const planned = plannedNativeState(
-        row.definition,
-        materialData,
-        names.get(row.nativeProductId) ?? { hu: "" }
-      );
-      const current = await this.currentNativeState(ctx, row.nativeProductId);
-      const stale = nativeStateHash(planned) !== nativeStateHash(current);
+      const planned = plannedVariant(row.definition, names.get(row.nativeProductId) ?? { hu: "" });
 
-      analysis.set(row.productId, {
-        stale,
-        details: stale ? nativeStateDiff(planned, current) : [],
-      });
+      analysis.set(row.productId, variantDrift(planned, variants.get(row.nativeProductId) ?? []));
     }
 
     return analysis;
   }
 
   /**
-   * Re-syncs every definition referencing the material: renames, color
-   * changes and facet upkeep propagate to the affected native products.
-   */
-  async enqueueSyncsForMaterial(ctx: RequestContext, materialSlug: string): Promise<number> {
-    const rows = await this.connection.getRepository(ctx, ProductDefinition).find();
-    const affected = rows.filter((row) => materialReferenceSlugs(row.definition).has(materialSlug));
-
-    for (const row of affected) {
-      await this.enqueueSync(ctx, row.productId, "automatic");
-    }
-
-    return affected.length;
-  }
-
-  private async onMaterialEvent(event: MaterialEvent): Promise<void> {
-    try {
-      await this.enqueueSyncsForMaterial(event.ctx, event.materialSlug);
-    } catch (error: unknown) {
-      Logger.error(
-        `Az anyag-módosulás utáni termékszinkronizálás sikertelen (${event.materialSlug}): ` +
-          (error instanceof Error ? error.message : String(error))
-      );
-    }
-  }
-
-  /**
    * Stock product writes find their generated definition: a delete cascades
    * to it (ADR 0011 decision 4 — the configurator's own delete removes the
    * definition first, so this finds nothing to do there), and a rename
-   * re-enqueues its sync only when a variant is named after the product
+   * re-enqueues its sync, since the variant is named after the product
    * (ADR 0011 decision 1: the native Product owns the name; the sync only
    * reads it).
    */
@@ -623,8 +434,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         .getRepository(event.ctx, ProductDefinition)
         .findOneBy({ nativeProductId });
 
-      if (row !== null && variantNamesUseProductName(row.definition)) {
-        await this.enqueueSync(event.ctx, row.productId, "automatic");
+      if (row !== null) {
+        await this.enqueueSync(event.ctx, row.productId);
       }
     } catch (error: unknown) {
       Logger.error(
@@ -657,11 +468,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   }
 
   /** Queues a sync after the definition write committed. */
-  private async enqueueSync(
-    ctx: RequestContext,
-    productId: string,
-    origin: SyncJobData["origin"]
-  ): Promise<void> {
+  private async enqueueSync(ctx: RequestContext, productId: string): Promise<void> {
     if (this.syncQueue === null) {
       throw new Error("A termékszinkronizáló sor még nem áll rendelkezésre.");
     }
@@ -679,7 +486,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     try {
       // The actor rides the job data: the worker's synthetic context has no
       // user, so the enqueueing admin is only known here.
-      await this.syncQueue.add({ productId, origin, actor: auditActor(ctx) });
+      await this.syncQueue.add({ productId, actor: auditActor(ctx) });
     } catch (error: unknown) {
       await this.connection
         .getRepository(ctx, ProductDefinition)
@@ -690,10 +497,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   }
 
   /** The worker-side sync of a definition's current stored state. */
-  private async processSyncJob(
-    { productId, origin, actor }: SyncJobData,
-    reportProgress: (progress: SyncProgress) => void
-  ): Promise<void> {
+  private async processSyncJob({ productId, actor }: SyncJobData): Promise<void> {
     const ctx = await this.jobContext();
     const repo = this.connection.getRepository(ctx, ProductDefinition);
     const row = await repo.findOneBy({ productId });
@@ -704,53 +508,6 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     }
 
     try {
-      if (origin === "automatic" && row.nativeProductId !== null) {
-        const decision = await this.automaticDecision(ctx, row, row.nativeProductId);
-
-        if (decision === "drift") {
-          await repo.update(
-            { productId },
-            {
-              syncState: "failed",
-              syncError:
-                `A(z) "${productId}" termék natív adatai (opciók, változatok, árak) a ` +
-                "szinkronizáláson kívül módosultak, ezért az automatikus szinkronizálás nem írta felül őket. " +
-                "A felülírásukhoz mentsd újra a terméket a konfigurátorban, és hagyd jóvá a szinkronizálást.",
-            }
-          );
-          await this.publishSyncAudit(
-            ctx,
-            productId,
-            "sync-failed",
-            "eltolás miatt az automatikus szinkronizálás nem írt",
-            actor
-          );
-          return;
-        }
-
-        if (decision === "skip") {
-          await repo.update(
-            { productId },
-            {
-              syncedDefinitionHash: productRevision(row.definition),
-              syncedNativeStateHash: nativeStateHash(
-                await this.currentNativeState(ctx, row.nativeProductId)
-              ),
-              syncState: "synced",
-              syncError: null,
-            }
-          );
-          await this.publishSyncAudit(
-            ctx,
-            productId,
-            "synced",
-            "nincs változás, a szinkronizálás kihagyva",
-            actor
-          );
-          return;
-        }
-      }
-
       await this.connection.withTransaction(ctx, async (txCtx) => {
         let nativeProductId = row.nativeProductId;
 
@@ -768,18 +525,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
             .update({ productId }, { nativeProductId });
         }
 
-        await this.sync(txCtx, nativeProductId, row.definition, reportProgress);
-
-        const state = await this.currentNativeState(txCtx, nativeProductId);
-        await this.connection.getRepository(txCtx, ProductDefinition).update(
-          { productId },
-          {
-            syncedDefinitionHash: productRevision(row.definition),
-            syncedNativeStateHash: nativeStateHash(state),
-            syncState: "synced",
-            syncError: null,
-          }
-        );
+        await this.sync(txCtx, nativeProductId, row.definition);
+        await this.connection
+          .getRepository(txCtx, ProductDefinition)
+          .update({ productId }, { syncState: "synced", syncError: null });
       });
 
       await this.publishSyncAudit(ctx, productId, "synced", null, actor);
@@ -825,57 +574,11 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     );
   }
 
-  private async automaticDecision(
-    ctx: RequestContext,
-    row: ProductDefinition,
-    nativeProductId: number
-  ): Promise<AutomaticSyncDecision> {
-    const materialData = await this.materialData(ctx);
-    const names = await this.nativeNames(ctx, [row]);
-    const planned = plannedNativeState(
-      row.definition,
-      materialData,
-      names.get(nativeProductId) ?? { hu: "" }
-    );
-    const current = await this.currentNativeState(ctx, nativeProductId);
-
-    return automaticSyncDecision({
-      planned: nativeStateHash(planned),
-      current: nativeStateHash(current),
-      synced: row.syncedNativeStateHash,
-    });
-  }
-
   /** Job handlers run outside any request; the sync needs the default channel. */
   private async jobContext(): Promise<RequestContext> {
     const defaultChannel = await this.channelService.getDefaultChannel();
 
     return this.requestContextService.create({ apiType: "admin", channelOrToken: defaultChannel });
-  }
-
-  /**
-   * Refuses to sync when the native product was edited outside the sync
-   * (ADR 0010: drift is flagged, never silently overwritten). `force`
-   * confirms the overwrite; the sync then restores the generated state.
-   */
-  private async assertNoNativeDrift(
-    ctx: RequestContext,
-    nativeProductId: number,
-    existing: ProductDefinition,
-    force: boolean
-  ): Promise<void> {
-    if (force || existing.syncedNativeStateHash === null) {
-      return;
-    }
-
-    const state = await this.currentNativeState(ctx, nativeProductId);
-
-    if (nativeStateHash(state) !== existing.syncedNativeStateHash) {
-      throw new NativeDriftError(
-        `A(z) "${existing.productId}" termék natív adatai (opciók, változatok, árak) a ` +
-          "szinkronizáláson kívül módosultak. A felülírásukhoz hagyd jóvá a szinkronizálást."
-      );
-    }
   }
 
   /** Creates the native Vendure Product the definition generates. The slug is
@@ -903,20 +606,16 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   }
 
   /**
-   * Regenerates the native option groups/options/variants from the structured
-   * model: creates missing groups+options, creates missing variants in
-   * batches, refreshes prices, and soft-deletes variants, options and groups
-   * that no longer exist in the model. Removed options and groups are deleted
-   * only after the variant writes: while stale variants still use an option,
-   * Vendure reports NOT_DELETED on its deletion instead of failing.
+   * Writes the one variant the definition plans (ADR 0016): creates it when
+   * missing, otherwise updates what differs and drops translations of
+   * languages the product no longer has. A generated product with more than
+   * one live variant is a broken state the sync refuses to guess about.
    */
   private async sync(
     ctx: RequestContext,
     nativeProductId: number,
-    definition: CanonicalProductDefinition,
-    reportProgress: (progress: SyncProgress) => void
+    definition: CanonicalProductDefinition
   ): Promise<void> {
-    const materialData = await this.materialData(ctx);
     const product = await this.connection.getRepository(ctx, Product).findOne({
       where: { id: nativeProductId, deletedAt: IsNull() },
       relations: { translations: true },
@@ -926,512 +625,109 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       throw new Error(`A szinkronizált natív termék eltűnt: ${nativeProductId}`);
     }
 
-    // The variant names read the native product's hu name (ADR 0011
-    // decision 1); the sync never writes the product's own name or slug.
-    const productName = textOf(product.translations, "");
-
+    // The variant name reads the native product's names (ADR 0011 decision
+    // 1); the sync never writes the product's own name or slug.
     if (huName(product.translations) === undefined) {
       throw new Error(`A natív terméknek nincs magyar nyelvű neve: ${nativeProductId}`);
     }
 
-    const plan = planVariantCombinations(definition, materialData, productName);
-    const facetCodesBySku = plannedVariantFacetCodes(plan, materialData);
-    const { optionIdsByGroupCode, removals } = await this.syncOptionGroups(
-      ctx,
-      nativeProductId,
-      plan
-    );
-    const facetValueIdsByCode = await this.facetValueIdsByCode(ctx, facetCodesBySku);
-
-    await this.syncVariants(
-      ctx,
-      nativeProductId,
-      plan,
-      optionIdsByGroupCode,
-      facetCodesBySku,
-      facetValueIdsByCode,
-      removals,
-      reportProgress
-    );
-  }
-
-  /**
-   * Creates missing option groups and options, updates renamed ones, and
-   * returns the resolved native option id per group/option code for the
-   * variant writes plus the options and groups to delete. Soft-deleted rows
-   * are ignored: the relation load returns them too (deletedAt is a plain
-   * column), and deleting one again would fail the sync.
-   */
-  private async syncOptionGroups(
-    ctx: RequestContext,
-    nativeProductId: number,
-    plan: VariantPlan
-  ): Promise<{
-    optionIdsByGroupCode: Map<string, Map<string, number>>;
-    removals: OptionGroupRemovals;
-  }> {
-    const product = await this.connection.getRepository(ctx, Product).findOne({
-      where: { id: nativeProductId, deletedAt: IsNull() },
-      relations: { optionGroups: { translations: true, options: { translations: true } } },
+    const planned = plannedVariant(definition, textOf(product.translations, ""));
+    const variants = await this.connection.getRepository(ctx, ProductVariant).find({
+      where: { productId: nativeProductId, deletedAt: IsNull() },
+      relations: { translations: true, productVariantPrices: true },
     });
 
-    if (product === null) {
-      throw new Error(`A szinkronizált natív termék eltűnt: ${nativeProductId}`);
-    }
-
-    const plannedByCode = new Map(plan.optionGroups.map((group) => [group.code, group]));
-    const optionIdsByGroupCode = new Map<string, Map<string, number>>();
-    const removals: OptionGroupRemovals = { options: [], groups: [] };
-    const keptGroups: KeptLanguages[] = [];
-    const keptOptions: KeptLanguages[] = [];
-
-    for (const group of product.optionGroups) {
-      if (group.deletedAt !== null) {
-        continue;
-      }
-
-      const planned = plannedByCode.get(group.code);
-
-      if (planned === undefined) {
-        removals.groups.push({ id: group.id, code: group.code });
-        continue;
-      }
-
-      optionIdsByGroupCode.set(group.code, new Map());
-      keptGroups.push({ baseId: Number(group.id), languages: Object.keys(planned.name) });
-
-      if (!sameText(textOf(group.translations, group.code), planned.name)) {
-        await this.optionGroupService.update(ctx, {
-          id: group.id,
-          translations: nameTranslations(planned.name),
-        });
-      }
-
-      const plannedOptions = new Map(planned.options.map((option) => [option.code, option]));
-      const optionIds = optionIdsByGroupCode.get(group.code);
-
-      if (optionIds === undefined) {
-        throw new Error(`Az opciócsoport azonosítói nem elérhetők: ${group.code}`);
-      }
-
-      for (const option of group.options) {
-        if (option.deletedAt !== null) {
-          continue;
-        }
-
-        const plannedOption = plannedOptions.get(option.code);
-
-        if (plannedOption === undefined) {
-          removals.options.push({ id: option.id, code: option.code });
-          continue;
-        }
-
-        plannedOptions.delete(option.code);
-        optionIds.set(option.code, Number(option.id));
-        keptOptions.push({ baseId: Number(option.id), languages: Object.keys(plannedOption.name) });
-
-        if (!sameText(textOf(option.translations, option.code), plannedOption.name)) {
-          await this.optionService.update(ctx, {
-            id: option.id,
-            translations: nameTranslations(plannedOption.name),
-          });
-        }
-      }
-
-      for (const [code, plannedOption] of plannedOptions) {
-        const created = await this.optionService.create(ctx, group.id, {
-          code,
-          translations: nameTranslations(plannedOption.name),
-        });
-
-        optionIds.set(code, Number(created.id));
-      }
-    }
-
-    for (const planned of plan.optionGroups) {
-      if (optionIdsByGroupCode.has(planned.code)) {
-        continue;
-      }
-
-      const createdGroup = await this.optionGroupService.create(ctx, {
-        code: planned.code,
-        translations: nameTranslations(planned.name),
-      });
-
-      await this.productService.addOptionGroupToProduct(ctx, nativeProductId, createdGroup.id);
-
-      const optionIds = new Map<string, number>();
-      optionIdsByGroupCode.set(planned.code, optionIds);
-
-      for (const plannedOption of planned.options) {
-        const created = await this.optionService.create(ctx, createdGroup.id, {
-          code: plannedOption.code,
-          translations: nameTranslations(plannedOption.name),
-        });
-
-        optionIds.set(plannedOption.code, Number(created.id));
-      }
-    }
-
-    const manager = this.connection.getRepository(ctx, Product).manager;
-    await pruneTranslations(manager, "product_option_group_translation", keptGroups);
-    await pruneTranslations(manager, "product_option_translation", keptOptions);
-
-    return { optionIdsByGroupCode, removals };
-  }
-
-  /**
-   * Deletes the removed options and groups. Their option deletes report
-   * NOT_DELETED while active variants still use them, so this runs after the
-   * variant writes have soft-deleted the stale ones; the groups are detached
-   * and deleted without force — a NOT_DELETED or in-use result fails the sync
-   * instead of leaving the option exposed on the shop API.
-   */
-  private async deleteRemovedOptionGroups(
-    ctx: RequestContext,
-    nativeProductId: number,
-    removals: OptionGroupRemovals
-  ): Promise<void> {
-    for (const option of removals.options) {
-      const result = await this.optionService.delete(ctx, option.id);
-
-      if (result.result !== DeletionResult.DELETED) {
-        throw new Error(
-          `A(z) "${option.code}" natív opció törlése nem sikerült, mert egy aktív változat még használja.`
-        );
-      }
-    }
-
-    for (const group of removals.groups) {
-      const detached = await this.productService.removeOptionGroupFromProduct(
-        ctx,
-        nativeProductId,
-        group.id
-      );
-
-      if ("productVariantCount" in detached) {
-        throw new Error(
-          `A(z) "${group.code}" natív opciócsoport eltávolítása nem sikerült, mert egy aktív változat még használja az egyik opcióját.`
-        );
-      }
-
-      const result = await this.optionGroupService.delete(ctx, group.id);
-
-      if (result.result !== DeletionResult.DELETED) {
-        throw new Error(
-          `A(z) "${group.code}" natív opciócsoport törlése nem sikerült, mert egy aktív változat még használja az egyik opcióját.`
-        );
-      }
-    }
-  }
-
-  /**
-   * Batched variant writes in the order Vendure's own validation requires:
-   * stale variants are soft-deleted first, then the removed options and
-   * groups are deleted (their option deletes report NOT_DELETED while active
-   * variants still use them), and only then the existing variants are updated
-   * and the missing ones created. A NOT_DELETED or in-use result fails the
-   * sync instead of leaving the option exposed on the shop API.
-   */
-  private async syncVariants(
-    ctx: RequestContext,
-    nativeProductId: number,
-    plan: VariantPlan,
-    optionIdsByGroupCode: ReadonlyMap<string, ReadonlyMap<string, number>>,
-    facetCodesBySku: ReadonlyMap<string, string[]>,
-    facetValueIdsByCode: ReadonlyMap<string, number>,
-    removals: OptionGroupRemovals,
-    reportProgress: (progress: SyncProgress) => void
-  ): Promise<void> {
-    const missingOption = plan.variants
-      .flatMap((variant) =>
-        variant.optionCodes.map((code, groupIndex) => ({
-          group: plan.optionGroups[groupIndex]?.code ?? "",
-          code,
-        }))
-      )
-      .find((entry) => optionIdsByGroupCode.get(entry.group)?.has(entry.code) !== true);
-
-    if (missingOption !== undefined) {
+    if (variants.length > 1) {
       throw new Error(
-        `Nem sikerült a natív opció előállítása: ${missingOption.group}/${missingOption.code}`
+        `A(z) "${definition.id}" termékhez ${variants.length} élő változat tartozik egy helyett.`
       );
     }
 
-    const optionIdsFor = (variant: { optionCodes: string[] }): number[] =>
-      variant.optionCodes.map((code, groupIndex) => {
-        const optionId = optionIdsByGroupCode
-          .get(plan.optionGroups[groupIndex]?.code ?? "")
-          ?.get(code);
+    const existing = variants.at(0);
 
-        if (optionId === undefined) {
-          throw new Error(`Nem sikerült a natív opció előállítása: ${code}`);
-        }
+    if (existing === undefined) {
+      await this.variantService.create(ctx, [
+        {
+          productId: nativeProductId,
+          sku: planned.sku,
+          price: planned.price,
+          trackInventory: GlobalFlag.FALSE,
+          translations: nameTranslations(planned.name),
+        },
+      ]);
+      return;
+    }
 
-        return optionId;
-      });
+    const current = this.variantState(ctx, existing);
+    const update: UpdateProductVariantInput = { id: existing.id };
+    let changed = existing.trackInventory !== GlobalFlag.FALSE;
 
-    const facetValueIdsFor = (sku: string): number[] => {
-      const ids: number[] = [];
+    if (changed) {
+      update.trackInventory = GlobalFlag.FALSE;
+    }
 
-      for (const code of facetCodesBySku.get(sku) ?? []) {
-        const id = facetValueIdsByCode.get(code);
+    for (const drift of variantDrift(planned, [current])) {
+      changed = true;
 
-        if (id === undefined) {
-          throw new Error(`Nem sikerült a facet érték feloldása: ${code}`);
-        }
-
-        ids.push(id);
+      if (drift.kind === "sku") {
+        update.sku = planned.sku;
       }
 
-      return ids;
-    };
-
-    const existing = await loadVariantMatrix(
-      this.connection.getRepository(ctx, ProductVariant).manager,
-      nativeProductId
-    );
-    const plannedBySku = new Map(plan.variants.map((variant) => [variant.sku, variant]));
-    const existingBySku = new Map(existing.map((variant) => [variant.sku, variant]));
-    const channelPrice = (variant: MatrixVariant): number =>
-      variant.prices.find((price) => price.channelId === Number(ctx.channelId))?.price ?? 0;
-
-    const missing = plan.variants.filter((variant) => !existingBySku.has(variant.sku));
-
-    const updates: UpdateProductVariantInput[] = [];
-
-    for (const variant of existing) {
-      const planned = plannedBySku.get(variant.sku);
-
-      if (planned === undefined) {
-        continue;
-      }
-
-      const plannedOptionIds = optionIdsFor(planned);
-      const actualOptionIds = new Set(variant.options.map((option) => option.id));
-      const optionsChanged =
-        actualOptionIds.size !== plannedOptionIds.length ||
-        plannedOptionIds.some((optionId) => !actualOptionIds.has(optionId));
-      const plannedFacetIds = facetValueIdsFor(variant.sku);
-      const actualFacetIds = new Set(variant.facetValues.map((value) => value.id));
-      const facetsChanged =
-        actualFacetIds.size !== plannedFacetIds.length ||
-        plannedFacetIds.some((facetValueId) => !actualFacetIds.has(facetValueId));
-      const priceChanged = channelPrice(variant) !== planned.price;
-      const nameChanged = !sameText(textOf(variant.translations, variant.sku), planned.name);
-      const inventoryChanged = variant.trackInventory !== GlobalFlag.FALSE;
-
-      if (!optionsChanged && !priceChanged && !nameChanged && !facetsChanged && !inventoryChanged) {
-        continue;
-      }
-
-      const update: UpdateProductVariantInput = { id: variant.id };
-
-      if (inventoryChanged) {
-        update.trackInventory = GlobalFlag.FALSE;
-      }
-
-      if (priceChanged) {
+      if (drift.kind === "price") {
         update.price = planned.price;
       }
 
-      if (nameChanged) {
+      if (drift.kind === "rename") {
         update.translations = nameTranslations(planned.name);
       }
-
-      if (optionsChanged) {
-        update.optionIds = plannedOptionIds;
-      }
-
-      if (facetsChanged) {
-        update.facetValueIds = plannedFacetIds;
-      }
-
-      updates.push(update);
     }
 
-    const stale = existing.filter((variant) => !plannedBySku.has(variant.sku));
-    const bulk = !this.bulkVariantWriter.legacyRequested;
-    const progress = createProgressCounter(
-      missing.length + updates.length + stale.length,
-      reportProgress
-    );
-
-    if (stale.length > 0) {
-      if (bulk) {
-        await this.bulkVariantWriter.softDelete(
-          ctx,
-          stale.map((variant) => variant.id)
-        );
-      } else {
-        await this.variantService.softDelete(
-          ctx,
-          stale.map((variant) => variant.id)
-        );
-      }
-
-      progress.advance(stale.length);
+    if (changed) {
+      await this.variantService.update(ctx, [update]);
     }
 
-    await this.deleteRemovedOptionGroups(ctx, nativeProductId, removals);
-
-    if (updates.length > 0) {
-      if (bulk) {
-        await this.bulkVariantWriter.update(ctx, updates);
-      } else {
-        for (let start = 0; start < updates.length; start += BATCH_SIZE) {
-          await this.variantService.update(ctx, updates.slice(start, start + BATCH_SIZE));
-        }
-      }
-
-      progress.advance(updates.length);
-    }
-
-    const keptVariants = existing.flatMap((variant) => {
-      const planned = plannedBySku.get(variant.sku);
-
-      if (planned === undefined) {
-        return [];
-      }
-
-      const languages = Object.keys(planned.name);
-      const hasRemovedLanguage = variant.translations.some(
-        (translation) => !languages.includes(translation.languageCode)
+    await this.connection
+      .getRepository(ctx, ProductVariant)
+      .manager.query(
+        `delete from product_variant_translation where "baseId" = $1 and not ("languageCode" = any($2))`,
+        [existing.id, Object.keys(planned.name)]
       );
-
-      return hasRemovedLanguage ? [{ baseId: variant.id, languages }] : [];
-    });
-
-    await pruneTranslations(
-      this.connection.getRepository(ctx, ProductVariant).manager,
-      "product_variant_translation",
-      keptVariants
-    );
-
-    if (missing.length > 0) {
-      const plannedCreates: PlannedVariantCreate[] = missing.map((variant) => ({
-        sku: variant.sku,
-        price: variant.price,
-        name: variant.name,
-        optionIds: optionIdsFor(variant),
-        facetValueIds: facetValueIdsFor(variant.sku),
-      }));
-
-      if (bulk) {
-        await this.bulkVariantWriter.create(ctx, nativeProductId, plannedCreates);
-      } else {
-        for (let start = 0; start < missing.length; start += BATCH_SIZE) {
-          await this.variantService.create(
-            ctx,
-            missing.slice(start, start + BATCH_SIZE).map((variant) => ({
-              productId: nativeProductId,
-              sku: variant.sku,
-              price: variant.price,
-              optionIds: optionIdsFor(variant),
-              facetValueIds: facetValueIdsFor(variant.sku),
-              trackInventory: GlobalFlag.FALSE,
-              translations: nameTranslations(variant.name),
-            }))
-          );
-        }
-      }
-
-      progress.advance(missing.length);
-    }
   }
 
-  /**
-   * Resolves the native facet value ids the sync needs, up front: a missing
-   * or duplicated code is a broken facet state, not something to paper over.
-   */
-  private async facetValueIdsByCode(
+  /** The live variants of the native products, keyed by product id. */
+  private async liveVariants(
     ctx: RequestContext,
-    facetCodesBySku: ReadonlyMap<string, string[]>
-  ): Promise<Map<string, number>> {
-    const codes = [...new Set([...facetCodesBySku.values()].flat())];
+    nativeProductIds: readonly number[]
+  ): Promise<Map<number, VariantState[]>> {
+    const byProduct = new Map<number, VariantState[]>();
 
-    if (codes.length === 0) {
-      return new Map();
+    if (nativeProductIds.length === 0) {
+      return byProduct;
     }
 
-    const values = await this.connection.getRepository(ctx, FacetValue).find({
-      where: { code: In(codes) },
-      relations: { facet: true },
+    const variants = await this.connection.getRepository(ctx, ProductVariant).find({
+      where: { productId: In(nativeProductIds), deletedAt: IsNull() },
+      relations: { translations: true, productVariantPrices: true },
     });
-    const syncFacetCodes = new Set([MATERIAL_FACET_CODE, COLOR_FACET_CODE]);
-    const byCode = new Map<string, FacetValue>();
 
-    for (const value of values) {
-      if (byCode.has(value.code)) {
-        throw new Error(`Több facet érték ugyanazzal a kóddal: ${value.code}`);
-      }
+    for (const variant of variants) {
+      const productId = Number(variant.productId);
 
-      if (!syncFacetCodes.has(value.facet.code)) {
-        throw new Error(
-          `A(z) "${value.code}" facet érték nem a szinkronizált facetekhez tartozik: ${value.facet.code}`
-        );
-      }
-
-      byCode.set(value.code, value);
+      byProduct.set(productId, [
+        ...(byProduct.get(productId) ?? []),
+        this.variantState(ctx, variant),
+      ]);
     }
 
-    const missing = codes.filter((code) => !byCode.has(code));
-
-    if (missing.length > 0) {
-      throw new Error(
-        `Hiányzó facet érték: ${missing.join(", ")}. Futtasd a facet-egyeztetést ` +
-          "(a convergeMaterialFacets admin mutationt)."
-      );
-    }
-
-    return new Map([...byCode].map(([code, value]) => [code, Number(value.id)]));
+    return byProduct;
   }
 
-  /** The native state as it exists right now, for drift hashing. */
-  private async currentNativeState(
-    ctx: RequestContext,
-    nativeProductId: number
-  ): Promise<NativeProductState> {
-    const product = await this.connection.getRepository(ctx, Product).findOne({
-      where: { id: nativeProductId, deletedAt: IsNull() },
-      relations: {
-        optionGroups: { translations: true, options: { translations: true } },
-      },
-    });
-
-    if (product === null) {
-      throw new Error(`A natív termék eltűnt: ${nativeProductId}`);
-    }
-
-    const variants = await loadVariantMatrix(
-      this.connection.getRepository(ctx, ProductVariant).manager,
-      nativeProductId
-    );
-
+  private variantState(ctx: RequestContext, variant: ProductVariant): VariantState {
     return {
-      optionGroups: product.optionGroups
-        .filter((group) => group.deletedAt === null)
-        .map((group) => ({
-          code: group.code,
-          name: textOf(group.translations, group.code),
-          options: group.options
-            .filter((option) => option.deletedAt === null)
-            .map((option) => ({
-              code: option.code,
-              name: textOf(option.translations, option.code),
-            })),
-        })),
-      variants: variants.map((variant) => ({
-        sku: variant.sku,
-        name: textOf(variant.translations, variant.sku),
-        price:
-          variant.prices.find((price) => price.channelId === Number(ctx.channelId))?.price ?? 0,
-        options: variant.options.map((option) => ({
-          groupCode: option.groupCode,
-          optionCode: option.code,
-        })),
-        facetValues: variant.facetValues.map((value) => value.code),
-      })),
+      sku: variant.sku,
+      name: textOf(variant.translations, variant.sku),
+      price:
+        variant.productVariantPrices.find((price) => price.channelId === ctx.channelId)?.price ?? 0,
     };
   }
 
@@ -1456,24 +752,6 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
       row.label = nativeName?.hu ?? row.productId;
     }
-  }
-
-  /** The materials' labels and colors, the two inputs the facet/variant plan reads. */
-  private async materialData(ctx: RequestContext): Promise<Map<string, MaterialFacetData>> {
-    const materials = await this.connection.getRepository(ctx, Material).find();
-
-    return new Map(
-      materials.map((material) => [
-        material.slug,
-        {
-          label: textOf(material.translations.map(labelAsName), material.slug),
-          colors: material.colors.map((color) => ({
-            id: color.colorId,
-            label: textOf(color.translations.map(labelAsName), color.colorId),
-          })),
-        },
-      ])
-    );
   }
 
   private async validatedUnderMaterialLocks(

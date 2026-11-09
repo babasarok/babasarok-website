@@ -70,7 +70,7 @@ function readTranslationFile(path: string): TranslationFile {
 async function extract(language: string, out: string): Promise<void> {
   const snapshot = await readCatalogSnapshot(api, { definitions: true });
   const missing = translatableStrings(snapshot, language).filter(
-    (string) => !string.derived && string.current === undefined
+    (string) => string.current === undefined
   );
   const file = TranslationFileSchema.parse({
     language,
@@ -89,7 +89,6 @@ async function main(): Promise<void> {
       out: { type: "string" },
       file: { type: "string" },
       write: { type: "boolean", default: false },
-      force: { type: "boolean", default: false },
     },
   });
   const [command] = positionals;
@@ -107,7 +106,6 @@ async function main(): Promise<void> {
     await signIn();
     await runUpload(api, translations, {
       write: values.write,
-      force: values.force,
       log: (line) => {
         console.log(line);
       },
@@ -128,7 +126,7 @@ async function main(): Promise<void> {
   }
 
   throw new Error(
-    "usage: translations extract --lang <code> --out <file> | upload --file <file> [--write] [--force] | verify --file <file>"
+    "usage: translations extract --lang <code> --out <file> | upload --file <file> [--write] | verify --file <file>"
   );
 }
 

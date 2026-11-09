@@ -1,5 +1,5 @@
 import type { ProductDefinition } from "../../shared/product-definition/index";
-import type { LineSelections } from "../../shared/pricing/index";
+import type { AxisCodes, LineSelections } from "../../shared/pricing/index";
 
 export interface MaterialPick {
   materialId: string;
@@ -36,16 +36,15 @@ function requiredColorCount(
 }
 
 /**
- * A line's material picks for the set gate, derived from the variant's own
- * options (the material axes are variant options — authoritative) and the
- * selections' colors only. `undefined` means the line earns nothing: a
- * material option is missing on the variant (drift) or required colors are
- * missing/unprovable. Lines of products without material fields yield `[]`
- * and match trivially.
+ * A line's material picks for the set gate: each material field's code from
+ * the line's axis codes (read from its selections) with the selections'
+ * colors. `undefined` means the line earns nothing: a material code is
+ * missing or required colors are missing/unprovable. Lines of products
+ * without material fields yield `[]` and match trivially.
  */
 export function materialPicks(
   fields: readonly DefinitionField[],
-  optionCodesByGroup: ReadonlyMap<string, readonly string[]>,
+  codes: AxisCodes,
   selections: LineSelections | null
 ): MaterialPick[] | undefined {
   const picks: MaterialPick[] = [];
@@ -55,9 +54,9 @@ export function materialPicks(
       continue;
     }
 
-    const optionCodes = optionCodesByGroup.get(field.id);
+    const materialId = codes.get(field.id);
 
-    if (optionCodes === undefined || optionCodes.length !== 1) {
+    if (materialId === undefined) {
       return undefined;
     }
 
@@ -69,7 +68,7 @@ export function materialPicks(
       return undefined;
     }
 
-    picks.push({ materialId: optionCodes[0], colors });
+    picks.push({ materialId, colors });
   }
 
   return picks;

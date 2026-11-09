@@ -166,6 +166,12 @@ custom-field definitions stay so those columns are never dropped, and the
 dashboard order-detail extension renders them from the stored fields. No code
 re-resolves or re-prices a placed order line.
 
+The dashboard order-detail table shows each line's product (linked to the
+product page) with its configuration (`configText`) — a configurable product
+has one variant, its choices live on the line (ADR 0016). Lines of orders
+placed before ADR 0016 keep their per-combination variant, now soft-deleted,
+and also show its name.
+
 ### Browser error reporting
 
 The system SHALL report uncaught browser errors and unhandled promise

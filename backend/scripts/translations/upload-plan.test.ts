@@ -37,10 +37,10 @@ function snapshot(overrides: Partial<CatalogSnapshot> = {}): CatalogSnapshot {
     facets: [
       {
         id: "1",
-        code: "babasarok-material",
-        translations: [{ languageCode: "hu", name: "Anyag" }],
+        code: "babasarok-product-type",
+        translations: [{ languageCode: "hu", name: "Terméktípus" }],
         values: [
-          { id: "11", code: "minky", translations: [{ languageCode: "hu", name: "Minky" }] },
+          { id: "11", code: "parna", translations: [{ languageCode: "hu", name: "Párna" }] },
         ],
       },
     ],
@@ -48,7 +48,7 @@ function snapshot(overrides: Partial<CatalogSnapshot> = {}): CatalogSnapshot {
       {
         id: "5",
         translations: [
-          { languageCode: "hu", name: "Minky", slug: "material-minky", description: "" },
+          { languageCode: "hu", name: "Ovis felszerelés", slug: "ovis", description: "" },
         ],
       },
     ],
@@ -88,8 +88,7 @@ describe("planUpload", () => {
   it("adds the language next to Hungarian, copying the slug onto a new product row", () => {
     const plan = planUpload(
       snapshot(),
-      file([{ key: "product|7|name", source: "Párna", translation: "Kissen" }]),
-      { force: false }
+      file([{ key: "product|7|name", source: "Párna", translation: "Kissen" }])
     );
 
     expect(plan.operations).toEqual([
@@ -114,13 +113,7 @@ describe("planUpload", () => {
 
     expect(
       refusal(() =>
-        planUpload(
-          live,
-          file([{ key: "product|7|name", source: "Párna", translation: "Kissen" }]),
-          {
-            force: false,
-          }
-        )
+        planUpload(live, file([{ key: "product|7|name", source: "Párna", translation: "Kissen" }]))
       )
     ).toEqual([expect.stringContaining('already translated as "Polster"')]);
   });
@@ -131,8 +124,7 @@ describe("planUpload", () => {
 
     const plan = planUpload(
       live,
-      file([{ key: "product|7|name", source: "Párna", translation: "Kissen" }]),
-      { force: false }
+      file([{ key: "product|7|name", source: "Párna", translation: "Kissen" }])
     );
 
     expect(plan).toEqual({ operations: [], alreadyDone: ["product|7|name"] });
@@ -146,34 +138,32 @@ describe("planUpload", () => {
           file([
             { key: "product|7|name", source: "Régi párna", translation: "Kissen" },
             { key: "material|minky|label", source: "Minky", translation: "Minky" },
-          ]),
-          { force: false }
+          ])
         )
       )
     ).toEqual([expect.stringContaining("the Hungarian source changed")]);
   });
 
-  it("refuses unknown keys, derived strings, duplicates and empty translations", () => {
+  it("refuses unknown keys, duplicates and empty translations", () => {
     expect(
       refusal(() =>
         planUpload(
           snapshot(),
           file([
             { key: "product|99|name", source: "Nincs", translation: "Nichts" },
-            { key: "facetValue|babasarok-material/11|name", source: "Minky", translation: "Minky" },
-            { key: "collection|5|name", source: "Minky", translation: "Minky" },
-            { key: "facet|babasarok-material|name", source: "Anyag", translation: " " },
-            { key: "facet|babasarok-material|name", source: "Anyag", translation: "Stoff" },
-          ]),
-          { force: false }
+            { key: "facet|babasarok-product-type|name", source: "Terméktípus", translation: " " },
+            {
+              key: "facet|babasarok-product-type|name",
+              source: "Terméktípus",
+              translation: "Produkttyp",
+            },
+          ])
         )
       )
     ).toEqual([
       expect.stringContaining("empty or starts/ends with whitespace"),
       expect.stringContaining("listed twice"),
       expect.stringContaining("product|99|name: not in the live catalog"),
-      expect.stringContaining("facetValue|babasarok-material/11|name: derived"),
-      expect.stringContaining("collection|5|name: derived"),
     ]);
   });
 
@@ -183,8 +173,7 @@ describe("planUpload", () => {
       file([
         { key: "material|minky|label", source: "Minky", translation: "Minky" },
         { key: "materialColor|minky/piros|label", source: "Piros", translation: "Rot" },
-      ]),
-      { force: false }
+      ])
     );
 
     expect(plan.operations[0]?.variables).toEqual({
@@ -222,14 +211,13 @@ describe("planUpload", () => {
       refusal(() =>
         planUpload(
           snapshot(),
-          file([{ key: "material|minky|subtitle", source: "Pihe", translation: "Flauschig" }]),
-          { force: false }
+          file([{ key: "material|minky|subtitle", source: "Pihe", translation: "Flauschig" }])
         )
       )
     ).toEqual([expect.stringContaining("translate the label too")]);
   });
 
-  it("adds the language to the definition's text objects and passes force through", () => {
+  it("adds the language to the definition's text objects", () => {
     const plan = planUpload(
       snapshot(),
       file([
@@ -239,8 +227,7 @@ describe("planUpload", () => {
           source: "Kicsi",
           translation: "Klein",
         },
-      ]),
-      { force: true }
+      ])
     );
 
     expect(plan.operations).toEqual([
@@ -249,7 +236,6 @@ describe("planUpload", () => {
         productId: "parna",
         variables: {
           productId: "parna",
-          force: true,
           definition: {
             fields: [
               {
@@ -286,7 +272,7 @@ describe("verificationProblems", () => {
   it("reports a changed Hungarian source and a target text nobody wrote", () => {
     const live = snapshot();
     live.products[0]?.translations.push({ languageCode: "de", name: "Kissen", slug: "parna" });
-    live.facets[0]?.translations.push({ languageCode: "de", name: "Stoff" });
+    live.facets[0]?.translations.push({ languageCode: "de", name: "Produkttyp" });
     live.materials[0]?.colors[0]?.translations.splice(0, 1, { languageCode: "hu", label: "Vörös" });
 
     expect(
@@ -300,7 +286,9 @@ describe("verificationProblems", () => {
       expect.stringContaining(
         'materialColor|minky/piros|label: Hungarian changed "Piros" → "Vörös"'
       ),
-      expect.stringContaining('facet|babasarok-material|name: de changed undefined → "Stoff"'),
+      expect.stringContaining(
+        'facet|babasarok-product-type|name: de changed undefined → "Produkttyp"'
+      ),
     ]);
   });
 });

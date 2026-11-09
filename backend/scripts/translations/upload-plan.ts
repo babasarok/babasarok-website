@@ -1,7 +1,6 @@
 import { z } from "zod";
 import type { CatalogSnapshot, NamedTranslation } from "./catalog-snapshot";
 import {
-  DERIVED_FACET_CODES,
   SOURCE_LANGUAGE,
   definitionKey,
   inLanguage,
@@ -30,7 +29,7 @@ export const MUTATIONS = {
   updateCollection: `mutation($input: UpdateCollectionInput!) { updateCollection(input: $input) { __typename } }`,
   updatePromotion: `mutation($input: UpdatePromotionInput!) { updatePromotion(input: $input) { __typename ... on ErrorResult { errorCode message } } }`,
   updateShippingMethod: `mutation($input: UpdateShippingMethodInput!) { updateShippingMethod(input: $input) { __typename } }`,
-  updateProductDefinition: `mutation($productId: String!, $definition: JSON!, $force: Boolean) { updateProductDefinition(productId: $productId, definition: $definition, force: $force) { __typename } }`,
+  updateProductDefinition: `mutation($productId: String!, $definition: JSON!) { updateProductDefinition(productId: $productId, definition: $definition) { __typename } }`,
 } as const;
 
 export type MutationName = keyof typeof MUTATIONS;
@@ -94,14 +93,10 @@ function fileProblems(file: TranslationFile): string[] {
 /**
  * The mutations that add `file.language` to the live catalog. Additive only:
  * a string already translated differently, a Hungarian source that changed
- * since the extract, an unknown or a derived key refuses the whole plan.
+ * since the extract, or an unknown key refuses the whole plan.
  * Every file entry ends up in exactly one write or in `alreadyDone`.
  */
-export function planUpload(
-  snapshot: CatalogSnapshot,
-  file: TranslationFile,
-  options: { force: boolean }
-): UploadPlan {
+export function planUpload(snapshot: CatalogSnapshot, file: TranslationFile): UploadPlan {
   const language = file.language;
   const problems = fileProblems(file);
   const live = new Map(translatableStrings(snapshot, language).map((s) => [s.key, s]));
@@ -113,13 +108,6 @@ export function planUpload(
 
     if (string === undefined) {
       problems.push(`${entry.key}: not in the live catalog (deleted, or its source emptied).`);
-      continue;
-    }
-
-    if (string.derived) {
-      problems.push(
-        `${entry.key}: derived from a material or color label by the sync; translate the material instead.`
-      );
       continue;
     }
 
@@ -149,7 +137,7 @@ export function planUpload(
     throw new UploadPlanError(problems);
   }
 
-  const operations = buildOperations(snapshot, language, pending, options);
+  const operations = buildOperations(snapshot, language, pending);
   const planned = new Set(
     operations.flatMap((operation) => operation.writes.map((write) => write.key))
   );
@@ -213,8 +201,7 @@ function slugDefaults(
 function buildOperations(
   snapshot: CatalogSnapshot,
   language: string,
-  pending: ReadonlyMap<string, PlannedWrite>,
-  options: { force: boolean }
+  pending: ReadonlyMap<string, PlannedWrite>
 ): UploadOperation[] {
   const operations: UploadOperation[] = [];
 
@@ -330,7 +317,7 @@ function buildOperations(
     );
   }
 
-  for (const facet of snapshot.facets.filter((f) => !DERIVED_FACET_CODES.has(f.code))) {
+  for (const facet of snapshot.facets) {
     for (const value of facet.values) {
       nameOperation(
         "facetValue",
@@ -397,7 +384,7 @@ function buildOperations(
       productId,
       entity: `definition ${productId}`,
       mutation: "updateProductDefinition",
-      variables: { productId, definition: updated, force: options.force },
+      variables: { productId, definition: updated },
       writes,
     });
   }

@@ -47,54 +47,21 @@ const definition = ProductDefinitionSchema.parse({
   ],
 });
 
-const variants = [
-  {
-    id: "1",
-    options: [
-      { group: "meret", code: "40" },
-      { group: "fodor", code: "nem" },
-    ],
-  },
-  {
-    id: "2",
-    options: [
-      { group: "meret", code: "50" },
-      { group: "fodor", code: "nem" },
-    ],
-  },
-  {
-    id: "3",
-    options: [
-      { group: "meret", code: "50" },
-      { group: "fodor", code: "igen" },
-    ],
-  },
-];
-
 const fields = (): Field[] => [
   makeField({ name: "meret", type: "radio", value: { value: "50" } }),
   makeField({ name: "fodor", type: "toggle", value: { value: true } }),
 ];
 
 describe("line input", () => {
-  it("picks the variant matching the variant axes and records every selection", () => {
-    const built = buildLine(definition, fields(), variants);
-
-    expect(built).toEqual({
-      ok: true,
-      line: {
-        variantId: "3",
-        selections: JSON.stringify({
-          meret: { kind: "option", value: "50" },
-          fodor: { kind: "option", value: "igen" },
-        }),
-        lengthCm: undefined,
-      },
+  it("puts every selection on the product's one variant", () => {
+    expect(buildLine(definition, fields(), "3")).toEqual({
+      variantId: "3",
+      selections: JSON.stringify({
+        meret: { kind: "option", value: "50" },
+        fodor: { kind: "option", value: "igen" },
+      }),
+      lengthCm: undefined,
     });
-  });
-
-  it("refuses a combination without a variant", () => {
-    expect(buildLine(definition, fields(), variants.slice(0, 2)).ok).toBe(false);
   });
 
   it("round-trips selections back onto the fields", () => {
@@ -391,30 +358,25 @@ describe("createBasketApi", () => {
     expect(token()).toBe("new");
   });
 
-  it("fetches the full variant matrix through productVariants and maps the axes flat", async () => {
+  it("reads the product's one variant id through the stock product query", async () => {
     const { api, fetchMock } = apiWith({
-      data: {
-        productVariants: [
-          { id: "7", options: [{ code: "50", group: "meret" }] },
-          { id: "8", options: [{ code: "igen", group: "fodor" }] },
-        ],
-      },
+      data: { product: { variants: [{ id: "7" }] } },
     });
-    const result = await api.productVariants("parna");
 
-    expect(result).toMatchObject({
-      ok: true,
-      value: [
-        { id: "7", options: [{ code: "50", group: "meret" }] },
-        { id: "8", options: [{ code: "igen", group: "fodor" }] },
-      ],
-    });
+    expect(await api.productVariantId("parna")).toEqual({ ok: true, value: "7" });
+
     const init = fetchMock.mock.calls[0]?.[1];
     const body = RequestBodySchema.safeParse(
       typeof init?.body === "string" ? JSON.parse(init.body) : null
     );
 
-    expect(body.success && body.data.query.includes("productVariants(slug: $slug)")).toBe(true);
+    expect(body.success && body.data.query.includes("product(slug: $slug)")).toBe(true);
+  });
+
+  it("reports no variant for a product the shop does not serve", async () => {
+    const { api } = apiWith({ data: { product: null } });
+
+    expect(await api.productVariantId("rejtett")).toEqual({ ok: true, value: undefined });
   });
 
   it("reports malformed responses instead of throwing", async () => {

@@ -180,11 +180,8 @@ merged to main until the backend structure is settled):
   products (the generated flag rides the stock page's own extended query —
   no `pnpm patch` needed), drift details are listed under the stale badge,
   and zod validation messages are localized to Hungarian
-- ✅ Facets + Collections — material/color facet values on generated variants,
-  auto-managed per-material collections, and event-driven re-sync of affected
-  products on material (create/rename/color/delete) changes; facets and
-  collections live in the stock dashboard; the `convergeMaterialFacets`
-  admin mutation converges pre-facet databases
+- ✅ Facets + Collections — later removed with the variant matrix (ADR 0016
+  step 4): no material/color facets or per-material collections remain
 - ✅ Server-side pricing + promotions — a custom `OrderItemPriceCalculationStrategy`
   prices length/embroidery from order-line custom fields (`lengthCm`,
   `selections`), with an order interceptor rejecting unpriceable lines (no
@@ -219,8 +216,8 @@ merged to main until the backend structure is settled):
 - ✅ Translatable catalog text — material/color labels, subtitle and
   description are Vendure translation entities and definition text is a
   `LocalizedText` (`hu` required, others optional, hu fallback), edited in the
-  dashboard's content language; generated options, variants and mirrored
-  facet values carry every language
+  dashboard's content language; the generated variant carries the product
+  name in every language
   ([ADR 0011](adr/0011-native-ownership-and-translatable-catalog.md)
   decision 6)
 - ⬜ Vendure-complete gate — catalog fully manageable in the Vendure dashboard,
@@ -239,27 +236,29 @@ Part of epic 2. Decision and rationale:
 2026-11-09; supersedes ADR 0010 decision 1 and the variant/facet part of
 decision 6). Each step ships alone:
 
-- ⬜ **1. Selections authoritative** — pricing, set discounts and line
-  validity derive axis values from the selections + definition; the variant
-  agreement check stays in one allowlisted module. Guard: ESLint
-  `no-restricted-syntax` against variant-option reads, shrink-only allowlist
-- ⬜ **2. Server refuses forbidden material combinations** from the
-  selections (today only the missing variant enforces them)
-- ⬜ **3. Variant agreement check retired**
-- ⬜ **4. Material collections and Material/Color facets dropped** (owner:
-  no material/color browsing, now or later)
-- ⬜ **5. Single variant** — sync keeps one variant per generated product,
-  active basket lines relinked
-- ⬜ **6. Dashboard** — order lines show selection labels
-- ⬜ **7. Cleanup** — matrix generation, option groups, drift over variants.
-  Each step also deletes what it makes dead; nothing is kept for a revert
+All seven steps are implemented in PR #108; the two migrations
+(`1794300000000-drop-material-facets-and-collections`,
+`1794400000000-one-variant-per-product`) run at its deploy and were rehearsed
+on a copy of production (`backend/integration/rehearse-one-variant.test.ts`).
 
-Remaining uses of the old way (the guard's allowlist):
+- ✅ **1. Selections authoritative** — pricing, set discounts and line
+  validity read the selections + definition (`axisCodes`)
+- ✅ **2. Server refuses forbidden material combinations** from the
+  selections, at add/adjust and as an `OPTION_NOT_OFFERED` reason
+- ✅ **3. Variant agreement check retired**
+- ✅ **4. Material collections and Material/Color facets dropped** (owner:
+  no material/color browsing, now or later) — migration
+- ✅ **5. Single variant** — the sync keeps one variant per generated
+  product; a migration soft-deletes the matrix and moves active basket lines
+  onto the new variant
+- ✅ **6. Dashboard** — order lines show the product and its configuration;
+  no generated-variants list
+- ✅ **7. Cleanup** — matrix generation, option groups, drift hashing,
+  `productVariants(slug)`, `pickVariant` and the material facet sync are
+  gone
 
-- `backend/src/plugins/pricing/variant-agreement.ts` (step 3)
-- the matrix sync, plan, drift and resolver files in
-  `backend/src/plugins/product/` (steps 5, 7)
-- `src/lib/basket/lineInput.ts` `pickVariant` (step 5)
+Remaining uses of the old way: none. The ESLint rule
+(`eslint/variant-option-reads.ts`) blocks reading a variant's options again.
 
 ## Epic 8 plan (English / multi-language)
 
@@ -268,7 +267,7 @@ Build on what exists; do not relitigate the catalog decision:
 
 - Already translatable (ADR 0011 decision 6): material/colour labels and
   descriptions, definition text (`LocalizedText`, hu required, hu fallback),
-  generated options, variants and mirrored facet values. The shop API takes a
+  the generated variant's name (the product's). The shop API takes a
   `languageCode` per request and the site's API client already passes one.
 - To translate for epic 8:
   - Site UI strings — every hardcoded Hungarian string in the site

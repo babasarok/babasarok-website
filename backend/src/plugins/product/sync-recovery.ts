@@ -1,4 +1,4 @@
-import { SyncJobDataSchema } from "./sync-decision";
+import { SyncJobDataSchema } from "./sync-job";
 
 /** Pending definitions that no queued sync job will pick up. */
 export function definitionsToRequeue(
