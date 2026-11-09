@@ -15,7 +15,6 @@
     "migrate": "node --env-file-if-exists=.env dist/migrate.js",
     "generate-migration": "node --env-file-if-exists=.env dist/generate-migration.js",
     "e2e:server": "tsx --env-file=e2e.env scripts/e2e-server.ts",
-    "translations": "bash scripts/translations/run.sh",
     "check": "tsc -b && tsc -p tsconfig.scripts.json --noEmit && tsc -p tsconfig.integration.json",
     "check:dashboard": "tsx scripts/check-dashboard-types.ts",
     "test": "vitest run",
