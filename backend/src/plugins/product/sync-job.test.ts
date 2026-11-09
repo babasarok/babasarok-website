@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SyncJobDataSchema, updateInputCarriesName } from "./sync-decision";
+import { SyncJobDataSchema, updateInputCarriesName } from "./sync-job";
 
 describe("updateInputCarriesName", () => {
   it("is true when any translation has a name", () => {
@@ -14,7 +14,10 @@ describe("updateInputCarriesName", () => {
 });
 
 describe("SyncJobDataSchema", () => {
-  it("treats a job without origin as automatic", () => {
-    expect(SyncJobDataSchema.parse({ productId: "p" }).origin).toBe("automatic");
+  it("reads a job queued before the actor existed as system-triggered", () => {
+    expect(SyncJobDataSchema.parse({ productId: "p", origin: "automatic" })).toEqual({
+      productId: "p",
+      actor: null,
+    });
   });
 });

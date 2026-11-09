@@ -161,8 +161,7 @@ Each step ships alone; the system is correct after each.
    consumer, see Context; owner: no material/color browsing, now or later):
    a migration deletes the `material-*` collections, the sync stops writing
    facet values on variants, and the material facet sync and
-   `convergeMaterialFacets` go away; facet values on historical variants are
-   left alone or removed with the facets.
+   `convergeMaterialFacets` go away; the facet values go with their facets.
 5. **Single variant.** The sync keeps one variant per generated product at
    the base price and soft-deletes the rest; placed orders keep theirs. The
    site adds to the single variant; `productVariants(slug)` and `pickVariant`
@@ -171,8 +170,9 @@ Each step ships alone; the system is correct after each.
    variant; their selections already carry everything step 1 reads and their
    stored prices stay (ADR 0013 decision 6). Lines that cannot be relinked
    surface as `VARIANT_UNAVAILABLE`, which the site already handles.
-   **Guard:** the sync refuses to create a second variant for a generated
-   product (test).
+   **Guard:** Vendure refuses a second variant with the same (empty)
+   option combination, and the sync refuses a product with more than one
+   live variant (tests).
 6. **Dashboard.** Order lines show selection labels and link to the
    product; the generated-variants list is removed.
 7. **Cleanup.** Matrix generation, option groups, drift hashing over
@@ -184,13 +184,11 @@ active order's line prices and totals before/after (must be equal), check
 placed orders still render in the dashboard, and pace the production run per
 the bulk-write rule in AGENTS.md (watch `job_record`).
 
-### Remaining uses of the old way (the step-1 allowlist)
+### Remaining uses of the old way
 
-- `backend/src/plugins/pricing/variant-agreement.ts` — the agreement check
-  (step 3).
-- `backend/src/plugins/product/` sync, plan, drift and resolver files that
-  generate, compare and serve the matrix (steps 5, 7).
-- `src/lib/basket/lineInput.ts` — `pickVariant` (step 5).
+None: all steps landed in PR #108. The ESLint rule
+`eslint/variant-option-reads.ts` stays and blocks reading a variant's
+options again.
 
 ## Owner answers (2026-11-09)
 

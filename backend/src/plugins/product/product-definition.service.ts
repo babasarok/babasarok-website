@@ -43,7 +43,7 @@ import { lockMaterials } from "../material/material-lock";
 import { AuditEntryEvent, auditActor } from "../audit/audit.event";
 import { sortDefinitions } from "./definition-sort";
 import { deletedNativeProductId, updatedNativeProductId } from "./product-event";
-import { SyncJobDataSchema, updateInputCarriesName, type SyncJobData } from "./sync-decision";
+import { SyncJobDataSchema, updateInputCarriesName, type SyncJobData } from "./sync-job";
 import { validateProductDefinition } from "./product-definition";
 import { ProductDefinition } from "./product.entity";
 import { memoPerRequest } from "./request-memo";
@@ -171,7 +171,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     );
 
     for (const productId of productIds) {
-      await this.syncQueue.add({ productId, origin: "automatic", actor: null });
+      await this.syncQueue.add({ productId, actor: null });
     }
   }
 
@@ -246,7 +246,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     });
 
     row.label = parsedName.data;
-    await this.enqueueSync(ctx, row.productId, "owner-save");
+    await this.enqueueSync(ctx, row.productId);
     await this.publishDefinitionAudit(ctx, row.productId, "created", parsedName.data);
 
     return row;
@@ -287,7 +287,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     });
 
     await this.withNativeLabels(ctx, [row]);
-    await this.enqueueSync(ctx, row.productId, "owner-save");
+    await this.enqueueSync(ctx, row.productId);
     await this.publishDefinitionAudit(ctx, row.productId, "updated", row.label);
 
     return row;
@@ -435,7 +435,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         .findOneBy({ nativeProductId });
 
       if (row !== null) {
-        await this.enqueueSync(event.ctx, row.productId, "automatic");
+        await this.enqueueSync(event.ctx, row.productId);
       }
     } catch (error: unknown) {
       Logger.error(
@@ -468,11 +468,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
   }
 
   /** Queues a sync after the definition write committed. */
-  private async enqueueSync(
-    ctx: RequestContext,
-    productId: string,
-    origin: SyncJobData["origin"]
-  ): Promise<void> {
+  private async enqueueSync(ctx: RequestContext, productId: string): Promise<void> {
     if (this.syncQueue === null) {
       throw new Error("A termékszinkronizáló sor még nem áll rendelkezésre.");
     }
@@ -490,7 +486,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     try {
       // The actor rides the job data: the worker's synthetic context has no
       // user, so the enqueueing admin is only known here.
-      await this.syncQueue.add({ productId, origin, actor: auditActor(ctx) });
+      await this.syncQueue.add({ productId, actor: auditActor(ctx) });
     } catch (error: unknown) {
       await this.connection
         .getRepository(ctx, ProductDefinition)
