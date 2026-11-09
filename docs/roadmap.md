@@ -43,7 +43,7 @@ ordering).
 | #   | Epic                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Status                                       |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
 | 1   | **Deploy Vendure, use it exactly how we used web3forms** — self-hosted backend receiving order requests, nothing more                                                                                                                                                                                                                                                                                                                                                                                                                                                          | done                                         |
-| 2   | **Implement the product catalog fully in Vendure with a good, manageable admin UX — this epic.** Includes set discounts. The delivery plan lives in [ADR 0010](adr/0010-native-generated-product-model.md) (product model: native-with-generation; dashboard configurator, facets/collections, promotions, set discounts) with the migration architecture in [ADR 0009](adr/0009-side-by-side-vendure-catalog-migration.md). Materials are already ported (PR #76)                                                                                                             | in progress                                  |
+| 2   | **Implement the product catalog fully in Vendure with a good, manageable admin UX — this epic.** Includes set discounts. The delivery plan lives in [ADR 0010](adr/0010-native-generated-product-model.md) (product model: native-with-generation; dashboard configurator, facets/collections, promotions, set discounts) with the migration architecture in [ADR 0009](adr/0009-side-by-side-vendure-catalog-migration.md). Materials are already ported (PR #76). Variant matrix retirement: [ADR 0016 plan](#adr-0016-plan-one-variant-per-configurable-product)            | in progress                                  |
 | 3   | **Move the Astro site over to Vendure** — show products from Vendure, place orders the new way against the epic-2 order-line fields and server pricing (quote/order handover). Plan: [Epic 3 plan](#epic-3-plan-site-cutover)                                                                                                                                                                                                                                                                                                                                                  | in progress — only S6 (prod cutover) remains |
 | 4   | **Remove the product Tina backend** — delete the product collections and their tooling once the site no longer reads them                                                                                                                                                                                                                                                                                                                                                                                                                                                      | done (2026-11-06)                            |
 | 5   | **Order resolution management** — the owner works orders in the Vendure dashboard: manual order-line stage changes (paid, order sent, fulfilled, …). Drives the later steps                                                                                                                                                                                                                                                                                                                                                                                                    | not started                                  |
@@ -231,6 +231,35 @@ merged to main until the backend structure is settled):
   `spike/sync-resume`) — revisit after real use. Note: if the bulk-writer
   sync (see S6, 2026-11-06) lands, full syncs drop to seconds and this
   matters much less
+
+## ADR 0016 plan (one variant per configurable product)
+
+Part of epic 2. Decision and rationale:
+[ADR 0016](adr/0016-one-variant-per-configurable-product.md) (accepted
+2026-11-09; supersedes ADR 0010 decision 1 and the variant/facet part of
+decision 6). Each step ships alone:
+
+- ⬜ **1. Selections authoritative** — pricing, set discounts and line
+  validity derive axis values from the selections + definition; the variant
+  agreement check stays in one allowlisted module. Guard: ESLint
+  `no-restricted-syntax` against variant-option reads, shrink-only allowlist
+- ⬜ **2. Server refuses forbidden material combinations** from the
+  selections (today only the missing variant enforces them)
+- ⬜ **3. Variant agreement check retired**
+- ⬜ **4. Material collections and Material/Color facets dropped** (owner:
+  no material/color browsing, now or later)
+- ⬜ **5. Single variant** — sync keeps one variant per generated product,
+  active basket lines relinked
+- ⬜ **6. Dashboard** — order lines show selection labels
+- ⬜ **7. Cleanup** — matrix generation, option groups, drift over variants.
+  Each step also deletes what it makes dead; nothing is kept for a revert
+
+Remaining uses of the old way (the guard's allowlist):
+
+- `backend/src/plugins/pricing/variant-agreement.ts` (step 3)
+- the matrix sync, plan, drift and resolver files in
+  `backend/src/plugins/product/` (steps 5, 7)
+- `src/lib/basket/lineInput.ts` `pickVariant` (step 5)
 
 ## Epic 8 plan (English / multi-language)
 
