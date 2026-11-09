@@ -111,6 +111,14 @@ function sameText(a: LocalizedText, b: LocalizedText): boolean {
 /** The variant writes per ProductVariantService call — the spike's per-variant loop is not shippable. */
 const BATCH_SIZE = 100;
 
+/**
+ * Full-matrix variant loads fetch each to-many relation in its own query: one
+ * joined query returns options × translations × prices × facet values rows per
+ * variant (~290 for babafeszek, 334k rows for its 1 152 variants, doubling with
+ * every added language), which OOM'd the worker on 2026-11-08/09.
+ */
+const VARIANT_RELATION_LOAD = "query";
+
 /** Options and groups the plan no longer has. Their deletion waits for the
  * variant writes, because Vendure's option delete reports NOT_DELETED while
  * active variants still use the option instead of failing. */
@@ -1116,6 +1124,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
     const existing = await this.connection.getRepository(ctx, ProductVariant).find({
       where: { product: { id: nativeProductId }, deletedAt: IsNull() },
+      relationLoadStrategy: VARIANT_RELATION_LOAD,
       relations: {
         options: true,
         translations: true,
@@ -1317,6 +1326,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
     const variants = await this.connection.getRepository(ctx, ProductVariant).find({
       where: { product: { id: nativeProductId }, deletedAt: IsNull() },
+      relationLoadStrategy: VARIANT_RELATION_LOAD,
       relations: {
         options: { group: true },
         translations: true,
