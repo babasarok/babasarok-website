@@ -202,12 +202,14 @@ the bulk-write rule in AGENTS.md (watch `job_record`).
   material collections and the Material/Color facets outright; they do not
   move to the product level.
 
-## Open questions
+- **No path back to the matrix.** Nothing is kept for a revert or "just
+  in case": no compatibility layers, no dual paths beyond a step's own
+  transition, no matrix preserved for invoicing. Each step deletes what it
+  makes dead (code, helpers, tests, docs) and shrinks the guard allowlist.
 
-- **Per-combination SKUs for invoicing/payments (epic 7).** Unknown whether
-  Hungarian invoicing (NAV Online Számla) needs an item code per combination;
-  the legal requirement is being researched separately and must be answered
-  before step 5 (single variant). A per-combination SKU list is likely
-  infeasible for the same reason as the matrix, so the design keeps a
-  per-line SKU computable from the product and its selections (a pure
-  function of the definition), with no matrix needed.
+## Note: invoicing identifiers
+
+Accounting/invoicing requirements (Hungarian invoicing, NAV Online Számla)
+are researched separately and do not block any step. If a per-line item
+identifier turns out to be required, it is computed from the product and the
+line's selections; it is not a reason to keep any of the matrix.

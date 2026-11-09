@@ -249,10 +249,10 @@ decision 6). Each step ships alone:
 - ⬜ **4. Material collections and Material/Color facets dropped** (owner:
   no material/color browsing, now or later)
 - ⬜ **5. Single variant** — sync keeps one variant per generated product,
-  active basket lines relinked; blocked on the epic-7 SKU question (NAV
-  Online Számla research)
+  active basket lines relinked
 - ⬜ **6. Dashboard** — order lines show selection labels
-- ⬜ **7. Cleanup** — matrix generation, option groups, drift over variants
+- ⬜ **7. Cleanup** — matrix generation, option groups, drift over variants.
+  Each step also deletes what it makes dead; nothing is kept for a revert
 
 Remaining uses of the old way (the guard's allowlist):
 
