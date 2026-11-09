@@ -251,7 +251,13 @@ export class MaterialFacetSync {
     if (!namesUpToDate(existing.translations, desired)) {
       await this.collectionService.update(ctx, {
         id: existing.id,
-        translations: desired.map((name) => ({ ...name, slug })),
+        translations: desired.map((name) => ({
+          ...name,
+          slug,
+          description:
+            existing.translations.find((t) => t.languageCode === name.languageCode)?.description ??
+            "",
+        })),
       });
 
       await pruneTranslations(
