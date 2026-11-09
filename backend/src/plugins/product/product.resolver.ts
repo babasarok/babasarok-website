@@ -11,7 +11,7 @@ import {
   UserInputError,
 } from "@vendure/core";
 import type { ID } from "@vendure/core";
-import { Args, Info, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
+import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { ProductDefinition } from "./product.entity";
 import { shopThreadColorTypes } from "./thread-color.resolver";
 import { ProductDefinitionService } from "./product-definition.service";
@@ -64,30 +64,6 @@ export interface ProductDefinitionDriftGraph {
   label: string;
 }
 
-/** The fields of the resolve info the staleness gate needs. */
-interface ResolveInfoLike {
-  fieldNodes: ReadonlyArray<{
-    selectionSet?: {
-      selections: ReadonlyArray<{ kind: string; name?: { value: string } }>;
-    };
-  }>;
-}
-
-/** Whether the operation actually reads `stale`/`driftDetails`: the drift
- * analysis hydrates the product's whole variant matrix (3 000+ variants
- * catalog-wide), so reads that don't display staleness must not pay for it.
- * ponytail: fragment spreads are not descended — the dashboard table and the
- * scripts inline their fields. */
-function wantsDrift(info: ResolveInfoLike): boolean {
-  return info.fieldNodes.some((node) =>
-    node.selectionSet?.selections.some(
-      (selection) =>
-        selection.kind === "Field" &&
-        (selection.name?.value === "stale" || selection.name?.value === "driftDetails")
-    )
-  );
-}
-
 function toGraph(
   row: ProductDefinition,
   stale: boolean,
@@ -117,19 +93,16 @@ export class ProductDefinitionResolver {
   @Allow(Permission.UpdateCatalog)
   async productDefinitions(
     @Ctx() ctx: RequestContext,
-    @Info() info: ResolveInfoLike,
     @Args("options") options: ProductDefinitionListOptionsInput
   ): Promise<ProductDefinitionListGraph> {
     const { items, totalItems } = await this.productDefinitionService.productDefinitions(
       ctx,
       options
     );
-    const staleness = wantsDrift(info)
-      ? await this.productDefinitionService.staleness(ctx, items)
-      : undefined;
+    const staleness = await this.productDefinitionService.staleness(ctx, items);
 
     return {
-      items: items.map((row) => toGraph(row, staleness?.get(row.productId) ?? false)),
+      items: items.map((row) => toGraph(row, staleness.get(row.productId) ?? false)),
       totalItems,
     };
   }
@@ -138,7 +111,6 @@ export class ProductDefinitionResolver {
   @Allow(Permission.UpdateCatalog)
   async productDefinition(
     @Ctx() ctx: RequestContext,
-    @Info() info: ResolveInfoLike,
     @Args("productId") productId: string
   ): Promise<ProductDefinitionGraph | null> {
     const row = await this.productDefinitionService.productDefinition(ctx, productId);
@@ -147,9 +119,9 @@ export class ProductDefinitionResolver {
       return null;
     }
 
-    const analysis = wantsDrift(info)
-      ? (await this.productDefinitionService.driftAnalysis(ctx, [row])).get(row.productId)
-      : undefined;
+    const analysis = (await this.productDefinitionService.driftAnalysis(ctx, [row])).get(
+      row.productId
+    );
 
     return toGraph(
       row,
@@ -181,23 +153,19 @@ export class ProductDefinitionResolver {
   @Allow(Permission.UpdateCatalog)
   async createProductDefinition(
     @Ctx() ctx: RequestContext,
-    @Info() info: ResolveInfoLike,
     @Args("definition") definition: unknown,
     @Args("name") name: string
   ): Promise<ProductDefinitionGraph> {
     const row = await this.productDefinitionService.createProductDefinition(ctx, definition, name);
-    const staleness = wantsDrift(info)
-      ? await this.productDefinitionService.staleness(ctx, [row])
-      : undefined;
+    const staleness = await this.productDefinitionService.staleness(ctx, [row]);
 
-    return toGraph(row, staleness?.get(row.productId) ?? false);
+    return toGraph(row, staleness.get(row.productId) ?? false);
   }
 
   @Mutation()
   @Allow(Permission.UpdateCatalog)
   async updateProductDefinition(
     @Ctx() ctx: RequestContext,
-    @Info() info: ResolveInfoLike,
     @Args("productId") productId: string,
     @Args("definition") definition: unknown,
     @Args("force", { nullable: true }) force: boolean | null
@@ -208,11 +176,9 @@ export class ProductDefinitionResolver {
       definition,
       force
     );
-    const staleness = wantsDrift(info)
-      ? await this.productDefinitionService.staleness(ctx, [row])
-      : undefined;
+    const staleness = await this.productDefinitionService.staleness(ctx, [row]);
 
-    return toGraph(row, staleness?.get(row.productId) ?? false);
+    return toGraph(row, staleness.get(row.productId) ?? false);
   }
 
   @Mutation()
