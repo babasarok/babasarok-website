@@ -1,13 +1,20 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from "@nestjs/common";
 import { GqlExecutionContext } from "@nestjs/graphql";
-import { Promotion, TransactionalConnection, UserInputError } from "@vendure/core";
+import {
+  EventBus,
+  internal_getRequestContext,
+  Promotion,
+  TransactionalConnection,
+  UserInputError,
+} from "@vendure/core";
 import { IsNull } from "typeorm";
 import type {
   CreatePromotionInput,
   ConfigurableOperationInput,
   UpdatePromotionInput,
 } from "@vendure/common/lib/generated-types";
-import type { Observable } from "rxjs";
+import { switchMap, tap, type Observable } from "rxjs";
+import { z } from "zod";
 import {
   huName,
   memberIdsFromArgs,
@@ -15,10 +22,17 @@ import {
   PRODUCT_SET_ACTION_CODE,
   PRODUCT_SET_CONDITION_CODE,
 } from "./set-basket";
+import { AuditEntryEvent, auditActor } from "../audit/audit.event";
 
 const GUARDED_MUTATIONS = new Set(["createPromotion", "updatePromotion"]);
 
 type GuardedArgs = { input?: CreatePromotionInput | UpdatePromotionInput };
+
+const SavedPromotionSchema = z.object({
+  id: z.union([z.number(), z.string()]),
+  name: z.string().optional(),
+  translations: z.array(z.object({ languageCode: z.string(), name: z.string() })).default([]),
+});
 
 interface ConditionArgs {
   condition: ConfigurableOperationInput | undefined;
@@ -33,7 +47,10 @@ interface ConditionArgs {
  */
 @Injectable()
 export class SetPromotionGuardInterceptor implements NestInterceptor {
-  constructor(private connection: TransactionalConnection) {}
+  constructor(
+    private connection: TransactionalConnection,
+    private eventBus: EventBus
+  ) {}
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
     const gqlContext = GqlExecutionContext.create(context);
@@ -45,18 +62,62 @@ export class SetPromotionGuardInterceptor implements NestInterceptor {
       return next.handle();
     }
 
-    await this.violation(info.fieldName, gqlContext.getArgs<GuardedArgs>());
+    const input = gqlContext.getArgs<GuardedArgs>().input;
+    const isSet = input !== undefined && this.isSetPromotion(input);
 
-    return next.handle();
-  }
-
-  private async violation(mutation: string, args: GuardedArgs): Promise<void> {
-    const input = args.input;
-
-    if (input === undefined) {
-      return;
+    if (input !== undefined) {
+      await this.violation(info.fieldName, input);
     }
 
+    const handle = next.handle();
+
+    if (!isSet) {
+      return handle;
+    }
+
+    // Only set promotions are logged; the guard is the one hook that sees
+    // these stock mutations (ADR 0015 — Vendure publishes no PromotionEvent).
+    // The handler emits its unresolved promise, and a rejected save comes back
+    // as an ErrorResult value (no id) — only a saved Promotion is logged.
+    const req = gqlContext.getContext<{
+      req: Parameters<typeof internal_getRequestContext>[0];
+    }>().req;
+    const ctx = internal_getRequestContext(req);
+    const action = info.fieldName === "createPromotion" ? "created" : "updated";
+
+    return handle.pipe(
+      switchMap((result: unknown) => Promise.resolve(result)),
+      tap((result: unknown) => {
+        const saved = SavedPromotionSchema.safeParse(result);
+
+        if (!saved.success) {
+          return;
+        }
+
+        void this.eventBus.publish(
+          new AuditEntryEvent(ctx, {
+            entityType: "promotion",
+            entityKey: String(saved.data.id),
+            action,
+            summary: huName(saved.data.translations) ?? saved.data.name ?? null,
+            source: "admin",
+            actor: auditActor(ctx),
+          })
+        );
+      })
+    );
+  }
+
+  private isSetPromotion(input: CreatePromotionInput | UpdatePromotionInput): boolean {
+    const own = this.ownOperations(input);
+
+    return own.condition !== undefined && own.action !== undefined;
+  }
+
+  private async violation(
+    mutation: string,
+    input: CreatePromotionInput | UpdatePromotionInput
+  ): Promise<void> {
     const own = this.ownOperations(input);
 
     if (own.condition === undefined && own.action === undefined) {

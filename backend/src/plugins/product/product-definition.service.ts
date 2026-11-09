@@ -47,6 +47,7 @@ import { materialReferenceSlugs, toLanguageCode } from "../material/material.ser
 import { MaterialEvent } from "../material/material.event";
 import { Material } from "../material/material.entity";
 import { lockMaterials } from "../material/material-lock";
+import { AuditEntryEvent, auditActor } from "../audit/audit.event";
 import { sortDefinitions } from "./definition-sort";
 import { deletedNativeProductId, updatedNativeProductId } from "./product-event";
 import {
@@ -245,7 +246,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     );
 
     for (const productId of productIds) {
-      await this.syncQueue.add({ productId, origin: "automatic" });
+      await this.syncQueue.add({ productId, origin: "automatic", actor: null });
     }
   }
 
@@ -343,6 +344,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
     row.label = parsedName.data;
     await this.enqueueSync(ctx, row.productId, "owner-save");
+    await this.publishDefinitionAudit(ctx, row.productId, "created", parsedName.data);
 
     return row;
   }
@@ -390,6 +392,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
     await this.withNativeLabels(ctx, [row]);
     await this.enqueueSync(ctx, row.productId, "owner-save");
+    await this.publishDefinitionAudit(ctx, row.productId, "updated", row.label);
 
     return row;
   }
@@ -410,7 +413,28 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       }
     });
 
+    await this.publishDefinitionAudit(ctx, productId, "deleted", existing.label);
+
     return true;
+  }
+
+  /** The definition row's label, resolved on the admin request that writes it. */
+  private async publishDefinitionAudit(
+    ctx: RequestContext,
+    productId: string,
+    action: "created" | "updated" | "deleted",
+    label: string | null
+  ): Promise<void> {
+    await this.eventBus.publish(
+      new AuditEntryEvent(ctx, {
+        entityType: "product-definition",
+        entityKey: productId,
+        action,
+        summary: label,
+        source: "admin",
+        actor: auditActor(ctx),
+      })
+    );
   }
 
   async productDefinitionByNativeProduct(
@@ -651,7 +675,9 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     }
 
     try {
-      await this.syncQueue.add({ productId, origin });
+      // The actor rides the job data: the worker's synthetic context has no
+      // user, so the enqueueing admin is only known here.
+      await this.syncQueue.add({ productId, origin, actor: auditActor(ctx) });
     } catch (error: unknown) {
       await this.connection
         .getRepository(ctx, ProductDefinition)
@@ -663,7 +689,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
   /** The worker-side sync of a definition's current stored state. */
   private async processSyncJob(
-    { productId, origin }: SyncJobData,
+    { productId, origin, actor }: SyncJobData,
     reportProgress: (progress: SyncProgress) => void
   ): Promise<void> {
     const ctx = await this.jobContext();
@@ -690,6 +716,13 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
                 "A felülírásukhoz mentsd újra a terméket a konfigurátorban, és hagyd jóvá a szinkronizálást.",
             }
           );
+          await this.publishSyncAudit(
+            ctx,
+            productId,
+            "sync-failed",
+            "eltolás miatt az automatikus szinkronizálás nem írt",
+            actor
+          );
           return;
         }
 
@@ -704,6 +737,13 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
               syncState: "synced",
               syncError: null,
             }
+          );
+          await this.publishSyncAudit(
+            ctx,
+            productId,
+            "synced",
+            "nincs változás, a szinkronizálás kihagyva",
+            actor
           );
           return;
         }
@@ -739,6 +779,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
           }
         );
       });
+
+      await this.publishSyncAudit(ctx, productId, "synced", null, actor);
     } catch (error: unknown) {
       // The stored syncError carries only the message; the job queue's own
       // error line drops the stack, so the full trace is logged here.
@@ -755,9 +797,30 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
           syncError: error instanceof Error ? error.message : String(error),
         }
       );
+      await this.publishSyncAudit(ctx, productId, "sync-failed", null, actor);
 
       throw error;
     }
+  }
+
+  /** One audit row per sync job, attributed to the enqueueing admin (ADR 0015). */
+  private async publishSyncAudit(
+    ctx: RequestContext,
+    productId: string,
+    action: "synced" | "sync-failed",
+    summary: string | null,
+    actor: SyncJobData["actor"]
+  ): Promise<void> {
+    await this.eventBus.publish(
+      new AuditEntryEvent(ctx, {
+        entityType: "product-definition",
+        entityKey: productId,
+        action,
+        summary,
+        source: "sync",
+        actor,
+      })
+    );
   }
 
   private async automaticDecision(

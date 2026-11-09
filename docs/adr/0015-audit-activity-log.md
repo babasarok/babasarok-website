@@ -1,6 +1,6 @@
 # ADR 0015: Self-hosted audit log for catalog changes — an event-fan-in table with a dashboard view
 
-- **Status:** proposed (owner feedback pending)
+- **Status:** proposed (implemented on `feat/audit-log`; owner to accept)
 - **Date:** 2026-11-09
 
 ## Context
@@ -66,21 +66,27 @@ The platform facts:
 
 ## Decision
 
-1. **One plugin, `backend/src/plugins/audit/`**, with one entity:
-   `AuditLogEntry { createdAt, actorUserId?, actorName?, entityType,
-entityKey, action, summary?, source }` — `source` ∈ `admin` | `sync` |
-   `system`. Dashboard extension in `backend/src/dashboard/audit/` (a list
-   route with a nav item, filterable by entity type, actor and period;
+1. **One plugin, `backend/src/plugins/audit/`**, with one entity,
+   `AuditLogEntry`: `createdAt`, the acting admin (`actorUserId`,
+   `actorIdentifier` — the login, denormalized; both null when no user acted),
+   `entityType`, `entityKey`, `action`, an optional `summary` and `source` ∈
+   `admin` | `sync` | `system`. Dashboard extension in
+   `backend/src/dashboard/audit/` (a list route with a nav item under the
+   catalog, newest first, filterable by entity type, source and period;
    read-only admin query behind the stock catalog-read permission).
 2. **Fan-in over the EventBus.** Blind spots get publish calls at the write
    site (after commit): `ProductDefinitionService.create/update/deleteProductDefinition`,
    material label-only updates in `MaterialService.updateMaterial`, and
    promotion saves in the `SetPromotionGuardInterceptor` (the only hook on
-   those stock mutations). Everything else is an existing event.
-3. **Sync output is one row per sync job, attributed to its origin.**
-   `enqueueSync`'s origin is extended to carry the acting admin (captured at
-   enqueue time, where the user is known); the sync-completion row cites it.
-   No per-variant rows.
+   those stock mutations; only set promotions, only saves that return a
+   Promotion — an `ErrorResult` is not logged). Everything else is an
+   existing event (`MaterialEvent`, core `ProductEvent`).
+3. **Sync output is one row per sync job, attributed to its origin.** The
+   sync job data carries the acting admin (captured at enqueue time, where
+   the user is known; null for system-triggered syncs); the job's outcome
+   row (`synced` / `sync-failed`) cites it. No per-variant rows. A save that
+   lands while a sync is already queued is covered by that job (the existing
+   dedup), so the outcome row cites the first enqueuer.
 4. **No diffs in v1.** The summary is a short human string each publish site
    provides (e.g. "materials changed: gyöngy, bársony"). Before/after diffs
    are a later slice, added at the same publish sites.
