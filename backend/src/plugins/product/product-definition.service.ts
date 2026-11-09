@@ -88,6 +88,7 @@ import {
 import { BulkVariantWriter } from "./bulk-variant-writer";
 import type { PlannedVariantCreate } from "./bulk-variant-writer";
 import { loadVariantMatrix, type MatrixVariant } from "./variant-matrix-loader";
+import { pruneTranslations, type KeptLanguages } from "./prune-translations";
 
 function labelAsName(translation: { languageCode: LanguageCode; label: string }): {
   languageCode: LanguageCode;
@@ -918,6 +919,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     const plannedByCode = new Map(plan.optionGroups.map((group) => [group.code, group]));
     const optionIdsByGroupCode = new Map<string, Map<string, number>>();
     const removals: OptionGroupRemovals = { options: [], groups: [] };
+    const keptGroups: KeptLanguages[] = [];
+    const keptOptions: KeptLanguages[] = [];
 
     for (const group of product.optionGroups) {
       if (group.deletedAt !== null) {
@@ -932,6 +935,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       }
 
       optionIdsByGroupCode.set(group.code, new Map());
+      keptGroups.push({ baseId: Number(group.id), languages: Object.keys(planned.name) });
 
       if (!sameText(textOf(group.translations, group.code), planned.name)) {
         await this.optionGroupService.update(ctx, {
@@ -961,6 +965,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
         plannedOptions.delete(option.code);
         optionIds.set(option.code, Number(option.id));
+        keptOptions.push({ baseId: Number(option.id), languages: Object.keys(plannedOption.name) });
 
         if (!sameText(textOf(option.translations, option.code), plannedOption.name)) {
           await this.optionService.update(ctx, {
@@ -1004,6 +1009,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         optionIds.set(plannedOption.code, Number(created.id));
       }
     }
+
+    const manager = this.connection.getRepository(ctx, Product).manager;
+    await pruneTranslations(manager, "product_option_group_translation", keptGroups);
+    await pruneTranslations(manager, "product_option_translation", keptOptions);
 
     return { optionIdsByGroupCode, removals };
   }
@@ -1214,6 +1223,27 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
 
       progress.advance(updates.length);
     }
+
+    const keptVariants = existing.flatMap((variant) => {
+      const planned = plannedBySku.get(variant.sku);
+
+      if (planned === undefined) {
+        return [];
+      }
+
+      const languages = Object.keys(planned.name);
+      const hasRemovedLanguage = variant.translations.some(
+        (translation) => !languages.includes(translation.languageCode)
+      );
+
+      return hasRemovedLanguage ? [{ baseId: variant.id, languages }] : [];
+    });
+
+    await pruneTranslations(
+      this.connection.getRepository(ctx, ProductVariant).manager,
+      "product_variant_translation",
+      keptVariants
+    );
 
     if (missing.length > 0) {
       const plannedCreates: PlannedVariantCreate[] = missing.map((variant) => ({
