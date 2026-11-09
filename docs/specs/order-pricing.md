@@ -13,7 +13,14 @@ the shared folder `backend/src/shared/pricing` (imported by the site as
 `@babasarok/pricing`, depending only on zod and the shared canonical schemas in
 `backend/src/shared/product-definition`). The backend pricing strategy
 and the order-line boundary call it; it prices a canonical `ProductDefinition`
-plus the line's selections and variant options. The site's configurator shows a
+plus the line's selections — never the variant's options
+([ADR 0016](../adr/0016-one-variant-per-configurable-product.md)). A
+variant-axis field (non-color choice, toggle, material) without a selection
+prices at its default (`nem` for a toggle, the first listed option
+otherwise), as does a custom value naming no listed option; a selection the
+field does not offer is unpriceable. The configurator's live price, the
+variant the site adds and the server price all start from the same
+selections. The site's configurator shows a
 live unit price from the shared code (`src/lib/catalog/livePrice.ts`) and an
 option breakdown from `src/lib/order/priceBreakdown.ts` (display only); every basket
 and checkout amount is read from the Vendure order, and the set discount is a
@@ -136,12 +143,14 @@ then sell for 0 Ft).
 > thread color, input texts, color picks) — and a length-priced line without
 > a length is rejected when the item is added or adjusted, with the strategy
 > refusing to price it as the backstop. Never a 0 Ft line. The generated
-> native variant list prices follow the same visibility rule: a variant's
-> price is the base price plus only the option prices of variant-axis fields
-> visible given the variant's own picks — a field hidden by `depends_on` rides
-> the matrix but contributes nothing, so no variant charges for a selection
-> the order form cannot offer (the length walk's per-meter price obeys the
-> same rule). Visibility and orderability are one switch: the native
+> unit price of a non-length line is the base price plus the option prices
+> of variant-axis fields visible given the axis picks alone (the same sum
+> the generated variants carry as their list price), plus the non-axis
+> parts — a field hidden by `depends_on` contributes nothing, so no line
+> charges for a selection the order form cannot offer (the length walk's
+> per-meter price obeys the same rule). While generated variants exist, the
+> server also refuses a line whose variant disagrees with its material or
+> listed-choice selections. Visibility and orderability are one switch: the native
 > product's `enabled` — the shop API serves only enabled products, so a
 > disabled product is neither listed nor configurable (owner decision
 > 2026-11; the definition carries no separate `orderable` flag). These
@@ -150,10 +159,7 @@ then sell for 0 Ft).
 > `babasarok-thread-color` facet is rejected at the same boundary (ADR 0011
 > decision 3; one lookup per add/adjust, only when the line carries an
 > embroidery selection). The site
-> never prices a basket itself: lines carry the server's unit price. An open owner question: a `customValue` choice
-> field used as a variant axis cannot select a generated variant, and the
-> server refuses to price such a line — whether such fields may exist outside
-> length source fields is undecided; none exist in current content.
+> never prices a basket itself: lines carry the server's unit price.
 
 ### Lines whose definition changed after they were added
 

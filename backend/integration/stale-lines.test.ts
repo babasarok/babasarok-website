@@ -25,7 +25,7 @@ import {
   removeLine,
   removeMaterialColor,
   setVariantEnabled,
-  setVariantPrice,
+  setBasePrice,
   transitionTo,
 } from "./shop";
 
@@ -97,25 +97,6 @@ describe("stale basket lines", () => {
     expect(replaced.lines[0]?.invalidReason).toBeNull();
   });
 
-  it("keeps a line's stored price until it is adjusted, then shows the new price", async () => {
-    const shopper = newShopper(server);
-    const priced = elavulo(VASZON, "kicsi");
-    const order = await addLine(shopper, priced);
-
-    expect(order.lines[0]?.unitPriceWithTax).toBe(6500);
-
-    await setVariantPrice(server, priced.sku, 7000);
-
-    const untouched = await activeOrder(shopper);
-
-    expect(untouched.lines[0]?.unitPriceWithTax).toBe(6500);
-    expect(untouched.lines[0]?.invalidReason).toBeNull();
-
-    const adjusted = await adjustLine(shopper, untouched.lines[0]?.id ?? "", 2);
-
-    expect(adjusted.lines[0]?.unitPriceWithTax).toBe(7000);
-  });
-
   it("reports a line whose chosen product option was removed from the definition", async () => {
     const shopper = newShopper(server);
     const order = await addLine(shopper, elavulo(PAMUT, "nagy"));
@@ -141,5 +122,24 @@ describe("stale basket lines", () => {
     const replaced = await addLine(shopper, elavulo({ material: "int-len" }, "kicsi"));
 
     expect(replaced.lines[0]?.invalidReason).toBeNull();
+  });
+
+  it("keeps a line's stored price until it is adjusted, then shows the new price", async () => {
+    const shopper = newShopper(server);
+    const priced = elavulo(VASZON, "kicsi");
+    const order = await addLine(shopper, priced);
+
+    expect(order.lines[0]?.unitPriceWithTax).toBe(6500);
+
+    await setBasePrice(server, "int-elavulo", 6500);
+
+    const untouched = await activeOrder(shopper);
+
+    expect(untouched.lines[0]?.unitPriceWithTax).toBe(6500);
+    expect(untouched.lines[0]?.invalidReason).toBeNull();
+
+    const adjusted = await adjustLine(shopper, untouched.lines[0]?.id ?? "", 2);
+
+    expect(adjusted.lines[0]?.unitPriceWithTax).toBe(7000);
   });
 });

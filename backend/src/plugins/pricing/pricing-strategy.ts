@@ -29,13 +29,7 @@ export async function calculateUnitPrice(
   orderLineCustomFields: { [key: string]: unknown },
   order: Order
 ): Promise<PriceCalculationResult> {
-  const valuation = await valueVariantLine(
-    deps,
-    ctx,
-    productVariant,
-    orderLineCustomFields,
-    productVariant.listPrice
-  );
+  const valuation = await valueVariantLine(deps, ctx, productVariant, orderLineCustomFields);
 
   if (valuation.kind === "passThrough") {
     return {

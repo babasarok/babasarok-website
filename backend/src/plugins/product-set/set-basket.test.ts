@@ -158,7 +158,7 @@ function definitionRow(nativeProductId: number, id: string): DefinitionRow {
 }
 
 function line(id: number, nativeProductId: number, quantity = 1): BasketLine {
-  return { id, quantity, listPrice: 5000, nativeProductId, selectionsRaw: null, options: [] };
+  return { id, quantity, listPrice: 5000, nativeProductId, selectionsRaw: null };
 }
 
 const rows = [definitionRow(1, "parna"), definitionRow(2, "pelenka")];

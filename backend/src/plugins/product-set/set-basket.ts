@@ -1,6 +1,6 @@
 import { Logger } from "@vendure/core";
 import type { ProductDefinition as CanonicalProductDefinition } from "../../shared/product-definition/index";
-import { parseLineSelections, type LineSelections } from "../../shared/pricing/index";
+import { axisCodes, parseLineSelections, type LineSelections } from "../../shared/pricing/index";
 import { materialPicks } from "./material-picks";
 import { allocateSetDiscounts, type AllocationGroup, type SetInstance } from "./set-allocation";
 import { lineSetStates, type LineSetState, type StateLine } from "./set-line-states";
@@ -79,7 +79,6 @@ export interface BasketLine {
   listPrice: number;
   nativeProductId: number;
   selectionsRaw: unknown;
-  options: ReadonlyArray<{ groupCode: string; code: string }>;
 }
 
 export interface DefinitionRow {
@@ -309,15 +308,13 @@ export function setBasketState(input: {
       selections = null;
     }
 
-    const optionCodesByGroup = new Map<string, string[]>();
+    const derived = axisCodes(definition, selections ?? {}, "hu");
 
-    for (const option of line.options) {
-      const codes = optionCodesByGroup.get(option.groupCode) ?? [];
-      codes.push(option.code);
-      optionCodesByGroup.set(option.groupCode, codes);
+    if (!derived.ok) {
+      continue;
     }
 
-    const picks = materialPicks(definition.fields, optionCodesByGroup, selections);
+    const picks = materialPicks(definition.fields, derived.codes, selections);
 
     if (picks === undefined) {
       continue;

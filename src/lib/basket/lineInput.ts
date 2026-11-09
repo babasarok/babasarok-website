@@ -1,5 +1,5 @@
-import type { ProductDefinition, ProductField } from "@babasarok/product-definition";
-import { serializeLineSelections, type LineSelections } from "@babasarok/pricing";
+import type { ProductDefinition } from "@babasarok/product-definition";
+import { axisCodes, serializeLineSelections, type LineSelections } from "@babasarok/pricing";
 import { isFieldVisible } from "@/lib/product/field";
 import type { Field } from "@/lib/types.svelte";
 import type { VariantOptions } from "./api";
@@ -75,60 +75,22 @@ function enteredValue(field: Field | undefined): string | undefined {
   }
 }
 
-function axisCode(definitionField: ProductField, entered: Field | undefined): string | undefined {
-  if (definitionField.kind === "toggle") {
-    return enteredValue(entered) ?? "nem";
-  }
-
-  if (definitionField.kind === "material") {
-    const picked = enteredValue(entered);
-
-    return definitionField.options.find((option) => option.materialId === picked)?.materialId;
-  }
-
-  if (definitionField.kind === "choice" && definitionField.presentation !== "color") {
-    const picked = enteredValue(entered);
-
-    return definitionField.options.find((option) => option.id === picked)?.id;
-  }
-
-  return undefined;
-}
-
-function firstOptionCode(field: ProductField): string | undefined {
-  if (field.kind === "material") {
-    return field.options[0]?.materialId;
-  }
-
-  if (field.kind === "choice") {
-    return field.options[0]?.id;
-  }
-
-  return undefined;
-}
-
-function isAxis(field: ProductField): boolean {
-  return (
-    field.kind === "toggle" ||
-    field.kind === "material" ||
-    (field.kind === "choice" && field.presentation !== "color")
-  );
-}
-
 export function pickVariant(
   definition: ProductDefinition,
   fields: Field[],
   variants: readonly VariantOptions[]
 ): VariantOptions | undefined {
-  const wanted = definition.fields.filter(isAxis).map((field) => {
-    const entered = fields.find((candidate) => candidate.name === field.id);
+  const derived = axisCodes(definition, buildSelections(fields), "hu");
 
-    return { group: field.id, code: axisCode(field, entered) ?? firstOptionCode(field) };
-  });
+  if (!derived.ok) {
+    return undefined;
+  }
+
+  const wanted = [...derived.codes];
 
   return variants.find((variant) =>
-    wanted.every((axis) =>
-      variant.options.some((option) => option.group === axis.group && option.code === axis.code)
+    wanted.every(([group, code]) =>
+      variant.options.some((option) => option.group === group && option.code === code)
     )
   );
 }

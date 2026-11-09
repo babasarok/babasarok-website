@@ -462,61 +462,91 @@ export async function createRegisteredCustomer(
 }
 
 /** Drops one option of a choice field from the stored definition, the way the owner edits it. */
-export async function removeChoiceOption(
+type StoredDefinition = z.output<typeof DefinitionSchema>;
+
+async function settledSync(
   server: IntegrationServer,
-  productId: ProductId,
-  fieldId: string,
-  optionId: string
-): Promise<void> {
-  const { productDefinition } = await run(
-    server.admin,
-    `query($productId: String!) { productDefinition(productId: $productId) { definition } }`,
-    { productId },
-    z.object({ productDefinition: z.object({ definition: DefinitionSchema }) })
-  );
-  const definition = productDefinition.definition;
-
-  await run(
-    server.admin,
-    `mutation($productId: String!, $definition: JSON!) {
-      updateProductDefinition(productId: $productId, definition: $definition, force: true) { productId }
-    }`,
-    {
-      productId,
-      definition: {
-        ...definition,
-        fields: definition.fields.map((field) =>
-          field.id === fieldId && field.options !== undefined
-            ? { ...field, options: field.options.filter((option) => option.id !== optionId) }
-            : field
-        ),
-      },
-    },
-    z.unknown()
-  );
-
+  productId: ProductId
+): Promise<{ syncState: string; syncError: string | null }> {
   for (let attempt = 0; attempt < 240; attempt += 1) {
-    const { productDefinition: current } = await run(
+    const { productDefinition: current, jobs } = await run(
       server.admin,
-      `query($productId: String!) { productDefinition(productId: $productId) { syncState syncError } }`,
+      `query($productId: String!) {
+        productDefinition(productId: $productId) { syncState syncError }
+        jobs(options: { filter: { queueName: { eq: "product-definition-sync" }, isSettled: { eq: false } } }) {
+          totalItems
+        }
+      }`,
       { productId },
       z.object({
         productDefinition: z.object({ syncState: z.string(), syncError: z.string().nullable() }),
+        jobs: z.object({ totalItems: z.number() }),
       })
     );
 
-    if (current.syncState === "failed") {
-      throw new Error(`${productId} sync failed: ${current.syncError}`);
-    }
-
-    if (current.syncState === "synced") {
-      return;
+    if (current.syncState !== "pending" && jobs.totalItems === 0) {
+      return current;
     }
 
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
 
   throw new Error(`${productId} did not sync in time.`);
+}
+
+/** Saves an edited definition once queued syncs settled, and waits for its own sync. */
+async function updateDefinition(
+  server: IntegrationServer,
+  productId: ProductId,
+  edit: (definition: StoredDefinition) => StoredDefinition
+): Promise<void> {
+  await settledSync(server, productId);
+
+  const { productDefinition } = await run(
+    server.admin,
+    `query($productId: String!) { productDefinition(productId: $productId) { definition } }`,
+    { productId },
+    z.object({ productDefinition: z.object({ definition: DefinitionSchema }) })
+  );
+
+  await run(
+    server.admin,
+    `mutation($productId: String!, $definition: JSON!) {
+      updateProductDefinition(productId: $productId, definition: $definition, force: true) { productId }
+    }`,
+    { productId, definition: edit(productDefinition.definition) },
+    z.unknown()
+  );
+
+  const settled = await settledSync(server, productId);
+
+  if (settled.syncState === "failed") {
+    throw new Error(`${productId} sync failed: ${settled.syncError}`);
+  }
+}
+
+export async function removeChoiceOption(
+  server: IntegrationServer,
+  productId: ProductId,
+  fieldId: string,
+  optionId: string
+): Promise<void> {
+  await updateDefinition(server, productId, (definition) => ({
+    ...definition,
+    fields: definition.fields.map((field) =>
+      field.id === fieldId && field.options !== undefined
+        ? { ...field, options: field.options.filter((option) => option.id !== optionId) }
+        : field
+    ),
+  }));
+}
+
+export async function setBasePrice(
+  server: IntegrationServer,
+  productId: ProductId,
+  basePrice: number
+): Promise<void> {
+  await updateDefinition(server, productId, (definition) => ({ ...definition, basePrice }));
 }
 
 const DefinitionSchema = z

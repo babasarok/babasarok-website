@@ -7,6 +7,11 @@ import svelte from "eslint-plugin-svelte";
 import svelteConfig from "./svelte.config";
 
 import { defineConfig, globalIgnores } from "eslint/config";
+import {
+  variantOptionReadAllowlist,
+  variantOptionReadFiles,
+  variantOptionReadSelectors,
+} from "./eslint/variant-option-reads";
 
 const noExtensionImports = {
   regex: String.raw`^\.{1,2}/.*\.[cm]?[jt]sx?$`,
@@ -215,6 +220,13 @@ export default defineConfig([
     rules: {
       // Process entry points: exiting with a status code is the contract.
       "unicorn/no-process-exit": "off",
+    },
+  },
+  {
+    files: variantOptionReadFiles,
+    ignores: variantOptionReadAllowlist,
+    rules: {
+      "no-restricted-syntax": ["error", ...variantOptionReadSelectors],
     },
   },
   // Astro-specific warnings and recommendations for .astro files
