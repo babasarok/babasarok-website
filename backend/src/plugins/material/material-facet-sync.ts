@@ -18,6 +18,7 @@ import {
   colorFacetValueCode,
   staleColorFacetValueCodes,
 } from "../product/facet-plan";
+import { pruneTranslations } from "../product/prune-translations";
 import { Material } from "./material.entity";
 
 /** Vendure's built-in facet-value collection filter (default-collection-filters). */
@@ -37,9 +38,12 @@ function namesOf(
 }
 
 function namesUpToDate(existing: TranslatedName[], desired: TranslatedName[]): boolean {
-  return desired.every((name) =>
-    existing.some(
-      (candidate) => candidate.languageCode === name.languageCode && candidate.name === name.name
+  return (
+    existing.length === desired.length &&
+    desired.every((name) =>
+      existing.some(
+        (candidate) => candidate.languageCode === name.languageCode && candidate.name === name.name
+      )
     )
   );
 }
@@ -197,10 +201,18 @@ export class MaterialFacetSync {
     }
 
     if (!namesUpToDate(existing.translations, desired.names)) {
-      return this.facetValueService.update(ctx, {
+      const updated = await this.facetValueService.update(ctx, {
         id: existing.id,
         translations: desired.names,
       });
+
+      await pruneTranslations(
+        this.connection.getRepository(ctx, FacetValue).manager,
+        "facet_value_translation",
+        [{ baseId: Number(existing.id), languages: desired.names.map((name) => name.languageCode) }]
+      );
+
+      return updated;
     }
 
     return existing;
@@ -241,15 +253,23 @@ export class MaterialFacetSync {
         id: existing.id,
         translations: desired.map((name) => ({ ...name, slug })),
       });
+
+      await pruneTranslations(
+        this.connection.getRepository(ctx, Collection).manager,
+        "collection_translation",
+        [{ baseId: Number(existing.id), languages: desired.map((name) => name.languageCode) }]
+      );
     }
   }
 
   private async collectionBySlug(ctx: RequestContext, slug: string): Promise<Collection | null> {
+    // The slug match is its own join: filtering the selected translations by
+    // slug would load only the matching language and hide the others.
     const collections = await this.connection
       .getRepository(ctx, Collection)
       .createQueryBuilder("collection")
+      .innerJoin("collection.translations", "match", "match.slug = :slug", { slug })
       .leftJoinAndSelect("collection.translations", "translation")
-      .where("translation.slug = :slug", { slug })
       .getMany();
 
     if (collections.length > 1) {
