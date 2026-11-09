@@ -8,7 +8,7 @@ import { FacetValue, LanguageCode } from "@vendure/core";
 import type { TransactionalConnection, RequestContext } from "@vendure/core";
 import { In } from "typeorm";
 import { Material } from "../material/material.entity";
-import { THREAD_COLOR_FACET_CODE } from "./facet-plan";
+import { THREAD_COLOR_FACET_CODE } from "./facet-codes";
 
 function labelIn<T extends { languageCode: LanguageCode }>(
   translations: readonly T[],

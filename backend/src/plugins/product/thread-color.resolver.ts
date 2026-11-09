@@ -9,7 +9,7 @@ import {
   TranslatorService,
 } from "@vendure/core";
 import { Query, Resolver } from "@nestjs/graphql";
-import { THREAD_COLOR_FACET_CODE } from "./facet-plan";
+import { THREAD_COLOR_FACET_CODE } from "./facet-codes";
 
 interface ShopThreadColor {
   id: string;

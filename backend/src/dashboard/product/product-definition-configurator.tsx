@@ -143,7 +143,6 @@ const generatedVariantsQuery = graphql(`
         name
         code
         price
-        facets
       }
       totalItems
     }
@@ -1200,7 +1199,6 @@ export function ConfiguratorEditor({
                 // default) and would render hidden with an unfetched value.
                 code: { header: "SKU", enableSorting: false },
                 price: { header: "Ár (Ft)", enableSorting: false },
-                facets: { header: "Tulajdonságok", enableSorting: false },
               }}
             />
           </div>

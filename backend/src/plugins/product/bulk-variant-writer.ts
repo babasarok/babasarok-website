@@ -3,8 +3,7 @@
  * ProductVariantService pipeline with direct repository writes that reproduce
  * its behavior — the same tax-category resolution, per-channel channel joins,
  * price rows and currency codes, the configured
- * ProductVariantPriceUpdateStrategy hooks, the other-channel facet-value
- * preservation on update, per-channel stock-level seeds and the same events
+ * ProductVariantPriceUpdateStrategy hooks, per-channel stock-level seeds and the same events
  * (one per phase instead of one per batch call; a sync measured ~31× faster
  * on a 1344-variant matrix, with a byte-identical drift hash against the
  * legacy path). What the sync never writes (assets, stock adjustments,
@@ -40,7 +39,7 @@ import type { CurrencyCode } from "@vendure/core";
 import type { UpdateProductVariantInput } from "@vendure/common/lib/generated-types";
 import type { LocalizedText } from "../../shared/product-definition/index";
 import { toLanguageCode } from "../material/material.service";
-import { desiredFacetJoins, diffTranslations } from "./bulk-variant-sql";
+import { diffTranslations } from "./bulk-variant-sql";
 import { In } from "typeorm";
 
 /** One variant's planned create. */
@@ -49,7 +48,6 @@ export interface PlannedVariantCreate {
   price: number;
   name: LocalizedText;
   optionIds: number[];
-  facetValueIds: number[];
 }
 
 /** A planned variant with the id its inserted row received. */
@@ -141,15 +139,6 @@ export class BulkVariantWriter {
           optionIds: (update.optionIds ?? []).map(Number),
         }))
     );
-    await this.replaceFacetJoins(
-      ctx,
-      updates
-        .filter((update) => update.facetValueIds !== undefined)
-        .map((update) => ({
-          id: Number(update.id),
-          facetValueIds: (update.facetValueIds ?? []).map(Number),
-        }))
-    );
 
     const trackInventoryIds = updates
       .filter((update) => update.trackInventory !== undefined)
@@ -201,7 +190,6 @@ export class BulkVariantWriter {
 
     await this.insertTranslations(ctx, created);
     await this.insertOptionJoins(ctx, created);
-    await this.insertFacetJoins(ctx, created);
     await this.assignChannelsAndPrices(ctx, nativeProductId, created);
     await this.publishVariantEvent(
       ctx,
@@ -420,20 +408,6 @@ export class BulkVariantWriter {
     );
 
     await this.insertChunked(ctx, "product_variant_options_product_option", rows);
-  }
-
-  private async insertFacetJoins(
-    ctx: RequestContext,
-    created: ReadonlyArray<CreatedVariant>
-  ): Promise<void> {
-    const rows = created.flatMap((variant) =>
-      variant.facetValueIds.map((facetValueId) => ({
-        productVariantId: variant.id,
-        facetValueId,
-      }))
-    );
-
-    await this.insertChunked(ctx, "product_variant_facet_values_facet_value", rows);
   }
 
   /**
@@ -717,69 +691,6 @@ export class BulkVariantWriter {
         .updateEntity(false)
         .execute();
     }
-  }
-
-  /** updateSingle keeps facet values that are not visible in the current
-   * channel and replaces the current-channel set. */
-  private async replaceFacetJoins(
-    ctx: RequestContext,
-    writes: ReadonlyArray<{ id: number; facetValueIds: number[] }>
-  ): Promise<void> {
-    if (writes.length === 0) {
-      return;
-    }
-
-    const manager = this.connection.getRepository(ctx, ProductVariant).manager;
-    const existing = (await manager
-      .createQueryBuilder()
-      .select("join.productVariantId", "productVariantId")
-      .addSelect("join.facetValueId", "facetValueId")
-      .from("product_variant_facet_values_facet_value", "join")
-      .where("join.productVariantId IN (:...ids)", { ids: writes.map((write) => write.id) })
-      .getRawMany<{ productVariantId: number; facetValueId: number }>()) as Array<{
-      productVariantId: number;
-      facetValueId: number;
-    }>;
-    const memberships = (await manager
-      .createQueryBuilder()
-      .select("membership.facetValueId", "facetValueId")
-      .addSelect("membership.channelId", "channelId")
-      .from("facet_value_channels_channel", "membership")
-      .getRawMany<{ facetValueId: number; channelId: number }>()) as Array<{
-      facetValueId: number;
-      channelId: number;
-    }>;
-    const channelsByFacetValue = new Map<number, Set<number>>();
-
-    for (const row of memberships) {
-      const set = channelsByFacetValue.get(row.facetValueId) ?? new Set<number>();
-
-      set.add(row.channelId);
-      channelsByFacetValue.set(row.facetValueId, set);
-    }
-
-    const desired = desiredFacetJoins(
-      existing,
-      [...channelsByFacetValue.entries()].flatMap(([facetValueId, channelIds]) =>
-        [...channelIds].map((channelId) => ({ facetValueId, channelId }))
-      ),
-      Number(ctx.channelId),
-      writes
-    );
-
-    await manager
-      .createQueryBuilder()
-      .delete()
-      .from("product_variant_facet_values_facet_value")
-      .where("productVariantId IN (:...ids)", { ids: writes.map((write) => write.id) })
-      .execute();
-
-    await this.rawInsertChunked(
-      ctx,
-      "product_variant_facet_values_facet_value",
-      ["productVariantId", "facetValueId"],
-      desired.map((row) => [row.productVariantId, row.facetValueId])
-    );
   }
 
   private async replaceOptionJoins(

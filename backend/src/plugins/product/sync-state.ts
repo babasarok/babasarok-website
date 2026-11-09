@@ -27,7 +27,6 @@ export interface NativeVariantState {
   name: LocalizedText;
   price: number;
   options: NativeVariantOptionState[];
-  facetValues: string[];
 }
 
 /** The sync-owned slice of the native Vendure product, hashed for drift detection.
@@ -42,7 +41,7 @@ export interface NativeProductState {
  * the native product's current state. Separate from nativeStateHash so later
  * sync-owned slices can extend it without reshaping the hash. */
 export interface NativeStateDiff {
-  kind: "rename" | "presence" | "price" | "options" | "facets";
+  kind: "rename" | "presence" | "price" | "options";
   label: string;
 }
 
@@ -188,10 +187,6 @@ function variantDiffs(
     if (optionSignature(variant) !== optionSignature(existing)) {
       diffs.push({ kind: "options", label: `Változat "${sku}" opciói eltérnek` });
     }
-
-    if (facetSignature(variant) !== facetSignature(existing)) {
-      diffs.push({ kind: "facets", label: `Változat "${sku}" facet értékei eltérnek` });
-    }
   }
 
   for (const [sku, variant] of [...currentBySku].toSorted(byCode)) {
@@ -213,17 +208,13 @@ function optionSignature(variant: NativeVariantState): string {
     .join(",");
 }
 
-function facetSignature(variant: NativeVariantState): string {
-  return [...variant.facetValues].toSorted(byCodeUnit).join(",");
-}
-
 function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
 
 /**
  * Hash of the native state the sync owns (option groups with their options,
- * variant skus/names/prices, option assignments and facet values). The
+ * variant skus/names/prices, and option assignments). The
  * product's own name and slug are the native Product's (ADR 0011 decision 1).
  * Canonicalized so presentation-order changes alone never read as drift.
  */
@@ -245,7 +236,6 @@ export function nativeStateHash(state: NativeProductState): string {
         options: [...variant.options].toSorted(
           (a, b) => byCodeUnit(a.groupCode, b.groupCode) || byCodeUnit(a.optionCode, b.optionCode)
         ),
-        facetValues: [...variant.facetValues].toSorted(byCodeUnit),
       })),
   };
 

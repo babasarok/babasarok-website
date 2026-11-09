@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildChunkedInsert, desiredFacetJoins, diffTranslations } from "./bulk-variant-sql";
+import { buildChunkedInsert, diffTranslations } from "./bulk-variant-sql";
 
 describe("buildChunkedInsert", () => {
   it("chunks rows and restarts parameter numbering per chunk", () => {
@@ -56,48 +56,5 @@ describe("diffTranslations", () => {
     const diff = diffTranslations([{ id: 11, baseId: 1, languageCode: "hu", name: "régi" }], []);
 
     expect(diff).toEqual({ toInsert: [], toUpdate: [] });
-  });
-});
-
-describe("desiredFacetJoins", () => {
-  const memberships = [
-    { facetValueId: 10, channelId: 1 },
-    { facetValueId: 20, channelId: 2 },
-  ];
-
-  it("keeps other-channel facet values and replaces the current-channel set", () => {
-    const desired = desiredFacetJoins(
-      [
-        { productVariantId: 1, facetValueId: 10 },
-        { productVariantId: 1, facetValueId: 20 },
-      ],
-      memberships,
-      1,
-      [{ id: 1, facetValueIds: [30] }]
-    );
-
-    expect(desired).toEqual([
-      { productVariantId: 1, facetValueId: 30 },
-      { productVariantId: 1, facetValueId: 20 },
-    ]);
-  });
-
-  it("drops kept values that the plan also carries, without duplicating", () => {
-    const desired = desiredFacetJoins([{ productVariantId: 1, facetValueId: 20 }], memberships, 1, [
-      { id: 1, facetValueIds: [20, 30] },
-    ]);
-
-    expect(desired).toEqual([
-      { productVariantId: 1, facetValueId: 20 },
-      { productVariantId: 1, facetValueId: 30 },
-    ]);
-  });
-
-  it("ignores other variants' kept values", () => {
-    const desired = desiredFacetJoins([{ productVariantId: 2, facetValueId: 10 }], memberships, 1, [
-      { id: 1, facetValueIds: [30] },
-    ]);
-
-    expect(desired).toEqual([{ productVariantId: 1, facetValueId: 30 }]);
   });
 });

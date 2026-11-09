@@ -4,14 +4,17 @@ import {
   type ProductDefinition,
   type ProductField,
 } from "../../shared/product-definition/index";
-import { plannedVariantFacetCodes } from "./facet-plan";
-import type { MaterialFacetData } from "./facet-plan";
 import type { NativeProductState } from "./sync-state";
 import {
   completesForbiddenCombination,
   dependencyOrder,
   isVisible,
 } from "../../shared/pricing/index";
+
+/** A material's labels, which name its generated options. */
+export interface MaterialLabels {
+  label: LocalizedText;
+}
 
 export interface PlannedOption {
   code: string;
@@ -120,7 +123,7 @@ export function variantNamesUseProductName(definition: ProductDefinition): boole
  */
 export function planVariantCombinations(
   definition: ProductDefinition,
-  materialDataBySlug: ReadonlyMap<string, MaterialFacetData>,
+  materialDataBySlug: ReadonlyMap<string, MaterialLabels>,
   productName: LocalizedText
 ): VariantPlan {
   const optionGroups: PlannedOptionGroup[] = [];
@@ -236,11 +239,10 @@ export function planVariantCombinations(
  */
 export function plannedNativeState(
   definition: ProductDefinition,
-  materialDataBySlug: ReadonlyMap<string, MaterialFacetData>,
+  materialDataBySlug: ReadonlyMap<string, MaterialLabels>,
   productName: LocalizedText
 ): NativeProductState {
   const plan = planVariantCombinations(definition, materialDataBySlug, productName);
-  const facetCodesBySku = plannedVariantFacetCodes(plan, materialDataBySlug);
 
   return {
     optionGroups: plan.optionGroups.map((group) => ({
@@ -256,7 +258,6 @@ export function plannedNativeState(
         groupCode: plan.optionGroups[groupIndex]?.code ?? "",
         optionCode: code,
       })),
-      facetValues: facetCodesBySku.get(variant.sku) ?? [],
     })),
   };
 }

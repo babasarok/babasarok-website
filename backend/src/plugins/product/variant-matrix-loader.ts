@@ -2,7 +2,7 @@
  * Loads a native product's full variant matrix with the relations the sync
  * and the drift hash read, as one flat query per relation grouped by variant
  * id. TypeORM's relation hydration is unusable at this size: the join strategy
- * multiplies rows (options × translations × prices × facet values per
+ * multiplies rows (options × translations × prices per
  * variant — 334k rows for babafeszek's 1 152 variants) and the query strategy
  * matches every relation row against every variant (RelationIdLoader, ~63M
  * comparisons — 10 s of blocked event loop per call).
@@ -19,7 +19,6 @@ export interface MatrixVariant {
   options: Array<{ id: number; code: string; groupCode: string }>;
   translations: Array<{ languageCode: LanguageCode; name: string }>;
   prices: Array<{ channelId: number; price: number }>;
-  facetValues: Array<{ id: number; code: string }>;
 }
 
 const VariantRow = z.object({
@@ -39,7 +38,6 @@ const TranslationRow = z.object({
   name: z.string(),
 });
 const PriceRow = z.object({ variantId: z.number(), channelId: z.number(), price: z.number() });
-const FacetValueRow = z.object({ variantId: z.number(), id: z.number(), code: z.string() });
 
 /** Each relation query takes the product id; the variant filter is shared. */
 const VARIANTS_OF = `select id from product_variant where "productId" = $1 and "deletedAt" is null`;
@@ -109,26 +107,15 @@ export async function loadVariantMatrix(
      where "variantId" in (${VARIANTS_OF}) order by id`,
     productId
   );
-  const facetValues = await rows(
-    manager,
-    FacetValueRow,
-    `select j."productVariantId" as "variantId", f.id, f.code
-     from product_variant_facet_values_facet_value j
-     join facet_value f on f.id = j."facetValueId"
-     where j."productVariantId" in (${VARIANTS_OF}) order by f.id`,
-    productId
-  );
 
   const optionsOf = groupByVariant(options);
   const translationsOf = groupByVariant(translations);
   const pricesOf = groupByVariant(prices);
-  const facetValuesOf = groupByVariant(facetValues);
 
   return variants.map((variant) => ({
     ...variant,
     options: optionsOf.get(variant.id) ?? [],
     translations: translationsOf.get(variant.id) ?? [],
     prices: pricesOf.get(variant.id) ?? [],
-    facetValues: facetValuesOf.get(variant.id) ?? [],
   }));
 }

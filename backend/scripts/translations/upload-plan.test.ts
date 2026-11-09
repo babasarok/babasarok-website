@@ -37,10 +37,10 @@ function snapshot(overrides: Partial<CatalogSnapshot> = {}): CatalogSnapshot {
     facets: [
       {
         id: "1",
-        code: "babasarok-material",
-        translations: [{ languageCode: "hu", name: "Anyag" }],
+        code: "babasarok-product-type",
+        translations: [{ languageCode: "hu", name: "Terméktípus" }],
         values: [
-          { id: "11", code: "minky", translations: [{ languageCode: "hu", name: "Minky" }] },
+          { id: "11", code: "parna", translations: [{ languageCode: "hu", name: "Párna" }] },
         ],
       },
     ],
@@ -48,7 +48,7 @@ function snapshot(overrides: Partial<CatalogSnapshot> = {}): CatalogSnapshot {
       {
         id: "5",
         translations: [
-          { languageCode: "hu", name: "Minky", slug: "material-minky", description: "" },
+          { languageCode: "hu", name: "Ovis felszerelés", slug: "ovis", description: "" },
         ],
       },
     ],
@@ -153,17 +153,19 @@ describe("planUpload", () => {
     ).toEqual([expect.stringContaining("the Hungarian source changed")]);
   });
 
-  it("refuses unknown keys, derived strings, duplicates and empty translations", () => {
+  it("refuses unknown keys, duplicates and empty translations", () => {
     expect(
       refusal(() =>
         planUpload(
           snapshot(),
           file([
             { key: "product|99|name", source: "Nincs", translation: "Nichts" },
-            { key: "facetValue|babasarok-material/11|name", source: "Minky", translation: "Minky" },
-            { key: "collection|5|name", source: "Minky", translation: "Minky" },
-            { key: "facet|babasarok-material|name", source: "Anyag", translation: " " },
-            { key: "facet|babasarok-material|name", source: "Anyag", translation: "Stoff" },
+            { key: "facet|babasarok-product-type|name", source: "Terméktípus", translation: " " },
+            {
+              key: "facet|babasarok-product-type|name",
+              source: "Terméktípus",
+              translation: "Produkttyp",
+            },
           ]),
           { force: false }
         )
@@ -172,8 +174,6 @@ describe("planUpload", () => {
       expect.stringContaining("empty or starts/ends with whitespace"),
       expect.stringContaining("listed twice"),
       expect.stringContaining("product|99|name: not in the live catalog"),
-      expect.stringContaining("facetValue|babasarok-material/11|name: derived"),
-      expect.stringContaining("collection|5|name: derived"),
     ]);
   });
 
@@ -286,7 +286,7 @@ describe("verificationProblems", () => {
   it("reports a changed Hungarian source and a target text nobody wrote", () => {
     const live = snapshot();
     live.products[0]?.translations.push({ languageCode: "de", name: "Kissen", slug: "parna" });
-    live.facets[0]?.translations.push({ languageCode: "de", name: "Stoff" });
+    live.facets[0]?.translations.push({ languageCode: "de", name: "Produkttyp" });
     live.materials[0]?.colors[0]?.translations.splice(0, 1, { languageCode: "hu", label: "Vörös" });
 
     expect(
@@ -300,7 +300,9 @@ describe("verificationProblems", () => {
       expect.stringContaining(
         'materialColor|minky/piros|label: Hungarian changed "Piros" → "Vörös"'
       ),
-      expect.stringContaining('facet|babasarok-material|name: de changed undefined → "Stoff"'),
+      expect.stringContaining(
+        'facet|babasarok-product-type|name: de changed undefined → "Produkttyp"'
+      ),
     ]);
   });
 });

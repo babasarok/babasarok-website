@@ -256,14 +256,7 @@ export async function runUpload(
     options.log(`verified through ${operation.category}: ${written.size} string(s) written`);
   }
 
-  const after = await liveStrings(api, file);
-  const derived = after.filter((string) => string.derived);
-  const derivedMissing = derived.filter((string) => string.current === undefined).length;
-
-  options.log(
-    `done: ${written.size} written, ${plan.alreadyDone.length} already live. ` +
-      `Derived material/color facet values without ${file.language}: ${derivedMissing}/${derived.length}.`
-  );
+  options.log(`done: ${written.size} written, ${plan.alreadyDone.length} already live.`);
 }
 
 /** Throws unless every file entry is live with its translation and an unchanged source. */

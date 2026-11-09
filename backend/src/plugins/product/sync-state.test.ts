@@ -20,14 +20,12 @@ const nativeState: NativeProductState = {
       name: { hu: "Babafészek (Kicsi)" },
       price: 15_000,
       options: [{ groupCode: "meret", optionCode: "kicsi" }],
-      facetValues: ["wellsoft"],
     },
     {
       sku: "babafeszek--nagy",
       name: { hu: "Babafészek (Nagy)" },
       price: 16_000,
       options: [{ groupCode: "meret", optionCode: "nagy" }],
-      facetValues: ["velur", "velur--barna"],
     },
   ],
 };
@@ -45,7 +43,6 @@ describe("nativeStateHash", () => {
           name: { hu: "Zz" },
           price: 1,
           options: [{ groupCode: "cz", optionCode: "cs" }],
-          facetValues: ["cz", "cs", "Z"],
         },
       ],
     };
@@ -63,7 +60,6 @@ describe("nativeStateHash", () => {
               name: { hu: "Zz" },
               price: 1,
               options: [{ groupCode: "cz", optionCode: "cs" }],
-              facetValues: ["Z", "cs", "cz"],
             },
           ],
         })
@@ -73,7 +69,7 @@ describe("nativeStateHash", () => {
     expect(nativeStateHash(state)).toBe(expected);
   });
 
-  it("is stable under option-group, option, variant and facet-value ordering", () => {
+  it("is stable under option-group, option and variant ordering", () => {
     const reordered: NativeProductState = {
       optionGroups: [
         {
@@ -85,11 +81,7 @@ describe("nativeStateHash", () => {
           ],
         },
       ],
-      variants: nativeState.variants.map((variant) =>
-        variant.sku === "babafeszek--nagy"
-          ? { ...variant, facetValues: ["velur--barna", "velur"] }
-          : variant
-      ),
+      variants: nativeState.variants.toReversed(),
     };
 
     expect(nativeStateHash(reordered)).toBe(nativeStateHash(nativeState));
@@ -116,17 +108,10 @@ describe("nativeStateHash", () => {
           : variant
       ),
     };
-    const refaceted: NativeProductState = {
-      ...nativeState,
-      variants: nativeState.variants.map((variant) =>
-        variant.sku === "babafeszek--nagy" ? { ...variant, facetValues: [] } : variant
-      ),
-    };
 
     expect(nativeStateHash(repriced)).not.toBe(nativeStateHash(nativeState));
     expect(nativeStateHash(renamed)).not.toBe(nativeStateHash(nativeState));
     expect(nativeStateHash(reassigned)).not.toBe(nativeStateHash(nativeState));
-    expect(nativeStateHash(refaceted)).not.toBe(nativeStateHash(nativeState));
   });
 });
 
@@ -201,21 +186,18 @@ describe("nativeStateDiff", () => {
           name: { hu: "Babafészek (Kicsi)" },
           price: 15_000,
           options: [{ groupCode: "meret", optionCode: "kicsi" }],
-          facetValues: ["wellsoft"],
         },
         {
           sku: "babafeszek--nagy",
           name: { hu: "Babafészek (Nagy)" },
           price: 99_000,
           options: [{ groupCode: "meret", optionCode: "kicsi" }],
-          facetValues: ["velur", "velur--barna"],
         },
         {
           sku: "babafeszek--uj",
           name: { hu: "Babafészek (Új)" },
           price: 1,
           options: [],
-          facetValues: [],
         },
       ],
     };
@@ -230,21 +212,6 @@ describe("nativeStateDiff", () => {
         kind: "presence",
         label: 'Változat "babafeszek--uj" (Babafészek (Új)) törlésre vár',
       },
-    ]);
-  });
-
-  it("reports drifted variant facet values regardless of ordering", () => {
-    const drifted: NativeProductState = {
-      ...nativeState,
-      variants: nativeState.variants.map((variant) =>
-        variant.sku === "babafeszek--kicsi"
-          ? { ...variant, facetValues: ["masik", "wellsoft"] }
-          : variant
-      ),
-    };
-
-    expect(nativeStateDiff(nativeState, drifted)).toEqual([
-      { kind: "facets", label: 'Változat "babafeszek--kicsi" facet értékei eltérnek' },
     ]);
   });
 });

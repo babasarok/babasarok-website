@@ -239,35 +239,20 @@ validated against the product's options like normal selections.
   - WHEN a query parameter references an unknown field, option, or material
   - THEN it is ignored and the configurator starts unselected for that part
 
-### Facets and collections (Vendure catalog)
+### No material or colour browsing
 
-> Transition note (ADR 0010 delivery step 4). The Vendure-native catalog
-> owns browsing facets and collections. Colors are order-line selections,
-> not variant axes — the Color facet describes the colors a variant can be
-> ordered in, derived from the variant's chosen materials.
+The catalog SHALL carry no material or colour facets and no per-material
+collections ([ADR 0016](../adr/0016-one-variant-per-configurable-product.md)):
+colours and materials are order-line selections, and browsing or filtering
+by them is out of scope (owner decision).
 
-The Vendure catalog SHALL expose two sync-owned facets on generated product
-variants: **Anyag** (`babasarok-material`, one value per material, code =
-material slug) and **Szín** (`babasarok-color`, one value per
-material-color, code = `<material-slug>--<color-id>`). Facet value names
-follow the material/color labels.
+Material writes SHALL propagate to the generated products automatically,
+without a definition save:
 
-Every generated variant SHALL carry the facet values of the materials its
-configuration picks, plus every color facet value of those materials. The
-facet assignment is part of the definition sync: native-side facet edits
-count as drift and are overwritten by the next sync.
-
-Material writes SHALL propagate automatically, without a definition save:
-
-- **Scenario: Material created or renamed**
-  - WHEN a material is created or its label changes
-  - THEN its facet values and the per-material collection follow (created or
-    renamed to the material's label)
-- **Scenario: Material colors change**
-  - WHEN colors are added to, renamed on, or removed from a material
-  - THEN the material's color facet values follow, and every product
-    definition referencing the material re-syncs, so its variants carry the
-    correct color facets
+- **Scenario: Material renamed**
+  - WHEN a material's label changes
+  - THEN every product definition referencing the material re-syncs, so its
+    generated material options carry the new name
 - **Scenario: Material edit the sync does not read**
   - WHEN a material update leaves its label and its colors' ids and labels
     unchanged (e.g. only the description or images change)
@@ -280,27 +265,6 @@ Material writes SHALL propagate automatically, without a definition save:
     drift message; stock product updates that carry no name never trigger a
     sync, and an automatic sync whose plan already equals the native state
     writes nothing
-- **Scenario: Material deleted**
-  - WHEN a material that no definition references is deleted
-  - THEN its facet values and its collection are deleted with it
-
-For every material the catalog SHALL maintain an auto-managed collection
-(slug `material-<material-slug>`, named after the material) containing the
-variants that carry that material's facet value (facet-value filter,
-containsAny). Its filter is written at creation and not overwritten
-afterwards; renames propagate, manual content edits are the owner's.
-
-Convergence for databases that predate the facet sync SHALL be idempotent
-and re-run safe: the `convergeMaterialFacets` admin mutation brings every
-material's facet values and collection in line and re-syncs every
-referencing product. A missing facet value fails a product sync with a
-clear error pointing at the convergence step, rather than silently creating
-or skipping.
-
-- **Scenario: Facet value missing at sync time**
-  - WHEN a product sync cannot resolve a facet value it should assign
-  - THEN the sync fails with an error naming the value and the convergence
-    step, and the dashboard shows the failed sync state
 
 ### Owner-maintained facets (product type, thread colors)
 
@@ -343,8 +307,7 @@ Owner-entered catalog text SHALL be translatable (ADR 0011 decision 6):
   not text. The configurator edits the current content language and shows the
   Hungarian text as the placeholder; saving a definition without `hu` is
   rejected.
-- Generated option groups, options and variants, and the facet values and
-  per-material collections mirrored from materials, are written with one
+- Generated option groups, options and variants are written with one
   translation per language present. A variant's name uses the native
   product's name in that language.
 - Server messages that name a definition field or option use the request
@@ -361,8 +324,8 @@ Owner-entered catalog text SHALL be translatable (ADR 0011 decision 6):
     removes it
 - **Scenario: Material translated**
   - WHEN a material is saved with an English label
-  - THEN its material facet value, its collection and its generated option
-    carry the English name next to the Hungarian one
+  - THEN its generated options carry the English name next to the
+    Hungarian one
 
 ### Definition lifecycle with the native product
 

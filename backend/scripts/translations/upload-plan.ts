@@ -1,7 +1,6 @@
 import { z } from "zod";
 import type { CatalogSnapshot, NamedTranslation } from "./catalog-snapshot";
 import {
-  DERIVED_FACET_CODES,
   SOURCE_LANGUAGE,
   definitionKey,
   inLanguage,
@@ -94,7 +93,7 @@ function fileProblems(file: TranslationFile): string[] {
 /**
  * The mutations that add `file.language` to the live catalog. Additive only:
  * a string already translated differently, a Hungarian source that changed
- * since the extract, an unknown or a derived key refuses the whole plan.
+ * since the extract, or an unknown key refuses the whole plan.
  * Every file entry ends up in exactly one write or in `alreadyDone`.
  */
 export function planUpload(
@@ -113,13 +112,6 @@ export function planUpload(
 
     if (string === undefined) {
       problems.push(`${entry.key}: not in the live catalog (deleted, or its source emptied).`);
-      continue;
-    }
-
-    if (string.derived) {
-      problems.push(
-        `${entry.key}: derived from a material or color label by the sync; translate the material instead.`
-      );
       continue;
     }
 
@@ -330,7 +322,7 @@ function buildOperations(
     );
   }
 
-  for (const facet of snapshot.facets.filter((f) => !DERIVED_FACET_CODES.has(f.code))) {
+  for (const facet of snapshot.facets) {
     for (const value of facet.values) {
       nameOperation(
         "facetValue",

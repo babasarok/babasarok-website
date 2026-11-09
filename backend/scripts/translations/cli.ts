@@ -70,7 +70,7 @@ function readTranslationFile(path: string): TranslationFile {
 async function extract(language: string, out: string): Promise<void> {
   const snapshot = await readCatalogSnapshot(api, { definitions: true });
   const missing = translatableStrings(snapshot, language).filter(
-    (string) => !string.derived && string.current === undefined
+    (string) => string.current === undefined
   );
   const file = TranslationFileSchema.parse({
     language,

@@ -2,18 +2,6 @@ import type { CatalogSnapshot } from "./catalog-snapshot";
 
 export const SOURCE_LANGUAGE = "hu";
 
-/**
- * Strings a sync derives from material and color labels. These mirror the
- * backend's facet-plan constants; integration/translation-upload.test.ts fails
- * when they drift (a derived string would change without being written).
- */
-export const DERIVED_FACET_CODES: ReadonlySet<string> = new Set([
-  "babasarok-material",
-  "babasarok-color",
-]);
-
-export const MATERIAL_COLLECTION_SLUG_PREFIX = "material-";
-
 export type StringCategory =
   | "product"
   | "material"
@@ -30,8 +18,6 @@ export interface TranslatableString {
   category: StringCategory;
   source: string;
   current: string | undefined;
-  /** Written by a sync from another string, never uploaded directly. */
-  derived: boolean;
 }
 
 export interface LocalizedNode {
@@ -92,14 +78,13 @@ export function translatableStrings(
     key: string,
     category: StringCategory,
     source: string | null | undefined,
-    current: string | null | undefined,
-    derived = false
+    current: string | null | undefined
   ): void {
     if (source === undefined || source === null || source === "") {
       return;
     }
 
-    strings.push({ key, category, source, current: current || undefined, derived });
+    strings.push({ key, category, source, current: current || undefined });
   }
 
   for (const product of snapshot.products) {
@@ -147,21 +132,17 @@ export function translatableStrings(
         `facetValue|${facet.code}/${value.id}|name`,
         "facetValue",
         inLanguage(value.translations, SOURCE_LANGUAGE)?.name,
-        inLanguage(value.translations, language)?.name,
-        DERIVED_FACET_CODES.has(facet.code)
+        inLanguage(value.translations, language)?.name
       );
     }
   }
 
   for (const collection of snapshot.collections) {
-    const source = inLanguage(collection.translations, SOURCE_LANGUAGE);
-
     add(
       `collection|${collection.id}|name`,
       "collection",
-      source?.name,
-      inLanguage(collection.translations, language)?.name,
-      source?.slug?.startsWith(MATERIAL_COLLECTION_SLUG_PREFIX) === true
+      inLanguage(collection.translations, SOURCE_LANGUAGE)?.name,
+      inLanguage(collection.translations, language)?.name
     );
   }
 

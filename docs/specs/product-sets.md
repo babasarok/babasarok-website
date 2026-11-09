@@ -19,8 +19,7 @@ unit), and surface the formed set discounts to the buyer at basket level.
 > set promotions must not share a product (enforced at save, refused at
 > runtime); no set is hidden in Collections any more — related-items groups
 > are private top-level Collections (label = collection name, members = the
-> native `product-id-filter`; public top-level collections are material
-> navigation, so `isPrivate` is the whole distinction). Degenerate
+> native `product-id-filter`). Degenerate
 > groups (<2 members, no amount) are ignored with a report, not thrown.
 > The checkout renders the set section and the per-line set state from the
 > shop API (`Order.setDiscounts`, `OrderLine.setState`) through one adapter
