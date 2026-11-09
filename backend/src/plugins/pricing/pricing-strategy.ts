@@ -59,8 +59,9 @@ export async function calculateUnitPrice(
 /**
  * The order item price strategy for the generated catalog (ADR 0010 decision
  * 6): configured lines price from the canonical definition and the line's
- * selections, everything else passes the variant's price through — the
- * quote-order placeholders keep their client-quoted totals. A line already on
+ * selections, everything else passes the variant's price through — the legacy
+ * quote-order lines (their products had no definition) keep their client-quoted
+ * totals. A line already on
  * the order that its definition can no longer price keeps its last price, so
  * unrelated recalculations work; the transition guard refuses to place it.
  */
