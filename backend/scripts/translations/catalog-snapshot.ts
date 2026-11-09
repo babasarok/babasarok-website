@@ -8,11 +8,43 @@ export interface AdminApi {
   ): Promise<z.output<S>>;
 }
 
+/**
+ * Custom fields as their update inputs take them: flat values, relations
+ * already read as `<name>Id`. A translations-only update wipes custom fields
+ * on some entity kinds (ShippingMethod has wiped `requiresAddress` on prod),
+ * so every write carries the snapshot's values back unchanged.
+ */
+export type CustomFieldValue = string | number | boolean | null | undefined;
+export type CustomFields = Record<string, CustomFieldValue>;
+
+const ProductCustomFieldsSchema = z.object({
+  date: z.string().nullish(),
+  iconId: z.string().nullish(),
+  popularityRank: z.number().nullish(),
+});
+
+const ProductTranslationCustomFieldsSchema = z.object({
+  shortDescription: z.string().nullish(),
+  tagline: z.string().nullish(),
+});
+
+const FacetValueCustomFieldsSchema = z.object({
+  hex: z.string().nullish(),
+  swatchId: z.string().nullish(),
+});
+
+const ShippingMethodCustomFieldsSchema = z.object({
+  requiresAddress: z.boolean().nullish(),
+});
+
 const NamedTranslationSchema = z.object({
   languageCode: z.string(),
   name: z.string(),
   slug: z.string().nullish(),
   description: z.string().nullish(),
+  // Localized custom fields ride on the translation rows; Product is the only
+  // entity kind with any today (see readCustomFields).
+  customFields: ProductTranslationCustomFieldsSchema.nullish(),
 });
 
 const LabelTranslationSchema = z.object({ languageCode: z.string(), label: z.string() });
@@ -22,7 +54,11 @@ const MaterialTranslationSchema = LabelTranslationSchema.extend({
   description: z.string().nullish(),
 });
 
-const ProductSchema = z.object({ id: z.string(), translations: z.array(NamedTranslationSchema) });
+const ProductSchema = z.object({
+  id: z.string(),
+  translations: z.array(NamedTranslationSchema),
+  customFields: ProductCustomFieldsSchema.nullish(),
+});
 
 const MaterialSchema = z.object({
   id: z.string(),
@@ -44,7 +80,12 @@ const FacetSchema = z.object({
   code: z.string(),
   translations: z.array(NamedTranslationSchema),
   values: z.array(
-    z.object({ id: z.string(), code: z.string(), translations: z.array(NamedTranslationSchema) })
+    z.object({
+      id: z.string(),
+      code: z.string(),
+      translations: z.array(NamedTranslationSchema),
+      customFields: FacetValueCustomFieldsSchema.nullish(),
+    })
   ),
 });
 
@@ -53,7 +94,10 @@ const NamedEntitySchema = z.object({
   translations: z.array(NamedTranslationSchema),
 });
 
-const ShippingMethodSchema = NamedEntitySchema.extend({ code: z.string() });
+const ShippingMethodSchema = NamedEntitySchema.extend({
+  code: z.string(),
+  customFields: ShippingMethodCustomFieldsSchema.nullish(),
+});
 
 const DefinitionSchema = z.object({ productId: z.string(), definition: z.unknown() });
 
@@ -72,6 +116,39 @@ export interface CatalogSnapshot {
 }
 
 const NAMED = "id translations { languageCode name slug description }";
+const PRODUCT =
+  "id customFields { date iconId popularityRank } " +
+  "translations { languageCode name slug description customFields { shortDescription tagline } }";
+
+/**
+ * The custom fields the snapshot reads for every entity kind the script
+ * writes. The translation-upload integration test compares this against
+ * vendure-config's customFields, so a newly configured field cannot stay
+ * unread (and be wiped by the script's writes).
+ */
+export type WrittenEntity =
+  "Product" | "Facet" | "FacetValue" | "Collection" | "Promotion" | "ShippingMethod" | "Material";
+
+export interface CustomFieldsRead {
+  entity: readonly string[];
+  translation: readonly string[];
+}
+
+export const readCustomFields: Readonly<Record<WrittenEntity, CustomFieldsRead>> = {
+  Product: {
+    entity: Object.keys(ProductCustomFieldsSchema.shape),
+    translation: Object.keys(ProductTranslationCustomFieldsSchema.shape),
+  },
+  Facet: { entity: [], translation: [] },
+  FacetValue: { entity: Object.keys(FacetValueCustomFieldsSchema.shape), translation: [] },
+  Collection: { entity: [], translation: [] },
+  Promotion: { entity: [], translation: [] },
+  ShippingMethod: {
+    entity: Object.keys(ShippingMethodCustomFieldsSchema.shape),
+    translation: [],
+  },
+  Material: { entity: [], translation: [] },
+};
 
 async function paged<S extends z.ZodType>(
   api: AdminApi,
@@ -129,12 +206,12 @@ export async function readCatalogSnapshot(
   );
 
   return {
-    products: await paged(api, "products", NAMED, ProductSchema, 100, 0),
+    products: await paged(api, "products", PRODUCT, ProductSchema, 100, 0),
     materials,
     facets: await paged(
       api,
       "facets",
-      "id code translations { languageCode name } values { id code translations { languageCode name } }",
+      "id code translations { languageCode name } values { id code translations { languageCode name } customFields { hex swatchId } }",
       FacetSchema,
       100,
       0
@@ -151,7 +228,7 @@ export async function readCatalogSnapshot(
     shippingMethods: await paged(
       api,
       "shippingMethods",
-      "id code translations { languageCode name description }",
+      "id code translations { languageCode name description } customFields { requiresAddress }",
       ShippingMethodSchema,
       100,
       0

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { CatalogSnapshot, NamedTranslation } from "./catalog-snapshot";
+import type { CatalogSnapshot, CustomFields, NamedTranslation } from "./catalog-snapshot";
 import {
   SOURCE_LANGUAGE,
   definitionKey,
@@ -66,6 +66,24 @@ export class UploadPlanError extends Error {
 function withoutEmpty(row: object): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(row).filter(([, value]) => value !== null && value !== undefined)
+  );
+}
+
+/**
+ * The entity's read custom fields, sent back unchanged so a translations-only
+ * write cannot wipe them (ShippingMethod has lost `requiresAddress` this way).
+ * Relations are already read as `<name>Id`; unset keys are omitted so the
+ * payload stays exactly what the API read.
+ */
+function customFieldsInput(
+  customFields: CustomFields | null | undefined
+): Record<string, unknown> | undefined {
+  if (customFields === undefined || customFields === null) {
+    return undefined;
+  }
+
+  return Object.fromEntries(
+    Object.entries(customFields).filter(([, value]) => value !== undefined)
   );
 }
 
@@ -152,20 +170,31 @@ export function planUpload(snapshot: CatalogSnapshot, file: TranslationFile): Up
   return { operations, alreadyDone };
 }
 
+/** A translation row as its input takes it, with its custom fields carried over. */
+function translationRow(translation: {
+  languageCode: string;
+  customFields?: CustomFields | null;
+}): Record<string, unknown> {
+  const customFields = customFieldsInput(translation.customFields);
+  const row = withoutEmpty(translation);
+
+  return customFields === undefined ? row : { ...row, customFields };
+}
+
 /**
  * The entity's translations with `values` merged into the `language` row.
  * Without a value to write and without an existing row, no row is added: a
  * bare `{ languageCode }` row would lack the required name or label.
  */
 function withLanguage(
-  translations: ReadonlyArray<{ languageCode: string }>,
+  translations: ReadonlyArray<{ languageCode: string; customFields?: CustomFields | null }>,
   language: string,
   values: Record<string, string | undefined>,
   defaults: Record<string, string>
 ): Array<Record<string, unknown>> {
   const others = translations
     .filter((translation) => translation.languageCode !== language)
-    .map(withoutEmpty);
+    .map(translationRow);
   const existing = inLanguage(translations, language);
   const written = withoutEmpty(values);
 
@@ -175,7 +204,12 @@ function withLanguage(
 
   return [
     ...others,
-    { ...defaults, ...withoutEmpty(existing ?? {}), ...written, languageCode: language },
+    {
+      ...defaults,
+      ...translationRow(existing ?? { languageCode: language }),
+      ...written,
+      languageCode: language,
+    },
   ];
 }
 
@@ -222,7 +256,7 @@ function buildOperations(
     entity: string,
     mutation: MutationName,
     key: string,
-    row: { id: string; translations: NamedTranslation[] },
+    row: { id: string; translations: NamedTranslation[]; customFields?: CustomFields | null },
     defaults: () => Record<string, string>
   ): void {
     const writes: PlannedWrite[] = [];
@@ -232,18 +266,18 @@ function buildOperations(
       return;
     }
 
-    operations.push({
-      category,
-      entity,
-      mutation,
-      variables: {
-        input: {
-          id: row.id,
-          translations: withLanguage(row.translations, language, { name }, defaults()),
-        },
-      },
-      writes,
-    });
+    const input: Record<string, unknown> = {
+      id: row.id,
+      translations: withLanguage(row.translations, language, { name }, defaults()),
+    };
+
+    const customFields = customFieldsInput(row.customFields);
+
+    if (customFields !== undefined) {
+      input.customFields = customFields;
+    }
+
+    operations.push({ category, entity, mutation, variables: { input }, writes });
   }
 
   for (const product of snapshot.products) {

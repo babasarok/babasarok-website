@@ -107,6 +107,128 @@ describe("planUpload", () => {
     ]);
   });
 
+  it("sends the entity's custom fields back unchanged, relations already as ids", () => {
+    const live = snapshot({
+      products: [
+        {
+          id: "7",
+          translations: [{ languageCode: "hu", name: "Párna", slug: "parna", description: "Puha" }],
+          customFields: { date: "2026-01-05T10:00:00.000Z", iconId: "5", popularityRank: 7 },
+        },
+      ],
+      facets: [
+        {
+          id: "1",
+          code: "babasarok-product-type",
+          translations: [{ languageCode: "hu", name: "Terméktípus" }],
+          values: [
+            {
+              id: "11",
+              code: "parna",
+              translations: [{ languageCode: "hu", name: "Párna" }],
+              customFields: { hex: "#9caf88", swatchId: "5" },
+            },
+          ],
+        },
+      ],
+      shippingMethods: [
+        {
+          id: "9",
+          code: "gls",
+          translations: [{ languageCode: "hu", name: "GLS", description: "Házhoz" }],
+          customFields: { requiresAddress: true },
+        },
+      ],
+    });
+
+    const plan = planUpload(
+      live,
+      file([
+        { key: "product|7|name", source: "Párna", translation: "Kissen" },
+        {
+          key: "facetValue|babasarok-product-type/11|name",
+          source: "Párna",
+          translation: "Kissen",
+        },
+        { key: "shippingMethod|gls|name", source: "GLS", translation: "GLS" },
+      ])
+    );
+
+    expect(plan.operations).toEqual([
+      expect.objectContaining({
+        mutation: "updateProduct",
+        variables: {
+          input: {
+            id: "7",
+            customFields: { date: "2026-01-05T10:00:00.000Z", iconId: "5", popularityRank: 7 },
+            translations: [
+              { languageCode: "hu", name: "Párna", slug: "parna", description: "Puha" },
+              { languageCode: "de", name: "Kissen", slug: "parna", description: "" },
+            ],
+          },
+        },
+      }),
+      expect.objectContaining({
+        mutation: "updateFacetValue",
+        variables: {
+          input: {
+            id: "11",
+            customFields: { hex: "#9caf88", swatchId: "5" },
+            translations: [
+              { languageCode: "hu", name: "Párna" },
+              { languageCode: "de", name: "Kissen" },
+            ],
+          },
+        },
+      }),
+      expect.objectContaining({
+        mutation: "updateShippingMethod",
+        variables: {
+          input: {
+            id: "9",
+            customFields: { requiresAddress: true },
+            translations: [
+              { languageCode: "hu", name: "GLS", description: "Házhoz" },
+              { languageCode: "de", name: "GLS", description: "" },
+            ],
+          },
+        },
+      }),
+    ]);
+  });
+
+  it("carries the Hungarian translation's custom fields on its re-sent row", () => {
+    const live = snapshot();
+    live.products[0]?.translations.splice(0, 1, {
+      languageCode: "hu",
+      name: "Párna",
+      slug: "parna",
+      description: "Puha",
+      customFields: { shortDescription: "Rövid leírás", tagline: "Alcím" },
+    });
+
+    const plan = planUpload(
+      live,
+      file([{ key: "product|7|name", source: "Párna", translation: "Kissen" }])
+    );
+
+    expect(plan.operations[0]?.variables).toEqual({
+      input: {
+        id: "7",
+        translations: [
+          {
+            languageCode: "hu",
+            name: "Párna",
+            slug: "parna",
+            description: "Puha",
+            customFields: { shortDescription: "Rövid leírás", tagline: "Alcím" },
+          },
+          { languageCode: "de", name: "Kissen", slug: "parna", description: "" },
+        ],
+      },
+    });
+  });
+
   it("never overwrites an existing translation", () => {
     const live = snapshot();
     live.products[0]?.translations.push({ languageCode: "de", name: "Polster", slug: "parna" });
