@@ -266,9 +266,21 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      i18next:
+        specifier: 26.5.10
+        version: 26.5.10(typescript@6.0.3)
+      i18next-browser-languagedetector:
+        specifier: ^8.3.0
+        version: 8.3.0
+      i18next-resources-to-backend:
+        specifier: 1.2.4
+        version: 1.2.4
       marked:
         specifier: ^16.4.2
         version: 16.4.2
+      nanostores:
+        specifier: ^1.5.5
+        version: 1.5.5
       sharp:
         specifier: ^0.34.5
         version: 0.34.5
@@ -7274,6 +7286,9 @@ packages:
   hyphenate-style-name@1.1.0:
     resolution: {integrity: sha512-WDC/ui2VVRrz3jOVi+XtjqkDjiVjTtFaAGiW37k6b+ohyQ5wYDOGkvCZa8+H0nx3gyvv0+BST9xuOgIyGQ00gw==}
 
+  i18next-browser-languagedetector@8.3.0:
+    resolution: {integrity: sha512-t7FtF+VyQ+XSy+GI1O9TXWsMzP4U2u0m27yxJcCbG4LaAbTQa3CXFXgG3LvRivS+ZoYah8yPv5NhMl+Wg6I8Fg==}
+
   i18next-fs-backend@2.6.9:
     resolution: {integrity: sha512-YZ5PQUV9xnAeh45CCSQW095wYDWZEwKse/1wr3m0z0Mij5zoCFMs67Q3M+w/9un8fUruubMR4DzETnDGH85heQ==}
 
@@ -7284,6 +7299,9 @@ packages:
     resolution: {integrity: sha512-ATlbwNqJoa3dUl2+eBcbU7gVgRulPB/rUy1ddLUDTrc9qO2Yjdg3agZSyTrpjhRXKRXxNvMXymoyXvE23/QhbA==}
     peerDependencies:
       intl-messageformat: '>=10.3.3 <13.0.0'
+
+  i18next-resources-to-backend@1.2.4:
+    resolution: {integrity: sha512-NV0bCktHrBNyEnjS5sq5k6J8HL3A+iR2MORcSJ7ZbQOnRwizrRmq+8K9WsdYy9mJv/Vki3VPnspBcFmF97UsQw==}
 
   i18next@26.5.10:
     resolution: {integrity: sha512-YS4EiLQhhk0wGThm4Zy+BL2c9rBNIK+kAbksi4l/B+D6kVRQLIFZgu2b/MU2LibJJHwWNTYoOYR52T+jfV8kPQ==}
@@ -7319,6 +7337,7 @@ packages:
   image-size@0.5.5:
     resolution: {integrity: sha512-6TDAlDPZxUFCv+fuOkIoXT/V/f3Qbq8e37p+YOiYrUv3v9cc3/6x78VdfPgFVaB9dZYeLUfKgHRebpkm/oP2VQ==}
     engines: {node: '>=0.10.0'}
+    deprecated: Please migrate to image-size@2.x
     hasBin: true
 
   image-size@2.0.4:
@@ -8804,6 +8823,10 @@ packages:
     resolution: {integrity: sha512-kVrnsrJqMR8+oLJnGEmSWw9BivK5mt7H3FZatVRjrc5wGqFYuBxX1yG7+A7Gi5AefkX6t/oCkizcQgpu0cY1dQ==}
     engines: {node: ^18 || >=20}
     hasBin: true
+
+  nanostores@1.5.5:
+    resolution: {integrity: sha512-FixtE239Gl6Gz0ZGCK0WzvNwObNCIwVT+L7zQcf1QgcA6AzBxblzqe9OT88qiucNkhsjSOqiogSaF5jVbJiqSA==}
+    engines: {node: ^20.0.0 || >=22.0.0}
 
   napi-build-utils@2.0.0:
     resolution: {integrity: sha512-GEbrYkbfF7MoNaoh2iGG84Mnf/WZfB0GdGEsM8wz7Expx/LlWf5U8t9nvJKXSp3qr5IsEbK04cBGhol/KwOsWA==}
@@ -20169,6 +20192,10 @@ snapshots:
 
   hyphenate-style-name@1.1.0: {}
 
+  i18next-browser-languagedetector@8.3.0:
+    dependencies:
+      '@babel/runtime': 7.29.10
+
   i18next-fs-backend@2.6.9: {}
 
   i18next-http-middleware@3.9.10: {}
@@ -20177,9 +20204,17 @@ snapshots:
     dependencies:
       intl-messageformat: 10.7.18
 
+  i18next-resources-to-backend@1.2.4:
+    dependencies:
+      '@babel/runtime': 7.29.10
+
   i18next@26.5.10(typescript@5.9.3):
     optionalDependencies:
       typescript: 5.9.3
+
+  i18next@26.5.10(typescript@6.0.3):
+    optionalDependencies:
+      typescript: 6.0.3
 
   iconv-lite@0.4.24:
     dependencies:
@@ -22453,6 +22488,8 @@ snapshots:
   nanoid@3.3.20: {}
 
   nanoid@5.1.16: {}
+
+  nanostores@1.5.5: {}
 
   napi-build-utils@2.0.0: {}
 

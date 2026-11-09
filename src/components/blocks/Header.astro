@@ -4,12 +4,19 @@ import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
 import NavBasket from "@/components/blocks/order/NavBasket.svelte";
 import SearchDialog from "@/components/blocks/SearchDialog.svelte";
+import LanguageDialog from "@/components/blocks/LanguageDialog.svelte";
+import { entryIdForLocale, localeFromPathname, localizedPath } from "@/lib/i18n";
+import { createI18n } from "@/lib/i18next";
 
+const locale = localeFromPathname(Astro.url.pathname);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const config = (await getEntry("config", "config")!).data;
+const config = (await getEntry("config", entryIdForLocale(locale, "config"))!).data;
 const logo = config.logo;
-const contactLink = config.contactLink ? `/${config.contactLink}` : "/contact";
-const checkoutLink = "/checkout";
+const contactLink = localizedPath(
+  config.contactLink ? `/${config.contactLink}` : "/contact",
+  locale
+);
+const checkoutLink = localizedPath("/checkout", locale);
 
 const isHome = Astro.url.pathname === "/";
 // The checkout page shows the full basket already; skip the nav basket there.
@@ -19,17 +26,19 @@ const rawMenu = config.mainMenu ?? [];
 const mainMenu = rawMenu
   .filter((item): item is NonNullable<typeof item> => item !== null)
   .toSorted((a, b) => (a.weight ?? 99) - (b.weight ?? 99));
+const i18n = createI18n(locale);
+const t = i18n.t.bind(i18n);
 ---
 
 <nav id="navbar" class="fixed top-0 z-50">
   <div class="container">
     <div class="flex flex-wrap items-center justify-between">
-      <a href="/" class="block shrink-0">
+      <a href={localizedPath("/", locale)} class="block shrink-0">
         {
           logo && (
             <Image
               src={logo}
-              alt="Babasarok logó"
+              alt={t("common.logoAlt")}
               width={200}
               loading="lazy"
               decoding="async"
@@ -40,12 +49,16 @@ const mainMenu = rawMenu
       </a>
 
       <div class="flex items-center gap-2 lg:hidden">
-        <SearchDialog client:load />
-        {showBasket && <NavBasket checkoutHref={checkoutLink} anchored={false} client:load />}
+        <SearchDialog locale={locale} client:load />
+        {
+          showBasket && (
+            <NavBasket checkoutHref={checkoutLink} locale={locale} anchored={false} client:load />
+          )
+        }
         <button
           id="navbar-toggler"
           type="button"
-          aria-label="Menü"
+          aria-label={t("header.menu")}
           aria-controls="navbar-collapse"
           aria-expanded="false"
           class="flex cursor-pointer flex-col gap-1.25 border-0 bg-transparent p-0"
@@ -62,7 +75,7 @@ const mainMenu = rawMenu
             mainMenu.map((item) => (
               <li>
                 <a
-                  href={item.url ?? "/"}
+                  href={localizedPath(item.url ?? "/", locale)}
                   class:list={[
                     "text-dark hover:text-sand-300 block p-2 text-center transition-all",
                     isHome && item.url?.includes("#") && "scroll",
@@ -76,16 +89,17 @@ const mainMenu = rawMenu
         </ul>
         <div class="flex items-center justify-center gap-2 pb-4 lg:pb-0">
           <div class="hidden lg:block">
-            <SearchDialog client:load />
+            <SearchDialog locale={locale} client:load />
           </div>
           {
             showBasket && (
               <div class="hidden lg:block">
-                <NavBasket checkoutHref={checkoutLink} client:load />
+                <NavBasket checkoutHref={checkoutLink} locale={locale} client:load />
               </div>
             )
           }
-          <Button href={contactLink} size="lg" variant="primary">Kapcsolat</Button>
+          <LanguageDialog pathname={Astro.url.pathname} locale={locale} client:load />
+          <Button href={contactLink} size="lg" variant="primary">{t("header.contact")}</Button>
         </div>
       </div>
     </div>

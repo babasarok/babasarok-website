@@ -9,9 +9,6 @@ export interface ConfiguredLine {
   lengthCm: number | undefined;
 }
 
-export const PRODUCT_UNAVAILABLE =
-  "Ez a termék jelenleg nem rendelhető. Töltsd újra az oldalt, hátha változott a kínálat.";
-
 function selectionFor(field: Field): LineSelections[string] {
   switch (field.type) {
     case "input":

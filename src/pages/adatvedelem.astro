@@ -3,12 +3,24 @@ import { getCollection, render } from "astro:content";
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
 import { getConfig } from "../lib/config";
+import { localeFromPathname } from "../lib/i18n";
+import { createI18n } from "../lib/i18next";
 
-const [entry] = await getCollection("adatvedelem");
+const locale = localeFromPathname(Astro.url.pathname);
+const entry = (await getCollection("adatvedelem")).find(
+  (candidate) => candidate.id === `${locale}/_index`
+);
+
+if (!entry) {
+  throw new Error("Adatvedelem entry not found");
+}
+
 const { Content } = await render(entry);
 const { title } = entry.data;
 
-const config = await getConfig();
+const config = await getConfig(locale);
+const i18n = createI18n(locale);
+const t = i18n.t.bind(i18n);
 const address = config.address ?? null;
 ---
 
@@ -45,10 +57,10 @@ const address = config.address ?? null;
           type="button"
           class="bg-brown-500 hover:bg-brown-700 inline-flex h-11 items-center justify-center rounded-md px-6 text-sm font-medium text-white uppercase transition-all"
         >
-          Hozzájárulás módosítása
+          {t("pages.consentEdit")}
         </button>
         <p class="text-body mt-3 mb-0 text-sm">
-          A gomb megnyomásával a hozzájárulási ablak újra megjelenik.
+          {t("pages.consentEditHint")}
         </p>
       </div>
     </div>

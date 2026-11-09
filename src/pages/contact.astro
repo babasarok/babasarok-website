@@ -6,15 +6,29 @@ import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
 import Button from "../components/ui/Button.astro";
 import { getConfig } from "../lib/config";
+import { localeFromPathname } from "../lib/i18n";
+import { createI18n } from "../lib/i18next";
+import { localizedPath } from "../lib/i18n";
 import locationIcon from "../assets/images/contact/location.svg";
 import phoneIcon from "../assets/images/contact/phone.svg";
 import socialIcon from "../assets/images/contact/social-media.svg";
 
-const [entry] = await getCollection("contact");
+const locale = localeFromPathname(Astro.url.pathname);
+const i18n = createI18n(locale);
+const t = i18n.t.bind(i18n);
+
+const entry = (await getCollection("contact")).find(
+  (candidate) => candidate.id === `${locale}/_index`
+);
+
+if (!entry) {
+  throw new Error("Contact entry not found");
+}
+
 const { Content } = await render(entry);
 const { title, breadcrumb } = entry.data;
 
-const config = await getConfig();
+const config = await getConfig(localeFromPathname(Astro.url.pathname));
 const address = config.address ?? null;
 const social = [...(config.social ?? [])]
   .filter((s): s is NonNullable<typeof s> => !!s && !!s.icon)
@@ -30,15 +44,19 @@ const social = [...(config.social ?? [])]
         <Content />
       </div>
       <div class="mt-10 flex flex-wrap justify-center gap-4">
-        <Button href="/checkout/" size="lg" variant="primary">Tovább a rendeléshez</Button>
-        <Button href="/product/" size="lg" variant="outline">Böngészd a termékeket</Button>
+        <Button href={localizedPath("/checkout/", locale)} size="lg" variant="primary">
+          {t("pages.orderNow")}
+        </Button>
+        <Button href={localizedPath("/product/", locale)} size="lg" variant="outline">
+          {t("pages.browse")}
+        </Button>
       </div>
     </div>
   </section>
 
   <section class="py-12.5 sm:py-25">
     <div class="container">
-      <h3 class="text-h3 text-headings mb-10">Elérhetőségek</h3>
+      <h3 class="text-h3 text-headings mb-10">{t("pages.contactHeading")}</h3>
       <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div class="h-full w-full flex-1 lg:w-auto">
           <div
@@ -51,7 +69,7 @@ const social = [...(config.social ?? [])]
                 class="absolute bottom-0 left-0 z-1 h-3/5 w-3/5"
               />
             </div>
-            <h4 class="text-h4 text-headings mb-6">Cím</h4>
+            <h4 class="text-h4 text-headings mb-6">{t("pages.addressHeading")}</h4>
             <p class="mb-0 text-sm">{address?.address}</p>
           </div>
         </div>
@@ -73,7 +91,7 @@ const social = [...(config.social ?? [])]
               </svg>
               <Image src={phoneIcon} alt="phone" class="absolute bottom-0 left-0 z-1 h-3/5 w-3/5" />
             </div>
-            <h4 class="text-h4 text-headings mb-6">Telefon &amp; Email</h4>
+            <h4 class="text-h4 text-headings mb-6">{t("pages.phoneEmail")}</h4>
             <p class="mb-0 text-sm">
               {
                 address?.phone && (
@@ -118,7 +136,7 @@ const social = [...(config.social ?? [])]
                 class="absolute bottom-0 left-0 z-1 h-3/5 w-3/5"
               />
             </div>
-            <h4 class="text-h4 text-headings mb-6">Közösségi Média</h4>
+            <h4 class="text-h4 text-headings mb-6">{t("pages.socialHeading")}</h4>
             <ul class="m-0 flex list-none gap-4 p-0 text-sm">
               {
                 social.map((s) => (

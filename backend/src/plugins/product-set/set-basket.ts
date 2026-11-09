@@ -303,7 +303,7 @@ export function setBasketState(input: {
     let selections: LineSelections | null;
 
     try {
-      selections = parseLineSelections(line.selectionsRaw);
+      selections = parseLineSelections(line.selectionsRaw, "hu");
     } catch {
       // An unparsable blob cannot prove colors; required colors stay unproven.
       selections = null;

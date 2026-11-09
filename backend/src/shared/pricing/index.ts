@@ -22,7 +22,6 @@ export {
   computeLineUnitPrice,
   lengthMissingRejection,
   LinePricingError,
-  unpricedLineMessage,
   valueConfiguredLine,
   type LinePricingInput,
   type LineValuation,

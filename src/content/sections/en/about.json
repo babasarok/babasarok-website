@@ -1,0 +1,11 @@
+{
+  "enable": true,
+  "title": "## About us\n",
+  "content": "### Welcome!\nWe make unique, handcrafted baby products so that every little one can rest in the greatest comfort. Every piece is made to your vision — be it the colour choice or the design — so that it fits the style of your nursery perfectly. As a mother of two I have gathered a wealth of experience, and I work only with the highest-quality materials. As a family business, everyone on our energetic young team is helpful and flexible, so that we can give you the very best. Take a look at our reference pieces and see how we can make the little ones' everyday life even more comfortable!\n",
+  "button1Name": "Contact",
+  "button2Name": "Our products",
+  "button1Target": "contact",
+  "button2Target": "product",
+  "image": "/src/assets/images/about/IMG_5375.webp",
+  "_template": "about_template"
+}

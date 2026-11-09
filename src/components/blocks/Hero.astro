@@ -1,14 +1,18 @@
 ---
 import { Image } from "astro:assets";
-import { Content } from "../../content/sections/hero.md";
+import { getEntry, render } from "astro:content";
 import figureSvg from "../../assets/images/hero/figure-svg.svg?url";
 import Button from "../ui/Button.astro";
 import TopTitle from "../ui/TopTitle.astro";
-import { getEntry } from "astro:content";
+import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const entry = await getEntry("heroBlock", "hero")!;
+const entry = (await getEntry(
+  "heroBlock",
+  entryIdForLocale(localeFromPathname(Astro.url.pathname), "hero")
+))!;
 const { enable, topTitle, buttonName, image: heroImage, buttonURL } = entry.data;
+const { Content } = await render(entry);
 
 const buttonHref = buttonURL ? `/${buttonURL}` : undefined;
 ---

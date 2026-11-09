@@ -3,11 +3,20 @@ import { Icon } from "astro-icon/components";
 import Button from "../ui/Button.astro";
 import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
+import { entryIdForLocale, localeFromPathname, localizedPath } from "@/lib/i18n";
+import { createI18n } from "@/lib/i18next";
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const config = (await getEntry("config", "config")!).data;
+const config = // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  (await getEntry("config", entryIdForLocale(localeFromPathname(Astro.url.pathname), "config"))!)
+    .data;
 const footerLogo = config.footerLogo;
-const contactLink = config.contactLink ? `/${config.contactLink}` : "/contact";
+const locale = localeFromPathname(Astro.url.pathname);
+const contactLink = localizedPath(
+  config.contactLink ? `/${config.contactLink}` : "/contact",
+  locale
+);
+const i18n = createI18n(localeFromPathname(Astro.url.pathname));
+const t = i18n.t.bind(i18n);
 
 const rawSitemap = config.sitemapMenu ?? [];
 const sitemap = rawSitemap
@@ -89,7 +98,7 @@ const social = [...(config.social ?? [])]
           footerLogo && (
             <Image
               src={footerLogo}
-              alt="Babasarok logó"
+              alt={t("common.logoAlt")}
               width={255}
               loading="lazy"
               decoding="async"
@@ -101,12 +110,15 @@ const social = [...(config.social ?? [])]
 
       <!-- Sitemap -->
       <div class="mb-5 w-full lg:mb-0 lg:w-1/3">
-        <h4 class="text-h4 font-base text-light mb-4 text-xl">Oldal</h4>
+        <h4 class="text-h4 font-base text-light mb-4 text-xl">{t("footer.page")}</h4>
         <ul class="m-0 list-none space-y-2 p-0 text-sm">
           {
             sitemap.map((item) => (
               <li>
-                <a href={item.url ?? "/"} class="text-light hover:text-light/80">
+                <a
+                  href={localizedPath(item.url ?? "/", locale)}
+                  class="text-light hover:text-light/80"
+                >
                   {item.name}
                 </a>
               </li>
@@ -117,7 +129,7 @@ const social = [...(config.social ?? [])]
 
       <!-- Address -->
       <div class="w-full lg:w-1/3">
-        <h4 class="text-h4 font-base text-light mb-4 text-xl">Cím</h4>
+        <h4 class="text-h4 font-base text-light mb-4 text-xl">{t("footer.address")}</h4>
         <ul class="m-0 list-none space-y-2 p-0 text-sm">
           {
             config.address?.phone && (

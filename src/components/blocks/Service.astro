@@ -4,11 +4,18 @@ import { Markdown } from "astro-md-2";
 import patternSvg from "../../assets/images/service/background-pattern.svg?url";
 import TopTitle from "../ui/TopTitle.astro";
 import { getEntry } from "astro:content";
+import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
+import { createI18n } from "@/lib/i18next";
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const entry = await getEntry("servicesBlock", "service")!;
+const entry = (await getEntry(
+  "servicesBlock",
+  entryIdForLocale(localeFromPathname(Astro.url.pathname), "service")
+))!;
 
 const { enable, topTitle, title, service: items } = entry.data;
+const i18n = createI18n(localeFromPathname(Astro.url.pathname));
+const t = i18n.t.bind(i18n);
 ---
 
 {
@@ -108,7 +115,7 @@ const { enable, topTitle, title, service: items } = entry.data;
         <ul id="service-indicator" class="slick-dots mt-12">
           {items.map(() => (
             <li>
-              <button type="button" aria-label="Ugrás a termékre" />
+              <button type="button" aria-label={t("pages.jumpToProduct")} />
             </li>
           ))}
         </ul>

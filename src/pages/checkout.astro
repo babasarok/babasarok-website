@@ -4,12 +4,20 @@ import PageHeader from "../components/ui/PageHeader.astro";
 import CheckoutForm from "@/components/blocks/order/CheckoutForm.svelte";
 import { getMaterials, getProductGroups, getProducts, getThreadColors } from "@/lib/catalog";
 import { setMembersByGroup } from "@/lib/basket/setDiscounts";
+import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
+import { pageLanguageCode } from "@/lib/vendure/client";
 import { getEntry } from "astro:content";
+import { createI18n } from "@/lib/i18next";
 
 export const prerender = false;
 
-const configEntry = await getEntry("config", "config");
-const checkout = await getEntry("checkout", "index");
+const locale = localeFromPathname(Astro.url.pathname);
+const languageCode = pageLanguageCode(Astro.url.pathname);
+const i18n = createI18n(locale);
+const t = i18n.t.bind(i18n);
+const configEntry = await getEntry("config", entryIdForLocale(locale, "config"));
+// The glob loader strips a trailing "/index" from the entry id (hu/index.md → hu).
+const checkout = await getEntry("checkout", locale);
 
 if (!configEntry) {
   throw new Error("Config entry not found");
@@ -22,10 +30,10 @@ if (!checkout) {
 }
 
 const [materials, threadColors, products, groups] = await Promise.all([
-  getMaterials(),
-  getThreadColors(),
-  getProducts(),
-  getProductGroups(),
+  getMaterials(undefined, languageCode),
+  getThreadColors(undefined, languageCode),
+  getProducts(undefined, languageCode),
+  getProductGroups(undefined, languageCode),
 ]);
 const setMembers = setMembersByGroup(groups, products);
 
@@ -43,12 +51,13 @@ const labels = {
 };
 ---
 
-<Base title="Pénztár">
-  <PageHeader title="Pénztár" breadcrumb="Pénztár" no-shapes />
+<Base title={t("checkout.title")}>
+  <PageHeader title={t("checkout.title")} breadcrumb={t("checkout.title")} no-shapes />
 
   <section class="py-12.5">
     <div class="not-prose container">
       <CheckoutForm
+        locale={localeFromPathname(Astro.url.pathname)}
         basketInfo={checkout.data.basket_note}
         contactHeading={checkout.data.contact_heading}
         basketHeading={checkout.data.basket_heading}

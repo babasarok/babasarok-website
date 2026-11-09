@@ -12,7 +12,8 @@ import {
 } from "@vendure/core";
 import { AssetServerPlugin } from "@vendure/asset-server-plugin";
 import { DashboardPlugin } from "@vendure/dashboard/plugin";
-import { EmailPlugin, FileBasedTemplateLoader } from "@vendure/email-plugin";
+import { EmailPlugin } from "@vendure/email-plugin";
+import { LocaleTemplateLoader } from "./plugins/email/localized-template-loader";
 import type { EmailPluginDevModeOptions, EmailPluginOptions } from "@vendure/email-plugin";
 import { ASSET_PRESETS, ASSET_QUALITY } from "./asset-presets";
 import { PresetOrOriginalStrategy } from "./preset-or-original-strategy";
@@ -54,7 +55,7 @@ class ForintMoneyStrategy extends DefaultMoneyStrategy {
 
 function emailPluginOptions(): EmailPluginOptions | EmailPluginDevModeOptions {
   const base = {
-    templateLoader: new FileBasedTemplateLoader(path.join(__dirname, "..", "email-templates")),
+    templateLoader: new LocaleTemplateLoader(path.join(__dirname, "..", "email-templates")),
     // Plain-HTML handlebars templates, not MJML.
     emailGenerator: new HandlebarsHtmlGenerator(),
     handlers: [nativeOrderConfirmationHandler, nativeOrderNotificationHandler],

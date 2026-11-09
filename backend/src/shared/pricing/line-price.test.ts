@@ -325,8 +325,8 @@ describe("computeLineUnitPrice", () => {
 
 describe("parseLineSelections", () => {
   it("parses an empty value into no records", () => {
-    expect(parseLineSelections(null)).toEqual({});
-    expect(parseLineSelections("")).toEqual({});
+    expect(parseLineSelections(null, "hu")).toEqual({});
+    expect(parseLineSelections("", "hu")).toEqual({});
   });
 
   it("round-trips records through JSON", () => {
@@ -334,12 +334,20 @@ describe("parseLineSelections", () => {
       anyag: { kind: "material", materialId: "wellsoft", colors: ["piros", "kek"] },
     };
 
-    expect(parseLineSelections(JSON.stringify(selections))).toEqual(selections);
+    expect(parseLineSelections(JSON.stringify(selections), "hu")).toEqual(selections);
   });
 
   it("throws a descriptive error for malformed JSON and wrong shapes", () => {
-    expect(() => parseLineSelections("{")).toThrow(LineSelectionsError);
-    expect(() => parseLineSelections('{"anyag": {"kind": "nope"}}')).toThrow(LineSelectionsError);
+    expect(() => parseLineSelections("{", "hu")).toThrow(LineSelectionsError);
+    expect(() => parseLineSelections('{"anyag": {"kind": "nope"}}', "hu")).toThrow(
+      LineSelectionsError
+    );
+  });
+
+  it("rejects in the request language", () => {
+    expect(() => parseLineSelections("{", "en")).toThrow(
+      "The order line configuration is not valid JSON."
+    );
   });
 });
 

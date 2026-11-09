@@ -16,7 +16,7 @@ export const BlogCollection: Collection = {
   frontmatterFormat: "yaml",
   match: {
     include: "**/*",
-    exclude: "_index",
+    exclude: "**/_index",
   },
   ui: {
     filename: {

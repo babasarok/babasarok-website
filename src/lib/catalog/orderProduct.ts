@@ -20,7 +20,6 @@ import type {
   CatalogThreadColor,
 } from "./mappers";
 
-const LANGUAGE = "hu";
 const FALLBACK_TYPE = "kiegeszito";
 type OrderMaterial = NonNullable<NonNullable<OrderField["materials"]>[number]>["material_path"];
 
@@ -62,7 +61,8 @@ function dependsOn(visibility: FieldVisibility): OrderField["depends_on"] {
 
 function toOrderField(
   field: ProductField,
-  materials: ReadonlyMap<string, OrderMaterial>
+  materials: ReadonlyMap<string, OrderMaterial>,
+  languageCode: string
 ): OrderField {
   const base = {
     optional: undefined,
@@ -76,8 +76,8 @@ function toOrderField(
     materials: undefined,
     depends_on: undefined,
     name: field.id,
-    label: resolveText(field.label, LANGUAGE),
-    tooltip: field.tooltip === undefined ? undefined : resolveText(field.tooltip, LANGUAGE),
+    label: resolveText(field.label, languageCode),
+    tooltip: field.tooltip === undefined ? undefined : resolveText(field.tooltip, languageCode),
   };
 
   if (field.kind === "input") {
@@ -87,12 +87,12 @@ function toOrderField(
       price: field.price,
       optional: !field.required,
       placeholder:
-        field.placeholder === undefined ? undefined : resolveText(field.placeholder, LANGUAGE),
+        field.placeholder === undefined ? undefined : resolveText(field.placeholder, languageCode),
       regex: field.pattern,
       depends_on: dependsOn(field.visibility),
       items: field.suggestions?.map((suggestion) => ({
         value: suggestion.value,
-        label: resolveText(suggestion.label, LANGUAGE),
+        label: resolveText(suggestion.label, languageCode),
         price: undefined,
         tooltip: undefined,
       })),
@@ -108,12 +108,13 @@ function toOrderField(
       depends_on: dependsOn(field.visibility),
       allow_custom_value: field.customValue !== undefined,
       regex: field.customValue?.pattern,
-      placeholder: placeholder === undefined ? undefined : resolveText(placeholder, LANGUAGE),
+      placeholder: placeholder === undefined ? undefined : resolveText(placeholder, languageCode),
       items: field.options.map((option) => ({
         value: option.id,
-        label: resolveText(option.label, LANGUAGE),
+        label: resolveText(option.label, languageCode),
         price: option.price,
-        tooltip: option.tooltip === undefined ? undefined : resolveText(option.tooltip, LANGUAGE),
+        tooltip:
+          option.tooltip === undefined ? undefined : resolveText(option.tooltip, languageCode),
       })),
     };
   }
@@ -136,7 +137,7 @@ function toOrderField(
       price: field.pricing.kind === "flat" ? field.pricing.price : field.pricing.pricePerWord,
       regex: field.pattern,
       placeholder:
-        field.placeholder === undefined ? undefined : resolveText(field.placeholder, LANGUAGE),
+        field.placeholder === undefined ? undefined : resolveText(field.placeholder, languageCode),
     };
   }
 
@@ -156,7 +157,8 @@ function toOrderField(
 export function toOrderProduct(
   product: CatalogProduct,
   materials: readonly CatalogMaterial[],
-  assetBase: string
+  assetBase: string,
+  languageCode: string
 ): OrderProduct {
   const { definition } = product;
   const orderMaterials = new Map(
@@ -195,7 +197,7 @@ export function toOrderProduct(
         }),
       })),
     },
-    fields: definition.fields.map((field) => toOrderField(field, orderMaterials)),
+    fields: definition.fields.map((field) => toOrderField(field, orderMaterials, languageCode)),
   };
 }
 

@@ -1,0 +1,7 @@
+{
+  "enable": true,
+  "title": "## Our Most Popular Products\n",
+  "itemCount": 6,
+  "buttonName": "All products",
+  "buttonTarget": "product"
+}

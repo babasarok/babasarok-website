@@ -3,6 +3,7 @@ import Header from "../components/blocks/Header.astro";
 import Footer from "../components/blocks/Footer.astro";
 import { Font } from "astro:assets";
 import { getConfig } from "../lib/config";
+import { OG_LOCALE, defaultLocale, localeFromEntryId, localeFromPathname } from "../lib/i18n";
 import "../styles/global.css";
 
 // ── Favicon imports (processed by Vite asset pipeline) ───────────────────────
@@ -37,16 +38,23 @@ const {
   ...rest
 } = Astro.props;
 
-const config = await getConfig();
-const [adatvedelemEntry] = await getCollection("adatvedelem");
+const locale = localeFromPathname(Astro.url.pathname);
+const config = await getConfig(locale);
+const adatvedelemEntry = (await getCollection("adatvedelem")).find(
+  (entry) => localeFromEntryId(entry.id) === locale
+);
+if (!adatvedelemEntry) {
+  throw new Error("Adatvedelem entry not found for locale");
+}
 const { cookieBannerHeading, cookieBannerText, cookieCategories } = adatvedelemEntry.data;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin);
-const ogLocale = config.ogLocale ?? "hu_HU";
+const ogLocale =
+  locale === defaultLocale ? (config.ogLocale ?? OG_LOCALE[locale]) : OG_LOCALE[locale];
 const themeColor = config.themeColor ?? "#F1D3B2";
 ---
 
 <!doctype html>
-<html lang="hu" {...rest}>
+<html lang={locale} {...rest}>
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
@@ -116,6 +124,7 @@ const themeColor = config.themeColor ?? "#F1D3B2";
     <Footer />
     <ConsentBanner
       gtmId={GTM_ID}
+      locale={localeFromPathname(Astro.url.pathname)}
       heading={cookieBannerHeading}
       text={cookieBannerText}
       categories={cookieCategories}

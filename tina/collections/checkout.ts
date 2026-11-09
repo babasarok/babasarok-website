@@ -7,7 +7,7 @@ export const CheckoutCollection: Collection = {
   format: "md",
   frontmatterFormat: "yaml",
   match: {
-    include: "index",
+    include: "**/index",
   },
   ui: {
     allowedActions: {

@@ -14,7 +14,6 @@
     applySelections,
     buildLine,
     buildSelections,
-    PRODUCT_UNAVAILABLE,
     type ConfiguredLine,
   } from "@/lib/basket/lineInput";
   import { formatMoney } from "@/lib/basket/money";
@@ -26,8 +25,13 @@
   import { sanitizeItem, isItemValid, validateItem } from "@/lib/product/validation";
   import type { OrderThreadColor, OrderProduct, OrderProductGroup } from "@/lib/order/types";
   import type { IProduct } from "@/lib/types.svelte";
+  import type { i18n as I18n } from "i18next";
+  import I18nGate from "@/components/ui/I18nGate.svelte";
+  import type { Locale } from "@/lib/i18n";
+  import { translateMessage } from "@/lib/i18next-client";
 
   interface Props {
+    locale: Locale;
     slug: string;
     product: OrderProduct;
     definition: ProductDefinition;
@@ -39,6 +43,7 @@
   }
 
   let {
+    locale,
     slug,
     product,
     definition,
@@ -133,7 +138,7 @@
 
     try {
       const next = $state.snapshot(item);
-      const selections = parseLineSelections(line.customFields?.selections ?? null);
+      const selections = parseLineSelections(line.customFields?.selections ?? null, locale);
       applySelections(next.fields, selections);
       applySelections(next.fields, partnerMaterials(params.get("syncFrom")));
       next.count = line.quantity;
@@ -168,7 +173,7 @@
       return {};
     }
 
-    const all = parseLineSelections(partner.customFields?.selections ?? null);
+    const all = parseLineSelections(partner.customFields?.selections ?? null, locale);
 
     return Object.fromEntries(
       Object.entries(all).filter(([, selection]) => selection?.kind === "material")
@@ -192,7 +197,7 @@
     validateItem(item);
 
     if (!isItemValid(item)) {
-      error = "Kérlek, ellenőrizd a termék adatait, és töltsd ki a hiányzó mezőket.";
+      error = "errors.validate";
       return false;
     }
 
@@ -213,7 +218,7 @@
     }
 
     if (variantId.value === undefined) {
-      return refuse(PRODUCT_UNAVAILABLE);
+      return refuse("errors.notOrderable");
     }
 
     const line = buildLine(definition, current.fields, variantId.value);
@@ -230,7 +235,7 @@
     const placed = findLine(result.value, line);
 
     if (!placed) {
-      return refuse("A termék nem került a kosárba. Töltsd újra az oldalt, és próbáld újra.");
+      return refuse("errors.addFailed");
     }
 
     if (existing && placed.id !== existing.id) {
@@ -302,7 +307,7 @@
       }
 
       if (variantId.value === undefined) {
-        refuse(PRODUCT_UNAVAILABLE);
+        refuse("errors.notOrderable");
         return;
       }
 
@@ -324,145 +329,152 @@
   }
 </script>
 
-<div class="not-prose w-full text-left text-body">
-  {#if item}
-    <OrderItem
-      product={item}
-      {definition}
-      {threadColors}
-      bare
-      onChange={(updated) => {
-        item = sanitizeItem(updated);
-        saved = false;
-      }}
-    />
-
-    {#if error}
-      <div class="mt-3 flex flex-col items-start gap-2 text-sm text-danger-500">
-        <p>{error}</p>
-        {#if refused}
-          <button
-            type="button"
-            class="cursor-pointer font-medium underline"
-            onclick={() => globalThis.location.reload()}
-          >
-            Oldal újratöltése
-          </button>
-        {/if}
-      </div>
-    {/if}
-
-    {#if priceNotice}
-      <div
-        class="mt-3 flex items-center gap-2 rounded-xl border border-warning-400 bg-warning-50 p-3 text-sm text-warning-800"
-      >
-        <Icon icon="mdi:alert-circle" class="shrink-0" />
-        Az oldalon látott ár ({formatMoney(priceNotice.shown, priceNotice.currencyCode)})
-        megváltozott; a kosárban a jelenlegi ár van: {formatMoney(
-          priceNotice.actual,
-          priceNotice.currencyCode
-        )}.
-      </div>
-    {/if}
-
-    {#if editingLineId !== null && isDirty}
-      <div
-        class="mt-3 flex items-center gap-2 rounded-xl border border-warning-400 bg-warning-50 p-3 text-sm text-warning-800"
-      >
-        <Icon icon="mdi:alert-circle" class="shrink-0" />
-        Nincs mentve: a módosítások még nem kerültek a kosárba.
-      </div>
-    {/if}
-
-    {#if saved}
-      <div
-        class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-success-600 bg-success-50 p-3 text-sm text-success-800"
-      >
-        <span class="flex items-center gap-1">
-          <Icon icon="mdi:check-circle" class="shrink-0" />
-          A termék a kosárban van.
-        </span>
-        <a
-          href={checkoutHref}
-          class="flex items-center gap-1 font-medium underline hover:text-success-900"
-        >
-          Tovább a pénztárhoz
-          <Icon icon="mdi:arrow-right" class="shrink-0" />
-        </a>
-      </div>
-    {/if}
-
-    <div class="mt-4 flex items-center gap-3">
-      <div
-        class="flex h-11 items-center justify-between rounded-full border border-brown-300 bg-white px-2 w-32 shrink-0 shadow-xs"
-      >
-        <IconButton
-          class="text-xl"
-          type="button"
-          aria-label="Mennyiség csökkentése"
-          disabled={item.count <= 1}
-          onclick={() => {
-            if (!item) {
-              return;
-            }
-
-            item.count--;
+<I18nGate {locale}>
+  {#snippet children(i18n: I18n)}
+    <div class="not-prose w-full text-left text-body">
+      {#if item}
+        <OrderItem
+          {locale}
+          product={item}
+          {definition}
+          {threadColors}
+          bare
+          onChange={(updated) => {
+            item = sanitizeItem(updated);
             saved = false;
           }}
-        >
-          <Icon icon="mdi:minus" class="h-[1em]" />
-        </IconButton>
-        <span class="text-sm font-semibold select-none">{item.count} db</span>
-        <IconButton
-          class="text-xl"
-          type="button"
-          aria-label="Mennyiség növelése"
-          onclick={() => {
-            if (!item) {
-              return;
-            }
-
-            item.count++;
-            saved = false;
-          }}
-        >
-          <Icon icon="mdi:add" class="h-[1em]" />
-        </IconButton>
-      </div>
-
-      <Button
-        class="h-11 flex-1 uppercase"
-        variant="contained"
-        type="button"
-        disabled={busy}
-        onclick={save}
-      >
-        {editingLineId === null ? "Kosárba" : "Kosár frissítése"}
-      </Button>
-    </div>
-
-    {#if relatedProducts.length > 0 && setInfo}
-      <div class="mt-6">
-        <SetPanel
-          setTitle={setInfo.setTitle}
-          {relatedProducts}
-          {basketCountByProductId}
-          {slugByProductId}
-          ready={!busy}
-          onAddRelated={addRelated}
         />
-      </div>
-    {/if}
 
-    {#if relatedGroups.length > 0}
-      <div class="mt-6">
-        <RelatedItems groups={relatedGroups} {slugByProductId} />
-      </div>
-    {/if}
-  {:else}
-    <div
-      class="min-h-64 w-full animate-pulse rounded-xl border border-brown-200 bg-brown-100"
-      aria-hidden="true"
-    ></div>
-  {/if}
-</div>
+        {#if error}
+          <div class="mt-3 flex flex-col items-start gap-2 text-sm text-danger-500">
+            <p>{translateMessage(i18n, error)}</p>
+            {#if refused}
+              <button
+                type="button"
+                class="cursor-pointer font-medium underline"
+                onclick={() => globalThis.location.reload()}
+              >
+                {i18n.t("errors.reload")}
+              </button>
+            {/if}
+          </div>
+        {/if}
+
+        {#if priceNotice}
+          <div
+            class="mt-3 flex items-center gap-2 rounded-xl border border-warning-400 bg-warning-50 p-3 text-sm text-warning-800"
+          >
+            <Icon icon="mdi:alert-circle" class="shrink-0" />
+            {i18n.t("order.priceChangedBasket", {
+              shown: formatMoney(priceNotice.shown, priceNotice.currencyCode),
+              actual: formatMoney(priceNotice.actual, priceNotice.currencyCode),
+            })}
+          </div>
+        {/if}
+
+        {#if editingLineId !== null && isDirty}
+          <div
+            class="mt-3 flex items-center gap-2 rounded-xl border border-warning-400 bg-warning-50 p-3 text-sm text-warning-800"
+          >
+            <Icon icon="mdi:alert-circle" class="shrink-0" />
+            {i18n.t("order.unsaved")}
+          </div>
+        {/if}
+
+        {#if saved}
+          <div
+            class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-success-600 bg-success-50 p-3 text-sm text-success-800"
+          >
+            <span class="flex items-center gap-1">
+              <Icon icon="mdi:check-circle" class="shrink-0" />
+              {i18n.t("order.inBasket")}
+            </span>
+            <a
+              href={checkoutHref}
+              class="flex items-center gap-1 font-medium underline hover:text-success-900"
+            >
+              {i18n.t("order.toCheckout")}
+              <Icon icon="mdi:arrow-right" class="shrink-0" />
+            </a>
+          </div>
+        {/if}
+
+        <div class="mt-4 flex items-center gap-3">
+          <div
+            class="flex h-11 items-center justify-between rounded-full border border-brown-300 bg-white px-2 w-32 shrink-0 shadow-xs"
+          >
+            <IconButton
+              class="text-xl"
+              type="button"
+              aria-label={i18n.t("common.quantityDecrease")}
+              disabled={item.count <= 1}
+              onclick={() => {
+                if (!item) {
+                  return;
+                }
+
+                item.count--;
+                saved = false;
+              }}
+            >
+              <Icon icon="mdi:minus" class="h-[1em]" />
+            </IconButton>
+            <span class="text-sm font-semibold select-none"
+              >{item.count} {i18n.t("common.piece")}</span
+            >
+            <IconButton
+              class="text-xl"
+              type="button"
+              aria-label={i18n.t("common.quantityIncrease")}
+              onclick={() => {
+                if (!item) {
+                  return;
+                }
+
+                item.count++;
+                saved = false;
+              }}
+            >
+              <Icon icon="mdi:add" class="h-[1em]" />
+            </IconButton>
+          </div>
+
+          <Button
+            class="h-11 flex-1 uppercase"
+            variant="contained"
+            type="button"
+            disabled={busy}
+            onclick={save}
+          >
+            {editingLineId === null ? i18n.t("order.addToBasket") : i18n.t("order.updateBasket")}
+          </Button>
+        </div>
+
+        {#if relatedProducts.length > 0 && setInfo}
+          <div class="mt-6">
+            <SetPanel
+              {locale}
+              setTitle={setInfo.setTitle}
+              {relatedProducts}
+              {basketCountByProductId}
+              {slugByProductId}
+              ready={!busy}
+              onAddRelated={addRelated}
+            />
+          </div>
+        {/if}
+
+        {#if relatedGroups.length > 0}
+          <div class="mt-6">
+            <RelatedItems groups={relatedGroups} {slugByProductId} {locale} />
+          </div>
+        {/if}
+      {:else}
+        <div
+          class="min-h-64 w-full animate-pulse rounded-xl border border-brown-200 bg-brown-100"
+          aria-hidden="true"
+        ></div>
+      {/if}
+    </div>
+  {/snippet}
+</I18nGate>

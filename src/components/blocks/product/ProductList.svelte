@@ -1,5 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import type { i18n as I18n } from "i18next";
+  import I18nGate from "@/components/ui/I18nGate.svelte";
+  import type { Locale } from "@/lib/i18n";
   import type { SlimImage } from "@/lib/order/types";
   import type { ProductListItem } from "@/lib/catalog/listItems";
   import {
@@ -28,6 +31,7 @@
   }
 
   interface Props {
+    locale: Locale;
     items: ProductListItem[];
     /** The catalogue's product sets, as filter options. */
     sets: SetOption[];
@@ -38,7 +42,7 @@
     popularOrder: string[];
   }
 
-  let { items, sets, popularOrder }: Props = $props();
+  let { locale, items, sets, popularOrder }: Props = $props();
 
   const products: ProductView[] = $derived(
     items.map((item) => ({
@@ -100,64 +104,76 @@
   });
 </script>
 
-{#snippet sortSelect(padding: "sm" | "lg")}
+{#snippet sortSelect(i18n: I18n, padding: "sm" | "lg")}
   <select
     data-pagefind-ignore
     value={view.sort}
-    aria-label="Rendezés"
+    aria-label={i18n.t("filters.sort")}
     class={`text-body rounded-full border border-muted bg-light py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sand-300 ${
       padding === "sm" ? "shrink-0 px-3.5" : "px-5"
     }`}
     onchange={handleSortChange}
   >
-    <option value="popular">Népszerű</option>
-    <option value="newest">Legfrissebb</option>
-    <option value="name">Név szerint</option>
+    <option value="popular">{i18n.t("filters.popular")}</option>
+    <option value="newest">{i18n.t("filters.newest")}</option>
+    <option value="name">{i18n.t("filters.name")}</option>
   </select>
 {/snippet}
 
 <div class="flex flex-col gap-10 sm:flex-row sm:gap-12">
-  <aside class="hidden w-full shrink-0 sm:block sm:w-60">
-    <label class="block">
-      <span class="text-headings mb-2.5 block text-h5">Keresés</span>
-      <input
-        type="search"
-        bind:value={view.q}
-        oninput={() => setView(view)}
-        placeholder="Keresés"
-        class="text-body w-full rounded-full border border-muted bg-light px-5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sand-300"
-      />
-    </label>
-    <FilterGroups
-      {sets}
-      selectedTypes={view.types}
-      selectedSets={view.sets}
-      onToggleType={toggleType}
-      onToggleSet={toggleSet}
-    />
-  </aside>
+  <I18nGate {locale}>
+    {#snippet children(i18n: I18n)}
+      <aside class="hidden w-full shrink-0 sm:block sm:w-60">
+        <label class="block">
+          <span class="text-headings mb-2.5 block text-h5">{i18n.t("search.label")}</span>
+          <input
+            type="search"
+            bind:value={view.q}
+            oninput={() => setView(view)}
+            placeholder={i18n.t("search.placeholder")}
+            class="text-body w-full rounded-full border border-muted bg-light px-5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sand-300"
+          />
+        </label>
+        <FilterGroups
+          {i18n}
+          {locale}
+          {sets}
+          selectedTypes={view.types}
+          selectedSets={view.sets}
+          onToggleType={toggleType}
+          onToggleSet={toggleSet}
+        />
+      </aside>
+    {/snippet}
+  </I18nGate>
   <div class="min-w-0 flex-1">
-    <div class="mb-8 flex items-center gap-2 sm:hidden" data-pagefind-ignore>
-      <input
-        type="search"
-        bind:value={view.q}
-        oninput={() => setView(view)}
-        placeholder="Keresés"
-        class="text-body min-w-0 flex-1 rounded-full border border-muted bg-light px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sand-300"
-      />
-      <FilterSheet
-        {sets}
-        selectedTypes={view.types}
-        selectedSets={view.sets}
-        onToggleType={toggleType}
-        onToggleSet={toggleSet}
-        onClear={clearView}
-      />
-      {@render sortSelect("sm")}
-    </div>
-    <div class="mb-8 hidden justify-end sm:flex">
-      {@render sortSelect("lg")}
-    </div>
+    <I18nGate {locale}>
+      {#snippet children(i18n: I18n)}
+        <div class="mb-8 flex items-center gap-2 sm:hidden" data-pagefind-ignore>
+          <input
+            type="search"
+            bind:value={view.q}
+            oninput={() => setView(view)}
+            placeholder={i18n.t("search.placeholder")}
+            class="text-body min-w-0 flex-1 rounded-full border border-muted bg-light px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sand-300"
+          />
+          <FilterSheet
+            {i18n}
+            {locale}
+            {sets}
+            selectedTypes={view.types}
+            selectedSets={view.sets}
+            onToggleType={toggleType}
+            onToggleSet={toggleSet}
+            onClear={clearView}
+          />
+          {@render sortSelect(i18n, "sm")}
+        </div>
+        <div class="mb-8 hidden justify-end sm:flex">
+          {@render sortSelect(i18n, "lg")}
+        </div>
+      {/snippet}
+    </I18nGate>
     <div
       class="grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-8 gap-y-12 px-4 sm:gap-y-8 sm:px-0"
     >
@@ -171,16 +187,20 @@
       {/each}
     </div>
     {#if visible.length === 0}
-      <div class="text-body py-20 text-center">
-        <p class="text-headings mb-5 text-h4">Nincs találat</p>
-        <button
-          type="button"
-          onclick={clearView}
-          class="rounded-full bg-accent px-6 py-2.5 text-sm text-light transition-colors hover:bg-sand-700"
-        >
-          Szűrők törlése
-        </button>
-      </div>
+      <I18nGate {locale}>
+        {#snippet children(i18n: I18n)}
+          <div class="text-body py-20 text-center">
+            <p class="text-headings mb-5 text-h4">{i18n.t("filters.noResults")}</p>
+            <button
+              type="button"
+              onclick={clearView}
+              class="rounded-full bg-accent px-6 py-2.5 text-sm text-light transition-colors hover:bg-sand-700"
+            >
+              {i18n.t("filters.clear")}
+            </button>
+          </div>
+        {/snippet}
+      </I18nGate>
     {/if}
   </div>
 </div>

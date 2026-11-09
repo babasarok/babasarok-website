@@ -78,10 +78,15 @@ describe("line input", () => {
 
 describe("line rows", () => {
   it("labels selections from the definition", () => {
-    const rows = describeLine(definition, JSON.stringify(buildSelections(fields())), {
-      materials: {},
-      threadColors: {},
-    });
+    const rows = describeLine(
+      definition,
+      JSON.stringify(buildSelections(fields())),
+      {
+        materials: {},
+        threadColors: {},
+      },
+      "hu"
+    );
 
     expect(rows).toEqual([
       { label: "Méret", value: "50x50" },
@@ -90,7 +95,35 @@ describe("line rows", () => {
   });
 
   it("returns no rows for unreadable selections", () => {
-    expect(describeLine(definition, "nope", { materials: {}, threadColors: {} })).toEqual([]);
+    expect(describeLine(definition, "nope", { materials: {}, threadColors: {} }, "hu")).toEqual([]);
+  });
+
+  it("resolves option labels in the requested language", () => {
+    const bilingual = ProductDefinitionSchema.parse({
+      id: "parna",
+      basePrice: 9000,
+      pricing: { kind: "unit" },
+      forbiddenMaterialCombinations: [],
+      fields: [
+        {
+          kind: "choice",
+          id: "meret",
+          label: { hu: "Méret", en: "Size" },
+          presentation: "radio",
+          visibility: { kind: "always" },
+          options: [{ id: "50", label: { hu: "50x50", en: "50 by 50" }, price: 2000 }],
+        },
+      ],
+    });
+    const selections = JSON.stringify({ meret: { kind: "option", value: "50" } });
+    const labels = { materials: {}, threadColors: {} };
+
+    expect(describeLine(bilingual, selections, labels, "hu")).toEqual([
+      { label: "Méret", value: "50x50" },
+    ]);
+    expect(describeLine(bilingual, selections, labels, "en")).toEqual([
+      { label: "Size", value: "50 by 50" },
+    ]);
   });
 });
 
@@ -306,7 +339,7 @@ describe("createBasketApi", () => {
     return { api, fetchMock, token: () => token };
   }
 
-  it("translates the vendure defaults buyers can hit into Hungarian", async () => {
+  it("maps the vendure defaults buyers can hit to a locale dictionary key", async () => {
     const { api } = apiWith({
       data: {
         setCustomerForOrder: {
@@ -326,8 +359,7 @@ describe("createBasketApi", () => {
     expect(result).toMatchObject({
       ok: false,
       failure: {
-        reason:
-          "Ez az email cím már regisztrált fiókhoz tartozik. Kérlek, adj meg egy másik email címet.",
+        reason: "errorCodes.EMAIL_ADDRESS_CONFLICT_ERROR",
       },
     });
   });

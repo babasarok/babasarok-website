@@ -1,19 +1,37 @@
 ---
-import { getCollection } from "astro:content";
+import { getCollection, getEntry } from "astro:content";
 import { Markdown } from "astro-md-2";
-import blogSection from "../../content/sections/blog.json";
+import {
+  defaultLocale,
+  entryIdForLocale,
+  entrySlugFromId,
+  localeFromEntryId,
+  localeFromPathname,
+  localizedPath,
+} from "@/lib/i18n";
 import blogShape from "../../assets/images/blog/blog-shape.svg?url";
 import Button from "../ui/Button.astro";
 import TopTitle from "../ui/TopTitle.astro";
 import BlogCard from "../ui/BlogCard.astro";
 
-const { enable, topTitle, title, buttonName, buttonTarget } = blogSection;
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const blogSectionEntry = (await getEntry(
+  "blogSectionBlock",
+  entryIdForLocale(localeFromPathname(Astro.url.pathname), "blog")
+))!;
+const { enable, topTitle, title, buttonName, buttonTarget } = blogSectionEntry.data;
 
+const locale = localeFromPathname(Astro.url.pathname);
 const posts = (await getCollection("blog"))
+  .filter((post) => localeFromEntryId(post.id) === locale)
   .toSorted((a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0))
   .slice(0, 3);
 
-const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
+const buttonHref = buttonTarget
+  ? locale === defaultLocale
+    ? `/${buttonTarget}`
+    : `/${locale}/${buttonTarget}`
+  : undefined;
 ---
 
 {
@@ -46,7 +64,7 @@ const buttonHref = buttonTarget ? `/${buttonTarget}` : undefined;
         <div class="flex flex-wrap">
           {posts.map((post) => (
             <BlogCard
-              href={`/blog/${post.id}/`}
+              href={localizedPath(`/blog/${entrySlugFromId(post.id)}/`, locale)}
               title={post.data.title}
               image={post.data.featureImage}
               date={post.data.date}

@@ -1,5 +1,7 @@
 ---
 import FloatingShapes from "./FloatingShapes.astro";
+import { localeFromPathname, localizedPath } from "../../lib/i18n";
+import { createI18n } from "../../lib/i18next";
 
 interface Props {
   title: string;
@@ -15,6 +17,10 @@ const {
   "no-shapes": noShapes = false,
   compact: compact = false,
 } = Astro.props;
+
+const locale = localeFromPathname(Astro.url.pathname);
+const i18n = createI18n(locale);
+const t = i18n.t.bind(i18n);
 ---
 
 <header class={`relative pt-30 lg:pt-50`}>
@@ -32,7 +38,9 @@ const {
       <nav aria-label="breadcrumb" class="flex justify-center">
         <ol class="flex items-center whitespace-nowrap">
           <li>
-            <a class="text-accent no-underline hover:underline" href="/"> Főoldal </a>
+            <a class="text-accent no-underline hover:underline" href={localizedPath("/", locale)}>
+              {t("pages.home")}
+            </a>
           </li>
           <li class="text-accent before:mx-2 before:content-['-']" aria-current="page">
             {breadcrumb}

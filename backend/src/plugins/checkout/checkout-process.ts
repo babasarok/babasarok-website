@@ -30,13 +30,16 @@ export class CheckoutReadinessProcess implements OrderProcess<string> {
 
     const shippingMethod = order.shippingLines.at(0)?.shippingMethod;
 
-    return checkoutRefusal({
-      lineCount: order.lines.length,
-      hasCustomer: order.customer != null,
-      hasShippingMethod: shippingMethod !== undefined,
-      termsAccepted: order.customFields.termsAccepted === true,
-      shippingMethodRequiresAddress: shippingMethod?.customFields.requiresAddress === true,
-      hasAddress: (order.shippingAddress.streetLine1 ?? "").trim() !== "",
-    });
+    return checkoutRefusal(
+      {
+        lineCount: order.lines.length,
+        hasCustomer: order.customer != null,
+        hasShippingMethod: shippingMethod !== undefined,
+        termsAccepted: order.customFields.termsAccepted === true,
+        shippingMethodRequiresAddress: shippingMethod?.customFields.requiresAddress === true,
+        hasAddress: (order.shippingAddress.streetLine1 ?? "").trim() !== "",
+      },
+      ctx.languageCode
+    );
   }
 }

@@ -77,12 +77,12 @@ const catalogProduct: CatalogProduct = {
 };
 
 function configured(): IProduct {
-  return instantiateProduct(toOrderProduct(catalogProduct, materials, BASE));
+  return instantiateProduct(toOrderProduct(catalogProduct, materials, BASE, "hu"));
 }
 
 describe("toOrderProduct", () => {
   it("maps the definition onto the configurator's product shape", () => {
-    const product = toOrderProduct(catalogProduct, materials, BASE);
+    const product = toOrderProduct(catalogProduct, materials, BASE, "hu");
 
     expect(product).toMatchObject({
       product_id: "kosar",
@@ -103,9 +103,36 @@ describe("toOrderProduct", () => {
   });
 
   it("offers only materials the catalog knows", () => {
-    const material = toOrderProduct(catalogProduct, materials, BASE).fields?.[3];
+    const material = toOrderProduct(catalogProduct, materials, BASE, "hu").fields?.[3];
 
     expect(material?.materials?.map((option) => option?.material_path.material_id)).toEqual(["a"]);
+  });
+
+  it("resolves the definition text in the requested language", () => {
+    const bilingual = ProductDefinitionSchema.parse({
+      id: "kosar",
+      basePrice: 1000,
+      pricing: { kind: "unit" },
+      forbiddenMaterialCombinations: [],
+      fields: [
+        {
+          id: "meret",
+          kind: "choice",
+          presentation: "select",
+          label: { hu: "Méret", en: "Size" },
+          visibility: { kind: "always" },
+          options: [{ id: "kicsi", label: { hu: "Kicsi", en: "Small" }, price: 0 }],
+        },
+      ],
+    });
+
+    const hu = toOrderProduct({ ...catalogProduct, definition: bilingual }, materials, BASE, "hu");
+    const en = toOrderProduct({ ...catalogProduct, definition: bilingual }, materials, BASE, "en");
+
+    expect(hu.fields?.[0]?.label).toBe("Méret");
+    expect(en.fields?.[0]?.label).toBe("Size");
+    expect(hu.fields?.[0]?.items?.[0]?.label).toBe("Kicsi");
+    expect(en.fields?.[0]?.items?.[0]?.label).toBe("Small");
   });
 });
 
@@ -180,7 +207,7 @@ describe("liveUnitPrice", () => {
       ],
     });
     const item = instantiateProduct(
-      toOrderProduct({ ...catalogProduct, definition: lengthDefinition }, materials, BASE)
+      toOrderProduct({ ...catalogProduct, definition: lengthDefinition }, materials, BASE, "hu")
     );
 
     expect(liveUnitPrice(lengthDefinition, "Szalag", item)).toBeNull();

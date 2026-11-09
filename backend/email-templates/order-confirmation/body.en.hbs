@@ -1,0 +1,141 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body style="margin:0; padding:0; background-color:#fbf7f4;">
+    <div style="background-color:#fbf7f4; padding:24px 12px;">
+      <table
+        role="presentation"
+        width="100%"
+        cellpadding="0"
+        cellspacing="0"
+        style="max-width:600px; margin:0 auto; background-color:#ffffff; border-radius:8px; overflow:hidden; font-family: Arial, Helvetica, sans-serif; color:#444444;"
+      >
+        <tr>
+          <td style="background-color:#6f5447; padding:20px 24px; text-align:center;">
+            <span
+              style="font-family: Georgia, 'Times New Roman', serif; font-size:26px; color:#fbf7f4; letter-spacing:1px;"
+            >Babasarok</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:28px 28px 8px 28px;">
+            <p style="margin:0 0 12px 0;">Dear customer,</p>
+            <p style="margin:0 0 12px 0;">Thank you for choosing Babasarok products! 🥰</p>
+            <p style="margin:0 0 12px 0;">Your order has reached us – we will soon start crafting it
+              for you 🧵✂️</p>
+            <p style="margin:0 0 12px 0;">Production takes roughly 3 weeks, counted from the receipt
+              of your payment.</p>
+            <p style="margin:0 0 12px 0;">💳 If you chose the bank-transfer payment method:<br />
+              We will send the invoice by email within 1–2 working days. You can settle the invoice
+              by bank transfer or online card payment.</p>
+            <p style="margin:0 0 12px 0;">📦 If you chose cash on delivery:<br />
+              Because our products are made individually, specifically for your order, a deposit of
+              HUF 6,000 is required, payable by bank transfer or online card payment.<br />
+              You can pay the remaining amount to the courier when you receive the parcel.</p>
+            <p style="margin:0 0 12px 0;">Thank you for your trust and patience! 🤍<br />
+              We hope you will soon hold your own, one-of-a-kind Babasarok products in your hands!
+              🥰</p>
+            <p style="margin:0 0 12px 0;">If any questions come up in the meantime, feel free to
+              reach out! 🫶</p>
+            <p style="margin:0 0 12px 0;">Best regards,<br />
+              The Babasarok team 🤍</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 28px 4px 28px;">
+            <hr style="border:none; border-top:1px solid #e0c0a3; margin:0 0 16px 0;" />
+            <p style="margin:0 0 8px 0; font-size:13px; color:#6f5447;">Order number:
+              <strong>{{order.code}}</strong></p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 28px;">
+            <p style="margin:0 0 6px 0; font-size:13px; color:#28341d; font-weight:bold;">Your order</p>
+            {{#each products}}
+              <table
+                role="presentation"
+                width="100%"
+                cellpadding="0"
+                cellspacing="0"
+                style="border:1px solid #e0c0a3; border-radius:6px; margin:0 0 10px 0;"
+              >
+                <tr>
+                  <td style="padding:10px 14px 4px 14px;">
+                    <p
+                      style="margin:0; font-family: Georgia, 'Times New Roman', serif; font-size:16px; color:#6f5447;"
+                    >{{number}}.
+                      {{title}}
+                      <span style="font-size:13px; color:#444444;">({{quantity}}
+                        pcs)</span></p>
+                  </td>
+                </tr>
+                {{#if details}}
+                  {{#each details}}
+                    <tr>
+                      <td
+                        style="padding:2px 14px 2px {{paddingLeft}}px; font-size:13px; line-height:1.5;"
+                      >
+                        <span style="color:#6f5447;">{{label}}:</span>
+                        <strong style="color:#28341d;">{{value}}</strong>
+                      </td>
+                    </tr>
+                  {{/each}}
+                {{/if}}
+                <tr><td style="font-size:0; line-height:6px;">&nbsp;</td></tr>
+              </table>
+            {{/each}}
+            {{#if setDiscountSummary}}
+              <div
+                style="border:1px solid #e0c0a3; border-radius:6px; padding:10px 14px; margin:0 0 10px 0;"
+              >
+                <p
+                  style="margin:0; font-size:13px; line-height:1.5; white-space:pre-line;"
+                >{{setDiscountSummary}}</p>
+              </div>
+            {{/if}}
+            <table
+              role="presentation"
+              width="100%"
+              cellpadding="0"
+              cellspacing="0"
+              style="background-color:#fbf7f4; border:1px solid #e0c0a3; border-radius:6px; margin:0 0 10px 0;"
+            >
+              <tr>
+                <td style="padding:10px 14px; font-size:13px; color:#6f5447;">Delivery:
+                  <strong style="color:#28341d;">{{deliveryName}}</strong></td>
+                <td
+                  align="right"
+                  style="padding:10px 14px; font-size:13px; color:#28341d; white-space:nowrap;"
+                ><strong>{{deliveryPrice}}</strong></td>
+              </tr>
+            </table>
+            {{#if order.customFields.message}}
+              <p style="margin:0 0 4px 0; font-size:13px;">Your message:
+                {{order.customFields.message}}</p>
+            {{/if}}
+            <p style="margin:0 0 16px 0; font-size:15px; color:#28341d;"><strong>Total:
+                {{total}}</strong></p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 28px 24px 28px;">
+            <p style="margin:0; font-size:11px; color:#a18472;">Transaction ID:
+              {{order.customFields.submissionTransactionId}}</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:#f3e7dc; padding:14px 28px; text-align:center;">
+            <p style="margin:0; font-size:12px; color:#6f5447;">
+              <a
+                href="https://babasarok.net"
+                style="color:#6f5447; text-decoration:none;"
+              >babasarok.net</a>
+            </p>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

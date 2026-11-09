@@ -4,6 +4,7 @@ import { HeroCollection } from "./collections/hero";
 import { ServiceCollection } from "./collections/service";
 import { AboutCollection } from "./collections/about";
 import { BlogSectionCollection } from "./collections/blog-section";
+import { ProductSectionCollection } from "./collections/product-section";
 import { BlogCollection } from "./collections/blog";
 import { ContactCollection } from "./collections/contact";
 import { AdatvedelemCollection } from "./collections/adatvedelem";
@@ -44,6 +45,7 @@ export default defineConfig({
       ServiceCollection,
       AboutCollection,
       BlogSectionCollection,
+      ProductSectionCollection,
       BlogCollection,
       CheckoutCollection,
       ContactCollection,

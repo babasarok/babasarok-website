@@ -1,0 +1,8 @@
+{
+  "enable": true,
+  "topTitle": "Reference pieces",
+  "title": "## Reference pieces\n",
+  "buttonName": "See all",
+  "buttonTarget": "blog",
+  "_template": "blog_section_template"
+}

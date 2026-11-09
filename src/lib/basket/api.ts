@@ -18,7 +18,12 @@ export interface TokenStore {
 export interface BasketApiDeps {
   fetch: typeof fetch;
   apiUrl: string;
-  languageCode: string;
+  /**
+   * The shop-API language per request: the fixed catalog language or a
+   * browser function reading the page's locale when the API outlives a
+   * single page.
+   */
+  languageCode: string | (() => string);
   tokens: TokenStore;
 }
 
@@ -85,9 +90,9 @@ const ORDER_FIELDS = `
   }
 `;
 
-const HUNGARIAN_ERRORS: Record<string, string> = {
-  EMAIL_ADDRESS_CONFLICT_ERROR:
-    "Ez az email cím már regisztrált fiókhoz tartozik. Kérlek, adj meg egy másik email címet.",
+// Vendure ErrorCode → i18next key; islands translate via their client i18n.
+const ERROR_KEYS: Record<string, string> = {
+  EMAIL_ADDRESS_CONFLICT_ERROR: "errorCodes.EMAIL_ADDRESS_CONFLICT_ERROR",
 };
 
 const ERROR_FIELDS = `__typename ... on ErrorResult { errorCode message }`;
@@ -136,12 +141,19 @@ function asFailure(error: unknown): Failure {
 }
 
 export function createBasketApi(deps: BasketApiDeps): BasketApi {
+  function language(): string {
+    return typeof deps.languageCode === "function" ? deps.languageCode() : deps.languageCode;
+  }
+
   async function request<Schema extends z.ZodType>(
     query: string,
     variables: Record<string, unknown>,
     schema: Schema
   ): Promise<Result<z.output<Schema>>> {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "Accept-Language": language(),
+    };
     const token = deps.tokens.get();
 
     if (token !== null) {
@@ -152,7 +164,7 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
 
     try {
       response = await deps.fetch(
-        `${deps.apiUrl}/shop-api?languageCode=${encodeURIComponent(deps.languageCode)}`,
+        `${deps.apiUrl}/shop-api?languageCode=${encodeURIComponent(language())}`,
         { method: "POST", headers, body: JSON.stringify({ query, variables }) }
       );
     } catch (error) {
@@ -232,7 +244,7 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
 
     const hungarian =
       "errorCode" in payload && typeof payload.errorCode === "string"
-        ? HUNGARIAN_ERRORS[payload.errorCode]
+        ? ERROR_KEYS[payload.errorCode]
         : undefined;
 
     const message =

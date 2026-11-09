@@ -1,0 +1,43 @@
+---
+import type { CollectionEntry } from "astro:content";
+import Base from "@/layouts/Base.astro";
+import PageHeader from "@/components/ui/PageHeader.astro";
+import BlogCard from "@/components/ui/BlogCard.astro";
+import Pagination from "@/components/ui/Pagination.astro";
+import { createI18n } from "@/lib/i18next";
+import { entrySlugFromId, localeFromPathname, localizedPath } from "@/lib/i18n";
+
+interface Props {
+  items: CollectionEntry<"blog">[];
+  currentPage: number;
+  lastPage: number;
+}
+
+const { items, currentPage, lastPage } = Astro.props;
+const locale = localeFromPathname(Astro.url.pathname);
+const i18n = createI18n(locale);
+const t = i18n.t.bind(i18n);
+const basePath = localizedPath("/blog", locale);
+---
+
+<Base title={t("pages.blog")}>
+  <PageHeader title={t("pages.blog")} />
+  <section class="py-25">
+    <div class="container">
+      <div class="flex flex-wrap">
+        {
+          items.map((post) => (
+            <BlogCard
+              href={localizedPath(`/blog/${entrySlugFromId(post.id)}/`, locale)}
+              title={post.data.title}
+              image={post.data.featureImage}
+              date={post.data.date}
+              spacing="page"
+            />
+          ))
+        }
+      </div>
+      <Pagination currentPage={currentPage} lastPage={lastPage} basePath={basePath} />
+    </div>
+  </section>
+</Base>

@@ -1,11 +1,16 @@
 ---
 import Base from "../layouts/Base.astro";
+import { localeFromPathname } from "../lib/i18n";
+import { createI18n } from "../lib/i18next";
+
+const i18n = createI18n(localeFromPathname(Astro.url.pathname));
+const t = i18n.t.bind(i18n);
 ---
 
-<Base title=" (404)">
+<Base title={t("pages.notFound")}>
   <section
     class="relative flex min-h-[70vh] items-center justify-center overflow-hidden px-6 text-center"
   >
-    <h1 class="text-h1 text-headings mb-6">Oldal nem található (404)</h1>
+    <h1 class="text-h1 text-headings mb-6">{t("pages.notFound")}</h1>
   </section>
 </Base>

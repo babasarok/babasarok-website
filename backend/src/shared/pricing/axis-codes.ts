@@ -4,6 +4,7 @@ import {
   type ProductField,
 } from "../product-definition/index";
 import type { LineSelectionRecord, LineSelections } from "../product-definition/index";
+import { messages } from "../messages";
 
 export type AxisField =
   | Extract<ProductField, { kind: "toggle" }>
@@ -27,11 +28,15 @@ export function isAxisField(field: ProductField): field is AxisField {
 }
 
 function notOffered(field: AxisField, value: string, languageCode: string): AxisCodeResult {
-  const noun = field.kind === "material" ? "anyagot" : "értéket";
+  const m = messages(languageCode);
+  const label = resolveText(field.label, languageCode);
 
   return {
     ok: false,
-    message: `A(z) "${resolveText(field.label, languageCode)}" mező nem kínálja ezt az ${noun}: ${value}`,
+    message:
+      field.kind === "material"
+        ? m.fieldDoesNotOfferMaterial(label, value)
+        : m.fieldDoesNotOfferValue(label, value),
   };
 }
 
@@ -53,7 +58,7 @@ function defaultAxisCode(field: AxisField, languageCode: string): AxisCodeResult
   if (code === undefined) {
     return {
       ok: false,
-      message: `A(z) "${resolveText(field.label, languageCode)}" mezőnek nincs választható értéke.`,
+      message: messages(languageCode).fieldHasNoOptions(resolveText(field.label, languageCode)),
     };
   }
 

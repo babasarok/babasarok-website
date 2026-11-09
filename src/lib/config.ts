@@ -22,6 +22,7 @@ import type { ImageFunction } from "astro/content/config";
 import type { z } from "astro/zod";
 import type { GetImageResult } from "astro";
 import { resolveImage } from "./assets";
+import type { Locale } from "./i18n";
 
 type Image = z.infer<ReturnType<ImageFunction>>;
 
@@ -83,10 +84,12 @@ async function optimizeImage(path: string, width: number): Promise<GetImageResul
 const LOGO_WIDTH = 400; // ~100–200px header logo
 const FOOTER_LOGO_WIDTH = 510; // ~255px footer logo
 
-export const getConfig = async (): Promise<
-  RecursiveRequired<CmsEnhancedConfig, GetImageResult>
-> => {
-  const result = await requestWithMetadata(client.queries.config({ relativePath: "config.json" }));
+export const getConfig = async (
+  locale: Locale
+): Promise<RecursiveRequired<CmsEnhancedConfig, GetImageResult>> => {
+  const result = await requestWithMetadata(
+    client.queries.config({ relativePath: `${locale}/config.json` })
+  );
   const { logo, footerLogo } = result.data.config;
 
   return {

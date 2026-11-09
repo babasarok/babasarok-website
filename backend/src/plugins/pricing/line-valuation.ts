@@ -50,7 +50,7 @@ export async function valueVariantLine(
   return valueConfiguredLine({
     definition: definitionRow.definition,
     productName,
-    selections: parseLineSelections(orderLineCustomFields.selections),
+    selections: parseLineSelections(orderLineCustomFields.selections, ctx.languageCode),
     lengthCm: typeof rawLengthCm === "number" ? rawLengthCm : null,
     languageCode: ctx.languageCode,
   });

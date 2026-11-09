@@ -6,6 +6,9 @@
   import IconButton from "./common/IconButton.svelte";
   import Tooltip from "./common/Tooltip.svelte";
   import { slide } from "svelte/transition";
+  import type { i18n as I18n } from "i18next";
+  import I18nGate from "@/components/ui/I18nGate.svelte";
+  import { localizedPath, type Locale } from "@/lib/i18n";
   import type { IProduct, MaterialField } from "@/lib/types.svelte";
   import { resolveColorCount } from "@/lib/product/materials";
 
@@ -19,12 +22,13 @@
    * whole product via {@link resolveColorCount}.
    */
   interface Props {
+    locale: Locale;
     product: IProduct;
     field: MaterialField;
     onChange?: ((product: IProduct) => void) | undefined;
   }
 
-  const { product, field, onChange }: Props = $props();
+  const { locale, product, field, onChange }: Props = $props();
 
   const materials = $derived(
     (field.materials ?? []).filter((m): m is NonNullable<typeof m> => m != null)
@@ -65,85 +69,94 @@
   }
 </script>
 
-{#if materials.length > 0}
-  <div class="flex flex-col gap-2">
-    <div class="flex gap-1 flex-wrap">
-      {#each materials as material (material.material_path.material_id)}
-        {@const materialInfo = material.material_path}
-        {@const selected = field.value?.material_id === materialInfo.material_id}
-        <Button
-          type="button"
-          class="flex items-center gap-0.5"
-          {selected}
-          onclick={() => selectMaterial(materialInfo.material_id)}
-        >
-          {materialInfo.label || materialInfo.material_id}
-          {#if material.price}
-            <span class="text-xs font-medium whitespace-nowrap opacity-70"
-              >+{material.price} Ft</span
+<I18nGate {locale}>
+  {#snippet children(i18n: I18n)}
+    {#if materials.length > 0}
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-1 flex-wrap">
+          {#each materials as material (material.material_path.material_id)}
+            {@const materialInfo = material.material_path}
+            {@const selected = field.value?.material_id === materialInfo.material_id}
+            <Button
+              type="button"
+              class="flex items-center gap-0.5"
+              {selected}
+              onclick={() => selectMaterial(materialInfo.material_id)}
             >
-          {/if}
-        </Button>
-      {/each}
-    </div>
-    {#if field.value?.material_id && materialInfo}
-      <div class="flex flex-col" transition:slide>
-        <p class="text-sm text-brown-500 flex items-center gap-1 justify-between">
-          <span class="flex items-center gap-1">
-            Szín
-            {#if (materialInfo.colors?.length ?? 0) > 0}
-              <Tooltip contentProps={{ class: "inline-flex" }}>
-                {#snippet content()}
-                  Összes szín megtekintése
-                {/snippet}
-                <IconButton
-                  href={`/material/${materialInfo.material_id}/`}
-                  target="_blank"
-                  rel="noopener"
-                  class="text-base"
-                  aria-label="Összes szín megtekintése"
+              {materialInfo.label || materialInfo.material_id}
+              {#if material.price}
+                <span class="text-xs font-medium whitespace-nowrap opacity-70"
+                  >+{material.price} Ft</span
                 >
-                  <Icon icon="mdi:information-outline" class="block" />
-                </IconButton>
-              </Tooltip>
-            {/if}
-          </span>
-          <span class="text-xs">
-            {#if colorCount === undefined}
-              <span class="text-red-600">Válaszz először opciót</span>
-            {:else}
-              {`${field.value.colors.length} / ${colorCount}`}
-            {/if}
-          </span>
-        </p>
-        {#if multiColor}
-          <div class="mt-1 flex gap-1 flex-wrap">
-            {#each field.value.colors as colorId, index (index)}
-              {@const colorInfo = materialInfo.colors?.find((c) => c.color_id === colorId)}
-              {#if colorInfo}
-                <Chip
-                  color={colorInfo.hex}
-                  bgImage={colorInfo.image?.src}
-                  onClose={() => removeColor(index)}
-                >
-                  {colorInfo.label || colorInfo.color_id}
-                </Chip>
               {/if}
-            {/each}
-          </div>
-        {/if}
-        {#if (materialInfo.colors?.length ?? 0) > 0}
-          {@const disabled =
-            colorCount === undefined ||
-            (multiColor ? field.value.colors.length >= colorCount : false)}
-          <div transition:slide class="mt-1 flex gap-1 flex-wrap leading-0">
-            {#each materialInfo.colors || [] as color (color.color_id)}
-              {@const selected = field.value?.colors.includes(color.color_id)}
-              <Color {color} {disabled} selected={!multiColor && !!selected} onclick={addColor} />
-            {/each}
+            </Button>
+          {/each}
+        </div>
+        {#if field.value?.material_id && materialInfo}
+          <div class="flex flex-col" transition:slide>
+            <p class="text-sm text-brown-500 flex items-center gap-1 justify-between">
+              <span class="flex items-center gap-1">
+                {i18n.t("basket.color")}
+                {#if (materialInfo.colors?.length ?? 0) > 0}
+                  <Tooltip contentProps={{ class: "inline-flex" }}>
+                    {#snippet content()}
+                      {i18n.t("basket.viewAllColors")}
+                    {/snippet}
+                    <IconButton
+                      href={localizedPath(`/material/${materialInfo.material_id}/`, locale)}
+                      target="_blank"
+                      rel="noopener"
+                      class="text-base"
+                      aria-label={i18n.t("basket.viewAllColors")}
+                    >
+                      <Icon icon="mdi:information-outline" class="block" />
+                    </IconButton>
+                  </Tooltip>
+                {/if}
+              </span>
+              <span class="text-xs">
+                {#if colorCount === undefined}
+                  <span class="text-red-600">Válaszz először opciót</span>
+                {:else}
+                  {`${field.value.colors.length} / ${colorCount}`}
+                {/if}
+              </span>
+            </p>
+            {#if multiColor}
+              <div class="mt-1 flex gap-1 flex-wrap">
+                {#each field.value.colors as colorId, index (index)}
+                  {@const colorInfo = materialInfo.colors?.find((c) => c.color_id === colorId)}
+                  {#if colorInfo}
+                    <Chip
+                      color={colorInfo.hex}
+                      bgImage={colorInfo.image?.src}
+                      onClose={() => removeColor(index)}
+                    >
+                      {colorInfo.label || colorInfo.color_id}
+                    </Chip>
+                  {/if}
+                {/each}
+              </div>
+            {/if}
+            {#if (materialInfo.colors?.length ?? 0) > 0}
+              {@const disabled =
+                colorCount === undefined ||
+                (multiColor ? field.value.colors.length >= colorCount : false)}
+              <div transition:slide class="mt-1 flex gap-1 flex-wrap leading-0">
+                {#each materialInfo.colors || [] as color (color.color_id)}
+                  {@const selected = field.value?.colors.includes(color.color_id)}
+                  <Color
+                    {color}
+                    {disabled}
+                    selected={!multiColor && !!selected}
+                    onclick={addColor}
+                  />
+                {/each}
+              </div>
+            {/if}
           </div>
         {/if}
       </div>
     {/if}
-  </div>
-{/if}
+  {/snippet}
+</I18nGate>

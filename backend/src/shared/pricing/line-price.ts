@@ -5,6 +5,7 @@ import {
 } from "../product-definition/index";
 import { dependencyOrder, isVisible } from "../product-definition/index";
 import type { LineSelections } from "../product-definition/index";
+import { messages } from "../messages";
 import { axisCodes, isAxisField, type AxisCodes, type AxisField } from "./axis-codes";
 
 export interface LinePricingInput {
@@ -20,8 +21,8 @@ export interface LinePricingInput {
 
 export class LinePricingError extends Error {}
 
-export function lengthMissingRejection(productName: string): string {
-  return `A(z) "${productName}" méteráru — a hossz (cm) megadása kötelező.`;
+export function lengthMissingRejection(productName: string, languageCode: string): string {
+  return messages(languageCode).lengthMissing(productName);
 }
 
 function countWords(text: string): number {
@@ -41,7 +42,10 @@ function choiceOptionPrice(
 
   if (option === undefined) {
     throw new LinePricingError(
-      `A(z) "${resolveText(field.label, languageCode)}" mező nem kínálja ezt az értéket: ${optionId}`
+      messages(languageCode).fieldDoesNotOfferValue(
+        resolveText(field.label, languageCode),
+        optionId
+      )
     );
   }
 
@@ -59,7 +63,10 @@ function axisPrice(field: AxisField, optionCode: string, languageCode: string): 
 
     if (option === undefined) {
       throw new LinePricingError(
-        `A(z) "${resolveText(field.label, languageCode)}" mező nem kínálja ezt az anyagot: ${optionCode}`
+        messages(languageCode).fieldDoesNotOfferMaterial(
+          resolveText(field.label, languageCode),
+          optionCode
+        )
       );
     }
 
@@ -92,7 +99,7 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
 
   for (const fieldId of Object.keys(selections)) {
     if (fieldById(definition.fields, fieldId) === undefined) {
-      throw new LinePricingError(`A termék nem ismeri ezt a mezőt: ${fieldId}`);
+      throw new LinePricingError(messages(languageCode).unknownField(fieldId));
     }
   }
 
@@ -175,7 +182,7 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
     const lengthCm = input.lengthCm;
 
     if (lengthCm === null || !Number.isInteger(lengthCm) || lengthCm <= 0) {
-      throw new LinePricingError(lengthMissingRejection(productName));
+      throw new LinePricingError(lengthMissingRejection(productName, languageCode));
     }
 
     const perMeter =
@@ -257,11 +264,6 @@ function axisSum(
 export type LineValuation =
   { kind: "priced"; price: number } | { kind: "invalid"; message: string };
 
-/** The buyer-facing message for a configured line its definition cannot price. */
-export function unpricedLineMessage(productName: string, detail: string): string {
-  return `Árazási hiba (${productName}): ${detail}`;
-}
-
 export function valueConfiguredLine(input: LinePricingInput): LineValuation {
   try {
     return { kind: "priced", price: computeLineUnitPrice(input) };
@@ -269,7 +271,7 @@ export function valueConfiguredLine(input: LinePricingInput): LineValuation {
     if (error instanceof LinePricingError) {
       return {
         kind: "invalid",
-        message: unpricedLineMessage(input.productName, error.message),
+        message: messages(input.languageCode).pricingFailure(input.productName, error.message),
       };
     }
 
