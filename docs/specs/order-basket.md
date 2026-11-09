@@ -47,28 +47,12 @@ value the field does not offer; a `custom` value on a choice without
 `customValue`, or any custom/input/embroidery value breaking the field's
 pattern; a material the colour list of which does not contain a picked colour,
 or that repeats a colour; input, custom or embroidery text over 200
-characters. `lengthCm` is a whole number from 1 to 10,000 (100 m); Vendure
+characters; material picks (an unpicked material field counting as its first
+listed material) that complete one of the product's forbidden material
+combinations. `lengthCm` is a whole number from 1 to 10,000 (100 m); Vendure
 refuses values outside it. The refusal reaches the site as an `OrderInterceptorError`
 whose `interceptorError` field carries the Hungarian message (its generic `message`
 does not).
-
-- **Scenario: Foreign colour**
-  - WHEN a line picks a colour the referenced material does not offer
-  - THEN adding or adjusting the line is refused
-
-### Shop-API line validation
-
-The system SHALL refuse, with a Hungarian buyer-facing message naming the
-product, an order line whose `selections` the product's own fields cannot
-accept. Refused: an unknown field id; a record whose kind does not fit its
-field (input → `input`, choice → `option`/`custom`, toggle → `option`,
-material → `material`, embroidery → `embroidery`); a choice option or toggle
-value the field does not offer; a `custom` value on a choice without
-`customValue`, or any custom/input/embroidery value breaking the field's
-pattern; a material the colour list of which does not contain a picked colour,
-or that repeats a colour; input, custom or embroidery text over 200
-characters. `lengthCm` is a whole number from 1 to 10,000 (100 m); Vendure
-refuses values outside it.
 
 - **Scenario: Foreign colour**
   - WHEN a line picks a colour the referenced material does not offer

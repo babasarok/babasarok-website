@@ -31,8 +31,9 @@ formatter; a selection is also refused when a material field carries fewer
 colours than its `colorCount` requires (a `from-field` count is checked only
 once the source field has a numeric answer). A forbidden material combination is
 a multiset of material ids (`[X, X]` bans X on two fields; `[X, Y]` bans the pair
-wherever they sit); variant generation omits every variant whose materials
-cover a rule, and the package exposes the same rule to the configurator.
+wherever they sit); the server refuses a line whose material picks (defaults
+included) cover a rule — at add/adjust and as an `OPTION_NOT_OFFERED` reason
+— and the package exposes the same rule to the configurator.
 
 ## Requirements
 
