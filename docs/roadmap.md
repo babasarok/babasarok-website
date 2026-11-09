@@ -123,8 +123,14 @@ splits into two PRs.
   indexer's incremental `update-variants` job only indexes its first
   take-50 page — any future bulk write must reindex or page)
 - ⬜ **S6 switch & verify** — merge the site cutover, flip prod to the
-  Vendure catalog, retire the placeholders, run the epic-2
-  Vendure-complete gate and the user / owner journey click-throughs
+  Vendure catalog, run the epic-2
+  Vendure-complete gate and the user / owner journey click-throughs.
+  Placeholder retirement is done (2026-11-09): the `[placeholder]` products
+  are soft-deleted by the `retire-placeholder-products` migration at its
+  deploy, and the orders referencing them keep their lines
+  (`backend/integration/retire-placeholders.test.ts`)
+
+## Post-cutover follow-ups
 
 ## Post-cutover follow-ups
 
