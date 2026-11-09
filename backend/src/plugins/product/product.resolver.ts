@@ -12,7 +12,6 @@ import {
 } from "@vendure/core";
 import type { ID } from "@vendure/core";
 import { Args, Info, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
-import type { GraphQLResolveInfo } from "graphql";
 import { ProductDefinition } from "./product.entity";
 import { shopThreadColorTypes } from "./thread-color.resolver";
 import { ProductDefinitionService } from "./product-definition.service";
@@ -65,17 +64,26 @@ export interface ProductDefinitionDriftGraph {
   label: string;
 }
 
+/** The fields of the resolve info the staleness gate needs. */
+interface ResolveInfoLike {
+  fieldNodes: ReadonlyArray<{
+    selectionSet?: {
+      selections: ReadonlyArray<{ kind: string; name?: { value: string } }>;
+    };
+  }>;
+}
+
 /** Whether the operation actually reads `stale`/`driftDetails`: the drift
  * analysis hydrates the product's whole variant matrix (3 000+ variants
  * catalog-wide), so reads that don't display staleness must not pay for it.
  * ponytail: fragment spreads are not descended — the dashboard table and the
  * scripts inline their fields. */
-function wantsDrift(info: GraphQLResolveInfo): boolean {
+function wantsDrift(info: ResolveInfoLike): boolean {
   return info.fieldNodes.some((node) =>
     node.selectionSet?.selections.some(
       (selection) =>
         selection.kind === "Field" &&
-        (selection.name.value === "stale" || selection.name.value === "driftDetails")
+        (selection.name?.value === "stale" || selection.name?.value === "driftDetails")
     )
   );
 }
@@ -109,7 +117,7 @@ export class ProductDefinitionResolver {
   @Allow(Permission.UpdateCatalog)
   async productDefinitions(
     @Ctx() ctx: RequestContext,
-    @Info() info: GraphQLResolveInfo,
+    @Info() info: ResolveInfoLike,
     @Args("options") options: ProductDefinitionListOptionsInput
   ): Promise<ProductDefinitionListGraph> {
     const { items, totalItems } = await this.productDefinitionService.productDefinitions(
@@ -130,7 +138,7 @@ export class ProductDefinitionResolver {
   @Allow(Permission.UpdateCatalog)
   async productDefinition(
     @Ctx() ctx: RequestContext,
-    @Info() info: GraphQLResolveInfo,
+    @Info() info: ResolveInfoLike,
     @Args("productId") productId: string
   ): Promise<ProductDefinitionGraph | null> {
     const row = await this.productDefinitionService.productDefinition(ctx, productId);
@@ -173,7 +181,7 @@ export class ProductDefinitionResolver {
   @Allow(Permission.UpdateCatalog)
   async createProductDefinition(
     @Ctx() ctx: RequestContext,
-    @Info() info: GraphQLResolveInfo,
+    @Info() info: ResolveInfoLike,
     @Args("definition") definition: unknown,
     @Args("name") name: string
   ): Promise<ProductDefinitionGraph> {
@@ -189,7 +197,7 @@ export class ProductDefinitionResolver {
   @Allow(Permission.UpdateCatalog)
   async updateProductDefinition(
     @Ctx() ctx: RequestContext,
-    @Info() info: GraphQLResolveInfo,
+    @Info() info: ResolveInfoLike,
     @Args("productId") productId: string,
     @Args("definition") definition: unknown,
     @Args("force", { nullable: true }) force: boolean | null
