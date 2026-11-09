@@ -13,7 +13,6 @@ import { Pool } from "pg";
 import { z } from "zod";
 import { env } from "../dist/env";
 import { RETIRE_PLACEHOLDER_PRODUCTS_STATEMENTS } from "../dist/migrations/1794500000000-retire-placeholder-products";
-import { dashboardOrders, type DashboardOrder } from "./dashboard-order";
 import { seedCatalog } from "./fixtures";
 import { run, startServer, type IntegrationServer } from "./harness";
 import { takaro } from "./lines";
@@ -30,6 +29,110 @@ const PLACEHOLDER_SLUG = "placeholder-int-teszt-termek";
 const PLACEHOLDER_SKU = "placeholder-Int-Teszt-Termek";
 const PLACEHOLDER_NAME = "[placeholder] Int teszt termék";
 const TAKARO_SKU = "int-takaro";
+
+/** The order as the dashboard's order-detail page reads it from the admin API. */
+const DashboardOrderSchema = z.object({
+  code: z.string(),
+  state: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  totalQuantity: z.number(),
+  subTotal: z.number(),
+  subTotalWithTax: z.number(),
+  shipping: z.number(),
+  shippingWithTax: z.number(),
+  total: z.number(),
+  totalWithTax: z.number(),
+  customer: z
+    .object({
+      emailAddress: z.string(),
+      firstName: z.string(),
+      lastName: z.string(),
+      phoneNumber: z.string().nullable(),
+    })
+    .nullable(),
+  shippingAddress: z.object({
+    fullName: z.string().nullable(),
+    streetLine1: z.string().nullable(),
+    phoneNumber: z.string().nullable(),
+    countryCode: z.string().nullable(),
+  }),
+  shippingLines: z.array(
+    z.object({ priceWithTax: z.number(), shippingMethod: z.object({ code: z.string() }) })
+  ),
+  customFields: z.object({
+    message: z.string().nullable(),
+    deliveryMethodName: z.string().nullable(),
+    deliveryPrice: z.number().nullable(),
+    deliveryFree: z.boolean().nullable(),
+    orderTotal: z.number().nullable(),
+    setDiscountSummary: z.string().nullable(),
+    termsAccepted: z.boolean().nullable(),
+    submissionTransactionId: z.string().nullable(),
+  }),
+  lines: z.array(
+    z.object({
+      id: z.string(),
+      quantity: z.number(),
+      unitPrice: z.number(),
+      unitPriceWithTax: z.number(),
+      linePrice: z.number(),
+      linePriceWithTax: z.number(),
+      productVariant: z.object({
+        id: z.string(),
+        name: z.string(),
+        sku: z.string(),
+        product: z.object({ id: z.string(), name: z.string() }),
+      }),
+      customFields: z.object({
+        title: z.string().nullable(),
+        configText: z.string().nullable(),
+        detailsJson: z.string().nullable(),
+        quotedUnitPrice: z.number().nullable(),
+        quotedLineTotal: z.number().nullable(),
+        lengthCm: z.number().nullable(),
+        selections: z.string().nullable(),
+      }),
+    })
+  ),
+});
+
+type DashboardOrder = z.output<typeof DashboardOrderSchema>;
+
+const OrderListSchema = z.object({
+  orders: z.object({ items: z.array(DashboardOrderSchema) }),
+});
+
+const ORDER_LIST_QUERY = `
+  query {
+    orders(options: { take: 100 }) { items {
+      code state createdAt updatedAt totalQuantity
+      subTotal subTotalWithTax shipping shippingWithTax total totalWithTax
+      customer { emailAddress firstName lastName phoneNumber }
+      shippingAddress { fullName streetLine1 phoneNumber countryCode }
+      shippingLines { priceWithTax shippingMethod { code } }
+      customFields {
+        message deliveryMethodName deliveryPrice deliveryFree orderTotal
+        setDiscountSummary termsAccepted submissionTransactionId
+      }
+      lines {
+        id quantity unitPrice unitPriceWithTax linePrice linePriceWithTax
+        productVariant { id name sku product { id name } }
+        customFields {
+          title configText detailsJson quotedUnitPrice quotedLineTotal
+          lengthCm selections
+        }
+      }
+    } }
+  }
+`;
+
+/** Every order, sorted by code so before/after lists compare positionally. */
+async function dashboardOrders(admin: IntegrationServer["admin"]): Promise<DashboardOrder[]> {
+  const { orders } = await run(admin, ORDER_LIST_QUERY, {}, OrderListSchema);
+
+  return orders.items.toSorted((a, b) => a.code.localeCompare(b.code));
+}
 
 const ProductListSchema = z.object({
   products: z.object({ items: z.array(z.object({ slug: z.string() })) }),
