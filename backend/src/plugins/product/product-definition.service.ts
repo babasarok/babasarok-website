@@ -87,6 +87,7 @@ import {
 } from "./variant-plan";
 import { BulkVariantWriter } from "./bulk-variant-writer";
 import type { PlannedVariantCreate } from "./bulk-variant-writer";
+import { loadVariantMatrix, type MatrixVariant } from "./variant-matrix-loader";
 
 function labelAsName(translation: { languageCode: LanguageCode; label: string }): {
   languageCode: LanguageCode;
@@ -110,14 +111,6 @@ function sameText(a: LocalizedText, b: LocalizedText): boolean {
 
 /** The variant writes per ProductVariantService call — the spike's per-variant loop is not shippable. */
 const BATCH_SIZE = 100;
-
-/**
- * Full-matrix variant loads fetch each to-many relation in its own query: one
- * joined query returns options × translations × prices × facet values rows per
- * variant (~290 for babafeszek, 334k rows for its 1 152 variants, doubling with
- * every added language), which OOM'd the worker on 2026-11-08/09.
- */
-const VARIANT_RELATION_LOAD = "query";
 
 /** Options and groups the plan no longer has. Their deletion waits for the
  * variant writes, because Vendure's option delete reports NOT_DELETED while
@@ -1122,20 +1115,14 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       return ids;
     };
 
-    const existing = await this.connection.getRepository(ctx, ProductVariant).find({
-      where: { product: { id: nativeProductId }, deletedAt: IsNull() },
-      relationLoadStrategy: VARIANT_RELATION_LOAD,
-      relations: {
-        options: true,
-        translations: true,
-        productVariantPrices: true,
-        facetValues: true,
-      },
-    });
+    const existing = await loadVariantMatrix(
+      this.connection.getRepository(ctx, ProductVariant).manager,
+      nativeProductId
+    );
     const plannedBySku = new Map(plan.variants.map((variant) => [variant.sku, variant]));
     const existingBySku = new Map(existing.map((variant) => [variant.sku, variant]));
-    const channelPrice = (variant: ProductVariant): number =>
-      variant.productVariantPrices.find((price) => price.channelId === ctx.channelId)?.price ?? 0;
+    const channelPrice = (variant: MatrixVariant): number =>
+      variant.prices.find((price) => price.channelId === Number(ctx.channelId))?.price ?? 0;
 
     const missing = plan.variants.filter((variant) => !existingBySku.has(variant.sku));
 
@@ -1149,12 +1136,12 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       }
 
       const plannedOptionIds = optionIdsFor(planned);
-      const actualOptionIds = new Set(variant.options.map((option) => Number(option.id)));
+      const actualOptionIds = new Set(variant.options.map((option) => option.id));
       const optionsChanged =
         actualOptionIds.size !== plannedOptionIds.length ||
         plannedOptionIds.some((optionId) => !actualOptionIds.has(optionId));
       const plannedFacetIds = facetValueIdsFor(variant.sku);
-      const actualFacetIds = new Set(variant.facetValues.map((value) => Number(value.id)));
+      const actualFacetIds = new Set(variant.facetValues.map((value) => value.id));
       const facetsChanged =
         actualFacetIds.size !== plannedFacetIds.length ||
         plannedFacetIds.some((facetValueId) => !actualFacetIds.has(facetValueId));
@@ -1202,7 +1189,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       if (bulk) {
         await this.bulkVariantWriter.softDelete(
           ctx,
-          stale.map((variant) => Number(variant.id))
+          stale.map((variant) => variant.id)
         );
       } else {
         await this.variantService.softDelete(
@@ -1315,7 +1302,6 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     const product = await this.connection.getRepository(ctx, Product).findOne({
       where: { id: nativeProductId, deletedAt: IsNull() },
       relations: {
-        translations: true,
         optionGroups: { translations: true, options: { translations: true } },
       },
     });
@@ -1324,16 +1310,10 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       throw new Error(`A natív termék eltűnt: ${nativeProductId}`);
     }
 
-    const variants = await this.connection.getRepository(ctx, ProductVariant).find({
-      where: { product: { id: nativeProductId }, deletedAt: IsNull() },
-      relationLoadStrategy: VARIANT_RELATION_LOAD,
-      relations: {
-        options: { group: true },
-        translations: true,
-        productVariantPrices: true,
-        facetValues: true,
-      },
-    });
+    const variants = await loadVariantMatrix(
+      this.connection.getRepository(ctx, ProductVariant).manager,
+      nativeProductId
+    );
 
     return {
       optionGroups: product.optionGroups
@@ -1352,10 +1332,9 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         sku: variant.sku,
         name: textOf(variant.translations, variant.sku),
         price:
-          variant.productVariantPrices.find((price) => price.channelId === ctx.channelId)?.price ??
-          0,
+          variant.prices.find((price) => price.channelId === Number(ctx.channelId))?.price ?? 0,
         options: variant.options.map((option) => ({
-          groupCode: option.group.code,
+          groupCode: option.groupCode,
           optionCode: option.code,
         })),
         facetValues: variant.facetValues.map((value) => value.code),
