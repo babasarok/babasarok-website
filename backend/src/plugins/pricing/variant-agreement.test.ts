@@ -60,7 +60,7 @@ describe("variantDisagreement", () => {
         variant,
         "hu"
       )
-    ).toMatch(/anyagválasztása nem egyezik/);
+    ).toMatch(/Anyag.*nem egyezik/);
     expect(
       variantDisagreement(definition, { meret: { kind: "option", value: "50" } }, variant, "hu")
     ).toMatch(/Méret.*nem egyezik/);
@@ -68,7 +68,32 @@ describe("variantDisagreement", () => {
 
   it("refuses a variant missing an axis option", () => {
     expect(variantDisagreement(definition, {}, new Map([["meret", "40"]]), "hu")).toMatch(
-      /"anyag" választása nincs rajta/
+      /Anyag.*nem egyezik/
     );
+  });
+
+  it("compares the defaults an absent selection implies", () => {
+    expect(
+      variantDisagreement(
+        definition,
+        {},
+        new Map([
+          ["meret", "50"],
+          ["anyag", "wellsoft"],
+        ]),
+        "hu"
+      )
+    ).toMatch(/Méret.*nem egyezik/);
+    expect(
+      variantDisagreement(
+        definition,
+        {},
+        new Map([
+          ["meret", "40"],
+          ["anyag", "wellsoft"],
+        ]),
+        "hu"
+      )
+    ).toBeUndefined();
   });
 });

@@ -1,6 +1,6 @@
 import type { EntityHydrator, ProductVariant, RequestContext } from "@vendure/core";
 import { resolveText, type ProductDefinition } from "../../shared/product-definition/index";
-import { isAxisField, type LineSelections } from "../../shared/pricing/index";
+import { axisCodes, type LineSelections } from "../../shared/pricing/index";
 
 /** Option-group code → option code of the variant's generated options. */
 export async function variantOptionCodes(
@@ -16,10 +16,10 @@ export async function variantOptionCodes(
 }
 
 /**
- * Why the line's variant does not match its selections, or undefined when it
- * does: a material or listed choice the selections pick must be the variant's
- * option, and the variant must carry an option for every variant-axis field.
- * Only the agreement is checked here; the price comes from the selections.
+ * Why the line's variant is not the one its selections imply (defaults
+ * included, see `axisCodes`), or undefined when it is. Every variant-axis
+ * field but a length source field must carry the derived option. Only the
+ * agreement is checked here; the price comes from the selections.
  */
 export function variantDisagreement(
   definition: ProductDefinition,
@@ -27,44 +27,24 @@ export function variantDisagreement(
   variantCodes: ReadonlyMap<string, string>,
   languageCode: string
 ): string | undefined {
-  for (const [fieldId, selection] of Object.entries(selections)) {
-    const field = definition.fields.find((candidate) => candidate.id === fieldId);
+  const derived = axisCodes(definition, selections, languageCode);
 
-    if (field === undefined || selection === undefined) {
-      continue;
-    }
-
-    if (selection.kind === "material") {
-      const optionCode = variantCodes.get(fieldId);
-
-      if (optionCode === undefined) {
-        return `A(z) "${fieldId}" anyagválasztása nincs rajta a kiválasztott változaton.`;
-      }
-
-      if (selection.materialId !== optionCode) {
-        return `A(z) "${fieldId}" anyagválasztása nem egyezik a kiválasztott változattal.`;
-      }
-    }
-
-    if (
-      field.kind === "choice" &&
-      field.presentation !== "color" &&
-      selection.kind === "option" &&
-      selection.value !== variantCodes.get(fieldId)
-    ) {
-      return `A(z) "${resolveText(field.label, languageCode)}" mező választása nem egyezik a kiválasztott változattal.`;
-    }
+  if (!derived.ok) {
+    return derived.message;
   }
 
   const sourceFieldId =
     definition.pricing.kind === "length" ? definition.pricing.sourceFieldId : undefined;
 
-  for (const field of definition.fields) {
-    if (!isAxisField(field) || field.id === sourceFieldId || variantCodes.has(field.id)) {
+  for (const [fieldId, code] of derived.codes) {
+    if (fieldId === sourceFieldId || variantCodes.get(fieldId) === code) {
       continue;
     }
 
-    return `A(z) "${field.id}" választása nincs rajta a kiválasztott változaton.`;
+    const field = definition.fields.find((candidate) => candidate.id === fieldId);
+    const label = field === undefined ? fieldId : resolveText(field.label, languageCode);
+
+    return `A(z) "${label}" mező választása nem egyezik a kiválasztott változattal.`;
   }
 
   return undefined;
