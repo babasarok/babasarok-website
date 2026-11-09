@@ -207,9 +207,27 @@ the bulk-write rule in AGENTS.md (watch `job_record`).
   transition, no matrix preserved for invoicing. Each step deletes what it
   makes dead (code, helpers, tests, docs) and shrinks the guard allowlist.
 
-## Note: invoicing identifiers
+## Invoicing identifiers (researched 2026-11-09)
 
-Accounting/invoicing requirements (Hungarian invoicing, NAV Online Számla)
-are researched separately and do not block any step. If a per-line item
-identifier turns out to be required, it is computed from the product and the
-line's selections; it is not a reason to keep any of the matrix.
+No source requires a distinct item code per option combination, so nothing
+in the rollout depends on one. An invoice line carries the product's name
+and SKU with the selection labels as its description.
+
+- VAT Act (2007. évi CXXVII. tv.) § 169 (1) f): the product's name
+  (megnevezés) and quantity are mandatory; tariff numbers (VTSZ/SZJ) are at
+  the issuer's choice ([njt.jog.gov.hu](https://njt.jog.gov.hu); NAV guide
+  [3012-2018](https://nav.gov.hu/pfile/file?path=%2Fszabalyzok%2Futmutatok%2F3012-2018_20181112_a.pdf)).
+- NAV Online Számla 3.0: `productCodes` and `lineDescription` are both
+  `minOccurs="0"` in `invoiceData.xsd`
+  ([nav-gov-hu/Online-Invoice](https://github.com/nav-gov-hu/Online-Invoice)).
+- Barion: `Items[].SKU` is optional — per the research (docs.barion.com,
+  Item); not re-verified.
+- Számlázz.hu's item `azonosito` is optional
+  ([docs](https://docs.szamlazz.hu/hu/agent/generating_invoice/xml)); Billingo
+  v3 items have no product-code field
+  ([API](https://api.billingo.hu/)).
+- Warranty decree 151/2003: a name/type suitable for identification
+  ([njt](https://njt.jog.gov.hu/jogszabaly/2003-151-20-22)).
+
+Should a per-line identifier ever be wanted, it is computed from the product
+and the line's selections.
