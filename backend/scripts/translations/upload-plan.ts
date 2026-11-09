@@ -70,10 +70,10 @@ function withoutEmpty(row: object): Record<string, unknown> {
 }
 
 /**
- * The entity's read custom fields, sent back unchanged so a translations-only
- * write cannot wipe them (ShippingMethod has lost `requiresAddress` this way).
- * Relations are already read as `<name>Id`; unset keys are omitted so the
- * payload stays exactly what the API read.
+ * The entity's read custom fields, sent back unchanged: Vendure's
+ * translations-only update of a ShippingMethod resets its custom fields to
+ * null. Relations are already read as `<name>Id`; unset keys are omitted so
+ * the payload stays exactly what the API read.
  */
 function customFieldsInput(
   customFields: CustomFields | null | undefined

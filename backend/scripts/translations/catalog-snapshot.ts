@@ -10,9 +10,9 @@ export interface AdminApi {
 
 /**
  * Custom fields as their update inputs take them: flat values, relations
- * already read as `<name>Id`. A translations-only update wipes custom fields
- * on some entity kinds (ShippingMethod has wiped `requiresAddress` on prod),
- * so every write carries the snapshot's values back unchanged.
+ * already read as `<name>Id`. Vendure's translations-only update of a
+ * ShippingMethod resets its custom fields to null, so every write sends the
+ * read values back unchanged.
  */
 export type CustomFieldValue = string | number | boolean | null | undefined;
 export type CustomFields = Record<string, CustomFieldValue>;
