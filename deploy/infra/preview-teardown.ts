@@ -42,6 +42,34 @@ function branchExists(branch: string): boolean | undefined {
 }
 
 let changed = false;
+let failed = false;
+
+function teardown(stack: string, dir: string): void {
+  compose(["-p", `babasarok-${stack}`, "down"], dir);
+  // `compose down` leaves named volumes behind (per-branch assets and test
+  // mail), so remove them explicitly. Tolerate absence: older stacks lack them.
+  for (const volume of ["assets", "email-out"]) {
+    spawnSync("docker", ["volume", "rm", `babasarok-${stack}_${volume}`], { stdio: "ignore" });
+  }
+
+  execFileSync(
+    "docker",
+    [
+      "exec",
+      SHARED_PG,
+      "psql",
+      "-U",
+      "babasarok",
+      "-d",
+      "postgres",
+      "-c",
+      `DROP DATABASE IF EXISTS "babasarok_preview_${stack}" WITH (FORCE)`,
+    ],
+    { stdio: "inherit" }
+  );
+  rmSync(`${ROOT}/infra/previews/${stack}.caddy`, { force: true });
+  rmSync(dir, { recursive: true, force: true });
+}
 
 for (const entry of readdirSync(ROOT, { withFileTypes: true })) {
   if (!entry.isDirectory() || !existsSync(`${ROOT}/${entry.name}/branch.txt`)) {
@@ -58,34 +86,23 @@ for (const entry of readdirSync(ROOT, { withFileTypes: true })) {
     continue;
   }
   console.log(`branch '${branch}' no longer exists on origin; tearing down ${stack}`);
-  compose(["-p", `babasarok-${stack}`, "down"], dir);
-  // The stack's assets volume (vendure-owned imagery) is per-branch state;
-  // `compose down` leaves named volumes behind, so remove it explicitly.
-  // Tolerate absence: stacks deployed before assets existed have none.
-  spawnSync("docker", ["volume", "rm", `babasarok-${stack}_assets`], { stdio: "ignore" });
-  execFileSync(
-    "docker",
-    [
-      "exec",
-      SHARED_PG,
-      "psql",
-      "-U",
-      "babasarok",
-      "-d",
-      "postgres",
-      "-c",
-      `DROP DATABASE IF EXISTS "babasarok_preview_${stack}" WITH (FORCE)`,
-    ],
-    { stdio: "inherit" }
-  );
-  rmSync(dir, { recursive: true, force: true });
-  rmSync(`${ROOT}/infra/previews/${stack}.caddy`, { force: true });
   changed = true;
+
+  try {
+    teardown(stack, dir);
+  } catch (error) {
+    console.error(`tearing down ${stack} failed:`, error);
+    failed = true;
+  }
 }
 
 if (changed) {
   compose(
-    ["exec", "-T", "caddy", "caddy", "reload", "--force", "/etc/caddy/Caddyfile"],
+    ["exec", "-T", "caddy", "caddy", "reload", "--config", "/etc/caddy/Caddyfile", "--force"],
     `${ROOT}/infra`
   );
+}
+
+if (failed) {
+  process.exitCode = 1;
 }

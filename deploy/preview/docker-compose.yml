@@ -13,7 +13,9 @@
 # NODE_ENV=development and no email transport in .env: previews run the file
 # transport and can never email a real buyer. Email rendering runs in the
 # worker (job queue), the /mailbox route in the vendure process — both mount
-# ./email-out so the mailbox sees what the worker wrote.
+# the stack's email-out volume so the mailbox sees what the worker wrote. A
+# named volume, not a bind mount: the containers run as root, and root-owned
+# files in the stack directory would block the deploy user's teardown.
 services:
   migrate:
     build: ./repo
@@ -37,7 +39,7 @@ services:
       DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/${PREVIEW_DB_NAME}
     volumes:
       # Email files written by the worker; /mailbox here serves them.
-      - ./email-out:/app/backend/email-out
+      - email-out:/app/backend/email-out
       # Vendure-owned imagery, copied from the prod volume on every deploy
       # (deploy-stack.ts), same lifecycle as the preview database.
       - assets:/app/backend/assets
@@ -67,7 +69,7 @@ services:
     command: ["node", "dist/index-worker.js"]
     stop_grace_period: 30s
     volumes:
-      - ./email-out:/app/backend/email-out
+      - email-out:/app/backend/email-out
     # Same DB probe as the prod stack's worker (no HTTP listener to fetch).
     healthcheck:
       test:
@@ -87,6 +89,7 @@ services:
 
 volumes:
   assets:
+  email-out:
 
 networks:
   default:
