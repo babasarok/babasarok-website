@@ -15,7 +15,8 @@
  * Run from the repo root: pnpm run db:pull-prod
  */
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { closeSync, openSync, readFileSync, statSync, unlinkSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { z } from "zod";
 
@@ -90,9 +91,25 @@ const sshArgs = [
 ];
 
 console.log("→ dumping the production database over ssh…");
-const dump = run("ssh", sshArgs);
+// Streamed to a file, not captured: spawnSync's stdout capture dies with
+// ENOBUFS on a real prod dump (its maxBuffer is a few hundred KiB).
+const dumpPath = path.join(os.tmpdir(), "babasarok-prod-dump.sql");
+const dumpFd = openSync(dumpPath, "w");
+const dumpResult = spawnSync("ssh", sshArgs, { stdio: ["ignore", dumpFd, "inherit"] });
+closeSync(dumpFd);
 
-if (dump.length === 0) {
+if (dumpResult.error !== undefined) {
+  die(`ssh could not start: ${dumpResult.error.message}`);
+}
+
+if (dumpResult.status !== 0) {
+  die(`ssh pg_dump failed with exit code ${dumpResult.status}`);
+}
+
+const dumpSize = statSync(dumpPath).size;
+
+if (dumpSize === 0) {
+  unlinkSync(dumpPath);
   die("the ssh dump came back empty — refusing to wipe the local database.");
 }
 
@@ -103,7 +120,8 @@ console.log(`→ dropping and recreating the local database "${dbName}"…`);
 psql(["-d", "postgres", "-c", `DROP DATABASE IF EXISTS "${dbName}" WITH (FORCE)`]);
 psql(["-d", "postgres", "-c", `CREATE DATABASE "${dbName}"`]);
 
-console.log(`→ restoring ${Math.round(dump.length / 1024)} KiB into "${dbName}"…`);
-psql(["-d", dbName, "-v", "ON_ERROR_STOP=1", "-q"], dump);
+console.log(`→ restoring ${Math.round(dumpSize / 1024 / 1024)} MiB into "${dbName}"…`);
+psql(["-d", dbName, "-v", "ON_ERROR_STOP=1", "-q"], readFileSync(dumpPath));
+unlinkSync(dumpPath);
 
 console.log("done — the chained migrate step brings the schema up to local HEAD.");
