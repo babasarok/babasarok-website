@@ -124,7 +124,10 @@ splits into two PRs.
   take-50 page — any future bulk write must reindex or page)
 - ✅ **S6 switch & verify** (2026-11-07) — the cutover PR (#86) merged to main
   and prod switched to the Vendure catalog (verified live on
-  babasarok.net: /product/ serves Vendure data).
+  babasarok.net: /product/ serves Vendure data). The `[placeholder]` products
+  are retired (2026-11-09): the `retire-placeholder-products` migration
+  soft-deletes them, and the orders referencing them keep their lines
+  (`backend/integration/retire-placeholders.test.ts`).
 
 ## Post-cutover follow-ups
 

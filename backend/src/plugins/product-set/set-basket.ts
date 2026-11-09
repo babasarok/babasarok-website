@@ -295,7 +295,8 @@ export function setBasketState(input: {
     const definition = productId === undefined ? undefined : definitionByProductId.get(productId);
 
     if (productId === undefined || definition === undefined) {
-      // Placeholder lines (quote submissions) carry no configuration.
+      // Legacy quote-order lines (their products had no definition) carry no
+      // configuration.
       continue;
     }
 

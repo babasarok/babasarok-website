@@ -45,7 +45,7 @@ export interface CatalogMaterial {
   colors: Array<{ id: string; label: string; hex: string | null; imageUrl: string | null }>;
 }
 
-/** Null for products without a configurator definition (e.g. quote-order placeholders): not storefront products. */
+/** Null for products without a configurator definition: not storefront products. */
 export function toProduct(row: ProductRow): CatalogProduct | null {
   if (row.productDefinition === null) {
     return null;

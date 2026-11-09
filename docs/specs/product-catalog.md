@@ -66,7 +66,7 @@ its tagline as the category line. Visibility and orderability are one switch —
 the native product's `enabled` (the shop API serves only enabled products); a
 product without a known type is
 listed and only drops out of type filters. A product without a definition
-(e.g. a quote-order placeholder) is not a storefront product: it appears in no
+is not a storefront product: it appears in no
 list, search, sitemap or home block, and its detail page is a 404. The page is
 rendered on demand and cached at the edge (60 s, 300 s stale-while-revalidate),
 and an unreachable backend shows the error page instead of partial data. With:
