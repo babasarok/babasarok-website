@@ -144,10 +144,9 @@ Each step ships alone; the system is correct after each.
    selections (the existing refusal, kept so nothing a buyer can do changes),
    in one allowlisted module. Buyer-visible behaviour is unchanged, except
    that during a sync lag the server now charges the definition's price (what
-   the configurator showed) instead of the stale variant price. Caveat: a
-   field whose visibility depends on a _hidden_ axis field could see a
-   different value (the site omits hidden fields from the selections); no
-   current definition has such a chain. **Guard:** an ESLint
+   the configurator showed) instead of the stale variant price. The site's live
+   price and its variant pick read the same selections through the same
+   function, so a hidden axis field takes its default everywhere. **Guard:** an ESLint
    `no-restricted-syntax` rule blocks variant-option reads (`variant.options`,
    `productVariant.options`, `options`/`options.group` relation loads) with
    an allowlist of the remaining uses (listed below); a unit test fails when
