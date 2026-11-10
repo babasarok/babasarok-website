@@ -8,6 +8,13 @@ import svelteConfig from "./svelte.config";
 
 import { defineConfig, globalIgnores } from "eslint/config";
 import { variantOptionReadFiles, variantOptionReadSelectors } from "./eslint/variant-option-reads";
+import {
+  catalogFetchFiles,
+  catalogFetchImports,
+  onDemandPageAllowlist,
+  onDemandPageFiles,
+  onDemandPageSelectors,
+} from "./eslint/catalog-rendering";
 
 const noExtensionImports = {
   regex: String.raw`^\.{1,2}/.*\.[cm]?[jt]sx?$`,
@@ -222,6 +229,22 @@ export default defineConfig([
     files: variantOptionReadFiles,
     rules: {
       "no-restricted-syntax": ["error", ...variantOptionReadSelectors],
+    },
+  },
+  {
+    files: catalogFetchFiles,
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        { patterns: [noExtensionImports], paths: [catalogFetchImports] },
+      ],
+    },
+  },
+  {
+    files: onDemandPageFiles,
+    ignores: onDemandPageAllowlist,
+    rules: {
+      "no-restricted-syntax": ["error", ...onDemandPageSelectors],
     },
   },
   // Astro-specific warnings and recommendations for .astro files

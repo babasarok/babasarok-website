@@ -7,12 +7,11 @@ import products from "./__fixtures__/products.json";
 import threadColors from "./__fixtures__/thread-colors.json";
 import {
   byPopularity,
+  getCatalog,
   getMaterial,
   getMaterials,
   getProduct,
-  getProductGroups,
   getProducts,
-  getThreadColors,
 } from "./index";
 
 function runReturning(...responses: unknown[]): ShopQuery & { variables: unknown[] } {
@@ -122,7 +121,7 @@ describe("getProduct", () => {
   });
 });
 
-describe("materials, thread colors, groups", () => {
+describe("materials", () => {
   it("maps materials with colors", async () => {
     const result = await getMaterials(runReturning(materials));
 
@@ -134,16 +133,38 @@ describe("materials, thread colors, groups", () => {
   it("is null for an unknown material", async () => {
     expect(await getMaterial("nope", runReturning({ material: null }))).toBeNull();
   });
+});
 
-  it("maps thread colors", async () => {
-    expect(await getThreadColors(runReturning(threadColors))).toHaveLength(2);
+describe("getCatalog", () => {
+  const catalogResponse = { ...products, ...materials, ...threadColors, ...productGroups };
+
+  it("loads products, materials, thread colors and groups in one request", async () => {
+    const run = runReturning(catalogResponse);
+    const catalog = await getCatalog(run);
+
+    expect(run.variables).toEqual([{ skip: 0, take: 100 }]);
+    expect(catalog.products).toHaveLength(3);
+    expect(catalog.materials).toHaveLength(2);
+    expect(catalog.threadColors).toHaveLength(2);
+    expect(catalog.groups.map((group) => group.kind)).toEqual(["set", "related"]);
+    expect(catalog.groups[0]).toMatchObject({
+      discount: 1300,
+      productIds: ["tornazsak", "vallfas-zsak"],
+    });
   });
 
-  it("returns product groups with kind and member ids", async () => {
-    const groups = await getProductGroups(runReturning(productGroups));
+  it("pages the products past the first page", async () => {
+    const [first, ...rest] = products.products.items;
+    const run = runReturning(
+      { ...catalogResponse, products: { totalItems: 3, items: [first] } },
+      { products: { totalItems: 3, items: rest } }
+    );
 
-    expect(groups.map((group) => group.kind)).toEqual(["set", "related"]);
-    expect(groups[0]).toMatchObject({ discount: 1300, productIds: ["tornazsak", "vallfas-zsak"] });
+    expect((await getCatalog(run)).products).toHaveLength(3);
+    expect(run.variables).toEqual([
+      { skip: 0, take: 100 },
+      { skip: 1, take: 100 },
+    ]);
   });
 });
 

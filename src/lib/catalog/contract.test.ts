@@ -8,14 +8,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { createShopQuery } from "@/lib/vendure/transport";
-import {
-  getMaterial,
-  getMaterials,
-  getProduct,
-  getProductGroups,
-  getProducts,
-  getThreadColors,
-} from "./index";
+import { getCatalog, getMaterial, getMaterials, getProduct, getProducts } from "./index";
 
 const apiUrl = process.env.CATALOG_CONTRACT_API_URL;
 
@@ -27,15 +20,18 @@ describe.skipIf(apiUrl === undefined)("catalog contract against the live shop AP
   });
 
   it("serves every catalog query in the shape the schemas expect", async () => {
-    const [products, materials, threadColors, groups] = await Promise.all([
+    const [catalog, products, materials] = await Promise.all([
+      getCatalog(run),
       getProducts(run),
       getMaterials(run),
-      getThreadColors(run),
-      getProductGroups(run),
     ]);
 
-    expect(Array.isArray(threadColors)).toBe(true);
-    expect(Array.isArray(groups)).toBe(true);
+    expect(catalog.products.map((product) => product.slug)).toEqual(
+      products.map((product) => product.slug)
+    );
+    expect(catalog.materials.map((material) => material.slug)).toEqual(
+      materials.map((material) => material.slug)
+    );
 
     const product = products.at(0);
     const material = materials.at(0);

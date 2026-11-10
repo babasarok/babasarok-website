@@ -19,6 +19,13 @@ const translation = {
     piece: "db",
     details: "Részletek",
   },
+  catalog: {
+    loading: "Betöltés…",
+    loadFailed: "A tartalmat most nem sikerült betölteni.",
+    retry: "Újrapróbálás",
+    productNotFound: "Ez a termék nem található.",
+    materialNotFound: "Ez az anyag nem található.",
+  },
   header: {
     menu: "Menü",
     contact: "Kapcsolat",

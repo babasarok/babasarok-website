@@ -78,3 +78,10 @@ export const ProductGroupsResponseSchema = z.object({
     })
   ),
 });
+
+export const CatalogResponseSchema = z.object({
+  ...ProductsResponseSchema.shape,
+  ...MaterialsResponseSchema.shape,
+  ...ThreadColorsResponseSchema.shape,
+  ...ProductGroupsResponseSchema.shape,
+});

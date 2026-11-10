@@ -109,6 +109,8 @@ export class QuoteOrderPlacedStrategy implements OrderPlacedStrategy {
   }
 }
 
+const CORS_PREFLIGHT_MAX_AGE_SECONDS = 7200;
+
 export const config: VendureConfig = {
   defaultLanguageCode: LanguageCode.hu,
   apiOptions: {
@@ -120,10 +122,14 @@ export const config: VendureConfig = {
     // browser rejects any cross-origin response unless the origin is exact
     // (never *) and Allow-Credentials is set — also what lets the login
     // response's vendure-auth-token header reach the dashboard (Vendure adds
-    // the exposedHeaders entry only for object cors options).
-    cors: env.allowedOrigins
-      ? { origin: env.allowedOrigins, credentials: true }
-      : { origin: true, credentials: true },
+    // the exposedHeaders entry only for object cors options). The storefront
+    // calls the shop API from the browser on every catalog page; caching the
+    // preflight saves those calls a round trip (Chromium caps it at 2 hours).
+    cors: {
+      origin: env.allowedOrigins ?? true,
+      credentials: true,
+      maxAge: CORS_PREFLIGHT_MAX_AGE_SECONDS,
+    },
     csrfPrevention: true,
     middleware: [
       {

@@ -25,6 +25,13 @@ const translation = {
     piece: "pc",
     details: "Details",
   },
+  catalog: {
+    loading: "Loading…",
+    loadFailed: "The content could not be loaded right now.",
+    retry: "Try again",
+    productNotFound: "This product could not be found.",
+    materialNotFound: "This material could not be found.",
+  },
   header: {
     menu: "Menu",
     contact: "Contact",

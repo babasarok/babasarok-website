@@ -35,20 +35,11 @@ export default defineConfig({
   // No Astro sessions; the adapter would otherwise provision a KV namespace.
   session: false,
   redirects: { "/home": "/" },
-  // On-demand catalog pages (ADR 0012): an edit is live within maxAge, and a
-  // failing backend is hidden behind stale copies for up to swr more seconds.
-  // The /en/ mirrors exist for the epic-8 locale routes (route rules support
-  // no globs, see ADR 0015); they are inert until those routes land.
+  // Catalog HTML pages are static shells whose islands load the catalog in the
+  // browser (ADR 0017); only these on-demand endpoints are edge-cached. Route
+  // rules support no globs, so every rule carries its /en/ mirror (ADR 0015).
   cache: { provider: cacheCloudflare() },
   routeRules: {
-    "/product": { maxAge: 60, swr: 300 },
-    "/en/product": { maxAge: 60, swr: 300 },
-    "/product/[id]": { maxAge: 60, swr: 300 },
-    "/en/product/[id]": { maxAge: 60, swr: 300 },
-    "/material": { maxAge: 60, swr: 300 },
-    "/en/material": { maxAge: 60, swr: 300 },
-    "/material/[slug]": { maxAge: 60, swr: 300 },
-    "/en/material/[slug]": { maxAge: 60, swr: 300 },
     "/search-index.json": { maxAge: 60, swr: 300 },
     "/en/search-index.json": { maxAge: 60, swr: 300 },
     "/sitemap-catalog.xml": { maxAge: 3600 },
@@ -64,12 +55,14 @@ export default defineConfig({
     i18nPreload(),
     // Builds the vendure dashboard into dist/dashboard on every build.
     vendureDashboard(),
-    // Catalog pages are on demand, so the integration cannot see their urls.
+    // Catalog detail pages are on demand, so the integration cannot see their
+    // urls; the checkout is no landing page.
     // The i18n option emits xhtml:link alternates per URL (sitemap-method
     // hreflang, ADR 0015): unprefixed urls get hu-HU, /en/ urls get en.
     sitemap({
       customSitemaps: [`${site}/sitemap-catalog.xml`],
       i18n: { defaultLocale, locales: { hu: "hu-HU", en: "en" } },
+      filter: (page) => !/\/checkout\/?$/.test(new URL(page).pathname),
     }),
     icon(),
     tina(),
