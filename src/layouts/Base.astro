@@ -32,6 +32,7 @@ interface Props extends HTMLAttributes<"html"> {
   isArticle?: boolean;
   /** Override robots directive, default: "index, follow" */
   robots?: string;
+  compactFooter?: boolean;
 }
 
 const {
@@ -40,6 +41,7 @@ const {
   image,
   isArticle = false,
   robots = "index, follow",
+  compactFooter = false,
   ...rest
 } = Astro.props;
 
@@ -132,7 +134,7 @@ const themeColor = config.themeColor ?? "#F1D3B2";
     <div id="content" role="document" data-pagefind-body>
       <slot />
     </div>
-    <Footer />
+    <Footer compact={compactFooter} />
     <ConsentBanner
       gtmId={GTM_ID}
       locale={localeFromPathname(Astro.url.pathname)}

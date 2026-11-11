@@ -214,7 +214,7 @@ export async function expectBrowserBackReturnsToShipping(page: Page): Promise<vo
 }
 
 export async function expectInvalidLineBlocksSubmit(page: Page): Promise<void> {
-  await expect(page.getByTestId("line-invalid-reason").first()).toBeVisible();
+  await expect(summary(page).getByTestId("line-invalid-reason")).toBeVisible();
   await step(page, "review")
     .getByRole("checkbox", { name: /Elfogadom/ })
     .check();
