@@ -250,7 +250,7 @@ on a copy of production (`backend/integration/rehearse-one-variant.test.ts`).
 - ✅ **1. Selections authoritative** — pricing, set discounts and line
   validity read the selections + definition (`axisCodes`)
 - ✅ **2. Server refuses forbidden material combinations** from the
-  selections, at add/adjust and as an `OPTION_NOT_OFFERED` reason
+  selections, at add/adjust and as a `FORBIDDEN_COMBINATION` reason
 - ✅ **3. Variant agreement check retired**
 - ✅ **4. Material collections and Material/Color facets dropped** (owner:
   no material/color browsing, now or later) — migration
@@ -281,15 +281,12 @@ Build on what exists; do not relitigate the catalog decision:
     and the Hungarian error mappings in `src/lib/basket`, product-page and
     list labels, cookie banner). Extract to locale dictionaries; route
     per-locale (Astro i18n routing, hreflang).
-  - Buyer-visible server messages — translate at the server per request
-    language (one source of truth; the site renders what the server says).
-    `OrderLine.invalidReason` is ready: each message carries a stable `code`
-    and `ctx.languageCode` already reaches the shared rejection helper. The
-    two free-text surfaces (the pricing package's invalid-configuration
-    message and `checkoutRefusal`) get their Hungarian templates moved into
-    the same per-language tables. Vendure's own default errors stay English
-    server-side — the site maps them by `errorCode`, so that one map grows
-    locale-keyed dictionaries.
+  - ✅ Buyer-visible server refusals are codes with values (the shared
+    `Refusal` schema): `OrderLine.invalidReason`, add/adjust refusals and
+    the checkout transition refusal. The site words them from its locale
+    files (`refusals.*`). Emails and line-detail labels stay server-rendered
+    per request language. Vendure's own default errors stay English
+    server-side — the site maps them by `errorCode`.
   - Order emails — Hungarian templates need per-locale variants.
   - Native names — delivery methods, promotions and set-group titles are
     Vendure-translatable; give them English values.

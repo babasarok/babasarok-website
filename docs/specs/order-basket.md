@@ -85,20 +85,21 @@ removed once), not migrated.
 
 ### Stale lines
 
-The system SHALL expose on every shop-API `OrderLine` an `invalidReason`
-(`{ code, message }`, null when the line is fine) with the codes
-`NOT_ORDERABLE` (the product is no longer orderable), `VARIANT_UNAVAILABLE`
-(the product's variant is disabled or deleted) and `OPTION_NOT_OFFERED` (the line's
-`selections`/`lengthCm` no longer fit the product definition or cannot be
-priced); `message` is Hungarian and buyer-facing. A line keeps the price it
+The system SHALL expose on every shop-API `OrderLine` an `invalidReason`, a
+refusal (a `code` plus the values that explain it, the shared `Refusal`
+schema; null when the line is fine): `VARIANT_UNAVAILABLE` when the product's
+variant is disabled or deleted, otherwise the code of whatever no longer fits
+the product definition or cannot be priced (for example `VALUE_NOT_OFFERED`,
+`SELECTION_INVALID` with a nested reason, `LENGTH_MISSING`). The site words
+every code from its locale files in the page's language. A line keeps the price it
 had when it was added or last adjusted; the site compares `unitPriceWithTax`
 with the price its page showed. Placing an order with an invalid line is
 refused (order-submission spec).
 
 - **Scenario: Option withdrawn after adding**
   - WHEN the owner removes an option a basket line selected
-  - THEN the line's `invalidReason` is `OPTION_NOT_OFFERED` with a message,
-    and removing or re-adjusting the line clears it
+  - THEN the line's `invalidReason` is a refusal naming the field and the
+    withdrawn value, and removing or re-adjusting the line clears it
 - **Scenario: Price changed on a stale page**
   - WHEN a line is added from a page showing an older price
   - THEN the line carries the server price and the site shows the

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { messages } from "../messages";
+import { RefusalError } from "../refusal";
 
 /**
  * A buyer's selections on an order line, stored on the line's `selections`
@@ -48,32 +48,32 @@ export type LineSelectionRecord = z.output<typeof LineSelectionRecordSchema>;
 /** Missing key = the buyer acted on no such field (record indexes stay optional). */
 export type LineSelections = Partial<Record<string, LineSelectionRecord>>;
 
-export class LineSelectionsError extends Error {}
+export class LineSelectionsError extends RefusalError {}
 
 /**
  * Parses the raw `selections` custom-field value (JSON or null/empty for an
  * unconfigured line) into the typed records, or throws {@link LineSelectionsError}.
  */
-export function parseLineSelections(raw: unknown, languageCode: string): LineSelections {
+export function parseLineSelections(raw: unknown): LineSelections {
   if (typeof raw !== "string" || raw.trim() === "") {
     return {};
   }
 
   let data: unknown;
-  const m = messages(languageCode);
 
   try {
     data = JSON.parse(raw);
   } catch {
-    throw new LineSelectionsError(m.selectionsNotJson());
+    throw new LineSelectionsError({ code: "SELECTIONS_NOT_JSON" });
   }
 
   const parsed = LineSelectionsSchema.safeParse(data);
 
   if (!parsed.success) {
-    throw new LineSelectionsError(
-      m.selectionsInvalid(parsed.error.issues.map((issue) => issue.path.join("..ts")).join(", "))
-    );
+    throw new LineSelectionsError({
+      code: "SELECTIONS_INVALID",
+      issues: parsed.error.issues.map((issue) => issue.path.join(".")),
+    });
   }
 
   return parsed.data;

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { parseLineSelections, type LineSelections } from "@babasarok/pricing";
-import { VENDURE_LANGUAGE_CODE, type Locale } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
 import { productPath, selectionMaterialParams } from "@/lib/order/queryParams";
 import type { Order, OrderLine } from "./schemas";
 
@@ -112,11 +112,7 @@ export function partnerPath(partner: PartnerLink, line: OrderLine, locale: Local
   let selections: LineSelections;
 
   try {
-    // The thrown message is discarded below, so the parse language never renders.
-    selections = parseLineSelections(
-      line.customFields?.selections ?? null,
-      VENDURE_LANGUAGE_CODE[locale]
-    );
+    selections = parseLineSelections(line.customFields?.selections ?? null);
   } catch {
     return productPath(partner.slug, locale);
   }

@@ -202,7 +202,7 @@ describe.skipIf(url === undefined || pool === undefined)("ADR 0016 rehearsal", (
       const price = computeLineUnitPrice({
         definition,
         productName: definition.id,
-        selections: parseLineSelections(line.selections, "hu"),
+        selections: parseLineSelections(line.selections),
         lengthCm: line.lengthCm,
         languageCode: "hu",
       });

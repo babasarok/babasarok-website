@@ -119,7 +119,7 @@ beforeAll(async () => {
   const placed = await transitionTo(buyer, "ArrangingPayment");
 
   if (!("order" in placed)) {
-    throw new Error(`placing the order was refused: ${placed.refusal}`);
+    throw new Error(`placing the order was refused: ${JSON.stringify(placed.refusal)}`);
   }
 
   orderCode = placed.order.code;

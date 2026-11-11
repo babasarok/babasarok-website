@@ -5,25 +5,21 @@ import {
 } from "../product-definition/index";
 import { dependencyOrder, isVisible } from "../product-definition/index";
 import type { LineSelections } from "../product-definition/index";
-import { messages } from "../messages";
+import { RefusalError, type Refusal } from "../refusal";
 import { axisCodes, isAxisField, type AxisCodes, type AxisField } from "./axis-codes";
 
 export interface LinePricingInput {
   definition: ProductDefinition;
-  /** The native product's name, which buyer-facing messages call it by. */
+  /** The native product's name, which a refusal calls it by. */
   productName: string;
   selections: LineSelections;
   /** The buyer-entered length in centimetres; null when not entered. */
   lengthCm: number | null;
-  /** The request language the rejection messages name fields in. */
+  /** The request language a refusal names fields in. */
   languageCode: string;
 }
 
-export class LinePricingError extends Error {}
-
-export function lengthMissingRejection(productName: string, languageCode: string): string {
-  return messages(languageCode).lengthMissing(productName);
-}
+export class LinePricingError extends RefusalError {}
 
 function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
@@ -33,27 +29,32 @@ function fieldById(fields: readonly ProductField[], id: string): ProductField | 
   return fields.find((field) => field.id === id);
 }
 
+interface PricingContext {
+  productName: string;
+  languageCode: string;
+}
+
 function choiceOptionPrice(
   field: Extract<ProductField, { kind: "choice" }>,
   optionId: string,
-  languageCode: string
+  context: PricingContext
 ): number {
   const option = field.options.find((candidate) => candidate.id === optionId);
 
   if (option === undefined) {
-    throw new LinePricingError(
-      messages(languageCode).fieldDoesNotOfferValue(
-        resolveText(field.label, languageCode),
-        optionId
-      )
-    );
+    throw new LinePricingError({
+      code: "VALUE_NOT_OFFERED",
+      productName: context.productName,
+      fieldLabel: resolveText(field.label, context.languageCode),
+      value: optionId,
+    });
   }
 
   return option.price;
 }
 
 /** The price a axis field contributes for the chosen option code. */
-function axisPrice(field: AxisField, optionCode: string, languageCode: string): number {
+function axisPrice(field: AxisField, optionCode: string, context: PricingContext): number {
   if (field.kind === "toggle") {
     return optionCode === "igen" ? field.price : 0;
   }
@@ -62,18 +63,18 @@ function axisPrice(field: AxisField, optionCode: string, languageCode: string): 
     const option = field.options.find((candidate) => candidate.materialId === optionCode);
 
     if (option === undefined) {
-      throw new LinePricingError(
-        messages(languageCode).fieldDoesNotOfferMaterial(
-          resolveText(field.label, languageCode),
-          optionCode
-        )
-      );
+      throw new LinePricingError({
+        code: "MATERIAL_NOT_OFFERED",
+        productName: context.productName,
+        fieldLabel: resolveText(field.label, context.languageCode),
+        materialId: optionCode,
+      });
     }
 
     return option.price;
   }
 
-  return choiceOptionPrice(field, optionCode, languageCode);
+  return choiceOptionPrice(field, optionCode, context);
 }
 
 /**
@@ -96,17 +97,18 @@ function axisPrice(field: AxisField, optionCode: string, languageCode: string): 
  */
 export function computeLineUnitPrice(input: LinePricingInput): number {
   const { definition, productName, selections, languageCode } = input;
+  const context: PricingContext = { productName, languageCode };
 
   for (const fieldId of Object.keys(selections)) {
     if (fieldById(definition.fields, fieldId) === undefined) {
-      throw new LinePricingError(messages(languageCode).unknownField(fieldId));
+      throw new LinePricingError({ code: "UNKNOWN_FIELD", productName, fieldId });
     }
   }
 
   const derived = axisCodes(definition, selections, languageCode);
 
   if (!derived.ok) {
-    throw new LinePricingError(derived.message);
+    throw new LinePricingError({ ...derived.problem, productName });
   }
 
   const codes = derived.codes;
@@ -169,7 +171,7 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
       const selection = selections[field.id];
 
       if (selection?.kind === "option") {
-        lineParts.push(choiceOptionPrice(field, selection.value, languageCode));
+        lineParts.push(choiceOptionPrice(field, selection.value, context));
       }
 
       continue;
@@ -182,7 +184,7 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
     const lengthCm = input.lengthCm;
 
     if (lengthCm === null || !Number.isInteger(lengthCm) || lengthCm <= 0) {
-      throw new LinePricingError(lengthMissingRejection(productName, languageCode));
+      throw new LinePricingError({ code: "LENGTH_MISSING", productName });
     }
 
     const perMeter =
@@ -190,14 +192,14 @@ export function computeLineUnitPrice(input: LinePricingInput): number {
       axisSum(
         order,
         codes,
-        languageCode,
+        context,
         (field) => field.id !== sourceFieldId && isVisible(field, cyclic, knownFieldIds, values)
       );
 
     return Math.round((perMeter + extras) * (lengthCm / 100));
   }
 
-  const axisTotal = axisSum(order, codes, languageCode, (field) =>
+  const axisTotal = axisSum(order, codes, context, (field) =>
     isVisible(field, cyclic, knownFieldIds, axisValues)
   );
 
@@ -239,7 +241,7 @@ function fieldValue(
 function axisSum(
   fields: readonly ProductField[],
   codes: AxisCodes,
-  languageCode: string,
+  context: PricingContext,
   counts: (field: AxisField) => boolean
 ): number {
   let sum = 0;
@@ -255,24 +257,21 @@ function axisSum(
       continue;
     }
 
-    sum += axisPrice(field, code, languageCode);
+    sum += axisPrice(field, code, context);
   }
 
   return sum;
 }
 
 export type LineValuation =
-  { kind: "priced"; price: number } | { kind: "invalid"; message: string };
+  { kind: "priced"; price: number } | { kind: "invalid"; refusal: Refusal };
 
 export function valueConfiguredLine(input: LinePricingInput): LineValuation {
   try {
     return { kind: "priced", price: computeLineUnitPrice(input) };
   } catch (error) {
     if (error instanceof LinePricingError) {
-      return {
-        kind: "invalid",
-        message: messages(input.languageCode).pricingFailure(input.productName, error.message),
-      };
+      return { kind: "invalid", refusal: error.refusal };
     }
 
     throw error;

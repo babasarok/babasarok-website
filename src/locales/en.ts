@@ -222,6 +222,50 @@ const translation = {
     submit:
       "Something went wrong while sending the order. Please try again later. ({{reason}}, code: {{reference}})",
   },
+  refusals: {
+    VARIANT_UNAVAILABLE: "The selected variant of {{productName}} is no longer available.",
+    LENGTH_MISSING: 'The "{{productName}}" fabric product requires a length in centimetres.',
+    UNKNOWN_FIELD: 'The "{{productName}}" product does not know this field: {{fieldId}}',
+    VALUE_NOT_OFFERED: 'The "{{fieldLabel}}" field does not offer this value: {{value}}',
+    MATERIAL_NOT_OFFERED: 'The "{{fieldLabel}}" field does not offer this material: {{materialId}}',
+    FIELD_HAS_NO_OPTIONS: 'The "{{fieldLabel}}" field has no selectable options.',
+    FORBIDDEN_COMBINATION:
+      'The "{{productName}}" product cannot be ordered in this material combination: {{materialIds}}.',
+    SELECTION_WRONG_KIND:
+      'The "{{fieldLabel}}" field of "{{productName}}" has a choice that does not match the field\'s kind.',
+    SELECTION_INVALID:
+      'The "{{fieldLabel}}" field of "{{productName}}" has an invalid choice: {{reason}}.',
+    SELECTIONS_NOT_JSON: "The order line configuration is not valid JSON.",
+    SELECTIONS_INVALID: "The order line configuration is invalid: {{issues}}",
+    UNKNOWN_THREAD_COLOR: "Unknown embroidery thread colour: {{colorIds}}.",
+    CHECKOUT_INCOMPLETE: "The order cannot be submitted, missing: {{missing}}.",
+    reasons: {
+      UNKNOWN_MATERIAL: "contains an unknown material",
+      FOREIGN_COLOR: "contains a colour the material does not offer",
+      TOO_FEW_COLORS: "at least {{required}} colours must be chosen",
+      TEXT_TOO_LONG: "{{subject}} can be at most {{maxLength}} characters",
+      BAD_FORMAT: "{{subject}} has an invalid format",
+      UNOFFERED_VALUE: "contains a value that is not offered",
+      CUSTOM_NOT_ACCEPTED: "does not accept a custom value",
+    },
+    subjects: {
+      text: "the text",
+      value: "the value",
+    },
+    missing: {
+      LINE: "at least one product",
+      CUSTOMER: "the customer details",
+      SHIPPING_METHOD: "the delivery method",
+      ADDRESS: "the delivery address ({{parts}})",
+      TERMS: "the acceptance of the terms",
+    },
+    addressParts: {
+      STREET: "street",
+      HOUSE_NUMBER: "house number",
+      POSTAL_CODE: "postcode",
+      CITY: "city",
+    },
+  },
   fieldErrors: {
     required: "Required field",
     invalidFormat: "Invalid format",

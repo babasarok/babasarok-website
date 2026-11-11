@@ -65,8 +65,7 @@ describe("lineInvalidReason", () => {
   it("reports a disabled variant", async () => {
     const reason = await lineInvalidReason(depsFor(row), ctx, lineOf({ enabled: false }));
 
-    expect(reason?.code).toBe("VARIANT_UNAVAILABLE");
-    expect(reason?.message).toContain("Párna");
+    expect(reason).toEqual({ code: "VARIANT_UNAVAILABLE", productName: "Párna" });
   });
 
   it("reports a deleted variant", async () => {
@@ -82,6 +81,6 @@ describe("lineInvalidReason", () => {
       lineOf({}, JSON.stringify({ gone: { kind: "option", value: "x" } }))
     );
 
-    expect(reason?.code).toBe("OPTION_NOT_OFFERED");
+    expect(reason).toMatchObject({ code: "UNKNOWN_FIELD", fieldId: "gone" });
   });
 });

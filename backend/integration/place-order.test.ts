@@ -69,7 +69,7 @@ async function placeNativeOrder(transactionId: string, extraFeszek: number): Pro
   const result = await transitionTo(shopper, "ArrangingPayment");
 
   if ("refusal" in result) {
-    throw new Error(result.refusal);
+    throw new Error(JSON.stringify(result.refusal));
   }
 
   return result.order;

@@ -6,6 +6,7 @@
 import type { SimpleGraphQLClient } from "@vendure/testing";
 import { z } from "zod";
 import { run, type IntegrationServer } from "./harness";
+import { decodeRefusal, RefusalSchema, type Refusal } from "../src/shared/refusal";
 import type { MaterialSlug, ProductId } from "./fixtures";
 
 const ORDER_FIELDS = `
@@ -22,7 +23,7 @@ const ORDER_FIELDS = `
     discounts { amountWithTax }
     productVariant { sku }
     customFields { selections lengthCm configText }
-    invalidReason { code message }
+    invalidReason
     setState { kind groupId title coveredUnits materialSyncFromLineId }
   }
 `;
@@ -39,7 +40,7 @@ const LineSchema = z.object({
     lengthCm: z.number().nullable(),
     configText: z.string().nullable(),
   }),
-  invalidReason: z.object({ code: z.string(), message: z.string() }).nullable(),
+  invalidReason: RefusalSchema.nullable(),
   setState: z
     .object({
       kind: z.enum(["ACTIVE", "PENDING_PARTNER", "PENDING_MATERIAL"]),
@@ -223,11 +224,14 @@ export async function activeOrder(shopper: Shopper): Promise<Order> {
   return data.activeOrder;
 }
 
-/** The Hungarian refusal of the transition (`transitionError`), or the order when it went through. */
+/**
+ * The refusal of the transition (`transitionError`, decoded when it is one of
+ * ours, Vendure's own text otherwise), or the order when it went through.
+ */
 export async function transitionTo(
   shopper: Shopper,
   state: string
-): Promise<{ order: Order } | { refusal: string }> {
+): Promise<{ order: Order } | { refusal: Refusal | string }> {
   const data = await run(
     shopper.client,
     `mutation($state: String!) {
@@ -248,7 +252,7 @@ export async function transitionTo(
   const result = data.transitionOrderToState;
 
   if ("transitionError" in result) {
-    return { refusal: result.transitionError };
+    return { refusal: decodeRefusal(result.transitionError) ?? result.transitionError };
   }
 
   return { order: result };

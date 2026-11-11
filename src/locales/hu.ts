@@ -216,6 +216,50 @@ const translation = {
     submit:
       "Hiba történt a rendelés elküldése közben. Kérlek, próbáld meg újra később. ({{reason}}, kód: {{reference}})",
   },
+  refusals: {
+    VARIANT_UNAVAILABLE: "A(z) {{productName}} kiválasztott változata már nem elérhető.",
+    LENGTH_MISSING: 'A(z) "{{productName}}" méteráru — a hossz (cm) megadása kötelező.',
+    UNKNOWN_FIELD: 'A(z) "{{productName}}" termék nem ismeri ezt a mezőt: {{fieldId}}',
+    VALUE_NOT_OFFERED: 'A(z) "{{fieldLabel}}" mező nem kínálja ezt az értéket: {{value}}',
+    MATERIAL_NOT_OFFERED: 'A(z) "{{fieldLabel}}" mező nem kínálja ezt az anyagot: {{materialId}}',
+    FIELD_HAS_NO_OPTIONS: 'A(z) "{{fieldLabel}}" mezőnek nincs választható értéke.',
+    FORBIDDEN_COMBINATION:
+      'A(z) "{{productName}}" termék ebben az anyagkombinációban nem rendelhető: {{materialIds}}.',
+    SELECTION_WRONG_KIND:
+      'A(z) "{{productName}}" "{{fieldLabel}}" mezőjének választása nem a mező fajtájának megfelelő.',
+    SELECTION_INVALID:
+      'A(z) "{{productName}}" "{{fieldLabel}}" mezőjének választása érvénytelen: {{reason}}.',
+    SELECTIONS_NOT_JSON: "A rendelési sor konfigurációja nem érvényes JSON.",
+    SELECTIONS_INVALID: "A rendelési sor konfigurációja érvénytelen: {{issues}}",
+    UNKNOWN_THREAD_COLOR: "Ismeretlen hímzőcérna-szín: {{colorIds}}.",
+    CHECKOUT_INCOMPLETE: "A rendelés nem adható le, hiányzik: {{missing}}.",
+    reasons: {
+      UNKNOWN_MATERIAL: "ismeretlen anyagot tartalmaz",
+      FOREIGN_COLOR: "az anyag által nem kínált színt tartalmaz",
+      TOO_FEW_COLORS: "legalább {{required}} színt kell választani",
+      TEXT_TOO_LONG: "{{subject}} legfeljebb {{maxLength}} karakter lehet",
+      BAD_FORMAT: "{{subject}} formátuma érvénytelen",
+      UNOFFERED_VALUE: "nem kínált értéket tartalmaz",
+      CUSTOM_NOT_ACCEPTED: "egyedi értéket nem fogad el",
+    },
+    subjects: {
+      text: "a szöveg",
+      value: "az érték",
+    },
+    missing: {
+      LINE: "legalább egy termék",
+      CUSTOMER: "a vevő adatai",
+      SHIPPING_METHOD: "a szállítási mód",
+      ADDRESS: "a szállítási cím ({{parts}})",
+      TERMS: "az ÁSZF elfogadása",
+    },
+    addressParts: {
+      STREET: "utca",
+      HOUSE_NUMBER: "házszám",
+      POSTAL_CODE: "irányítószám",
+      CITY: "város",
+    },
+  },
   fieldErrors: {
     required: "Kötelező mező",
     invalidFormat: "Érvénytelen formátum",

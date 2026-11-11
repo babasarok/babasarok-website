@@ -1,4 +1,5 @@
 import type { BasketApi, Result } from "./api";
+import type { Reason } from "./refusalText";
 import { requiresAddress, type Order, type ShippingQuote } from "./schemas";
 import {
   billingPlan,
@@ -19,7 +20,7 @@ export type SubmitResult = { ok: true; order: Order } | { ok: false; failure: Su
 
 /** Shown as `errors.submit`; the reason is an i18n key or the server's own localized message. */
 export interface SubmitFailure {
-  reason: string;
+  reason: Reason;
   reference: string;
 }
 

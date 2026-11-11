@@ -18,18 +18,9 @@ export class OrderLineInvalidReasonResolver {
   }
 }
 
+/** The refusal (a `Refusal` object: code plus values) blocking the line, or null. */
 export const lineInvalidReasonSchema = gql`
-  enum LineInvalidCode {
-    VARIANT_UNAVAILABLE
-    OPTION_NOT_OFFERED
-  }
-
-  type LineInvalidReason {
-    code: LineInvalidCode!
-    message: String!
-  }
-
   extend type OrderLine {
-    invalidReason: LineInvalidReason
+    invalidReason: JSON
   }
 `;

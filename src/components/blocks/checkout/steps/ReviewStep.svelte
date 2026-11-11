@@ -10,6 +10,7 @@
   import type { SetMembers } from "@/lib/basket/setDiscounts";
   import type { ShownPrices } from "@/lib/basket/stale";
   import type { StepId } from "@/lib/basket/steps";
+  import { reasonText } from "@/lib/basket/refusalText";
   import type { SubmitFailure } from "@/lib/basket/submit";
   import type { DetailRow } from "@/lib/basket/summaryText";
   import { FIELD } from "@/lib/basket/checkoutValues";
@@ -192,7 +193,7 @@
           <Icon icon="mdi:alert-circle" class="mt-0.5 shrink-0" />
           {#if submitFailure}
             {i18n.t("errors.submit", {
-              reason: translateMessage(i18n, submitFailure.reason),
+              reason: reasonText(i18n, submitFailure.reason),
               reference: submitFailure.reference,
             })}
           {:else if error}

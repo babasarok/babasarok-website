@@ -3,6 +3,7 @@
   import { fade } from "svelte/transition";
   import { describeLine, type Labels } from "@/lib/basket/lineRows";
   import { formatMoney } from "@/lib/basket/money";
+  import { refusalText } from "@/lib/basket/refusalText";
   import type { OrderLine } from "@/lib/basket/schemas";
   import type { PriceChange } from "@/lib/basket/stale";
   import { lineSetState, partnerPath, type PartnerLink } from "@/lib/basket/setDiscounts";
@@ -134,7 +135,7 @@
               class="flex items-start gap-1 rounded-lg bg-danger-500/10 p-2 text-sm text-danger-500"
             >
               <Icon icon="mdi:alert-circle" class="mt-0.5 shrink-0" />
-              {line.invalidReason.message}
+              {refusalText(i18n, line.invalidReason)}
             </p>
           {/if}
           {#if setState}

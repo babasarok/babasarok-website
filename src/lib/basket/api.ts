@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { decodeRefusal } from "@babasarok/pricing";
+import type { Reason } from "./refusalText";
 import { isTokenRejection } from "./tokenRejection";
 import { SET_LINE_FIELDS, SET_ORDER_FIELDS } from "./setDiscounts";
 import {
@@ -28,7 +30,7 @@ export interface BasketApiDeps {
 }
 
 export interface Failure {
-  reason: string;
+  reason: Reason;
   detail: string;
   stack?: string | undefined;
   tokenRejected?: boolean;
@@ -97,7 +99,7 @@ const ORDER_FIELDS = `
   lines {
     id quantity unitPriceWithTax discountedLinePriceWithTax
     customFields { selections lengthCm }
-    invalidReason { code message }
+    invalidReason
     ${SET_LINE_FIELDS}
     productVariant {
       id name
@@ -269,19 +271,25 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
       return { ok: true, value: payload };
     }
 
-    const hungarian =
+    const known =
       "errorCode" in payload && typeof payload.errorCode === "string"
         ? ERROR_KEYS[payload.errorCode]
         : undefined;
 
     const message =
-      hungarian ??
+      known ??
       ("interceptorError" in payload ? payload.interceptorError : undefined) ??
       ("transitionError" in payload ? payload.transitionError : undefined) ??
       ("message" in payload ? payload.message : undefined) ??
       payload.__typename;
 
-    return { ok: false, failure: { reason: message, detail: `${payload.__typename}: ${message}` } };
+    return {
+      ok: false,
+      failure: {
+        reason: decodeRefusal(message) ?? message,
+        detail: `${payload.__typename}: ${message}`,
+      },
+    };
   }
 
   return {

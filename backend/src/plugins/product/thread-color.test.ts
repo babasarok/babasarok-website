@@ -19,14 +19,9 @@ describe("hexColorError", () => {
 
 describe("unknownThreadColorRejection", () => {
   it("names the unknown color ids", () => {
-    expect(unknownThreadColorRejection(["lila", "kek"], "hu")).toBe(
-      "Ismeretlen hímzőcérna-szín: lila, kek."
-    );
-  });
-
-  it("names the unknown color ids in English", () => {
-    expect(unknownThreadColorRejection(["lila", "kek"], "en")).toBe(
-      "Unknown embroidery thread colour: lila, kek."
-    );
+    expect(unknownThreadColorRejection(["lila", "kek"])).toEqual({
+      code: "UNKNOWN_THREAD_COLOR",
+      colorIds: ["lila", "kek"],
+    });
   });
 });

@@ -1,10 +1,11 @@
 import { ProductDefinitionSchema } from "../product-definition/index";
 import { describe, expect, it } from "vitest";
 import type { LineSelectionRecord, LineSelections } from "../product-definition/index";
+import type { Refusal } from "../refusal";
 import {
   MAX_SELECTION_TEXT_LENGTH,
   referencedMaterialIds,
-  formatSelectionProblem,
+  selectionRefusal,
   selectionsRejection,
   validateSelections,
 } from "./selection-validation";
@@ -52,7 +53,7 @@ const definition = ProductDefinitionSchema.parse({
 
 const materialColors = new Map([["len", new Set(["piros", "kek"])]]);
 
-function reject(selections: LineSelections): string | undefined {
+function reject(selections: LineSelections): Refusal | undefined {
   return selectionsRejection({
     definition,
     productName: "Párna",
@@ -75,11 +76,19 @@ describe("selectionsRejection", () => {
   });
 
   it("rejects an unknown field", () => {
-    expect(reject({ x: { kind: "input", value: "" } })).toContain("nem ismeri");
+    expect(reject({ x: { kind: "input", value: "" } })).toEqual({
+      code: "UNKNOWN_FIELD",
+      productName: "Párna",
+      fieldId: "x",
+    });
   });
 
   it("rejects a kind that does not match the field", () => {
-    expect(reject({ nev: { kind: "custom", value: "a" } })).toContain("fajtájának");
+    expect(reject({ nev: { kind: "custom", value: "a" } })).toEqual({
+      code: "SELECTION_WRONG_KIND",
+      productName: "Párna",
+      fieldLabel: "Név",
+    });
   });
 
   it("rejects a foreign material colour and accepts a repeated one", () => {
@@ -87,7 +96,7 @@ describe("selectionsRejection", () => {
       anyag: { kind: "material", materialId: "len", colors },
     });
 
-    expect(reject(pick(["piros", "zold"]))).toContain("nem kínált színt");
+    expect(reject(pick(["piros", "zold"]))).toMatchObject({ reason: { code: "FOREIGN_COLOR" } });
     // The same colour twice is a legitimate pick (e.g. Teddy/Velúr items use
     // one colour for two parts); only a colour the material does not offer is
     // rejected.
@@ -95,15 +104,23 @@ describe("selectionsRejection", () => {
   });
 
   it("rejects an unknown option and a custom value breaking the pattern", () => {
-    expect(reject({ meret: { kind: "option", value: "99" } })).toContain("nem kínált");
-    expect(reject({ meret: { kind: "custom", value: "abc" } })).toContain("formátuma");
+    expect(reject({ meret: { kind: "option", value: "99" } })).toMatchObject({
+      reason: { code: "UNOFFERED_VALUE" },
+    });
+    expect(reject({ meret: { kind: "custom", value: "abc" } })).toMatchObject({
+      reason: { code: "BAD_FORMAT", subject: "value" },
+    });
   });
 
   it("rejects over-long text", () => {
     const text = "a".repeat(MAX_SELECTION_TEXT_LENGTH + 1);
 
-    expect(reject({ hímzés: { kind: "embroidery", text, colorId: "x" } })).toContain("legfeljebb");
-    expect(reject({ nev: { kind: "input", value: text } })).toContain("legfeljebb");
+    expect(reject({ hímzés: { kind: "embroidery", text, colorId: "x" } })).toMatchObject({
+      reason: { code: "TEXT_TOO_LONG", subject: "text", maxLength: MAX_SELECTION_TEXT_LENGTH },
+    });
+    expect(reject({ nev: { kind: "input", value: text } })).toMatchObject({
+      reason: { code: "TEXT_TOO_LONG", subject: "value" },
+    });
   });
 });
 
@@ -138,7 +155,7 @@ describe("validateSelections", () => {
     ]);
   });
 
-  it("formats a problem in Hungarian", () => {
+  it("turns a problem into a refusal naming the field in the request language", () => {
     const [problem] = validateSelections({
       definition,
       selections: { nev: { kind: "input", value: "ÁÉ" } },
@@ -146,14 +163,19 @@ describe("validateSelections", () => {
     });
 
     expect(
-      formatSelectionProblem(problem, { definition, productName: "Párna", languageCode: "hu" })
-    ).toBe('A(z) "Párna" "Név" mezőjének választása érvénytelen: az érték formátuma érvénytelen.');
+      selectionRefusal(problem, { definition, productName: "Párna", languageCode: "hu" })
+    ).toEqual({
+      code: "SELECTION_INVALID",
+      productName: "Párna",
+      fieldLabel: "Név",
+      reason: { code: "BAD_FORMAT", subject: "value" },
+    });
   });
 
   it("requires as many colours as the material field's fixed colour count", () => {
-    expect(reject({ anyag: { kind: "material", materialId: "len", colors: ["piros"] } })).toContain(
-      "legalább 2 színt"
-    );
+    expect(
+      reject({ anyag: { kind: "material", materialId: "len", colors: ["piros"] } })
+    ).toMatchObject({ reason: { code: "TOO_FEW_COLORS", required: 2 } });
     expect(
       reject({ anyag: { kind: "material", materialId: "len", colors: ["piros", "kek"] } })
     ).toBeUndefined();
@@ -217,7 +239,7 @@ describe("forbidden material combinations", () => {
     })),
   });
 
-  function rejectPicks(selections: LineSelections): string | undefined {
+  function rejectPicks(selections: LineSelections): Refusal | undefined {
     return selectionsRejection({
       definition: twoFields,
       productName: "Fészek",
@@ -236,8 +258,12 @@ describe("forbidden material combinations", () => {
         kulso: { kind: "material", materialId: "wellsoft", colors: ["piros"] },
         belso: { kind: "material", materialId: "wellsoft", colors: ["piros"] },
       })
-    ).toBe('A(z) "Fészek" termék ebben az anyagkombinációban nem rendelhető: wellsoft, wellsoft.');
-    expect(rejectPicks({})).toMatch(/anyagkombinációban nem rendelhető/);
+    ).toEqual({
+      code: "FORBIDDEN_COMBINATION",
+      productName: "Fészek",
+      materialIds: ["wellsoft", "wellsoft"],
+    });
+    expect(rejectPicks({})).toMatchObject({ code: "FORBIDDEN_COMBINATION" });
   });
 
   it("accepts picks that complete no forbidden combination", () => {

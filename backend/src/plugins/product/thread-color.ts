@@ -1,4 +1,4 @@
-import { messages } from "../../shared/messages";
+import type { Refusal } from "../../shared/refusal";
 
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
@@ -14,9 +14,6 @@ export function hexColorError(value: unknown): string | undefined {
   return undefined;
 }
 
-export function unknownThreadColorRejection(
-  colorIds: readonly string[],
-  languageCode: string
-): string {
-  return messages(languageCode).unknownThreadColor(colorIds.join(", "));
+export function unknownThreadColorRejection(colorIds: readonly string[]): Refusal {
+  return { code: "UNKNOWN_THREAD_COLOR", colorIds: [...colorIds] };
 }

@@ -311,22 +311,43 @@ describe("computeLineUnitPrice", () => {
   });
 
   it("names the product in the missing-length refusal", () => {
-    expect(() =>
-      computeLineUnitPrice({
+    expect(
+      valueConfiguredLine({
         productName: "Fonott rácsvédő",
         definition: lengthProduct,
         selections: lengthSelections("200", "3", "teddy"),
         lengthCm: null,
         languageCode: "hu",
       })
-    ).toThrow(/Fonott rácsvédő.*hossz/);
+    ).toEqual({
+      kind: "invalid",
+      refusal: { code: "LENGTH_MISSING", productName: "Fonott rácsvédő" },
+    });
+  });
+
+  it("names the field in the request language when a material is not offered", () => {
+    expect(
+      valueConfiguredLine({
+        productName: "Termék",
+        definition: unitProduct,
+        selections: {
+          ...unitSelections("40", "nem", "minky"),
+          anyag: { kind: "material", materialId: "nincs", colors: [] },
+        },
+        lengthCm: null,
+        languageCode: "hu",
+      })
+    ).toMatchObject({
+      kind: "invalid",
+      refusal: { code: "MATERIAL_NOT_OFFERED", productName: "Termék", materialId: "nincs" },
+    });
   });
 });
 
 describe("parseLineSelections", () => {
   it("parses an empty value into no records", () => {
-    expect(parseLineSelections(null, "hu")).toEqual({});
-    expect(parseLineSelections("", "hu")).toEqual({});
+    expect(parseLineSelections(null)).toEqual({});
+    expect(parseLineSelections("")).toEqual({});
   });
 
   it("round-trips records through JSON", () => {
@@ -334,19 +355,17 @@ describe("parseLineSelections", () => {
       anyag: { kind: "material", materialId: "wellsoft", colors: ["piros", "kek"] },
     };
 
-    expect(parseLineSelections(JSON.stringify(selections), "hu")).toEqual(selections);
+    expect(parseLineSelections(JSON.stringify(selections))).toEqual(selections);
   });
 
   it("throws a descriptive error for malformed JSON and wrong shapes", () => {
-    expect(() => parseLineSelections("{", "hu")).toThrow(LineSelectionsError);
-    expect(() => parseLineSelections('{"anyag": {"kind": "nope"}}', "hu")).toThrow(
-      LineSelectionsError
-    );
+    expect(() => parseLineSelections("{")).toThrow(LineSelectionsError);
+    expect(() => parseLineSelections('{"anyag": {"kind": "nope"}}')).toThrow(LineSelectionsError);
   });
 
-  it("rejects in the request language", () => {
-    expect(() => parseLineSelections("{", "en")).toThrow(
-      "The order line configuration is not valid JSON."
+  it("refuses with a code", () => {
+    expect(() => parseLineSelections("{")).toThrow(
+      new LineSelectionsError({ code: "SELECTIONS_NOT_JSON" })
     );
   });
 });
@@ -452,6 +471,9 @@ describe("valueConfiguredLine", () => {
       selections: { torolt: { kind: "input", value: "x" } },
     });
 
-    expect(result.kind).toBe("invalid");
+    expect(result).toMatchObject({
+      kind: "invalid",
+      refusal: { code: "UNKNOWN_FIELD", fieldId: "torolt" },
+    });
   });
 });

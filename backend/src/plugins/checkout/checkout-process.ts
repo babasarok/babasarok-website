@@ -1,6 +1,7 @@
 import { EntityHydrator } from "@vendure/core";
 import type { Injector, OrderProcess, OrderTransitionData } from "@vendure/core";
 import { isLegacyQuoteOrder } from "../../shared/legacy-order";
+import { encodeRefusal } from "../../shared/refusal";
 import { checkoutRefusal } from "./checkout-readiness";
 
 /** Refuses to place an order that lacks contact, delivery or the accepted terms. */
@@ -30,21 +31,20 @@ export class CheckoutReadinessProcess implements OrderProcess<string> {
 
     const shippingMethod = order.shippingLines.at(0)?.shippingMethod;
 
-    return checkoutRefusal(
-      {
-        lineCount: order.lines.length,
-        hasCustomer: order.customer != null,
-        hasShippingMethod: shippingMethod !== undefined,
-        termsAccepted: order.customFields.termsAccepted === true,
-        shippingMethodRequiresAddress: shippingMethod?.customFields.requiresAddress === true,
-        address: {
-          street: order.shippingAddress.streetLine1 ?? "",
-          houseNumber: order.shippingAddress.streetLine2 ?? "",
-          postalCode: order.shippingAddress.postalCode ?? "",
-          city: order.shippingAddress.city ?? "",
-        },
+    const refusal = checkoutRefusal({
+      lineCount: order.lines.length,
+      hasCustomer: order.customer != null,
+      hasShippingMethod: shippingMethod !== undefined,
+      termsAccepted: order.customFields.termsAccepted === true,
+      shippingMethodRequiresAddress: shippingMethod?.customFields.requiresAddress === true,
+      address: {
+        street: order.shippingAddress.streetLine1 ?? "",
+        houseNumber: order.shippingAddress.streetLine2 ?? "",
+        postalCode: order.shippingAddress.postalCode ?? "",
+        city: order.shippingAddress.city ?? "",
       },
-      ctx.languageCode
-    );
+    });
+
+    return refusal === undefined ? undefined : encodeRefusal(refusal);
   }
 }

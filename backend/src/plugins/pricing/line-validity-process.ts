@@ -1,5 +1,6 @@
 import type { Injector, OrderProcess, OrderTransitionData } from "@vendure/core";
 import { isLegacyQuoteOrder } from "../../shared/legacy-order";
+import { encodeRefusal } from "../../shared/refusal";
 import { LineInvalidReasonService } from "./line-invalid-reason.service";
 
 /**
@@ -26,6 +27,8 @@ export class LineValidityProcess implements OrderProcess<string> {
       return undefined;
     }
 
-    return (await this.reasons.firstReasonForOrder(ctx, order.id))?.message;
+    const reason = await this.reasons.firstReasonForOrder(ctx, order.id);
+
+    return reason === undefined ? undefined : encodeRefusal(reason);
   }
 }

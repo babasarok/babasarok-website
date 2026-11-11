@@ -1,8 +1,7 @@
 import { z } from "zod";
+import { RefusalSchema } from "@babasarok/pricing";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { SetDiscountSchema, SetStateSchema } from "./setDiscounts";
-
-const InvalidReasonSchema = z.object({ code: z.string(), message: z.string() });
 
 export const OrderLineSchema = z.object({
   id: z.string(),
@@ -12,7 +11,7 @@ export const OrderLineSchema = z.object({
   customFields: z
     .object({ selections: z.string().nullable(), lengthCm: z.number().nullable() })
     .nullable(),
-  invalidReason: InvalidReasonSchema.nullable(),
+  invalidReason: RefusalSchema.nullable(),
   setState: SetStateSchema.nullable().optional(),
   productVariant: z.object({
     id: z.string(),

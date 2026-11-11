@@ -108,6 +108,6 @@ describe("calculateUnitPrice", () => {
   it("refuses a new line whose length is missing", async () => {
     await expect(
       calculateUnitPrice(depsFor(lengthRow), ctx, variant, {}, new Order({ lines: [] }))
-    ).rejects.toThrow("Árazási hiba");
+    ).rejects.toMatchObject({ refusal: { code: "LENGTH_MISSING" } });
   });
 });

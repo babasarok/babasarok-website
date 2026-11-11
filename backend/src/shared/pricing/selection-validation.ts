@@ -4,7 +4,7 @@ import {
   type ProductField,
 } from "../product-definition/index";
 import type { LineSelectionRecord, LineSelections } from "../product-definition/index";
-import { messages } from "../messages";
+import type { Refusal, SelectionReason } from "../refusal";
 import { axisCodes } from "./axis-codes";
 import { completesForbiddenCombination } from "./banned-combinations";
 
@@ -226,70 +226,63 @@ function forbiddenCombinationProblem(
   return { code: "forbidden-combination", materialIds };
 }
 
-function reasonMessage(
-  problem: Extract<SelectionProblem, { code: "invalid" }>,
-  languageCode: string
-): string {
-  const m = messages(languageCode);
-
+function selectionReason(problem: Extract<SelectionProblem, { code: "invalid" }>): SelectionReason {
   switch (problem.reason) {
     case "unknown-material":
-      return m.reasonUnknownMaterial();
+      return { code: "UNKNOWN_MATERIAL" };
     case "foreign-color":
-      return m.reasonForeignColor();
+      return { code: "FOREIGN_COLOR" };
     case "too-few-colors":
-      return m.reasonTooFewColors(problem.required);
+      return { code: "TOO_FEW_COLORS", required: problem.required };
     case "text-too-long":
-      return m.reasonTextTooLong(
-        subjectName(languageCode, problem.subject),
-        MAX_SELECTION_TEXT_LENGTH
-      );
+      return {
+        code: "TEXT_TOO_LONG",
+        subject: problem.subject,
+        maxLength: MAX_SELECTION_TEXT_LENGTH,
+      };
     case "bad-format":
-      return m.reasonBadFormat(subjectName(languageCode, problem.subject));
+      return { code: "BAD_FORMAT", subject: problem.subject };
     case "unoffered-value":
-      return m.reasonUnofferedValue();
+      return { code: "UNOFFERED_VALUE" };
     case "custom-not-accepted":
-      return m.reasonCustomNotAccepted();
+      return { code: "CUSTOM_NOT_ACCEPTED" };
   }
 }
 
-function subjectName(languageCode: string, subject: "text" | "value"): string {
-  return subject === "text"
-    ? messages(languageCode).subjectText()
-    : messages(languageCode).subjectValue();
-}
-
-export function formatSelectionProblem(
+export function selectionRefusal(
   problem: SelectionProblem,
   context: Pick<SelectionValidationInput, "definition" | "productName" | "languageCode">
-): string {
+): Refusal {
   const { definition, productName, languageCode } = context;
-  const m = messages(languageCode);
 
   if (problem.code === "forbidden-combination") {
-    return m.forbiddenCombination(productName, problem.materialIds.join(", "));
+    return {
+      code: "FORBIDDEN_COMBINATION",
+      productName,
+      materialIds: [...problem.materialIds],
+    };
   }
 
   if (problem.code === "unknown-field") {
-    return m.selectionUnknownField(productName, problem.fieldId);
+    return { code: "UNKNOWN_FIELD", productName, fieldId: problem.fieldId };
   }
 
   const field = definition.fields.find((candidate) => candidate.id === problem.fieldId);
-  const label = field === undefined ? problem.fieldId : resolveText(field.label, languageCode);
+  const fieldLabel = field === undefined ? problem.fieldId : resolveText(field.label, languageCode);
 
   if (problem.code === "wrong-kind") {
-    return m.selectionWrongKind(productName, label);
+    return { code: "SELECTION_WRONG_KIND", productName, fieldLabel };
   }
 
-  return m.selectionInvalid(productName, label, reasonMessage(problem, languageCode));
+  return { code: "SELECTION_INVALID", productName, fieldLabel, reason: selectionReason(problem) };
 }
 
 /**
- * The buyer-facing refusal for the first selection the product's own fields
- * cannot accept, or undefined when every record fits its field.
+ * The refusal for the first selection the product's own fields cannot
+ * accept, or undefined when every record fits its field.
  */
-export function selectionsRejection(input: SelectionValidationInput): string | undefined {
+export function selectionsRejection(input: SelectionValidationInput): Refusal | undefined {
   const first = validateSelections(input).at(0);
 
-  return first === undefined ? undefined : formatSelectionProblem(first, input);
+  return first === undefined ? undefined : selectionRefusal(first, input);
 }

@@ -309,7 +309,9 @@ describe("checkout readiness", () => {
     expect(orderBlocker(null)?.message).toBe("blockers.empty");
     expect(orderBlocker(order([]))?.message).toBe("blockers.empty");
     expect(
-      orderBlocker(order([line({ invalidReason: { code: "X", message: "m" } })]))?.message
+      orderBlocker(
+        order([line({ invalidReason: { code: "VARIANT_UNAVAILABLE", productName: "Párna" } })])
+      )?.message
     ).toBe("blockers.invalid");
     expect(orderBlocker(order([line()]))).toBeUndefined();
   });
@@ -478,7 +480,7 @@ describe("createBasketApi", () => {
     });
   });
 
-  it("sends the bearer token, stores the issued one and prefers the interceptor message", async () => {
+  it("sends the bearer token, stores the issued one and prefers the interceptor text", async () => {
     const { api, fetchMock, token } = apiWith(
       {
         data: {
@@ -502,6 +504,26 @@ describe("createBasketApi", () => {
       "Bearer old"
     );
     expect(token()).toBe("new");
+  });
+
+  it("decodes a refusal the interceptor sends as JSON", async () => {
+    const refusal = { code: "LENGTH_MISSING", productName: "Szalag" };
+    const { api } = apiWith({
+      data: {
+        addItemToOrder: {
+          __typename: "OrderInterceptorError",
+          message: "generic",
+          interceptorError: JSON.stringify(refusal),
+        },
+      },
+    });
+    const result = await api.addItem({
+      productVariantId: "1",
+      quantity: 1,
+      customFields: { selections: "{}" },
+    });
+
+    expect(result).toMatchObject({ ok: false, failure: { reason: refusal } });
   });
 
   it("reads the product's one variant id through the stock product query", async () => {
