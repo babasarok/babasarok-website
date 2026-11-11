@@ -70,21 +70,21 @@ export const materialBehavior = defineBehavior("material", {
     f.value.error = undefined;
 
     if (!f.value.material_id || !isMaterialInOption(f, f.value.material_id)) {
-      f.value.error = "Kötelező mező";
+      f.value.error = { kind: "required" };
       return;
     }
     const count = resolveColorCount(f, { fields: ctx.fields });
     if (!count) {
-      f.value.error = "Színt nem lehet választani, más érték még nincs megadva";
+      f.value.error = { kind: "colorsUnavailable" };
       return;
     }
     if (f.value.colors.length < count) {
-      f.value.error = `${count == 1 ? "" : count.toString()} színt kell választani`;
+      f.value.error = { kind: "colorCount", count };
       return;
     }
 
     if (bannedMaterialFieldNames(ctx.fields, ctx.banned ?? []).has(f.name)) {
-      f.value.error = "Ez az anyagkombináció nem rendelhető";
+      f.value.error = { kind: "bannedCombination" };
     }
   },
 

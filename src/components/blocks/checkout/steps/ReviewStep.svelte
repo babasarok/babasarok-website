@@ -10,6 +10,7 @@
   import type { SetMembers } from "@/lib/basket/setDiscounts";
   import type { ShownPrices } from "@/lib/basket/stale";
   import type { StepId } from "@/lib/basket/steps";
+  import type { SubmitFailure } from "@/lib/basket/submit";
   import type { DetailRow } from "@/lib/basket/summaryText";
   import { FIELD } from "@/lib/basket/checkoutValues";
   import { translateMessage } from "@/lib/i18next-client";
@@ -27,6 +28,7 @@
     total: string;
     terms: boolean;
     error: string | null;
+    submitFailure: SubmitFailure | null;
     sending: boolean;
     submitDisabled: boolean;
     onBack: () => void;
@@ -54,6 +56,7 @@
     total,
     terms = $bindable(false),
     error,
+    submitFailure,
     sending,
     submitDisabled,
     onBack,
@@ -176,7 +179,7 @@
         {i18n.t("checkout.nextSteps")}
       </p>
 
-      {#if error}
+      {#if error || submitFailure}
         <p
           id="checkout-error"
           role="alert"
@@ -184,7 +187,14 @@
           data-testid="checkout-error"
         >
           <Icon icon="mdi:alert-circle" class="mt-0.5 shrink-0" />
-          {translateMessage(i18n, error)}
+          {#if submitFailure}
+            {i18n.t("errors.submit", {
+              reason: translateMessage(i18n, submitFailure.reason),
+              reference: submitFailure.reference,
+            })}
+          {:else if error}
+            {translateMessage(i18n, error)}
+          {/if}
         </p>
       {/if}
 

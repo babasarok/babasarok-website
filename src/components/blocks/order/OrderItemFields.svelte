@@ -8,7 +8,7 @@
   import Switch from "@/components/ui/Switch.svelte";
   import OrderItemMaterialField from "./OrderItemMaterialField.svelte";
   import type { OrderThreadColor } from "@/lib/order/types";
-  import type { IProduct, StringValueField } from "@/lib/types.svelte";
+  import type { FieldError, IProduct, StringValueField } from "@/lib/types.svelte";
   import { isFieldVisible } from "@/lib/product/field";
   import { randomUUID } from "@/lib/uuid";
   import type { i18n as I18n } from "i18next";
@@ -23,6 +23,14 @@
   }
 
   const { locale, product, threadColors, onChange }: Props = $props();
+
+  function errorText(i18n: I18n, error: FieldError): string {
+    if (error.kind === "colorCount") {
+      return i18n.t("fieldErrors.colorCount", { count: error.count });
+    }
+
+    return i18n.t(`fieldErrors.${error.kind}`);
+  }
 </script>
 
 <I18nGate {locale}>
@@ -308,7 +316,9 @@
                           }}
                         />
                         {#if embroideryValue.text.error}
-                          <p class="text-sm text-red-500">{embroideryValue.text.error}</p>
+                          <p class="text-sm text-red-500">
+                            {errorText(i18n, embroideryValue.text.error)}
+                          </p>
                         {/if}
                       </div>
                       <div class="flex flex-col gap-1">
@@ -336,7 +346,9 @@
                           {/each}
                         </div>
                         {#if embroideryValue.color.error}
-                          <p class="text-sm text-red-500">{embroideryValue.color.error}</p>
+                          <p class="text-sm text-red-500">
+                            {errorText(i18n, embroideryValue.color.error)}
+                          </p>
                         {/if}
                       </div>
                     </div>
@@ -347,7 +359,7 @@
               {/if}
             </div>
             {#if field.value?.error}
-              <p class="text-sm text-red-500">{field.value.error}</p>
+              <p class="text-sm text-red-500">{errorText(i18n, field.value.error)}</p>
             {/if}
           </div>
         {/if}

@@ -72,7 +72,13 @@ const translation = {
     inBasket: "Kosárban",
     configure: "Beállítom",
     add: "Hozzáadom",
+    setState: {
+      active: "{{title}}: a szett kedvezmény aktív ({{units}} db-ra).",
+      pendingPartner: "{{title}}: add hozzá a szett egy másik darabját, és megkapod a kedvezményt.",
+      pendingMaterial: "{{title}}: egyeztesd az anyagot a szett darabjához a kedvezményhez.",
+    },
     syncMaterial: "Anyag egyeztetése",
+    chooseOptionFirst: "Válaszz először opciót",
     viewAllColors: "Összes szín megtekintése",
     color: "Szín",
     selectOption: "Válassz egy opciót",
@@ -81,6 +87,7 @@ const translation = {
     perWord: " / szó",
   },
   price: {
+    from: "{{price}} Ft-tól",
     base: "Alapár",
     perMeter: "Méterár",
     perUnit: "Egységár",
@@ -204,6 +211,19 @@ const translation = {
     addFailed: "A termék nem került a kosárba. Töltsd újra az oldalt, és próbáld újra.",
     notOrderable: "Ez a termék jelenleg nem rendelhető.",
     reload: "Oldal újratöltése",
+    network: "hálózati hiba",
+    server: "szerverhiba",
+    submit:
+      "Hiba történt a rendelés elküldése közben. Kérlek, próbáld meg újra később. ({{reason}}, kód: {{reference}})",
+  },
+  fieldErrors: {
+    required: "Kötelező mező",
+    invalidFormat: "Érvénytelen formátum",
+    invalidValue: "Érvénytelen érték",
+    colorsUnavailable: "Színt nem lehet választani, más érték még nincs megadva",
+    colorCount_one: "Színt kell választani",
+    colorCount_other: "{{count}} színt kell választani",
+    bannedCombination: "Ez az anyagkombináció nem rendelhető",
   },
   blockers: {
     empty: "A kosarad üres.",
@@ -222,6 +242,11 @@ const translation = {
   errorCodes: {
     EMAIL_ADDRESS_CONFLICT_ERROR:
       "Ez az email cím már regisztrált fiókhoz tartozik. Kérlek, adj meg egy másik email címet.",
+  },
+  privacy: {
+    controllerHeading: "1. Adatkezelő",
+    controller: "Adatkezelő",
+    contact: "Kapcsolat",
   },
   pages: {
     notFound: "Oldal nem található (404)",

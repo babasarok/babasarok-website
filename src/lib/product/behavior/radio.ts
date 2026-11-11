@@ -45,14 +45,14 @@ export const radioBehavior = defineBehavior("radio", {
 
     f.value.error = undefined;
     if (!f.value.value) {
-      f.value.error = "Kötelező mező";
+      f.value.error = { kind: "required" };
       return;
     }
 
     if (f.regex) {
       const regex = new RegExp(f.regex);
       if (!regex.test(f.value.value)) {
-        f.value.error = "Érvénytelen formátum";
+        f.value.error = { kind: "invalidFormat" };
         return;
       }
     }
@@ -63,13 +63,13 @@ export const radioBehavior = defineBehavior("radio", {
 
     const items = f.items;
     // Only validate membership for a *non-empty* value, otherwise this would
-    // overwrite the more helpful "Kötelező mező" set above for empty fields.
+    // overwrite the more helpful { kind: "required" } set above for empty fields.
     if (
       f.value.value &&
       items &&
       !items.some((option) => option && option.value === f.value?.value)
     ) {
-      f.value.error = "Érvénytelen érték";
+      f.value.error = { kind: "invalidValue" };
       return;
     }
   },

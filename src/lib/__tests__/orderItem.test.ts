@@ -327,7 +327,7 @@ describe("validateItem / isItemValid", () => {
         fields: [makeField({ name: "meret", type: "radio", items: [{ value: "s" }] })],
       })
     );
-    expect(fieldError(item.fields[0])).toBe("Kötelező mező");
+    expect(fieldError(item.fields[0])).toEqual({ kind: "required" });
     expect(isItemValid(item)).toBe(false);
   });
 
@@ -339,7 +339,7 @@ describe("validateItem / isItemValid", () => {
       makeProduct({ fields: [makeField({ name: "x", type: "input" })] })
     );
     expect(fieldError(optional.fields[0])).toBeUndefined();
-    expect(fieldError(required.fields[0])).toBe("Kötelező mező");
+    expect(fieldError(required.fields[0])).toEqual({ kind: "required" });
   });
 
   it("rejects a value that fails the regex", () => {
@@ -355,7 +355,7 @@ describe("validateItem / isItemValid", () => {
         ],
       })
     );
-    expect(fieldError(item.fields[0])).toBe("Érvénytelen formátum");
+    expect(fieldError(item.fields[0])).toEqual({ kind: "invalidFormat" });
   });
 
   it("rejects a non-custom value that is not among the items", () => {
@@ -366,7 +366,7 @@ describe("validateItem / isItemValid", () => {
         ],
       })
     );
-    expect(fieldError(item.fields[0])).toBe("Érvénytelen érték");
+    expect(fieldError(item.fields[0])).toEqual({ kind: "invalidValue" });
   });
 
   it("requires embroidery text and thread color only when enabled", () => {
@@ -390,8 +390,8 @@ describe("validateItem / isItemValid", () => {
     if (field.type !== "embroidery") {
       throw new Error("expected embroidery field");
     }
-    expect(field.value?.text.error).toBe("Kötelező mező");
-    expect(field.value?.color.error).toBe("Kötelező mező");
+    expect(field.value?.text.error).toEqual({ kind: "required" });
+    expect(field.value?.color.error).toEqual({ kind: "required" });
     expect(isItemValid(enabled)).toBe(false);
 
     const valid = validateItem(
@@ -443,7 +443,7 @@ describe("validateItem / isItemValid", () => {
         ],
       })
     );
-    expect(fieldError(item.fields[0])).toBe("2 színt kell választani");
+    expect(fieldError(item.fields[0])).toEqual({ kind: "colorCount", count: 2 });
     expect(isItemValid(item)).toBe(false);
   });
 
@@ -457,8 +457,8 @@ describe("validateItem / isItemValid", () => {
         ],
       })
     );
-    expect(fieldError(item.fields[0])).toBe("Kötelező mező");
-    expect(fieldError(item.fields[1])).toBe("Kötelező mező");
+    expect(fieldError(item.fields[0])).toEqual({ kind: "required" });
+    expect(fieldError(item.fields[1])).toEqual({ kind: "required" });
     expect(isItemValid(item)).toBe(false);
   });
 
@@ -475,7 +475,7 @@ describe("validateItem / isItemValid", () => {
         ],
       })
     );
-    expect(fieldError(item.fields[0])).toBe("Kötelező mező");
+    expect(fieldError(item.fields[0])).toEqual({ kind: "required" });
     expect(isItemValid(item)).toBe(false);
   });
 
@@ -507,8 +507,8 @@ describe("validateItem / isItemValid", () => {
         ],
       })
     );
-    expect(fieldError(item.fields[0])).toBe("Ez az anyagkombináció nem rendelhető");
-    expect(fieldError(item.fields[1])).toBe("Ez az anyagkombináció nem rendelhető");
+    expect(fieldError(item.fields[0])).toEqual({ kind: "bannedCombination" });
+    expect(fieldError(item.fields[1])).toEqual({ kind: "bannedCombination" });
     expect(isItemValid(item)).toBe(false);
   });
 

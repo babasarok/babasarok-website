@@ -116,7 +116,7 @@
               </span>
               <span class="text-xs">
                 {#if colorCount === undefined}
-                  <span class="text-red-600">Válaszz először opciót</span>
+                  <span class="text-red-600">{i18n.t("basket.chooseOptionFirst")}</span>
                 {:else}
                   {`${field.value.colors.length} / ${colorCount}`}
                 {/if}

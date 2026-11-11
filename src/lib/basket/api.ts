@@ -147,13 +147,13 @@ const EnvelopeSchema = z.object({
 function asFailure(error: unknown): Failure {
   if (error instanceof Error) {
     return {
-      reason: "hálózati hiba",
+      reason: "errors.network",
       detail: `${error.name}: ${error.message}`,
       stack: error.stack,
     };
   }
 
-  return { reason: "hálózati hiba", detail: String(error) };
+  return { reason: "errors.network", detail: String(error) };
 }
 
 export function createBasketApi(deps: BasketApiDeps): BasketApi {
@@ -193,27 +193,35 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
       deps.tokens.set(issued);
     }
 
-    const status = `szerverhiba ${response.status.toString()}`;
+    const status = `HTTP ${response.status.toString()}`;
     let body: unknown;
 
     try {
       body = await response.json();
     } catch (error) {
-      return { ok: false, failure: { ...asFailure(error), reason: status } };
+      const failure = asFailure(error);
+
+      return {
+        ok: false,
+        failure: { ...failure, reason: "errors.server", detail: `${status}: ${failure.detail}` },
+      };
     }
 
     const envelope = EnvelopeSchema.safeParse(body);
 
     if (!envelope.success) {
-      return { ok: false, failure: { reason: status, detail: JSON.stringify(body) } };
+      return {
+        ok: false,
+        failure: { reason: "errors.server", detail: `${status}: ${JSON.stringify(body)}` },
+      };
     }
 
     if (envelope.data.errors !== undefined && envelope.data.errors.length > 0) {
       return {
         ok: false,
         failure: {
-          reason: status,
-          detail: envelope.data.errors.map((e) => e.message).join("; "),
+          reason: "errors.server",
+          detail: `${status}: ${envelope.data.errors.map((e) => e.message).join("; ")}`,
           tokenRejected: isTokenRejection(
             response.status,
             envelope.data.errors.flatMap((e) => e.extensions?.code ?? [])
@@ -225,7 +233,10 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
     const data = schema.safeParse(envelope.data.data);
 
     if (!data.success) {
-      return { ok: false, failure: { reason: status, detail: data.error.message } };
+      return {
+        ok: false,
+        failure: { reason: "errors.server", detail: `${status}: ${data.error.message}` },
+      };
     }
 
     return { ok: true, value: data.data };
@@ -251,7 +262,7 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
     const payload = result.value[field];
 
     if (payload === undefined) {
-      return { ok: false, failure: { reason: "szerverhiba", detail: `missing ${field}` } };
+      return { ok: false, failure: { reason: "errors.server", detail: `missing ${field}` } };
     }
 
     if ("id" in payload) {

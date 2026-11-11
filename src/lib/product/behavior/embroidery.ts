@@ -54,16 +54,16 @@ export const embroideryBehavior = defineBehavior("embroidery", {
     }
 
     if (!f.value.text.value) {
-      f.value.text.error = "Kötelező mező";
+      f.value.text.error = { kind: "required" };
     } else if (f.regex) {
       const regex = new RegExp(f.regex);
       if (!regex.test(f.value.text.value)) {
-        f.value.text.error = "Érvénytelen formátum";
+        f.value.text.error = { kind: "invalidFormat" };
       }
     }
 
     if (!f.value.color.color) {
-      f.value.color.error = "Kötelező mező";
+      f.value.color.error = { kind: "required" };
     }
   },
 

@@ -52,7 +52,7 @@
       <div class="flex flex-1 flex-col gap-1 p-2">
         <p class="text-sm font-medium leading-tight text-dark">{product.title}</p>
         {#if product.price}
-          <p class="text-xs text-brown-500">{product.price} Ft-tól</p>
+          <p class="text-xs text-brown-500">{i18n.t("price.from", { price: product.price })}</p>
         {/if}
         <button
           type="button"

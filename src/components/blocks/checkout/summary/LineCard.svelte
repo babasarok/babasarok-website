@@ -142,7 +142,16 @@
               class="flex flex-wrap items-center gap-2 text-xs text-brown-600"
               data-testid="line-set-state"
             >
-              {setState.message}
+              {#if setState.kind === "active"}
+                {i18n.t("basket.setState.active", {
+                  title: setState.title,
+                  units: setState.coveredUnits,
+                })}
+              {:else if setState.kind === "pending-partner"}
+                {i18n.t("basket.setState.pendingPartner", { title: setState.title })}
+              {:else}
+                {i18n.t("basket.setState.pendingMaterial", { title: setState.title })}
+              {/if}
               {#if setState.kind === "pending-material" && setState.syncFromLineId}
                 <a
                   href={localizedPath(

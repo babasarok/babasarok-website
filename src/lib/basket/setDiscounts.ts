@@ -45,9 +45,9 @@ export function setSection(order: Order): SetSectionEntry[] {
 }
 
 export type LineSetStateView =
-  | { kind: "active"; message: string }
-  | { kind: "pending-partner"; message: string }
-  | { kind: "pending-material"; message: string; syncFromLineId: string | undefined };
+  | { kind: "active"; title: string; coveredUnits: number }
+  | { kind: "pending-partner"; title: string }
+  | { kind: "pending-material"; title: string; syncFromLineId: string | undefined };
 
 export function lineSetState(line: OrderLine): LineSetStateView | undefined {
   const state = line.setState;
@@ -57,22 +57,16 @@ export function lineSetState(line: OrderLine): LineSetStateView | undefined {
   }
 
   if (state.kind === "ACTIVE") {
-    return {
-      kind: "active",
-      message: `${state.title}: a szett kedvezmény aktív (${state.coveredUnits.toString()} db-ra).`,
-    };
+    return { kind: "active", title: state.title, coveredUnits: state.coveredUnits };
   }
 
   if (state.kind === "PENDING_PARTNER") {
-    return {
-      kind: "pending-partner",
-      message: `${state.title}: add hozzá a szett egy másik darabját, és megkapod a kedvezményt.`,
-    };
+    return { kind: "pending-partner", title: state.title };
   }
 
   return {
     kind: "pending-material",
-    message: `${state.title}: egyeztesd az anyagot a szett darabjához a kedvezményhez.`,
+    title: state.title,
     syncFromLineId: state.materialSyncFromLineId ?? undefined,
   };
 }

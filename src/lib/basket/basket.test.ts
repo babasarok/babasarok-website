@@ -406,8 +406,7 @@ describe("placeOrder", () => {
     const result = await placeOrder(pick.api, { ...submitInput, shippingMethod: pickup }, report);
 
     expect(pick.calls).toEqual(["setCustomer", "setShippingMethod"]);
-    expect(result).toMatchObject({ ok: false, reference: "12345678" });
-    expect(result.ok ? "" : result.message).toContain("nem megy, kód: 12345678");
+    expect(result).toEqual({ ok: false, failure: { reason: "nem megy", reference: "12345678" } });
     expect(report).toHaveBeenCalledWith(expect.objectContaining({ reference: "12345678" }));
   });
 

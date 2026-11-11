@@ -56,7 +56,7 @@
     type DetailRow,
     type T,
   } from "@/lib/basket/summaryText";
-  import { placeOrder } from "@/lib/basket/submit";
+  import { placeOrder, type SubmitFailure } from "@/lib/basket/submit";
   import { reportClientError } from "@/lib/errorReport";
   import { randomUUID } from "@/lib/uuid";
   import { translateMessage } from "@/lib/i18next-client";
@@ -77,6 +77,7 @@
   let step = $state<StepId>("contact");
   let fieldError = $state<FieldCheck | undefined>();
   let error = $state<string | null>(null);
+  let submitFailure = $state<SubmitFailure | null>(null);
   let methodPending = $state(false);
   let methodResets = $state(0);
   let advancing = $state(false);
@@ -193,6 +194,7 @@
 
     fieldError = undefined;
     error = null;
+    submitFailure = null;
     step = own;
     focusHeading(own);
   }
@@ -201,6 +203,7 @@
     history.pushState(null, "", `#${id}`);
     fieldError = undefined;
     error = null;
+    submitFailure = null;
     step = id;
     globalThis.scrollTo({ top: 0 });
     focusHeading(id);
@@ -383,16 +386,20 @@
     }
   }
 
-  function showError(message: string): void {
-    error = message;
-
+  function revealError(): void {
     void tick().then(() => {
       document.getElementById("checkout-error")?.scrollIntoView({ block: "center" });
     });
   }
 
+  function showError(message: string): void {
+    error = message;
+    revealError();
+  }
+
   async function onSubmit(): Promise<void> {
     error = null;
+    submitFailure = null;
 
     const found = blocker ?? reviewCheck(termsAccepted);
 
@@ -419,7 +426,8 @@
     sending = false;
 
     if (!result.ok) {
-      showError(result.message);
+      submitFailure = result.failure;
+      revealError();
       return;
     }
 
@@ -583,6 +591,7 @@
                           total={formatMoney(order.totalWithTax, order.currencyCode)}
                           bind:terms={termsAccepted}
                           {error}
+                          {submitFailure}
                           {sending}
                           {submitDisabled}
                           onBack={() => onBack("review")}

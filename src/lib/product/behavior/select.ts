@@ -44,14 +44,14 @@ export const selectBehavior = defineBehavior("select", {
 
     f.value.error = undefined;
     if (!f.value.value) {
-      f.value.error = "Kötelező mező";
+      f.value.error = { kind: "required" };
       return;
     }
 
     if (f.regex) {
       const regex = new RegExp(f.regex);
       if (!regex.test(f.value.value)) {
-        f.value.error = "Érvénytelen formátum";
+        f.value.error = { kind: "invalidFormat" };
         return;
       }
     }
@@ -66,7 +66,7 @@ export const selectBehavior = defineBehavior("select", {
       items &&
       !items.some((option) => option && option.value === f.value?.value)
     ) {
-      f.value.error = "Érvénytelen érték";
+      f.value.error = { kind: "invalidValue" };
       return;
     }
     return;

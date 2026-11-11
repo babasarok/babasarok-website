@@ -10,6 +10,7 @@
 import type { OrderFieldMaterial } from "@/lib/order/types";
 import type {
   Field,
+  FieldError,
   EmbroideryValue,
   IProduct,
   ProductMaterialValue,
@@ -54,7 +55,7 @@ export function makeField(opts: FieldOpts): Field {
   } as unknown as Field;
 }
 
-export function fieldError(field: Field | undefined): string | undefined {
+export function fieldError(field: Field | undefined): FieldError | undefined {
   if (!field || field.type === "embroidery") {
     return undefined;
   }

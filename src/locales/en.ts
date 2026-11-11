@@ -78,7 +78,14 @@ const translation = {
     inBasket: "In basket",
     configure: "Configure",
     add: "Add",
+    setState: {
+      active: "{{title}}: the set discount applies ({{units}} pcs).",
+      pendingPartner: "{{title}}: add another piece of the set to get the discount.",
+      pendingMaterial:
+        "{{title}}: match the material with the set's other piece to get the discount.",
+    },
     syncMaterial: "Match material",
+    chooseOptionFirst: "Choose an option first",
     viewAllColors: "View all colors",
     color: "Color",
     selectOption: "Choose an option",
@@ -87,6 +94,7 @@ const translation = {
     perWord: " / word",
   },
   price: {
+    from: "from {{price}} Ft",
     base: "Base price",
     perMeter: "Price per meter",
     perUnit: "Unit price",
@@ -209,6 +217,19 @@ const translation = {
     addFailed: "The product was not added to the basket. Reload the page and try again.",
     notOrderable: "This product cannot be ordered at the moment.",
     reload: "Reload the page",
+    network: "network error",
+    server: "server error",
+    submit:
+      "Something went wrong while sending the order. Please try again later. ({{reason}}, code: {{reference}})",
+  },
+  fieldErrors: {
+    required: "Required field",
+    invalidFormat: "Invalid format",
+    invalidValue: "Invalid value",
+    colorsUnavailable: "Colors can't be chosen until the other options are set",
+    colorCount_one: "Choose a color",
+    colorCount_other: "Choose {{count}} colors",
+    bannedCombination: "This material combination can't be ordered",
   },
   blockers: {
     empty: "Your basket is empty.",
@@ -227,6 +248,11 @@ const translation = {
   errorCodes: {
     EMAIL_ADDRESS_CONFLICT_ERROR:
       "This email address already belongs to a registered account. Please enter a different email address.",
+  },
+  privacy: {
+    controllerHeading: "1. Data controller",
+    controller: "Data controller",
+    contact: "Contact",
   },
   pages: {
     notFound: "Page not found (404)",

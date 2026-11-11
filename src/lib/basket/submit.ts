@@ -1,4 +1,4 @@
-import type { BasketApi, Failure, Result } from "./api";
+import type { BasketApi, Result } from "./api";
 import { requiresAddress, type Order, type ShippingQuote } from "./schemas";
 import {
   billingPlan,
@@ -8,8 +8,6 @@ import {
   type CheckoutValues,
 } from "./checkoutValues";
 
-const GENERIC_ERROR = "Hiba történt a rendelés elküldése közben. Kérlek, próbáld meg újra később.";
-
 export interface SubmitInput {
   values: CheckoutValues;
   shippingMethod: ShippingQuote;
@@ -17,8 +15,13 @@ export interface SubmitInput {
   transactionId: string;
 }
 
-export type SubmitResult =
-  { ok: true; order: Order } | { ok: false; message: string; reference: string };
+export type SubmitResult = { ok: true; order: Order } | { ok: false; failure: SubmitFailure };
+
+/** Shown as `errors.submit`; the reason is an i18n key or the server's own localized message. */
+export interface SubmitFailure {
+  reason: string;
+  reference: string;
+}
 
 export interface OrderErrorReport {
   message: string;
@@ -75,10 +78,6 @@ async function runSequence(api: BasketApi, input: SubmitInput): Promise<Result<O
   return api.transitionToArrangingPayment();
 }
 
-function describe(failure: Failure, reference: string): string {
-  return `${GENERIC_ERROR} (${failure.reason}, kód: ${reference})`;
-}
-
 export async function placeOrder(
   api: BasketApi,
   input: SubmitInput,
@@ -94,5 +93,5 @@ export async function placeOrder(
 
   report({ message: result.failure.detail, stack: result.failure.stack, reference });
 
-  return { ok: false, message: describe(result.failure, reference), reference };
+  return { ok: false, failure: { reason: result.failure.reason, reference } };
 }
