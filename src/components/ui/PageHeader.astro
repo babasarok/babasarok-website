@@ -9,6 +9,7 @@ interface Props {
   "no-shapes"?: boolean;
   /** Reduced vertical rhythm for pages whose main content follows directly. */
   compact?: boolean;
+  class?: string;
 }
 
 const {
@@ -16,6 +17,7 @@ const {
   breadcrumb = title,
   "no-shapes": noShapes = false,
   compact: compact = false,
+  class: className = "",
 } = Astro.props;
 
 const locale = localeFromPathname(Astro.url.pathname);
@@ -23,7 +25,7 @@ const i18n = createI18n(locale);
 const t = i18n.t.bind(i18n);
 ---
 
-<header class={`relative pt-30 lg:pt-50`}>
+<header class={`relative pt-30 lg:pt-50 ${className}`}>
   {!noShapes && <FloatingShapes />}
 
   <div class="container">

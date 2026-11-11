@@ -3,6 +3,7 @@
   import Button from "@/components/ui/Button.svelte";
   import TextInput from "@/components/ui/TextInput.svelte";
   import AddressFields from "./AddressFields.svelte";
+  import Collapse from "@/components/blocks/checkout/wizard/Collapse.svelte";
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import type { i18n as I18n } from "i18next";
   import type { Locale } from "@/lib/i18n";
@@ -22,12 +23,13 @@
   let { locale, billing, method, error, onContinue, onBack }: Props = $props();
 
   const pickup = $derived(!requiresAddress(method));
-  const showAddress = $derived(pickup || !billing.sameAsShipping);
+  const showAddress = $derived(pickup || !billing.sameAsShipping || error !== undefined);
 </script>
 
 <I18nGate {locale}>
   {#snippet children(i18n: I18n)}
     <form
+      id="wizard-step-billing"
       data-testid="step-billing"
       class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-white p-4 sm:p-6"
       onsubmit={(event) => {
@@ -35,8 +37,6 @@
         onContinue();
       }}
     >
-      <h2 class="text-2xl font-bold text-headings">{i18n.t("checkout.steps.billing")}</h2>
-
       {#if !pickup}
         <label class="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-body">
           <input
@@ -47,13 +47,17 @@
           />
           {i18n.t("checkout.sameAsShipping")}
         </label>
-      {:else}
-        <p class="text-xs text-brown-600 italic">{i18n.t("checkout.pickupBillingNote")}</p>
       {/if}
 
-      {#if showAddress}
-        <AddressFields {locale} address={billing.address} {error} idPrefix="billing" />
-      {/if}
+      <Collapse open={showAddress}>
+        <div class="flex flex-col gap-3 pt-2">
+          {#if pickup}
+            <p class="text-xs text-brown-600 italic">{i18n.t("checkout.pickupBillingNote")}</p>
+          {/if}
+
+          <AddressFields {locale} address={billing.address} {error} idPrefix="billing" />
+        </div>
+      </Collapse>
 
       <div class="flex flex-col gap-3 rounded-xl bg-brown-50 p-3">
         <p class="text-xs text-brown-600">{i18n.t("checkout.companyGroupLabel")}</p>
@@ -78,7 +82,7 @@
         </div>
       </div>
 
-      <div class="mt-2 flex items-center justify-between gap-3">
+      <div class="mt-2 hidden items-center justify-between gap-3 lg:flex">
         <Button type="button" variant="outlined" class="h-8 px-2" onclick={onBack}>
           {i18n.t("checkout.back")}
         </Button>

@@ -47,9 +47,9 @@
       .filter((entry) => entry.lines.some((member) => member.orderLineId === line.id))
       .map((entry) => entry.title);
 
-    const state = lineSetState(line);
+    const state = line.setState;
 
-    if (state !== undefined && state.kind !== "active") {
+    if (state !== null && state !== undefined && state.kind !== "ACTIVE") {
       titles.push(state.title);
     }
 

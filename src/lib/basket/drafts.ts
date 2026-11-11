@@ -243,6 +243,31 @@ export function adoptPickupBilling(drafts: CheckoutDrafts): CheckoutDrafts {
   };
 }
 
+/**
+ * Returning to a delivery method that has an address: the pickup detour's
+ * copied billing fields collapse back into the ticked same-as-shipping
+ * default, unless the buyer entered a distinct billing address.
+ */
+export function restoreShippingBilling(drafts: CheckoutDrafts): CheckoutDrafts {
+  const billing = drafts.billing;
+
+  if (billing.sameAsShipping) {
+    return drafts;
+  }
+
+  const empty =
+    billing.address.street.trim() === "" &&
+    billing.address.houseNumber.trim() === "" &&
+    billing.address.postalCode.trim() === "" &&
+    billing.address.city.trim() === "";
+
+  if (empty || sameAddress(billing.address, drafts.address)) {
+    return { ...drafts, billing: { ...billing, sameAsShipping: true } };
+  }
+
+  return drafts;
+}
+
 function shippingInput(address: AddressDraft): AddressInput {
   return {
     streetLine1: address.street,

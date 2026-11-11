@@ -163,10 +163,6 @@ const translation = {
     noBilling: "Nincs külön számlázási cím",
     setBadge: "Szett",
   },
-  delivery: {
-    heading: "Hogyan szeretnéd megkapni a csomagot?",
-    addressPlaceholder: "Add meg a szállítási címet",
-  },
   order: {
     priceChanged:
       "Az oldalon látott ár ({{shown}}) megváltozott; a jelenlegi egységár: {{actual}}.",
@@ -194,7 +190,6 @@ const translation = {
     email: "Kérem, add meg az email címed.",
     terms: "Az ÁSZF elfogadása kötelező.",
     method: "Kérem, válassz egy szállítási módot.",
-    address: "Kérem, add meg a szállítási címet a szállítási módhoz.",
     street: "Kérjük, add meg az utcát.",
     houseNumber: "Kérjük, add meg a házszámot.",
     postalCode: "Kérjük, add meg az irányítószámot.",

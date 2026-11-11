@@ -18,7 +18,14 @@
     first?: boolean;
   }
 
-  let { locale, contact, error, onContinue, onBack, first = false }: Props = $props();
+  let {
+    locale,
+    contact,
+    error,
+    onContinue,
+    onBack,
+    first = false,
+  }: Props = $props();
 
   function nameError(): boolean {
     return error?.field === "name";
@@ -49,6 +56,7 @@
     {/snippet}
 
     <form
+      id="wizard-step-contact"
       data-testid="step-contact"
       class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-white p-4 sm:p-6"
       onsubmit={(event) => {
@@ -56,8 +64,6 @@
         onContinue();
       }}
     >
-      <h2 class="text-2xl font-bold text-headings">{i18n.t("checkout.steps.contact")}</h2>
-
       <div class="grid grid-cols-1 gap-x-3 gap-y-1 sm:grid-cols-2">
         <div class="flex flex-col gap-1">
           <label for="contact-lastName" class="text-sm font-medium text-body">
@@ -119,7 +125,7 @@
         <TextInput id="contact-phone" type="tel" autocomplete="tel" bind:value={contact.phone} />
       </div>
 
-      <div class="mt-2 flex items-center justify-between gap-3">
+      <div class="mt-2 hidden items-center justify-between gap-3 lg:flex">
         {#if !first}
           <Button type="button" variant="outlined" class="h-8 px-2" onclick={onBack}>
             {i18n.t("checkout.back")}

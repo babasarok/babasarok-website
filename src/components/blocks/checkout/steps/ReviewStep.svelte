@@ -65,6 +65,7 @@
 <I18nGate {locale}>
   {#snippet children(i18n: I18n)}
     <form
+      id="wizard-step-review"
       data-testid="step-review"
       class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-white p-4 sm:p-6"
       onsubmit={(event) => {
@@ -72,8 +73,6 @@
         onSubmit();
       }}
     >
-      <h2 class="text-2xl font-bold text-headings">{i18n.t("checkout.steps.review")}</h2>
-
       <div class="flex flex-col gap-2">
         <StepSummary
           {locale}
@@ -138,7 +137,7 @@
         </span>
       </label>
 
-      <div class="flex items-center justify-between gap-3">
+      <div class="hidden items-center justify-between gap-3 lg:flex">
         <Button type="button" variant="outlined" class="h-11 px-6" onclick={onBack}>
           {i18n.t("checkout.back")}
         </Button>

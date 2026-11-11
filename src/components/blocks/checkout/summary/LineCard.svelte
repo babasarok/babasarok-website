@@ -58,7 +58,7 @@
 <I18nGate {locale}>
   {#snippet children(i18n: I18n)}
     <article
-      transition:fade={{ duration: 200 }}
+      out:fade={{ duration: 200 }}
       class={[
         "relative flex flex-col gap-3 rounded-xl border bg-white p-4 shadow-sm transition-all",
         highlighted
@@ -100,20 +100,6 @@
             {product.name}
           </h3>
 
-          {#if rows.length > 0}
-            <dl class="flex flex-wrap gap-1 text-xs">
-              {#each rows as row, index (row.label)}
-                <div class="flex gap-1">
-                  <dt class="text-brown-700 font-medium">{row.label}:</dt>
-                  <dd class="text-right text-brown-700">{row.value}</dd>
-                </div>
-                {#if index < rows.length - 1}
-                  <span class="text-brown-700">*</span>
-                {/if}
-              {/each}
-            </dl>
-          {/if}
-
           <div class="flex gap-3 py-1 justify-between">
             <div class="flex items-center gap-3">
               <span class="text-xs select-none">{line.quantity} {i18n.t("common.piece")}</span>
@@ -122,26 +108,35 @@
               {formatMoney(line.discountedLinePriceWithTax, currencyCode)}
             </p>
           </div>
-
-          <div class="flex items-center gap-3 text-sm pt-1">
-            <a
-              href={localizedPath(`/product/${product.slug}/?line=${line.id}`, locale)}
-              class="flex text-xs items-center gap-1 font-medium underline text-brown-600 transition-colors hover:text-brown-700"
-            >
-              <Icon icon="mdi:pencil" class="shrink-0 text-base" />
-              {i18n.t("basket.edit")}
-            </a>
-            <div class="h-4 border-l border-brown-200"></div>
-            <button
-              type="button"
-              onclick={onRemove}
-              disabled={busy}
-              class="flex cursor-pointer items-center gap-1 text-brown-500 transition-colors hover:text-red-600 text-base"
-            >
-              <Icon icon="mdi:delete-outline" class="shrink-0" />
-            </button>
-          </div>
         </div>
+      </div>
+      {#if rows.length > 0}
+        <dl class="flex flex-wrap gap-1 text-xs">
+          {#each rows as row (row.label)}
+            <div class="flex gap-1">
+              <dt class="text-brown-700 font-medium">{row.label}:</dt>
+              <dd class="text-right text-brown-700">{row.value}</dd>
+            </div>
+          {/each}
+        </dl>
+      {/if}
+      <div class="flex items-center gap-3 text-sm pt-1">
+        <a
+          href={localizedPath(`/product/${product.slug}/?line=${line.id}`, locale)}
+          class="flex text-xs items-center gap-1 font-medium underline text-brown-600 transition-colors hover:text-brown-700"
+        >
+          <Icon icon="mdi:pencil" class="shrink-0 text-base" />
+          {i18n.t("basket.edit")}
+        </a>
+        <div class="h-4 border-l border-brown-200"></div>
+        <button
+          type="button"
+          onclick={onRemove}
+          disabled={busy}
+          class="flex cursor-pointer items-center gap-1 text-brown-500 transition-colors hover:text-red-600 text-base"
+        >
+          <Icon icon="mdi:delete-outline" class="shrink-0" />
+        </button>
       </div>
 
       {#if line.invalidReason || setState || priceChange}

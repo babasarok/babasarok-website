@@ -25,9 +25,16 @@ if (!checkout) {
 ---
 
 <Base title={t("checkout.title")}>
-  <PageHeader title={t("checkout.title")} breadcrumb={t("checkout.title")} no-shapes />
+  <PageHeader
+    title={t("checkout.title")}
+    breadcrumb={t("checkout.title")}
+    no-shapes
+    class="hidden sm:block"
+  />
+  <!-- TODO: factor out header height -->
+  <div class="h-25 md:hidden"></div>
 
-  <section class="py-12.5">
+  <section class="py-6 sm:py-12.5">
     <div class="not-prose container">
       <CheckoutSection
         {locale}

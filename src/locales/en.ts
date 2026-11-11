@@ -168,10 +168,6 @@ const translation = {
     noBilling: "No separate billing address",
     setBadge: "Set",
   },
-  delivery: {
-    heading: "How would you like to receive the package?",
-    addressPlaceholder: "Enter the shipping address",
-  },
   order: {
     priceChanged:
       "The price you saw on the page ({{shown}}) has changed; the current unit price: {{actual}}.",
@@ -199,7 +195,6 @@ const translation = {
     email: "Please enter your email address.",
     terms: "Accepting the GTC is required.",
     method: "Please choose a shipping method.",
-    address: "Please enter the shipping address for the shipping method.",
     street: "Please enter the street.",
     houseNumber: "Please enter the house number.",
     postalCode: "Please enter the postcode.",

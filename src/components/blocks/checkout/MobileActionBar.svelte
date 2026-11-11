@@ -1,8 +1,8 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { slide } from "svelte/transition";
-  import OrderSummary from "./OrderSummary.svelte";
-  import { formatMoney } from "@/lib/basket/money";
+  import Button from "@/components/ui/Button.svelte";
+  import OrderSummary from "@/components/blocks/checkout/summary/OrderSummary.svelte";
   import type { Labels } from "@/lib/basket/lineRows";
   import type { Order } from "@/lib/basket/schemas";
   import type { SetMembers } from "@/lib/basket/setDiscounts";
@@ -17,6 +17,11 @@
     labels: Labels;
     setMembers: SetMembers;
     highlightedLines: readonly string[];
+    backVisible: boolean;
+    onBack: () => void;
+    nextLabel: string;
+    nextDisabled: boolean;
+    formId: string;
     basketInfo?: string | undefined;
     shownPrices?: ShownPrices | undefined;
     busy?: boolean;
@@ -30,6 +35,11 @@
     labels,
     setMembers,
     highlightedLines,
+    backVisible,
+    onBack,
+    nextLabel,
+    nextDisabled,
+    formId,
     basketInfo,
     shownPrices,
     busy = false,
@@ -69,24 +79,41 @@
       {/if}
 
       <div
-        class="flex items-center justify-between gap-3 border-t border-brown-200 bg-white px-4 py-3 shadow-[0_-8px_24px_rgba(52,58,64,0.15)]"
+        class="flex items-center gap-2 border-t border-brown-200 bg-white px-3 py-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] shadow-[0_-8px_24px_rgba(52,58,64,0.15)]"
       >
-        <span class="text-sm text-body">{i18n.t("checkout.total")}</span>
-        <div class="flex items-center gap-2">
-          <span data-testid="checkout-total-mobile" class="text-lg font-semibold text-dark">
-            {formatMoney(order.totalWithTax, order.currencyCode)}
-          </span>
-          <button
+        {#if backVisible}
+          <Button
             type="button"
-            aria-label={i18n.t("checkout.summaryTitle")}
-            aria-expanded={expanded}
-            aria-controls="checkout-summary-mobile"
-            onclick={toggle}
-            class="cursor-pointer rounded-full p-1 text-brown-600 transition-colors hover:bg-brown-100"
+            variant="outlined"
+            class="h-11 shrink-0 px-3"
+            onclick={onBack}
+            data-testid="wizard-back"
           >
-            <Icon icon={expanded ? "mdi:chevron-down" : "mdi:chevron-up"} class="text-2xl" />
-          </button>
-        </div>
+            {i18n.t("checkout.back")}
+          </Button>
+        {/if}
+
+        <button
+          type="button"
+          aria-label={i18n.t("checkout.summaryTitle")}
+          aria-expanded={expanded}
+          aria-controls="checkout-summary-mobile"
+          onclick={toggle}
+          class="mx-auto cursor-pointer rounded-full p-2 text-brown-600 transition-colors hover:bg-brown-100"
+        >
+          <Icon icon={expanded ? "mdi:chevron-down" : "mdi:chevron-up"} class="text-2xl" />
+        </button>
+
+        <Button
+          type="submit"
+          form={formId}
+          variant="contained"
+          class="h-11 shrink-0 px-3 uppercase"
+          disabled={nextDisabled}
+          data-testid="wizard-next"
+        >
+          {nextLabel}
+        </Button>
       </div>
     </div>
   {/snippet}

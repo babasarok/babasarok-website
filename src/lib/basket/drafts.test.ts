@@ -7,6 +7,7 @@ import {
   createDraftSaver,
   draftsFromOrder,
   pendingSaves,
+  restoreShippingBilling,
   type CheckoutDrafts,
   type DraftSaver,
 } from "./drafts";
@@ -182,6 +183,32 @@ describe("adoptPickupBilling", () => {
     };
 
     expect(adoptPickupBilling(typed).billing.address).toEqual({ ...EMPTY_ADDRESS, street: "Piac tér" });
+  });
+});
+
+describe("restoreShippingBilling", () => {
+  it("re-ticks same-as-shipping when the pickup detour copied the shipping address", () => {
+    const adopted = adoptPickupBilling(filled);
+
+    expect(adopted.billing.sameAsShipping).toBe(false);
+    expect(restoreShippingBilling(adopted).billing.sameAsShipping).toBe(true);
+  });
+
+  it("keeps a distinct billing address the buyer entered", () => {
+    const typed: CheckoutDrafts = {
+      ...filled,
+      billing: {
+        ...filled.billing,
+        sameAsShipping: false,
+        address: { ...EMPTY_ADDRESS, street: "Piac tér" },
+      },
+    };
+
+    expect(restoreShippingBilling(typed)).toBe(typed);
+  });
+
+  it("keeps an already ticked draft", () => {
+    expect(restoreShippingBilling(filled)).toBe(filled);
   });
 });
 

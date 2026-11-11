@@ -2,6 +2,7 @@
   import Icon from "@iconify/svelte";
   import Button from "@/components/ui/Button.svelte";
   import AddressFields from "./AddressFields.svelte";
+  import Collapse from "@/components/blocks/checkout/wizard/Collapse.svelte";
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import type { i18n as I18n } from "i18next";
   import type { Locale } from "@/lib/i18n";
@@ -36,12 +37,14 @@
   }: Props = $props();
 
   const method = $derived(selectedMethod(methods, shippingMethodId));
-  const showAddress = $derived(requiresAddress(method));
+  const addressError = $derived(error !== undefined && error.field !== "method");
+  const showAddress = $derived(requiresAddress(method) || addressError);
 </script>
 
 <I18nGate {locale}>
   {#snippet children(i18n: I18n)}
     <form
+      id="wizard-step-shipping"
       data-testid="step-shipping"
       class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-white p-4 sm:p-6"
       onsubmit={(event) => {
@@ -49,8 +52,6 @@
         onContinue();
       }}
     >
-      <h2 class="text-2xl font-bold text-headings">{i18n.t("checkout.steps.shipping")}</h2>
-
       <div class="flex flex-col gap-2" role="radiogroup" aria-label={i18n.t("checkout.shipping")}>
         {#if methodsLoading}
           {#each Array.from({ length: 3 }) as _, index (index)}
@@ -86,8 +87,8 @@
         </p>
       {/if}
 
-      {#if showAddress}
-        <div class="flex flex-col gap-2">
+      <Collapse open={showAddress}>
+        <div class="flex flex-col gap-2 pt-2">
           <AddressFields {locale} {address} {error} idPrefix="shipping" {onCountryChange} />
 
           <p class="flex items-center gap-1.5 text-xs text-brown-600 italic">
@@ -95,9 +96,9 @@
             {i18n.t("checkout.addressNote")}
           </p>
         </div>
-      {/if}
+      </Collapse>
 
-      <div class="mt-2 flex items-center justify-between gap-3">
+      <div class="mt-2 hidden items-center justify-between gap-3 lg:flex">
         <Button type="button" variant="outlined" class="h-8 px-2" onclick={onBack}>
           {i18n.t("checkout.back")}
         </Button>
