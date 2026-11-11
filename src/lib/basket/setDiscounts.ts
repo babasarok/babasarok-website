@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { parseLineSelections, type LineSelections } from "@babasarok/pricing";
+import { selectionMaterialParams } from "@/lib/order/queryParams";
 import type { Order, OrderLine } from "./schemas";
 
 export const SetDiscountSchema = z.object({
@@ -108,4 +110,24 @@ export function partnerLinks(line: OrderLine, order: Order, members: SetMembers)
   const inBasket = new Set(order.lines.map((other) => other.productVariant.product.slug));
 
   return (members[line.setState.groupId] ?? []).filter((member) => !inBasket.has(member.slug));
+}
+
+/** The partner's product page with the line's materials preselected, so adding it completes the set. */
+export function partnerPath(partner: PartnerLink, line: OrderLine, languageCode: string): string {
+  let selections: LineSelections;
+
+  try {
+    // The thrown message is discarded below, so the parse language never renders.
+    selections = parseLineSelections(line.customFields?.selections ?? null, languageCode);
+  } catch {
+    return `/product/${partner.slug}/`;
+  }
+
+  const query = selectionMaterialParams(selections).toString();
+
+  if (query === "") {
+    return `/product/${partner.slug}/`;
+  }
+
+  return `/product/${partner.slug}/?${query}`;
 }

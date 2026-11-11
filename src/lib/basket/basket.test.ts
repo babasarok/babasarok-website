@@ -23,6 +23,7 @@ import {
   SetDiscountSchema,
   lineSetState,
   partnerLinks,
+  partnerPath,
   setMembersByGroup,
   setSection,
 } from "./setDiscounts";
@@ -629,6 +630,22 @@ describe("set discount adapter", () => {
       { slug: "kosar", name: "Kosár" },
     ]);
     expect(partnerLinks(active, fixtureOrder, members)).toEqual([]);
+  });
+
+  it("links a partner with the line's materials preselected", () => {
+    const partner = { slug: "takaro", name: "Takaró" };
+    const material = JSON.stringify({
+      anyag: { kind: "material", materialId: "alfa", colors: ["feher"] },
+      meret: { kind: "option", value: "50x50" },
+    });
+
+    expect(
+      partnerPath(partner, line({ customFields: { selections: material, lengthCm: null } }), "hu")
+    ).toBe("/product/takaro/?anyag=alfa&anyag_colors=feher");
+    expect(partnerPath(partner, line(), "hu")).toBe("/product/takaro/");
+    expect(
+      partnerPath(partner, line({ customFields: { selections: "{", lengthCm: null } }), "hu")
+    ).toBe("/product/takaro/");
   });
 
   it("rejects set data of the wrong shape", () => {

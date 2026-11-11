@@ -5,7 +5,7 @@
   import { formatMoney } from "@/lib/basket/money";
   import type { OrderLine } from "@/lib/basket/schemas";
   import type { PriceChange } from "@/lib/basket/stale";
-  import { lineSetState, type PartnerLink } from "@/lib/basket/setDiscounts";
+  import { lineSetState, partnerPath, type PartnerLink } from "@/lib/basket/setDiscounts";
   import { ASSET_BASE } from "@/lib/vendure/client";
   import { imageUrl } from "@/lib/vendure/imageUrl";
   import type { i18n as I18n } from "i18next";
@@ -158,7 +158,10 @@
               {#if setState.kind === "pending-partner"}
                 {#each partnerLinks as partner (partner.slug)}
                   <a
-                    href={localizedPath(`/product/${partner.slug}/`, locale)}
+                    href={localizedPath(
+                      partnerPath(partner, line, VENDURE_LANGUAGE_CODE[locale]),
+                      locale
+                    )}
                     data-testid="set-partner-link"
                     class="flex items-center gap-1 rounded-full border border-brown-200 px-3 py-1 font-medium transition-all hover:bg-brown-100"
                   >

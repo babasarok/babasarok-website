@@ -41,6 +41,7 @@ import {
   increaseLineQuantity,
   lineOf,
   openCheckout,
+  openPartnerLink,
   openProductFromList,
   openSecondTabOnCheckout,
   removeFirstLine,
@@ -157,8 +158,9 @@ test("a set forms, breaks on a material mismatch and is restored by the one-clic
   await expectPartnerLink(page, /E2E Szett Fej/, /E2E Szett Láb/);
   await expectIncompleteSetChip(page, SET_TITLE);
 
-  await openProductFromList(page, /E2E Szett Láb/);
-  await chooseMaterial(page, /Alfa/);
+  // The partner link carries the line's material, so the partner is added
+  // without choosing it again.
+  await openPartnerLink(page, /E2E Szett Fej/, /E2E Szett Láb/);
   await addToBasket(page);
   await goToCheckoutInApp(page);
   await expectSetChip(page, SET_TITLE, 1, /1\s?000\s?Ft/);
