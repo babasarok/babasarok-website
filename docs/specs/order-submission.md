@@ -13,21 +13,25 @@ owner.
 
 The system SHALL provide the order form on a dedicated checkout page
 (`/checkout`) as a multi-step wizard: **Kapcsolat** (contact), **Szállítás**
-(delivery), **Számlázás** (billing) and **Áttekintés** (review). The step list
-is data rendered as a progress strip (completed ✓ / active / upcoming), and
-the active step's form is the only editable one. The step index is synced to
-the URL hash: browser back returns to the previous step, a refresh lands on
-the saved step, and the saved step is derived from what the active order
-already has when the hash is absent or ahead of the data. Moving to a step
+(delivery), **Számlázás** (billing) and **Áttekintés** (review). On mobile a
+**Kosár** (basket) step showing the order summary comes first; desktop has no
+such step because its summary column shows the basket beside every step. The
+step list is data rendered as a progress strip (completed ✓ / active /
+upcoming), and the active step's form is the only editable one. The step index
+is synced to the URL hash: browser back returns to the previous step, a
+refresh lands on the saved step, and the saved step is derived from what the
+active order already has when the hash is absent or ahead of the data (an
+order without saved contact details opens on the layout's first step). A hash
+naming a step the layout lacks opens the next step it has. Moving to a step
 moves keyboard focus to its heading.
 
 The wizard SHALL offer exactly one submit affordance per layout: the
 Áttekintés step carries the terms checkbox and the CTA; the order-summary
 panel shows no submit button. The order summary (basket lines, set discounts,
-totals) is a sticky column beside the steps on desktop. On mobile a sticky
-bottom bar always shows the step's back and forward actions (forward submits
-on Áttekintés) and a basket toggle that opens the full summary as a sheet,
-which repeats the same actions. On desktop each completed step collapses to a
+totals) is a sticky column beside the steps on desktop. On mobile the summary
+is the Kosár step and is repeated on Áttekintés, and a sticky bottom bar
+always shows the step's back and forward actions (forward submits on
+Áttekintés). On desktop each completed step collapses to a
 one-line summary with a `Módosítás` link that reopens it, and a flow
 transitions between its full and summary state; on Áttekintés the summaries
 give way to the review's labelled details of every step, each with its own

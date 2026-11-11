@@ -68,7 +68,7 @@
     onRemoveLine,
   }: Props = $props();
 
-  type ReviewedStep = Exclude<StepId, "review">;
+  type ReviewedStep = Exclude<StepId, "basket" | "review">;
 
   const ICONS: Record<ReviewedStep, string> = {
     contact: "mdi:account-outline",

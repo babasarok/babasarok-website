@@ -165,9 +165,10 @@ checkout. Product pages render `<ProductOrder client:load>` (in
 `blocks/order/`) to build up a basket item. `checkout.astro` renders
 `<CheckoutSection client:load>` (in `blocks/checkout/`), which loads the
 catalog labels and mounts the checkout wizard: `steps/` holds one form per
-flow (Kapcsolat, Szállítás, Számlázás, Áttekintés), `summary/` the order
-summary (desktop column, mobile sheet), `wizard/` the step chrome. Shared
-primitives (buttons, inputs, sheet) live in `components/ui/`. The wizard keeps
+flow (the mobile-only Kosár, then Kapcsolat, Szállítás, Számlázás,
+Áttekintés), `summary/` the order summary the desktop column and the Kosár
+step share, `wizard/` the step chrome. Shared primitives (buttons, inputs)
+live in `components/ui/`. The wizard keeps
 no copy of the form: inputs start from the active order, saves read the forms
 with `FormData` and replace the order with Vendure's response. Domain logic is
 extracted into `src/lib/`:

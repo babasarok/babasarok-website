@@ -1,9 +1,11 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
+  import { MediaQuery } from "svelte/reactivity";
   import Icon from "@iconify/svelte";
   import StepStrip from "./wizard/StepStrip.svelte";
   import StepSummary from "./wizard/StepSummary.svelte";
   import Collapse from "./wizard/Collapse.svelte";
+  import BasketStep from "./steps/BasketStep.svelte";
   import ContactStep from "./steps/ContactStep.svelte";
   import ShippingStep from "./steps/ShippingStep.svelte";
   import BillingStep from "./steps/BillingStep.svelte";
@@ -37,7 +39,15 @@
   } from "@/lib/basket/readiness";
   import type { Order, ShippingQuote } from "@/lib/basket/schemas";
   import type { SetMembers } from "@/lib/basket/setDiscounts";
-  import { STEPS, stepFromHash, stepIndex, type StepId } from "@/lib/basket/steps";
+  import {
+    layoutSteps,
+    nextStep,
+    previousStep,
+    stepFromHash,
+    stepIn,
+    stepIndex,
+    type StepId,
+  } from "@/lib/basket/steps";
   import {
     billingRows,
     contactRows,
@@ -76,6 +86,8 @@
   let highlightedLines = $state<readonly string[]>([]);
   let termsAccepted = $state(false);
 
+  const wide = new MediaQuery("min-width: 64rem");
+  const steps = $derived(layoutSteps(wide.current));
   const order = $derived(basket.order);
   const method = $derived(orderMethod(order, methods));
   const saved = $derived(order === null ? null : valuesFromOrder(order));
@@ -118,11 +130,22 @@
     const values = valuesFromOrder(order);
 
     initial = values;
-    step = entryStep(values, method, stepFromHash(globalThis.location.hash.slice(1)));
+    step = entryStep(values, steps, method, stepFromHash(globalThis.location.hash.slice(1)));
 
     if (globalThis.location.hash.slice(1) !== step) {
       history.replaceState(null, "", `#${step}`);
     }
+  });
+
+  $effect(() => {
+    const own = stepIn(steps, step);
+
+    if (initial === null || own === step) {
+      return;
+    }
+
+    step = own;
+    history.replaceState(null, "", `#${own}`);
   });
 
   async function loadMethods(): Promise<void> {
@@ -154,14 +177,24 @@
   function syncFromHash(): void {
     const hashStep = stepFromHash(globalThis.location.hash.slice(1));
 
-    if (hashStep === undefined || hashStep === step) {
+    if (hashStep === undefined) {
+      return;
+    }
+
+    const own = stepIn(steps, hashStep);
+
+    if (own !== hashStep) {
+      history.replaceState(null, "", `#${own}`);
+    }
+
+    if (own === step) {
       return;
     }
 
     fieldError = undefined;
     error = null;
-    step = hashStep;
-    focusHeading(hashStep);
+    step = own;
+    focusHeading(own);
   }
 
   function goTo(id: StepId): void {
@@ -174,7 +207,13 @@
   }
 
   function onBack(id: StepId): void {
-    goTo(STEPS[stepIndex(id) - 1].id);
+    const previous = previousStep(steps, id);
+
+    if (previous === undefined) {
+      return;
+    }
+
+    goTo(previous);
   }
 
   function saveContact(data: FormData): Promise<void> {
@@ -229,7 +268,11 @@
       return saveBilling(data);
     }
 
-    return saveMessage(data);
+    if (id === "review") {
+      return saveMessage(data);
+    }
+
+    return Promise.resolve();
   }
 
   async function onContinue(id: StepId, data: FormData): Promise<void> {
@@ -254,7 +297,13 @@
       advancing = false;
     }
 
-    goTo(STEPS[stepIndex(id) + 1].id);
+    const next = nextStep(steps, id);
+
+    if (next === undefined) {
+      return;
+    }
+
+    goTo(next);
   }
 
   async function onMethod(shippingMethodId: string): Promise<void> {
@@ -448,10 +497,10 @@
         <div class="grid grid-cols-1 items-start gap-6 pb-24 lg:grid-cols-[1fr_420px] lg:pb-0">
           <div class="flex min-w-0 flex-col">
             <div class="pb-4">
-              <StepStrip {locale} current={step} onJump={goTo} />
+              <StepStrip {locale} {steps} current={step} onJump={goTo} />
             </div>
 
-            {#each STEPS as stepDef (stepDef.id)}
+            {#each steps as stepDef (stepDef.id)}
               {@const active = stepDef.id === step}
               {@const shown = stepIndex(stepDef.id) < currentIndex && step !== "review"}
 
@@ -470,7 +519,21 @@
                         {i18n.t(`checkout.stepIntro.${stepDef.id}`)}
                       </p>
 
-                      {#if stepDef.id === "contact"}
+                      {#if stepDef.id === "basket"}
+                        <BasketStep
+                          {locale}
+                          {order}
+                          {labels}
+                          {setMembers}
+                          {highlightedLines}
+                          {basketInfo}
+                          shownPrices={basket.shownPrices}
+                          {busy}
+                          onContinue={() => void onContinue("basket", new FormData())}
+                          onHighlight={(lineIds) => (highlightedLines = lineIds)}
+                          onRemoveLine={(lineId) => removeLine(lineId)}
+                        />
+                      {:else if stepDef.id === "contact"}
                         <ContactStep
                           {locale}
                           initial={initial.contact}
@@ -538,24 +601,26 @@
                   </div>
                 </Collapse>
 
-                <div
-                  inert={!shown}
-                  aria-hidden={shown ? undefined : "true"}
-                  class="hidden transition-[grid-template-rows,opacity] duration-200 ease-out lg:grid {shown
-                    ? 'grid-rows-[1fr] opacity-100 delay-100'
-                    : 'grid-rows-[0fr] opacity-0'}"
-                >
-                  <div class="overflow-hidden min-h-0">
-                    <div class="pb-4">
-                      <StepSummary
-                        {locale}
-                        title={translateMessage(i18n, stepDef.labelKey)}
-                        summary={summaryLine(stepRows(stepDef.id, saved, order, t))}
-                        onEdit={() => goTo(stepDef.id)}
-                      />
+                {#if stepDef.id !== "basket"}
+                  <div
+                    inert={!shown}
+                    aria-hidden={shown ? undefined : "true"}
+                    class="hidden transition-[grid-template-rows,opacity] duration-200 ease-out lg:grid {shown
+                      ? 'grid-rows-[1fr] opacity-100 delay-100'
+                      : 'grid-rows-[0fr] opacity-0'}"
+                  >
+                    <div class="overflow-hidden min-h-0">
+                      <div class="pb-4">
+                        <StepSummary
+                          {locale}
+                          title={translateMessage(i18n, stepDef.labelKey)}
+                          summary={summaryLine(stepRows(stepDef.id, saved, order, t))}
+                          onEdit={() => goTo(stepDef.id)}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
+                {/if}
               </div>
             {/each}
 
@@ -587,21 +652,12 @@
 
         <MobileActionBar
           {locale}
-          {order}
-          {labels}
-          {setMembers}
-          {highlightedLines}
-          backVisible={step !== "contact"}
+          backVisible={step !== steps[0].id}
           onBack={() => onBack(step)}
           nextLabel={translateMessage(i18n, mobileNextLabelKey(step))}
           nextDisabled={step === "review" ? submitDisabled : false}
           pending={step === "review" ? sending : advancing}
           formId={`wizard-step-${step}`}
-          {basketInfo}
-          shownPrices={basket.shownPrices}
-          {busy}
-          onHighlight={(lineIds) => (highlightedLines = lineIds)}
-          onRemoveLine={(lineId) => removeLine(lineId)}
         />
       {/if}
     </div>

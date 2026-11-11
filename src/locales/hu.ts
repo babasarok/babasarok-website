@@ -132,6 +132,7 @@ const translation = {
     termsLink: "Általános Szerződési Feltételeket (ÁSZF)",
     placeOrder: "Leadom a rendelést!",
     steps: {
+      basket: "Kosár",
       contact: "Kapcsolat",
       shipping: "Szállítás",
       billing: "Számlázás",
@@ -153,6 +154,7 @@ const translation = {
       address: "Cím",
     },
     stepIntro: {
+      basket: "Nézd át a kosarad tartalmát, mielőtt megadod az adataidat.",
       contact: "Add meg az elérhetőségeidet, hogy kapcsolatba léphessünk a rendelésedről.",
       shipping: "Válaszd ki a szállítási módot, és add meg a szállítási címet.",
       billing: "Add meg a számlázási adatokat.",

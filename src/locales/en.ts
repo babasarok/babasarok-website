@@ -137,6 +137,7 @@ const translation = {
     termsLink: "General Terms and Conditions (GTC)",
     placeOrder: "Place the order!",
     steps: {
+      basket: "Basket",
       contact: "Contact",
       shipping: "Shipping",
       billing: "Billing",
@@ -158,6 +159,7 @@ const translation = {
       address: "Address",
     },
     stepIntro: {
+      basket: "Check what's in your basket before entering your details.",
       contact: "Enter your contact details so we can get in touch about your order.",
       shipping: "Choose a shipping method and enter the shipping address.",
       billing: "Enter the billing details.",

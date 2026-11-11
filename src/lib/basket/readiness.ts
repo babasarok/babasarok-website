@@ -6,7 +6,7 @@ import {
   type CheckoutValues,
   type ContactValues,
 } from "./checkoutValues";
-import { STEPS, stepIndex, type StepId } from "./steps";
+import { stepIn, stepIndex, type StepDef, type StepId } from "./steps";
 
 export interface FieldCheck {
   /** The form field to mark invalid, or "step" when the step lacks a field to point at. */
@@ -115,36 +115,46 @@ export function orderBlocker(order: Order | null): FieldCheck | undefined {
   return undefined;
 }
 
-/** The first step whose saved data is incomplete; the review step always passes. */
+/** The first form step whose saved data is incomplete; the review step always passes. */
 export function furthestStep(values: CheckoutValues, method?: ShippingQuote): StepId {
-  const checks = [
-    contactCheck(values.contact),
-    shippingCheck(values.address, method),
-    billingCheck(values.billing, method),
-  ];
-  const index = checks.findIndex((check) => check !== undefined);
-
-  if (index === -1) {
-    return "review";
+  if (contactCheck(values.contact) !== undefined) {
+    return "contact";
   }
 
-  return STEPS[index].id;
+  if (shippingCheck(values.address, method) !== undefined) {
+    return "shipping";
+  }
+
+  if (billingCheck(values.billing, method) !== undefined) {
+    return "billing";
+  }
+
+  return "review";
 }
 
 /**
- * The step to open on load: the hash's step, clamped back to the saved data
- * when the hash is absent or ahead of what the order has.
+ * The layout step to open on load: the hash's step, clamped back to the saved
+ * data when the hash is absent or ahead of what the order has. An order with
+ * no saved details opens on the layout's first step.
  */
 export function entryStep(
   values: CheckoutValues,
+  steps: readonly StepDef[],
   method?: ShippingQuote,
   hashStep?: StepId
 ): StepId {
-  const derived = furthestStep(values, method);
+  const furthest = furthestStep(values, method);
+  const derived = furthest === "contact" ? steps[0].id : furthest;
 
-  if (hashStep === undefined || stepIndex(hashStep) > stepIndex(derived)) {
+  if (hashStep === undefined) {
     return derived;
   }
 
-  return hashStep;
+  const requested = stepIn(steps, hashStep);
+
+  if (stepIndex(requested) > stepIndex(derived)) {
+    return derived;
+  }
+
+  return requested;
 }

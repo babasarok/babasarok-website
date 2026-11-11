@@ -17,6 +17,7 @@ import {
   shippingCheck,
 } from "./readiness";
 import type { Order, OrderLine, ShippingQuote } from "./schemas";
+import { layoutSteps, nextStep, previousStep, stepIn } from "./steps";
 import { loadShownPrices, priceChange, rememberShownPrice } from "./stale";
 import {
   SetDiscountSchema,
@@ -313,13 +314,40 @@ describe("checkout readiness", () => {
   });
 
   it("derives the entry step from what the order already has", () => {
-    expect(entryStep(EMPTY_VALUES, pickup)).toBe("contact");
-    expect(entryStep(values, pickup)).toBe("billing");
-    expect(entryStep(values, gls)).toBe("review");
-    expect(entryStep(values)).toBe("shipping");
-    expect(entryStep(values, gls, "contact")).toBe("contact");
-    expect(entryStep(EMPTY_VALUES, pickup, "review")).toBe("contact");
-    expect(entryStep({ ...values, address: EMPTY_ADDRESS }, gls, "billing")).toBe("shipping");
+    const wide = layoutSteps(true);
+
+    expect(entryStep(EMPTY_VALUES, wide, pickup)).toBe("contact");
+    expect(entryStep(values, wide, pickup)).toBe("billing");
+    expect(entryStep(values, wide, gls)).toBe("review");
+    expect(entryStep(values, wide)).toBe("shipping");
+    expect(entryStep(values, wide, gls, "contact")).toBe("contact");
+    expect(entryStep(EMPTY_VALUES, wide, pickup, "review")).toBe("contact");
+    expect(entryStep({ ...values, address: EMPTY_ADDRESS }, wide, gls, "billing")).toBe("shipping");
+  });
+
+  it("opens a narrow layout on the basket step until contact details are saved", () => {
+    const narrow = layoutSteps(false);
+    const wide = layoutSteps(true);
+
+    expect(entryStep(EMPTY_VALUES, narrow, pickup)).toBe("basket");
+    expect(entryStep(EMPTY_VALUES, narrow, pickup, "billing")).toBe("basket");
+    expect(entryStep(values, narrow, gls)).toBe("review");
+    expect(entryStep(values, narrow, gls, "basket")).toBe("basket");
+    expect(entryStep(values, wide, gls, "basket")).toBe("contact");
+    expect(entryStep(EMPTY_VALUES, wide, pickup, "basket")).toBe("contact");
+  });
+
+  it("moves between the steps the layout shows", () => {
+    const narrow = layoutSteps(false);
+    const wide = layoutSteps(true);
+
+    expect(nextStep(narrow, "basket")).toBe("contact");
+    expect(previousStep(narrow, "contact")).toBe("basket");
+    expect(previousStep(wide, "contact")).toBeUndefined();
+    expect(nextStep(wide, "billing")).toBe("review");
+    expect(nextStep(wide, "review")).toBeUndefined();
+    expect(stepIn(wide, "basket")).toBe("contact");
+    expect(stepIn(narrow, "basket")).toBe("basket");
   });
 });
 
