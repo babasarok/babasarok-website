@@ -44,8 +44,12 @@ afterAll(async () => {
   await server.stop();
 });
 
-async function placeNativeOrder(transactionId: string, extraFeszek: number): Promise<Order> {
-  const shopper = newShopper(server);
+async function placeNativeOrder(
+  transactionId: string,
+  extraFeszek: number,
+  languageCode?: string
+): Promise<Order> {
+  const shopper = newShopper(server, languageCode);
 
   await addLine(
     shopper,
@@ -205,6 +209,22 @@ describe("placing an order with the native sequence", () => {
       expect(body).toContain("Fészek (5 db)");
       expect(body).toContain("ingyenes");
     }
+  });
+});
+
+describe("the order emails' languages", () => {
+  it("writes the buyer's confirmation in the order's language and the owner's notification in Hungarian", async () => {
+    const order = await placeNativeOrder("native-en", 0, "en");
+    const emails = await emailsFor(order.code, 2);
+    const owner = emails.find((email) => email.recipient === OWNER_EMAIL);
+    const buyer = emails.find((email) => email.recipient === BUYER.emailAddress);
+
+    expect(owner?.subject).toBe(`Új árajánlatkérés: ${order.code}`);
+    expect(emailText(owner?.body ?? "")).toContain("Szállítási cím Fő u. 1. 3894 Telkibánya");
+    expect(emailText(owner?.body ?? "")).toContain("Szegély: Igen");
+    expect(buyer?.subject).toBe(`Thank you for your order: ${order.code}`);
+    expect(emailText(buyer?.body ?? "")).toContain("Delivery address Fő u. 1. 3894 Telkibánya");
+    expect(emailText(buyer?.body ?? "")).toContain(": Yes");
   });
 });
 

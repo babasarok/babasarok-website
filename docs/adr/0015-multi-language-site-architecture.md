@@ -156,7 +156,8 @@ Slices, in merge order:
 4. **Tina per-locale content**: locale subfolders, collection/config
    updates, English drafts (legal texts owner-reviewed before publish).
 5. **Backend language plumbing**: languageCode + Accept-Language per
-   request, per-language message tables, per-locale order emails.
+   request, per-language message tables, the buyer's order confirmation in
+   the order's language (the owner's notification is always Hungarian).
 
 No data migration: content files move under locale folders inside the Tina
 git repo; the Tina editor must still resolve moved documents (verify before

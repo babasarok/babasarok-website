@@ -1,9 +1,12 @@
 import {
   ConfigService,
   EntityHydrator,
-  type Order,
+  type Injector,
+  LanguageCode,
+  Order,
   OrderStateTransitionEvent,
   type RequestContext,
+  RequestContextService,
   TransactionalConnection,
 } from "@vendure/core";
 import { Channel } from "@vendure/core/dist/entity/channel/channel.entity";
@@ -43,14 +46,46 @@ function adminOrderUrl(order: Order): string {
   return `${env.adminUrl.replace(/\/$/, "")}/orders/${order.id}`;
 }
 
+async function contextIn(
+  injector: Injector,
+  ctx: RequestContext,
+  languageCode: LanguageCode
+): Promise<RequestContext> {
+  if (ctx.languageCode === languageCode) {
+    return ctx;
+  }
+
+  return injector.get(RequestContextService).create({
+    apiType: ctx.apiType,
+    channelOrToken: ctx.channel,
+    languageCode,
+  });
+}
+
+interface NativeOrderEmail {
+  /** The language the email's content is written in. */
+  languageCode: (event: OrderStateTransitionEvent) => LanguageCode;
+  subject: (orderCode: string, languageCode: LanguageCode) => string;
+}
+
+/**
+ * Each email loads its own copy of the order: translating the event's shared
+ * order into one email's language would leak into the other email.
+ */
 function onNativeOrderPlaced(
   name: string,
-  subject: (event: OrderStateTransitionEvent) => string
+  email: NativeOrderEmail
 ): EmailEventHandler<
   string,
   EventWithAsyncData<
     OrderStateTransitionEvent,
-    { orderEmailFrom: string; ownerEmail: string; view: OrderEmailView }
+    {
+      order: Order;
+      subject: string;
+      orderEmailFrom: string;
+      ownerEmail: string;
+      view: OrderEmailView;
+    }
   >
 > {
   return new EmailEventListener(name)
@@ -62,51 +97,64 @@ function onNativeOrderPlaced(
         !isLegacyQuoteOrder(event.order)
     )
     .loadData(async ({ event, injector }) => {
-      await injector.get(EntityHydrator).hydrate(event.ctx, event.order, {
+      const languageCode = email.languageCode(event);
+      const ctx = await contextIn(injector, event.ctx, languageCode);
+      const connection = injector.get(TransactionalConnection);
+      const order = await connection
+        .getRepository(ctx, Order)
+        .findOneOrFail({ where: { id: event.order.id } });
+
+      await injector.get(EntityHydrator).hydrate(ctx, order, {
         relations: [
           "lines",
           "lines.productVariant",
           "customer",
           "shippingLines",
           "shippingLines.shippingMethod",
+          // The email job serializes the order, and its taxSummary getter needs these.
+          "surcharges",
         ],
       });
 
-      const connection = injector.get(TransactionalConnection);
       const view = orderEmailView(
-        event.order,
-        await loadNativeLineContent(connection, event.ctx, event.order),
+        order,
+        await loadNativeLineContent(connection, ctx, order),
         {
-          currencyCode: event.order.currencyCode,
+          currencyCode: order.currencyCode,
           precision: injector.get(ConfigService).entityOptions.moneyStrategy.precision ?? 2,
         },
-        event.ctx.languageCode
+        languageCode
       );
 
       return {
+        order,
+        subject: email.subject(order.code, languageCode),
         view,
-        ...(await loadChannelEmails(connection, event.ctx)),
+        ...(await loadChannelEmails(connection, ctx)),
       };
     })
     .setTemplateVars((event) => ({
-      order: event.order,
+      order: event.data.order,
       fromAddress: event.data.orderEmailFrom,
-      adminOrderUrl: adminOrderUrl(event.order),
-      subject: subject(event),
+      adminOrderUrl: adminOrderUrl(event.data.order),
+      subject: event.data.subject,
       ...event.data.view,
     }));
 }
 
-export const nativeOrderConfirmationHandler = onNativeOrderPlaced("order-confirmation", (event) =>
-  messages(event.ctx.languageCode).orderConfirmationSubject(event.order.code)
-)
+export const nativeOrderConfirmationHandler = onNativeOrderPlaced("order-confirmation", {
+  languageCode: (event) => event.ctx.languageCode,
+  subject: (orderCode, languageCode) => messages(languageCode).orderConfirmationSubject(orderCode),
+})
   .setRecipient((event) => event.order.customer?.emailAddress ?? "")
   .setFrom("{{ fromAddress }}")
   .setSubject("{{ subject }}");
 
-export const nativeOrderNotificationHandler = onNativeOrderPlaced("order-notification", (event) =>
-  messages(event.ctx.languageCode).orderNotificationSubject(event.order.code)
-)
+/** The owner reads every order in Hungarian, whatever language the buyer used. */
+export const nativeOrderNotificationHandler = onNativeOrderPlaced("order-notification", {
+  languageCode: () => LanguageCode.hu,
+  subject: (orderCode, languageCode) => messages(languageCode).orderNotificationSubject(orderCode),
+})
   .setRecipient((event) => event.data.ownerEmail)
   .setFrom("{{ fromAddress }}")
   .setSubject("{{ subject }}");

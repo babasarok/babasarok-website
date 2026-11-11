@@ -37,7 +37,8 @@ const config = mergeConfig(mergeConfig(defaultConfig, appConfig), {
 
 export interface IntegrationServer {
   admin: SimpleGraphQLClient;
-  newShopSession(): SimpleGraphQLClient;
+  /** A shop-API session; `languageCode` sets the request language as the site does. */
+  newShopSession(languageCode?: string): SimpleGraphQLClient;
   stop(): Promise<void>;
 }
 
@@ -76,11 +77,17 @@ export async function startServer(): Promise<IntegrationServer> {
 
   return {
     admin: adminClient,
-    newShopSession: () =>
-      new SimpleGraphQLClient(
-        config,
+    newShopSession: (languageCode) => {
+      const url = new URL(
         `http://localhost:${config.apiOptions.port}/${config.apiOptions.shopApiPath}`
-      ),
+      );
+
+      if (languageCode !== undefined) {
+        url.searchParams.set("languageCode", languageCode);
+      }
+
+      return new SimpleGraphQLClient(config, url.toString());
+    },
     stop: () => server.destroy(),
   };
 }

@@ -153,8 +153,8 @@ export interface Shopper {
   server: IntegrationServer;
 }
 
-export function newShopper(server: IntegrationServer): Shopper {
-  return { client: server.newShopSession(), server };
+export function newShopper(server: IntegrationServer, languageCode?: string): Shopper {
+  return { client: server.newShopSession(languageCode), server };
 }
 
 export async function addLine(shopper: Shopper, spec: LineSpec): Promise<Order> {

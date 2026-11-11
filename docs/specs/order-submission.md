@@ -233,7 +233,9 @@ the shop owner a notification (subject: `Új árajánlatkérés: <rendelésszám
 both carrying the per-product details, the set-discount summary, the order
 code, and the transaction identifier. Email delivery goes through Cloudflare
 Email Sending (REST); previews/dev run file transport and physically cannot
-email a buyer.
+email a buyer. The confirmation is written in the order's language; the
+notification is always Hungarian (subject, labels, product, material and
+delivery names), whatever language the buyer ordered in.
 
 The per-product description is built server-side from each order line's
 `selections` and the product's canonical definition: visible fields only,
