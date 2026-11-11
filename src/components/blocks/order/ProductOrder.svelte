@@ -21,13 +21,13 @@
   import { liveUnitPrice } from "@/lib/catalog/livePrice";
   import { instantiateProduct, hasConfigurableOptions } from "@/lib/order/product";
   import { siblingsFor, relatedGroupsFor, resolveSetDiscount } from "@/lib/order/groups";
-  import { prefillFromParams, buildMaterialParams } from "@/lib/order/queryParams";
+  import { prefillFromParams, buildMaterialParams, productPath } from "@/lib/order/queryParams";
   import { sanitizeItem, isItemValid, validateItem } from "@/lib/product/validation";
   import type { OrderThreadColor, OrderProduct, OrderProductGroup } from "@/lib/order/types";
   import type { IProduct } from "@/lib/types.svelte";
   import type { i18n as I18n } from "i18next";
   import I18nGate from "@/components/ui/I18nGate.svelte";
-  import type { Locale } from "@/lib/i18n";
+  import { localizedPath, type Locale } from "@/lib/i18n";
   import { translateMessage } from "@/lib/i18next-client";
 
   interface Props {
@@ -291,8 +291,10 @@
     }
 
     if (hasConfigurableOptions($state.snapshot(target))) {
-      const query = buildMaterialParams($state.snapshot(item)).toString();
-      globalThis.location.href = `/product/${targetSlug}/${query ? `?${query}` : ""}`;
+      globalThis.location.href = localizedPath(
+        productPath(targetSlug, buildMaterialParams($state.snapshot(item))),
+        locale
+      );
       return;
     }
 
@@ -458,6 +460,7 @@
               {relatedProducts}
               {basketCountByProductId}
               {slugByProductId}
+              materialParams={buildMaterialParams(item)}
               ready={!busy}
               onAddRelated={addRelated}
             />

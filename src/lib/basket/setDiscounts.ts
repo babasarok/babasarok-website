@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { parseLineSelections, type LineSelections } from "@babasarok/pricing";
-import { selectionMaterialParams } from "@/lib/order/queryParams";
+import { productPath, selectionMaterialParams } from "@/lib/order/queryParams";
 import type { Order, OrderLine } from "./schemas";
 
 export const SetDiscountSchema = z.object({
@@ -120,14 +120,8 @@ export function partnerPath(partner: PartnerLink, line: OrderLine, languageCode:
     // The thrown message is discarded below, so the parse language never renders.
     selections = parseLineSelections(line.customFields?.selections ?? null, languageCode);
   } catch {
-    return `/product/${partner.slug}/`;
+    return productPath(partner.slug);
   }
 
-  const query = selectionMaterialParams(selections).toString();
-
-  if (query === "") {
-    return `/product/${partner.slug}/`;
-  }
-
-  return `/product/${partner.slug}/?${query}`;
+  return productPath(partner.slug, selectionMaterialParams(selections));
 }

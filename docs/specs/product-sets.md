@@ -144,7 +144,9 @@ whose member products are disjoint from the others'; while that disjointness
 is violated the allocation refuses to apply and the fields are empty.
 The product configurator SHALL offer to add related set members, and SHALL
 present the members of any related-items collection the product belongs to as
-a separate "related items" list per group.
+a separate "related items" list per group. Links to a set member's page carry
+the current item's materials, preselected on fields of the same name, and
+every member and related-item link stays in the page's language.
 
 - **Scenario: Basket-level instance list**
   - WHEN set instances are formed in the basket

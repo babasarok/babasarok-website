@@ -180,3 +180,14 @@ export function selectionMaterialParams(selections: LineSelections): URLSearchPa
 
   return params;
 }
+
+/** A product page path, with the query appended when it carries any params. */
+export function productPath(slug: string, params = new URLSearchParams()): string {
+  const query = params.toString();
+
+  if (query === "") {
+    return `/product/${slug}/`;
+  }
+
+  return `/product/${slug}/?${query}`;
+}
