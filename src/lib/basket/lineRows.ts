@@ -58,8 +58,7 @@ export function describeLine(
   let selections: LineSelections;
 
   try {
-    // The thrown message is discarded below, so the parse language never renders.
-    selections = parseLineSelections(rawSelections, languageCode);
+    selections = parseLineSelections(rawSelections);
   } catch {
     return [];
   }

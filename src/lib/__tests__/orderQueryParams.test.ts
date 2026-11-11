@@ -4,7 +4,11 @@
  * including `material` fields (plus their `<name>_colors` companion).
  */
 import { describe, expect, it } from "vitest";
-import { prefillFromParams, buildMaterialParams } from "@/lib/order/queryParams";
+import {
+  prefillFromParams,
+  buildMaterialParams,
+  selectionMaterialParams,
+} from "@/lib/order/queryParams";
 import { makeProduct, makeField, makeMaterial } from "./fixtures";
 
 describe("prefillFromParams", () => {
@@ -256,5 +260,31 @@ describe("buildMaterialParams", () => {
       throw new Error("expected material field");
     }
     expect(field.value).toEqual({ material_id: "cotton", colors: ["Felhon alvo, feher", "red"] });
+  });
+});
+
+describe("selectionMaterialParams", () => {
+  it("prefills a basket line's materials onto another product, ignoring other selections", () => {
+    const target = makeProduct({
+      fields: [
+        makeField({
+          name: "anyag",
+          type: "material",
+          materials: [makeMaterial({ material_id: "cotton" })],
+        }),
+        makeField({ name: "szin", type: "color", items: [{ value: "piros" }] }),
+      ],
+    });
+    const params = selectionMaterialParams({
+      anyag: { kind: "material", materialId: "cotton", colors: ["red", "blue"] },
+      szin: { kind: "option", value: "piros" },
+      ures: { kind: "material", materialId: "", colors: [] },
+    });
+
+    prefillFromParams(target, params);
+
+    expect([...params.keys()]).toEqual(["anyag", "anyag_colors"]);
+    expect(target.fields[0].value).toEqual({ material_id: "cotton", colors: ["red", "blue"] });
+    expect(target.fields[1].value).toBeUndefined();
   });
 });

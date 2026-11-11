@@ -4,7 +4,7 @@ import { getEntry, render } from "astro:content";
 import figureSvg from "../../assets/images/hero/figure-svg.svg?url";
 import Button from "../ui/Button.astro";
 import TopTitle from "../ui/TopTitle.astro";
-import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
+import { entryIdForLocale, localeFromPathname, localizedPath } from "@/lib/i18n";
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const entry = (await getEntry(
@@ -14,7 +14,9 @@ const entry = (await getEntry(
 const { enable, topTitle, buttonName, image: heroImage, buttonURL } = entry.data;
 const { Content } = await render(entry);
 
-const buttonHref = buttonURL ? `/${buttonURL}` : undefined;
+const buttonHref = buttonURL
+  ? localizedPath(`/${buttonURL}`, localeFromPathname(Astro.url.pathname))
+  : undefined;
 ---
 
 {

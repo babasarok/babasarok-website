@@ -4,7 +4,6 @@ import {
   type ProductField,
 } from "../product-definition/index";
 import type { LineSelectionRecord, LineSelections } from "../product-definition/index";
-import { messages } from "../messages";
 
 export type AxisField =
   | Extract<ProductField, { kind: "toggle" }>
@@ -14,9 +13,15 @@ export type AxisField =
 /** Field id → the option code the line picks on that axis field. */
 export type AxisCodes = ReadonlyMap<string, string>;
 
-export type AxisCodesResult = { ok: true; codes: AxisCodes } | { ok: false; message: string };
+/** A refusal of the line's axis picks, before the caller names the product. */
+export type AxisProblem =
+  | { code: "VALUE_NOT_OFFERED"; fieldLabel: string; value: string }
+  | { code: "MATERIAL_NOT_OFFERED"; fieldLabel: string; materialId: string }
+  | { code: "FIELD_HAS_NO_OPTIONS"; fieldLabel: string };
 
-type AxisCodeResult = { ok: true; code: string } | { ok: false; message: string };
+export type AxisCodesResult = { ok: true; codes: AxisCodes } | { ok: false; problem: AxisProblem };
+
+type AxisCodeResult = { ok: true; code: string } | { ok: false; problem: AxisProblem };
 
 /** Non-color choices, toggles and materials: the fields that always resolve to one listed option. */
 export function isAxisField(field: ProductField): field is AxisField {
@@ -28,16 +33,13 @@ export function isAxisField(field: ProductField): field is AxisField {
 }
 
 function notOffered(field: AxisField, value: string, languageCode: string): AxisCodeResult {
-  const m = messages(languageCode);
-  const label = resolveText(field.label, languageCode);
+  const fieldLabel = resolveText(field.label, languageCode);
 
-  return {
-    ok: false,
-    message:
-      field.kind === "material"
-        ? m.fieldDoesNotOfferMaterial(label, value)
-        : m.fieldDoesNotOfferValue(label, value),
-  };
+  if (field.kind === "material") {
+    return { ok: false, problem: { code: "MATERIAL_NOT_OFFERED", fieldLabel, materialId: value } };
+  }
+
+  return { ok: false, problem: { code: "VALUE_NOT_OFFERED", fieldLabel, value } };
 }
 
 function defaultCode(field: AxisField): string | undefined {
@@ -58,7 +60,7 @@ function defaultAxisCode(field: AxisField, languageCode: string): AxisCodeResult
   if (code === undefined) {
     return {
       ok: false,
-      message: messages(languageCode).fieldHasNoOptions(resolveText(field.label, languageCode)),
+      problem: { code: "FIELD_HAS_NO_OPTIONS", fieldLabel: resolveText(field.label, languageCode) },
     };
   }
 

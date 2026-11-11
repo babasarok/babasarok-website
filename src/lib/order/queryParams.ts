@@ -1,3 +1,5 @@
+import type { LineSelections } from "@babasarok/pricing";
+import { localizedPath, type Locale } from "../i18n";
 import type { IProduct } from "../types.svelte";
 import { FIELD_BEHAVIORS } from "../product/behavior";
 
@@ -128,6 +130,23 @@ function discardUnofferedMaterialColors(item: IProduct): void {
   }
 }
 
+function setMaterialParam(
+  params: URLSearchParams,
+  name: string,
+  materialId: string,
+  colors: readonly string[]
+): void {
+  params.set(name, materialId);
+
+  if (colors.length === 0) {
+    return;
+  }
+
+  // Percent-encode each id before joining with commas, so a comma inside
+  // an id (real data: "Felhon alvo, feher") cannot read as a separator.
+  params.set(`${name}_colors`, colors.map((c) => encodeURIComponent(c)).join(","));
+}
+
 /**
  * Serialise an item's chosen materials into query params using the same scheme
  * {@link prefillFromParams} reads, so a set sibling's page can be deep-linked
@@ -143,12 +162,34 @@ export function buildMaterialParams(item: Pick<IProduct, "fields">): URLSearchPa
     if (!value?.material_id) {
       continue;
     }
-    params.set(field.name, value.material_id);
-    if (value.colors.length > 0) {
-      // Percent-encode each id before joining with commas, so a comma inside
-      // an id (real data: "Felhon alvo, feher") cannot read as a separator.
-      params.set(`${field.name}_colors`, value.colors.map((c) => encodeURIComponent(c)).join(","));
-    }
+    setMaterialParam(params, field.name, value.material_id, value.colors);
   }
   return params;
+}
+
+/** {@link buildMaterialParams} for a basket line's stored selections. */
+export function selectionMaterialParams(selections: LineSelections): URLSearchParams {
+  const params = new URLSearchParams();
+
+  for (const [name, selection] of Object.entries(selections)) {
+    if (selection?.kind !== "material" || selection.materialId === "") {
+      continue;
+    }
+
+    setMaterialParam(params, name, selection.materialId, selection.colors);
+  }
+
+  return params;
+}
+
+/** A product page's path in `locale`, with the query appended when it carries any params. */
+export function productPath(slug: string, locale: Locale, params = new URLSearchParams()): string {
+  const path = localizedPath(`/product/${slug}/`, locale);
+  const query = params.toString();
+
+  if (query === "") {
+    return path;
+  }
+
+  return `${path}?${query}`;
 }

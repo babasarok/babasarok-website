@@ -158,14 +158,20 @@ in cloud builds) while Astro wants `ImageMetadata` objects from `src/assets`.
 - `scripts/test/no-tina-cloud-urls.ts` is a CI guard that fails the build if any
   `assets.tina.io` URL survives into `dist/`.
 
-### 4.4 The order configurator island (`components/blocks/order/`)
+### 4.4 The order islands (`components/blocks/order/`, `components/blocks/checkout/`)
 
 The main pieces of client-side state are the product-page configurator and the
-checkout. Product pages render `<ProductOrder client:load>` to build up a basket
-item, and `checkout.astro` renders `<CheckoutForm client:load>` for the basket
-review + submission, passing in Vendure-derived products, delivery methods and
-thread colors plus the Tina `config` as plain serializable data. Domain logic
-is extracted into `src/lib/`:
+checkout. Product pages render `<ProductOrder client:load>` (in
+`blocks/order/`) to build up a basket item. `checkout.astro` renders
+`<CheckoutSection client:load>` (in `blocks/checkout/`), which loads the
+catalog labels and mounts the checkout wizard: `steps/` holds one form per
+flow (the mobile-only Kosár, then Kapcsolat, Szállítás, Számlázás,
+Áttekintés), `summary/` the order summary the desktop column and the Kosár
+step share, `wizard/` the step chrome. Shared primitives (buttons, inputs)
+live in `components/ui/`. The wizard keeps
+no copy of the form: inputs start from the active order, saves read the forms
+with `FormData` and replace the order with Vendure's response. Domain logic is
+extracted into `src/lib/`:
 
 - `order/types.ts` — the island's data shapes, mapped from Vendure by
   `catalog/orderProduct.ts`
@@ -176,14 +182,18 @@ is extracted into `src/lib/`:
 - `materialUtils`/`validation` (`product/`) — material/color resolution and
   field validation
 - `basket/` — the active order: the Vendure session token, add/adjust/remove,
-  and native submission (`basket/submit.ts`: set customer → address →
-  shipping method → order custom fields → transition to placed)
+  the checkout's order ↔ form ↔ native-mutation mapping
+  (`basket/checkoutValues.ts`), the serial step saves
+  (`basket/checkoutSaves.ts`), per-step checks (`basket/readiness.ts`) and
+  native submission (`basket/submit.ts`: customer → delivery address →
+  shipping method → billing address → order custom fields → transition to
+  placed)
 
 Submission runs the native Vendure order flow against the shop API (the
-backend prices every line server-side and emails buyer + owner). Unit tests in
-`src/lib/__tests__/` cover the pricing/validation logic; checkout E2E covers
-the full journey; `catalog/contract.test.ts` checks the query shapes against a
-live shop API.
+backend prices every line server-side and emails buyer + owner). Unit tests
+next to the code cover the pricing/validation and checkout mapping logic;
+checkout E2E covers the full journey; `catalog/contract.test.ts` and
+`basket/contract.test.ts` check the query shapes against a live shop API.
 
 ### 4.5 Build & tooling specifics
 

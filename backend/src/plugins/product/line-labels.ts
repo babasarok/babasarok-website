@@ -25,7 +25,7 @@ function labelIn<T extends { languageCode: LanguageCode }>(
 
 export function selectionsOf(raw: unknown): LineSelections {
   try {
-    return parseLineSelections(raw, "hu");
+    return parseLineSelections(raw);
   } catch (error) {
     if (error instanceof LineSelectionsError) {
       return {};

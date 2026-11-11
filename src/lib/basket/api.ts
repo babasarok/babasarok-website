@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { decodeRefusal } from "@babasarok/pricing";
+import type { Reason } from "./refusalText";
 import { isTokenRejection } from "./tokenRejection";
 import { SET_LINE_FIELDS, SET_ORDER_FIELDS } from "./setDiscounts";
 import {
@@ -28,7 +30,7 @@ export interface BasketApiDeps {
 }
 
 export interface Failure {
-  reason: string;
+  reason: Reason;
   detail: string;
   stack?: string | undefined;
   tokenRejected?: boolean;
@@ -52,7 +54,20 @@ export interface CustomerInput {
 export interface OrderCustomFieldsInput {
   message?: string;
   termsAccepted?: boolean;
+  taxNumber?: string;
   submissionTransactionId?: string;
+}
+
+/** The structured delivery/billing address; the house number rides streetLine2. */
+export interface AddressInput {
+  fullName?: string;
+  phoneNumber?: string;
+  company?: string;
+  streetLine1: string;
+  streetLine2?: string;
+  postalCode?: string;
+  city?: string;
+  countryCode: string;
 }
 
 export interface BasketApi {
@@ -64,7 +79,9 @@ export interface BasketApi {
   productVariantId(slug: string): Promise<Result<string | undefined>>;
   eligibleShippingMethods(): Promise<Result<ShippingQuote[]>>;
   setCustomer(input: CustomerInput): Promise<Result<Order>>;
-  setShippingAddress(streetLine1: string, countryCode: string): Promise<Result<Order>>;
+  setShippingAddress(input: AddressInput): Promise<Result<Order>>;
+  setBillingAddress(input: AddressInput): Promise<Result<Order>>;
+  unsetBillingAddress(): Promise<Result<Order>>;
   setShippingMethod(shippingMethodId: string): Promise<Result<Order>>;
   setOrderCustomFields(input: OrderCustomFieldsInput): Promise<Result<Order>>;
   transitionToArrangingPayment(): Promise<Result<Order>>;
@@ -75,13 +92,14 @@ const ORDER_FIELDS = `
   discounts { description amountWithTax }
   ${SET_ORDER_FIELDS}
   customer { firstName lastName emailAddress phoneNumber }
-  shippingAddress { streetLine1 }
-  customFields { message }
+  shippingAddress { fullName company streetLine1 streetLine2 postalCode city countryCode }
+  billingAddress { fullName company streetLine1 streetLine2 postalCode city countryCode }
+  customFields { message taxNumber }
   shippingLines { priceWithTax discountedPriceWithTax shippingMethod { id } }
   lines {
     id quantity unitPriceWithTax discountedLinePriceWithTax
     customFields { selections lengthCm }
-    invalidReason { code message }
+    invalidReason
     ${SET_LINE_FIELDS}
     productVariant {
       id name
@@ -131,13 +149,13 @@ const EnvelopeSchema = z.object({
 function asFailure(error: unknown): Failure {
   if (error instanceof Error) {
     return {
-      reason: "hálózati hiba",
+      reason: "errors.network",
       detail: `${error.name}: ${error.message}`,
       stack: error.stack,
     };
   }
 
-  return { reason: "hálózati hiba", detail: String(error) };
+  return { reason: "errors.network", detail: String(error) };
 }
 
 export function createBasketApi(deps: BasketApiDeps): BasketApi {
@@ -177,27 +195,35 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
       deps.tokens.set(issued);
     }
 
-    const status = `szerverhiba ${response.status.toString()}`;
+    const status = `HTTP ${response.status.toString()}`;
     let body: unknown;
 
     try {
       body = await response.json();
     } catch (error) {
-      return { ok: false, failure: { ...asFailure(error), reason: status } };
+      const failure = asFailure(error);
+
+      return {
+        ok: false,
+        failure: { ...failure, reason: "errors.server", detail: `${status}: ${failure.detail}` },
+      };
     }
 
     const envelope = EnvelopeSchema.safeParse(body);
 
     if (!envelope.success) {
-      return { ok: false, failure: { reason: status, detail: JSON.stringify(body) } };
+      return {
+        ok: false,
+        failure: { reason: "errors.server", detail: `${status}: ${JSON.stringify(body)}` },
+      };
     }
 
     if (envelope.data.errors !== undefined && envelope.data.errors.length > 0) {
       return {
         ok: false,
         failure: {
-          reason: status,
-          detail: envelope.data.errors.map((e) => e.message).join("; "),
+          reason: "errors.server",
+          detail: `${status}: ${envelope.data.errors.map((e) => e.message).join("; ")}`,
           tokenRejected: isTokenRejection(
             response.status,
             envelope.data.errors.flatMap((e) => e.extensions?.code ?? [])
@@ -209,7 +235,10 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
     const data = schema.safeParse(envelope.data.data);
 
     if (!data.success) {
-      return { ok: false, failure: { reason: status, detail: data.error.message } };
+      return {
+        ok: false,
+        failure: { reason: "errors.server", detail: `${status}: ${data.error.message}` },
+      };
     }
 
     return { ok: true, value: data.data };
@@ -235,26 +264,32 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
     const payload = result.value[field];
 
     if (payload === undefined) {
-      return { ok: false, failure: { reason: "szerverhiba", detail: `missing ${field}` } };
+      return { ok: false, failure: { reason: "errors.server", detail: `missing ${field}` } };
     }
 
     if ("id" in payload) {
       return { ok: true, value: payload };
     }
 
-    const hungarian =
+    const known =
       "errorCode" in payload && typeof payload.errorCode === "string"
         ? ERROR_KEYS[payload.errorCode]
         : undefined;
 
     const message =
-      hungarian ??
+      known ??
       ("interceptorError" in payload ? payload.interceptorError : undefined) ??
       ("transitionError" in payload ? payload.transitionError : undefined) ??
       ("message" in payload ? payload.message : undefined) ??
       payload.__typename;
 
-    return { ok: false, failure: { reason: message, detail: `${payload.__typename}: ${message}` } };
+    return {
+      ok: false,
+      failure: {
+        reason: decodeRefusal(message) ?? message,
+        detail: `${payload.__typename}: ${message}`,
+      },
+    };
   }
 
   return {
@@ -317,10 +352,15 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
       orderMutation("setCustomerForOrder", "($input: CreateCustomerInput!)", "(input: $input)", {
         input,
       }),
-    setShippingAddress: (streetLine1, countryCode) =>
+    setShippingAddress: (input) =>
       orderMutation("setOrderShippingAddress", "($input: CreateAddressInput!)", "(input: $input)", {
-        input: { streetLine1, countryCode },
+        input,
       }),
+    setBillingAddress: (input) =>
+      orderMutation("setOrderBillingAddress", "($input: CreateAddressInput!)", "(input: $input)", {
+        input,
+      }),
+    unsetBillingAddress: () => orderMutation("unsetOrderBillingAddress", "", "", {}),
     setShippingMethod: (shippingMethodId) =>
       orderMutation("setOrderShippingMethod", "($id: [ID!]!)", "(shippingMethodId: $id)", {
         id: [shippingMethodId],

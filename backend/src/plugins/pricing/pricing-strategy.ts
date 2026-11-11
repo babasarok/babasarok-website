@@ -8,6 +8,7 @@ import type {
   RequestContext,
 } from "@vendure/core";
 import { TransactionalConnection } from "@vendure/core";
+import { RefusalError } from "../../shared/refusal";
 import { lineValuationDeps, valueVariantLine, type LineValuationDeps } from "./line-valuation";
 
 function sameConfiguration(
@@ -47,7 +48,7 @@ export async function calculateUnitPrice(
   );
 
   if (existingLine === undefined) {
-    throw new Error(valuation.message);
+    throw new RefusalError(valuation.refusal);
   }
 
   return {

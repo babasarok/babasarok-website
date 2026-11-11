@@ -53,11 +53,27 @@ describe.skipIf(apiUrl === undefined)("basket contract against the live shop API
       lastName: "B",
       phoneNumber: "1",
     });
-    await api.setShippingAddress("Street 1", "HU");
+    await api.setShippingAddress({
+      streetLine1: "Street 1",
+      streetLine2: "12",
+      postalCode: "1053",
+      city: "Budapest",
+      countryCode: "HU",
+    });
+    await api.setBillingAddress({
+      company: "Minta Kft.",
+      streetLine1: "Street 1",
+      streetLine2: "12",
+      postalCode: "1053",
+      city: "Budapest",
+      countryCode: "HU",
+    });
+    await api.unsetBillingAddress();
     await api.setShippingMethod("1");
     await api.setOrderCustomFields({
       message: "m",
       termsAccepted: true,
+      taxNumber: "12345678-2-42",
       submissionTransactionId: "t",
     });
     await api.transitionToArrangingPayment();

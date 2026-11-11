@@ -7,60 +7,50 @@ const complete: CheckoutFacts = {
   hasShippingMethod: true,
   termsAccepted: true,
   shippingMethodRequiresAddress: true,
-  hasAddress: true,
+  address: { street: "Rózsa utca", houseNumber: "12", postalCode: "3900", city: "Szerencs" },
 };
+
+const noAddress = { street: "", houseNumber: "", postalCode: "", city: "" };
 
 describe("checkoutRefusal", () => {
   it("accepts a complete order", () => {
-    expect(checkoutRefusal(complete, "hu")).toBeUndefined();
+    expect(checkoutRefusal(complete)).toBeUndefined();
   });
 
   it("needs no address for a method that does not require one", () => {
     expect(
-      checkoutRefusal(
-        { ...complete, shippingMethodRequiresAddress: false, hasAddress: false },
-        "hu"
-      )
+      checkoutRefusal({ ...complete, shippingMethodRequiresAddress: false, address: noAddress })
     ).toBeUndefined();
   });
 
-  it("names every missing part in Hungarian", () => {
-    const refusal = checkoutRefusal(
-      {
-        lineCount: 0,
-        hasCustomer: false,
-        hasShippingMethod: false,
-        termsAccepted: false,
-        shippingMethodRequiresAddress: false,
-        hasAddress: false,
-      },
-      "hu"
-    );
+  it("names every missing part", () => {
+    const refusal = checkoutRefusal({
+      lineCount: 0,
+      hasCustomer: false,
+      hasShippingMethod: false,
+      termsAccepted: false,
+      shippingMethodRequiresAddress: false,
+      address: noAddress,
+    });
 
-    expect(refusal).toBe(
-      "A rendelés nem adható le, hiányzik: legalább egy termék, a vevő adatai, a szállítási mód, az ÁSZF elfogadása."
-    );
+    expect(refusal).toEqual({
+      code: "CHECKOUT_INCOMPLETE",
+      missing: ["LINE", "CUSTOMER", "SHIPPING_METHOD", "TERMS"],
+      addressParts: [],
+    });
   });
 
-  it("requires the address of a method that needs one", () => {
-    expect(checkoutRefusal({ ...complete, hasAddress: false }, "hu")).toContain("a szállítási cím");
+  it("names every missing address part of a method that needs one", () => {
+    expect(checkoutRefusal({ ...complete, address: noAddress })).toEqual({
+      code: "CHECKOUT_INCOMPLETE",
+      missing: [],
+      addressParts: ["STREET", "HOUSE_NUMBER", "POSTAL_CODE", "CITY"],
+    });
   });
 
-  it("refuses in the request language", () => {
-    const refusal = checkoutRefusal(
-      {
-        lineCount: 0,
-        hasCustomer: false,
-        hasShippingMethod: false,
-        termsAccepted: false,
-        shippingMethodRequiresAddress: false,
-        hasAddress: false,
-      },
-      "en"
-    );
-
-    expect(refusal).toBe(
-      "The order cannot be submitted, missing: at least one product, the customer details, the delivery method, the acceptance of the terms."
-    );
+  it("names only the address parts that are missing", () => {
+    expect(
+      checkoutRefusal({ ...complete, address: { ...complete.address, houseNumber: " " } })
+    ).toEqual({ code: "CHECKOUT_INCOMPLETE", missing: [], addressParts: ["HOUSE_NUMBER"] });
   });
 });

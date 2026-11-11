@@ -177,7 +177,7 @@ describe("the one-variant migration", () => {
     const placed = await transitionTo(placedBuyer, "ArrangingPayment");
 
     if (!("order" in placed)) {
-      throw new Error(`placing the order was refused: ${placed.refusal}`);
+      throw new Error(`placing the order was refused: ${JSON.stringify(placed.refusal)}`);
     }
 
     const basketBuyer = newShopper(server);

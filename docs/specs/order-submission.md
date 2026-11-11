@@ -12,17 +12,63 @@ owner.
 ### Order form
 
 The system SHALL provide the order form on a dedicated checkout page
-(`/checkout`), where a buyer can manage the basket lines (quantity, removal),
-see active set deals, choose a delivery method, and provide name, email,
-phone, delivery address, and an optional message. The contact page SHALL NOT
-host the order form; it keeps the contact information and links to the
-checkout page. Every amount on the form is read from the Vendure order.
+(`/checkout`) as a multi-step wizard: **Kapcsolat** (contact), **Szállítás**
+(delivery), **Számlázás** (billing) and **Áttekintés** (review). On mobile a
+**Kosár** (basket) step showing the order summary comes first; desktop has no
+such step because its summary column shows the basket beside every step. The
+step list is data rendered as a progress strip (completed ✓ / active /
+upcoming), and the active step's form is the only editable one. The step index
+is synced to the URL hash: browser back returns to the previous step, a
+refresh lands on the saved step, and the saved step is derived from what the
+active order already has when the hash is absent or ahead of the data (an
+order without saved contact details opens on the layout's first step). A hash
+naming a step the layout lacks opens the next step it has. Moving to a step
+moves keyboard focus to its heading.
 
+The wizard SHALL offer exactly one submit affordance per layout: the
+Áttekintés step carries the terms checkbox and the CTA; the order-summary
+panel shows no submit button. The order summary (basket lines, set discounts,
+totals) is a sticky column beside the steps on desktop. On mobile the summary
+is the Kosár step and is repeated on Áttekintés, and a sticky bottom bar
+always shows the step's back and forward actions (forward submits on
+Áttekintés). On desktop each completed step collapses to a
+one-line summary with a `Módosítás` link that reopens it, and a flow
+transitions between its full and summary state; on Áttekintés the summaries
+give way to the review's labelled details of every step, each with its own
+`Módosítás`, followed by the total, the message, what happens after
+submitting, and the terms. On mobile only the active flow's full card renders
+and the context comes from the progress strip plus browser back/forward
+through the URL hash. A step's forward action is unavailable while its save is
+in flight, and a failed step check focuses the first invalid field. Basket
+lines in the summary are display-only (`N db`): quantity and configuration
+changes happen only through the `Szerkesztés` deep link into the product-page
+configurator (`?line=`, which supports quantity); removal stays in the
+checkout. Sets render as chips, not brackets: one chip row per set with the
+instance count and the clamped discount from the order's own computed data
+(`Order.setDiscounts` / `OrderLine.setState`), hovering/focusing a chip rings
+the member cards, and an incomplete set renders its chip muted (`még nem
+teljes`) without a discount while its line keeps the action chip. Every
+amount is read from the Vendure order. The contact page SHALL NOT host the
+order form; it keeps the contact information and links to the checkout page.
+
+- **Scenario: Refresh mid-checkout**
+  - WHEN a buyer who reached the Szállítás step reloads the page
+  - THEN the wizard opens on the Szállítás step, its fields pre-filled from
+    the active order, and completed steps collapsed to their summaries
+- **Scenario: Browser back**
+  - WHEN the buyer presses browser back on the Számlázás step
+  - THEN the wizard returns to the Szállítás step with saved values, not off
+    the checkout page
+- **Scenario: Quantity edit**
+  - WHEN the buyer wants a second piece of a line
+  - THEN the line offers `Szerkesztés` into the product-page configurator
+    with the line pre-loaded; checkout shows the updated quantity and price
+    when they return
 - **Scenario: Delivery method selection**
   - WHEN a buyer opens the checkout
   - THEN the offered delivery methods are the order's `eligibleShippingMethods`
-    with their prices, and an address field is required when the selected
-    method's `customFields.requiresAddress` is true
+    with their prices, and the structured address section is required when
+    the selected method's `customFields.requiresAddress` is true
 - **Scenario: Contact page without form**
   - WHEN a visitor opens the contact page
   - THEN they see the contact information and a link to the checkout page,
@@ -57,18 +103,20 @@ keeps the method's price as the list price.
 ### Order validation
 
 The system SHALL refuse the transition `AddingItems → ArrangingPayment` of an
-order with a Hungarian message unless: it has at least one line, none of which
-has an `invalidReason`; it has a customer (`setCustomerForOrder`); a shipping
-method is selected; the `termsAccepted` custom field is true (given for every
-order, never persisted across visits); and, when the selected method
-`requiresAddress`, the shipping address `streetLine1` is non-empty. Orders
+order with a message in the request language unless: it has at least one
+line, none of which has an `invalidReason`; it has a customer
+(`setCustomerForOrder`); a shipping method is selected; the `termsAccepted`
+custom field is true (given for every order, never persisted across visits);
+and, when the selected method `requiresAddress`, the shipping address has a
+non-empty street (`streetLine1`), house number (`streetLine2`), postcode
+(`postalCode`) and city. The refusal names the missing address parts. Orders
 created by the legacy mutation are exempt (they carry `deliveryMethodName`).
 Line validation on add/adjust is the order-basket spec's shop-API line
 validation.
 
 - **Scenario: Incomplete order**
   - WHEN the buyer tries to place an order missing contact, delivery method,
-    required address or terms acceptance
+    required address parts or terms acceptance
   - THEN the transition is refused with a message naming what is missing
 - **Scenario: Invalid line**
   - WHEN a line has an `invalidReason`
@@ -76,28 +124,82 @@ validation.
 
 ### Checkout details follow the active order
 
-While a basket is in progress the checkout SHALL save what the buyer types
-onto the active order through the same native mutations the submission uses
-(`setCustomerForOrder` only when name and email are valid,
-`setOrderShippingAddress`, `setOrderCustomFields` with `message` only,
-`setOrderShippingMethod` on selection), on blur and after a short pause in
-typing, and SHALL pre-fill name, email, phone, address, message and the
-delivery method from the active order on load. A failed save SHALL NOT block
-typing or submitting; submission still sends every field. Contact details are
-never stored in the browser, and the ÁSZF acceptance is never saved or
-pre-filled. A new basket after a placed order starts empty.
+The active order is the checkout's only state. The form SHALL stay
+uneditable until the active order and its eligible shipping methods have
+loaded, then show each field's value from the order. While a basket is in
+progress the checkout SHALL save each step onto the active order through the
+same native mutations the submission uses (`setCustomerForOrder` only when
+name and email are valid, `setOrderShippingAddress` with the structured
+fields, `setOrderBillingAddress` / `unsetOrderBillingAddress`,
+`setOrderCustomFields` with `message` and the `taxNumber`,
+`setOrderShippingMethod` on selection) whenever a field's value is committed
+(the native `change` event, which browsers also fire for autofill) and on the
+step's `Tovább`. A save sends the values the inputs currently hold — read
+from the form itself, so autofill and password managers that change values
+without events are saved too — and its response replaces the shown order.
+Saves run one at a time. A failed save SHALL NOT block typing or submitting;
+submission re-reads every step's inputs and sends every field. Contact
+details are never stored in the browser, and the ÁSZF acceptance is never
+saved or pre-filled. A new basket after a placed order starts empty. A step's
+validation covers only that step's fields; the server-side validation is
+unchanged and remains authoritative.
 
 - **Scenario: Returning to an unfinished basket**
   - WHEN a buyer fills in the details, then reloads, opens another tab or
     returns on a later visit
-  - THEN name, email, phone, address, message and delivery method are
-    pre-filled from the active order and the ÁSZF box is unchecked
+  - THEN name, email, phone, the addresses, the company and tax number, the
+    message and the delivery method are pre-filled from the active order and
+    the ÁSZF box is unchecked
+- **Scenario: Autofill**
+  - WHEN the browser autofills a step's fields
+  - THEN the filled values are saved onto the active order like typed ones
 - **Scenario: Next basket after an order**
   - WHEN the buyer places an order and starts a new basket
   - THEN the checkout form is empty
 - **Scenario: Save refused**
   - WHEN the server refuses a save (e.g. the email belongs to a registered account)
   - THEN typing and submitting continue unaffected
+
+### Structured delivery address
+
+The delivery address SHALL be structured: `Utca` and `Házszám` on one row,
+`Irányítószám` and `Város` on one row, and an `Ország` dropdown, with labels
+above the inputs that wrap, never truncate. The house number is its own field
+everywhere — it is stored in the address's native `streetLine2` column
+(carrier labels need it separately; it is never typed into the street field).
+The address section is visible only when the selected method
+`requiresAddress`; switching to `Személyes átvétel` hides it while a saved
+address is kept but not required, and switching back to an address method
+shows it pre-filled. The delivery address also carries the recipient for the
+carrier label in its native columns: `fullName` (the customer's name, surname
+first) and `phoneNumber` (the customer's phone, for the carrier's SMS).
+Changing the country saves the address and re-fetches
+`eligibleShippingMethods`; a selected method that is no longer eligible shows
+as unselected and the wizard stays on the step until one is chosen.
+
+- **Scenario: Method switched to pickup**
+  - WHEN the buyer selects `Személyes átvétel` after entering an address
+  - THEN the address section hides, the address stays saved, and Áttekintés
+    remains reachable without re-entering it
+
+### Billing address
+
+The Számlázás step SHALL collect the order's billing address with the same
+structured field shape as the delivery address plus a required `Név`
+(the address's native `fullName`) — it is not a company form. For delivery
+methods that require an address, a toggle `Azonos a szállítási címmel`
+(default on, and on whenever the order has no billing address) keeps the
+billing address off the order (`unsetOrderBillingAddress`); turning it off
+reveals the billing fields, which then must be complete. For delivery methods
+without a delivery address (`Személyes átvétel`) there is no toggle: the
+billing address is mandatory, because it is the buyer's only address. No
+billing field is copied from the delivery address. Company data is a separate
+optional group (`Cégnév`, `Adószám`) shown for both toggle states, stored in
+native columns where Vendure has them: the company name goes to the `company`
+column of the address that stands for the invoice buyer — the billing address
+when the order has one, otherwise the delivery address — and the tax number,
+which has no native column, to the order's `taxNumber` custom field. The
+invoice buyer is therefore always `billingAddress ?? shippingAddress`.
 
 ### Order submission
 
@@ -107,13 +209,19 @@ this order, each result checked before the next:
 1. `addItemToOrder` / `adjustOrderLine` / `removeOrderLine` while building
    the basket (the basket spec);
 2. `setCustomerForOrder` — email, first/last name (surname first), `phoneNumber`;
-3. `setOrderShippingAddress` — free-text address in `streetLine1`, the shop's
-   `countryCode`; required only when the method `requiresAddress`;
+3. `setOrderShippingAddress` — the structured address (street in
+   `streetLine1`, house number in `streetLine2`, postcode, city, the shop's
+   `countryCode`, the recipient's `fullName` and `phoneNumber`, and the
+   company when the order has no billing address); required only when the
+   method `requiresAddress`;
 4. `setOrderShippingMethod` — one of `eligibleShippingMethods`;
-5. `setOrderCustomFields` — `message`, `termsAccepted` and
+5. `setOrderBillingAddress` — the billing step's own address with its
+   `fullName` and `company`, or `unsetOrderBillingAddress` when the toggle
+   keeps the billing address off the order (the billing section above);
+6. `setOrderCustomFields` — `message`, `termsAccepted`, `taxNumber` and
    `submissionTransactionId` (a unique identifier generated per submission
    attempt; named so to avoid the native, payment-derived `transactionId`);
-6. `transitionOrderToState("ArrangingPayment")` — the order is placed (there
+7. `transitionOrderToState("ArrangingPayment")` — the order is placed (there
    is no payment step yet).
 
 Prices, set discounts, delivery and the total are the order's own

@@ -16,11 +16,11 @@ describe("messages", () => {
   });
 
   it("formats the same message in both languages", () => {
-    expect(messages("hu").checkoutMissingLine()).toBe("legalább egy termék");
-    expect(messages("en").checkoutMissingLine()).toBe("at least one product");
+    expect(messages("hu").deliveryFree()).toBe("ingyenes");
+    expect(messages("en").deliveryFree()).toBe("free");
   });
 
   it("falls back to Hungarian for unknown languages", () => {
-    expect(messages("de").checkoutMissingLine()).toBe("legalább egy termék");
+    expect(messages("de").deliveryFree()).toBe("ingyenes");
   });
 });

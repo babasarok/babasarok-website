@@ -48,6 +48,9 @@ export default defineConfig({
     defaultLocale,
     locales: [...locales],
   },
+  devToolbar: {
+    enabled: false,
+  },
   prefetch: true,
   integrations: [
     devProxy(),

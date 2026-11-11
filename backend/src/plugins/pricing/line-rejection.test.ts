@@ -3,6 +3,7 @@ import {
   type ProductDefinition,
 } from "../../shared/product-definition/index";
 import { describe, expect, it } from "vitest";
+import type { Refusal } from "../../shared/refusal";
 import { lineRejection, type LineFacts } from "./line-rejection";
 
 type Definition = ProductDefinition;
@@ -35,6 +36,7 @@ function factsFor(definition?: Definition, threadColors: string[] = ["piros"]): 
 }
 
 const unit = define({ kind: "unit" });
+const missingLength: Refusal = { code: "LENGTH_MISSING", productName: "Párna" };
 const length = define({ kind: "length", sourceFieldId: "hossz" });
 function selected(colorId: string): string {
   return JSON.stringify({ himzes: { kind: "embroidery", text: "szia", colorId } });
@@ -44,7 +46,7 @@ function check(
   facts: LineFacts,
   customFields?: { lengthCm?: unknown; selections?: unknown },
   storedLengthCm?: unknown
-): Promise<string | undefined> {
+): Promise<Refusal | undefined> {
   return lineRejection(facts, { productId: 1, languageCode: "hu", customFields, storedLengthCm });
 }
 
@@ -57,17 +59,17 @@ describe("lineRejection", () => {
   it("still rejects unknown thread colors on non-generated products", async () => {
     const rejection = await check(factsFor(), { selections: selected("lila") });
 
-    expect(rejection).toContain("lila");
+    expect(rejection).toEqual({ code: "UNKNOWN_THREAD_COLOR", colorIds: ["lila"] });
   });
 
   it("requires a positive integer length for length-priced products", async () => {
     const facts = factsFor(length);
 
     for (const lengthCm of [0, -5, 1.5, "100"]) {
-      expect(await check(facts, { lengthCm })).toContain("hossz");
+      expect(await check(facts, { lengthCm })).toEqual(missingLength);
     }
 
-    expect(await check(facts)).toContain("hossz");
+    expect(await check(facts)).toEqual(missingLength);
     expect(await check(facts, { lengthCm: 120 })).toBeUndefined();
   });
 
@@ -75,8 +77,8 @@ describe("lineRejection", () => {
     const facts = factsFor(length);
 
     expect(await check(facts, {}, 80)).toBeUndefined();
-    expect(await check(facts, { lengthCm: 0 }, 80)).toContain("hossz");
-    expect(await check(facts, {})).toContain("hossz");
+    expect(await check(facts, { lengthCm: 0 }, 80)).toEqual(missingLength);
+    expect(await check(facts, {})).toEqual(missingLength);
   });
 
   it("does not require a length for unit-priced products", async () => {
@@ -84,7 +86,9 @@ describe("lineRejection", () => {
   });
 
   it("returns the parse error of malformed selections", async () => {
-    expect(await check(factsFor(unit), { selections: "nem json" })).toBeTypeOf("string");
+    expect(await check(factsFor(unit), { selections: "nem json" })).toEqual({
+      code: "SELECTIONS_NOT_JSON",
+    });
   });
 
   it("applies the definition's selection validation", async () => {
@@ -92,13 +96,16 @@ describe("lineRejection", () => {
       await check(factsFor(unit), {
         selections: JSON.stringify({ x: { kind: "input", value: "" } }),
       })
-    ).toContain("nem ismeri");
+    ).toEqual({ code: "UNKNOWN_FIELD", productName: "Párna", fieldId: "x" });
   });
 
   it("rejects an unknown thread color and accepts a known one", async () => {
     const facts = factsFor(unit);
 
     expect(await check(facts, { selections: selected("piros") })).toBeUndefined();
-    expect(await check(facts, { selections: selected("lila") })).toContain("lila");
+    expect(await check(facts, { selections: selected("lila") })).toEqual({
+      code: "UNKNOWN_THREAD_COLOR",
+      colorIds: ["lila"],
+    });
   });
 });

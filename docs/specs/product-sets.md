@@ -144,7 +144,9 @@ whose member products are disjoint from the others'; while that disjointness
 is violated the allocation refuses to apply and the fields are empty.
 The product configurator SHALL offer to add related set members, and SHALL
 present the members of any related-items collection the product belongs to as
-a separate "related items" list per group.
+a separate "related items" list per group. Links to a set member's page carry
+the current item's materials, preselected on fields of the same name, and
+every member and related-item link stays in the page's language.
 
 - **Scenario: Basket-level instance list**
   - WHEN set instances are formed in the basket
@@ -153,7 +155,8 @@ a separate "related items" list per group.
 - **Scenario: Pending partner hint**
   - WHEN a set member is in the basket but no matching partner is
   - THEN the line shows a hint that the set discount is pending and offers
-    the set's related members
+    the set's related members, each linking to its product page with the
+    line's materials preselected on fields of the same name
 - **Scenario: One-click material sync**
   - WHEN a pending-material line's partner picks materials on fields that the
     line offers by the same field name

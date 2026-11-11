@@ -2,13 +2,13 @@
  * Seam 3: a cached catalog vs. the live one. Buyers hold lines the owner then
  * changes through the admin API (disables a variant, removes a material
  * colour or a product option, edits a price). The server verdict must reach the basket:
- * `OrderLine.invalidReason`, the Hungarian refusal at the transition to
+ * `OrderLine.invalidReason`, the same refusal at the transition to
  * ArrangingPayment, and recovery by removing/re-adding the line (ADR 0013
  * decision 6). Each case uses its own variant, so the owner's edits never
  * leak between cases. A removed product option is reported as
- * VARIANT_UNAVAILABLE, not OPTION_NOT_OFFERED: the owner's save syncs the
+ * VARIANT_UNAVAILABLE, not as a refused option: the owner's save syncs the
  * variants and retires the one the line uses, and Vendure's own (English)
- * refusal then wins over our Hungarian one at the transition.
+ * refusal then wins over ours at the transition.
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { seedCatalog } from "./fixtures";
@@ -56,12 +56,11 @@ describe("stale basket lines", () => {
 
     const flagged = await activeOrder(shopper);
 
-    expect(flagged.lines[0]?.invalidReason?.code).toBe("VARIANT_UNAVAILABLE");
+    expect(flagged.lines[0]?.invalidReason).toMatchObject({ code: "VARIANT_UNAVAILABLE" });
 
     const refused = await transitionTo(shopper, "ArrangingPayment");
 
-    expect(refused).toEqual({ refusal: flagged.lines[0]?.invalidReason?.message });
-    expect(flagged.lines[0]?.invalidReason?.message).toContain("már nem elérhető");
+    expect(refused).toEqual({ refusal: flagged.lines[0]?.invalidReason });
 
     await removeLine(shopper, flagged.lines[0]?.id ?? "");
     await setVariantEnabled(server, stale.sku, true);
@@ -86,9 +85,12 @@ describe("stale basket lines", () => {
 
     const flagged = await activeOrder(shopper);
 
-    expect(flagged.lines[0]?.invalidReason?.code).toBe("OPTION_NOT_OFFERED");
+    expect(flagged.lines[0]?.invalidReason).toMatchObject({
+      code: "SELECTION_INVALID",
+      reason: { code: "FOREIGN_COLOR" },
+    });
     expect(await transitionTo(shopper, "ArrangingPayment")).toEqual({
-      refusal: flagged.lines[0]?.invalidReason?.message,
+      refusal: flagged.lines[0]?.invalidReason,
     });
 
     await removeLine(shopper, flagged.lines[0]?.id ?? "");
@@ -109,10 +111,12 @@ describe("stale basket lines", () => {
 
     const flagged = await activeOrder(shopper);
 
-    expect(flagged.lines[0]?.invalidReason?.code).toBe("OPTION_NOT_OFFERED");
-    expect(flagged.lines[0]?.invalidReason?.message).toContain("nem kínálja ezt az értéket: nagy");
+    expect(flagged.lines[0]?.invalidReason).toMatchObject({
+      code: "VALUE_NOT_OFFERED",
+      value: "nagy",
+    });
     expect(await transitionTo(shopper, "ArrangingPayment")).toEqual({
-      refusal: flagged.lines[0]?.invalidReason?.message,
+      refusal: flagged.lines[0]?.invalidReason,
     });
 
     await removeLine(shopper, flagged.lines[0]?.id ?? "");

@@ -4,6 +4,7 @@
   import type { i18n as I18n } from "i18next";
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import type { Locale } from "@/lib/i18n";
+  import { productPath } from "@/lib/order/queryParams";
   import type { OrderProduct } from "@/lib/order/types";
 
   interface Props {
@@ -12,6 +13,8 @@
     relatedProducts: OrderProduct[];
     basketCountByProductId?: Record<string, number>;
     slugByProductId?: Record<string, string | undefined>;
+    /** The current item's materials, preselected on the sibling page the card links to. */
+    materialParams: URLSearchParams;
     ready: boolean;
     onAddRelated: (target: OrderProduct) => void;
   }
@@ -22,6 +25,7 @@
     relatedProducts,
     basketCountByProductId = {},
     slugByProductId = {},
+    materialParams,
     ready,
     onAddRelated,
   }: Props = $props();
@@ -50,7 +54,7 @@
           <SetSiblingCard
             {locale}
             product={related}
-            href={slug ? `/product/${slug}/` : undefined}
+            href={slug ? productPath(slug, locale, materialParams) : undefined}
             added={basketCountByProductId[related.product_id] ?? 0}
             disabled={!ready}
             onAdd={() => onAddRelated(related)}

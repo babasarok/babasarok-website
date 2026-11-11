@@ -50,11 +50,7 @@ const t = i18n.t.bind(i18n);
 
       <div class="flex items-center gap-2 lg:hidden">
         <SearchDialog locale={locale} client:load />
-        {
-          showBasket && (
-            <NavBasket checkoutHref={checkoutLink} locale={locale} anchored={false} client:load />
-          )
-        }
+        {showBasket && <NavBasket locale={locale} anchored={false} client:load />}
         <button
           id="navbar-toggler"
           type="button"
@@ -70,7 +66,9 @@ const t = i18n.t.bind(i18n);
       </div>
 
       <div id="navbar-collapse" class="w-full">
-        <ul class="mx-auto my-0 flex flex-col items-center gap-2 py-4 lg:flex-row lg:py-0">
+        <ul
+          class="mx-auto my-0 flex flex-col items-center gap-2 py-4 text-base lg:flex-row lg:py-0"
+        >
           {
             mainMenu.map((item) => (
               <li>
@@ -94,7 +92,7 @@ const t = i18n.t.bind(i18n);
           {
             showBasket && (
               <div class="hidden lg:block">
-                <NavBasket checkoutHref={checkoutLink} locale={locale} client:load />
+                <NavBasket locale={locale} client:load />
               </div>
             )
           }

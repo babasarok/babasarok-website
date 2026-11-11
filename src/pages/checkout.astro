@@ -1,7 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
-import CheckoutSection from "@/components/blocks/catalog/CheckoutSection.svelte";
+import CheckoutSection from "@/components/blocks/checkout/CheckoutSection.svelte";
 import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
 import { getEntry } from "astro:content";
 import { createI18n } from "@/lib/i18next";
@@ -24,17 +24,21 @@ if (!checkout) {
 }
 ---
 
-<Base title={t("checkout.title")}>
-  <PageHeader title={t("checkout.title")} breadcrumb={t("checkout.title")} no-shapes />
+<Base title={t("checkout.title")} compactFooter>
+  <PageHeader
+    title={t("checkout.title")}
+    breadcrumb={t("checkout.title")}
+    no-shapes
+    class="hidden sm:block"
+  />
+  <!-- TODO: factor out header height -->
+  <div class="h-25 sm:hidden"></div>
 
-  <section class="py-12.5">
+  <section class="py-6 sm:py-12.5">
     <div class="not-prose container">
       <CheckoutSection
         {locale}
         basketInfo={checkout.data.basket_note}
-        contactHeading={checkout.data.contact_heading}
-        basketHeading={checkout.data.basket_heading}
-        messageHeading={checkout.data.message_heading}
         supportEmail={config.address?.email}
         client:load
       />

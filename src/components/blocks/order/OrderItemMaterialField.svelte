@@ -1,10 +1,10 @@
 <script lang="ts">
-  import Button from "./common/Button.svelte";
-  import Chip from "./common/Chip.svelte";
+  import Button from "@/components/ui/Button.svelte";
+  import Chip from "@/components/ui/Chip.svelte";
   import Icon from "@iconify/svelte";
-  import Color from "./common/Color.svelte";
-  import IconButton from "./common/IconButton.svelte";
-  import Tooltip from "./common/Tooltip.svelte";
+  import Color from "@/components/ui/Color.svelte";
+  import IconButton from "@/components/ui/IconButton.svelte";
+  import Tooltip from "@/components/ui/Tooltip.svelte";
   import { slide } from "svelte/transition";
   import type { i18n as I18n } from "i18next";
   import I18nGate from "@/components/ui/I18nGate.svelte";
@@ -116,7 +116,7 @@
               </span>
               <span class="text-xs">
                 {#if colorCount === undefined}
-                  <span class="text-red-600">Válaszz először opciót</span>
+                  <span class="text-red-600">{i18n.t("basket.chooseOptionFirst")}</span>
                 {:else}
                   {`${field.value.colors.length} / ${colorCount}`}
                 {/if}

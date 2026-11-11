@@ -6,8 +6,8 @@
   import OrderItem from "./OrderItem.svelte";
   import SetPanel from "./SetPanel.svelte";
   import RelatedItems from "./RelatedItems.svelte";
-  import Button from "./common/Button.svelte";
-  import IconButton from "./common/IconButton.svelte";
+  import Button from "@/components/ui/Button.svelte";
+  import IconButton from "@/components/ui/IconButton.svelte";
   import { basket } from "@/lib/basket/basket.svelte";
   import type { LineInput } from "@/lib/basket/api";
   import {
@@ -17,18 +17,18 @@
     type ConfiguredLine,
   } from "@/lib/basket/lineInput";
   import { formatMoney } from "@/lib/basket/money";
+  import { reasonText, type Reason } from "@/lib/basket/refusalText";
   import { findLine, lineMatches, type PriceChange } from "@/lib/basket/stale";
   import { liveUnitPrice } from "@/lib/catalog/livePrice";
   import { instantiateProduct, hasConfigurableOptions } from "@/lib/order/product";
   import { siblingsFor, relatedGroupsFor, resolveSetDiscount } from "@/lib/order/groups";
-  import { prefillFromParams, buildMaterialParams } from "@/lib/order/queryParams";
+  import { prefillFromParams, buildMaterialParams, productPath } from "@/lib/order/queryParams";
   import { sanitizeItem, isItemValid, validateItem } from "@/lib/product/validation";
   import type { OrderThreadColor, OrderProduct, OrderProductGroup } from "@/lib/order/types";
   import type { IProduct } from "@/lib/types.svelte";
   import type { i18n as I18n } from "i18next";
   import I18nGate from "@/components/ui/I18nGate.svelte";
-  import type { Locale } from "@/lib/i18n";
-  import { translateMessage } from "@/lib/i18next-client";
+  import { localizedPath, type Locale } from "@/lib/i18n";
 
   interface Props {
     locale: Locale;
@@ -39,7 +39,6 @@
     productGroups: OrderProductGroup[];
     slugByProductId?: Record<string, string | undefined>;
     threadColors: OrderThreadColor[];
-    checkoutHref?: string;
   }
 
   let {
@@ -51,7 +50,6 @@
     productGroups,
     slugByProductId = {},
     threadColors,
-    checkoutHref = "/checkout",
   }: Props = $props();
 
   let item = $state<IProduct | null>(null);
@@ -59,7 +57,7 @@
   let savedKey = $state<string | null>(null);
   let saved = $state(false);
   let busy = $state(false);
-  let error = $state<string | null>(null);
+  let error = $state<Reason | null>(null);
   let refused = $state(false);
   let priceNotice = $state<(PriceChange & { currencyCode: string }) | null>(null);
   let restored = false;
@@ -138,7 +136,7 @@
 
     try {
       const next = $state.snapshot(item);
-      const selections = parseLineSelections(line.customFields?.selections ?? null, locale);
+      const selections = parseLineSelections(line.customFields?.selections ?? null);
       applySelections(next.fields, selections);
       applySelections(next.fields, partnerMaterials(params.get("syncFrom")));
       next.count = line.quantity;
@@ -173,15 +171,15 @@
       return {};
     }
 
-    const all = parseLineSelections(partner.customFields?.selections ?? null, locale);
+    const all = parseLineSelections(partner.customFields?.selections ?? null);
 
     return Object.fromEntries(
       Object.entries(all).filter(([, selection]) => selection?.kind === "material")
     );
   }
 
-  function refuse(message: string): false {
-    error = message;
+  function refuse(reason: Reason): false {
+    error = reason;
     refused = true;
     return false;
   }
@@ -291,8 +289,11 @@
     }
 
     if (hasConfigurableOptions($state.snapshot(target))) {
-      const query = buildMaterialParams($state.snapshot(item)).toString();
-      globalThis.location.href = `/product/${targetSlug}/${query ? `?${query}` : ""}`;
+      globalThis.location.href = productPath(
+        targetSlug,
+        locale,
+        buildMaterialParams($state.snapshot(item))
+      );
       return;
     }
 
@@ -347,7 +348,7 @@
 
         {#if error}
           <div class="mt-3 flex flex-col items-start gap-2 text-sm text-danger-500">
-            <p>{translateMessage(i18n, error)}</p>
+            <p>{reasonText(i18n, error)}</p>
             {#if refused}
               <button
                 type="button"
@@ -390,7 +391,7 @@
               {i18n.t("order.inBasket")}
             </span>
             <a
-              href={checkoutHref}
+              href={localizedPath("/checkout", locale)}
               class="flex items-center gap-1 font-medium underline hover:text-success-900"
             >
               {i18n.t("order.toCheckout")}
@@ -458,6 +459,7 @@
               {relatedProducts}
               {basketCountByProductId}
               {slugByProductId}
+              materialParams={buildMaterialParams(item)}
               ready={!busy}
               onAddRelated={addRelated}
             />

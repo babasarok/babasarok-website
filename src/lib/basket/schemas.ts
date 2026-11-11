@@ -1,8 +1,7 @@
 import { z } from "zod";
+import { RefusalSchema } from "@babasarok/pricing";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { SetDiscountSchema, SetStateSchema } from "./setDiscounts";
-
-const InvalidReasonSchema = z.object({ code: z.string(), message: z.string() });
 
 export const OrderLineSchema = z.object({
   id: z.string(),
@@ -12,7 +11,7 @@ export const OrderLineSchema = z.object({
   customFields: z
     .object({ selections: z.string().nullable(), lengthCm: z.number().nullable() })
     .nullable(),
-  invalidReason: InvalidReasonSchema.nullable(),
+  invalidReason: RefusalSchema.nullable(),
   setState: SetStateSchema.nullable().optional(),
   productVariant: z.object({
     id: z.string(),
@@ -25,6 +24,18 @@ export const OrderLineSchema = z.object({
     }),
   }),
 });
+
+export const OrderAddressSchema = z.object({
+  fullName: z.string().nullable(),
+  company: z.string().nullable(),
+  streetLine1: z.string().nullable(),
+  streetLine2: z.string().nullable(),
+  postalCode: z.string().nullable(),
+  city: z.string().nullable(),
+  countryCode: z.string().nullable(),
+});
+
+export type OrderAddress = z.output<typeof OrderAddressSchema>;
 
 export const OrderSchema = z.object({
   id: z.string(),
@@ -51,8 +62,11 @@ export const OrderSchema = z.object({
       phoneNumber: z.string().nullable(),
     })
     .nullable(),
-  shippingAddress: z.object({ streetLine1: z.string().nullable() }).nullable(),
-  customFields: z.object({ message: z.string().nullable() }).nullable(),
+  shippingAddress: OrderAddressSchema.nullable(),
+  billingAddress: OrderAddressSchema.nullable(),
+  customFields: z
+    .object({ message: z.string().nullable(), taxNumber: z.string().nullable() })
+    .nullable(),
   lines: z.array(OrderLineSchema),
   setDiscounts: z.array(SetDiscountSchema).optional(),
 });
@@ -69,6 +83,11 @@ export const ShippingQuoteSchema = z.object({
 });
 
 export type ShippingQuote = z.output<typeof ShippingQuoteSchema>;
+
+/** Methods with this flag need a delivery address at checkout. */
+export function requiresAddress(method: ShippingQuote | undefined): boolean {
+  return method?.customFields?.requiresAddress === true;
+}
 
 export const ProductVariantIdsSchema = z.object({
   product: z.object({ variants: z.array(z.object({ id: z.string() })) }).nullable(),

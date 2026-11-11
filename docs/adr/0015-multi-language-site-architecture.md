@@ -100,9 +100,14 @@ non-catalog Tina content, buyer-visible server messages, and order emails.
    `Accept-Language` header to the same locale: Vendure resolves its own
    text (error messages) by `Accept-Language` first, then `languageCode`,
    so a browser client relying on `languageCode` alone gets its OS locale.
-   Buyer-visible server messages are translated server-side (per-language
-   tables; the site renders what the server returns); the site-side
-   `ErrorCode` maps are per-locale dictionaries.
+   Buyer-visible server refusals travel as codes with the values that
+   explain them (the shared `Refusal` schema: JSON in Vendure's string
+   error channels, a JSON field on `OrderLine.invalidReason`), and the site
+   words them from its own locale files, so all buyer-facing copy lives in
+   one place and a new code without text fails the type check. Text the
+   server sends itself (emails, line-detail labels) stays in the server's
+   per-language tables. The site-side `ErrorCode` maps are per-locale
+   dictionaries.
 
 6. **hreflang by sitemap, once.** Google treats HTML, HTTP-header and
    sitemap annotations as equivalent and advises picking one; this site

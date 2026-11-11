@@ -11,13 +11,13 @@ import { FIELD_BEHAVIORS } from "../product/behavior";
 import type { FieldPricePart } from "../product/behavior";
 
 export interface PriceBreakdown {
-  basePrice: FieldPricePart;
+  basePrice: Pick<FieldPricePart, "price">;
   options: FieldPricePart[];
   priced_by_length: false;
 }
 
 export interface LengthBasedBreakdown {
-  basePrice: FieldPricePart;
+  basePrice: Pick<FieldPricePart, "price">;
   options: FieldPricePart[];
   priced_by_length: true;
   /** The per-meter price: base plus every visible field part except the length source. */
@@ -50,7 +50,7 @@ export function priceBreakdown(product: IProduct): PriceBreakdown | LengthBasedB
     parts.push(fieldPrice);
   }
 
-  const basePrice: FieldPricePart = { label: "Alapár", price: product.price };
+  const basePrice: Pick<FieldPricePart, "price"> = { price: product.price };
 
   if (product.length_based_pricing) {
     return {

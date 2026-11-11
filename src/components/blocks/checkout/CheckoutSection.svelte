@@ -1,19 +1,16 @@
 <script lang="ts">
-  import CheckoutForm from "@/components/blocks/order/CheckoutForm.svelte";
+  import CheckoutWizard from "@/components/blocks/checkout/CheckoutWizard.svelte";
+  import CatalogState from "@/components/blocks/catalog/CatalogState.svelte";
   import { toCheckoutCatalog } from "@/lib/catalog/checkoutCatalog";
   import { remoteValue } from "@/lib/catalog/remote.svelte";
   import type { Catalog } from "@/lib/catalog";
   import { catalogStore } from "@/lib/catalog/store";
   import type { Locale } from "@/lib/i18n";
-  import CatalogState from "./CatalogState.svelte";
 
   interface Props {
     locale: Locale;
     supportEmail: string | null | undefined;
     basketInfo?: string | undefined;
-    contactHeading: string;
-    basketHeading: string;
-    messageHeading: string;
   }
 
   let { locale, ...content }: Props = $props();
@@ -31,6 +28,11 @@
 
   {#snippet children(loaded: Catalog)}
     {@const checkout = toCheckoutCatalog(loaded)}
-    <CheckoutForm {locale} labels={checkout.labels} setMembers={checkout.setMembers} {...content} />
+    <CheckoutWizard
+      {locale}
+      labels={checkout.labels}
+      setMembers={checkout.setMembers}
+      {...content}
+    />
   {/snippet}
 </CatalogState>

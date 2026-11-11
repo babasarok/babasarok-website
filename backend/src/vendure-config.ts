@@ -221,6 +221,11 @@ export const config: VendureConfig = {
       { name: "orderTotal", type: "int" },
       { name: "setDiscountSummary", type: "text" },
       { name: "termsAccepted", type: "boolean" },
+      {
+        name: "taxNumber",
+        type: "string",
+        label: [{ languageCode: LanguageCode.hu, value: "Adószám" }],
+      },
       // Not Order.transactionId: that native field is derived from Payments
       // (none in the quote flow), and a same-named customField would collide
       // with it in the GraphQL schema.

@@ -36,14 +36,14 @@ export const inputBehavior = defineBehavior("input", {
 
     f.value.error = undefined;
     if (!f.value.value && !f.optional) {
-      f.value.error = "Kötelező mező";
+      f.value.error = { kind: "required" };
       return;
     }
 
     if (f.regex) {
       const regex = new RegExp(f.regex);
       if (!regex.test(f.value.value)) {
-        f.value.error = "Érvénytelen formátum";
+        f.value.error = { kind: "invalidFormat" };
         return;
       }
     }

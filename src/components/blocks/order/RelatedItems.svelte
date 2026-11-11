@@ -4,6 +4,7 @@
   import type { i18n as I18n } from "i18next";
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import type { Locale } from "@/lib/i18n";
+  import { productPath } from "@/lib/order/queryParams";
 
   interface RelatedGroup {
     title: string;
@@ -43,7 +44,7 @@
             {#each group.products as related (related.product_id)}
               {@const slug = slugByProductId[related.product_id]}
               <a
-                href={slug ? `/product/${slug}/` : undefined}
+                href={slug ? productPath(slug, locale) : undefined}
                 class="flex w-40 shrink-0 flex-col overflow-hidden rounded-xl border border-brown-200 bg-white transition-shadow hover:shadow-md"
               >
                 <div class="aspect-square bg-brown-50">
@@ -64,7 +65,9 @@
                 <div class="flex flex-1 flex-col gap-1 p-2">
                   <p class="text-sm font-medium leading-tight text-dark">{related.title}</p>
                   {#if related.price}
-                    <p class="text-xs text-brown-500">{related.price} Ft-tól</p>
+                    <p class="text-xs text-brown-500">
+                      {i18n.t("price.from", { price: related.price })}
+                    </p>
                   {/if}
                 </div>
               </a>

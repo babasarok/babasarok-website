@@ -3,11 +3,11 @@ import { unknownThreadColorRejection } from "../product/thread-color";
 
 import {
   LineSelectionsError,
-  lengthMissingRejection,
   parseLineSelections,
   referencedMaterialIds,
   selectionsRejection,
   type LineSelections,
+  type Refusal,
 } from "../../shared/pricing/index";
 
 /** The data a line check needs; the interceptor backs it with the database. */
@@ -33,14 +33,14 @@ async function selectionsError(
   facts: LineFacts,
   input: LineCheckInput,
   definition: ProductDefinition | undefined
-): Promise<string | undefined> {
+): Promise<Refusal | undefined> {
   let selections: LineSelections;
 
   try {
-    selections = parseLineSelections(input.customFields?.selections, input.languageCode);
+    selections = parseLineSelections(input.customFields?.selections);
   } catch (error) {
     if (error instanceof LineSelectionsError) {
-      return error.message;
+      return error.refusal;
     }
 
     throw error;
@@ -74,7 +74,7 @@ async function selectionsError(
   const unknown = [...colorIds].filter((colorId) => !known.has(colorId));
 
   if (unknown.length > 0) {
-    return unknownThreadColorRejection(unknown, input.languageCode);
+    return unknownThreadColorRejection(unknown);
   }
 
   return undefined;
@@ -88,7 +88,7 @@ async function selectionsError(
 export async function lineRejection(
   facts: LineFacts,
   input: LineCheckInput
-): Promise<string | undefined> {
+): Promise<Refusal | undefined> {
   const definition = await facts.generatedDefinition(input.productId);
 
   if (definition === undefined || definition.pricing.kind !== "length") {
@@ -99,10 +99,10 @@ export async function lineRejection(
   const lengthCm = typeof provided === "number" ? provided : input.storedLengthCm;
 
   if (!isValidLength(lengthCm)) {
-    return lengthMissingRejection(
-      await facts.productName(input.productId, definition),
-      input.languageCode
-    );
+    return {
+      code: "LENGTH_MISSING",
+      productName: await facts.productName(input.productId, definition),
+    };
   }
 
   return selectionsError(facts, input, definition);

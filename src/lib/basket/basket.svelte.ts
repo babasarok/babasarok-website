@@ -75,7 +75,7 @@ class Basket {
     }
   }
 
-  #apply(result: Result<Order>): Result<Order> {
+  apply(result: Result<Order>): Result<Order> {
     if (result.ok) {
       this.order = result.value;
       announceBasketChange();
@@ -85,19 +85,19 @@ class Basket {
   }
 
   add(input: LineInput): Promise<Result<Order>> {
-    return this.api.addItem(input).then((result) => this.#apply(result));
+    return this.api.addItem(input).then((result) => this.apply(result));
   }
 
   adjust(orderLineId: string, quantity: number): Promise<Result<Order>> {
-    return this.api.adjustLine(orderLineId, quantity).then((result) => this.#apply(result));
+    return this.api.adjustLine(orderLineId, quantity).then((result) => this.apply(result));
   }
 
   remove(orderLineId: string): Promise<Result<Order>> {
-    return this.api.removeLine(orderLineId).then((result) => this.#apply(result));
+    return this.api.removeLine(orderLineId).then((result) => this.apply(result));
   }
 
   setShippingMethod(shippingMethodId: string): Promise<Result<Order>> {
-    return this.api.setShippingMethod(shippingMethodId).then((result) => this.#apply(result));
+    return this.api.setShippingMethod(shippingMethodId).then((result) => this.apply(result));
   }
 
   rememberShownPrice(lineId: string, price: number): void {

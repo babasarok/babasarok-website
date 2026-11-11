@@ -9,13 +9,12 @@
 
   interface Props {
     locale: Locale;
-    checkoutHref?: string;
     /** Anchor the panel to the button (desktop). When false, pin it to the
      * viewport as a sheet so it can't overflow on narrow screens. */
     anchored?: boolean;
   }
 
-  let { locale, checkoutHref = "/checkout", anchored = true }: Props = $props();
+  let { locale, anchored = true }: Props = $props();
 
   let open = $state(false);
   let buttonEl: HTMLButtonElement | undefined;
@@ -93,7 +92,7 @@
           {#if items.length === 0}
             <p class="py-4 text-center text-sm text-brown-500">{i18n.t("basket.empty")}</p>
             <a
-              href="/product/"
+              href={localizedPath("/product/", locale)}
               class="flex h-10 items-center justify-center rounded-md bg-brown-500 font-medium uppercase text-white transition-colors hover:bg-brown-700"
             >
               {i18n.t("basket.browse")}
@@ -135,7 +134,7 @@
               {/each}
             </ul>
             <a
-              href={checkoutHref}
+              href={localizedPath("/checkout", locale)}
               class="mt-3 flex h-10 items-center justify-center rounded-md bg-brown-500 font-medium uppercase text-white transition-colors hover:bg-brown-700"
             >
               {i18n.t("basket.checkout")}

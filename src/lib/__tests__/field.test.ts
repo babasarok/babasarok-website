@@ -255,7 +255,7 @@ describe("validation ignores hidden fields", () => {
           name: "extra",
           type: "select",
           items: [{ value: "a" }],
-          value: { value: "", error: "Kötelező mező" },
+          value: { value: "", error: { kind: "required" } },
           depends_on: { field: "meret", value: "l" },
         }),
       ],
@@ -284,7 +284,7 @@ describe("validation ignores hidden fields", () => {
         ],
       })
     );
-    expect(fieldError(item.fields.find((f) => f.name === "extra"))).toBe("Kötelező mező");
+    expect(fieldError(item.fields.find((f) => f.name === "extra"))).toEqual({ kind: "required" });
     expect(isItemValid(item)).toBe(false);
   });
 });

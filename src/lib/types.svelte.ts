@@ -1,33 +1,43 @@
 import type { OrderField, OrderProduct, OrderProductMaterials } from "./order/types";
 import type { ProductFieldType, StringValuedFieldType } from "./product/fieldTypes";
+
+/** Why a field's value is not orderable; the form shows it as `fieldErrors.<kind>`. */
+export type FieldError =
+  | { kind: "required" }
+  | { kind: "invalidFormat" }
+  | { kind: "invalidValue" }
+  | { kind: "colorsUnavailable" }
+  | { kind: "colorCount"; count: number }
+  | { kind: "bannedCombination" };
+
 export interface ValueWithError {
   value: string;
   is_custom?: boolean;
-  error?: string | undefined;
+  error?: FieldError | undefined;
 }
 
 /** Toggle fields hold a boolean, unlike the string-valued field types. */
 export interface ToggleValue {
   value: boolean;
-  error?: string | undefined;
+  error?: FieldError | undefined;
 }
 
 export interface ProductMaterialValue {
   material_id: string;
   colors: string[];
-  error?: string | undefined;
+  error?: FieldError | undefined;
 }
 
 export interface EmbroideryColorValue {
   color: string;
-  error?: string | undefined;
+  error?: FieldError | undefined;
 }
 
 export interface EmbroideryValue {
   enabled: boolean;
   text: ValueWithError;
   color: EmbroideryColorValue;
-  error?: string | undefined;
+  error?: FieldError | undefined;
 }
 
 /** The runtime value shape each field `type` carries. */

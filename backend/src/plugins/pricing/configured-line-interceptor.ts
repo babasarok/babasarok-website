@@ -8,7 +8,8 @@ import type {
   WillAdjustOrderLineInput,
 } from "@vendure/core";
 import { DatabaseLineFacts } from "./database-line-facts";
-import { lineRejection } from "./line-rejection";
+import { encodeRefusal } from "../../shared/refusal";
+import { lineRejection, type LineCheckInput } from "./line-rejection";
 
 /**
  * Rejects unpriceable configured lines at the mutation boundary with a clear
@@ -29,7 +30,7 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
     order: Order,
     input: WillAddItemToOrderInput
   ): Promise<string | undefined> {
-    return lineRejection(this.facts(ctx), {
+    return this.rejection(ctx, {
       productId: Number(input.productVariant.productId),
       languageCode: ctx.languageCode,
       customFields: input.customFields,
@@ -41,12 +42,18 @@ export class ConfiguredOrderLineInterceptor implements OrderInterceptor {
     order: Order,
     input: WillAdjustOrderLineInput
   ): Promise<string | undefined> {
-    return lineRejection(this.facts(ctx), {
+    return this.rejection(ctx, {
       productId: Number(input.orderLine.productVariant.productId),
       languageCode: ctx.languageCode,
       customFields: input.customFields,
       storedLengthCm: input.orderLine.customFields.lengthCm,
     });
+  }
+
+  private async rejection(ctx: RequestContext, input: LineCheckInput): Promise<string | undefined> {
+    const refusal = await lineRejection(this.facts(ctx), input);
+
+    return refusal === undefined ? undefined : encodeRefusal(refusal);
   }
 
   private facts(ctx: RequestContext): DatabaseLineFacts {

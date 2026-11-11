@@ -33,11 +33,11 @@ const address = config.address ?? null;
         {
           address && (
             <>
-              <h2>1. Adatkezelő</h2>
+              <h2>{t("privacy.controllerHeading")}</h2>
               <p>
-                Adatkezelő: <strong>{config.title}</strong> — {address.address}
+                {t("privacy.controller")}: <strong>{config.title}</strong> — {address.address}
                 <br />
-                Kapcsolat: {address.phone}
+                {t("privacy.contact")}: {address.phone}
                 {address.email && (
                   <>
                     {" · "}

@@ -1,26 +1,28 @@
-import type { BasketApi, Failure, Result } from "./api";
-import type { Order, ShippingQuote } from "./schemas";
-import { requiresAddress } from "./readiness";
-
-export const SHIPPING_COUNTRY_CODE = "HU";
-
-const GENERIC_ERROR =
-  "Hiba történt az árajánlatkérés elküldése közben. Kérlek, próbáld meg újra később.";
+import type { BasketApi, Result } from "./api";
+import type { Reason } from "./refusalText";
+import { requiresAddress, type Order, type ShippingQuote } from "./schemas";
+import {
+  billingPlan,
+  customerInput,
+  recipientOf,
+  shippingAddressInput,
+  type CheckoutValues,
+} from "./checkoutValues";
 
 export interface SubmitInput {
-  lastName: string;
-  firstName: string;
-  email: string;
-  phone: string;
-  address: string;
-  message: string;
+  values: CheckoutValues;
   shippingMethod: ShippingQuote;
   termsAccepted: boolean;
   transactionId: string;
 }
 
-export type SubmitResult =
-  { ok: true; order: Order } | { ok: false; message: string; reference: string };
+export type SubmitResult = { ok: true; order: Order } | { ok: false; failure: SubmitFailure };
+
+/** Shown as `errors.submit`; the reason is an i18n key or the server's own localized message. */
+export interface SubmitFailure {
+  reason: Reason;
+  reference: string;
+}
 
 export interface OrderErrorReport {
   message: string;
@@ -29,34 +31,44 @@ export interface OrderErrorReport {
 }
 
 async function runSequence(api: BasketApi, input: SubmitInput): Promise<Result<Order>> {
-  const customer = await api.setCustomer({
-    emailAddress: input.email.trim(),
-    phoneNumber: input.phone.trim(),
-    firstName: input.firstName.trim(),
-    lastName: input.lastName.trim(),
-  });
+  const { values, shippingMethod } = input;
+  const customer = await api.setCustomer(customerInput(values.contact));
 
   if (!customer.ok) {
     return customer;
   }
 
-  if (requiresAddress(input.shippingMethod)) {
-    const address = await api.setShippingAddress(input.address.trim(), SHIPPING_COUNTRY_CODE);
+  const plan = billingPlan(values.billing, shippingMethod);
+
+  if (requiresAddress(shippingMethod)) {
+    const address = await api.setShippingAddress(
+      shippingAddressInput(values.address, recipientOf(values.contact), plan.shippingCompany)
+    );
 
     if (!address.ok) {
       return address;
     }
   }
 
-  const method = await api.setShippingMethod(input.shippingMethod.id);
+  const method = await api.setShippingMethod(shippingMethod.id);
 
   if (!method.ok) {
     return method;
   }
 
+  const billing =
+    plan.billingAddress === null
+      ? await api.unsetBillingAddress()
+      : await api.setBillingAddress(plan.billingAddress);
+
+  if (!billing.ok) {
+    return billing;
+  }
+
   const fields = await api.setOrderCustomFields({
-    message: input.message,
+    message: values.message,
     termsAccepted: input.termsAccepted,
+    taxNumber: values.billing.taxNumber,
     submissionTransactionId: input.transactionId,
   });
 
@@ -65,10 +77,6 @@ async function runSequence(api: BasketApi, input: SubmitInput): Promise<Result<O
   }
 
   return api.transitionToArrangingPayment();
-}
-
-function describe(failure: Failure, reference: string): string {
-  return `${GENERIC_ERROR} (${failure.reason}, kód: ${reference})`;
 }
 
 export async function placeOrder(
@@ -86,5 +94,5 @@ export async function placeOrder(
 
   report({ message: result.failure.detail, stack: result.failure.stack, reference });
 
-  return { ok: false, message: describe(result.failure, reference), reference };
+  return { ok: false, failure: { reason: result.failure.reason, reference } };
 }
