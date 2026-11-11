@@ -61,8 +61,8 @@
             <label
               class="flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm transition-all {shippingMethodId ===
               option.id
-                ? "border-brown-600 bg-brown-50 ring-1 ring-brown-500"
-                : "border-brown-200 bg-white hover:border-brown-400"}"
+                ? 'border-brown-600 bg-brown-50 ring-1 ring-brown-500'
+                : 'border-brown-200 bg-white hover:border-brown-400'}"
             >
               <input
                 type="radio"
@@ -98,11 +98,15 @@
       {/if}
 
       <div class="mt-2 flex items-center justify-between gap-3">
-        <Button type="button" variant="outlined" class="h-11 px-6" onclick={onBack}>
+        <Button type="button" variant="outlined" class="h-8 px-2" onclick={onBack}>
           {i18n.t("checkout.back")}
         </Button>
 
-        <Button type="submit" variant="contained" class="h-11 px-6 uppercase">
+        <Button
+          type="submit"
+          variant="contained"
+          class="h-8 px-2 uppercase flex flex-nowrap items-center"
+        >
           {i18n.t("checkout.continueBilling")}
           <Icon icon="mdi:arrow-right" class="ml-2 text-lg" />
         </Button>

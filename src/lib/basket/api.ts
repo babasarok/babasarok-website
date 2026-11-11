@@ -76,7 +76,6 @@ export interface BasketApi {
   eligibleShippingMethods(): Promise<Result<ShippingQuote[]>>;
   setCustomer(input: CustomerInput): Promise<Result<Order>>;
   setShippingAddress(input: AddressInput): Promise<Result<Order>>;
-  setShippingAddress(input: AddressInput): Promise<Result<Order>>;
   setBillingAddress(input: AddressInput): Promise<Result<Order>>;
   unsetBillingAddress(): Promise<Result<Order>>;
   setShippingMethod(shippingMethodId: string): Promise<Result<Order>>;

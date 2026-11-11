@@ -21,13 +21,17 @@
   function errorFor(field: string): FieldCheck | undefined {
     return error?.field === field ? error : undefined;
   }
+
+  function hasError(field: string): boolean {
+    return error?.field === field;
+  }
 </script>
 
 <I18nGate {locale}>
   {#snippet children(i18n: I18n)}
     {#snippet errorText(check: FieldCheck | undefined, id: string)}
       {#if check}
-        <p id={id} class="flex items-center gap-1 text-xs text-danger-500">
+        <p {id} class="flex items-center gap-1 text-xs text-danger-500">
           <Icon icon="mdi:alert-circle-outline" class="size-3.5 shrink-0" />
           <span>{translateMessage(i18n, check.message)}</span>
         </p>
@@ -44,11 +48,9 @@
             id={`${idPrefix}-street`}
             type="text"
             autocomplete="address-line1"
-            aria-invalid={errorFor("street") !== undefined}
-            aria-describedby={errorFor("street") !== undefined
-              ? `${idPrefix}-street-error`
-              : undefined}
-            class={errorFor("street") !== undefined ? "border-danger-500" : ""}
+            aria-invalid={hasError("street")}
+            aria-describedby={hasError("street") ? `${idPrefix}-street-error` : undefined}
+            class={hasError("street") ? "border-danger-500" : ""}
             bind:value={address.street}
           />
           {@render errorText(errorFor("street"), `${idPrefix}-street-error`)}
@@ -62,11 +64,9 @@
             id={`${idPrefix}-houseNumber`}
             type="text"
             autocomplete="address-line2"
-            aria-invalid={errorFor("houseNumber") !== undefined}
-            aria-describedby={errorFor("houseNumber") !== undefined
-              ? `${idPrefix}-houseNumber-error`
-              : undefined}
-            class={errorFor("houseNumber") !== undefined ? "border-danger-500" : ""}
+            aria-invalid={hasError("houseNumber")}
+            aria-describedby={hasError("houseNumber") ? `${idPrefix}-houseNumber-error` : undefined}
+            class={hasError("houseNumber") ? "border-danger-500" : ""}
             bind:value={address.houseNumber}
           />
           {@render errorText(errorFor("houseNumber"), `${idPrefix}-houseNumber-error`)}
@@ -81,11 +81,9 @@
             type="text"
             inputmode="numeric"
             autocomplete="postal-code"
-            aria-invalid={errorFor("postalCode") !== undefined}
-            aria-describedby={errorFor("postalCode") !== undefined
-              ? `${idPrefix}-postalCode-error`
-              : undefined}
-            class={errorFor("postalCode") !== undefined ? "border-danger-500" : ""}
+            aria-invalid={hasError("postalCode")}
+            aria-describedby={hasError("postalCode") ? `${idPrefix}-postalCode-error` : undefined}
+            class={hasError("postalCode") ? "border-danger-500" : ""}
             bind:value={address.postalCode}
           />
           {@render errorText(errorFor("postalCode"), `${idPrefix}-postalCode-error`)}
@@ -99,9 +97,9 @@
             id={`${idPrefix}-city`}
             type="text"
             autocomplete="address-level2"
-            aria-invalid={errorFor("city") !== undefined}
-            aria-describedby={errorFor("city") !== undefined ? `${idPrefix}-city-error` : undefined}
-            class={errorFor("city") !== undefined ? "border-danger-500" : ""}
+            aria-invalid={hasError("city")}
+            aria-describedby={hasError("city") ? `${idPrefix}-city-error` : undefined}
+            class={hasError("city") ? "border-danger-500" : ""}
             bind:value={address.city}
           />
           {@render errorText(errorFor("city"), `${idPrefix}-city-error`)}

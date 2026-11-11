@@ -5,7 +5,7 @@ import {
   type ContactDraft,
 } from "./drafts";
 import { formatMoney } from "./money";
-import { requiresAddress, type ShippingQuote } from "./schemas";
+import type { ShippingQuote } from "./schemas";
 
 export type T = (key: string, vars?: Record<string, unknown>) => string;
 

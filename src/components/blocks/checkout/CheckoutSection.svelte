@@ -28,6 +28,11 @@
 
   {#snippet children(loaded: Catalog)}
     {@const checkout = toCheckoutCatalog(loaded)}
-    <CheckoutWizard {locale} labels={checkout.labels} setMembers={checkout.setMembers} {...content} />
+    <CheckoutWizard
+      {locale}
+      labels={checkout.labels}
+      setMembers={checkout.setMembers}
+      {...content}
+    />
   {/snippet}
 </CatalogState>

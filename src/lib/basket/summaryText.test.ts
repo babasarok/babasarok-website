@@ -14,7 +14,13 @@ const pickup: ShippingQuote = {
   customFields: { requiresAddress: false },
 };
 
-const gls: ShippingQuote = { ...pickup, id: "8", name: "GLS", priceWithTax: 2500, customFields: { requiresAddress: true } };
+const gls: ShippingQuote = {
+  ...pickup,
+  id: "8",
+  name: "GLS",
+  priceWithTax: 2500,
+  customFields: { requiresAddress: true },
+};
 
 const address: AddressDraft = {
   street: "Fő u.",
@@ -27,7 +33,12 @@ const address: AddressDraft = {
 describe("contactSummary", () => {
   it("joins the name, email and phone with dots", () => {
     expect(
-      contactSummary({ lastName: "Teszt", firstName: "Elek", email: "a@b.hu", phone: "+36301234567" })
+      contactSummary({
+        lastName: "Teszt",
+        firstName: "Elek",
+        email: "a@b.hu",
+        phone: "+36301234567",
+      })
     ).toBe("Teszt Elek · a@b.hu · +36301234567");
   });
 
@@ -65,15 +76,15 @@ describe("billingSummary", () => {
   it("renders the split billing address one-line with the country label", () => {
     const billing: BillingDraft = { ...EMPTY_BILLING, sameAsShipping: false, address };
 
-    expect(billingSummary(billing, gls, t)).toBe(
-      "Fő u. 12, 3894 Telkibánya, checkout.countryHU"
-    );
+    expect(billingSummary(billing, gls, t)).toBe("Fő u. 12, 3894 Telkibánya, checkout.countryHU");
   });
 
   it("renders the mandatory billing address for pickup", () => {
     const billing: BillingDraft = { ...EMPTY_BILLING, sameAsShipping: false, address };
 
-    expect(billingSummary(billing, pickup, t)).toBe("Fő u. 12, 3894 Telkibánya, checkout.countryHU");
+    expect(billingSummary(billing, pickup, t)).toBe(
+      "Fő u. 12, 3894 Telkibánya, checkout.countryHU"
+    );
   });
 
   it("falls back to the no-billing text when everything is empty", () => {

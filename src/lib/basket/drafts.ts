@@ -64,6 +64,11 @@ export function draftsFromOrder(order: Order): CheckoutDrafts {
   const customer = order.customer;
   const shipping = order.shippingAddress;
   const billing = order.billingAddress;
+  const billingStored =
+    billing !== null &&
+    [billing.company, billing.streetLine1, billing.streetLine2, billing.postalCode, billing.city].some(
+      (value) => (value ?? "").trim() !== ""
+    );
 
   return {
     contact: {
@@ -80,7 +85,7 @@ export function draftsFromOrder(order: Order): CheckoutDrafts {
       country: shipping?.countryCode ?? DEFAULT_COUNTRY,
     },
     billing: {
-      sameAsShipping: billing === null,
+      sameAsShipping: !billingStored,
       address: {
         street: billing?.streetLine1 ?? "",
         houseNumber: billing?.streetLine2 ?? "",

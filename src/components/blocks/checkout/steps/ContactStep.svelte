@@ -20,11 +20,19 @@
 
   let { locale, contact, error, onContinue, onBack, first = false }: Props = $props();
 
-  function nameError(): FieldCheck | undefined {
+  function nameError(): boolean {
+    return error?.field === "name";
+  }
+
+  function emailError(): boolean {
+    return error?.field === "email";
+  }
+
+  function nameCheck(): FieldCheck | undefined {
     return error?.field === "name" ? error : undefined;
   }
 
-  function emailError(): FieldCheck | undefined {
+  function emailCheck(): FieldCheck | undefined {
     return error?.field === "email" ? error : undefined;
   }
 </script>
@@ -59,8 +67,8 @@
             id="contact-lastName"
             type="text"
             autocomplete="family-name"
-            aria-invalid={nameError() !== undefined}
-            class={nameError() !== undefined ? "border-danger-500" : ""}
+            aria-invalid={nameError()}
+            class={nameError() ? "border-danger-500" : ""}
             bind:value={contact.lastName}
           />
         </div>
@@ -73,14 +81,14 @@
             id="contact-firstName"
             type="text"
             autocomplete="given-name"
-            aria-invalid={nameError() !== undefined}
-            class={nameError() !== undefined ? "border-danger-500" : ""}
+            aria-invalid={nameError()}
+            class={nameError() ? "border-danger-500" : ""}
             bind:value={contact.firstName}
           />
         </div>
 
         <div class="sm:col-span-2">
-          {@render errorText(nameError(), "contact-name-error")}
+          {@render errorText(nameCheck(), "contact-name-error")}
         </div>
       </div>
 
@@ -92,12 +100,12 @@
           id="contact-email"
           type="email"
           autocomplete="email"
-          aria-invalid={emailError() !== undefined}
-          aria-describedby={emailError() !== undefined ? "contact-email-error" : undefined}
-          class={emailError() !== undefined ? "border-danger-500" : ""}
+          aria-invalid={emailError()}
+          aria-describedby={emailError() ? "contact-email-error" : undefined}
+          class={emailError() ? "border-danger-500" : ""}
           bind:value={contact.email}
         />
-        {@render errorText(emailError(), "contact-email-error")}
+        {@render errorText(emailCheck(), "contact-email-error")}
       </div>
 
       <div class="flex flex-col gap-1">

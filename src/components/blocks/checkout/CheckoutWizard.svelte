@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Icon from "@iconify/svelte";
+  import { fade, slide, type TransitionConfig } from "svelte/transition";
   import StepStrip from "./wizard/StepStrip.svelte";
   import StepSummary from "./wizard/StepSummary.svelte";
   import ContactStep from "./steps/ContactStep.svelte";
@@ -74,6 +75,17 @@
 
   const saver = createDraftSaver(basket.api, () => ({ drafts, method }));
 
+  const desktop =
+    globalThis.window !== undefined && globalThis.window.matchMedia("(min-width: 1024px)").matches;
+
+  function swap(node: Element): TransitionConfig {
+    if (desktop) {
+      return slide(node, { duration: 200 });
+    }
+
+    return fade(node, { duration: 200 });
+  }
+
   let prefilledFor: string | null = null;
   let entryResolved = false;
   let adoptedPickupFor: string | null = null;
@@ -109,9 +121,14 @@
     }
 
     entryResolved = true;
-    step = entryStep(basket.order, methods, drafts, stepFromHash(globalThis.location.hash.substring(1)));
+    step = entryStep(
+      basket.order,
+      methods,
+      drafts,
+      stepFromHash(globalThis.location.hash.slice(1))
+    );
 
-    if (globalThis.location.hash.substring(1) !== step) {
+    if (globalThis.location.hash.slice(1) !== step) {
       history.replaceState(null, "", `#${step}`);
     }
   });
@@ -150,8 +167,7 @@
   });
 
   $effect(() => {
-    void JSON.stringify(drafts);
-    void method;
+    const _reads = JSON.stringify(drafts) + (method?.id ?? "");
 
     const timer = setTimeout(saveDrafts, 800);
 
@@ -166,7 +182,7 @@
     void saver.save();
   }
 
-  async function loadMethods(): Promise<void> {
+  async function loadMethods(): Promise<boolean> {
     methodsLoading = true;
 
     try {
@@ -174,7 +190,7 @@
 
       if (!result.ok) {
         error = "errors.loadMethods";
-        return;
+        return false;
       }
 
       methods = result.value;
@@ -184,6 +200,8 @@
       if (shippingMethodId === "" && current !== undefined) {
         shippingMethodId = current;
       }
+
+      return true;
     } finally {
       methodsLoading = false;
       methodsSettled = true;
@@ -199,7 +217,7 @@
   }
 
   function syncFromHash(): void {
-    const hashStep = stepFromHash(globalThis.location.hash.substring(1));
+    const hashStep = stepFromHash(globalThis.location.hash.slice(1));
 
     if (hashStep === undefined || hashStep === step) {
       return;
@@ -338,7 +356,7 @@
 
 <I18nGate {locale}>
   {#snippet children(i18n: I18n)}
-    <div class="mx-auto flex w-full max-w-160 flex-col gap-6 text-body lg:max-w-5xl">
+    <div class="mx-auto flex w-full max-w-160 flex-col gap-6 text-body lg:max-w-6xl">
       {#if !basket.loaded}
         <div
           class="min-h-64 w-full animate-pulse rounded-xl border border-brown-200 bg-brown-100 lg:mx-auto lg:max-w-160"
@@ -381,7 +399,7 @@
         </div>
       {:else}
         <div
-          class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_400px]"
+          class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_420px]"
           onfocusout={saveDrafts}
         >
           <div class="flex min-w-0 flex-col gap-4">
@@ -389,72 +407,77 @@
 
             {#each STEPS.slice(0, currentIndex) as stepDef (stepDef.id)}
               {@const text = stepText(stepDef.id, translator(i18n))}
-              <StepSummary
-                {locale}
-                title={translateMessage(i18n, stepDef.labelKey)}
-                summary={text}
-                onEdit={() => goTo(stepDef.id)}
-              />
+              <div transition:slide={{ duration: 200 }}>
+                <StepSummary
+                  {locale}
+                  title={translateMessage(i18n, stepDef.labelKey)}
+                  summary={text}
+                  onEdit={() => goTo(stepDef.id)}
+                />
+              </div>
             {/each}
 
-            {#if step === "contact"}
-              <ContactStep
-                {locale}
-                contact={drafts.contact}
-                error={fieldError}
-                first
-                onContinue={() => onContinue("contact")}
-              />
-            {:else if step === "shipping"}
-              <ShippingStep
-                {locale}
-                address={drafts.address}
-                {methods}
-                bind:shippingMethodId
-                error={fieldError}
-                {methodsLoading}
-                onContinue={() => onContinue("shipping")}
-                onBack={() => onBack("shipping")}
-                {onCountryChange}
-              />
-            {:else if step === "billing"}
-              <BillingStep
-                {locale}
-                billing={drafts.billing}
-                address={drafts.address}
-                {method}
-                error={fieldError}
-                onContinue={() => onContinue("billing")}
-                onBack={() => onBack("billing")}
-              />
-            {:else}
-              {@const contactText = contactSummary(drafts.contact)}
-              {@const shippingText = shippingSummary(method, drafts.address, translator(i18n))}
-              {@const billingText = billingSummary(drafts.billing, method, translator(i18n))}
-              <ReviewStep
-                {locale}
-                {order}
-                {labels}
-                {setMembers}
-                {highlightedLines}
-                contactSummary={contactText}
-                shippingSummary={shippingText}
-                billingSummary={billingText}
-                bind:terms={termsAccepted}
-                {error}
-                {sending}
-                {submitDisabled}
-                onBack={() => onBack("review")}
-                onEdit={goTo}
-                onSubmit={onSubmit}
-                {supportEmail}
-                {basketInfo}
-                shownPrices={basket.shownPrices}
-                {busy}
-                onHighlight={(lineIds) => (highlightedLines = lineIds)}
-                onRemoveLine={(lineId) => removeLine(lineId)}
-              />
-            {/if}
+            {#key step}
+              <div transition:swap>
+                {#if step === "contact"}
+                  <ContactStep
+                    {locale}
+                    contact={drafts.contact}
+                    error={fieldError}
+                    first
+                    onContinue={() => onContinue("contact")}
+                  />
+                {:else if step === "shipping"}
+                  <ShippingStep
+                    {locale}
+                    address={drafts.address}
+                    {methods}
+                    bind:shippingMethodId
+                    error={fieldError}
+                    {methodsLoading}
+                    onContinue={() => onContinue("shipping")}
+                    onBack={() => onBack("shipping")}
+                    {onCountryChange}
+                  />
+                {:else if step === "billing"}
+                  <BillingStep
+                    {locale}
+                    billing={drafts.billing}
+                    {method}
+                    error={fieldError}
+                    onContinue={() => onContinue("billing")}
+                    onBack={() => onBack("billing")}
+                  />
+                {:else}
+                  {@const contactText = contactSummary(drafts.contact)}
+                  {@const shippingText = shippingSummary(method, drafts.address, translator(i18n))}
+                  {@const billingText = billingSummary(drafts.billing, method, translator(i18n))}
+                  <ReviewStep
+                    {locale}
+                    {order}
+                    {labels}
+                    {setMembers}
+                    {highlightedLines}
+                    contactSummary={contactText}
+                    shippingSummary={shippingText}
+                    billingSummary={billingText}
+                    bind:terms={termsAccepted}
+                    {error}
+                    {sending}
+                    {submitDisabled}
+                    onBack={() => onBack("review")}
+                    onEdit={goTo}
+                    {onSubmit}
+                    {supportEmail}
+                    {basketInfo}
+                    shownPrices={basket.shownPrices}
+                    {busy}
+                    onHighlight={(lineIds) => (highlightedLines = lineIds)}
+                    onRemoveLine={(lineId) => removeLine(lineId)}
+                  />
+                {/if}
+              </div>
+            {/key}
 
             {#if error !== null && step !== "review"}
               <p class="text-sm text-danger-500" role="alert">

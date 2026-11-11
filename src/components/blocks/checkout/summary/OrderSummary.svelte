@@ -47,6 +47,12 @@
       .filter((entry) => entry.lines.some((member) => member.orderLineId === line.id))
       .map((entry) => entry.title);
 
+    const state = lineSetState(line);
+
+    if (state !== undefined && state.kind !== "active") {
+      titles.push(state.title);
+    }
+
     return [...new Set(titles)];
   }
 

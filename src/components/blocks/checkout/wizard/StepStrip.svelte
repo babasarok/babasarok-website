@@ -28,11 +28,10 @@
             {#if index > 0}
               <span
                 aria-hidden="true"
-                class="absolute top-[18px] h-px -translate-y-1/2 bg-brown-200 left-[calc(-50%_+_18px)] w-[calc(100%_-_36px)] {index
-                <=
+                class="absolute top-[18px] h-px -translate-y-1/2 bg-brown-200 left-[calc(-50%_+_18px)] w-[calc(100%_-_36px)] {index <=
                 currentIndex
-                  ? "bg-brown-500"
-                  : ""}"
+                  ? 'bg-brown-500'
+                  : ''}"
               ></span>
             {/if}
 
@@ -49,8 +48,8 @@
               <span
                 aria-current={active ? "step" : undefined}
                 class="z-10 flex size-9 shrink-0 items-center justify-center rounded-full border text-sm font-medium {active
-                  ? "border-brown-700 bg-brown-700 text-white"
-                  : "border-brown-200 bg-white text-brown-600"}"
+                  ? 'border-brown-700 bg-brown-700 text-white'
+                  : 'border-brown-200 bg-white text-brown-600'}"
               >
                 {index + 1}
               </span>
@@ -59,18 +58,17 @@
             {#if index < STEPS.length - 1}
               <span
                 aria-hidden="true"
-                class="absolute top-[18px] h-px -translate-y-1/2 bg-brown-200 left-[calc(50%_+_18px)] w-[calc(100%_-_36px)] {index
-                <
+                class="absolute top-[18px] h-px -translate-y-1/2 bg-brown-200 left-[calc(50%_+_18px)] w-[calc(100%_-_36px)] {index <
                 currentIndex
-                  ? "bg-brown-500"
-                  : ""}"
+                  ? 'bg-brown-500'
+                  : ''}"
               ></span>
             {/if}
 
             <span
               class="hidden text-center text-xs leading-snug font-medium text-brown-600 sm:block {active
-                ? "font-semibold text-brown-700"
-                : ""}"
+                ? 'font-semibold text-brown-700'
+                : ''}"
             >
               {translateMessage(i18n, stepDef.labelKey)}
             </span>

@@ -23,6 +23,7 @@ import {
   createRegisteredCustomer,
   newShopper,
   setAddress,
+  setBillingAddress,
   setCustomer,
   setOrderNotes,
   transitionTo,
@@ -88,7 +89,14 @@ describe("placing an order with the native sequence", () => {
       city: BUYER_ADDRESS.city,
       countryCode: "HU",
     });
-    expect(order.billingAddress).toBeNull();
+    expect(order.billingAddress).toEqual({
+      company: null,
+      streetLine1: null,
+      streetLine2: null,
+      postalCode: null,
+      city: null,
+      countryCode: null,
+    });
     expect(order.shippingLines.map((line) => line.shippingMethod.code)).toEqual([
       "gls-elore-utalas",
     ]);

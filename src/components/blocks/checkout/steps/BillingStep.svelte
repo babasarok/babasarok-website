@@ -6,21 +6,20 @@
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import type { i18n as I18n } from "i18next";
   import type { Locale } from "@/lib/i18n";
-  import type { AddressDraft, BillingDraft } from "@/lib/basket/drafts";
+  import type { BillingDraft } from "@/lib/basket/drafts";
   import type { FieldCheck } from "@/lib/basket/readiness";
   import { requiresAddress, type ShippingQuote } from "@/lib/basket/schemas";
 
   interface Props {
     locale: Locale;
     billing: BillingDraft;
-    address: AddressDraft;
     method: ShippingQuote | undefined;
     error?: FieldCheck | undefined;
     onContinue: () => void;
     onBack: () => void;
   }
 
-  let { locale, billing, address, method, error, onContinue, onBack }: Props = $props();
+  let { locale, billing, method, error, onContinue, onBack }: Props = $props();
 
   const pickup = $derived(!requiresAddress(method));
   const showAddress = $derived(pickup || !billing.sameAsShipping);
@@ -63,7 +62,12 @@
           <label for="billing-company" class="text-sm font-medium text-body">
             {i18n.t("checkout.company")}
           </label>
-          <TextInput id="billing-company" type="text" autocomplete="organization" bind:value={billing.company} />
+          <TextInput
+            id="billing-company"
+            type="text"
+            autocomplete="organization"
+            bind:value={billing.company}
+          />
         </div>
 
         <div class="flex flex-col gap-1">
@@ -75,11 +79,15 @@
       </div>
 
       <div class="mt-2 flex items-center justify-between gap-3">
-        <Button type="button" variant="outlined" class="h-11 px-6" onclick={onBack}>
+        <Button type="button" variant="outlined" class="h-8 px-2" onclick={onBack}>
           {i18n.t("checkout.back")}
         </Button>
 
-        <Button type="submit" variant="contained" class="h-11 px-6 uppercase">
+        <Button
+          type="submit"
+          variant="contained"
+          class="h-8 px-2 uppercase flex flex-nowrap items-center"
+        >
           {i18n.t("checkout.continueReview")}
           <Icon icon="mdi:arrow-right" class="ml-2 text-lg" />
         </Button>

@@ -17,7 +17,9 @@
 <I18nGate {locale}>
   {#snippet children(i18n: I18n)}
     <div class="flex items-center gap-3 rounded-xl bg-brown-100 px-4 py-3">
-      <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-brown-500 text-white">
+      <span
+        class="flex size-7 shrink-0 items-center justify-center rounded-full bg-brown-500 text-white"
+      >
         <Icon icon="mdi:check" class="text-base" />
       </span>
       <div class="flex min-w-0 flex-1 items-baseline gap-2 text-sm">

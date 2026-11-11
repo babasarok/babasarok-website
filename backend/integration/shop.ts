@@ -12,7 +12,7 @@ const ORDER_FIELDS = `
   code state totalQuantity subTotalWithTax shippingWithTax totalWithTax
   discounts { description amountWithTax }
   customer { emailAddress firstName lastName phoneNumber }
-  shippingAddress { streetLine1 streetLine2 postalCode city countryCode }
+  shippingAddress { company streetLine1 streetLine2 postalCode city countryCode }
   billingAddress { company streetLine1 streetLine2 postalCode city countryCode }
   shippingLines { priceWithTax shippingMethod { code } }
   customFields { message termsAccepted taxNumber submissionTransactionId }

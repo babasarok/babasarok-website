@@ -53,7 +53,7 @@ function addressMissingPart(address: AddressDraft): FieldCheck | undefined {
 
 export function shippingCheck(
   address: AddressDraft,
-  method: ShippingQuote | undefined
+  method?: ShippingQuote
 ): FieldCheck | undefined {
   if (method === undefined) {
     return { field: "method", message: "blockers.method" };
@@ -123,7 +123,7 @@ export function entryStep(
   order: Order | null,
   methods: readonly ShippingQuote[],
   drafts: CheckoutDrafts,
-  hashStep: StepId | undefined
+  hashStep?: StepId
 ): StepId {
   const derived = furthestStep(order, methods, drafts);
 

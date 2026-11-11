@@ -249,7 +249,7 @@ describe("checkout readiness", () => {
     expect(contactCheck({ ...drafts.contact, email: "" })?.field).toBe("email");
 
     expect(shippingCheck(drafts.address, pickup)).toBeUndefined();
-    expect(shippingCheck(drafts.address, undefined)?.field).toBe("method");
+    expect(shippingCheck(drafts.address)?.field).toBe("method");
     expect(shippingCheck({ ...drafts.address, street: "" }, gls)?.field).toBe("street");
     expect(shippingCheck({ ...drafts.address, houseNumber: "" }, gls)?.field).toBe("houseNumber");
     expect(shippingCheck({ ...drafts.address, postalCode: "" }, gls)?.field).toBe("postalCode");
@@ -275,15 +275,15 @@ describe("checkout readiness", () => {
   });
 
   it("derives the entry step from what the order already has", () => {
-    expect(entryStep(order([line()]), [pickup], EMPTY_DRAFTS, undefined)).toBe("contact");
-    expect(entryStep(orderWithMethod("7"), [pickup], drafts, undefined)).toBe("billing");
-    expect(entryStep(orderWithMethod("8"), [gls], drafts, undefined)).toBe("review");
+    expect(entryStep(order([line()]), [pickup], EMPTY_DRAFTS)).toBe("contact");
+    expect(entryStep(orderWithMethod("7"), [pickup], drafts)).toBe("billing");
+    expect(entryStep(orderWithMethod("8"), [gls], drafts)).toBe("review");
     expect(entryStep(order([line()]), [pickup], drafts, "contact")).toBe("contact");
     expect(entryStep(order([line()]), [pickup], EMPTY_DRAFTS, "review")).toBe("contact");
     expect(
       entryStep(orderWithMethod("8"), [gls], { ...drafts, address: EMPTY_ADDRESS }, "billing")
     ).toBe("shipping");
-    expect(entryStep(order([line()]), [gls], drafts, undefined)).toBe("shipping");
+    expect(entryStep(order([line()]), [gls], drafts)).toBe("shipping");
   });
 });
 
