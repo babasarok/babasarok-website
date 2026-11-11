@@ -1,11 +1,33 @@
 import { Linter } from "eslint";
-import * as astroParser from "astro-eslint-parser";
-import * as svelteParser from "svelte-eslint-parser";
+import astro from "eslint-plugin-astro";
+import svelte from "eslint-plugin-svelte";
 import tseslint from "typescript-eslint";
 import { describe, expect, it } from "vitest";
 import { siteLanguagePlugin } from "./site-language";
 
 type Parser = NonNullable<Linter.LanguageOptions["parser"]>;
+
+function isParser(value: unknown): value is Parser {
+  return (
+    typeof value === "object" && value !== null && ("parse" in value || "parseForESLint" in value)
+  );
+}
+
+/** The markup parsers come with the plugins the site config already uses. */
+function pluginParser(configs: readonly Linter.Config[], name: string): Parser {
+  for (const config of configs) {
+    const parser: unknown = config.languageOptions?.parser;
+
+    if (isParser(parser) && parser.meta?.name === name) {
+      return parser;
+    }
+  }
+
+  throw new Error(`No ${name} in the plugin's recommended config.`);
+}
+
+const astroParser = pluginParser(astro.configs.recommended, "astro-eslint-parser");
+const svelteParser = pluginParser(svelte.configs.recommended, "svelte-eslint-parser");
 
 function messages(code: string, rule: string, filename: string, parser: Parser): string[] {
   const linter = new Linter({ configType: "flat" });
