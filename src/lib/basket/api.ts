@@ -52,7 +52,18 @@ export interface CustomerInput {
 export interface OrderCustomFieldsInput {
   message?: string;
   termsAccepted?: boolean;
+  taxNumber?: string;
   submissionTransactionId?: string;
+}
+
+/** The structured delivery/billing address; the house number rides streetLine2. */
+export interface AddressInput {
+  company?: string;
+  streetLine1: string;
+  streetLine2?: string;
+  postalCode?: string;
+  city?: string;
+  countryCode: string;
 }
 
 export interface BasketApi {
@@ -64,7 +75,10 @@ export interface BasketApi {
   productVariantId(slug: string): Promise<Result<string | undefined>>;
   eligibleShippingMethods(): Promise<Result<ShippingQuote[]>>;
   setCustomer(input: CustomerInput): Promise<Result<Order>>;
-  setShippingAddress(streetLine1: string, countryCode: string): Promise<Result<Order>>;
+  setShippingAddress(input: AddressInput): Promise<Result<Order>>;
+  setShippingAddress(input: AddressInput): Promise<Result<Order>>;
+  setBillingAddress(input: AddressInput): Promise<Result<Order>>;
+  unsetBillingAddress(): Promise<Result<Order>>;
   setShippingMethod(shippingMethodId: string): Promise<Result<Order>>;
   setOrderCustomFields(input: OrderCustomFieldsInput): Promise<Result<Order>>;
   transitionToArrangingPayment(): Promise<Result<Order>>;
@@ -75,8 +89,9 @@ const ORDER_FIELDS = `
   discounts { description amountWithTax }
   ${SET_ORDER_FIELDS}
   customer { firstName lastName emailAddress phoneNumber }
-  shippingAddress { streetLine1 }
-  customFields { message }
+  shippingAddress { company streetLine1 streetLine2 postalCode city countryCode }
+  billingAddress { company streetLine1 streetLine2 postalCode city countryCode }
+  customFields { message taxNumber }
   shippingLines { priceWithTax discountedPriceWithTax shippingMethod { id } }
   lines {
     id quantity unitPriceWithTax discountedLinePriceWithTax
@@ -317,10 +332,16 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
       orderMutation("setCustomerForOrder", "($input: CreateCustomerInput!)", "(input: $input)", {
         input,
       }),
-    setShippingAddress: (streetLine1, countryCode) =>
+    setShippingAddress: (input) =>
       orderMutation("setOrderShippingAddress", "($input: CreateAddressInput!)", "(input: $input)", {
-        input: { streetLine1, countryCode },
+        input,
       }),
+    setBillingAddress: (input) =>
+      orderMutation("setOrderBillingAddress", "($input: CreateAddressInput!)", "(input: $input)", {
+        input,
+      }),
+    unsetBillingAddress: () =>
+      orderMutation("unsetOrderBillingAddress", "", "", {}),
     setShippingMethod: (shippingMethodId) =>
       orderMutation("setOrderShippingMethod", "($id: [ID!]!)", "(shippingMethodId: $id)", {
         id: [shippingMethodId],

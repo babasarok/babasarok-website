@@ -1,10 +1,10 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import IconButton from "@/components/ui/IconButton.svelte";
+  import { fade } from "svelte/transition";
   import { describeLine, type Labels } from "@/lib/basket/lineRows";
   import { formatMoney } from "@/lib/basket/money";
-  import type { PriceChange } from "@/lib/basket/stale";
   import type { OrderLine } from "@/lib/basket/schemas";
+  import type { PriceChange } from "@/lib/basket/stale";
   import { lineSetState, type PartnerLink } from "@/lib/basket/setDiscounts";
   import { ASSET_BASE } from "@/lib/vendure/client";
   import { imageUrl } from "@/lib/vendure/imageUrl";
@@ -19,9 +19,9 @@
     labels: Labels;
     partnerLinks: PartnerLink[];
     priceChange: PriceChange | undefined;
-    /** Emphasise this line while its set discount is hovered/pinned in the deals panel. */
     highlighted: boolean;
     busy: boolean;
+    badges: string[];
     onRemove: () => void;
   }
 
@@ -34,6 +34,7 @@
     priceChange,
     highlighted,
     busy,
+    badges,
     onRemove,
   }: Props = $props();
 
@@ -57,17 +58,30 @@
 <I18nGate {locale}>
   {#snippet children(i18n: I18n)}
     <article
+      transition:fade={{ duration: 200 }}
       class={[
-        "flex flex-col gap-3 rounded-xl border bg-white p-4 shadow-sm transition-all",
+        "relative flex flex-col gap-3 rounded-xl border bg-white p-4 shadow-sm transition-all",
         highlighted
-          ? "border-success-500 ring-2 ring-success-500"
+          ? "border-success-600 ring-2 ring-success-600"
           : line.invalidReason
             ? "border-danger-500"
             : "border-brown-200",
       ]}
       data-testid="checkout-line"
     >
-      <div class="flex items-center gap-3">
+      {#if badges.length > 0}
+        <div class="absolute top-2 left-2 z-10 flex max-w-40 flex-col items-start gap-1">
+          {#each badges as badge (badge)}
+            <span
+              class="rounded-full border border-brown-200 bg-brown-100/95 px-2 py-0.5 text-[11px] leading-tight font-medium text-brown-700"
+            >
+              {badge}
+            </span>
+          {/each}
+        </div>
+      {/if}
+
+      <div class="flex items-start gap-3">
         {#if thumbnail}
           <img
             src={thumbnail}
@@ -76,7 +90,7 @@
           />
         {:else}
           <div
-            class="grid size-16 shrink-0 place-items-center rounded-lg bg-brown-50 text-brown-300"
+            class="grid size-16 shrink-0 place-items-center rounded-lg bg-brown-50 text-brown-400"
           >
             <Icon icon="mdi:image-outline" class="text-2xl" />
           </div>
@@ -93,7 +107,6 @@
                   <dt class="text-brown-700 font-medium">{row.label}:</dt>
                   <dd class="text-right text-brown-700">{row.value}</dd>
                 </div>
-                <!-- TODO: want to have dot, but only between elements that are on the same row -->
                 {#if index < rows.length - 1}
                   <span class="text-brown-700">*</span>
                 {/if}
@@ -132,11 +145,11 @@
       </div>
 
       {#if line.invalidReason || setState || priceChange}
-        <div class="flex items-center justify-between border-t border-brown-100 pt-3">
+        <div class="flex flex-col items-start justify-between gap-2 border-t border-brown-100 pt-3">
           {#if line.invalidReason}
             <p
               data-testid="line-invalid-reason"
-              class="flex items-start gap-1 rounded-lg bg-danger-50 p-2 text-sm text-danger-500"
+              class="flex items-start gap-1 rounded-lg bg-danger-500/10 p-2 text-sm text-danger-500"
             >
               <Icon icon="mdi:alert-circle" class="mt-0.5 shrink-0" />
               {line.invalidReason.message}
@@ -154,7 +167,7 @@
                     `/product/${product.slug}/?line=${line.id}&syncFrom=${setState.syncFromLineId}`,
                     locale
                   )}
-                  class="flex items-center gap-1 rounded-full border border-brown-300 px-3 py-1 font-medium transition-all hover:bg-brown-100"
+                  class="flex items-center gap-1 rounded-full border border-brown-200 px-3 py-1 font-medium transition-all hover:bg-brown-100"
                 >
                   <Icon icon="mdi:sync" class="shrink-0" />
                   {i18n.t("basket.syncMaterial")}
@@ -165,7 +178,7 @@
                   <a
                     href={localizedPath(`/product/${partner.slug}/`, locale)}
                     data-testid="set-partner-link"
-                    class="flex items-center gap-1 rounded-full border border-brown-300 px-3 py-1 font-medium transition-all hover:bg-brown-100"
+                    class="flex items-center gap-1 rounded-full border border-brown-200 px-3 py-1 font-medium transition-all hover:bg-brown-100"
                   >
                     {partner.name}
                   </a>

@@ -82,6 +82,11 @@ export const ShippingQuoteSchema = z.object({
 
 export type ShippingQuote = z.output<typeof ShippingQuoteSchema>;
 
+/** Methods with this flag need a delivery address at checkout. */
+export function requiresAddress(method: ShippingQuote | undefined): boolean {
+  return method?.customFields?.requiresAddress === true;
+}
+
 export const ProductVariantIdsSchema = z.object({
   product: z.object({ variants: z.array(z.object({ id: z.string() })) }).nullable(),
 });

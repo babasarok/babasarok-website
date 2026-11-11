@@ -1,19 +1,15 @@
 import type { BasketApi, Failure, Result } from "./api";
 import type { Order, ShippingQuote } from "./schemas";
-import { requiresAddress } from "./readiness";
+import { requiresAddress } from "./schemas";
+import { billingAddressInput, type CheckoutDrafts } from "./drafts";
 
-export const SHIPPING_COUNTRY_CODE = "HU";
+export const DEFAULT_COUNTRY = "HU";
 
 const GENERIC_ERROR =
-  "Hiba történt az árajánlatkérés elküldése közben. Kérlek, próbáld meg újra később.";
+  "Hiba történt a rendelés elküldése közben. Kérlek, próbáld meg újra később.";
 
 export interface SubmitInput {
-  lastName: string;
-  firstName: string;
-  email: string;
-  phone: string;
-  address: string;
-  message: string;
+  drafts: CheckoutDrafts;
   shippingMethod: ShippingQuote;
   termsAccepted: boolean;
   transactionId: string;
@@ -29,11 +25,12 @@ export interface OrderErrorReport {
 }
 
 async function runSequence(api: BasketApi, input: SubmitInput): Promise<Result<Order>> {
+  const { drafts } = input;
   const customer = await api.setCustomer({
-    emailAddress: input.email.trim(),
-    phoneNumber: input.phone.trim(),
-    firstName: input.firstName.trim(),
-    lastName: input.lastName.trim(),
+    emailAddress: drafts.contact.email.trim(),
+    phoneNumber: drafts.contact.phone.trim(),
+    firstName: drafts.contact.firstName.trim(),
+    lastName: drafts.contact.lastName.trim(),
   });
 
   if (!customer.ok) {
@@ -41,7 +38,13 @@ async function runSequence(api: BasketApi, input: SubmitInput): Promise<Result<O
   }
 
   if (requiresAddress(input.shippingMethod)) {
-    const address = await api.setShippingAddress(input.address.trim(), SHIPPING_COUNTRY_CODE);
+    const address = await api.setShippingAddress({
+      streetLine1: drafts.address.street.trim(),
+      streetLine2: drafts.address.houseNumber.trim(),
+      postalCode: drafts.address.postalCode.trim(),
+      city: drafts.address.city.trim(),
+      countryCode: drafts.address.country,
+    });
 
     if (!address.ok) {
       return address;
@@ -54,9 +57,26 @@ async function runSequence(api: BasketApi, input: SubmitInput): Promise<Result<O
     return method;
   }
 
+  const billingInput = billingAddressInput(drafts.billing, drafts.address, input.shippingMethod);
+
+  if (billingInput === null) {
+    const unset = await api.unsetBillingAddress();
+
+    if (!unset.ok) {
+      return unset;
+    }
+  } else {
+    const billing = await api.setBillingAddress(billingInput);
+
+    if (!billing.ok) {
+      return billing;
+    }
+  }
+
   const fields = await api.setOrderCustomFields({
-    message: input.message,
+    message: drafts.message,
     termsAccepted: input.termsAccepted,
+    taxNumber: drafts.billing.taxNumber,
     submissionTransactionId: input.transactionId,
   });
 

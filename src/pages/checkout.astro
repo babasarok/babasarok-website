@@ -1,7 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
-import CheckoutSection from "@/components/blocks/catalog/CheckoutSection.svelte";
+import CheckoutSection from "@/components/blocks/checkout/CheckoutSection.svelte";
 import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
 import { getEntry } from "astro:content";
 import { createI18n } from "@/lib/i18next";
@@ -32,9 +32,6 @@ if (!checkout) {
       <CheckoutSection
         {locale}
         basketInfo={checkout.data.basket_note}
-        contactHeading={checkout.data.contact_heading}
-        basketHeading={checkout.data.basket_heading}
-        messageHeading={checkout.data.message_heading}
         supportEmail={config.address?.email}
         client:load
       />

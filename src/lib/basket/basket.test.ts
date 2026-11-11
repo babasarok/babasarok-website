@@ -4,10 +4,18 @@ import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { makeField } from "../__tests__/fixtures";
 import type { Field } from "@/lib/types.svelte";
 import { createBasketApi, type BasketApi, type Result } from "./api";
+import { EMPTY_ADDRESS, EMPTY_DRAFTS, type CheckoutDrafts } from "./drafts";
 import { applySelections, buildLine, buildSelections } from "./lineInput";
 import { describeLine } from "./lineRows";
 import { formatMoney, majorUnits } from "./money";
-import { checkoutBlocker } from "./readiness";
+import {
+  billingCheck,
+  contactCheck,
+  entryStep,
+  orderBlocker,
+  reviewCheck,
+  shippingCheck,
+} from "./readiness";
 import type { Order, OrderLine, ShippingQuote } from "./schemas";
 import { loadShownPrices, priceChange, rememberShownPrice } from "./stale";
 import {
@@ -176,8 +184,16 @@ const order = (lines: OrderLine[]): Order => ({
   shippingLines: [],
   customer: null,
   shippingAddress: null,
+  billingAddress: null,
   customFields: null,
   lines,
+});
+
+const orderWithMethod = (id: string): Order => ({
+  ...order([line()]),
+  shippingLines: [
+    { priceWithTax: 0, discountedPriceWithTax: 0, shippingMethod: { id } },
+  ],
 });
 
 const pickup: ShippingQuote = {
@@ -188,13 +204,17 @@ const pickup: ShippingQuote = {
   customFields: { requiresAddress: false },
 };
 const gls: ShippingQuote = { ...pickup, id: "8", customFields: { requiresAddress: true } };
-const draft = {
-  lastName: "A",
-  firstName: "B",
-  email: "a@b.hu",
-  address: "",
-  termsAccepted: true,
-  shippingMethodId: "7",
+const drafts: CheckoutDrafts = {
+  contact: { lastName: "A", firstName: "B", email: "a@b.hu", phone: "" },
+  address: {
+    street: "Fő u.",
+    houseNumber: "1.",
+    postalCode: "3894",
+    city: "Telkibánya",
+    country: "HU",
+  },
+  billing: { sameAsShipping: true, address: EMPTY_ADDRESS, company: "", taxNumber: "" },
+  message: "",
 };
 
 describe("stale prices", () => {
@@ -223,34 +243,47 @@ describe("stale prices", () => {
 });
 
 describe("checkout readiness", () => {
-  it("blocks on an empty basket, invalid lines and missing details, in order", () => {
-    expect(checkoutBlocker(order([]), [pickup], draft)?.field).toBe("lines");
+  it("checks each step's own fields only", () => {
+    expect(contactCheck(drafts.contact)).toBeUndefined();
+    expect(contactCheck({ ...drafts.contact, lastName: "" })?.field).toBe("name");
+    expect(contactCheck({ ...drafts.contact, email: "" })?.field).toBe("email");
+
+    expect(shippingCheck(drafts.address, pickup)).toBeUndefined();
+    expect(shippingCheck(drafts.address, undefined)?.field).toBe("method");
+    expect(shippingCheck({ ...drafts.address, street: "" }, gls)?.field).toBe("street");
+    expect(shippingCheck({ ...drafts.address, houseNumber: "" }, gls)?.field).toBe("houseNumber");
+    expect(shippingCheck({ ...drafts.address, postalCode: "" }, gls)?.field).toBe("postalCode");
+    expect(shippingCheck({ ...drafts.address, city: "" }, gls)?.field).toBe("city");
+    expect(shippingCheck(EMPTY_ADDRESS, pickup)).toBeUndefined();
+
+    expect(billingCheck(drafts.billing, gls)).toBeUndefined();
     expect(
-      checkoutBlocker(
-        order([line({ invalidReason: { code: "X", message: "m" } })]),
-        [pickup],
-        draft
-      )?.field
-    ).toBe("invalid");
-    expect(checkoutBlocker(order([line()]), [pickup], { ...draft, firstName: "" })?.field).toBe(
-      "name"
-    );
-    expect(
-      checkoutBlocker(order([line()]), [pickup], { ...draft, termsAccepted: false })?.field
-    ).toBe("terms");
-    expect(
-      checkoutBlocker(order([line()]), [pickup], { ...draft, shippingMethodId: "" })?.field
-    ).toBe("method");
+      billingCheck({ ...drafts.billing, sameAsShipping: false }, gls)?.field
+    ).toBe("street");
+    expect(billingCheck(drafts.billing, pickup)?.field).toBe("street");
+    expect(reviewCheck(false)?.field).toBe("terms");
+    expect(reviewCheck(true)).toBeUndefined();
   });
 
-  it("requires an address only for methods that need one", () => {
-    expect(checkoutBlocker(order([line()]), [pickup], draft)).toBeUndefined();
+  it("blocks placement on order-level problems first", () => {
+    expect(orderBlocker(null)?.message).toBe("blockers.empty");
+    expect(orderBlocker(order([]))?.message).toBe("blockers.empty");
+    expect(orderBlocker(order([line({ invalidReason: { code: "X", message: "m" } })]))?.message).toBe(
+      "blockers.invalid"
+    );
+    expect(orderBlocker(order([line()]))).toBeUndefined();
+  });
+
+  it("derives the entry step from what the order already has", () => {
+    expect(entryStep(order([line()]), [pickup], EMPTY_DRAFTS, undefined)).toBe("contact");
+    expect(entryStep(orderWithMethod("7"), [pickup], drafts, undefined)).toBe("billing");
+    expect(entryStep(orderWithMethod("8"), [gls], drafts, undefined)).toBe("review");
+    expect(entryStep(order([line()]), [pickup], drafts, "contact")).toBe("contact");
+    expect(entryStep(order([line()]), [pickup], EMPTY_DRAFTS, "review")).toBe("contact");
     expect(
-      checkoutBlocker(order([line()]), [gls], { ...draft, shippingMethodId: "8" })?.field
-    ).toBe("address");
-    expect(
-      checkoutBlocker(order([line()]), [gls], { ...draft, shippingMethodId: "8", address: "x" })
-    ).toBeUndefined();
+      entryStep(orderWithMethod("8"), [gls], { ...drafts, address: EMPTY_ADDRESS }, "billing")
+    ).toBe("shipping");
+    expect(entryStep(order([line()]), [gls], drafts, undefined)).toBe("shipping");
   });
 });
 
@@ -271,6 +304,8 @@ function fakeApi(failAt?: keyof BasketApi): { api: BasketApi; calls: string[] } 
     api: {
       setCustomer: () => result("setCustomer"),
       setShippingAddress: () => result("setShippingAddress"),
+      setBillingAddress: () => result("setBillingAddress"),
+      unsetBillingAddress: () => result("unsetBillingAddress"),
       setShippingMethod: () => result("setShippingMethod"),
       setOrderCustomFields: () => result("setOrderCustomFields"),
       transitionToArrangingPayment: () => result("transitionToArrangingPayment"),
@@ -279,12 +314,7 @@ function fakeApi(failAt?: keyof BasketApi): { api: BasketApi; calls: string[] } 
 }
 
 const submitInput: SubmitInput = {
-  lastName: "Kovács",
-  firstName: "Anna",
-  email: "a@b.hu",
-  phone: "",
-  address: "Cím 1",
-  message: "",
+  drafts,
   shippingMethod: gls,
   termsAccepted: true,
   transactionId: "12345678-aaaa",
@@ -299,6 +329,7 @@ describe("placeOrder", () => {
       "setCustomer",
       "setShippingAddress",
       "setShippingMethod",
+      "unsetBillingAddress",
       "setOrderCustomFields",
       "transitionToArrangingPayment",
     ]);
@@ -313,6 +344,24 @@ describe("placeOrder", () => {
     expect(result).toMatchObject({ ok: false, reference: "12345678" });
     expect(result.ok ? "" : result.message).toContain("nem megy, kód: 12345678");
     expect(report).toHaveBeenCalledWith(expect.objectContaining({ reference: "12345678" }));
+  });
+
+  it("sends the split billing address when the buyer split the addresses", async () => {
+    const { api, calls } = fakeApi();
+    const split: CheckoutDrafts = {
+      ...drafts,
+      billing: {
+        sameAsShipping: false,
+        address: { ...EMPTY_ADDRESS, street: "Piac tér", houseNumber: "2.", country: "HU" },
+        company: "Minta Kft.",
+        taxNumber: "12345678-2-42",
+      },
+    };
+
+    await placeOrder(api, { ...submitInput, drafts: split }, vi.fn());
+
+    expect(calls).toContain("setBillingAddress");
+    expect(calls).not.toContain("unsetBillingAddress");
   });
 });
 
