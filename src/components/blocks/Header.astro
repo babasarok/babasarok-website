@@ -50,11 +50,7 @@ const t = i18n.t.bind(i18n);
 
       <div class="flex items-center gap-2 lg:hidden">
         <SearchDialog locale={locale} client:load />
-        {
-          showBasket && (
-            <NavBasket checkoutHref={checkoutLink} locale={locale} anchored={false} client:load />
-          )
-        }
+        {showBasket && <NavBasket locale={locale} anchored={false} client:load />}
         <button
           id="navbar-toggler"
           type="button"
@@ -96,7 +92,7 @@ const t = i18n.t.bind(i18n);
           {
             showBasket && (
               <div class="hidden lg:block">
-                <NavBasket checkoutHref={checkoutLink} locale={locale} client:load />
+                <NavBasket locale={locale} client:load />
               </div>
             )
           }

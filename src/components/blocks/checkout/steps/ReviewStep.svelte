@@ -4,7 +4,7 @@
   import OrderSummary from "@/components/blocks/checkout/summary/OrderSummary.svelte";
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import type { i18n as I18n } from "i18next";
-  import type { Locale } from "@/lib/i18n";
+  import { localizedPath, type Locale } from "@/lib/i18n";
   import type { Labels } from "@/lib/basket/lineRows";
   import type { Order } from "@/lib/basket/schemas";
   import type { SetMembers } from "@/lib/basket/setDiscounts";
@@ -198,8 +198,11 @@
         />
         <span>
           {i18n.t("checkout.termsPrefix")}
-          <a href="/terms" target="_blank" rel="noopener" class="underline hover:text-brown-700"
-            >{i18n.t("checkout.termsLink")}</a
+          <a
+            href={localizedPath("/terms", locale)}
+            target="_blank"
+            rel="noopener"
+            class="underline hover:text-brown-700">{i18n.t("checkout.termsLink")}</a
           >
         </span>
       </label>

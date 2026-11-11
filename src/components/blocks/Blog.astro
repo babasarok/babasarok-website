@@ -2,7 +2,6 @@
 import { getCollection, getEntry } from "astro:content";
 import { Markdown } from "astro-md-2";
 import {
-  defaultLocale,
   entryIdForLocale,
   entrySlugFromId,
   localeFromEntryId,
@@ -27,11 +26,7 @@ const posts = (await getCollection("blog"))
   .toSorted((a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0))
   .slice(0, 3);
 
-const buttonHref = buttonTarget
-  ? locale === defaultLocale
-    ? `/${buttonTarget}`
-    : `/${locale}/${buttonTarget}`
-  : undefined;
+const buttonHref = buttonTarget ? localizedPath(`/${buttonTarget}`, locale) : undefined;
 ---
 
 {

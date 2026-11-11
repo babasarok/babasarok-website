@@ -4,7 +4,7 @@ import { Markdown } from "astro-md-2";
 import figureSvg from "../../assets/images/hero/figure-svg.svg?url";
 import Button from "../ui/Button.astro";
 import { getEntry } from "astro:content";
-import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
+import { entryIdForLocale, localeFromPathname, localizedPath } from "@/lib/i18n";
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const entry = (await getEntry(
@@ -22,8 +22,9 @@ const {
   image: aboutImage,
 } = entry.data;
 
-const button1Href = button1Target ? `/${button1Target}` : undefined;
-const button2Href = button2Target ? `/${button2Target}` : undefined;
+const locale = localeFromPathname(Astro.url.pathname);
+const button1Href = button1Target ? localizedPath(`/${button1Target}`, locale) : undefined;
+const button2Href = button2Target ? localizedPath(`/${button2Target}`, locale) : undefined;
 ---
 
 {

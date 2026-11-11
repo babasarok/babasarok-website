@@ -14,7 +14,7 @@
   import MobileActionBar from "./MobileActionBar.svelte";
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import type { i18n as I18n } from "i18next";
-  import type { Locale } from "@/lib/i18n";
+  import { localizedPath, type Locale } from "@/lib/i18n";
   import { basket } from "@/lib/basket/basket.svelte";
   import { createCheckoutSaves } from "@/lib/basket/checkoutSaves";
   import {
@@ -465,7 +465,7 @@
             <strong data-testid="order-code">{success.code}</strong>
           </p>
           <a
-            href="/product/"
+            href={localizedPath("/product/", locale)}
             class="mt-2 flex h-11 items-center justify-center rounded-md bg-brown-500 px-4 text-sm font-medium uppercase text-white transition-all hover:bg-brown-700"
           >
             {i18n.t("checkout.backToProducts")}
@@ -482,7 +482,7 @@
               : i18n.t("checkout.basketEmpty")}
           </p>
           <a
-            href="/product/"
+            href={localizedPath("/product/", locale)}
             class="mt-2 flex h-11 items-center justify-center rounded-md bg-brown-500 px-4 text-sm font-medium uppercase text-white transition-all hover:bg-brown-700"
           >
             {i18n.t("checkout.viewProducts")}

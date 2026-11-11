@@ -39,7 +39,6 @@
     productGroups: OrderProductGroup[];
     slugByProductId?: Record<string, string | undefined>;
     threadColors: OrderThreadColor[];
-    checkoutHref?: string;
   }
 
   let {
@@ -51,7 +50,6 @@
     productGroups,
     slugByProductId = {},
     threadColors,
-    checkoutHref = "/checkout",
   }: Props = $props();
 
   let item = $state<IProduct | null>(null);
@@ -392,7 +390,7 @@
               {i18n.t("order.inBasket")}
             </span>
             <a
-              href={checkoutHref}
+              href={localizedPath("/checkout", locale)}
               class="flex items-center gap-1 font-medium underline hover:text-success-900"
             >
               {i18n.t("order.toCheckout")}
