@@ -354,7 +354,6 @@
                   priceChange={priceChange(line, basket.shownPrices)}
                   highlighted={highlightedLines.includes(line.id)}
                   {busy}
-                  onQuantity={(quantity) => changeLine(basket.adjust(line.id, quantity))}
                   onRemove={() => changeLine(basket.remove(line.id))}
                 />
               </div>
