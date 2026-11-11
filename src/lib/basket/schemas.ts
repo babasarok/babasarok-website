@@ -26,6 +26,17 @@ export const OrderLineSchema = z.object({
   }),
 });
 
+export const OrderAddressSchema = z.object({
+  company: z.string().nullable(),
+  streetLine1: z.string().nullable(),
+  streetLine2: z.string().nullable(),
+  postalCode: z.string().nullable(),
+  city: z.string().nullable(),
+  countryCode: z.string().nullable(),
+});
+
+export type OrderAddress = z.output<typeof OrderAddressSchema>;
+
 export const OrderSchema = z.object({
   id: z.string(),
   code: z.string(),
@@ -51,8 +62,9 @@ export const OrderSchema = z.object({
       phoneNumber: z.string().nullable(),
     })
     .nullable(),
-  shippingAddress: z.object({ streetLine1: z.string().nullable() }).nullable(),
-  customFields: z.object({ message: z.string().nullable() }).nullable(),
+  shippingAddress: OrderAddressSchema.nullable(),
+  billingAddress: OrderAddressSchema.nullable(),
+  customFields: z.object({ message: z.string().nullable(), taxNumber: z.string().nullable() }).nullable(),
   lines: z.array(OrderLineSchema),
   setDiscounts: z.array(SetDiscountSchema).optional(),
 });

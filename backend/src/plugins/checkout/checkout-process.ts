@@ -37,7 +37,12 @@ export class CheckoutReadinessProcess implements OrderProcess<string> {
         hasShippingMethod: shippingMethod !== undefined,
         termsAccepted: order.customFields.termsAccepted === true,
         shippingMethodRequiresAddress: shippingMethod?.customFields.requiresAddress === true,
-        hasAddress: (order.shippingAddress.streetLine1 ?? "").trim() !== "",
+        address: {
+          street: order.shippingAddress.streetLine1 ?? "",
+          houseNumber: order.shippingAddress.streetLine2 ?? "",
+          postalCode: order.shippingAddress.postalCode ?? "",
+          city: order.shippingAddress.city ?? "",
+        },
       },
       ctx.languageCode
     );

@@ -1,12 +1,41 @@
 import { messages } from "../../shared/messages";
 
+export interface AddressFacts {
+  street: string;
+  houseNumber: string;
+  postalCode: string;
+  city: string;
+}
+
 export interface CheckoutFacts {
   lineCount: number;
   hasCustomer: boolean;
   hasShippingMethod: boolean;
   termsAccepted: boolean;
   shippingMethodRequiresAddress: boolean;
-  hasAddress: boolean;
+  address: AddressFacts;
+}
+
+function missingAddressParts(facts: AddressFacts, m: ReturnType<typeof messages>): string[] {
+  const parts: string[] = [];
+
+  if (facts.street.trim() === "") {
+    parts.push(m.addressStreet());
+  }
+
+  if (facts.houseNumber.trim() === "") {
+    parts.push(m.addressHouseNumber());
+  }
+
+  if (facts.postalCode.trim() === "") {
+    parts.push(m.addressPostalCode());
+  }
+
+  if (facts.city.trim() === "") {
+    parts.push(m.addressCity());
+  }
+
+  return parts;
 }
 
 /**
@@ -29,8 +58,12 @@ export function checkoutRefusal(facts: CheckoutFacts, languageCode: string): str
     missing.push(m.checkoutMissingShippingMethod());
   }
 
-  if (facts.shippingMethodRequiresAddress && !facts.hasAddress) {
-    missing.push(m.checkoutMissingAddress());
+  if (facts.shippingMethodRequiresAddress) {
+    const parts = missingAddressParts(facts.address, m);
+
+    if (parts.length > 0) {
+      missing.push(m.checkoutMissingAddress(parts.join(", ")));
+    }
   }
 
   if (!facts.termsAccepted) {

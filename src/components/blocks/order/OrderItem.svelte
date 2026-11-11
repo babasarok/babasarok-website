@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import IconButton from "./common/IconButton.svelte";
+  import IconButton from "@/components/ui/IconButton.svelte";
   import type { HTMLAttributes } from "svelte/elements";
   import OrderItemFields from "./OrderItemFields.svelte";
   import type { OrderThreadColor } from "@/lib/order/types";

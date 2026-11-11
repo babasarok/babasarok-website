@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import IconButton from "./common/IconButton.svelte";
+  import IconButton from "@/components/ui/IconButton.svelte";
   import { describeLine, type Labels } from "@/lib/basket/lineRows";
   import { formatMoney } from "@/lib/basket/money";
   import type { PriceChange } from "@/lib/basket/stale";

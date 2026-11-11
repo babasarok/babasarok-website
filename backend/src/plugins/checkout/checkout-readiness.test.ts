@@ -7,7 +7,7 @@ const complete: CheckoutFacts = {
   hasShippingMethod: true,
   termsAccepted: true,
   shippingMethodRequiresAddress: true,
-  hasAddress: true,
+  address: { street: "Rózsa utca", houseNumber: "12", postalCode: "3900", city: "Szerencs" },
 };
 
 describe("checkoutRefusal", () => {
@@ -18,7 +18,11 @@ describe("checkoutRefusal", () => {
   it("needs no address for a method that does not require one", () => {
     expect(
       checkoutRefusal(
-        { ...complete, shippingMethodRequiresAddress: false, hasAddress: false },
+        {
+          ...complete,
+          shippingMethodRequiresAddress: false,
+          address: { street: "", houseNumber: "", postalCode: "", city: "" },
+        },
         "hu"
       )
     ).toBeUndefined();
@@ -32,7 +36,7 @@ describe("checkoutRefusal", () => {
         hasShippingMethod: false,
         termsAccepted: false,
         shippingMethodRequiresAddress: false,
-        hasAddress: false,
+        address: { street: "", houseNumber: "", postalCode: "", city: "" },
       },
       "hu"
     );
@@ -42,8 +46,27 @@ describe("checkoutRefusal", () => {
     );
   });
 
-  it("requires the address of a method that needs one", () => {
-    expect(checkoutRefusal({ ...complete, hasAddress: false }, "hu")).toContain("a szállítási cím");
+  it("names every missing address part of a method that needs one", () => {
+    const refusal = checkoutRefusal(
+      {
+        ...complete,
+        address: { street: "", houseNumber: "", postalCode: "", city: "" },
+      },
+      "hu"
+    );
+
+    expect(refusal).toBe(
+      "A rendelés nem adható le, hiányzik: a szállítási cím (utca, házszám, irányítószám, város)."
+    );
+  });
+
+  it("names only the address parts that are missing", () => {
+    const refusal = checkoutRefusal(
+      { ...complete, address: { ...complete.address, houseNumber: " " } },
+      "hu"
+    );
+
+    expect(refusal).toBe("A rendelés nem adható le, hiányzik: a szállítási cím (házszám).");
   });
 
   it("refuses in the request language", () => {
@@ -54,7 +77,7 @@ describe("checkoutRefusal", () => {
         hasShippingMethod: false,
         termsAccepted: false,
         shippingMethodRequiresAddress: false,
-        hasAddress: false,
+        address: { street: "", houseNumber: "", postalCode: "", city: "" },
       },
       "en"
     );
@@ -62,5 +85,14 @@ describe("checkoutRefusal", () => {
     expect(refusal).toBe(
       "The order cannot be submitted, missing: at least one product, the customer details, the delivery method, the acceptance of the terms."
     );
+  });
+
+  it("names missing address parts in the request language", () => {
+    const refusal = checkoutRefusal(
+      { ...complete, address: { ...complete.address, postalCode: "" } },
+      "en"
+    );
+
+    expect(refusal).toBe("The order cannot be submitted, missing: the delivery address (postcode).");
   });
 });

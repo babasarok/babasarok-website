@@ -1,7 +1,7 @@
 <script lang="ts" generics="T">
   import type { Snippet } from "svelte";
   import type { i18n as I18n } from "i18next";
-  import Button from "@/components/blocks/order/common/Button.svelte";
+  import Button from "@/components/ui/Button.svelte";
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import type { Remote } from "@/lib/catalog/store";
   import type { Locale } from "@/lib/i18n";

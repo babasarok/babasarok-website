@@ -1,11 +1,11 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import Button from "./common/Button.svelte";
-  import Tooltip from "./common/Tooltip.svelte";
-  import TextInput from "./common/TextInput.svelte";
+  import Button from "@/components/ui/Button.svelte";
+  import Tooltip from "@/components/ui/Tooltip.svelte";
+  import TextInput from "@/components/ui/TextInput.svelte";
   import { slide } from "svelte/transition";
-  import Color from "./common/Color.svelte";
-  import Switch from "./common/Switch.svelte";
+  import Color from "@/components/ui/Color.svelte";
+  import Switch from "@/components/ui/Switch.svelte";
   import OrderItemMaterialField from "./OrderItemMaterialField.svelte";
   import type { OrderThreadColor } from "@/lib/order/types";
   import type { IProduct, StringValueField } from "@/lib/types.svelte";

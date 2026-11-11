@@ -5,8 +5,8 @@
   import CheckoutItem from "./CheckoutItem.svelte";
   import CheckoutDeals from "./CheckoutDeals.svelte";
   import OrderDelivery from "./OrderDelivery.svelte";
-  import Button from "./common/Button.svelte";
-  import TextInput from "./common/TextInput.svelte";
+  import Button from "@/components/ui/Button.svelte";
+  import TextInput from "@/components/ui/TextInput.svelte";
   import { basket } from "@/lib/basket/basket.svelte";
   import { createContactSaver, draftFromOrder, type ContactDraft } from "@/lib/basket/contactDraft";
   import type { Labels } from "@/lib/basket/lineRows";

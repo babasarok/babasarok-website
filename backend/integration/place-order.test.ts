@@ -80,15 +80,54 @@ describe("placing an order with the native sequence", () => {
 
     expect(order.state).toBe("ArrangingPayment");
     expect(order.customer).toEqual(BUYER);
-    expect(order.shippingAddress).toEqual({ streetLine1: BUYER_ADDRESS, countryCode: "HU" });
+    expect(order.shippingAddress).toEqual({
+      company: null,
+      streetLine1: BUYER_ADDRESS.street,
+      streetLine2: BUYER_ADDRESS.houseNumber,
+      postalCode: BUYER_ADDRESS.postalCode,
+      city: BUYER_ADDRESS.city,
+      countryCode: "HU",
+    });
+    expect(order.billingAddress).toBeNull();
     expect(order.shippingLines.map((line) => line.shippingMethod.code)).toEqual([
       "gls-elore-utalas",
     ]);
     expect(order.customFields).toEqual({
       message: "Köszönöm",
       termsAccepted: true,
+      taxNumber: null,
       submissionTransactionId: "native-1",
     });
+  });
+
+  it("stores the billing address and the tax number of a business buyer", async () => {
+    const shopper = newShopper(server);
+
+    await addLine(shopper, parna(PAMUT));
+    await setCustomer(shopper);
+    await setAddress(shopper);
+    await setBillingAddress(shopper, "Minta Kft.");
+    await chooseShipping(shopper, "gls-elore-utalas");
+    await setOrderNotes(shopper, {
+      message: "",
+      termsAccepted: true,
+      submissionTransactionId: "native-billing",
+      taxNumber: "12345678-2-42",
+    });
+
+    const result = await transitionTo(shopper, "ArrangingPayment");
+
+    expect(result).toMatchObject({ order: { state: "ArrangingPayment" } });
+
+    const order = "order" in result ? result.order : undefined;
+
+    expect(order?.billingAddress).toMatchObject({
+      company: "Minta Kft.",
+      streetLine1: BUYER_ADDRESS.street,
+      city: BUYER_ADDRESS.city,
+      countryCode: "HU",
+    });
+    expect(order?.customFields.taxNumber).toBe("12345678-2-42");
   });
 
   it("summarises each native line's configuration into its configText field", async () => {

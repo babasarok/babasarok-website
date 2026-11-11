@@ -12,9 +12,10 @@ const ORDER_FIELDS = `
   code state totalQuantity subTotalWithTax shippingWithTax totalWithTax
   discounts { description amountWithTax }
   customer { emailAddress firstName lastName phoneNumber }
-  shippingAddress { streetLine1 countryCode }
+  shippingAddress { streetLine1 streetLine2 postalCode city countryCode }
+  billingAddress { company streetLine1 streetLine2 postalCode city countryCode }
   shippingLines { priceWithTax shippingMethod { code } }
-  customFields { message termsAccepted submissionTransactionId }
+  customFields { message termsAccepted taxNumber submissionTransactionId }
   setDiscounts { groupId title amount lines { orderLineId units } }
   lines {
     id quantity unitPriceWithTax linePriceWithTax
@@ -50,6 +51,15 @@ const LineSchema = z.object({
     .nullable(),
 });
 
+const AddressSchema = z.object({
+  company: z.string().nullable(),
+  streetLine1: z.string().nullable(),
+  streetLine2: z.string().nullable(),
+  postalCode: z.string().nullable(),
+  city: z.string().nullable(),
+  countryCode: z.string().nullable(),
+});
+
 export const OrderSchema = z.object({
   code: z.string(),
   state: z.string(),
@@ -66,16 +76,15 @@ export const OrderSchema = z.object({
       phoneNumber: z.string().nullable(),
     })
     .nullable(),
-  shippingAddress: z.object({
-    streetLine1: z.string().nullable(),
-    countryCode: z.string().nullable(),
-  }),
+  shippingAddress: AddressSchema,
+  billingAddress: AddressSchema.nullable(),
   shippingLines: z.array(
     z.object({ priceWithTax: z.number(), shippingMethod: z.object({ code: z.string() }) })
   ),
   customFields: z.object({
     message: z.string().nullable(),
     termsAccepted: z.boolean().nullable(),
+    taxNumber: z.string().nullable(),
     submissionTransactionId: z.string().nullable(),
   }),
   setDiscounts: z.array(
@@ -301,7 +310,12 @@ export const BUYER = {
   phoneNumber: "+36301234567",
 };
 
-export const BUYER_ADDRESS = "3894 Telkibánya, Fő u. 1.";
+export const BUYER_ADDRESS = {
+  street: "Fő u.",
+  houseNumber: "1.",
+  postalCode: "3894",
+  city: "Telkibánya",
+};
 
 export async function setCustomer(
   shopper: Shopper,
@@ -323,14 +337,40 @@ export async function setAddress(shopper: Shopper): Promise<void> {
   await run(
     shopper.client,
     `mutation($input: CreateAddressInput!) { setOrderShippingAddress(input: $input) { ... on Order { code } } }`,
-    { input: { streetLine1: BUYER_ADDRESS, countryCode: "HU" } },
+    {
+      input: {
+        streetLine1: BUYER_ADDRESS.street,
+        streetLine2: BUYER_ADDRESS.houseNumber,
+        postalCode: BUYER_ADDRESS.postalCode,
+        city: BUYER_ADDRESS.city,
+        countryCode: "HU",
+      },
+    },
+    z.unknown()
+  );
+}
+
+export async function setBillingAddress(shopper: Shopper, company = ""): Promise<void> {
+  await run(
+    shopper.client,
+    `mutation($input: CreateAddressInput!) { setOrderBillingAddress(input: $input) { ... on Order { code } } }`,
+    {
+      input: {
+        company,
+        streetLine1: BUYER_ADDRESS.street,
+        streetLine2: BUYER_ADDRESS.houseNumber,
+        postalCode: BUYER_ADDRESS.postalCode,
+        city: BUYER_ADDRESS.city,
+        countryCode: "HU",
+      },
+    },
     z.unknown()
   );
 }
 
 export async function setOrderNotes(
   shopper: Shopper,
-  fields: { message: string; termsAccepted: boolean; submissionTransactionId: string }
+  fields: { message: string; termsAccepted: boolean; submissionTransactionId: string; taxNumber?: string }
 ): Promise<void> {
   await run(
     shopper.client,

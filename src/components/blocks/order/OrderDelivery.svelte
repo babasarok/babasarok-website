@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { slide } from "svelte/transition";
-  import TextInput from "./common/TextInput.svelte";
+  import TextInput from "@/components/ui/TextInput.svelte";
   import type { i18n as I18n } from "i18next";
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import type { Locale } from "@/lib/i18n";
