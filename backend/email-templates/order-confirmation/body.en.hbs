@@ -119,6 +119,35 @@
                 {{total}}</strong></p>
           </td>
         </tr>
+        {{#if deliveryAddress}}
+          <tr>
+            <td style="padding:8px 28px 8px 28px;">
+              <p style="margin:0 0 4px 0; font-size:13px; color:#28341d; font-weight:bold;">Delivery
+                address</p>
+              {{#each deliveryAddress}}
+                <p style="margin:0; font-size:13px; line-height:1.5;">{{this}}</p>
+              {{/each}}
+            </td>
+          </tr>
+        {{/if}}
+        {{#if billing}}
+          <tr>
+            <td style="padding:8px 28px 8px 28px;">
+              <p style="margin:0 0 4px 0; font-size:13px; color:#28341d; font-weight:bold;">Billing
+                details</p>
+              {{#if billing.sameAsDelivery}}
+                <p style="margin:0; font-size:13px; line-height:1.5;">Same as the delivery address</p>
+              {{/if}}
+              {{#each billing.lines}}
+                <p style="margin:0; font-size:13px; line-height:1.5;">{{this}}</p>
+              {{/each}}
+              {{#if billing.taxNumber}}
+                <p style="margin:0; font-size:13px; line-height:1.5;">Tax number:
+                  {{billing.taxNumber}}</p>
+              {{/if}}
+            </td>
+          </tr>
+        {{/if}}
         <tr>
           <td style="padding:0 28px 24px 28px;">
             <p style="margin:0; font-size:11px; color:#a18472;">Transaction ID:

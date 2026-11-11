@@ -246,7 +246,11 @@ subtotals, in the buyer confirmation and the owner notification alike.
 Delivery SHALL be its own row (method name and its price, or "ingyenes" when a
 promotion zeroed a charged price) and the only price in the confirmation is
 the order total. The set-discount summary is generated from the order's
-discount adjustments.
+discount adjustments. Both emails SHALL show the delivery address (street and
+house number, then postcode and city) when the order has one, and the billing
+details: the buyer's own billing address (name, company, street and house
+number, postcode and city) when they gave one, otherwise "same as the delivery
+address" with the company stored on it, plus the tax number when given.
 
 - **Scenario: Successful submission**
   - WHEN a complete order is transitioned to `ArrangingPayment`

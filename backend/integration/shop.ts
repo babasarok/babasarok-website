@@ -354,12 +354,17 @@ export async function setAddress(shopper: Shopper): Promise<void> {
   );
 }
 
-export async function setBillingAddress(shopper: Shopper, company = ""): Promise<void> {
+export async function setBillingAddress(
+  shopper: Shopper,
+  company = "",
+  fullName = ""
+): Promise<void> {
   await run(
     shopper.client,
     `mutation($input: CreateAddressInput!) { setOrderBillingAddress(input: $input) { ... on Order { code } } }`,
     {
       input: {
+        fullName,
         company,
         streetLine1: BUYER_ADDRESS.street,
         streetLine2: BUYER_ADDRESS.houseNumber,

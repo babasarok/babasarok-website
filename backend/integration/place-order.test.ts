@@ -114,7 +114,7 @@ describe("placing an order with the native sequence", () => {
     await addLine(shopper, parna(PAMUT));
     await setCustomer(shopper);
     await setAddress(shopper);
-    await setBillingAddress(shopper, "Minta Kft.");
+    await setBillingAddress(shopper, "Minta Kft.", "Minta Pénzügy");
     await chooseShipping(shopper, "gls-elore-utalas");
     await setOrderNotes(shopper, {
       message: "",
@@ -136,6 +136,14 @@ describe("placing an order with the native sequence", () => {
       countryCode: "HU",
     });
     expect(order?.customFields.taxNumber).toBe("12345678-2-42");
+
+    for (const email of await emailsFor(order?.code ?? "", 2)) {
+      const body = emailText(email.body);
+
+      expect(body).toContain("Számlázási adatok Minta Pénzügy Minta Kft. Fő u. 1. 3894 Telkibánya");
+      expect(body).toContain("Adószám: 12345678-2-42");
+      expect(body).not.toContain("Azonos a szállítási címmel");
+    }
   });
 
   it("summarises each native line's configuration into its configText field", async () => {
@@ -178,6 +186,8 @@ describe("placing an order with the native sequence", () => {
       expect(body).toContain("Hossz: 150 cm");
       expect(body).toContain("GLS házhozszállítás előre utalással");
       expect(body).toContain("2500 Ft");
+      expect(body).toContain("Szállítási cím Fő u. 1. 3894 Telkibánya");
+      expect(body).toContain("Számlázási adatok Azonos a szállítási címmel");
     }
   });
 
