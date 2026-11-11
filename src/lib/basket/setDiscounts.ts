@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { parseLineSelections, type LineSelections } from "@babasarok/pricing";
+import { VENDURE_LANGUAGE_CODE, type Locale } from "@/lib/i18n";
 import { productPath, selectionMaterialParams } from "@/lib/order/queryParams";
 import type { Order, OrderLine } from "./schemas";
 
@@ -107,15 +108,18 @@ export function partnerLinks(line: OrderLine, order: Order, members: SetMembers)
 }
 
 /** The partner's product page with the line's materials preselected, so adding it completes the set. */
-export function partnerPath(partner: PartnerLink, line: OrderLine, languageCode: string): string {
+export function partnerPath(partner: PartnerLink, line: OrderLine, locale: Locale): string {
   let selections: LineSelections;
 
   try {
     // The thrown message is discarded below, so the parse language never renders.
-    selections = parseLineSelections(line.customFields?.selections ?? null, languageCode);
+    selections = parseLineSelections(
+      line.customFields?.selections ?? null,
+      VENDURE_LANGUAGE_CODE[locale]
+    );
   } catch {
-    return productPath(partner.slug);
+    return productPath(partner.slug, locale);
   }
 
-  return productPath(partner.slug, selectionMaterialParams(selections));
+  return productPath(partner.slug, locale, selectionMaterialParams(selections));
 }

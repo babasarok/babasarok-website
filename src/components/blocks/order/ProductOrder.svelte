@@ -289,9 +289,10 @@
     }
 
     if (hasConfigurableOptions($state.snapshot(target))) {
-      globalThis.location.href = localizedPath(
-        productPath(targetSlug, buildMaterialParams($state.snapshot(item))),
-        locale
+      globalThis.location.href = productPath(
+        targetSlug,
+        locale,
+        buildMaterialParams($state.snapshot(item))
       );
       return;
     }

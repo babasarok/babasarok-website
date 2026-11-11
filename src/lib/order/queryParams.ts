@@ -1,4 +1,5 @@
 import type { LineSelections } from "@babasarok/pricing";
+import { localizedPath, type Locale } from "../i18n";
 import type { IProduct } from "../types.svelte";
 import { FIELD_BEHAVIORS } from "../product/behavior";
 
@@ -181,13 +182,14 @@ export function selectionMaterialParams(selections: LineSelections): URLSearchPa
   return params;
 }
 
-/** A product page path, with the query appended when it carries any params. */
-export function productPath(slug: string, params = new URLSearchParams()): string {
+/** A product page's path in `locale`, with the query appended when it carries any params. */
+export function productPath(slug: string, locale: Locale, params = new URLSearchParams()): string {
+  const path = localizedPath(`/product/${slug}/`, locale);
   const query = params.toString();
 
   if (query === "") {
-    return `/product/${slug}/`;
+    return path;
   }
 
-  return `/product/${slug}/?${query}`;
+  return `${path}?${query}`;
 }

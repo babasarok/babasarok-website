@@ -3,7 +3,7 @@
   import SetSiblingCard from "./SetSiblingCard.svelte";
   import type { i18n as I18n } from "i18next";
   import I18nGate from "@/components/ui/I18nGate.svelte";
-  import { localizedPath, type Locale } from "@/lib/i18n";
+  import type { Locale } from "@/lib/i18n";
   import { productPath } from "@/lib/order/queryParams";
   import type { OrderProduct } from "@/lib/order/types";
 
@@ -54,7 +54,7 @@
           <SetSiblingCard
             {locale}
             product={related}
-            href={slug ? localizedPath(productPath(slug, materialParams), locale) : undefined}
+            href={slug ? productPath(slug, locale, materialParams) : undefined}
             added={basketCountByProductId[related.product_id] ?? 0}
             disabled={!ready}
             onAdd={() => onAddRelated(related)}

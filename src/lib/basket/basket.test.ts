@@ -643,6 +643,9 @@ describe("set discount adapter", () => {
     ).toBe("/product/takaro/?anyag=alfa&anyag_colors=feher");
     expect(partnerPath(partner, line(), "hu")).toBe("/product/takaro/");
     expect(
+      partnerPath(partner, line({ customFields: { selections: material, lengthCm: null } }), "en")
+    ).toBe("/en/product/takaro/?anyag=alfa&anyag_colors=feher");
+    expect(
       partnerPath(partner, line({ customFields: { selections: "{", lengthCm: null } }), "hu")
     ).toBe("/product/takaro/");
   });

@@ -79,6 +79,11 @@
     billing: "mdi:file-document-outline",
   };
 
+  const problemReportHref = $derived(
+    // eslint-disable-next-line site-language/no-hungarian-text -- the prefilled problem report goes to the Hungarian-speaking owner, not the buyer
+    `mailto:${supportEmail ?? ""}?subject=Babasarok rendelési probléma&body=Kérlek, írd le a problémát, ha lehet screenshot-tal együtt.&cc=attilagreguss@protonmail.com`
+  );
+
   const sections: { step: ReviewedStep; rows: DetailRow[] }[] = $derived([
     { step: "contact", rows: contactRows },
     { step: "shipping", rows: shippingRows },
@@ -159,9 +164,7 @@
         <Icon icon="mdi:info" class="shrink-0 text-2xl text-warning-500" />
         <p class="text-xs text-warning-800">
           {i18n.t("checkout.testingNotice")}
-          <a
-            class="underline hover:text-brown-700"
-            href={`mailto:${supportEmail ?? ""}?subject=Babasarok rendelési probléma&body=Kérlek, írd le a problémát, ha lehet screenshot-tal együtt.&cc=attilagreguss@protonmail.com`}
+          <a class="underline hover:text-brown-700" href={problemReportHref}
             >{i18n.t("checkout.testingNoticeLink")}</a
           >.
         </p>

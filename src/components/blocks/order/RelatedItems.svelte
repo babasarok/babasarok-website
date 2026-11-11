@@ -3,7 +3,7 @@
   import type { OrderProduct } from "@/lib/order/types";
   import type { i18n as I18n } from "i18next";
   import I18nGate from "@/components/ui/I18nGate.svelte";
-  import { localizedPath, type Locale } from "@/lib/i18n";
+  import type { Locale } from "@/lib/i18n";
   import { productPath } from "@/lib/order/queryParams";
 
   interface RelatedGroup {
@@ -44,7 +44,7 @@
             {#each group.products as related (related.product_id)}
               {@const slug = slugByProductId[related.product_id]}
               <a
-                href={slug ? localizedPath(productPath(slug), locale) : undefined}
+                href={slug ? productPath(slug, locale) : undefined}
                 class="flex w-40 shrink-0 flex-col overflow-hidden rounded-xl border border-brown-200 bg-white transition-shadow hover:shadow-md"
               >
                 <div class="aspect-square bg-brown-50">

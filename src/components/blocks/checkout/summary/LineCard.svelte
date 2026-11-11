@@ -167,10 +167,7 @@
               {#if setState.kind === "pending-partner"}
                 {#each partnerLinks as partner (partner.slug)}
                   <a
-                    href={localizedPath(
-                      partnerPath(partner, line, VENDURE_LANGUAGE_CODE[locale]),
-                      locale
-                    )}
+                    href={partnerPath(partner, line, locale)}
                     data-testid="set-partner-link"
                     class="flex items-center gap-1 rounded-full border border-brown-200 px-3 py-1 font-medium transition-all hover:bg-brown-100"
                   >

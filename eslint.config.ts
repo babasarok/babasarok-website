@@ -15,6 +15,13 @@ import {
   onDemandPageFiles,
   onDemandPageSelectors,
 } from "./eslint/catalog-rendering";
+import {
+  hungarianTextAllowlist,
+  localizedPathAllowlist,
+  siteLanguageFiles,
+  siteLanguageIgnores,
+  siteLanguagePlugin,
+} from "./eslint/site-language";
 
 const noExtensionImports = {
   regex: String.raw`^\.{1,2}/.*\.[cm]?[jt]sx?$`,
@@ -246,6 +253,20 @@ export default defineConfig([
     rules: {
       "no-restricted-syntax": ["error", ...onDemandPageSelectors],
     },
+  },
+  {
+    files: siteLanguageFiles,
+    plugins: { "site-language": siteLanguagePlugin },
+  },
+  {
+    files: siteLanguageFiles,
+    ignores: [...siteLanguageIgnores, ...localizedPathAllowlist],
+    rules: { "site-language/localized-paths": "error" },
+  },
+  {
+    files: siteLanguageFiles,
+    ignores: [...siteLanguageIgnores, ...hungarianTextAllowlist],
+    rules: { "site-language/no-hungarian-text": "error" },
   },
   // Astro-specific warnings and recommendations for .astro files
   {
