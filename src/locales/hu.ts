@@ -124,6 +124,7 @@ const translation = {
       "Írd meg ide, milyen egyedi színekre, mintákra gondoltál, vagy ha van bármilyen egyedi kérésed (pl. név hímzése)!",
     shipping: "Szállítás",
     free: "Ingyenes",
+    shippingLater: "A Szállítás lépésben választható",
     total: "Végösszeg",
     testingNotice:
       "Jelenleg a rendelési folyamat tesztelés alatt áll. Ha bármilyen problémát tapasztalsz, kérlek, jelezd nekünk a",

@@ -129,6 +129,7 @@ const translation = {
       "Write here if you have custom colors, patterns, or any custom request (e.g. embroidered name)!",
     shipping: "Shipping",
     free: "Free",
+    shippingLater: "Chosen at the Shipping step",
     total: "Total",
     testingNotice:
       "The ordering process is currently under testing. If you run into any problems, please let us know via",

@@ -86,7 +86,7 @@
           <span>{i18n.t("checkout.shipping")}</span>
           <span class="text-right">
             {#if shippingLine === undefined}
-              —
+              <span class="text-brown-500 italic">{i18n.t("checkout.shippingLater")}</span>
             {:else if shippingFree}
               <span class="mr-1 line-through opacity-60">
                 {formatMoney(shippingLine.priceWithTax, order.currencyCode)}
