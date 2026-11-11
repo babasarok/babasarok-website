@@ -69,7 +69,7 @@
       ]}
       data-testid="checkout-line"
     >
-      {#if badges.length > 0}
+      <!-- {#if badges.length > 0}
         <div class="absolute top-2 left-2 z-10 flex max-w-40 flex-col items-start gap-1">
           {#each badges as badge (badge)}
             <span
@@ -79,7 +79,7 @@
             </span>
           {/each}
         </div>
-      {/if}
+      {/if} -->
 
       <div class="flex items-start gap-3">
         {#if thumbnail}
