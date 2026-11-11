@@ -207,7 +207,13 @@ const EMPTY_ADDRESS: AddressValues = {
 const EMPTY_VALUES: CheckoutValues = {
   contact: { lastName: "", firstName: "", email: "", phone: "" },
   address: EMPTY_ADDRESS,
-  billing: { sameAsShipping: true, fullName: "", address: EMPTY_ADDRESS, company: "", taxNumber: "" },
+  billing: {
+    sameAsShipping: true,
+    fullName: "",
+    address: EMPTY_ADDRESS,
+    company: "",
+    taxNumber: "",
+  },
   message: "",
 };
 const values: CheckoutValues = {
@@ -219,7 +225,13 @@ const values: CheckoutValues = {
     city: "Telkibánya",
     country: "HU",
   },
-  billing: { sameAsShipping: true, fullName: "", address: EMPTY_ADDRESS, company: "", taxNumber: "" },
+  billing: {
+    sameAsShipping: true,
+    fullName: "",
+    address: EMPTY_ADDRESS,
+    company: "",
+    taxNumber: "",
+  },
   message: "",
 };
 
@@ -275,9 +287,9 @@ describe("checkout readiness", () => {
   it("blocks placement on order-level problems first", () => {
     expect(orderBlocker(null)?.message).toBe("blockers.empty");
     expect(orderBlocker(order([]))?.message).toBe("blockers.empty");
-    expect(orderBlocker(order([line({ invalidReason: { code: "X", message: "m" } })]))?.message).toBe(
-      "blockers.invalid"
-    );
+    expect(
+      orderBlocker(order([line({ invalidReason: { code: "X", message: "m" } })]))?.message
+    ).toBe("blockers.invalid");
     expect(orderBlocker(order([line()]))).toBeUndefined();
   });
 

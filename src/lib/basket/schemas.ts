@@ -65,7 +65,9 @@ export const OrderSchema = z.object({
     .nullable(),
   shippingAddress: OrderAddressSchema.nullable(),
   billingAddress: OrderAddressSchema.nullable(),
-  customFields: z.object({ message: z.string().nullable(), taxNumber: z.string().nullable() }).nullable(),
+  customFields: z
+    .object({ message: z.string().nullable(), taxNumber: z.string().nullable() })
+    .nullable(),
   lines: z.array(OrderLineSchema),
   setDiscounts: z.array(SetDiscountSchema).optional(),
 });

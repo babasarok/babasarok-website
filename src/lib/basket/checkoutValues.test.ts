@@ -160,7 +160,10 @@ describe("the native mapping", () => {
   });
 
   it("keeps no billing address when ticked and puts the company on the delivery address", () => {
-    expect(billingPlan(billing, gls)).toEqual({ billingAddress: null, shippingCompany: "Minta Kft." });
+    expect(billingPlan(billing, gls)).toEqual({
+      billingAddress: null,
+      shippingCompany: "Minta Kft.",
+    });
   });
 
   it("stores the billing address with its company when unticked", () => {
@@ -169,7 +172,13 @@ describe("the native mapping", () => {
         ...billing,
         sameAsShipping: false,
         fullName: "Számla Név",
-        address: { street: "Piac tér", houseNumber: "2", postalCode: "1053", city: "Budapest", country: "HU" },
+        address: {
+          street: "Piac tér",
+          houseNumber: "2",
+          postalCode: "1053",
+          city: "Budapest",
+          country: "HU",
+        },
       },
       gls
     );
@@ -195,7 +204,13 @@ describe("the native mapping", () => {
   it("writes the structured delivery address with the house number in streetLine2", () => {
     expect(
       shippingAddressInput(
-        { street: "Fő u.", houseNumber: "1.", postalCode: "3894", city: "Telkibánya", country: "HU" },
+        {
+          street: "Fő u.",
+          houseNumber: "1.",
+          postalCode: "3894",
+          city: "Telkibánya",
+          country: "HU",
+        },
         { fullName: "Kovács Anna", phoneNumber: "+3630" },
         ""
       )

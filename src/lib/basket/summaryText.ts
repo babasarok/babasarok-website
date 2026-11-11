@@ -17,61 +17,81 @@ function joined(parts: readonly string[], separator: string): string {
   return parts.filter(present).join(separator);
 }
 
-export function contactSummary(contact: ContactValues): string {
-  return joined(
-    [joined([contact.lastName, contact.firstName], " "), contact.email, contact.phone],
-    " · "
-  );
+function labelled(label: string, value: string): string {
+  if (!present(value)) {
+    return "";
+  }
+
+  return `${label}: ${value}`;
 }
 
-function addressLine(address: AddressValues, t: T): string {
+function addressLines(address: AddressValues, t: T): string[] {
   const street = joined([address.street, address.houseNumber], " ");
   const locality = joined([address.postalCode, address.city], " ");
 
   if (street === "" && locality === "") {
-    return "";
+    return [];
   }
 
   const country = address.country === "HU" ? t("checkout.countryHU") : address.country;
 
-  return joined([street, locality, country], ", ");
+  return [street, locality, country].filter(present);
 }
 
-export function shippingSummary(
+function companyLines(billing: BillingValues, t: T): string[] {
+  return [
+    labelled(t("checkout.company"), billing.company),
+    labelled(t("checkout.taxNumber"), billing.taxNumber),
+  ].filter(present);
+}
+
+/** One entry per detail of the Kapcsolat step, as the review lists them. */
+export function contactLines(contact: ContactValues): string[] {
+  return [joined([contact.lastName, contact.firstName], " "), contact.email, contact.phone].filter(
+    present
+  );
+}
+
+export function shippingLines(
   method: ShippingQuote | undefined,
   address: AddressValues,
   currencyCode: string,
   t: T
-): string {
+): string[] {
   if (method === undefined) {
-    return "";
+    return [];
   }
 
   const name = `${method.name} · ${formatMoney(method.priceWithTax, currencyCode)}`;
 
   if (!requiresAddress(method)) {
-    return name;
+    return [name];
   }
 
-  return joined([name, addressLine(address, t)], " · ");
+  return [name, ...addressLines(address, t)];
 }
 
-export function billingSummary(
+export function billingLines(
   billing: BillingValues,
   method: ShippingQuote | undefined,
   t: T
-): string {
-  const company = joined([billing.company, billing.taxNumber], " · ");
+): string[] {
+  const company = companyLines(billing, t);
 
   if (!billingUsesOwnFields(billing, method)) {
-    return joined([t("checkout.sameAsShipping"), company], " · ");
+    return [t("checkout.sameAsShipping"), ...company];
   }
 
-  const own = joined([billing.fullName, addressLine(billing.address, t), company], " · ");
+  const own = [billing.fullName, ...addressLines(billing.address, t)].filter(present);
 
-  if (own === "") {
-    return t("checkout.noBilling");
+  if (own.length === 0 && company.length === 0) {
+    return [t("checkout.noBilling")];
   }
 
-  return own;
+  return [...own, ...company];
+}
+
+/** The one-line form of a step's details, for the collapsed step summaries. */
+export function summaryLine(lines: readonly string[]): string {
+  return lines.join(" · ");
 }

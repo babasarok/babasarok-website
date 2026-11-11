@@ -39,9 +39,10 @@
   import type { SetMembers } from "@/lib/basket/setDiscounts";
   import { STEPS, stepFromHash, stepIndex, type StepId } from "@/lib/basket/steps";
   import {
-    billingSummary,
-    contactSummary,
-    shippingSummary,
+    billingLines,
+    contactLines,
+    shippingLines,
+    summaryLine,
     type T,
   } from "@/lib/basket/summaryText";
   import { placeOrder } from "@/lib/basket/submit";
@@ -252,16 +253,16 @@
     };
   }
 
-  function stepText(id: StepId, values: CheckoutValues, currencyCode: string, t: T): string {
+  function stepLines(id: StepId, values: CheckoutValues, currencyCode: string, t: T): string[] {
     if (id === "contact") {
-      return contactSummary(values.contact);
+      return contactLines(values.contact);
     }
 
     if (id === "shipping") {
-      return shippingSummary(method, values.address, currencyCode, t);
+      return shippingLines(method, values.address, currencyCode, t);
     }
 
-    return billingSummary(values.billing, method, t);
+    return billingLines(values.billing, method, t);
   }
 
   function translator(i18n: I18n): T {
@@ -457,9 +458,24 @@
                         {setMembers}
                         {highlightedLines}
                         initialMessage={initial.message}
-                        contactSummary={stepText("contact", saved, order.currencyCode, translator(i18n))}
-                        shippingSummary={stepText("shipping", saved, order.currencyCode, translator(i18n))}
-                        billingSummary={stepText("billing", saved, order.currencyCode, translator(i18n))}
+                        contactLines={stepLines(
+                          "contact",
+                          saved,
+                          order.currencyCode,
+                          translator(i18n)
+                        )}
+                        shippingLines={stepLines(
+                          "shipping",
+                          saved,
+                          order.currencyCode,
+                          translator(i18n)
+                        )}
+                        billingLines={stepLines(
+                          "billing",
+                          saved,
+                          order.currencyCode,
+                          translator(i18n)
+                        )}
                         bind:terms={termsAccepted}
                         {error}
                         {sending}
@@ -491,7 +507,9 @@
                       <StepSummary
                         {locale}
                         title={translateMessage(i18n, stepDef.labelKey)}
-                        summary={stepText(stepDef.id, saved, order.currencyCode, translator(i18n))}
+                        summary={summaryLine(
+                          stepLines(stepDef.id, saved, order.currencyCode, translator(i18n))
+                        )}
                         onEdit={() => goTo(stepDef.id)}
                       />
                     </div>

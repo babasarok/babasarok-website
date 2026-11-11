@@ -128,7 +128,11 @@
       </div>
 
       <div class="mt-2 hidden items-center justify-end gap-3 lg:flex">
-        <Button type="submit" variant="contained" class="flex flex-nowrap items-center h-8 px-2 uppercase">
+        <Button
+          type="submit"
+          variant="contained"
+          class="flex flex-nowrap items-center h-8 px-2 uppercase"
+        >
           {i18n.t("checkout.continueShipping")}
           <Icon icon="mdi:arrow-right" class="ml-2 text-lg" />
         </Button>

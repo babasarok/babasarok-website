@@ -2,7 +2,6 @@
   import Icon from "@iconify/svelte";
   import Button from "@/components/ui/Button.svelte";
   import OrderSummary from "@/components/blocks/checkout/summary/OrderSummary.svelte";
-  import StepSummary from "@/components/blocks/checkout/wizard/StepSummary.svelte";
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import type { i18n as I18n } from "i18next";
   import type { Locale } from "@/lib/i18n";
@@ -21,9 +20,9 @@
     setMembers: SetMembers;
     highlightedLines: readonly string[];
     initialMessage: string;
-    contactSummary: string;
-    shippingSummary: string;
-    billingSummary: string;
+    contactLines: string[];
+    shippingLines: string[];
+    billingLines: string[];
     terms: boolean;
     error: string | null;
     sending: boolean;
@@ -47,9 +46,9 @@
     setMembers,
     highlightedLines,
     initialMessage,
-    contactSummary,
-    shippingSummary,
-    billingSummary,
+    contactLines,
+    shippingLines,
+    billingLines,
     terms = $bindable(false),
     error,
     sending,
@@ -65,6 +64,12 @@
     onHighlight,
     onRemoveLine,
   }: Props = $props();
+
+  const sections: { step: Exclude<StepId, "review">; lines: string[] }[] = $derived([
+    { step: "contact", lines: contactLines },
+    { step: "shipping", lines: shippingLines },
+    { step: "billing", lines: billingLines },
+  ]);
 </script>
 
 <I18nGate {locale}>
@@ -79,25 +84,31 @@
         onSubmit();
       }}
     >
-      <div class="flex flex-col gap-2">
-        <StepSummary
-          {locale}
-          title={i18n.t("checkout.steps.contact")}
-          summary={contactSummary}
-          onEdit={() => onEdit("contact")}
-        />
-        <StepSummary
-          {locale}
-          title={i18n.t("checkout.steps.shipping")}
-          summary={shippingSummary}
-          onEdit={() => onEdit("shipping")}
-        />
-        <StepSummary
-          {locale}
-          title={i18n.t("checkout.steps.billing")}
-          summary={billingSummary}
-          onEdit={() => onEdit("billing")}
-        />
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {#each sections as section (section.step)}
+          <section
+            class="flex flex-col gap-1.5 rounded-xl bg-brown-50 p-3"
+            data-testid={`review-${section.step}`}
+          >
+            <div class="flex items-baseline justify-between gap-2">
+              <h3 class="text-sm font-semibold text-headings">
+                {i18n.t(`checkout.steps.${section.step}`)}
+              </h3>
+              <button
+                type="button"
+                class="cursor-pointer text-xs text-brown-600 underline hover:text-brown-700"
+                onclick={() => onEdit(section.step)}
+              >
+                {i18n.t("checkout.modify")}
+              </button>
+            </div>
+            <ul class="flex flex-col text-sm text-body">
+              {#each section.lines as line, index (index)}
+                <li class="break-words">{line}</li>
+              {/each}
+            </ul>
+          </section>
+        {/each}
       </div>
 
       <div class="lg:hidden">

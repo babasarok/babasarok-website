@@ -81,7 +81,10 @@
               value={initial.fullName}
             />
             {#if nameError && error}
-              <p id="billing-fullName-error" class="flex items-center gap-1 text-xs text-danger-500">
+              <p
+                id="billing-fullName-error"
+                class="flex items-center gap-1 text-xs text-danger-500"
+              >
                 <Icon icon="mdi:alert-circle-outline" class="size-3.5 shrink-0" />
                 <span>{translateMessage(i18n, error.message)}</span>
               </p>

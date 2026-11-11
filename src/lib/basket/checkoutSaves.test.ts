@@ -47,7 +47,12 @@ function fakeShop(initial: Partial<Order> = {}) {
     totalWithTax: 0,
     discounts: [],
     shippingLines: [],
-    customer: { firstName: "Anna", lastName: "Kovács", emailAddress: "a@b.hu", phoneNumber: "+3630" },
+    customer: {
+      firstName: "Anna",
+      lastName: "Kovács",
+      emailAddress: "a@b.hu",
+      phoneNumber: "+3630",
+    },
     shippingAddress: none,
     billingAddress: none,
     customFields: { message: null, taxNumber: null },
@@ -109,7 +114,13 @@ function fakeShop(initial: Partial<Order> = {}) {
   return { api, saves, calls, current: () => live };
 }
 
-const address = { street: "Fő u.", houseNumber: "1.", postalCode: "3894", city: "Telkibánya", country: "HU" };
+const address = {
+  street: "Fő u.",
+  houseNumber: "1.",
+  postalCode: "3894",
+  city: "Telkibánya",
+  country: "HU",
+};
 
 const ticked: BillingValues = {
   sameAsShipping: true,
@@ -123,7 +134,12 @@ describe("createCheckoutSaves", () => {
   it("applies each response so the next save reads the updated order", async () => {
     const shop = fakeShop({ customer: null });
 
-    void shop.saves.contact({ lastName: "Teszt", firstName: "Elek", email: "e@b.hu", phone: "+3620" });
+    void shop.saves.contact({
+      lastName: "Teszt",
+      firstName: "Elek",
+      email: "e@b.hu",
+      phone: "+3620",
+    });
     void shop.saves.shipping(address);
     await shop.saves.settled();
 
@@ -135,7 +151,9 @@ describe("createCheckoutSaves", () => {
   });
 
   it("keeps the stored delivery-address company when the delivery step is saved", async () => {
-    const shop = fakeShop({ shippingAddress: { ...none, streetLine1: "Régi u.", company: "Minta Kft." } });
+    const shop = fakeShop({
+      shippingAddress: { ...none, streetLine1: "Régi u.", company: "Minta Kft." },
+    });
 
     await shop.saves.shipping(address);
 
@@ -145,12 +163,21 @@ describe("createCheckoutSaves", () => {
   it("stores no billing address when ticked and moves the company onto the delivery address", async () => {
     const shop = fakeShop({
       shippingAddress: toAddress({ streetLine1: "Fő u.", countryCode: "HU" }),
-      billingAddress: toAddress({ fullName: "Régi", company: "Régi Kft.", streetLine1: "Piac tér", countryCode: "HU" }),
+      billingAddress: toAddress({
+        fullName: "Régi",
+        company: "Régi Kft.",
+        streetLine1: "Piac tér",
+        countryCode: "HU",
+      }),
     });
 
     await shop.saves.billing(ticked, gls);
 
-    expect(shop.calls).toEqual(["unsetBillingAddress", "setShippingAddress", "setOrderCustomFields"]);
+    expect(shop.calls).toEqual([
+      "unsetBillingAddress",
+      "setShippingAddress",
+      "setOrderCustomFields",
+    ]);
     expect(shop.current()?.billingAddress?.streetLine1).toBeNull();
     expect(shop.current()?.shippingAddress?.company).toBe("Minta Kft.");
     expect(shop.current()?.customFields?.taxNumber).toBe("123");
@@ -158,7 +185,11 @@ describe("createCheckoutSaves", () => {
 
   it("clears the delivery-address company once the billing address carries it", async () => {
     const shop = fakeShop({
-      shippingAddress: toAddress({ company: "Minta Kft.", streetLine1: "Fő u.", countryCode: "HU" }),
+      shippingAddress: toAddress({
+        company: "Minta Kft.",
+        streetLine1: "Fő u.",
+        countryCode: "HU",
+      }),
     });
 
     await shop.saves.billing(
@@ -172,7 +203,11 @@ describe("createCheckoutSaves", () => {
 
   it("does not resave an unchanged ticked billing step", async () => {
     const shop = fakeShop({
-      shippingAddress: toAddress({ company: "Minta Kft.", streetLine1: "Fő u.", countryCode: "HU" }),
+      shippingAddress: toAddress({
+        company: "Minta Kft.",
+        streetLine1: "Fő u.",
+        countryCode: "HU",
+      }),
     });
 
     await shop.saves.billing(ticked, gls);

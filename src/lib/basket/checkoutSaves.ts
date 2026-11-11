@@ -103,7 +103,11 @@ export function createCheckoutSaves(api: SaveApi, port: OrderPort): CheckoutSave
 
           await apply(
             api.setShippingAddress(
-              shippingAddressInput(values.address, recipientOf(values.contact), plan.shippingCompany)
+              shippingAddressInput(
+                values.address,
+                recipientOf(values.contact),
+                plan.shippingCompany
+              )
             )
           );
         }

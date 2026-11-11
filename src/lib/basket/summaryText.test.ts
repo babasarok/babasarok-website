@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { formatMoney } from "./money";
-import { billingSummary, contactSummary, shippingSummary, type T } from "./summaryText";
+import { billingLines, contactLines, shippingLines, summaryLine, type T } from "./summaryText";
 import type { AddressValues, BillingValues } from "./checkoutValues";
 import type { ShippingQuote } from "./schemas";
 
@@ -30,7 +30,13 @@ const address: AddressValues = {
   country: "HU",
 };
 
-const empty: AddressValues = { street: "", houseNumber: "", postalCode: "", city: "", country: "HU" };
+const empty: AddressValues = {
+  street: "",
+  houseNumber: "",
+  postalCode: "",
+  city: "",
+  country: "HU",
+};
 
 const ticked: BillingValues = {
   sameAsShipping: true,
@@ -40,68 +46,73 @@ const ticked: BillingValues = {
   taxNumber: "",
 };
 
-describe("contactSummary", () => {
-  it("joins the name, email and phone with dots", () => {
+describe("contactLines", () => {
+  it("lists the name, email and phone, skipping missing parts", () => {
     expect(
-      contactSummary({
-        lastName: "Teszt",
-        firstName: "Elek",
-        email: "a@b.hu",
-        phone: "+36301234567",
-      })
-    ).toBe("Teszt Elek · a@b.hu · +36301234567");
-  });
-
-  it("skips missing parts", () => {
-    expect(contactSummary({ lastName: "Teszt", firstName: "", email: "a@b.hu", phone: "" })).toBe(
-      "Teszt · a@b.hu"
-    );
-    expect(contactSummary({ lastName: "", firstName: "", email: "", phone: "" })).toBe("");
+      contactLines({ lastName: "Teszt", firstName: "Elek", email: "a@b.hu", phone: "+3630" })
+    ).toEqual(["Teszt Elek", "a@b.hu", "+3630"]);
+    expect(contactLines({ lastName: "Teszt", firstName: "", email: "", phone: "" })).toEqual([
+      "Teszt",
+    ]);
   });
 });
 
-describe("shippingSummary", () => {
+describe("shippingLines", () => {
   it("is empty when no method is chosen", () => {
-    expect(shippingSummary(undefined, address, "HUF", t)).toBe("");
+    expect(shippingLines(undefined, address, "HUF", t)).toEqual([]);
   });
 
-  it("shows the method, its price and the delivery address", () => {
-    expect(shippingSummary(gls, address, "HUF", t)).toBe(
-      `GLS · ${formatMoney(2500, "HUF")} · Fő u. 12, 3894 Telkibánya, checkout.countryHU`
-    );
+  it("lists the method with its price, then the delivery address line by line", () => {
+    expect(shippingLines(gls, address, "HUF", t)).toEqual([
+      `GLS · ${formatMoney(2500, "HUF")}`,
+      "Fő u. 12",
+      "3894 Telkibánya",
+      "checkout.countryHU",
+    ]);
   });
 
   it("omits the address for a method that needs none", () => {
-    expect(shippingSummary(pickup, address, "HUF", t)).toBe(
-      `Személyes átvétel · ${formatMoney(0, "HUF")}`
-    );
+    expect(shippingLines(pickup, address, "HUF", t)).toEqual([
+      `Személyes átvétel · ${formatMoney(0, "HUF")}`,
+    ]);
   });
 });
 
-describe("billingSummary", () => {
+describe("billingLines", () => {
   it("says same-as-shipping when ticked for an address method", () => {
-    expect(billingSummary(ticked, gls, t)).toBe("checkout.sameAsShipping");
+    expect(billingLines(ticked, gls, t)).toEqual(["checkout.sameAsShipping"]);
   });
 
-  it("appends the company and tax number", () => {
-    expect(billingSummary({ ...ticked, company: "Minta Kft.", taxNumber: "123" }, gls, t)).toBe(
-      "checkout.sameAsShipping · Minta Kft. · 123"
-    );
+  it("labels the company and tax number", () => {
+    expect(billingLines({ ...ticked, company: "Minta Kft.", taxNumber: "123" }, gls, t)).toEqual([
+      "checkout.sameAsShipping",
+      "checkout.company: Minta Kft.",
+      "checkout.taxNumber: 123",
+    ]);
   });
 
-  it("shows the own billing address when split", () => {
+  it("lists the own billing name and address when split", () => {
     expect(
-      billingSummary({ ...ticked, sameAsShipping: false, fullName: "Teszt Elek", address }, gls, t)
-    ).toBe("Teszt Elek · Fő u. 12, 3894 Telkibánya, checkout.countryHU");
+      billingLines({ ...ticked, sameAsShipping: false, fullName: "Teszt Elek", address }, gls, t)
+    ).toEqual(["Teszt Elek", "Fő u. 12", "3894 Telkibánya", "checkout.countryHU"]);
   });
 
-  it("always shows the own billing address for pickup", () => {
-    expect(billingSummary({ ...ticked, fullName: "Teszt Elek", address }, pickup, t)).toBe(
-      "Teszt Elek · Fő u. 12, 3894 Telkibánya, checkout.countryHU"
-    );
+  it("always lists the own billing address for pickup", () => {
+    expect(billingLines({ ...ticked, fullName: "Teszt Elek", address }, pickup, t)).toEqual([
+      "Teszt Elek",
+      "Fő u. 12",
+      "3894 Telkibánya",
+      "checkout.countryHU",
+    ]);
   });
 
   it("says no billing when the own fields are empty", () => {
-    expect(billingSummary(ticked, pickup, t)).toBe("checkout.noBilling");
+    expect(billingLines(ticked, pickup, t)).toEqual(["checkout.noBilling"]);
+  });
+});
+
+describe("summaryLine", () => {
+  it("joins a step's lines into the collapsed one-liner", () => {
+    expect(summaryLine(["Teszt Elek", "a@b.hu"])).toBe("Teszt Elek · a@b.hu");
   });
 });

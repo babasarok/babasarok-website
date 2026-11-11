@@ -71,8 +71,13 @@ function stored(address: OrderAddress | null): boolean {
     return false;
   }
 
-  return [address.fullName, address.streetLine1, address.streetLine2, address.postalCode, address.city]
-    .some((value) => text(value).trim() !== "");
+  return [
+    address.fullName,
+    address.streetLine1,
+    address.streetLine2,
+    address.postalCode,
+    address.city,
+  ].some((value) => text(value).trim() !== "");
 }
 
 /** Vendure returns an all-null address object rather than null when none is set. */

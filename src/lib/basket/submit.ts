@@ -8,8 +8,7 @@ import {
   type CheckoutValues,
 } from "./checkoutValues";
 
-const GENERIC_ERROR =
-  "Hiba történt a rendelés elküldése közben. Kérlek, próbáld meg újra később.";
+const GENERIC_ERROR = "Hiba történt a rendelés elküldése közben. Kérlek, próbáld meg újra később.";
 
 export interface SubmitInput {
   values: CheckoutValues;

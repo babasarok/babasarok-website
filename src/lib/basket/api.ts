@@ -341,8 +341,7 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
       orderMutation("setOrderBillingAddress", "($input: CreateAddressInput!)", "(input: $input)", {
         input,
       }),
-    unsetBillingAddress: () =>
-      orderMutation("unsetOrderBillingAddress", "", "", {}),
+    unsetBillingAddress: () => orderMutation("unsetOrderBillingAddress", "", "", {}),
     setShippingMethod: (shippingMethodId) =>
       orderMutation("setOrderShippingMethod", "($id: [ID!]!)", "(shippingMethodId: $id)", {
         id: [shippingMethodId],
