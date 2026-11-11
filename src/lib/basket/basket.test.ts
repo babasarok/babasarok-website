@@ -136,6 +136,25 @@ describe("line rows", () => {
 });
 
 describe("money", () => {
+  it("prints forints without decimals where the browser's ICU formats HUF with two", () => {
+    const RealNumberFormat = Intl.NumberFormat;
+    const spy = vi.spyOn(Intl, "NumberFormat").mockImplementation(function twoDigitHuf(
+      locale?: Intl.LocalesArgument,
+      options?: Intl.NumberFormatOptions
+    ) {
+      return new RealNumberFormat(locale, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+        ...options,
+      });
+    });
+
+    try {
+      expect(formatMoney(2500, "HUF")).not.toMatch(/,\d/);
+    } finally {
+      spy.mockRestore();
+    }
+  });
   it("reads forint amounts as whole units", () => {
     expect(majorUnits(2500, "HUF")).toBe(2500);
     expect(formatMoney(2500, "HUF")).toMatch(/2\s?500\s?Ft/);
@@ -267,7 +286,7 @@ describe("checkout readiness", () => {
     expect(contactCheck({ ...values.contact, email: "" })?.field).toBe("email");
 
     expect(shippingCheck(values.address, pickup)).toBeUndefined();
-    expect(shippingCheck(values.address, undefined)?.field).toBe("method");
+    expect(shippingCheck(values.address)?.field).toBe("method");
     expect(shippingCheck({ ...values.address, street: "" }, gls)?.field).toBe("street");
     expect(shippingCheck({ ...values.address, houseNumber: "" }, gls)?.field).toBe("houseNumber");
     expect(shippingCheck({ ...values.address, postalCode: "" }, gls)?.field).toBe("postalCode");
@@ -294,10 +313,10 @@ describe("checkout readiness", () => {
   });
 
   it("derives the entry step from what the order already has", () => {
-    expect(entryStep(EMPTY_VALUES, pickup, undefined)).toBe("contact");
-    expect(entryStep(values, pickup, undefined)).toBe("billing");
-    expect(entryStep(values, gls, undefined)).toBe("review");
-    expect(entryStep(values, undefined, undefined)).toBe("shipping");
+    expect(entryStep(EMPTY_VALUES, pickup)).toBe("contact");
+    expect(entryStep(values, pickup)).toBe("billing");
+    expect(entryStep(values, gls)).toBe("review");
+    expect(entryStep(values)).toBe("shipping");
     expect(entryStep(values, gls, "contact")).toBe("contact");
     expect(entryStep(EMPTY_VALUES, pickup, "review")).toBe("contact");
     expect(entryStep({ ...values, address: EMPTY_ADDRESS }, gls, "billing")).toBe("shipping");

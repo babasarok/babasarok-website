@@ -93,6 +93,8 @@ describe("checkoutRefusal", () => {
       "en"
     );
 
-    expect(refusal).toBe("The order cannot be submitted, missing: the delivery address (postcode).");
+    expect(refusal).toBe(
+      "The order cannot be submitted, missing: the delivery address (postcode)."
+    );
   });
 });

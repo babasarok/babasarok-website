@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AddressInput, OrderCustomFieldsInput, Result } from "./api";
-import { createCheckoutSaves, type SaveApi } from "./checkoutSaves";
+import { createCheckoutSaves, type CheckoutSaves, type SaveApi } from "./checkoutSaves";
 import type { BillingValues } from "./checkoutValues";
 import type { Order, OrderAddress, ShippingQuote } from "./schemas";
 
@@ -34,8 +34,15 @@ function toAddress(input: AddressInput): OrderAddress {
   };
 }
 
+interface FakeShop {
+  api: SaveApi;
+  saves: CheckoutSaves;
+  calls: string[];
+  current: () => Order | null;
+}
+
 /** A fake shop API holding one order, answering every mutation with the updated order. */
-function fakeShop(initial: Partial<Order> = {}) {
+function fakeShop(initial: Partial<Order> = {}): FakeShop {
   let order: Order = {
     id: "1",
     code: "ABC",
@@ -213,6 +220,21 @@ describe("createCheckoutSaves", () => {
     await shop.saves.billing(ticked, gls);
 
     expect(shop.calls).toEqual(["setOrderCustomFields"]);
+  });
+
+  it("reports whether the order took a delivery method", async () => {
+    const shop = fakeShop();
+    const refusing = createCheckoutSaves(
+      {
+        ...shop.api,
+        setShippingMethod: () =>
+          Promise.resolve({ ok: false, failure: { reason: "r", detail: "d" } }),
+      },
+      { order: shop.current, apply: (result) => result }
+    );
+
+    expect(await refusing.method("8")).toBe(false);
+    expect(await shop.saves.method("8")).toBe(true);
   });
 
   it("does nothing without an active order", async () => {

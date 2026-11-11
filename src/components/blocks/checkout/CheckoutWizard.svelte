@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import Icon from "@iconify/svelte";
   import StepStrip from "./wizard/StepStrip.svelte";
   import StepSummary from "./wizard/StepSummary.svelte";
@@ -24,7 +24,7 @@
     type CheckoutValues,
   } from "@/lib/basket/checkoutValues";
   import type { Labels } from "@/lib/basket/lineRows";
-  import { majorUnits } from "@/lib/basket/money";
+  import { formatMoney, majorUnits } from "@/lib/basket/money";
   import {
     billingCheck,
     contactCheck,
@@ -35,14 +35,15 @@
     shippingCheck,
     type FieldCheck,
   } from "@/lib/basket/readiness";
-  import type { ShippingQuote } from "@/lib/basket/schemas";
+  import type { Order, ShippingQuote } from "@/lib/basket/schemas";
   import type { SetMembers } from "@/lib/basket/setDiscounts";
   import { STEPS, stepFromHash, stepIndex, type StepId } from "@/lib/basket/steps";
   import {
-    billingLines,
-    contactLines,
-    shippingLines,
+    billingRows,
+    contactRows,
+    shippingRows,
     summaryLine,
+    type DetailRow,
     type T,
   } from "@/lib/basket/summaryText";
   import { placeOrder } from "@/lib/basket/submit";
@@ -67,6 +68,8 @@
   let fieldError = $state<FieldCheck | undefined>();
   let error = $state<string | null>(null);
   let methodPending = $state(false);
+  let methodResets = $state(0);
+  let advancing = $state(false);
   let sending = $state(false);
   let busy = $state(false);
   let success = $state<{ code: string } | null>(null);
@@ -134,6 +137,20 @@
     methodsLoaded = true;
   }
 
+  function focusHeading(id: StepId): void {
+    void tick().then(() => {
+      document.getElementById(`step-heading-${id}`)?.focus({ preventScroll: true });
+    });
+  }
+
+  function focusInvalid(id: StepId): void {
+    void tick().then(() => {
+      const form = document.forms.namedItem(`wizard-step-${id}`);
+
+      form?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+    });
+  }
+
   function syncFromHash(): void {
     const hashStep = stepFromHash(globalThis.location.hash.slice(1));
 
@@ -142,14 +159,18 @@
     }
 
     fieldError = undefined;
+    error = null;
     step = hashStep;
+    focusHeading(hashStep);
   }
 
   function goTo(id: StepId): void {
     history.pushState(null, "", `#${id}`);
     fieldError = undefined;
+    error = null;
     step = id;
     globalThis.scrollTo({ top: 0 });
+    focusHeading(id);
   }
 
   function onBack(id: StepId): void {
@@ -212,15 +233,27 @@
   }
 
   async function onContinue(id: StepId, data: FormData): Promise<void> {
+    if (advancing) {
+      return;
+    }
+
     const check = stepCheck(id, data);
 
     if (check !== undefined) {
       fieldError = check;
+      focusInvalid(id);
       return;
     }
 
     fieldError = undefined;
-    await stepSave(id, data);
+    advancing = true;
+
+    try {
+      await stepSave(id, data);
+    } finally {
+      advancing = false;
+    }
+
     goTo(STEPS[stepIndex(id) + 1].id);
   }
 
@@ -228,7 +261,12 @@
     methodPending = true;
 
     try {
-      await saves.method(shippingMethodId);
+      const taken = await saves.method(shippingMethodId);
+
+      if (!taken) {
+        methodResets += 1;
+        error = "errors.changeFailed";
+      }
     } finally {
       methodPending = false;
     }
@@ -253,36 +291,33 @@
     };
   }
 
-  function stepLines(id: StepId, values: CheckoutValues, currencyCode: string, t: T): string[] {
+  function stepRows(id: StepId, values: CheckoutValues, current: Order, t: T): DetailRow[] {
     if (id === "contact") {
-      return contactLines(values.contact);
+      return contactRows(values.contact, t);
     }
 
     if (id === "shipping") {
-      return shippingLines(method, values.address, currencyCode, t);
+      const fee = {
+        listPrice: current.shippingLines.at(0)?.priceWithTax ?? 0,
+        charged: current.shippingWithTax,
+      };
+
+      return shippingRows(method, values.address, fee, current.currencyCode, t);
     }
 
-    return billingLines(values.billing, method, t);
+    return billingRows(values.billing, method, t);
   }
 
   function translator(i18n: I18n): T {
     return (key: string) => translateMessage(i18n, key);
   }
 
-  function nextLabelKey(id: StepId): string {
-    if (id === "contact") {
-      return "checkout.continueShipping";
+  function mobileNextLabelKey(id: StepId): string {
+    if (id === "review") {
+      return "checkout.submitShort";
     }
 
-    if (id === "shipping") {
-      return "checkout.continueBilling";
-    }
-
-    if (id === "billing") {
-      return "checkout.continueReview";
-    }
-
-    return "checkout.placeOrder";
+    return "checkout.next";
   }
 
   async function removeLine(lineId: string): Promise<void> {
@@ -299,18 +334,26 @@
     }
   }
 
+  function showError(message: string): void {
+    error = message;
+
+    void tick().then(() => {
+      document.getElementById("checkout-error")?.scrollIntoView({ block: "center" });
+    });
+  }
+
   async function onSubmit(): Promise<void> {
     error = null;
 
     const found = blocker ?? reviewCheck(termsAccepted);
 
     if (found !== undefined) {
-      error = found.message;
+      showError(found.message);
       return;
     }
 
     if (method === undefined) {
-      error = "blockers.method";
+      showError("blockers.method");
       return;
     }
 
@@ -327,7 +370,7 @@
     sending = false;
 
     if (!result.ok) {
-      error = result.message;
+      showError(result.message);
       return;
     }
 
@@ -362,13 +405,13 @@
     <div class="mx-auto flex w-full max-w-160 flex-col gap-6 text-body lg:max-w-6xl">
       {#if success}
         <div
-          class="flex flex-col items-center gap-3 rounded-2xl border border-green-600 bg-green-50 p-8 text-center lg:mx-auto lg:max-w-160"
+          class="flex flex-col items-center gap-3 rounded-2xl border border-success-600 bg-success-50 p-8 text-center lg:mx-auto lg:max-w-160"
         >
-          <Icon icon="mdi:check-circle" class="text-4xl text-green-600" />
-          <p class="text-green-800">
+          <Icon icon="mdi:check-circle" class="text-4xl text-success-600" />
+          <p class="text-success-800">
             {i18n.t("checkout.success")}
           </p>
-          <p class="text-green-800">
+          <p class="text-success-800">
             {i18n.t("checkout.orderNumber")}
             <strong data-testid="order-code">{success.code}</strong>
           </p>
@@ -401,6 +444,7 @@
           class="min-h-64 w-full animate-pulse rounded-xl border border-brown-200 bg-brown-100 lg:mx-auto lg:max-w-160"
         ></div>
       {:else}
+        {@const t = translator(i18n)}
         <div class="grid grid-cols-1 items-start gap-6 pb-24 lg:grid-cols-[1fr_420px] lg:pb-0">
           <div class="flex min-w-0 flex-col">
             <div class="pb-4">
@@ -409,89 +453,88 @@
 
             {#each STEPS as stepDef (stepDef.id)}
               {@const active = stepDef.id === step}
-              {@const shown = stepIndex(stepDef.id) < currentIndex}
+              {@const shown = stepIndex(stepDef.id) < currentIndex && step !== "review"}
 
               <div>
                 <Collapse open={active}>
                   <div class="pb-4">
-                    <h2 class="pb-4 text-2xl font-bold text-headings">
-                      {translateMessage(i18n, stepDef.labelKey)}
-                    </h2>
+                    <div class="lg:rounded-2xl lg:border lg:border-brown-200 lg:bg-white lg:p-6">
+                      <h2
+                        id={`step-heading-${stepDef.id}`}
+                        tabindex="-1"
+                        class="text-2xl font-bold text-headings outline-none"
+                      >
+                        {translateMessage(i18n, stepDef.labelKey)}
+                      </h2>
+                      <p class="pt-1 pb-4 text-sm text-brown-600">
+                        {i18n.t(`checkout.stepIntro.${stepDef.id}`)}
+                      </p>
 
-                    {#if stepDef.id === "contact"}
-                      <ContactStep
-                        {locale}
-                        initial={initial.contact}
-                        error={fieldError}
-                        onSave={(data) => void saveContact(data)}
-                        onContinue={(data) => void onContinue("contact", data)}
-                      />
-                    {:else if stepDef.id === "shipping"}
-                      <ShippingStep
-                        {locale}
-                        initial={initial.address}
-                        {methods}
-                        selectedId={method?.id}
-                        {methodPending}
-                        currencyCode={order.currencyCode}
-                        error={fieldError}
-                        onMethod={(id) => void onMethod(id)}
-                        onSave={(data) => void saveShipping(data)}
-                        onContinue={(data) => void onContinue("shipping", data)}
-                        onBack={() => onBack("shipping")}
-                      />
-                    {:else if stepDef.id === "billing"}
-                      <BillingStep
-                        {locale}
-                        initial={initial.billing}
-                        {method}
-                        error={fieldError}
-                        onSave={(data) => void saveBilling(data)}
-                        onContinue={(data) => void onContinue("billing", data)}
-                        onBack={() => onBack("billing")}
-                      />
-                    {:else}
-                      <ReviewStep
-                        {locale}
-                        {order}
-                        {labels}
-                        {setMembers}
-                        {highlightedLines}
-                        initialMessage={initial.message}
-                        contactLines={stepLines(
-                          "contact",
-                          saved,
-                          order.currencyCode,
-                          translator(i18n)
-                        )}
-                        shippingLines={stepLines(
-                          "shipping",
-                          saved,
-                          order.currencyCode,
-                          translator(i18n)
-                        )}
-                        billingLines={stepLines(
-                          "billing",
-                          saved,
-                          order.currencyCode,
-                          translator(i18n)
-                        )}
-                        bind:terms={termsAccepted}
-                        {error}
-                        {sending}
-                        {submitDisabled}
-                        onBack={() => onBack("review")}
-                        onEdit={goTo}
-                        onSave={(data) => void saveMessage(data)}
-                        {onSubmit}
-                        {supportEmail}
-                        {basketInfo}
-                        shownPrices={basket.shownPrices}
-                        {busy}
-                        onHighlight={(lineIds) => (highlightedLines = lineIds)}
-                        onRemoveLine={(lineId) => removeLine(lineId)}
-                      />
-                    {/if}
+                      {#if stepDef.id === "contact"}
+                        <ContactStep
+                          {locale}
+                          initial={initial.contact}
+                          error={fieldError}
+                          pending={advancing}
+                          onSave={(data) => void saveContact(data)}
+                          onContinue={(data) => void onContinue("contact", data)}
+                        />
+                      {:else if stepDef.id === "shipping"}
+                        <ShippingStep
+                          {locale}
+                          initial={initial.address}
+                          {methods}
+                          selectedId={method?.id}
+                          {methodPending}
+                          {methodResets}
+                          pending={advancing}
+                          currencyCode={order.currencyCode}
+                          error={fieldError}
+                          onMethod={(id) => void onMethod(id)}
+                          onSave={(data) => void saveShipping(data)}
+                          onContinue={(data) => void onContinue("shipping", data)}
+                          onBack={() => onBack("shipping")}
+                        />
+                      {:else if stepDef.id === "billing"}
+                        <BillingStep
+                          {locale}
+                          initial={initial.billing}
+                          {method}
+                          error={fieldError}
+                          pending={advancing}
+                          onSave={(data) => void saveBilling(data)}
+                          onContinue={(data) => void onContinue("billing", data)}
+                          onBack={() => onBack("billing")}
+                        />
+                      {:else}
+                        <ReviewStep
+                          {locale}
+                          {order}
+                          {labels}
+                          {setMembers}
+                          {highlightedLines}
+                          initialMessage={initial.message}
+                          contactRows={stepRows("contact", saved, order, t)}
+                          shippingRows={stepRows("shipping", saved, order, t)}
+                          billingRows={stepRows("billing", saved, order, t)}
+                          total={formatMoney(order.totalWithTax, order.currencyCode)}
+                          bind:terms={termsAccepted}
+                          {error}
+                          {sending}
+                          {submitDisabled}
+                          onBack={() => onBack("review")}
+                          onEdit={goTo}
+                          onSave={(data) => void saveMessage(data)}
+                          {onSubmit}
+                          {supportEmail}
+                          {basketInfo}
+                          shownPrices={basket.shownPrices}
+                          {busy}
+                          onHighlight={(lineIds) => (highlightedLines = lineIds)}
+                          onRemoveLine={(lineId) => removeLine(lineId)}
+                        />
+                      {/if}
+                    </div>
                   </div>
                 </Collapse>
 
@@ -507,9 +550,7 @@
                       <StepSummary
                         {locale}
                         title={translateMessage(i18n, stepDef.labelKey)}
-                        summary={summaryLine(
-                          stepLines(stepDef.id, saved, order.currencyCode, translator(i18n))
-                        )}
+                        summary={summaryLine(stepRows(stepDef.id, saved, order, t))}
                         onEdit={() => goTo(stepDef.id)}
                       />
                     </div>
@@ -519,7 +560,11 @@
             {/each}
 
             {#if error !== null && step !== "review"}
-              <p class="text-sm text-danger-500" role="alert">
+              <p
+                role="alert"
+                class="flex items-start gap-1.5 rounded-lg bg-danger-500/10 p-2 text-sm text-danger-500"
+              >
+                <Icon icon="mdi:alert-circle" class="mt-0.5 shrink-0" />
                 {translateMessage(i18n, error)}
               </p>
             {/if}
@@ -531,6 +576,7 @@
             {labels}
             {setMembers}
             {highlightedLines}
+            hint={step !== "review"}
             {basketInfo}
             shownPrices={basket.shownPrices}
             {busy}
@@ -547,8 +593,9 @@
           {highlightedLines}
           backVisible={step !== "contact"}
           onBack={() => onBack(step)}
-          nextLabel={translateMessage(i18n, nextLabelKey(step))}
+          nextLabel={translateMessage(i18n, mobileNextLabelKey(step))}
           nextDisabled={step === "review" ? submitDisabled : false}
+          pending={step === "review" ? sending : advancing}
           formId={`wizard-step-${step}`}
           {basketInfo}
           shownPrices={basket.shownPrices}

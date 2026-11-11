@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { formatMoney } from "./money";
-import { billingLines, contactLines, shippingLines, summaryLine, type T } from "./summaryText";
+import { billingRows, contactRows, shippingRows, summaryLine, type T } from "./summaryText";
 import type { AddressValues, BillingValues } from "./checkoutValues";
 import type { ShippingQuote } from "./schemas";
 
@@ -21,6 +21,8 @@ const gls: ShippingQuote = {
   priceWithTax: 2500,
   customFields: { requiresAddress: true },
 };
+
+const charged = { listPrice: 2500, charged: 2500 };
 
 const address: AddressValues = {
   street: "Fő u.",
@@ -46,73 +48,92 @@ const ticked: BillingValues = {
   taxNumber: "",
 };
 
-describe("contactLines", () => {
-  it("lists the name, email and phone, skipping missing parts", () => {
+const addressValue = "Fő u. 12, 3894 Telkibánya, checkout.countryHU";
+
+describe("contactRows", () => {
+  it("labels the name, email and phone, skipping missing parts", () => {
     expect(
-      contactLines({ lastName: "Teszt", firstName: "Elek", email: "a@b.hu", phone: "+3630" })
-    ).toEqual(["Teszt Elek", "a@b.hu", "+3630"]);
-    expect(contactLines({ lastName: "Teszt", firstName: "", email: "", phone: "" })).toEqual([
-      "Teszt",
+      contactRows({ lastName: "Teszt", firstName: "Elek", email: "a@b.hu", phone: "+3630" }, t)
+    ).toEqual([
+      { label: "checkout.detail.name", value: "Teszt Elek" },
+      { label: "checkout.detail.email", value: "a@b.hu" },
+      { label: "checkout.detail.phone", value: "+3630" },
+    ]);
+    expect(contactRows({ lastName: "Teszt", firstName: "", email: "", phone: "" }, t)).toEqual([
+      { label: "checkout.detail.name", value: "Teszt" },
     ]);
   });
 });
 
-describe("shippingLines", () => {
+describe("shippingRows", () => {
   it("is empty when no method is chosen", () => {
-    expect(shippingLines(undefined, address, "HUF", t)).toEqual([]);
+    expect(shippingRows(undefined, address, charged, "HUF", t)).toEqual([]);
   });
 
-  it("lists the method with its price, then the delivery address line by line", () => {
-    expect(shippingLines(gls, address, "HUF", t)).toEqual([
-      `GLS · ${formatMoney(2500, "HUF")}`,
-      "Fő u. 12",
-      "3894 Telkibánya",
-      "checkout.countryHU",
+  it("lists the method, what the order charges and the delivery address", () => {
+    expect(shippingRows(gls, address, charged, "HUF", t)).toEqual([
+      { label: "checkout.detail.method", value: "GLS" },
+      { label: "checkout.detail.fee", value: formatMoney(2500, "HUF") },
+      { label: "checkout.detail.address", value: addressValue },
     ]);
+  });
+
+  it("says free when a promotion zeroed a charged delivery", () => {
+    expect(shippingRows(gls, address, { listPrice: 2500, charged: 0 }, "HUF", t)[1]).toEqual({
+      label: "checkout.detail.fee",
+      value: "checkout.free",
+    });
   });
 
   it("omits the address for a method that needs none", () => {
-    expect(shippingLines(pickup, address, "HUF", t)).toEqual([
-      `Személyes átvétel · ${formatMoney(0, "HUF")}`,
+    expect(shippingRows(pickup, address, { listPrice: 0, charged: 0 }, "HUF", t)).toEqual([
+      { label: "checkout.detail.method", value: "Személyes átvétel" },
+      { label: "checkout.detail.fee", value: formatMoney(0, "HUF") },
     ]);
   });
 });
 
-describe("billingLines", () => {
+describe("billingRows", () => {
   it("says same-as-shipping when ticked for an address method", () => {
-    expect(billingLines(ticked, gls, t)).toEqual(["checkout.sameAsShipping"]);
+    expect(billingRows(ticked, gls, t)).toEqual([
+      { label: "checkout.detail.address", value: "checkout.sameAsShipping" },
+    ]);
   });
 
   it("labels the company and tax number", () => {
-    expect(billingLines({ ...ticked, company: "Minta Kft.", taxNumber: "123" }, gls, t)).toEqual([
-      "checkout.sameAsShipping",
-      "checkout.company: Minta Kft.",
-      "checkout.taxNumber: 123",
+    expect(billingRows({ ...ticked, company: "Minta Kft.", taxNumber: "123" }, gls, t)).toEqual([
+      { label: "checkout.detail.address", value: "checkout.sameAsShipping" },
+      { label: "checkout.company", value: "Minta Kft." },
+      { label: "checkout.taxNumber", value: "123" },
     ]);
   });
 
-  it("lists the own billing name and address when split", () => {
+  it("lists the own billing name and address when split, and always for pickup", () => {
+    const own = [
+      { label: "checkout.detail.name", value: "Teszt Elek" },
+      { label: "checkout.detail.address", value: addressValue },
+    ];
+
     expect(
-      billingLines({ ...ticked, sameAsShipping: false, fullName: "Teszt Elek", address }, gls, t)
-    ).toEqual(["Teszt Elek", "Fő u. 12", "3894 Telkibánya", "checkout.countryHU"]);
-  });
-
-  it("always lists the own billing address for pickup", () => {
-    expect(billingLines({ ...ticked, fullName: "Teszt Elek", address }, pickup, t)).toEqual([
-      "Teszt Elek",
-      "Fő u. 12",
-      "3894 Telkibánya",
-      "checkout.countryHU",
-    ]);
+      billingRows({ ...ticked, sameAsShipping: false, fullName: "Teszt Elek", address }, gls, t)
+    ).toEqual(own);
+    expect(billingRows({ ...ticked, fullName: "Teszt Elek", address }, pickup, t)).toEqual(own);
   });
 
   it("says no billing when the own fields are empty", () => {
-    expect(billingLines(ticked, pickup, t)).toEqual(["checkout.noBilling"]);
+    expect(billingRows(ticked, pickup, t)).toEqual([
+      { label: "checkout.detail.address", value: "checkout.noBilling" },
+    ]);
   });
 });
 
 describe("summaryLine", () => {
-  it("joins a step's lines into the collapsed one-liner", () => {
-    expect(summaryLine(["Teszt Elek", "a@b.hu"])).toBe("Teszt Elek · a@b.hu");
+  it("joins a step's values into the collapsed one-liner", () => {
+    expect(
+      summaryLine([
+        { label: "a", value: "Teszt Elek" },
+        { label: "b", value: "a@b.hu" },
+      ])
+    ).toBe("Teszt Elek · a@b.hu");
   });
 });

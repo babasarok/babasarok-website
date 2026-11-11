@@ -13,11 +13,12 @@
     locale: Locale;
     initial: ContactValues;
     error?: FieldCheck | undefined;
+    pending: boolean;
     onSave: (data: FormData) => void;
     onContinue: (data: FormData) => void;
   }
 
-  let { locale, initial, error, onSave, onContinue }: Props = $props();
+  let { locale, initial, error, pending, onSave, onContinue }: Props = $props();
 
   function nameError(): boolean {
     return error?.field === "name";
@@ -50,7 +51,7 @@
     <form
       id="wizard-step-contact"
       data-testid="step-contact"
-      class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-white p-4 sm:p-6"
+      class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-white p-4 sm:p-6 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0"
       onchange={(event) => onSave(new FormData(event.currentTarget))}
       onsubmit={(event) => {
         event.preventDefault();
@@ -68,6 +69,7 @@
             type="text"
             autocomplete="family-name"
             aria-invalid={nameError()}
+            aria-describedby={nameError() ? "contact-name-error" : undefined}
             class={nameError() ? "border-danger-500" : ""}
             value={initial.lastName}
           />
@@ -83,6 +85,7 @@
             type="text"
             autocomplete="given-name"
             aria-invalid={nameError()}
+            aria-describedby={nameError() ? "contact-name-error" : undefined}
             class={nameError() ? "border-danger-500" : ""}
             value={initial.firstName}
           />
@@ -131,10 +134,15 @@
         <Button
           type="submit"
           variant="contained"
-          class="flex flex-nowrap items-center h-8 px-2 uppercase"
+          class="flex h-11 flex-nowrap items-center gap-2 px-6 uppercase"
+          disabled={pending}
+          aria-busy={pending}
         >
           {i18n.t("checkout.continueShipping")}
-          <Icon icon="mdi:arrow-right" class="ml-2 text-lg" />
+          <Icon
+            icon={pending ? "mdi:loading" : "mdi:arrow-right"}
+            class="text-lg {pending ? 'animate-spin' : ''}"
+          />
         </Button>
       </div>
     </form>

@@ -17,12 +17,13 @@
     initial: BillingValues;
     method: ShippingQuote | undefined;
     error?: FieldCheck | undefined;
+    pending: boolean;
     onSave: (data: FormData) => void;
     onContinue: (data: FormData) => void;
     onBack: () => void;
   }
 
-  let { locale, initial, method, error, onSave, onContinue, onBack }: Props = $props();
+  let { locale, initial, method, error, pending, onSave, onContinue, onBack }: Props = $props();
 
   function seed(): boolean {
     return initial.sameAsShipping;
@@ -40,7 +41,7 @@
     <form
       id="wizard-step-billing"
       data-testid="step-billing"
-      class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-white p-4 sm:p-6"
+      class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-white p-4 sm:p-6 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0"
       onchange={(event) => onSave(new FormData(event.currentTarget))}
       onsubmit={(event) => {
         event.preventDefault();
@@ -132,17 +133,22 @@
       </div>
 
       <div class="mt-2 hidden items-center justify-between gap-3 lg:flex">
-        <Button type="button" variant="outlined" class="h-8 px-2" onclick={onBack}>
+        <Button type="button" variant="outlined" class="h-11 px-6" onclick={onBack}>
           {i18n.t("checkout.back")}
         </Button>
 
         <Button
           type="submit"
           variant="contained"
-          class="h-8 px-2 uppercase flex flex-nowrap items-center"
+          class="flex h-11 flex-nowrap items-center gap-2 px-6 uppercase"
+          disabled={pending}
+          aria-busy={pending}
         >
           {i18n.t("checkout.continueReview")}
-          <Icon icon="mdi:arrow-right" class="ml-2 text-lg" />
+          <Icon
+            icon={pending ? "mdi:loading" : "mdi:arrow-right"}
+            class="text-lg {pending ? 'animate-spin' : ''}"
+          />
         </Button>
       </div>
     </form>

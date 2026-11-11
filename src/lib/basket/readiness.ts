@@ -66,7 +66,7 @@ function addressMissingPart(address: AddressValues): FieldCheck | undefined {
 
 export function shippingCheck(
   address: AddressValues,
-  method: ShippingQuote | undefined
+  method?: ShippingQuote
 ): FieldCheck | undefined {
   if (method === undefined) {
     return { field: "method", message: "blockers.method" };
@@ -116,7 +116,7 @@ export function orderBlocker(order: Order | null): FieldCheck | undefined {
 }
 
 /** The first step whose saved data is incomplete; the review step always passes. */
-export function furthestStep(values: CheckoutValues, method: ShippingQuote | undefined): StepId {
+export function furthestStep(values: CheckoutValues, method?: ShippingQuote): StepId {
   const checks = [
     contactCheck(values.contact),
     shippingCheck(values.address, method),
@@ -137,8 +137,8 @@ export function furthestStep(values: CheckoutValues, method: ShippingQuote | und
  */
 export function entryStep(
   values: CheckoutValues,
-  method: ShippingQuote | undefined,
-  hashStep: StepId | undefined
+  method?: ShippingQuote,
+  hashStep?: StepId
 ): StepId {
   const derived = furthestStep(values, method);
 

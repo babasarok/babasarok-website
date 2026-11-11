@@ -42,20 +42,6 @@
     shippingLine !== undefined && shippingLine.priceWithTax > 0 && order.shippingWithTax === 0
   );
 
-  function badgesFor(line: OrderLine): string[] {
-    const titles = (order.setDiscounts ?? [])
-      .filter((entry) => entry.lines.some((member) => member.orderLineId === line.id))
-      .map((entry) => entry.title);
-
-    const state = line.setState;
-
-    if (state !== null && state !== undefined && state.kind !== "ACTIVE") {
-      titles.push(state.title);
-    }
-
-    return [...new Set(titles)];
-  }
-
   function linePriceChange(line: OrderLine): PriceChange | undefined {
     if (shownPrices === undefined) {
       return undefined;
@@ -78,7 +64,6 @@
           priceChange={linePriceChange(line)}
           highlighted={highlightedLines.includes(line.id)}
           {busy}
-          badges={badgesFor(line)}
           onRemove={() => onRemoveLine(line.id)}
         />
       {/each}

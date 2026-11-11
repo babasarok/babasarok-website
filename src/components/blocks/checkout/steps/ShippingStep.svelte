@@ -18,6 +18,8 @@
     methods: ShippingQuote[];
     selectedId: string | undefined;
     methodPending: boolean;
+    methodResets: number;
+    pending: boolean;
     currencyCode: string;
     error?: FieldCheck | undefined;
     onMethod: (shippingMethodId: string) => void;
@@ -32,6 +34,8 @@
     methods,
     selectedId,
     methodPending,
+    methodResets,
+    pending,
     currencyCode,
     error,
     onMethod,
@@ -60,7 +64,7 @@
     <form
       id="wizard-step-shipping"
       data-testid="step-shipping"
-      class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-white p-4 sm:p-6"
+      class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-white p-4 sm:p-6 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0"
       onchange={onChange}
       onsubmit={(event) => {
         event.preventDefault();
@@ -68,28 +72,31 @@
       }}
     >
       <div class="flex flex-col gap-2" role="radiogroup" aria-label={i18n.t("checkout.shipping")}>
-        {#each methods as option (option.id)}
-          <label
-            class="flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm transition-all {selectedId ===
-            option.id
-              ? 'border-brown-600 bg-brown-50 ring-1 ring-brown-500'
-              : 'border-brown-200 bg-white hover:border-brown-400'}"
-          >
-            <input
-              type="radio"
-              name={METHOD_INPUT}
-              value={option.id}
-              data-testid={`method-${option.id}`}
-              class="size-4 shrink-0 accent-accent"
-              checked={option.id === selectedId}
-              disabled={methodPending}
-              onchange={() => onMethod(option.id)}
-            />
-            <span class="font-medium text-body">{option.name}</span>
-            <span class="text-body">·</span>
-            <span class="text-body">{formatMoney(option.priceWithTax, currencyCode)}</span>
-          </label>
-        {/each}
+        {#key methodResets}
+          {#each methods as option (option.id)}
+            <label
+              class="flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm transition-all {selectedId ===
+              option.id
+                ? 'border-brown-600 bg-brown-50 ring-1 ring-brown-500'
+                : 'border-brown-200 bg-white hover:border-brown-400'}"
+            >
+              <input
+                type="radio"
+                name={METHOD_INPUT}
+                value={option.id}
+                data-testid={`method-${option.id}`}
+                class="size-4 shrink-0 accent-accent"
+                checked={option.id === selectedId}
+                disabled={methodPending}
+                aria-invalid={error?.field === "method"}
+                onchange={() => onMethod(option.id)}
+              />
+              <span class="font-medium text-body">{option.name}</span>
+              <span class="text-body">·</span>
+              <span class="text-body">{formatMoney(option.priceWithTax, currencyCode)}</span>
+            </label>
+          {/each}
+        {/key}
       </div>
 
       {#if error?.field === "method"}
@@ -110,17 +117,22 @@
       </Collapse>
 
       <div class="mt-2 hidden items-center justify-between gap-3 lg:flex">
-        <Button type="button" variant="outlined" class="h-8 px-2" onclick={onBack}>
+        <Button type="button" variant="outlined" class="h-11 px-6" onclick={onBack}>
           {i18n.t("checkout.back")}
         </Button>
 
         <Button
           type="submit"
           variant="contained"
-          class="h-8 px-2 uppercase flex flex-nowrap items-center"
+          class="flex h-11 flex-nowrap items-center gap-2 px-6 uppercase"
+          disabled={pending}
+          aria-busy={pending}
         >
           {i18n.t("checkout.continueBilling")}
-          <Icon icon="mdi:arrow-right" class="ml-2 text-lg" />
+          <Icon
+            icon={pending ? "mdi:loading" : "mdi:arrow-right"}
+            class="text-lg {pending ? 'animate-spin' : ''}"
+          />
         </Button>
       </div>
     </form>

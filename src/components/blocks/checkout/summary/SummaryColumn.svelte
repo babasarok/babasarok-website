@@ -14,6 +14,7 @@
     labels: Labels;
     setMembers: SetMembers;
     highlightedLines: readonly string[];
+    hint: boolean;
     basketInfo?: string | undefined;
     shownPrices?: ShownPrices | undefined;
     busy?: boolean;
@@ -27,6 +28,7 @@
     labels,
     setMembers,
     highlightedLines,
+    hint,
     basketInfo,
     shownPrices,
     busy = false,
@@ -37,7 +39,7 @@
 
 <I18nGate {locale}>
   {#snippet children(i18n: I18n)}
-    <aside class="hidden lg:sticky lg:top-8 lg:block">
+    <aside class="hidden lg:sticky lg:top-8 lg:block" data-testid="summary-column">
       <div class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-white p-6 shadow-sm">
         <h2 class="text-2xl font-bold text-headings">{i18n.t("checkout.summaryTitle")}</h2>
         <OrderSummary
@@ -52,7 +54,9 @@
           {onHighlight}
           {onRemoveLine}
         />
-        <p class="text-sm italic text-brown-500">{i18n.t("checkout.summaryHint")}</p>
+        {#if hint}
+          <p class="text-sm italic text-brown-500">{i18n.t("checkout.summaryHint")}</p>
+        {/if}
       </div>
     </aside>
   {/snippet}

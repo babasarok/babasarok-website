@@ -21,7 +21,6 @@
     priceChange: PriceChange | undefined;
     highlighted: boolean;
     busy: boolean;
-    badges: string[];
     onRemove: () => void;
   }
 
@@ -34,7 +33,6 @@
     priceChange,
     highlighted,
     busy,
-    badges,
     onRemove,
   }: Props = $props();
 
@@ -69,18 +67,6 @@
       ]}
       data-testid="checkout-line"
     >
-      <!-- {#if badges.length > 0}
-        <div class="absolute top-2 left-2 z-10 flex max-w-40 flex-col items-start gap-1">
-          {#each badges as badge (badge)}
-            <span
-              class="rounded-full border border-brown-200 bg-brown-100/95 px-2 py-0.5 text-[11px] leading-tight font-medium text-brown-700"
-            >
-              {badge}
-            </span>
-          {/each}
-        </div>
-      {/if} -->
-
       <div class="flex items-start gap-3">
         {#if thumbnail}
           <img
@@ -133,7 +119,8 @@
           type="button"
           onclick={onRemove}
           disabled={busy}
-          class="flex cursor-pointer items-center gap-1 text-brown-500 transition-colors hover:text-red-600 text-base"
+          aria-label={i18n.t("basket.remove")}
+          class="flex cursor-pointer items-center gap-1 text-brown-500 transition-colors hover:text-danger-500 text-base"
         >
           <Icon icon="mdi:delete-outline" class="shrink-0" />
         </button>

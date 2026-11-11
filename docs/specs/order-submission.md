@@ -14,22 +14,28 @@ owner.
 The system SHALL provide the order form on a dedicated checkout page
 (`/checkout`) as a multi-step wizard: **Kapcsolat** (contact), **Szállítás**
 (delivery), **Számlázás** (billing) and **Áttekintés** (review). The step list
-is data rendered as a progress strip (completed ✓ / active / upcoming); each
-completed step collapses to a one-line summary with a `Módosítás` link that
-reopens it, and the active step's form is the only editable one. The step
-index is synced to the URL hash: browser back returns to the previous step,
-a refresh lands on the saved step, and the saved step is derived from what
-the active order already has when the hash is absent or ahead of the data.
+is data rendered as a progress strip (completed ✓ / active / upcoming), and
+the active step's form is the only editable one. The step index is synced to
+the URL hash: browser back returns to the previous step, a refresh lands on
+the saved step, and the saved step is derived from what the active order
+already has when the hash is absent or ahead of the data. Moving to a step
+moves keyboard focus to its heading.
 
-The wizard SHALL offer exactly one submit affordance: the Áttekintés step
-carries the terms checkbox and the CTA; the order-summary panel shows no
-submit button before it. The order summary (basket lines, set discounts,
-totals) is a sticky column beside the steps on desktop; on mobile it is a
-sticky bottom bar with the total that expands to the full summary. On desktop
-each completed step collapses to a one-line summary with a `Módosítás` link
-that reopens it, and a flow transitions between its full and summary state;
-on mobile only the active flow's full card renders and the context comes from
-the progress strip plus browser back/forward through the URL hash. Basket
+The wizard SHALL offer exactly one submit affordance per layout: the
+Áttekintés step carries the terms checkbox and the CTA; the order-summary
+panel shows no submit button. The order summary (basket lines, set discounts,
+totals) is a sticky column beside the steps on desktop. On mobile a sticky
+bottom bar always shows the step's back and forward actions (forward submits
+on Áttekintés) and a basket toggle that opens the full summary as a sheet,
+which repeats the same actions. On desktop each completed step collapses to a
+one-line summary with a `Módosítás` link that reopens it, and a flow
+transitions between its full and summary state; on Áttekintés the summaries
+give way to the review's labelled details of every step, each with its own
+`Módosítás`, followed by the total, the message, what happens after
+submitting, and the terms. On mobile only the active flow's full card renders
+and the context comes from the progress strip plus browser back/forward
+through the URL hash. A step's forward action is unavailable while its save is
+in flight, and a failed step check focuses the first invalid field. Basket
 lines in the summary are display-only (`N db`): quantity and configuration
 changes happen only through the `Szerkesztés` deep link into the product-page
 configurator (`?line=`, which supports quantity); removal stays in the

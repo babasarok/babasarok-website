@@ -5,7 +5,7 @@ export interface StepDef {
   labelKey: string;
 }
 
-/** The step list is data: epic 7 inserted Számlázás without a redesign. */
+/** The wizard's steps in order; the progress strip and the step blocks render from this list. */
 export const STEPS: readonly StepDef[] = [
   { id: "contact", labelKey: "checkout.steps.contact" },
   { id: "shipping", labelKey: "checkout.steps.shipping" },

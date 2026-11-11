@@ -20,7 +20,12 @@ export function majorUnits(amount: number, currencyCode: string): number {
 }
 
 export function formatMoney(amount: number, currencyCode: string): string {
-  return new Intl.NumberFormat("hu-HU", { style: "currency", currency: currencyCode }).format(
-    majorUnits(amount, currencyCode)
-  );
+  const digits = fractionDigits(currencyCode);
+
+  return new Intl.NumberFormat("hu-HU", {
+    style: "currency",
+    currency: currencyCode,
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(majorUnits(amount, currencyCode));
 }

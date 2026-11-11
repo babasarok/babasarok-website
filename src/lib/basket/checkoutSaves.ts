@@ -33,7 +33,8 @@ export interface CheckoutSaves {
   contact(contact: ContactValues): Promise<void>;
   shipping(address: AddressValues): Promise<void>;
   billing(billing: BillingValues, method: ShippingQuote | undefined): Promise<void>;
-  method(shippingMethodId: string): Promise<void>;
+  /** Resolves whether the order took the method, so the shown choice can fall back. */
+  method(shippingMethodId: string): Promise<boolean>;
   message(message: string): Promise<void>;
   /** Resolves once every queued save has settled. */
   settled(): Promise<void>;
@@ -114,10 +115,13 @@ export function createCheckoutSaves(api: SaveApi, port: OrderPort): CheckoutSave
 
         await apply(api.setOrderCustomFields({ taxNumber: billing.taxNumber }));
       }),
-    method: (shippingMethodId) =>
-      enqueue(async () => {
-        await apply(api.setShippingMethod(shippingMethodId));
-      }),
+    method: (shippingMethodId) => {
+      let taken = false;
+
+      return enqueue(async () => {
+        taken = await apply(api.setShippingMethod(shippingMethodId));
+      }).then(() => taken);
+    },
     message: (message) =>
       enqueue(async () => {
         await apply(api.setOrderCustomFields({ message }));

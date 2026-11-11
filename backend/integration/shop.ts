@@ -370,7 +370,12 @@ export async function setBillingAddress(shopper: Shopper, company = ""): Promise
 
 export async function setOrderNotes(
   shopper: Shopper,
-  fields: { message: string; termsAccepted: boolean; submissionTransactionId: string; taxNumber?: string }
+  fields: {
+    message: string;
+    termsAccepted: boolean;
+    submissionTransactionId: string;
+    taxNumber?: string;
+  }
 ): Promise<void> {
   await run(
     shopper.client,
