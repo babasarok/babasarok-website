@@ -39,7 +39,8 @@
 
 <I18nGate {locale}>
   {#snippet children(i18n: I18n)}
-    <aside class="hidden lg:sticky lg:top-8 lg:block" data-testid="summary-column">
+    <!-- TODO: factor out header height (100px) -->
+    <aside class="hidden lg:sticky lg:top-25 lg:block" data-testid="summary-column">
       <div class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-white p-6 shadow-sm">
         <h2 class="text-2xl font-bold text-headings">{i18n.t("checkout.summaryTitle")}</h2>
         <OrderSummary
