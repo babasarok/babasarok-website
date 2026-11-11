@@ -1,15 +1,13 @@
 import {
   billingUsesOwnFields,
-  type AddressDraft,
-  type BillingDraft,
-  type ContactDraft,
-} from "./drafts";
+  type AddressValues,
+  type BillingValues,
+  type ContactValues,
+} from "./checkoutValues";
 import { formatMoney } from "./money";
-import type { ShippingQuote } from "./schemas";
+import { requiresAddress, type ShippingQuote } from "./schemas";
 
 export type T = (key: string, vars?: Record<string, unknown>) => string;
-
-const DEFAULT_CURRENCY = "HUF";
 
 function present(value: string): boolean {
   return value.trim() !== "";
@@ -19,14 +17,14 @@ function joined(parts: readonly string[], separator: string): string {
   return parts.filter(present).join(separator);
 }
 
-export function contactSummary(contact: ContactDraft): string {
+export function contactSummary(contact: ContactValues): string {
   return joined(
     [joined([contact.lastName, contact.firstName], " "), contact.email, contact.phone],
     " · "
   );
 }
 
-function addressLine(address: AddressDraft, t: T): string {
+function addressLine(address: AddressValues, t: T): string {
   const street = joined([address.street, address.houseNumber], " ");
   const locality = joined([address.postalCode, address.city], " ");
 
@@ -39,45 +37,41 @@ function addressLine(address: AddressDraft, t: T): string {
   return joined([street, locality, country], ", ");
 }
 
-function companySuffix(billing: BillingDraft): string {
-  const parts = joined([billing.company, billing.taxNumber], " · ");
-
-  return parts === "" ? "" : ` · ${parts}`;
-}
-
 export function shippingSummary(
   method: ShippingQuote | undefined,
-  address: AddressDraft,
-  t: T,
-  currencyCode: string = DEFAULT_CURRENCY
+  address: AddressValues,
+  currencyCode: string,
+  t: T
 ): string {
   if (method === undefined) {
     return "";
   }
 
-  return `${method.name} · ${formatMoney(method.priceWithTax, currencyCode)}`;
+  const name = `${method.name} · ${formatMoney(method.priceWithTax, currencyCode)}`;
+
+  if (!requiresAddress(method)) {
+    return name;
+  }
+
+  return joined([name, addressLine(address, t)], " · ");
 }
 
 export function billingSummary(
-  billing: BillingDraft,
+  billing: BillingValues,
   method: ShippingQuote | undefined,
   t: T
 ): string {
-  const company = companySuffix(billing);
+  const company = joined([billing.company, billing.taxNumber], " · ");
 
   if (!billingUsesOwnFields(billing, method)) {
-    return t("checkout.sameAsShipping") + company;
+    return joined([t("checkout.sameAsShipping"), company], " · ");
   }
 
-  const line = addressLine(billing.address, t);
+  const own = joined([billing.fullName, addressLine(billing.address, t), company], " · ");
 
-  if (line === "" && company === "") {
+  if (own === "") {
     return t("checkout.noBilling");
   }
 
-  if (line === "") {
-    return company.replace(/^ · /, "");
-  }
-
-  return line + company;
+  return own;
 }

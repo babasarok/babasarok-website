@@ -154,6 +154,7 @@ const translation = {
     addressNote: "Az adataid automatikusan mentődnek, később is folytathatod.",
     phoneHint: "GLS SMS értesítéshez",
     sameAsShipping: "Azonos a szállítási címmel",
+    fullName: "Név *",
     companyGroupLabel: "Cégnév és adószám (vállalkozásoknak, opcionális)",
     company: "Cégnév",
     taxNumber: "Adószám",
@@ -194,6 +195,7 @@ const translation = {
     houseNumber: "Kérjük, add meg a házszámot.",
     postalCode: "Kérjük, add meg az irányítószámot.",
     city: "Kérjük, add meg a várost.",
+    fullName: "Kérjük, add meg a számlázási nevet.",
   },
   errorCodes: {
     EMAIL_ADDRESS_CONFLICT_ERROR:

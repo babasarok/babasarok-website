@@ -5,27 +5,19 @@
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import type { i18n as I18n } from "i18next";
   import type { Locale } from "@/lib/i18n";
-  import type { ContactDraft } from "@/lib/basket/drafts";
+  import { FIELD, type ContactValues } from "@/lib/basket/checkoutValues";
   import type { FieldCheck } from "@/lib/basket/readiness";
   import { translateMessage } from "@/lib/i18next-client";
 
   interface Props {
     locale: Locale;
-    contact: ContactDraft;
+    initial: ContactValues;
     error?: FieldCheck | undefined;
-    onContinue: () => void;
-    onBack?: () => void;
-    first?: boolean;
+    onSave: (data: FormData) => void;
+    onContinue: (data: FormData) => void;
   }
 
-  let {
-    locale,
-    contact,
-    error,
-    onContinue,
-    onBack,
-    first = false,
-  }: Props = $props();
+  let { locale, initial, error, onSave, onContinue }: Props = $props();
 
   function nameError(): boolean {
     return error?.field === "name";
@@ -59,9 +51,10 @@
       id="wizard-step-contact"
       data-testid="step-contact"
       class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-white p-4 sm:p-6"
+      onchange={(event) => onSave(new FormData(event.currentTarget))}
       onsubmit={(event) => {
         event.preventDefault();
-        onContinue();
+        onContinue(new FormData(event.currentTarget));
       }}
     >
       <div class="grid grid-cols-1 gap-x-3 gap-y-1 sm:grid-cols-2">
@@ -71,11 +64,12 @@
           </label>
           <TextInput
             id="contact-lastName"
+            name={FIELD.lastName}
             type="text"
             autocomplete="family-name"
             aria-invalid={nameError()}
             class={nameError() ? "border-danger-500" : ""}
-            bind:value={contact.lastName}
+            value={initial.lastName}
           />
         </div>
 
@@ -85,11 +79,12 @@
           </label>
           <TextInput
             id="contact-firstName"
+            name={FIELD.firstName}
             type="text"
             autocomplete="given-name"
             aria-invalid={nameError()}
             class={nameError() ? "border-danger-500" : ""}
-            bind:value={contact.firstName}
+            value={initial.firstName}
           />
         </div>
 
@@ -104,12 +99,13 @@
         </label>
         <TextInput
           id="contact-email"
+          name={FIELD.email}
           type="email"
           autocomplete="email"
           aria-invalid={emailError()}
           aria-describedby={emailError() ? "contact-email-error" : undefined}
           class={emailError() ? "border-danger-500" : ""}
-          bind:value={contact.email}
+          value={initial.email}
         />
         {@render errorText(emailCheck(), "contact-email-error")}
       </div>
@@ -122,21 +118,17 @@
             {i18n.t("checkout.phoneHint")}
           </span> -->
         </label>
-        <TextInput id="contact-phone" type="tel" autocomplete="tel" bind:value={contact.phone} />
+        <TextInput
+          id="contact-phone"
+          name={FIELD.phone}
+          type="tel"
+          autocomplete="tel"
+          value={initial.phone}
+        />
       </div>
 
-      <div class="mt-2 hidden items-center justify-between gap-3 lg:flex">
-        {#if !first}
-          <Button type="button" variant="outlined" class="h-8 px-2" onclick={onBack}>
-            {i18n.t("checkout.back")}
-          </Button>
-        {/if}
-
-        <Button
-          type="submit"
-          variant="contained"
-          class="flex flex-nowrap items-center h-8 px-2 uppercase {first ? 'ml-auto' : ''}"
-        >
+      <div class="mt-2 hidden items-center justify-end gap-3 lg:flex">
+        <Button type="submit" variant="contained" class="flex flex-nowrap items-center h-8 px-2 uppercase">
           {i18n.t("checkout.continueShipping")}
           <Icon icon="mdi:arrow-right" class="ml-2 text-lg" />
         </Button>

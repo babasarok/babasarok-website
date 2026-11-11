@@ -14,14 +14,15 @@
   import type { i18n as I18n } from "i18next";
   import type { Locale } from "@/lib/i18n";
   import { basket } from "@/lib/basket/basket.svelte";
+  import { createCheckoutSaves } from "@/lib/basket/checkoutSaves";
   import {
-    EMPTY_DRAFTS,
-    adoptPickupBilling,
-    createDraftSaver,
-    draftsFromOrder,
-    restoreShippingBilling,
-    type CheckoutDrafts,
-  } from "@/lib/basket/drafts";
+    addressFromForm,
+    billingFromForm,
+    contactFromForm,
+    messageFromForm,
+    valuesFromOrder,
+    type CheckoutValues,
+  } from "@/lib/basket/checkoutValues";
   import type { Labels } from "@/lib/basket/lineRows";
   import { majorUnits } from "@/lib/basket/money";
   import {
@@ -29,20 +30,24 @@
     contactCheck,
     entryStep,
     orderBlocker,
+    orderMethod,
     reviewCheck,
-    selectedMethod,
     shippingCheck,
     type FieldCheck,
   } from "@/lib/basket/readiness";
-  import { requiresAddress, type ShippingQuote } from "@/lib/basket/schemas";
+  import type { ShippingQuote } from "@/lib/basket/schemas";
   import type { SetMembers } from "@/lib/basket/setDiscounts";
   import { STEPS, stepFromHash, stepIndex, type StepId } from "@/lib/basket/steps";
-  import { billingSummary, contactSummary, shippingSummary } from "@/lib/basket/summaryText";
+  import {
+    billingSummary,
+    contactSummary,
+    shippingSummary,
+    type T,
+  } from "@/lib/basket/summaryText";
   import { placeOrder } from "@/lib/basket/submit";
   import { reportClientError } from "@/lib/errorReport";
   import { randomUUID } from "@/lib/uuid";
   import { translateMessage } from "@/lib/i18next-client";
-  import type { T } from "@/lib/basket/summaryText";
 
   interface Props {
     locale: Locale;
@@ -54,32 +59,30 @@
 
   let { locale, labels, setMembers, supportEmail, basketInfo }: Props = $props();
 
-  let drafts = $state<CheckoutDrafts>(EMPTY_DRAFTS);
   let methods = $state<ShippingQuote[]>([]);
-  let shippingMethodId = $state("");
+  let methodsLoaded = $state(false);
+  let initial = $state.raw<CheckoutValues | null>(null);
   let step = $state<StepId>("contact");
+  let fieldError = $state<FieldCheck | undefined>();
   let error = $state<string | null>(null);
+  let methodPending = $state(false);
   let sending = $state(false);
   let busy = $state(false);
   let success = $state<{ code: string } | null>(null);
   let highlightedLines = $state<readonly string[]>([]);
-  let fieldError = $state<FieldCheck | undefined>();
-  let methodsLoading = $state(false);
-  let methodsSettled = $state(false);
   let termsAccepted = $state(false);
 
   const order = $derived(basket.order);
-  const method = $derived(selectedMethod(methods, shippingMethodId));
+  const method = $derived(orderMethod(order, methods));
+  const saved = $derived(order === null ? null : valuesFromOrder(order));
   const currentIndex = $derived(stepIndex(step));
   const blocker = $derived(orderBlocker(order));
   const submitDisabled = $derived(sending || blocker !== undefined || !termsAccepted);
 
-  const saver = createDraftSaver(basket.api, () => ({ drafts, method }));
-
-  let prefilledFor: string | null = null;
-  let entryResolved = false;
-  let addressState: boolean | null = null;
-  let pickupAdopted = false;
+  const saves = createCheckoutSaves(basket.api, {
+    order: () => basket.order,
+    apply: (result) => basket.apply(result),
+  });
 
   onMount(() => {
     basket.start();
@@ -94,41 +97,9 @@
   });
 
   $effect(() => {
-    const current = basket.order;
-
-    if (current === null || current.id === prefilledFor) {
-      return;
-    }
-
-    prefilledFor = current.id;
-    drafts = draftsFromOrder(current);
-    saver.adopt(drafts);
-    shippingMethodId = current.shippingLines.at(0)?.shippingMethod.id ?? "";
-  });
-
-  $effect(() => {
-    if (!methodsSettled || entryResolved || basket.order === null) {
-      return;
-    }
-
-    entryResolved = true;
-    step = entryStep(
-      basket.order,
-      methods,
-      drafts,
-      stepFromHash(globalThis.location.hash.slice(1))
-    );
-
-    if (globalThis.location.hash.slice(1) !== step) {
-      history.replaceState(null, "", `#${step}`);
-    }
-  });
-
-  $effect(() => {
-    const key = order ? `${order.id}:${order.totalWithTax}` : null;
+    const key = order === null ? null : `${order.id}:${order.totalWithTax}`;
 
     if (key === null) {
-      methods = [];
       return;
     }
 
@@ -136,101 +107,30 @@
   });
 
   $effect(() => {
-    const chosen = shippingMethodId;
-    const applied = basket.order?.shippingLines.at(0)?.shippingMethod.id;
-
-    if (chosen === "" || chosen === applied || basket.order === null) {
+    if (initial !== null || order === null || !methodsLoaded) {
       return;
     }
 
-    void basket.setShippingMethod(chosen);
-  });
+    const values = valuesFromOrder(order);
 
-  $effect(() => {
-    const next = selectedMethod(methods, shippingMethodId);
+    initial = values;
+    step = entryStep(values, method, stepFromHash(globalThis.location.hash.slice(1)));
 
-    if (next === undefined) {
-      return;
-    }
-
-    const isPickup = !requiresAddress(next);
-
-    if (addressState === null) {
-      addressState = isPickup;
-
-      if (isPickup) {
-        drafts = adoptPickupBilling(drafts);
-      }
-
-      return;
-    }
-
-    if (isPickup === addressState) {
-      return;
-    }
-
-    addressState = isPickup;
-
-    if (isPickup) {
-      drafts = adoptPickupBilling(drafts);
-      pickupAdopted = true;
-      return;
-    }
-
-    if (pickupAdopted) {
-      pickupAdopted = false;
-      drafts = restoreShippingBilling(drafts);
+    if (globalThis.location.hash.slice(1) !== step) {
+      history.replaceState(null, "", `#${step}`);
     }
   });
 
-  $effect(() => {
-    const _reads = JSON.stringify(drafts) + (method?.id ?? "");
+  async function loadMethods(): Promise<void> {
+    const result = await basket.api.eligibleShippingMethods();
 
-    const timer = setTimeout(saveDrafts, 800);
-
-    return () => clearTimeout(timer);
-  });
-
-  function saveDrafts(): void {
-    if (sending || success !== null) {
+    if (!result.ok) {
+      error = "errors.loadMethods";
       return;
     }
 
-    void saver.save();
-  }
-
-  async function loadMethods(): Promise<boolean> {
-    methodsLoading = true;
-
-    try {
-      const result = await basket.api.eligibleShippingMethods();
-
-      if (!result.ok) {
-        error = "errors.loadMethods";
-        return false;
-      }
-
-      methods = result.value;
-
-      const current = basket.order?.shippingLines.at(0)?.shippingMethod.id;
-
-      if (shippingMethodId === "" && current !== undefined) {
-        shippingMethodId = current;
-      }
-
-      return true;
-    } finally {
-      methodsLoading = false;
-      methodsSettled = true;
-    }
-  }
-
-  async function onCountryChange(): Promise<void> {
-    await loadMethods();
-
-    if (shippingMethodId !== "" && !methods.some((option) => option.id === shippingMethodId)) {
-      shippingMethodId = "";
-    }
+    methods = result.value;
+    methodsLoaded = true;
   }
 
   function syncFromHash(): void {
@@ -251,48 +151,117 @@
     globalThis.scrollTo({ top: 0 });
   }
 
-  function stepCheck(id: StepId): FieldCheck | undefined {
+  function onBack(id: StepId): void {
+    goTo(STEPS[stepIndex(id) - 1].id);
+  }
+
+  function saveContact(data: FormData): Promise<void> {
+    const contact = contactFromForm(data);
+
+    if (contactCheck(contact) !== undefined) {
+      return Promise.resolve();
+    }
+
+    return saves.contact(contact);
+  }
+
+  async function saveShipping(data: FormData): Promise<void> {
+    await saves.shipping(addressFromForm(data));
+    await loadMethods();
+  }
+
+  function saveBilling(data: FormData): Promise<void> {
+    return saves.billing(billingFromForm(data), method);
+  }
+
+  function saveMessage(data: FormData): Promise<void> {
+    return saves.message(messageFromForm(data));
+  }
+
+  function stepCheck(id: StepId, data: FormData): FieldCheck | undefined {
     if (id === "contact") {
-      return contactCheck(drafts.contact);
+      return contactCheck(contactFromForm(data));
     }
 
     if (id === "shipping") {
-      return shippingCheck(drafts.address, method);
+      return shippingCheck(addressFromForm(data), method);
     }
 
     if (id === "billing") {
-      return billingCheck(drafts.billing, method);
+      return billingCheck(billingFromForm(data), method);
     }
 
     return undefined;
   }
 
-  function onContinue(id: StepId): void {
-    const check = stepCheck(id);
+  function stepSave(id: StepId, data: FormData): Promise<void> {
+    if (id === "contact") {
+      return saveContact(data);
+    }
+
+    if (id === "shipping") {
+      return saveShipping(data);
+    }
+
+    if (id === "billing") {
+      return saveBilling(data);
+    }
+
+    return saveMessage(data);
+  }
+
+  async function onContinue(id: StepId, data: FormData): Promise<void> {
+    const check = stepCheck(id, data);
 
     if (check !== undefined) {
       fieldError = check;
       return;
     }
 
+    fieldError = undefined;
+    await stepSave(id, data);
     goTo(STEPS[stepIndex(id) + 1].id);
-    void saver.save();
   }
 
-  function onBack(id: StepId): void {
-    goTo(STEPS[stepIndex(id) - 1].id);
+  async function onMethod(shippingMethodId: string): Promise<void> {
+    methodPending = true;
+
+    try {
+      await saves.method(shippingMethodId);
+    } finally {
+      methodPending = false;
+    }
   }
 
-  function stepText(id: StepId, t: T): string {
+  function formData(id: StepId): FormData {
+    const form = document.forms.namedItem(`wizard-step-${id}`);
+
+    if (form === null) {
+      return new FormData();
+    }
+
+    return new FormData(form);
+  }
+
+  function valuesFromForms(): CheckoutValues {
+    return {
+      contact: contactFromForm(formData("contact")),
+      address: addressFromForm(formData("shipping")),
+      billing: billingFromForm(formData("billing")),
+      message: messageFromForm(formData("review")),
+    };
+  }
+
+  function stepText(id: StepId, values: CheckoutValues, currencyCode: string, t: T): string {
     if (id === "contact") {
-      return contactSummary(drafts.contact);
+      return contactSummary(values.contact);
     }
 
     if (id === "shipping") {
-      return shippingSummary(method, drafts.address, t);
+      return shippingSummary(method, values.address, currencyCode, t);
     }
 
-    return billingSummary(drafts.billing, method, t);
+    return billingSummary(values.billing, method, t);
   }
 
   function translator(i18n: I18n): T {
@@ -345,12 +314,12 @@
     }
 
     sending = true;
-    await saver.save();
+    await saves.settled();
 
     const transactionId = randomUUID();
     const result = await placeOrder(
       basket.api,
-      { drafts, shippingMethod: method, termsAccepted, transactionId },
+      { values: valuesFromForms(), shippingMethod: method, termsAccepted, transactionId },
       (report) => reportClientError({ kind: "order", ...report })
     );
 
@@ -390,11 +359,7 @@
 <I18nGate {locale}>
   {#snippet children(i18n: I18n)}
     <div class="mx-auto flex w-full max-w-160 flex-col gap-6 text-body lg:max-w-6xl">
-      {#if !basket.loaded}
-        <div
-          class="min-h-64 w-full animate-pulse rounded-xl border border-brown-200 bg-brown-100 lg:mx-auto lg:max-w-160"
-        ></div>
-      {:else if success}
+      {#if success}
         <div
           class="flex flex-col items-center gap-3 rounded-2xl border border-green-600 bg-green-50 p-8 text-center lg:mx-auto lg:max-w-160"
         >
@@ -413,7 +378,7 @@
             {i18n.t("checkout.backToProducts")}
           </a>
         </div>
-      {:else if !order || order.lines.length === 0}
+      {:else if basket.loaded && (order === null || order.lines.length === 0)}
         <div
           class="flex flex-col items-center gap-3 rounded-2xl border border-brown-200 bg-brown-50 p-8 text-center lg:mx-auto lg:max-w-160"
         >
@@ -430,11 +395,12 @@
             {i18n.t("checkout.viewProducts")}
           </a>
         </div>
-      {:else}
+      {:else if initial === null || order === null || saved === null}
         <div
-          class="grid grid-cols-1 items-start gap-6 pb-24 lg:grid-cols-[1fr_420px] lg:pb-0"
-          onfocusout={saveDrafts}
-        >
+          class="min-h-64 w-full animate-pulse rounded-xl border border-brown-200 bg-brown-100 lg:mx-auto lg:max-w-160"
+        ></div>
+      {:else}
+        <div class="grid grid-cols-1 items-start gap-6 pb-24 lg:grid-cols-[1fr_420px] lg:pb-0">
           <div class="flex min-w-0 flex-col">
             <div class="pb-4">
               <StepStrip {locale} current={step} onJump={goTo} />
@@ -442,8 +408,7 @@
 
             {#each STEPS as stepDef (stepDef.id)}
               {@const active = stepDef.id === step}
-              {@const completed = stepIndex(stepDef.id) < currentIndex}
-              {@const shown = completed && !active}
+              {@const shown = stepIndex(stepDef.id) < currentIndex}
 
               <div>
                 <Collapse open={active}>
@@ -455,59 +420,53 @@
                     {#if stepDef.id === "contact"}
                       <ContactStep
                         {locale}
-                        contact={drafts.contact}
+                        initial={initial.contact}
                         error={fieldError}
-                        first
-                        onContinue={() => onContinue("contact")}
+                        onSave={(data) => void saveContact(data)}
+                        onContinue={(data) => void onContinue("contact", data)}
                       />
                     {:else if stepDef.id === "shipping"}
                       <ShippingStep
                         {locale}
-                        address={drafts.address}
+                        initial={initial.address}
                         {methods}
-                        bind:shippingMethodId
+                        selectedId={method?.id}
+                        {methodPending}
+                        currencyCode={order.currencyCode}
                         error={fieldError}
-                        {methodsLoading}
-                        onContinue={() => onContinue("shipping")}
+                        onMethod={(id) => void onMethod(id)}
+                        onSave={(data) => void saveShipping(data)}
+                        onContinue={(data) => void onContinue("shipping", data)}
                         onBack={() => onBack("shipping")}
-                        {onCountryChange}
                       />
                     {:else if stepDef.id === "billing"}
                       <BillingStep
                         {locale}
-                        billing={drafts.billing}
+                        initial={initial.billing}
                         {method}
                         error={fieldError}
-                        onContinue={() => onContinue("billing")}
+                        onSave={(data) => void saveBilling(data)}
+                        onContinue={(data) => void onContinue("billing", data)}
                         onBack={() => onBack("billing")}
                       />
                     {:else}
-                      {@const contactText = contactSummary(drafts.contact)}
-                      {@const shippingText = shippingSummary(
-                        method,
-                        drafts.address,
-                        translator(i18n)
-                      )}
-                      {@const billingText = billingSummary(
-                        drafts.billing,
-                        method,
-                        translator(i18n)
-                      )}
                       <ReviewStep
                         {locale}
                         {order}
                         {labels}
                         {setMembers}
                         {highlightedLines}
-                        contactSummary={contactText}
-                        shippingSummary={shippingText}
-                        billingSummary={billingText}
+                        initialMessage={initial.message}
+                        contactSummary={stepText("contact", saved, order.currencyCode, translator(i18n))}
+                        shippingSummary={stepText("shipping", saved, order.currencyCode, translator(i18n))}
+                        billingSummary={stepText("billing", saved, order.currencyCode, translator(i18n))}
                         bind:terms={termsAccepted}
                         {error}
                         {sending}
                         {submitDisabled}
                         onBack={() => onBack("review")}
                         onEdit={goTo}
+                        onSave={(data) => void saveMessage(data)}
                         {onSubmit}
                         {supportEmail}
                         {basketInfo}
@@ -532,7 +491,7 @@
                       <StepSummary
                         {locale}
                         title={translateMessage(i18n, stepDef.labelKey)}
-                        summary={stepText(stepDef.id, translator(i18n))}
+                        summary={stepText(stepDef.id, saved, order.currencyCode, translator(i18n))}
                         onEdit={() => goTo(stepDef.id)}
                       />
                     </div>
@@ -571,7 +530,7 @@
           backVisible={step !== "contact"}
           onBack={() => onBack(step)}
           nextLabel={translateMessage(i18n, nextLabelKey(step))}
-          nextDisabled={step === "review" ? submitDisabled || sending : false}
+          nextDisabled={step === "review" ? submitDisabled : false}
           formId={`wizard-step-${step}`}
           {basketInfo}
           shownPrices={basket.shownPrices}

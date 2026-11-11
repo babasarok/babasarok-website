@@ -1,15 +1,18 @@
 import type { BasketApi, Failure, Result } from "./api";
-import type { Order, ShippingQuote } from "./schemas";
-import { requiresAddress } from "./schemas";
-import { billingAddressInput, type CheckoutDrafts } from "./drafts";
-
-export const DEFAULT_COUNTRY = "HU";
+import { requiresAddress, type Order, type ShippingQuote } from "./schemas";
+import {
+  billingPlan,
+  customerInput,
+  recipientOf,
+  shippingAddressInput,
+  type CheckoutValues,
+} from "./checkoutValues";
 
 const GENERIC_ERROR =
   "Hiba történt a rendelés elküldése közben. Kérlek, próbáld meg újra később.";
 
 export interface SubmitInput {
-  drafts: CheckoutDrafts;
+  values: CheckoutValues;
   shippingMethod: ShippingQuote;
   termsAccepted: boolean;
   transactionId: string;
@@ -25,58 +28,44 @@ export interface OrderErrorReport {
 }
 
 async function runSequence(api: BasketApi, input: SubmitInput): Promise<Result<Order>> {
-  const { drafts } = input;
-  const customer = await api.setCustomer({
-    emailAddress: drafts.contact.email.trim(),
-    phoneNumber: drafts.contact.phone.trim(),
-    firstName: drafts.contact.firstName.trim(),
-    lastName: drafts.contact.lastName.trim(),
-  });
+  const { values, shippingMethod } = input;
+  const customer = await api.setCustomer(customerInput(values.contact));
 
   if (!customer.ok) {
     return customer;
   }
 
-  if (requiresAddress(input.shippingMethod)) {
-    const address = await api.setShippingAddress({
-      streetLine1: drafts.address.street.trim(),
-      streetLine2: drafts.address.houseNumber.trim(),
-      postalCode: drafts.address.postalCode.trim(),
-      city: drafts.address.city.trim(),
-      countryCode: drafts.address.country,
-    });
+  const plan = billingPlan(values.billing, shippingMethod);
+
+  if (requiresAddress(shippingMethod)) {
+    const address = await api.setShippingAddress(
+      shippingAddressInput(values.address, recipientOf(values.contact), plan.shippingCompany)
+    );
 
     if (!address.ok) {
       return address;
     }
   }
 
-  const method = await api.setShippingMethod(input.shippingMethod.id);
+  const method = await api.setShippingMethod(shippingMethod.id);
 
   if (!method.ok) {
     return method;
   }
 
-  const billingInput = billingAddressInput(drafts.billing, drafts.address, input.shippingMethod);
+  const billing =
+    plan.billingAddress === null
+      ? await api.unsetBillingAddress()
+      : await api.setBillingAddress(plan.billingAddress);
 
-  if (billingInput === null) {
-    const unset = await api.unsetBillingAddress();
-
-    if (!unset.ok) {
-      return unset;
-    }
-  } else {
-    const billing = await api.setBillingAddress(billingInput);
-
-    if (!billing.ok) {
-      return billing;
-    }
+  if (!billing.ok) {
+    return billing;
   }
 
   const fields = await api.setOrderCustomFields({
-    message: drafts.message,
+    message: values.message,
     termsAccepted: input.termsAccepted,
-    taxNumber: drafts.billing.taxNumber,
+    taxNumber: values.billing.taxNumber,
     submissionTransactionId: input.transactionId,
   });
 

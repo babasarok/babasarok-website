@@ -7,23 +7,32 @@
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import type { i18n as I18n } from "i18next";
   import type { Locale } from "@/lib/i18n";
-  import type { BillingDraft } from "@/lib/basket/drafts";
+  import { FIELD, type BillingValues } from "@/lib/basket/checkoutValues";
   import type { FieldCheck } from "@/lib/basket/readiness";
   import { requiresAddress, type ShippingQuote } from "@/lib/basket/schemas";
+  import { translateMessage } from "@/lib/i18next-client";
 
   interface Props {
     locale: Locale;
-    billing: BillingDraft;
+    initial: BillingValues;
     method: ShippingQuote | undefined;
     error?: FieldCheck | undefined;
-    onContinue: () => void;
+    onSave: (data: FormData) => void;
+    onContinue: (data: FormData) => void;
     onBack: () => void;
   }
 
-  let { locale, billing, method, error, onContinue, onBack }: Props = $props();
+  let { locale, initial, method, error, onSave, onContinue, onBack }: Props = $props();
+
+  function seed(): boolean {
+    return initial.sameAsShipping;
+  }
+
+  let sameAsShipping = $state(seed());
 
   const pickup = $derived(!requiresAddress(method));
-  const showAddress = $derived(pickup || !billing.sameAsShipping || error !== undefined);
+  const showAddress = $derived(pickup || !sameAsShipping || error !== undefined);
+  const nameError = $derived(error?.field === "fullName");
 </script>
 
 <I18nGate {locale}>
@@ -32,17 +41,19 @@
       id="wizard-step-billing"
       data-testid="step-billing"
       class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-white p-4 sm:p-6"
+      onchange={(event) => onSave(new FormData(event.currentTarget))}
       onsubmit={(event) => {
         event.preventDefault();
-        onContinue();
+        onContinue(new FormData(event.currentTarget));
       }}
     >
       {#if !pickup}
         <label class="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-body">
           <input
             type="checkbox"
+            name={FIELD.sameAsShipping}
             data-testid="billing-same-toggle"
-            bind:checked={billing.sameAsShipping}
+            bind:checked={sameAsShipping}
             class="size-4 accent-accent"
           />
           {i18n.t("checkout.sameAsShipping")}
@@ -55,7 +66,35 @@
             <p class="text-xs text-brown-600 italic">{i18n.t("checkout.pickupBillingNote")}</p>
           {/if}
 
-          <AddressFields {locale} address={billing.address} {error} idPrefix="billing" />
+          <div class="flex flex-col gap-1">
+            <label for="billing-fullName" class="text-sm font-medium text-body">
+              {i18n.t("checkout.fullName")}
+            </label>
+            <TextInput
+              id="billing-fullName"
+              name={FIELD.fullName}
+              type="text"
+              autocomplete="billing name"
+              aria-invalid={nameError}
+              aria-describedby={nameError ? "billing-fullName-error" : undefined}
+              class={nameError ? "border-danger-500" : ""}
+              value={initial.fullName}
+            />
+            {#if nameError && error}
+              <p id="billing-fullName-error" class="flex items-center gap-1 text-xs text-danger-500">
+                <Icon icon="mdi:alert-circle-outline" class="size-3.5 shrink-0" />
+                <span>{translateMessage(i18n, error.message)}</span>
+              </p>
+            {/if}
+          </div>
+
+          <AddressFields
+            {locale}
+            initial={initial.address}
+            section="billing"
+            idPrefix="billing"
+            {error}
+          />
         </div>
       </Collapse>
 
@@ -68,9 +107,10 @@
           </label>
           <TextInput
             id="billing-company"
+            name={FIELD.company}
             type="text"
             autocomplete="organization"
-            bind:value={billing.company}
+            value={initial.company}
           />
         </div>
 
@@ -78,7 +118,13 @@
           <label for="billing-taxNumber" class="text-sm font-medium text-body">
             {i18n.t("checkout.taxNumber")}
           </label>
-          <TextInput id="billing-taxNumber" type="text" bind:value={billing.taxNumber} />
+          <TextInput
+            id="billing-taxNumber"
+            name={FIELD.taxNumber}
+            type="text"
+            autocomplete="off"
+            value={initial.taxNumber}
+          />
         </div>
       </div>
 

@@ -159,6 +159,7 @@ const translation = {
     addressNote: "Your details are saved automatically; you can continue later.",
     phoneHint: "for GLS SMS notifications",
     sameAsShipping: "Same as the shipping address",
+    fullName: "Name *",
     companyGroupLabel: "Company name and tax number (for businesses, optional)",
     company: "Company name",
     taxNumber: "Tax number",
@@ -199,6 +200,7 @@ const translation = {
     houseNumber: "Please enter the house number.",
     postalCode: "Please enter the postcode.",
     city: "Please enter the city.",
+    fullName: "Please enter the billing name.",
   },
   errorCodes: {
     EMAIL_ADDRESS_CONFLICT_ERROR:

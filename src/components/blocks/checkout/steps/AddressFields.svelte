@@ -4,19 +4,19 @@
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import type { i18n as I18n } from "i18next";
   import type { Locale } from "@/lib/i18n";
-  import type { AddressDraft } from "@/lib/basket/drafts";
+  import { FIELD, type AddressValues } from "@/lib/basket/checkoutValues";
   import type { FieldCheck } from "@/lib/basket/readiness";
   import { translateMessage } from "@/lib/i18next-client";
 
   interface Props {
     locale: Locale;
-    address: AddressDraft;
-    error?: FieldCheck | undefined;
+    initial: AddressValues;
+    section: "shipping" | "billing";
     idPrefix: string;
-    onCountryChange?: () => Promise<void> | void;
+    error?: FieldCheck | undefined;
   }
 
-  let { locale, address, error, idPrefix, onCountryChange }: Props = $props();
+  let { locale, initial, section, idPrefix, error }: Props = $props();
 
   function errorFor(field: string): FieldCheck | undefined {
     return error?.field === field ? error : undefined;
@@ -46,12 +46,13 @@
           </label>
           <TextInput
             id={`${idPrefix}-street`}
+            name={FIELD.street}
             type="text"
-            autocomplete="address-line1"
+            autocomplete={`${section} address-line1`}
             aria-invalid={hasError("street")}
             aria-describedby={hasError("street") ? `${idPrefix}-street-error` : undefined}
             class={hasError("street") ? "border-danger-500" : ""}
-            bind:value={address.street}
+            value={initial.street}
           />
           {@render errorText(errorFor("street"), `${idPrefix}-street-error`)}
         </div>
@@ -62,12 +63,13 @@
           </label>
           <TextInput
             id={`${idPrefix}-houseNumber`}
+            name={FIELD.houseNumber}
             type="text"
-            autocomplete="address-line2"
+            autocomplete="off"
             aria-invalid={hasError("houseNumber")}
             aria-describedby={hasError("houseNumber") ? `${idPrefix}-houseNumber-error` : undefined}
             class={hasError("houseNumber") ? "border-danger-500" : ""}
-            bind:value={address.houseNumber}
+            value={initial.houseNumber}
           />
           {@render errorText(errorFor("houseNumber"), `${idPrefix}-houseNumber-error`)}
         </div>
@@ -78,13 +80,14 @@
           </label>
           <TextInput
             id={`${idPrefix}-postalCode`}
+            name={FIELD.postalCode}
             type="text"
             inputmode="numeric"
-            autocomplete="postal-code"
+            autocomplete={`${section} postal-code`}
             aria-invalid={hasError("postalCode")}
             aria-describedby={hasError("postalCode") ? `${idPrefix}-postalCode-error` : undefined}
             class={hasError("postalCode") ? "border-danger-500" : ""}
-            bind:value={address.postalCode}
+            value={initial.postalCode}
           />
           {@render errorText(errorFor("postalCode"), `${idPrefix}-postalCode-error`)}
         </div>
@@ -95,12 +98,13 @@
           </label>
           <TextInput
             id={`${idPrefix}-city`}
+            name={FIELD.city}
             type="text"
-            autocomplete="address-level2"
+            autocomplete={`${section} address-level2`}
             aria-invalid={hasError("city")}
             aria-describedby={hasError("city") ? `${idPrefix}-city-error` : undefined}
             class={hasError("city") ? "border-danger-500" : ""}
-            bind:value={address.city}
+            value={initial.city}
           />
           {@render errorText(errorFor("city"), `${idPrefix}-city-error`)}
         </div>
@@ -112,10 +116,10 @@
         </label>
         <select
           id={`${idPrefix}-country`}
-          autocomplete="country"
+          name={FIELD.country}
+          autocomplete={`${section} country`}
           class="w-full rounded border border-brown-200 bg-white px-2 py-1 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-sand-300/40"
-          bind:value={address.country}
-          onchange={() => void onCountryChange?.()}
+          value={initial.country}
         >
           <option value="HU">{i18n.t("checkout.countryHU")}</option>
         </select>

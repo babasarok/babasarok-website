@@ -11,6 +11,7 @@
   import type { SetMembers } from "@/lib/basket/setDiscounts";
   import type { ShownPrices } from "@/lib/basket/stale";
   import type { StepId } from "@/lib/basket/steps";
+  import { FIELD } from "@/lib/basket/checkoutValues";
   import { translateMessage } from "@/lib/i18next-client";
 
   interface Props {
@@ -19,6 +20,7 @@
     labels: Labels;
     setMembers: SetMembers;
     highlightedLines: readonly string[];
+    initialMessage: string;
     contactSummary: string;
     shippingSummary: string;
     billingSummary: string;
@@ -28,6 +30,7 @@
     submitDisabled: boolean;
     onBack: () => void;
     onEdit: (step: StepId) => void;
+    onSave: (data: FormData) => void;
     onSubmit: () => void;
     supportEmail: string | null | undefined;
     basketInfo?: string | undefined;
@@ -43,6 +46,7 @@
     labels,
     setMembers,
     highlightedLines,
+    initialMessage,
     contactSummary,
     shippingSummary,
     billingSummary,
@@ -52,6 +56,7 @@
     submitDisabled,
     onBack,
     onEdit,
+    onSave,
     onSubmit,
     supportEmail,
     basketInfo,
@@ -68,6 +73,7 @@
       id="wizard-step-review"
       data-testid="step-review"
       class="flex flex-col gap-4 rounded-2xl border border-brown-200 bg-white p-4 sm:p-6"
+      onchange={(event) => onSave(new FormData(event.currentTarget))}
       onsubmit={(event) => {
         event.preventDefault();
         onSubmit();
@@ -127,8 +133,23 @@
         </p>
       {/if}
 
+      <textarea
+        name={FIELD.message}
+        rows="4"
+        aria-label={i18n.t("checkout.messagePlaceholder")}
+        placeholder={i18n.t("checkout.messagePlaceholder")}
+        class="min-h-22 rounded border border-brown-200 bg-white p-2 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-sand-300/40"
+        value={initialMessage}
+      ></textarea>
+
       <label class="flex cursor-pointer items-start gap-2.5 text-sm text-body">
-        <input type="checkbox" bind:checked={terms} required class="size-4 accent-accent" />
+        <input
+          type="checkbox"
+          name={FIELD.terms}
+          bind:checked={terms}
+          required
+          class="size-4 accent-accent"
+        />
         <span>
           {i18n.t("checkout.termsPrefix")}
           <a href="/terms" target="_blank" rel="noopener" class="underline hover:text-brown-700"

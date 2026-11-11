@@ -27,6 +27,7 @@ export const OrderLineSchema = z.object({
 });
 
 export const OrderAddressSchema = z.object({
+  fullName: z.string().nullable(),
   company: z.string().nullable(),
   streetLine1: z.string().nullable(),
   streetLine2: z.string().nullable(),

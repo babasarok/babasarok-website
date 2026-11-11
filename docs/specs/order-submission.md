@@ -114,28 +114,35 @@ validation.
 
 ### Checkout details follow the active order
 
-While a basket is in progress the checkout SHALL save what the buyer types
-onto the active order through the same native mutations the submission uses
-(`setCustomerForOrder` only when name and email are valid,
-`setOrderShippingAddress` with the structured fields,
-`setOrderBillingAddress` with the structured fields and the company,
+The active order is the checkout's only state. The form SHALL stay
+uneditable until the active order and its eligible shipping methods have
+loaded, then show each field's value from the order. While a basket is in
+progress the checkout SHALL save each step onto the active order through the
+same native mutations the submission uses (`setCustomerForOrder` only when
+name and email are valid, `setOrderShippingAddress` with the structured
+fields, `setOrderBillingAddress` / `unsetOrderBillingAddress`,
 `setOrderCustomFields` with `message` and the `taxNumber`,
-`setOrderShippingMethod` on selection), on blur and after a short pause in
-typing, and SHALL pre-fill name, email, phone, the delivery address, the
-billing address and its toggle state, the tax number, the message and the
-delivery method from the active order on load. A failed save SHALL NOT block
-typing or submitting; submission still sends every field. Contact details are
-never stored in the browser, and the ÁSZF acceptance is never saved or
-pre-filled. A new basket after a placed order starts empty. Each step's
-`Tovább` also writes that step's fields onto the order; a step's validation
-covers only that step's fields, the server-side validation is unchanged and
-remains authoritative.
+`setOrderShippingMethod` on selection) whenever a field's value is committed
+(the native `change` event, which browsers also fire for autofill) and on the
+step's `Tovább`. A save sends the values the inputs currently hold — read
+from the form itself, so autofill and password managers that change values
+without events are saved too — and its response replaces the shown order.
+Saves run one at a time. A failed save SHALL NOT block typing or submitting;
+submission re-reads every step's inputs and sends every field. Contact
+details are never stored in the browser, and the ÁSZF acceptance is never
+saved or pre-filled. A new basket after a placed order starts empty. A step's
+validation covers only that step's fields; the server-side validation is
+unchanged and remains authoritative.
 
 - **Scenario: Returning to an unfinished basket**
   - WHEN a buyer fills in the details, then reloads, opens another tab or
     returns on a later visit
-  - THEN name, email, phone, address, message and delivery method are
-    pre-filled from the active order and the ÁSZF box is unchecked
+  - THEN name, email, phone, the addresses, the company and tax number, the
+    message and the delivery method are pre-filled from the active order and
+    the ÁSZF box is unchecked
+- **Scenario: Autofill**
+  - WHEN the browser autofills a step's fields
+  - THEN the filled values are saved onto the active order like typed ones
 - **Scenario: Next basket after an order**
   - WHEN the buyer places an order and starts a new basket
   - THEN the checkout form is empty
@@ -153,9 +160,12 @@ everywhere — it is stored in the address's native `streetLine2` column
 The address section is visible only when the selected method
 `requiresAddress`; switching to `Személyes átvétel` hides it while a saved
 address is kept but not required, and switching back to an address method
-shows it pre-filled. Changing the country re-fetches
-`eligibleShippingMethods`; if the selected method is no longer eligible, its
-selection clears and the wizard stays on the step.
+shows it pre-filled. The delivery address also carries the recipient for the
+carrier label in its native columns: `fullName` (the customer's name, surname
+first) and `phoneNumber` (the customer's phone, for the carrier's SMS).
+Changing the country saves the address and re-fetches
+`eligibleShippingMethods`; a selected method that is no longer eligible shows
+as unselected and the wizard stays on the step until one is chosen.
 
 - **Scenario: Method switched to pickup**
   - WHEN the buyer selects `Személyes átvétel` after entering an address
@@ -165,19 +175,21 @@ selection clears and the wizard stays on the step.
 ### Billing address
 
 The Számlázás step SHALL collect the order's billing address with the same
-structured field shape as the delivery address — it is not a company form.
-For delivery methods that require an address, a toggle `Azonos a szállítási
-címmel` (default on) keeps the billing address off the order; turning it off
-reveals the billing fields, which then must be complete. For delivery
-methods without a delivery address (`Személyes átvétel`) there is no toggle:
-the billing address is mandatory, because it is the buyer's only address —
-the fields start pre-filled from the saved delivery address when there is
-one. Company data is a separate optional group (`Cégnév`, `Adószám`) shown
-for both toggle states: the company name is stored in the billing address's
-native `company` column and the tax number in the order's `taxNumber` custom
-field. The billing address is the order's native billing address
-(`setOrderBillingAddress`); when the toggle is on and no company is given,
-the order carries no billing address.
+structured field shape as the delivery address plus a required `Név`
+(the address's native `fullName`) — it is not a company form. For delivery
+methods that require an address, a toggle `Azonos a szállítási címmel`
+(default on, and on whenever the order has no billing address) keeps the
+billing address off the order (`unsetOrderBillingAddress`); turning it off
+reveals the billing fields, which then must be complete. For delivery methods
+without a delivery address (`Személyes átvétel`) there is no toggle: the
+billing address is mandatory, because it is the buyer's only address. No
+billing field is copied from the delivery address. Company data is a separate
+optional group (`Cégnév`, `Adószám`) shown for both toggle states, stored in
+native columns where Vendure has them: the company name goes to the `company`
+column of the address that stands for the invoice buyer — the billing address
+when the order has one, otherwise the delivery address — and the tax number,
+which has no native column, to the order's `taxNumber` custom field. The
+invoice buyer is therefore always `billingAddress ?? shippingAddress`.
 
 ### Order submission
 
@@ -189,11 +201,13 @@ this order, each result checked before the next:
 2. `setCustomerForOrder` — email, first/last name (surname first), `phoneNumber`;
 3. `setOrderShippingAddress` — the structured address (street in
    `streetLine1`, house number in `streetLine2`, postcode, city, the shop's
-   `countryCode`); required only when the method `requiresAddress`;
+   `countryCode`, the recipient's `fullName` and `phoneNumber`, and the
+   company when the order has no billing address); required only when the
+   method `requiresAddress`;
 4. `setOrderShippingMethod` — one of `eligibleShippingMethods`;
-5. `setOrderBillingAddress` — the structured billing address with the company
-   in its `company` field, or its unset when the billing matches the
-   delivery address and no company is given (the billing spec section above);
+5. `setOrderBillingAddress` — the billing step's own address with its
+   `fullName` and `company`, or `unsetOrderBillingAddress` when the toggle
+   keeps the billing address off the order (the billing section above);
 6. `setOrderCustomFields` — `message`, `termsAccepted`, `taxNumber` and
    `submissionTransactionId` (a unique identifier generated per submission
    attempt; named so to avoid the native, payment-derived `transactionId`);

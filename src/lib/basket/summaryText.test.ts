@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { formatMoney } from "./money";
 import { billingSummary, contactSummary, shippingSummary, type T } from "./summaryText";
-import { EMPTY_ADDRESS, EMPTY_BILLING, type AddressDraft, type BillingDraft } from "./drafts";
+import type { AddressValues, BillingValues } from "./checkoutValues";
 import type { ShippingQuote } from "./schemas";
 
 const t: T = (key: string) => key;
@@ -22,12 +22,22 @@ const gls: ShippingQuote = {
   customFields: { requiresAddress: true },
 };
 
-const address: AddressDraft = {
+const address: AddressValues = {
   street: "Fő u.",
   houseNumber: "12",
   postalCode: "3894",
   city: "Telkibánya",
   country: "HU",
+};
+
+const empty: AddressValues = { street: "", houseNumber: "", postalCode: "", city: "", country: "HU" };
+
+const ticked: BillingValues = {
+  sameAsShipping: true,
+  fullName: "",
+  address: empty,
+  company: "",
+  taxNumber: "",
 };
 
 describe("contactSummary", () => {
@@ -52,65 +62,46 @@ describe("contactSummary", () => {
 
 describe("shippingSummary", () => {
   it("is empty when no method is chosen", () => {
-    expect(shippingSummary(undefined, address, t)).toBe("");
+    expect(shippingSummary(undefined, address, "HUF", t)).toBe("");
   });
 
-  it("shows the method name and the formatted price", () => {
-    expect(shippingSummary(gls, address, t)).toBe(`GLS · ${formatMoney(2500, "HUF")}`);
+  it("shows the method, its price and the delivery address", () => {
+    expect(shippingSummary(gls, address, "HUF", t)).toBe(
+      `GLS · ${formatMoney(2500, "HUF")} · Fő u. 12, 3894 Telkibánya, checkout.countryHU`
+    );
+  });
+
+  it("omits the address for a method that needs none", () => {
+    expect(shippingSummary(pickup, address, "HUF", t)).toBe(
+      `Személyes átvétel · ${formatMoney(0, "HUF")}`
+    );
   });
 });
 
 describe("billingSummary", () => {
-  it("refers to the shipping address when the addresses match", () => {
-    const billing: BillingDraft = { ...EMPTY_BILLING, sameAsShipping: true };
-
-    expect(billingSummary(billing, gls, t)).toBe("checkout.sameAsShipping");
+  it("says same-as-shipping when ticked for an address method", () => {
+    expect(billingSummary(ticked, gls, t)).toBe("checkout.sameAsShipping");
   });
 
-  it("appends the company data to the shipping-address reference", () => {
-    const billing: BillingDraft = { ...EMPTY_BILLING, company: "Minta Kft.", taxNumber: "1234" };
-
-    expect(billingSummary(billing, gls, t)).toBe("checkout.sameAsShipping · Minta Kft. · 1234");
-  });
-
-  it("renders the split billing address one-line with the country label", () => {
-    const billing: BillingDraft = { ...EMPTY_BILLING, sameAsShipping: false, address };
-
-    expect(billingSummary(billing, gls, t)).toBe("Fő u. 12, 3894 Telkibánya, checkout.countryHU");
-  });
-
-  it("renders the mandatory billing address for pickup", () => {
-    const billing: BillingDraft = { ...EMPTY_BILLING, sameAsShipping: false, address };
-
-    expect(billingSummary(billing, pickup, t)).toBe(
-      "Fő u. 12, 3894 Telkibánya, checkout.countryHU"
+  it("appends the company and tax number", () => {
+    expect(billingSummary({ ...ticked, company: "Minta Kft.", taxNumber: "123" }, gls, t)).toBe(
+      "checkout.sameAsShipping · Minta Kft. · 123"
     );
   });
 
-  it("falls back to the no-billing text when everything is empty", () => {
-    expect(billingSummary(EMPTY_BILLING, pickup, t)).toBe("checkout.noBilling");
+  it("shows the own billing address when split", () => {
+    expect(
+      billingSummary({ ...ticked, sameAsShipping: false, fullName: "Teszt Elek", address }, gls, t)
+    ).toBe("Teszt Elek · Fő u. 12, 3894 Telkibánya, checkout.countryHU");
   });
 
-  it("shows the company alone when the billing address is empty but company data is set", () => {
-    const billing: BillingDraft = { ...EMPTY_BILLING, company: "Minta Kft." };
-
-    expect(billingSummary(billing, pickup, t)).toBe("Minta Kft.");
-  });
-
-  it("treats a missing method like an address-less flow", () => {
-    expect(billingSummary({ ...EMPTY_BILLING, address }, undefined, t)).toBe(
-      "Fő u. 12, 3894 Telkibánya, checkout.countryHU"
+  it("always shows the own billing address for pickup", () => {
+    expect(billingSummary({ ...ticked, fullName: "Teszt Elek", address }, pickup, t)).toBe(
+      "Teszt Elek · Fő u. 12, 3894 Telkibánya, checkout.countryHU"
     );
-    expect(billingSummary(EMPTY_BILLING, undefined, t)).toBe("checkout.noBilling");
   });
 
-  it("keeps non-HU countries untranslated", () => {
-    const billing: BillingDraft = {
-      ...EMPTY_BILLING,
-      sameAsShipping: false,
-      address: { ...EMPTY_ADDRESS, ...address, country: "SK" },
-    };
-
-    expect(billingSummary(billing, pickup, t)).toBe("Fő u. 12, 3894 Telkibánya, SK");
+  it("says no billing when the own fields are empty", () => {
+    expect(billingSummary(ticked, pickup, t)).toBe("checkout.noBilling");
   });
 });

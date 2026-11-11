@@ -1,6 +1,11 @@
-import type { Order, ShippingQuote } from "./schemas";
-import { requiresAddress } from "./schemas";
-import { billingUsesOwnFields, type AddressDraft, type BillingDraft, type CheckoutDrafts, type ContactDraft } from "./drafts";
+import { requiresAddress, type Order, type ShippingQuote } from "./schemas";
+import {
+  billingUsesOwnFields,
+  type AddressValues,
+  type BillingValues,
+  type CheckoutValues,
+  type ContactValues,
+} from "./checkoutValues";
 import { STEPS, stepIndex, type StepId } from "./steps";
 
 export interface FieldCheck {
@@ -12,39 +17,47 @@ export interface FieldCheck {
 
 export function selectedMethod(
   methods: readonly ShippingQuote[],
-  shippingMethodId: string
+  shippingMethodId: string | undefined
 ): ShippingQuote | undefined {
   return methods.find((method) => method.id === shippingMethodId);
 }
 
+/** The order's delivery method, when it is still among the eligible ones. */
+export function orderMethod(
+  order: Order | null,
+  methods: readonly ShippingQuote[]
+): ShippingQuote | undefined {
+  return selectedMethod(methods, order?.shippingLines.at(0)?.shippingMethod.id);
+}
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function contactCheck(contact: ContactDraft): FieldCheck | undefined {
-  if (contact.lastName.trim() === "" || contact.firstName.trim() === "") {
+export function contactCheck(contact: ContactValues): FieldCheck | undefined {
+  if (contact.lastName === "" || contact.firstName === "") {
     return { field: "name", message: "blockers.name" };
   }
 
-  if (!EMAIL_PATTERN.test(contact.email.trim())) {
+  if (!EMAIL_PATTERN.test(contact.email)) {
     return { field: "email", message: "blockers.email" };
   }
 
   return undefined;
 }
 
-function addressMissingPart(address: AddressDraft): FieldCheck | undefined {
-  if (address.street.trim() === "") {
+function addressMissingPart(address: AddressValues): FieldCheck | undefined {
+  if (address.street === "") {
     return { field: "street", message: "blockers.street" };
   }
 
-  if (address.houseNumber.trim() === "") {
+  if (address.houseNumber === "") {
     return { field: "houseNumber", message: "blockers.houseNumber" };
   }
 
-  if (address.postalCode.trim() === "") {
+  if (address.postalCode === "") {
     return { field: "postalCode", message: "blockers.postalCode" };
   }
 
-  if (address.city.trim() === "") {
+  if (address.city === "") {
     return { field: "city", message: "blockers.city" };
   }
 
@@ -52,8 +65,8 @@ function addressMissingPart(address: AddressDraft): FieldCheck | undefined {
 }
 
 export function shippingCheck(
-  address: AddressDraft,
-  method?: ShippingQuote
+  address: AddressValues,
+  method: ShippingQuote | undefined
 ): FieldCheck | undefined {
   if (method === undefined) {
     return { field: "method", message: "blockers.method" };
@@ -67,14 +80,18 @@ export function shippingCheck(
 }
 
 export function billingCheck(
-  billing: BillingDraft,
+  billing: BillingValues,
   method: ShippingQuote | undefined
 ): FieldCheck | undefined {
-  if (billingUsesOwnFields(billing, method)) {
-    return addressMissingPart(billing.address);
+  if (!billingUsesOwnFields(billing, method)) {
+    return undefined;
   }
 
-  return undefined;
+  if (billing.fullName === "") {
+    return { field: "fullName", message: "blockers.fullName" };
+  }
+
+  return addressMissingPart(billing.address);
 }
 
 export function reviewCheck(termsAccepted: boolean): FieldCheck | undefined {
@@ -99,20 +116,19 @@ export function orderBlocker(order: Order | null): FieldCheck | undefined {
 }
 
 /** The first step whose saved data is incomplete; the review step always passes. */
-export function furthestStep(
-  order: Order | null,
-  methods: readonly ShippingQuote[],
-  drafts: CheckoutDrafts
-): StepId {
-  const methodId = order?.shippingLines.at(0)?.shippingMethod.id ?? "";
-  const method = selectedMethod(methods, methodId);
+export function furthestStep(values: CheckoutValues, method: ShippingQuote | undefined): StepId {
   const checks = [
-    contactCheck(drafts.contact),
-    shippingCheck(drafts.address, method),
-    billingCheck(drafts.billing, method),
+    contactCheck(values.contact),
+    shippingCheck(values.address, method),
+    billingCheck(values.billing, method),
   ];
+  const index = checks.findIndex((check) => check !== undefined);
 
-  return STEPS.find((step, index) => checks[index] !== undefined)?.id ?? "review";
+  if (index === -1) {
+    return "review";
+  }
+
+  return STEPS[index].id;
 }
 
 /**
@@ -120,12 +136,11 @@ export function furthestStep(
  * when the hash is absent or ahead of what the order has.
  */
 export function entryStep(
-  order: Order | null,
-  methods: readonly ShippingQuote[],
-  drafts: CheckoutDrafts,
-  hashStep?: StepId
+  values: CheckoutValues,
+  method: ShippingQuote | undefined,
+  hashStep: StepId | undefined
 ): StepId {
-  const derived = furthestStep(order, methods, drafts);
+  const derived = furthestStep(values, method);
 
   if (hashStep === undefined || stepIndex(hashStep) > stepIndex(derived)) {
     return derived;

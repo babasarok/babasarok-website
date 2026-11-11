@@ -58,6 +58,8 @@ export interface OrderCustomFieldsInput {
 
 /** The structured delivery/billing address; the house number rides streetLine2. */
 export interface AddressInput {
+  fullName?: string;
+  phoneNumber?: string;
   company?: string;
   streetLine1: string;
   streetLine2?: string;
@@ -88,8 +90,8 @@ const ORDER_FIELDS = `
   discounts { description amountWithTax }
   ${SET_ORDER_FIELDS}
   customer { firstName lastName emailAddress phoneNumber }
-  shippingAddress { company streetLine1 streetLine2 postalCode city countryCode }
-  billingAddress { company streetLine1 streetLine2 postalCode city countryCode }
+  shippingAddress { fullName company streetLine1 streetLine2 postalCode city countryCode }
+  billingAddress { fullName company streetLine1 streetLine2 postalCode city countryCode }
   customFields { message taxNumber }
   shippingLines { priceWithTax discountedPriceWithTax shippingMethod { id } }
   lines {

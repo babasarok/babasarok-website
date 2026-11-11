@@ -60,7 +60,7 @@
     <article
       out:fade={{ duration: 200 }}
       class={[
-        "relative flex flex-col gap-3 rounded-xl border bg-white p-4 shadow-sm transition-all",
+        "relative flex flex-col gap-3 rounded-xl border bg-white p-4 transition-all",
         highlighted
           ? "border-success-600 ring-2 ring-success-600"
           : line.invalidReason
