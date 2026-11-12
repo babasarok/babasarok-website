@@ -16,7 +16,7 @@ const ORDER_FIELDS = `
   shippingAddress { company streetLine1 streetLine2 postalCode city countryCode }
   billingAddress { company streetLine1 streetLine2 postalCode city countryCode }
   shippingLines { priceWithTax shippingMethod { code } }
-  customFields { message termsAccepted taxNumber submissionTransactionId }
+  customFields { message termsAccepted taxNumber }
   setDiscounts { groupId title amount lines { orderLineId units } }
   lines {
     id quantity unitPriceWithTax linePriceWithTax
@@ -86,7 +86,6 @@ export const OrderSchema = z.object({
     message: z.string().nullable(),
     termsAccepted: z.boolean().nullable(),
     taxNumber: z.string().nullable(),
-    submissionTransactionId: z.string().nullable(),
   }),
   setDiscounts: z.array(
     z.object({
@@ -448,12 +447,7 @@ export async function setBillingAddress(
 
 export async function setOrderNotes(
   shopper: Shopper,
-  fields: {
-    message: string;
-    termsAccepted: boolean;
-    submissionTransactionId: string;
-    taxNumber?: string;
-  }
+  fields: { message: string; termsAccepted: boolean; taxNumber?: string }
 ): Promise<void> {
   await run(
     shopper.client,
@@ -473,7 +467,6 @@ export async function completeCheckout(
   await setOrderNotes(shopper, {
     message: "",
     termsAccepted: true,
-    submissionTransactionId: `int-${Date.now()}`,
   });
 }
 

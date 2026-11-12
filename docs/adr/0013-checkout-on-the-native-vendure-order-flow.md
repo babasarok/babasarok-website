@@ -59,7 +59,7 @@ Slovakia/EUR (9).
    without a data move. A separate billing address (epic 7, invoicing)
    is the order's native billing address, set with `setOrderBillingAddress`
    from the same structured form; no billing data is collected before then. `message`, `termsAccepted` and
-   `submissionTransactionId` are the existing Order custom fields set through
+   `taxNumber` are the Order custom fields set through
    `setOrderCustomFields` (never named `transactionId`: it collides with the
    native payment-derived field).
 5. **Placing the order is one native sequence** ending in

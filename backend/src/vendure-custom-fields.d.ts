@@ -8,7 +8,6 @@ declare module "@vendure/core/dist/entity/custom-entity-fields" {
   }
 
   interface CustomOrderFields {
-    deliveryMethodName: string | null;
     termsAccepted: boolean | null;
     taxNumber: string | null;
   }
@@ -38,18 +37,10 @@ declare module "@vendure/core/dist/entity/custom-entity-fields" {
     galleryDescription: string | null;
   }
 
-  interface CustomCollectionFields {
-    setDiscount: number | null;
-  }
-
   interface CustomOrderLineFields {
-    title?: string | null;
     configText?: string | null;
-    quotedUnitPrice?: number | null;
-    quotedLineTotal?: number | null;
     lengthCm?: number | null;
     selections?: string | null;
-    detailsJson?: string | null;
   }
 }
 

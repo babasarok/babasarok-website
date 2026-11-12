@@ -1,5 +1,4 @@
 import type { Injector, OrderProcess, OrderTransitionData } from "@vendure/core";
-import { isLegacyQuoteOrder } from "../../shared/legacy-order";
 import { encodeRefusal } from "../../shared/refusal";
 import { LineInvalidReasonService } from "./line-invalid-reason.service";
 
@@ -20,10 +19,6 @@ export class LineValidityProcess implements OrderProcess<string> {
     { ctx, order }: OrderTransitionData
   ): Promise<string | undefined> {
     if (fromState !== "AddingItems" || toState !== "ArrangingPayment") {
-      return undefined;
-    }
-
-    if (isLegacyQuoteOrder(order)) {
       return undefined;
     }
 

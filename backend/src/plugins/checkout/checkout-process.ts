@@ -1,6 +1,5 @@
 import { EntityHydrator } from "@vendure/core";
 import type { Injector, OrderProcess, OrderTransitionData } from "@vendure/core";
-import { isLegacyQuoteOrder } from "../../shared/legacy-order";
 import { encodeRefusal } from "../../shared/refusal";
 import { checkoutRefusal } from "./checkout-readiness";
 
@@ -18,10 +17,6 @@ export class CheckoutReadinessProcess implements OrderProcess<string> {
     { ctx, order }: OrderTransitionData
   ): Promise<string | undefined> {
     if (fromState !== "AddingItems" || toState !== "ArrangingPayment") {
-      return undefined;
-    }
-
-    if (isLegacyQuoteOrder(order)) {
       return undefined;
     }
 

@@ -218,9 +218,7 @@ this order, each result checked before the next:
 5. `setOrderBillingAddress` — the billing step's own address with its
    `fullName` and `company`, or `unsetOrderBillingAddress` when the toggle
    keeps the billing address off the order (the billing section above);
-6. `setOrderCustomFields` — `message`, `termsAccepted`, `taxNumber` and
-   `submissionTransactionId` (a unique identifier generated per submission
-   attempt; named so to avoid the native, payment-derived `transactionId`);
+6. `setOrderCustomFields` — `message`, `termsAccepted` and `taxNumber`;
 7. `transitionOrderToState("ArrangingPayment")` — the order is placed (there
    is no payment step yet).
 
@@ -230,8 +228,8 @@ Prices, set discounts, delivery and the total are the order's own
 On the AddingItems → ArrangingPayment transition the backend SHALL email the
 buyer a confirmation (subject: `Köszönjük a rendelésed: <rendelésszám>`) and
 the shop owner a notification (subject: `Új árajánlatkérés: <rendelésszám>`),
-both carrying the per-product details, the set-discount summary, the order
-code, and the transaction identifier. Email delivery goes through Cloudflare
+both carrying the per-product details, the set-discount summary and the
+order code. Email delivery goes through Cloudflare
 Email Sending (REST); previews/dev run file transport and physically cannot
 email a buyer. The confirmation is written in the order's language; the
 notification is always Hungarian (subject, labels, product, material and
@@ -264,8 +262,8 @@ address" with the company stored on it, plus the tax number when given.
   - WHEN any step is refused or the network request fails
   - THEN the buyer sees a generic error message followed by the failure reason
     (network error, server error with its HTTP status, or the backend's own
-    message) and a reference code (the first 8 characters of the transaction
-    identifier); the buyer can retry and the order stays intact
+    message) and a reference code (the order's native code); the buyer can
+    retry and the order stays intact
   - AND an error report of kind `order` carrying the reference code is sent to
     the site's own `/client-errors` endpoint, which logs it to Workers Logs
 
@@ -273,12 +271,14 @@ address" with the company stored on it, plus the tax number when given.
 
 The `submitQuoteOrder` mutation and the quote-order plugin were removed after
 the native checkout replaced them (roadmap S5, ADR 0013 decision 8). Orders
-placed by the legacy flow are preserved as placed: their lines keep every
-stored snapshot custom field (`title`, `configText`, `detailsJson`,
-`selections`, `lengthCm`, the `quoted*` prices, the set-discount summary), the
-custom-field definitions stay so those columns are never dropped, and the
-dashboard order-detail extension renders them from the stored fields. No code
-re-resolves or re-prices a placed order line.
+placed by the legacy flow are preserved as placed: the legacy-era custom
+fields (the delivery method/price/free, order total and set-discount summary
+on the order; the line `title`, `detailsJson` and `quoted*` prices) were
+archived into one private order note per legacy order and their columns
+dropped (`archive-legacy-order-snapshots` migration) — the legacy orders'
+variants are 0-priced placeholders, so those notes are the only place that
+data existed. `configText`, `selections` and `lengthCm` stay as custom
+fields. No code re-resolves or re-prices a placed order line.
 
 The dashboard order-detail table shows each line's product (linked to the
 product page) with its configuration (`configText`) — a configurable product

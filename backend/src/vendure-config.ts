@@ -215,34 +215,21 @@ export const config: VendureConfig = {
   customFields: {
     Order: [
       { name: "message", type: "text" },
-      { name: "deliveryMethodName", type: "text" },
-      { name: "deliveryPrice", type: "int" },
-      { name: "deliveryFree", type: "boolean" },
-      { name: "orderTotal", type: "int" },
-      { name: "setDiscountSummary", type: "text" },
       { name: "termsAccepted", type: "boolean" },
       {
         name: "taxNumber",
         type: "string",
         label: [{ languageCode: LanguageCode.hu, value: "Adószám" }],
       },
-      // Not Order.transactionId: that native field is derived from Payments
-      // (none in the quote flow), and a same-named customField would collide
-      // with it in the GraphQL schema.
-      { name: "submissionTransactionId", type: "string" },
     ],
-    // The quoted* fields are legacy-order snapshots (the pre-cutover quote
-    // flow wrote them; native checkout prices server-side instead). They stay
-    // so placed orders keep their stored data; nothing reads them on new
-    // orders. The pricing fields carry what the server's own pricing
-    // needs (ADR 0010 delivery step 5); keep the OrderLine array contiguous —
-    // gql regeneration diffs against the other branch's field edits.
+    // configText is the dashboard-visible line summary (written server-side
+    // by LineSummaryService from the selections). lengthCm and selections
+    // carry what the server's own pricing needs (ADR 0010 delivery step 5).
+    // Legacy snapshot fields (title, detailsJson, quotedUnitPrice,
+    // quotedLineTotal) were archived into private order notes by the
+    // archive-legacy-order-snapshots migration and their columns dropped.
     OrderLine: [
-      { name: "title", type: "string" },
       { name: "configText", type: "text" },
-      { name: "detailsJson", type: "text", nullable: true },
-      { name: "quotedUnitPrice", type: "int" },
-      { name: "quotedLineTotal", type: "int" },
       {
         name: "lengthCm",
         type: "int",

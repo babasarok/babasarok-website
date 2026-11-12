@@ -58,7 +58,6 @@
   } from "@/lib/basket/summaryText";
   import { placeOrder, type SubmitFailure } from "@/lib/basket/submit";
   import { reportClientError } from "@/lib/errorReport";
-  import { randomUUID } from "@/lib/uuid";
   import { translateMessage } from "@/lib/i18next-client";
 
   interface Props {
@@ -416,10 +415,14 @@
     sending = true;
     await saves.settled();
 
-    const transactionId = randomUUID();
     const result = await placeOrder(
       basket.api,
-      { values: valuesFromForms(), shippingMethod: method, termsAccepted, transactionId },
+      {
+        values: valuesFromForms(),
+        shippingMethod: method,
+        termsAccepted,
+        orderCode: order?.code ?? "",
+      },
       (report) => reportClientError({ kind: "order", ...report })
     );
 
@@ -447,7 +450,7 @@
     }
 
     try {
-      gtag("event", "conversion", { value, currency, transaction_id: transactionId });
+      gtag("event", "conversion", { value, currency, transaction_id: result.order.code });
     } catch (e) {
       console.error("Failed to record purchase conversion", e);
     }

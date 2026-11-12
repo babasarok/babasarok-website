@@ -45,11 +45,7 @@ afterAll(async () => {
   await server.stop();
 });
 
-async function placeNativeOrder(
-  transactionId: string,
-  extraFeszek: number,
-  languageCode?: string
-): Promise<Order> {
+async function placeNativeOrder(extraFeszek: number, languageCode?: string): Promise<Order> {
   const shopper = newShopper(server, languageCode);
 
   await addLine(
@@ -68,7 +64,6 @@ async function placeNativeOrder(
   await setOrderNotes(shopper, {
     message: "Köszönöm",
     termsAccepted: true,
-    submissionTransactionId: transactionId,
   });
 
   const result = await transitionTo(shopper, "ArrangingPayment");
@@ -82,7 +77,7 @@ async function placeNativeOrder(
 
 describe("placing an order with the native sequence", () => {
   it("stores the buyer, address, shipping and notes on a placed order", async () => {
-    const order = await placeNativeOrder("native-1", 0);
+    const order = await placeNativeOrder(0);
 
     expect(order.state).toBe("ArrangingPayment");
     expect(order.customer).toEqual(BUYER);
@@ -109,7 +104,6 @@ describe("placing an order with the native sequence", () => {
       message: "Köszönöm",
       termsAccepted: true,
       taxNumber: null,
-      submissionTransactionId: "native-1",
     });
   });
 
@@ -124,7 +118,6 @@ describe("placing an order with the native sequence", () => {
     await setOrderNotes(shopper, {
       message: "",
       termsAccepted: true,
-      submissionTransactionId: "native-billing",
       taxNumber: "12345678-2-42",
     });
 
@@ -152,7 +145,7 @@ describe("placing an order with the native sequence", () => {
   });
 
   it("summarises each native line's configuration into its configText field", async () => {
-    const order = await placeNativeOrder("native-configtext", 0);
+    const order = await placeNativeOrder(0);
 
     for (const line of await settledLineSummaries(server, order.code)) {
       const selections = JSON.parse(line.selections ?? "{}") as Record<string, unknown>;
@@ -167,7 +160,7 @@ describe("placing an order with the native sequence", () => {
   });
 
   it("charges the delivery below the free-shipping threshold and says so in both emails", async () => {
-    const order = await placeNativeOrder("native-2", 0);
+    const order = await placeNativeOrder(0);
 
     expect(order.shippingLines.map((line) => line.priceWithTax)).toEqual([2500]);
 
@@ -194,7 +187,7 @@ describe("placing an order with the native sequence", () => {
   });
 
   it("delivers free above the threshold: the shipping line is zero and the emails say ingyenes", async () => {
-    const order = await placeNativeOrder("native-3", 5);
+    const order = await placeNativeOrder(5);
     const total = order.subTotalWithTax;
 
     expect(total).toBeGreaterThanOrEqual(60_000);
@@ -212,7 +205,7 @@ describe("placing an order with the native sequence", () => {
 
 describe("the order emails' languages", () => {
   it("writes the buyer's confirmation in the order's language and the owner's notification in Hungarian", async () => {
-    const order = await placeNativeOrder("native-en", 0, "en");
+    const order = await placeNativeOrder(0, "en");
     const emails = await emailsFor(order.code, 2);
     const owner = emails.find((email) => email.recipient === OWNER_EMAIL);
     const buyer = emails.find((email) => email.recipient === BUYER.emailAddress);
@@ -256,7 +249,6 @@ describe("a guest using a registered customer's email", () => {
     await setOrderNotes(shopper, {
       message: "",
       termsAccepted: true,
-      submissionTransactionId: "collision-1",
     });
     expect(await transitionTo(shopper, "ArrangingPayment")).toMatchObject({
       order: { state: "ArrangingPayment" },

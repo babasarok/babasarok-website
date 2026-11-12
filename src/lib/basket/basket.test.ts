@@ -384,7 +384,7 @@ const submitInput: SubmitInput = {
   values,
   shippingMethod: gls,
   termsAccepted: true,
-  transactionId: "12345678-aaaa",
+  orderCode: "12345678-aaaa",
 };
 
 describe("placeOrder", () => {
@@ -408,8 +408,11 @@ describe("placeOrder", () => {
     const result = await placeOrder(pick.api, { ...submitInput, shippingMethod: pickup }, report);
 
     expect(pick.calls).toEqual(["setCustomer", "setShippingMethod"]);
-    expect(result).toEqual({ ok: false, failure: { reason: "nem megy", reference: "12345678" } });
-    expect(report).toHaveBeenCalledWith(expect.objectContaining({ reference: "12345678" }));
+    expect(result).toEqual({
+      ok: false,
+      failure: { reason: "nem megy", reference: "12345678-aaaa" },
+    });
+    expect(report).toHaveBeenCalledWith(expect.objectContaining({ reference: "12345678-aaaa" }));
   });
 
   it("sends the split billing address when the buyer split the addresses", async () => {

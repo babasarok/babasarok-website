@@ -55,7 +55,6 @@ export interface OrderCustomFieldsInput {
   message?: string;
   termsAccepted?: boolean;
   taxNumber?: string;
-  submissionTransactionId?: string;
 }
 
 /** The structured delivery/billing address; the house number rides streetLine2. */
