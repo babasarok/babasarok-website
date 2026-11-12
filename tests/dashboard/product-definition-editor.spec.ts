@@ -261,8 +261,8 @@ test("the configurator product lifecycle: create, edit every field kind, delete"
     await page.getByRole("button", { name: "Frissítés", exact: true }).click();
     await update;
 
-    await expect(page.getByText("Mentés sikeres — a szinkronizálás fut.")).toBeVisible();
-    await expect(page.getByText("Szinkronizálás…")).toBeVisible();
+    // The save toast (4s) and the pending badge are transient — the sync can
+    // settle before either is observed — so only the settled badge is asserted.
     await expect(page.getByText("Szinkronizálva")).toBeVisible({ timeout: 60_000 });
 
     await page.reload();

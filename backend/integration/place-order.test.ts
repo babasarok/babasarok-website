@@ -26,6 +26,7 @@ import {
   setBillingAddress,
   setCustomer,
   setOrderNotes,
+  settledLineSummaries,
   transitionTo,
   type Order,
 } from "./shop";
@@ -153,18 +154,15 @@ describe("placing an order with the native sequence", () => {
   it("summarises each native line's configuration into its configText field", async () => {
     const order = await placeNativeOrder("native-configtext", 0);
 
-    for (const line of order.lines) {
-      const selections = JSON.parse(line.customFields.selections ?? "{}") as Record<
-        string,
-        unknown
-      >;
+    for (const line of await settledLineSummaries(server, order.code)) {
+      const selections = JSON.parse(line.selections ?? "{}") as Record<string, unknown>;
 
       if (Object.keys(selections).length === 0) {
         continue;
       }
 
-      expect(line.customFields.configText).toBeTruthy();
-      expect(line.customFields.configText).toContain(": ");
+      expect(line.configText).toBeTruthy();
+      expect(line.configText).toContain(": ");
     }
   });
 

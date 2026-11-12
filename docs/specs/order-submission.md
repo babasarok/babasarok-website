@@ -282,7 +282,10 @@ re-resolves or re-prices a placed order line.
 
 The dashboard order-detail table shows each line's product (linked to the
 product page) with its configuration (`configText`) — a configurable product
-has one variant, its choices live on the line (ADR 0016). Lines of orders
+has one variant, its choices live on the line (ADR 0016). The server computes
+and stores `configText` in a background write shortly after the line's
+transaction commits, never inside the buyer's request, so a read that races
+it can still see the field empty. Lines of orders
 placed before ADR 0016 keep their per-combination variant, now soft-deleted,
 and also show its name.
 
