@@ -100,9 +100,11 @@
       {#if rows.length > 0}
         <dl class="flex flex-wrap gap-1 text-xs">
           {#each rows as row (row.label)}
-            <div class="flex gap-1">
-              <dt class="text-brown-700 font-medium">{row.label}:</dt>
-              <dd class="text-right text-brown-700">{row.value}</dd>
+            <div class="flex gap-1 max-w-full">
+              <dt class="text-brown-700 font-medium whitespace-nowrap">{row.label}:</dt>
+              <dd class="text-brown-700 whitespace-nowrap text-ellipsis overflow-hidden">
+                {row.value}
+              </dd>
             </div>
           {/each}
         </dl>
