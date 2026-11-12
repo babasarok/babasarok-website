@@ -138,6 +138,14 @@ splits into two PRs.
   (`src/lib/pricing`) is gone too: the order island's unit price comes from the
   shared pricing package (`catalog/livePrice`) and only the display breakdown +
   set-grouping helpers remain, moved to `src/lib/order/`.
+- ✅ **Legacy snapshot fields consolidated** (2026-11-12) — the legacy-era
+  custom fields (order: `deliveryPrice`, `deliveryFree`, `orderTotal`,
+  `setDiscountSummary`; order line: `title`, `detailsJson`, `quotedUnitPrice`,
+  `quotedLineTotal`) were archived into one private order note per legacy
+  order and their columns dropped (`archive-legacy-order-snapshots`
+  migration): the legacy orders' variants are 0-priced placeholders, so those
+  notes are the only place that data existed.
+  `Order.deliveryMethodName` stays — `isLegacyQuoteOrder` reads it.
 - **Static catalog shells** ([ADR 0017](adr/0017-static-catalog-shells.md),
   proposed) — catalog pages stop waiting for the backend: HTML pages are
   prerendered, catalog islands load the catalog in the browser through a

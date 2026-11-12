@@ -25,7 +25,7 @@ const ORDER_QUERY = `
       lines {
         id quantity unitPriceWithTax linePriceWithTax
         productVariant { id name sku product { id name } }
-        customFields { title configText detailsJson quotedUnitPrice quotedLineTotal lengthCm selections }
+        customFields { configText lengthCm selections }
       }
     } }
   }
