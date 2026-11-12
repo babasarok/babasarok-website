@@ -215,10 +215,6 @@ export const config: VendureConfig = {
   customFields: {
     Order: [
       { name: "message", type: "text" },
-      // Legacy quote orders only: the discriminator isLegacyQuoteOrder reads
-      // (their delivery/total snapshots were archived into private order
-      // notes by the archive-legacy-order-snapshots migration).
-      { name: "deliveryMethodName", type: "text" },
       { name: "termsAccepted", type: "boolean" },
       {
         name: "taxNumber",

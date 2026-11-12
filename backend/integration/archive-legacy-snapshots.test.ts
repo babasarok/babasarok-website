@@ -60,6 +60,7 @@ let nativeOrderCode: string;
 async function recreateLegacyColumns(): Promise<void> {
   await pool.query(`
     ALTER TABLE "order"
+      ADD COLUMN "customFieldsDeliverymethodname" character varying(255),
       ADD COLUMN "customFieldsDeliveryprice" integer,
       ADD COLUMN "customFieldsDeliveryfree" boolean,
       ADD COLUMN "customFieldsOrdertotal" integer,
@@ -173,7 +174,7 @@ async function placeOrder(): Promise<string> {
 async function columnsDropped(): Promise<boolean> {
   const result = await pool.query(
     `SELECT count(*)::int AS n FROM information_schema.columns
-     WHERE (table_name = 'order' AND column_name IN ('customFieldsDeliveryprice', 'customFieldsDeliveryfree', 'customFieldsOrdertotal', 'customFieldsSetdiscountsummary'))
+     WHERE (table_name = 'order' AND column_name IN ('customFieldsDeliverymethodname', 'customFieldsDeliveryprice', 'customFieldsDeliveryfree', 'customFieldsOrdertotal', 'customFieldsSetdiscountsummary'))
         OR (table_name = 'order_line' AND column_name IN ('customFieldsTitle', 'customFieldsDetailsjson', 'customFieldsQuotedunitprice', 'customFieldsQuotedlinetotal'))`
   );
 
@@ -208,6 +209,7 @@ describe("the legacy-snapshot archive migration", () => {
 
     expect(notes).toHaveLength(1);
     expect(notes[0]?.isPublic).toBe(false);
+    expect(notes[0]?.data.note).toContain("Szállítási mód: GLS házhozszállítás");
     expect(notes[0]?.data.note).toContain("Összesen: 12500 Ft");
     expect(notes[0]?.data.note).toContain("Szállítási díj: 2500 Ft");
     expect(notes[0]?.data.note).toContain("Szett-kedvezmény: Ovis szett: -2000 Ft");

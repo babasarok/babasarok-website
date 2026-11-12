@@ -16,7 +16,6 @@ import {
   type EventWithAsyncData,
 } from "@vendure/email-plugin";
 import { env } from "../../env";
-import { isLegacyQuoteOrder } from "../../shared/legacy-order";
 import { messages } from "../../shared/messages";
 import { loadNativeLineContent } from "./native-line-content";
 import { orderEmailView, type OrderEmailView } from "./order-email-view";
@@ -90,12 +89,7 @@ function onNativeOrderPlaced(
 > {
   return new EmailEventListener(name)
     .on(OrderStateTransitionEvent)
-    .filter(
-      (event) =>
-        event.toState === "ArrangingPayment" &&
-        event.fromState === "AddingItems" &&
-        !isLegacyQuoteOrder(event.order)
-    )
+    .filter((event) => event.toState === "ArrangingPayment" && event.fromState === "AddingItems")
     .loadData(async ({ event, injector }) => {
       const languageCode = email.languageCode(event);
       const ctx = await contextIn(injector, event.ctx, languageCode);

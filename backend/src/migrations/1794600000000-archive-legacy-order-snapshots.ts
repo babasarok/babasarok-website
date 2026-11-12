@@ -8,10 +8,13 @@ import { MigrationInterface, QueryRunner } from "typeorm";
  * entries only) for every order the removed legacy flow placed, then drops
  * the now-empty columns:
  *
- * - order: deliveryPrice, deliveryFree, orderTotal, setDiscountSummary
+ * - order: deliveryMethodName, deliveryPrice, deliveryFree, orderTotal,
+ *   setDiscountSummary
  * - order_line: title, detailsJson, quotedUnitPrice, quotedLineTotal
  *
- * order.deliveryMethodName stays: isLegacyQuoteOrder reads it.
+ * A legacy order always carries a deliveryPrice and an orderTotal (both
+ * required by the removed flow's input), and nothing else writes those
+ * columns, so their presence selects exactly the legacy orders.
  *
  * Idempotent: the note block returns early once the deliveryPrice column is
  * gone, and the drops are IF EXISTS, so a re-run changes nothing.
@@ -33,14 +36,17 @@ export const ARCHIVE_LEGACY_SNAPSHOT_STATEMENTS: readonly string[] = [
 
      FOR o IN
        SELECT id,
+              "customFieldsDeliverymethodname" AS method_name,
               "customFieldsDeliveryprice" AS delivery_price,
               "customFieldsDeliveryfree" AS delivery_free,
               "customFieldsOrdertotal" AS order_total,
               "customFieldsSetdiscountsummary" AS set_summary
        FROM "order"
-       WHERE "customFieldsDeliverymethodname" IS NOT NULL
+       WHERE "customFieldsDeliveryprice" IS NOT NULL
+          OR "customFieldsOrdertotal" IS NOT NULL
      LOOP
        note := 'A cutover (2026-11-07) előtti ajánlatos rendelés adatai a törölt egyéni mezőkből:'
+            || chr(10) || 'Szállítási mód: ' || COALESCE(o.method_name, '—')
             || chr(10) || 'Összesen: ' || COALESCE(o.order_total::text, '—') || ' Ft'
             || chr(10) || 'Szállítási díj: '
             || CASE
@@ -89,6 +95,7 @@ export const ARCHIVE_LEGACY_SNAPSHOT_STATEMENTS: readonly string[] = [
    END
    $archive$;`,
 
+  `ALTER TABLE "order" DROP COLUMN IF EXISTS "customFieldsDeliverymethodname"`,
   `ALTER TABLE "order" DROP COLUMN IF EXISTS "customFieldsDeliveryprice"`,
   `ALTER TABLE "order" DROP COLUMN IF EXISTS "customFieldsDeliveryfree"`,
   `ALTER TABLE "order" DROP COLUMN IF EXISTS "customFieldsOrdertotal"`,
