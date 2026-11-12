@@ -221,10 +221,6 @@ export const config: VendureConfig = {
         type: "string",
         label: [{ languageCode: LanguageCode.hu, value: "Adószám" }],
       },
-      // Not Order.transactionId: that native field is derived from Payments
-      // (none in the quote flow), and a same-named customField would collide
-      // with it in the GraphQL schema.
-      { name: "submissionTransactionId", type: "string" },
     ],
     // configText is the dashboard-visible line summary (written server-side
     // by LineSummaryService from the selections). lengthCm and selections

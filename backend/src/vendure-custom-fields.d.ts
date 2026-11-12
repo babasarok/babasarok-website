@@ -37,10 +37,6 @@ declare module "@vendure/core/dist/entity/custom-entity-fields" {
     galleryDescription: string | null;
   }
 
-  interface CustomCollectionFields {
-    setDiscount: number | null;
-  }
-
   interface CustomOrderLineFields {
     configText?: string | null;
     lengthCm?: number | null;

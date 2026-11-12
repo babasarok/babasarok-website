@@ -13,7 +13,8 @@ export interface SubmitInput {
   values: CheckoutValues;
   shippingMethod: ShippingQuote;
   termsAccepted: boolean;
-  transactionId: string;
+  /** The active order's code — the buyer-facing failure reference. */
+  orderCode: string;
 }
 
 export type SubmitResult = { ok: true; order: Order } | { ok: false; failure: SubmitFailure };
@@ -69,7 +70,6 @@ async function runSequence(api: BasketApi, input: SubmitInput): Promise<Result<O
     message: values.message,
     termsAccepted: input.termsAccepted,
     taxNumber: values.billing.taxNumber,
-    submissionTransactionId: input.transactionId,
   });
 
   if (!fields.ok) {
@@ -90,7 +90,7 @@ export async function placeOrder(
     return { ok: true, order: result.value };
   }
 
-  const reference = input.transactionId.slice(0, 8);
+  const reference = input.orderCode;
 
   report({ message: result.failure.detail, stack: result.failure.stack, reference });
 

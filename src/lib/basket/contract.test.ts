@@ -74,7 +74,6 @@ describe.skipIf(apiUrl === undefined)("basket contract against the live shop API
       message: "m",
       termsAccepted: true,
       taxNumber: "12345678-2-42",
-      submissionTransactionId: "t",
     });
     await api.transitionToArrangingPayment();
 
