@@ -26,6 +26,7 @@ import {
   setBillingAddress,
   setCustomer,
   setOrderNotes,
+  settledLineSummaries,
   transitionTo,
   type Order,
 } from "./shop";
@@ -44,8 +45,12 @@ afterAll(async () => {
   await server.stop();
 });
 
-async function placeNativeOrder(transactionId: string, extraFeszek: number): Promise<Order> {
-  const shopper = newShopper(server);
+async function placeNativeOrder(
+  transactionId: string,
+  extraFeszek: number,
+  languageCode?: string
+): Promise<Order> {
+  const shopper = newShopper(server, languageCode);
 
   await addLine(
     shopper,
@@ -114,7 +119,7 @@ describe("placing an order with the native sequence", () => {
     await addLine(shopper, parna(PAMUT));
     await setCustomer(shopper);
     await setAddress(shopper);
-    await setBillingAddress(shopper, "Minta Kft.");
+    await setBillingAddress(shopper, "Minta Kft.", "Minta Pénzügy");
     await chooseShipping(shopper, "gls-elore-utalas");
     await setOrderNotes(shopper, {
       message: "",
@@ -136,23 +141,28 @@ describe("placing an order with the native sequence", () => {
       countryCode: "HU",
     });
     expect(order?.customFields.taxNumber).toBe("12345678-2-42");
+
+    for (const email of await emailsFor(order?.code ?? "", 2)) {
+      const body = emailText(email.body);
+
+      expect(body).toContain("Számlázási adatok Minta Pénzügy Minta Kft. Fő u. 1. 3894 Telkibánya");
+      expect(body).toContain("Adószám: 12345678-2-42");
+      expect(body).not.toContain("Azonos a szállítási címmel");
+    }
   });
 
   it("summarises each native line's configuration into its configText field", async () => {
     const order = await placeNativeOrder("native-configtext", 0);
 
-    for (const line of order.lines) {
-      const selections = JSON.parse(line.customFields.selections ?? "{}") as Record<
-        string,
-        unknown
-      >;
+    for (const line of await settledLineSummaries(server, order.code)) {
+      const selections = JSON.parse(line.selections ?? "{}") as Record<string, unknown>;
 
       if (Object.keys(selections).length === 0) {
         continue;
       }
 
-      expect(line.customFields.configText).toBeTruthy();
-      expect(line.customFields.configText).toContain(": ");
+      expect(line.configText).toBeTruthy();
+      expect(line.configText).toContain(": ");
     }
   });
 
@@ -178,6 +188,8 @@ describe("placing an order with the native sequence", () => {
       expect(body).toContain("Hossz: 150 cm");
       expect(body).toContain("GLS házhozszállítás előre utalással");
       expect(body).toContain("2500 Ft");
+      expect(body).toContain("Szállítási cím Fő u. 1. 3894 Telkibánya");
+      expect(body).toContain("Számlázási adatok Azonos a szállítási címmel");
     }
   });
 
@@ -195,6 +207,22 @@ describe("placing an order with the native sequence", () => {
       expect(body).toContain("Fészek (5 db)");
       expect(body).toContain("ingyenes");
     }
+  });
+});
+
+describe("the order emails' languages", () => {
+  it("writes the buyer's confirmation in the order's language and the owner's notification in Hungarian", async () => {
+    const order = await placeNativeOrder("native-en", 0, "en");
+    const emails = await emailsFor(order.code, 2);
+    const owner = emails.find((email) => email.recipient === OWNER_EMAIL);
+    const buyer = emails.find((email) => email.recipient === BUYER.emailAddress);
+
+    expect(owner?.subject).toBe(`Új árajánlatkérés: ${order.code}`);
+    expect(emailText(owner?.body ?? "")).toContain("Szállítási cím Fő u. 1. 3894 Telkibánya");
+    expect(emailText(owner?.body ?? "")).toContain("Szegély: Igen");
+    expect(buyer?.subject).toBe(`Thank you for your order: ${order.code}`);
+    expect(emailText(buyer?.body ?? "")).toContain("Delivery address Fő u. 1. 3894 Telkibánya");
+    expect(emailText(buyer?.body ?? "")).toContain(": Yes");
   });
 });
 

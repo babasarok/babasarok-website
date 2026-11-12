@@ -10,6 +10,7 @@ declare module "@vendure/core/dist/entity/custom-entity-fields" {
   interface CustomOrderFields {
     deliveryMethodName: string | null;
     termsAccepted: boolean | null;
+    taxNumber: string | null;
   }
 
   interface CustomShippingMethodFields {

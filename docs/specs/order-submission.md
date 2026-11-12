@@ -233,7 +233,9 @@ the shop owner a notification (subject: `Új árajánlatkérés: <rendelésszám
 both carrying the per-product details, the set-discount summary, the order
 code, and the transaction identifier. Email delivery goes through Cloudflare
 Email Sending (REST); previews/dev run file transport and physically cannot
-email a buyer.
+email a buyer. The confirmation is written in the order's language; the
+notification is always Hungarian (subject, labels, product, material and
+delivery names), whatever language the buyer ordered in.
 
 The per-product description is built server-side from each order line's
 `selections` and the product's canonical definition: visible fields only,
@@ -246,7 +248,11 @@ subtotals, in the buyer confirmation and the owner notification alike.
 Delivery SHALL be its own row (method name and its price, or "ingyenes" when a
 promotion zeroed a charged price) and the only price in the confirmation is
 the order total. The set-discount summary is generated from the order's
-discount adjustments.
+discount adjustments. Both emails SHALL show the delivery address (street and
+house number, then postcode and city) when the order has one, and the billing
+details: the buyer's own billing address (name, company, street and house
+number, postcode and city) when they gave one, otherwise "same as the delivery
+address" with the company stored on it, plus the tax number when given.
 
 - **Scenario: Successful submission**
   - WHEN a complete order is transitioned to `ArrangingPayment`
@@ -276,7 +282,10 @@ re-resolves or re-prices a placed order line.
 
 The dashboard order-detail table shows each line's product (linked to the
 product page) with its configuration (`configText`) — a configurable product
-has one variant, its choices live on the line (ADR 0016). Lines of orders
+has one variant, its choices live on the line (ADR 0016). The server computes
+and stores `configText` in a background write shortly after the line's
+transaction commits, never inside the buyer's request, so a read that races
+it can still see the field empty. Lines of orders
 placed before ADR 0016 keep their per-combination variant, now soft-deleted,
 and also show its name.
 

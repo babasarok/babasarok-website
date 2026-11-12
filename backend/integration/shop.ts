@@ -153,8 +153,8 @@ export interface Shopper {
   server: IntegrationServer;
 }
 
-export function newShopper(server: IntegrationServer): Shopper {
-  return { client: server.newShopSession(), server };
+export function newShopper(server: IntegrationServer, languageCode?: string): Shopper {
+  return { client: server.newShopSession(languageCode), server };
 }
 
 export async function addLine(shopper: Shopper, spec: LineSpec): Promise<Order> {
@@ -282,6 +282,75 @@ export async function adminVariant(
   return variant;
 }
 
+export interface LineSummary {
+  selections: string | null;
+  configText: string | null;
+}
+
+function nonEmptySelections(raw: string | null): boolean {
+  try {
+    const parsed: unknown = JSON.parse(raw ?? "{}");
+
+    return parsed instanceof Object && Object.keys(parsed).length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The line-summary subscriber writes `configText` shortly after the line's
+ * transaction commits — never inside the buyer's mutation — so the read goes
+ * through the admin API (which the dashboard uses too) and waits for the
+ * summaries to land, throwing when they do not settle in time.
+ */
+export async function settledLineSummaries(
+  server: IntegrationServer,
+  code: string
+): Promise<LineSummary[]> {
+  const SummariesSchema = z.object({
+    orders: z.object({
+      items: z.array(
+        z.object({
+          lines: z.array(
+            z.object({
+              customFields: z.object({
+                selections: z.string().nullable(),
+                configText: z.string().nullable(),
+              }),
+            })
+          ),
+        })
+      ),
+    }),
+  });
+
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    const data = await run(
+      server.admin,
+      `query($code: String!) {
+        orders(options: { filter: { code: { eq: $code } } }) {
+          items { lines { customFields { selections configText } } }
+        }
+      }`,
+      { code },
+      SummariesSchema
+    );
+    const lines = data.orders.items.at(0)?.lines ?? [];
+    const configured = lines.filter((line) => nonEmptySelections(line.customFields.selections));
+
+    if (
+      configured.length > 0 &&
+      configured.every((line) => line.customFields.configText !== null)
+    ) {
+      return lines.map((line) => line.customFields);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+
+  throw new Error(`The config summaries of order ${code} did not land in time.`);
+}
+
 export async function chooseShipping(shopper: Shopper, code: string): Promise<Order> {
   const { eligibleShippingMethods } = await run(
     shopper.client,
@@ -354,12 +423,17 @@ export async function setAddress(shopper: Shopper): Promise<void> {
   );
 }
 
-export async function setBillingAddress(shopper: Shopper, company = ""): Promise<void> {
+export async function setBillingAddress(
+  shopper: Shopper,
+  company = "",
+  fullName = ""
+): Promise<void> {
   await run(
     shopper.client,
     `mutation($input: CreateAddressInput!) { setOrderBillingAddress(input: $input) { ... on Order { code } } }`,
     {
       input: {
+        fullName,
         company,
         streetLine1: BUYER_ADDRESS.street,
         streetLine2: BUYER_ADDRESS.houseNumber,

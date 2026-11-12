@@ -1,9 +1,20 @@
 import { selectionDetails, type ProductDefinition } from "../../shared/product-definition/index";
 import { Injectable } from "@nestjs/common";
-import { EventBus, OrderLine, OrderLineEvent, TransactionalConnection } from "@vendure/core";
+import {
+  EventBus,
+  Logger,
+  OrderLine,
+  OrderLineEvent,
+  RequestContext,
+  RequestContextService,
+  TransactionalConnection,
+} from "@vendure/core";
 import { In } from "typeorm";
 import { selectionLabels, selectionsOf } from "../product/line-labels";
 import { ProductDefinition as ProductDefinitionEntity } from "../product/product.entity";
+
+const VISIBLE_ATTEMPTS = 15;
+const VISIBLE_DELAY_MS = 200;
 
 /**
  * Keeps each native order line's `configText` custom field in sync with its
@@ -17,7 +28,8 @@ import { ProductDefinition as ProductDefinitionEntity } from "../product/product
 export class LineSummaryService {
   constructor(
     private eventBus: EventBus,
-    private connection: TransactionalConnection
+    private connection: TransactionalConnection,
+    private requestContextService: RequestContextService
   ) {}
 
   onApplicationBootstrap(): void {
@@ -26,26 +38,58 @@ export class LineSummaryService {
     });
   }
 
+  /** An observed write never fails the business write it follows. */
   private async writeSummary(event: OrderLineEvent): Promise<void> {
     if (event.type !== "created" && event.type !== "updated") {
       return;
     }
 
-    const { ctx } = event;
-    const lines = await this.connection.getRepository(ctx, OrderLine).find({
-      where: { id: event.orderLine.id },
-      relations: { productVariant: true },
-    });
-    const line = lines.at(0);
+    try {
+      await this.writeWhenCommitted(event);
+    } catch (error: unknown) {
+      Logger.error(
+        `A rendelési sor (${event.orderLine.id}) összefoglalójának írása sikertelen: ` +
+          (error instanceof Error ? error.message : String(error))
+      );
+    }
+  }
 
-    if (!line) {
-      return;
+  /**
+   * The event fires inside the writing transaction, so the summary runs on
+   * its own connection and waits until the line is committed before reading
+   * it. The buyer's request language carries over.
+   */
+  private async writeWhenCommitted(event: OrderLineEvent): Promise<void> {
+    const ctx = await this.requestContextService.create({
+      apiType: event.ctx.apiType,
+      channelOrToken: event.ctx.channel,
+      languageCode: event.ctx.languageCode,
+    });
+
+    for (let attempt = 0; attempt < VISIBLE_ATTEMPTS; attempt += 1) {
+      const lines = await this.connection.getRepository(ctx, OrderLine).find({
+        where: { id: event.orderLine.id },
+        relations: { productVariant: true },
+      });
+      const line = lines.at(0);
+
+      if (line) {
+        await this.writeFor(ctx, line);
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, VISIBLE_DELAY_MS));
     }
 
-    const productId = line.productVariant.productId;
+    Logger.error(
+      `A rendelési sor (${event.orderLine.id}) nem lett látható — az összefoglaló íratlan maradt.`
+    );
+  }
+
+  private async writeFor(ctx: RequestContext, line: OrderLine): Promise<void> {
     const definitionRows = await this.connection
       .getRepository(ctx, ProductDefinitionEntity)
-      .find({ where: { nativeProductId: In([Number(productId)]) } });
+      .find({ where: { nativeProductId: In([Number(line.productVariant.productId)]) } });
     const definition: ProductDefinition | undefined = definitionRows.at(0)?.definition;
 
     if (!definition) {
