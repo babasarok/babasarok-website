@@ -49,7 +49,7 @@ ordering).
 | 5   | **Order resolution management** — the owner works orders in the Vendure dashboard. Its state design is part of epic 7's payment integration (that is when payment at placement — full or the 6 000 Ft deposit — gives the order a state that can progress to delivery); until then the owner tracks the steps manually, which is enough. See [Owner post-order flow](#owner-post-order-flow-epics-5-6-and-7)                                                                                                                                                                                                                                                                                       | not started                                                                                                                                                                                                                                                                                                                                                                                |
 | 6   | **Native delivery methods** — replace the email/request-era delivery handling with Vendure-native shipping; the checkout address becomes structured (native shipping-address columns: postcode, city, street, country — carrier labels need them)                                                                                                                                                                                                                                                                                                                                                                                                                                                  | in progress (2026-11-11: the checkout is a multi-step wizard with the structured address, the house number in streetLine2; open: the GLS parcel-shop picker, carrier labels — see [ADR 0018](adr/0018-gls-labels-via-mygls-api.md))                                                                                                                                                        |
 | 7   | **Barion payment provider on the site** — including proper tax setup and invoicing integration to the Hungarian tax entity (NAV) — the invoicing flow it must support is recorded in [Owner post-order flow](#owner-post-order-flow-epics-5-6-and-7). Tax note: the channel is `pricesIncludeTax` (stored prices are gross — `ChannelSetupPlugin`); this step adds the 27% HU `TaxRate` so invoices show the extracted ÁFA without changing any stored price. Checkout gains an optional separate billing address ("differs from delivery") with company name and tax number, stored as the order's native billing address (`setOrderBillingAddress`) and reusing epic 6's structured address form | in progress (2026-11-11: the Számlázás step, the billing address and the taxNumber order field shipped; open: Barion (incl. the order-state design it forces — see [Owner post-order flow](#owner-post-order-flow-epics-5-6-and-7)), tax, NAV invoicing, payment-method selection, Meta purchase-tracking handle — see [Epic 7 design notes](#epic-7-design-notes-meta-purchase-tracking)) |
-| 8   | **English translation of the site**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | in progress (ADR 0015): routing, Tina content and backend language plumbing merged; UI dictionaries in progress                                                                                                                                                                                                                                                                            |
+| 8   | **English translation of the site**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | done (ADR 0015)                                                                                                                                                                                                                                                                                                                                                                            |
 | 9   | **Expand to Slovakia** — accept orders from Slovakia (delivery, tax, translations as needed)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | not started                                                                                                                                                                                                                                                                                                                                                                                |
 
 ## Epic 3 plan (site cutover)
@@ -112,35 +112,13 @@ blocks reading a variant's options again.
 
 ## Epic 8 plan (English / multi-language)
 
-Owner requirement: the site will support multiple languages (English first).
-Build on what exists; do not relitigate the catalog decision:
-
-- Already translatable (ADR 0011 decision 6): material/colour labels and
-  descriptions, definition text (`LocalizedText`, hu required, hu fallback),
-  the generated variant's name (the product's). The shop API takes a
-  `languageCode` per request and the site's API client already passes one.
-- To translate for epic 8:
-  - Site UI strings — every hardcoded Hungarian string in the site
-    (checkout labels, basket/checkout messages incl. the set-state messages
-    and the Hungarian error mappings in `src/lib/basket`, product-page and
-    list labels, cookie banner). Extract to locale dictionaries; route
-    per-locale (Astro i18n routing, hreflang).
-  - ✅ Buyer-visible server refusals are codes with values (the shared
-    `Refusal` schema): `OrderLine.invalidReason`, add/adjust refusals and
-    the checkout transition refusal. The site words them from its locale
-    files (`refusals.*`). Emails and line-detail labels stay server-rendered
-    per request language. Vendure's own default errors stay English
-    server-side — the site maps them by `errorCode`.
-  - Order emails — Hungarian templates need per-locale variants.
-  - Native names — delivery methods, promotions and set-group titles are
-    Vendure-translatable; give them English values.
-  - Non-catalog Tina content (privacy, contact, blog, ÁSZF) needs per-locale
-    content; the product collections are gone by epic 4 and must NOT return
-    as a translation home (roadmap principle).
-  - SEO surfaces — per-locale sitemap/search index, meta titles and
-    descriptions.
-- Prices stay HUF for English at first (EUR is epic 9's scope); do not couple
-  the two epics.
+Done. The architecture lives in
+[ADR 0015](adr/0015-multi-language-site-architecture.md) (routing, Tina
+content and backend language plumbing, the translatable catalog text of
+ADR 0011); the site's UI strings and the buyer-visible server refusals
+(coded values, worded per locale) live in the locale dictionaries and the
+order-basket/order-submission specs. Prices stay HUF for English — EUR is
+epic 9's scope; do not couple the two epics.
 
 ## Epic 7 design notes (Meta purchase tracking)
 
