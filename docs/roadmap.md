@@ -437,61 +437,60 @@ recipient's `fullName` and `phoneNumber`) already ships in the checkout
 is a separate slice with its own data-modeling question (where the selected
 shop lives on the order).
 
-### The GLS API (rundown, verified 2026-11-13)
+### The MyGLS API (GLS Hungary's integration surface, verified 2026-11-13
 
-GLS's group-wide shipping interface is **ShipIT** (REST and SOAP; the REST
-Doxygen pages are public):
+from https://api.mygls.hu, doc ver. 25.12.11)
 
-- **Auth:** HTTP Basic over TLS with the ShipIT credentials from the GLS
-  contract, plus an optional `Requester` header tagging the caller for
-  data-protection logging. Third-party integrations describe the login as a
-  ShipIT user + password + contact ID. The base URL is not published — GLS
-  hands it out with the credentials (centrally hosted ShipIT). Access is
-  requested through the owner's GLS contact / MyGLS account; this is an
-  off-repo onboarding step and the credentials become box secrets, never CI
-  variables.
-- **Shipment creation:** `POST /backend/rs/shipments` (`createParcels`) —
-  shipper, consignee, shipment units (weight, references), services,
-  printing options, custom content. Labels come back in the response via
-  the `ReturnLabels` printing option (PDF/PNG/ZEBRA — centrally hosted
-  ShipIT supports only `ReturnLabels`, which is exactly our "save without
-  printing" requirement). Also: `/shipments/cancel/{trackID}`,
-  `/shipments/allowedservices`, `/shipments/endofday`,
-  `/shipments/updateparcelweight`.
-- **Hungary quirk (stated in the docs):** Hungary does not assign dedicated
-  Contact IDs to customers, so the full shipper address must be transmitted
-  in every `createParcels` call — the shop's address becomes configuration.
-- **Services** are per-shipment-unit objects with fixed `ServiceName`
-  values; the docs list ShopDelivery (parcel-shop delivery — the future
-  picker), ShopReturn, Exchange, DeliveryAtWork, Intercompany. COD appears
-  as a per-unit attribute (the validator's sample response shows
-  `shipmentunit.attribute.cod.toohigh` with an `ARTICLES_PRODUCT_MAX_COD`
-  rule — a product-level max amount). The exact HU COD service name and max
-  amount must be confirmed with credentials at design time.
-- **Tracking:** `POST /parcels` (bulk status), `POST /parceldetails` (event
-  history), `POST /parcelpod` (proof of delivery). Poll-based; the event
-  vocabulary is GLS-proprietary. The newer dev-portal APIs
-  (dev-portal.gls-group.net — OAuth2 Authentication, Delivery, ParcelShop,
-  POD) hide their catalog behind login and "restricted" APIs need local GLS
-  approval; webhooks are documented only on the Dutch national portal. Plan
-  for polling `parceldetails` for the delivered event.
-- **No public sandbox** — testing runs on the real contract (or a GLS-provided
-  test environment if the contact offers one).
+In Hungary the shipping API is the **MyGLS API**, not the group-wide
+ShipIT: REST/JSON first (SOAP exists; we will not use it), at
+`https://api.mygls.hu/ParcelService.svc/json/<Method>` and
+`.../MasterDataService.svc/json/<Method>` (versioned method names like
+`GetPrintedLabels_20251022` pin behavior). **A test environment exists**:
+`https://api.test.mygls.hu/`. The same API covers SK/RO/HR/CZ/SI/RS on
+their own country domains — epic 9's GLS work rides this same integration.
 
-Practical mapping to our flow: fulfillment created → `createParcels` with
-the order's address (+ the COD attribute on utánvét orders, amount =
-total − deposit) → the returned trackID/tracking number goes onto the
-fulfillment's native `trackingCode` and the label PDF is stored → a worker
-polls `parceldetails` and fires the delivered event that epic 7's
-settle-on-delivery leg listens to. MyGLS stays the manual fallback until
-the credentials exist.
+- **Auth — no API keys, no OAuth:** every request body carries `Username`
+  (the MyGLS e-mail), `Password` (the SHA-512 hash of the password, as a
+  byte array) and an optional `WebshopEngine` tag; the client number rides
+  on each parcel. GLS issues a dedicated API username/password + ügyfélszám
+  for the MyGLS account — requested from GLS Hungary customer service
+  (connect@gls-hungary.com, 06-29-88-66-88). Off-repo onboarding step; the
+  credentials become box secrets, never CI variables.
+- **Label creation:** `PrintLabels` (one step) or `PrepareLabels` +
+  `GetPrintedLabels`; the response is the **label PDF as a byte array**
+  (`TypeOfPrinter`: `A4_2x2`/`A4_4x1` for A4 sheets, Thermo/ZPL variants
+  for label printers; `HidePhoneNumberOnLabels` optional). Exactly the
+  "save without printing" flow.
+- **Utánvét:** the `COD` service code plus the parcel fields `CODAmount`,
+  `CODReference` ("used for payment pairing" — the AutoKassza-friendly
+  hook) and `CODCurrency`. `ModifyCOD` can change the amount after
+  creation.
+- **Tracking:** `GetParcelStatuses`/`GetParcelListStatuses` (polling, with
+  `LanguageIsoCode`); GLS status codes include 5 = delivered,
+  16 = not delivered (no cash), 23 = returned to sender — the delivered
+  event feeds epic 7's settle-on-delivery leg.
+- **Weights are not mandatory by default:** parcel properties (weight,
+  dimensions, packaging) are optional except for Serbia and
+  client-number-dependent cases. If GLS requires weights for the owner's
+  client number, they get modeled like pricing: base weight per product +
+  per-field additional weights in the canonical definition.
+- **Parcel identity:** `ClientReference` (strongly recommended) carries our
+  order code; the response's `PrintDataInfoList` returns the API's parcel
+  ID and routing data (pickup PIN since 2025-10).
+- GLS ships reference SDKs (C#/PHP/Java) "as reference examples" and asks
+  production integrations to implement their own client — we write a small
+  typed TS client in the backend against the JSON API.
 
-**Open questions (design time):** ShipIT version to target, the label
-format the owner's setup wants (PDF vs ZPL), the HU COD service name and
-max amount, whether GLS offers a Hungarian test environment, and **parcel
-weights** — GLS requires an expected weight per unit and the catalog
-carries none (per-product defaults vs a fixed value until real weights
-exist).
+Practical mapping: fulfillment created → `PrintLabels` with the order's
+address (+ COD when utánvét, amount = total − deposit) → the tracking
+number goes onto the fulfillment's native `trackingCode` and the PDF is
+stored → a worker polls `GetParcelStatuses` and fires the delivered event
+that epic 7's settle-on-delivery leg listens to. MyGLS (the web UI) stays
+the manual fallback until the credentials exist.
+
+**Open questions (design time):** which `TypeOfPrinter` the owner wants
+(A4 PDF vs thermal), the COD max in her contract, whether her client
+number requires weights, test-environment credentials.
 
 ## Epic 9 design notes (multi-market tax & pricing)
 
