@@ -26,7 +26,14 @@ export const auditSchema = gql`
     entityKey: String!
     action: String!
     summary: String
+    details: [AuditLogDetail!]
     source: String!
+  }
+
+  type AuditLogDetail {
+    field: String!
+    from: String
+    to: String
   }
 
   type AuditLogEntryList {

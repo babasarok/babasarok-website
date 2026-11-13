@@ -11,6 +11,9 @@ export interface VariantState {
 export interface VariantDrift {
   kind: "presence" | "sku" | "rename" | "price";
   label: string;
+  /** The changed values, display-ready; null for the presence kinds. */
+  from: string | null;
+  to: string | null;
 }
 
 /**
@@ -26,6 +29,20 @@ export function plannedVariant(
   return { sku: definition.id, name: productName, price: definition.basePrice };
 }
 
+function textValue(text: LocalizedText): string {
+  const languages = Object.keys(text);
+
+  return languages.length === 1
+    ? text[languages[0] as keyof LocalizedText]
+    : languages
+        .map((language) => `${language}: ${text[language as keyof LocalizedText]}`)
+        .join(" / ");
+}
+
+function ft(price: number): string {
+  return `${price} Ft`;
+}
+
 /** What a sync would change on the native variants: empty when they match the plan. */
 export function variantDrift(
   planned: VariantState,
@@ -34,25 +51,47 @@ export function variantDrift(
   const variant = current.at(0);
 
   if (variant === undefined) {
-    return [{ kind: "presence", label: "A termék változata hiányzik" }];
+    return [{ kind: "presence", label: "A termék változata hiányzik", from: null, to: null }];
   }
 
   if (current.length > 1) {
-    return [{ kind: "presence", label: `${current.length} változat van egy helyett` }];
+    return [
+      {
+        kind: "presence",
+        label: `${current.length} változat van egy helyett`,
+        from: null,
+        to: null,
+      },
+    ];
   }
 
   const drift: VariantDrift[] = [];
 
   if (variant.sku !== planned.sku) {
-    drift.push({ kind: "sku", label: `SKU eltér: ${variant.sku} → ${planned.sku}` });
+    drift.push({
+      kind: "sku",
+      label: `SKU eltér: ${variant.sku} → ${planned.sku}`,
+      from: variant.sku,
+      to: planned.sku,
+    });
   }
 
   if (canonicalJson(variant.name) !== canonicalJson(planned.name)) {
-    drift.push({ kind: "rename", label: `Név eltér: ${variant.name.hu} → ${planned.name.hu}` });
+    drift.push({
+      kind: "rename",
+      label: `Név eltér: ${variant.name.hu} → ${planned.name.hu}`,
+      from: textValue(variant.name),
+      to: textValue(planned.name),
+    });
   }
 
   if (variant.price !== planned.price) {
-    drift.push({ kind: "price", label: `Ár eltér: ${variant.price} → ${planned.price}` });
+    drift.push({
+      kind: "price",
+      label: `Ár eltér: ${variant.price} → ${planned.price}`,
+      from: ft(variant.price),
+      to: ft(planned.price),
+    });
   }
 
   return drift;

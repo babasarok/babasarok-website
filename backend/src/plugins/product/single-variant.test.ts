@@ -39,18 +39,33 @@ describe("variantDrift", () => {
 
   it("reports a missing variant and surplus variants", () => {
     expect(variantDrift(planned, [])).toEqual([
-      { kind: "presence", label: "A termék változata hiányzik" },
+      { kind: "presence", label: "A termék változata hiányzik", from: null, to: null },
     ]);
     expect(variantDrift(planned, [planned, planned])).toEqual([
-      { kind: "presence", label: "2 változat van egy helyett" },
+      { kind: "presence", label: "2 változat van egy helyett", from: null, to: null },
     ]);
   });
 
-  it("reports a changed SKU, name and price", () => {
-    expect(
-      variantDrift(planned, [{ sku: "regi", name: { hu: "Régi" }, price: 1 }]).map(
-        (drift) => drift.kind
-      )
-    ).toEqual(["sku", "rename", "price"]);
+  it("reports a changed SKU, name and price with their from/to values", () => {
+    expect(variantDrift(planned, [{ sku: "regi", name: { hu: "Régi" }, price: 1 }])).toEqual([
+      {
+        kind: "sku",
+        label: "SKU eltér: regi → parna",
+        from: "regi",
+        to: "parna",
+      },
+      {
+        kind: "rename",
+        label: "Név eltér: Régi → Párna",
+        from: "Régi",
+        to: "hu: Párna / en: Pillow",
+      },
+      {
+        kind: "price",
+        label: "Ár eltér: 1 → 9000",
+        from: "1 Ft",
+        to: "9000 Ft",
+      },
+    ]);
   });
 });

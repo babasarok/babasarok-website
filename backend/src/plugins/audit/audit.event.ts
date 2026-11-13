@@ -1,5 +1,6 @@
 import { VendureEvent } from "@vendure/core";
 import type { RequestContext } from "@vendure/core";
+import type { AuditDetail } from "./details";
 
 export interface AuditActor {
   id: number;
@@ -17,6 +18,7 @@ export interface AuditEntryInput {
   entityKey: string;
   action: AuditAction;
   summary: string | null;
+  details: AuditDetail[] | null;
   source: AuditSource;
   actor: AuditActor | null;
 }

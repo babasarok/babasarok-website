@@ -1,5 +1,6 @@
 import { DeepPartial, VendureEntity } from "@vendure/core";
 import { Column, Entity, Index } from "typeorm";
+import type { AuditDetail } from "./details";
 
 @Entity()
 @Index(["createdAt"])
@@ -27,6 +28,9 @@ export class AuditLogEntry extends VendureEntity {
 
   @Column({ type: "varchar", nullable: true })
   summary!: string | null;
+
+  @Column({ type: "jsonb", nullable: true })
+  details!: AuditDetail[] | null;
 
   @Column({ type: "varchar" })
   source!: string;

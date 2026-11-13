@@ -34,6 +34,9 @@ const AuditEntrySchema = z.object({
   entityKey: z.string(),
   actorIdentifier: z.string().nullable(),
   summary: z.string().nullable(),
+  details: z
+    .array(z.object({ field: z.string(), from: z.string().nullable(), to: z.string().nullable() }))
+    .nullable(),
 });
 
 const AuditSchema = z.object({
@@ -117,7 +120,10 @@ async function auditEntries(
     `query($options: AuditLogListOptions) {
       auditLogEntries(options: $options) {
         totalItems
-        items { id action source entityType entityKey actorIdentifier summary }
+        items {
+          id action source entityType entityKey actorIdentifier summary
+          details { field from to }
+        }
       }
     }`,
     { options: { take: 100, entityType } },
@@ -192,12 +198,15 @@ describe("the audit log over the admin write path", () => {
       throw new Error("int-pamut was not seeded.");
     }
 
+    const subtitle = material.translations.find((t) => t.languageCode === "hu")?.subtitle ?? "";
+    const changed = subtitle.trim() === "" ? "(módosítva)" : `${subtitle} (módosítva)`;
+
     // A subtitle-only change touches nothing a product reads, yet the log must see it.
     const input = {
       slug: material.slug,
       translations: material.translations.map((t) => ({
         ...t,
-        subtitle: t.languageCode === "hu" ? `${t.subtitle} (módosítva)` : t.subtitle,
+        subtitle: t.languageCode === "hu" ? changed : t.subtitle,
       })),
       colors: material.colors.map((c) => ({
         id: c.id,
@@ -221,6 +230,89 @@ describe("the audit log over the admin write path", () => {
     expect(row).toBeDefined();
     expect(row?.source).toBe("admin");
     expect(row?.actorIdentifier).not.toBeNull();
+    expect(row?.summary).toBe(material.translations.find((t) => t.languageCode === "hu")?.label);
+    expect(row?.details).toContainEqual({
+      field: "Alcím (hu)",
+      from: subtitle.trim() === "" ? null : subtitle,
+      to: changed,
+    });
+  });
+
+  it("records what a definition save changed and what its sync applied", async () => {
+    const { productDefinition } = await run(
+      server.admin,
+      `query($productId: String!) { productDefinition(productId: $productId) { nativeProductId } }`,
+      { productId },
+      z.object({
+        productDefinition: z.object({ nativeProductId: z.number().nullable() }),
+      })
+    );
+
+    if (productDefinition.nativeProductId === null) {
+      throw new Error("the definition has no native product.");
+    }
+
+    const definition = { ...AUDIT_MATRIX, basePrice: 3000 };
+
+    await run(
+      server.admin,
+      `mutation($productId: String!, $definition: JSON!) {
+        updateProductDefinition(productId: $productId, definition: $definition) { productId }
+      }`,
+      { productId, definition },
+      z.object({ updateProductDefinition: z.object({ productId: z.string() }) })
+    );
+
+    const updated = await waitForAuditRow("product-definition", "updated");
+
+    expect(updated.details).toEqual([{ field: "Alapár", from: "1000 Ft", to: "3000 Ft" }]);
+
+    await waitForSync();
+
+    const synced = await waitForAuditRow("product-definition", "synced");
+
+    expect(synced.summary).toBe("Audit mátrix");
+    expect(synced.details).toEqual([{ field: "Ár", from: "1000 Ft", to: "3000 Ft" }]);
+  });
+
+  it("records a stock-form rename with the name diff as its details", async () => {
+    const { productDefinition } = await run(
+      server.admin,
+      `query($productId: String!) { productDefinition(productId: $productId) { nativeProductId } }`,
+      { productId },
+      z.object({
+        productDefinition: z.object({ nativeProductId: z.number().nullable() }),
+      })
+    );
+
+    if (productDefinition.nativeProductId === null) {
+      throw new Error("the definition has no native product.");
+    }
+
+    await run(
+      server.admin,
+      `mutation($input: UpdateProductInput!) {
+        updateProduct(input: $input) { __typename ... on Product { id } }
+      }`,
+      {
+        input: {
+          id: String(productDefinition.nativeProductId),
+          translations: [{ languageCode: "hu", name: "Audit mátrix (átnevezve)" }],
+        },
+      },
+      z.object({ updateProduct: z.object({ __typename: z.string() }) })
+    );
+
+    const row = await waitForAuditRow("product", "updated");
+
+    expect(row.summary).toBe("Audit mátrix (átnevezve)");
+    expect(row.details).toEqual([
+      {
+        field: "Fordítás / hu / Név",
+        from: "Audit mátrix",
+        to: "Audit mátrix (átnevezve)",
+      },
+    ]);
   });
 
   it("records a set-promotion rename through the guarded stock mutation", async () => {

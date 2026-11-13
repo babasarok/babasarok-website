@@ -35,6 +35,7 @@ export {
   type MaterialColorDefinition,
   type MaterialColorId,
   type MaterialDefinition,
+  type MaterialDefinitionInput,
   type MaterialId,
 } from "./material";
 export {
