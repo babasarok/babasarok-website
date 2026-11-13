@@ -514,7 +514,15 @@ and no COD payout/settlement surface at all. GLS status 5 (delivered) is
 therefore only a proxy for the COD money; the money-confirmed signal
 stays bank-side: AutoKassza pairs the bank statement line via the
 parcel's `CODReference`, and `PaymentSettled` happens on that, not on
-delivery.
+delivery. The shipped→delivered update is automatic (the polling worker
+transitions the fulfillment and then the order — `FulfillmentService.
+transitionToState` does not move the order itself) under one rule:
+**deliver only when the order's payments cover the total.** Prepaid
+orders deliver on status 5; COD orders hold in `Shipped` until the COD
+payment is recorded (`Shipped → Modifying → PaymentSettled`), because the
+order's `Delivered` state can only transition to `Cancelled` — delivering
+an unsettled COD order would dead-end it. This makes `Delivered` an
+invariant: fully paid and physically delivered.
 
 **Test mode (Stripe-style, per account `mode`: `test`/`live`/`fake`).**
 The plugin's service depends on a narrow `GlsClient` interface.
