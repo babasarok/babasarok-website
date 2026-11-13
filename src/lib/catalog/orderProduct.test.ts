@@ -58,8 +58,8 @@ const materials: CatalogMaterial[] = [
     label: "A",
     subtitle: "",
     description: "",
-    thumbnailUrl: null,
-    colors: [{ id: "piros", label: "Piros", hex: "#ff0000", imageUrl: null }],
+    thumbnail: null,
+    colors: [{ id: "piros", label: "Piros", hex: "#ff0000", image: null }],
   },
 ];
 
@@ -71,7 +71,7 @@ const catalogProduct: CatalogProduct = {
   shortDescription: null,
   date: "2026-01-02T00:00:00.000Z",
   popularityRank: null,
-  thumbnailUrl: "source/ab/kosar.jpg",
+  thumbnail: { source: "source/ab/kosar.jpg", focalPoint: null },
   type: { code: "zsak", name: "Zsák" },
   definition,
 };

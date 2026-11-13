@@ -1,26 +1,48 @@
-export const IMAGE_PRESET_WIDTHS = {
-  "card-sm": 300,
-  "card-lg": 600,
-  "hero-sm": 480,
-  "hero-md": 768,
-  "hero-lg": 1000,
-} as const;
+import { ASSET_PRESETS } from "@babasarok/asset-presets";
 
-export type ImagePreset = keyof typeof IMAGE_PRESET_WIDTHS;
+export type ImagePreset = (typeof ASSET_PRESETS)[number]["name"];
+
+export interface VendureFocalPoint {
+  x: number;
+  y: number;
+}
+
+export interface VendureAsset {
+  source: string;
+  focalPoint: VendureFocalPoint | null;
+}
+
+const IMAGE_PRESET_WIDTHS = Object.fromEntries(
+  ASSET_PRESETS.map((preset) => [preset.name, preset.width] as const)
+) as Record<ImagePreset, number>;
+
+const CROP_PRESETS: ReadonlySet<ImagePreset> = new Set(
+  ASSET_PRESETS.filter((preset) => preset.mode === "crop").map((preset) => preset.name)
+);
 
 const IMAGE_QUALITY = "75";
 
-/**
- * `source` is either an absolute asset URL from the shop API or a host-relative
- * asset path such as `source/ab/file.jpg`, resolved against `assetBase`
- * (e.g. `https://api.example/assets/`).
- */
-export function imageUrl(source: string, preset: ImagePreset, assetBase: string): string {
+/** Vendure crops around the focal point; without one the crop is centred. */
+const CENTER: VendureFocalPoint = { x: 0.5, y: 0.5 };
+
+export function imageUrl(
+  source: string,
+  preset: ImagePreset,
+  assetBase: string,
+  focalPoint?: VendureFocalPoint | null
+): string {
   const url = new URL(source, assetBase);
 
   url.searchParams.set("preset", preset);
   url.searchParams.set("format", "webp");
   url.searchParams.set("q", IMAGE_QUALITY);
+
+  if (CROP_PRESETS.has(preset)) {
+    const { x, y } = focalPoint ?? CENTER;
+
+    url.searchParams.set("fpx", String(x));
+    url.searchParams.set("fpy", String(y));
+  }
 
   return url.href;
 }
@@ -28,9 +50,13 @@ export function imageUrl(source: string, preset: ImagePreset, assetBase: string)
 export function imageSrcSet(
   source: string,
   presets: readonly ImagePreset[],
-  assetBase: string
+  assetBase: string,
+  focalPoint?: VendureFocalPoint | null
 ): string {
   return presets
-    .map((preset) => `${imageUrl(source, preset, assetBase)} ${IMAGE_PRESET_WIDTHS[preset]}w`)
+    .map(
+      (preset) =>
+        `${imageUrl(source, preset, assetBase, focalPoint)} ${IMAGE_PRESET_WIDTHS[preset]}w`
+    )
     .join(", ");
 }

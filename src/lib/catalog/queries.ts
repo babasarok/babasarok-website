@@ -3,7 +3,7 @@ const PRODUCT_FIELDS = `
   slug
   name
   customFields { shortDescription tagline date popularityRank }
-  featuredAsset { source }
+  featuredAsset { source focalPoint { x y } }
   facetValues { code name facet { code } }
   productDefinition
 `;
@@ -24,7 +24,7 @@ export const PRODUCT_QUERY = `
     product(slug: $slug) {
       ${PRODUCT_FIELDS}
       description
-      assets { source customFields { galleryDescription } }
+      assets { source focalPoint { x y } customFields { galleryDescription } }
     }
   }
 `;
@@ -34,8 +34,8 @@ const MATERIAL_FIELDS = `
   label
   subtitle
   description
-  thumbnail { source }
-  colors { id label hex asset { source } }
+  thumbnail { source focalPoint { x y } }
+  colors { id label hex asset { source focalPoint { x y } } }
 `;
 
 export const MATERIALS_QUERY = `query CatalogMaterials { materials { ${MATERIAL_FIELDS} } }`;
@@ -44,7 +44,7 @@ export const MATERIAL_QUERY = `
   query CatalogMaterial($slug: String!) { material(slug: $slug) { ${MATERIAL_FIELDS} } }
 `;
 
-const THREAD_COLORS = `threadColors { id label hex swatch { source } }`;
+const THREAD_COLORS = `threadColors { id label hex swatch { source focalPoint { x y } } }`;
 
 const PRODUCT_GROUPS = `productGroups { id kind label discount productIds }`;
 

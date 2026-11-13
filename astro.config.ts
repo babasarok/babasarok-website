@@ -123,6 +123,9 @@ export default defineConfig({
         "@babasarok/pricing": fileURLToPath(
           new URL("backend/src/shared/pricing/index.ts", import.meta.url)
         ),
+        "@babasarok/asset-presets": fileURLToPath(
+          new URL("backend/src/shared/asset-presets.ts", import.meta.url)
+        ),
       },
     },
     // Bundle @tinacms/astro into the SSR build instead of resolving it

@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { ProductDefinition } from "@babasarok/product-definition";
+import type { VendureAsset } from "@/lib/vendure/imageUrl";
 import type {
   MaterialsResponseSchema,
   ProductGroupsResponseSchema,
@@ -22,7 +23,7 @@ export interface CatalogProduct {
   shortDescription: string | null;
   date: string | null;
   popularityRank: number | null;
-  thumbnailUrl: string | null;
+  thumbnail: VendureAsset | null;
   type: { code: string; name: string } | null;
   definition: ProductDefinition;
 }
@@ -33,7 +34,7 @@ export type CatalogProductGroup = z.output<
 
 export interface CatalogProductDetail extends CatalogProduct {
   description: string;
-  gallery: Array<{ url: string; description: string | null }>;
+  gallery: Array<{ asset: VendureAsset; description: string | null }>;
 }
 
 export interface CatalogMaterial {
@@ -41,8 +42,8 @@ export interface CatalogMaterial {
   label: string;
   subtitle: string;
   description: string;
-  thumbnailUrl: string | null;
-  colors: Array<{ id: string; label: string; hex: string | null; imageUrl: string | null }>;
+  thumbnail: VendureAsset | null;
+  colors: Array<{ id: string; label: string; hex: string | null; image: VendureAsset | null }>;
 }
 
 /** Null for products without a configurator definition: not storefront products. */
@@ -61,7 +62,7 @@ export function toProduct(row: ProductRow): CatalogProduct | null {
     shortDescription: row.customFields.shortDescription,
     date: row.customFields.date,
     popularityRank: row.customFields.popularityRank,
-    thumbnailUrl: row.featuredAsset?.source ?? null,
+    thumbnail: row.featuredAsset ?? null,
     type: type === undefined ? null : { code: type.code, name: type.name },
     definition: row.productDefinition,
   };
@@ -78,7 +79,7 @@ export function toProductDetail(row: DetailRow): CatalogProductDetail | null {
     ...product,
     description: row.description,
     gallery: row.assets.map((asset) => ({
-      url: asset.source,
+      asset,
       description: asset.customFields?.galleryDescription ?? null,
     })),
   };
@@ -90,12 +91,12 @@ export function toMaterial(row: MaterialRow): CatalogMaterial {
     label: row.label,
     subtitle: row.subtitle,
     description: row.description,
-    thumbnailUrl: row.thumbnail?.source ?? null,
+    thumbnail: row.thumbnail ?? null,
     colors: row.colors.map((color) => ({
       id: color.id,
       label: color.label,
       hex: color.hex,
-      imageUrl: color.asset?.source ?? null,
+      image: color.asset ?? null,
     })),
   };
 }
@@ -104,7 +105,7 @@ export interface CatalogThreadColor {
   id: string;
   label: string;
   hex: string | null;
-  swatchUrl: string | null;
+  swatch: VendureAsset | null;
 }
 
 export function toThreadColors(
@@ -114,7 +115,7 @@ export function toThreadColors(
     id: color.id,
     label: color.label,
     hex: color.hex,
-    swatchUrl: color.swatch?.source ?? null,
+    swatch: color.swatch ?? null,
   }));
 }
 

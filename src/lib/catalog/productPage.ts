@@ -1,12 +1,13 @@
 import type { ProductDefinition } from "@babasarok/product-definition";
 import { localizedPath, VENDURE_LANGUAGE_CODE, type Locale } from "@/lib/i18n";
 import type { OrderProduct, OrderProductGroup, OrderThreadColor } from "@/lib/order/types";
+import type { VendureAsset } from "@/lib/vendure/imageUrl";
 import type { Catalog } from "./index";
 import type { CatalogProduct, CatalogProductDetail } from "./mappers";
 import { toOrderGroups, toOrderProduct, toOrderThreadColors } from "./orderProduct";
 
 export interface GalleryImage {
-  src: string;
+  asset: VendureAsset;
   alt: string;
   description?: string | undefined;
 }
@@ -38,13 +39,13 @@ function navLink(product: CatalogProduct | undefined, locale: Locale): NavLink |
 
 function galleryOf(product: CatalogProductDetail): GalleryImage[] {
   const gallery = product.gallery.map((image) => ({
-    src: image.url,
+    asset: image.asset,
     alt: product.name,
     description: image.description ?? undefined,
   }));
 
-  if (gallery.length === 0 && product.thumbnailUrl !== null) {
-    return [{ src: product.thumbnailUrl, alt: product.name }];
+  if (gallery.length === 0 && product.thumbnail !== null) {
+    return [{ asset: product.thumbnail, alt: product.name }];
   }
 
   return gallery;

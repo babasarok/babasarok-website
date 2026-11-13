@@ -32,7 +32,7 @@
             <CatalogCard
               href={localizedPath(`/product/${product.slug}/`, locale)}
               title={product.name}
-              image={product.thumbnailUrl ?? undefined}
+              image={product.thumbnail ?? undefined}
               category={product.tagline ?? undefined}
               detailsLabel={i18n.t("common.details")}
               square

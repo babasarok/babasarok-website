@@ -15,7 +15,7 @@ import { DashboardPlugin } from "@vendure/dashboard/plugin";
 import { EmailPlugin } from "@vendure/email-plugin";
 import { LocaleTemplateLoader } from "./plugins/email/localized-template-loader";
 import type { EmailPluginDevModeOptions, EmailPluginOptions } from "@vendure/email-plugin";
-import { ASSET_PRESETS, ASSET_QUALITY } from "./asset-presets";
+import { ASSET_PRESETS, ASSET_QUALITY } from "./shared/asset-presets";
 import { PresetOrOriginalStrategy } from "./preset-or-original-strategy";
 import { env } from "./env";
 import { z } from "zod";
@@ -200,6 +200,7 @@ export const config: VendureConfig = {
         defaultPreset: "card-lg",
         permittedQuality: [ASSET_QUALITY],
         permittedFormats: ["webp"],
+        allowFocalPoint: true,
       }),
     }),
     DefaultJobQueuePlugin.init({}),

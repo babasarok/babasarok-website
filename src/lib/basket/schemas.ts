@@ -19,7 +19,12 @@ export const OrderLineSchema = z.object({
     product: z.object({
       slug: z.string(),
       name: z.string(),
-      featuredAsset: z.object({ source: z.string() }).nullable(),
+      featuredAsset: z
+        .object({
+          source: z.string(),
+          focalPoint: z.object({ x: z.number(), y: z.number() }).nullable(),
+        })
+        .nullable(),
       productDefinition: ProductDefinitionSchema.nullable(),
     }),
   }),

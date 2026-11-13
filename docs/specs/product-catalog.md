@@ -135,7 +135,10 @@ product block is a client island showing the `itemCount` (from `product.json`)
 most popular listed products; its title and button stay prerendered. Catalog images come
 from the asset server's presets as webp (`card-sm`, `card-lg`, `hero-sm`,
 `hero-md`, `hero-lg`; plain asset URLs still serve the original, any other
-preset or size is rejected).
+preset or size is rejected). The crop presets (`card-sm`, `card-lg`) honour the
+asset's focal point set in the dashboard: their URLs carry `fpx`/`fpy` from the
+asset's focal point, or `fpx=0.5&fpy=0.5` (centre crop) when the asset has
+none; the resize presets (`hero-*`) ignore focal points.
 
 ### Catalog sitemap and search
 

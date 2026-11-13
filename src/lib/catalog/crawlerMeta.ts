@@ -1,6 +1,6 @@
 import { VENDURE_LANGUAGE_CODE, type Locale } from "@/lib/i18n";
 import { ASSET_BASE } from "@/lib/vendure/client";
-import { imageUrl } from "@/lib/vendure/imageUrl";
+import { imageUrl, type VendureAsset } from "@/lib/vendure/imageUrl";
 import { getMaterial, getProduct } from "./index";
 import type { CatalogMaterial, CatalogProductDetail } from "./mappers";
 
@@ -35,12 +35,12 @@ const defaultDeps: CrawlerMetaDeps = {
   assetBase: ASSET_BASE,
 };
 
-function previewImage(source: string | null, assetBase: string): string | undefined {
-  if (source === null) {
+function previewImage(asset: VendureAsset | null, assetBase: string): string | undefined {
+  if (asset === null) {
     return undefined;
   }
 
-  return imageUrl(source, "hero-md", assetBase);
+  return imageUrl(asset.source, "hero-md", assetBase);
 }
 
 async function loadMeta(
@@ -59,7 +59,7 @@ async function loadMeta(
     return {
       title: product.name,
       description: product.shortDescription ?? undefined,
-      image: previewImage(product.gallery.at(0)?.url ?? product.thumbnailUrl, deps.assetBase),
+      image: previewImage(product.gallery.at(0)?.asset ?? product.thumbnail, deps.assetBase),
     };
   }
 
@@ -72,7 +72,7 @@ async function loadMeta(
   return {
     title: material.label,
     description: material.subtitle || undefined,
-    image: previewImage(material.thumbnailUrl, deps.assetBase),
+    image: previewImage(material.thumbnail, deps.assetBase),
   };
 }
 

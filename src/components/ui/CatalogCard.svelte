@@ -1,11 +1,12 @@
 <script lang="ts">
+  import type { VendureAsset } from "@/lib/vendure/imageUrl";
   import VendureImage from "./VendureImage.svelte";
 
   interface Props {
     href: string;
     title: string;
-    /** Vendure asset source (see `imageUrl`). */
-    image?: string | undefined;
+    /** Vendure asset (see `imageUrl`). */
+    image?: VendureAsset | undefined;
     category?: string | undefined;
     detailsLabel: string;
     /** Square, uniform-height variant used by the landing product grid. */
@@ -21,7 +22,7 @@
 >
   {#if image}
     <VendureImage
-      src={image}
+      asset={image}
       alt={title}
       presets={["card-sm", "card-lg"]}
       sizes="(max-width: 575px) 50vw, 300px"

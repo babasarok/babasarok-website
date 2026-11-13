@@ -1,7 +1,10 @@
 import { z } from "zod";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 
-const AssetSchema = z.object({ source: z.string() });
+const AssetSchema = z.object({
+  source: z.string(),
+  focalPoint: z.object({ x: z.number(), y: z.number() }).nullable(),
+});
 
 const ProductRowSchema = z.object({
   id: z.string(),
@@ -30,6 +33,7 @@ export const ProductResponseSchema = z.object({
     assets: z.array(
       z.object({
         source: z.string(),
+        focalPoint: z.object({ x: z.number(), y: z.number() }).nullable(),
         customFields: z.object({ galleryDescription: z.string().nullable() }).nullable(),
       })
     ),

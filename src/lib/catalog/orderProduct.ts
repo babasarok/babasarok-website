@@ -11,7 +11,7 @@ import type {
   SlimImage,
 } from "@/lib/order/types";
 import { isProductType } from "@/lib/product/productTypes";
-import { imageUrl } from "@/lib/vendure/imageUrl";
+import { imageUrl, type VendureAsset } from "@/lib/vendure/imageUrl";
 import { cardImage } from "./listItems";
 import type {
   CatalogMaterial,
@@ -23,9 +23,9 @@ import type {
 const FALLBACK_TYPE = "kiegeszito";
 type OrderMaterial = NonNullable<NonNullable<OrderField["materials"]>[number]>["material_path"];
 
-function swatchImage(source: string, assetBase: string): SlimImage {
+function swatchImage(asset: VendureAsset, assetBase: string): SlimImage {
   return {
-    src: imageUrl(source, "card-sm", assetBase),
+    src: imageUrl(asset.source, "card-sm", assetBase, asset.focalPoint),
     srcSet: { attribute: "" },
     attributes: {},
   };
@@ -37,12 +37,12 @@ function toOrderMaterial(material: CatalogMaterial, assetBase: string): OrderMat
     label: material.label,
     categories: material.subtitle,
     shortDescription: material.description,
-    thumbnail: material.thumbnailUrl ? swatchImage(material.thumbnailUrl, assetBase) : undefined,
+    thumbnail: material.thumbnail ? swatchImage(material.thumbnail, assetBase) : undefined,
     colors: material.colors.map((color) => ({
       color_id: color.id,
       label: color.label,
       hex: color.hex ?? undefined,
-      image: color.imageUrl ? swatchImage(color.imageUrl, assetBase) : undefined,
+      image: color.image ? swatchImage(color.image, assetBase) : undefined,
     })),
   };
 }
@@ -180,7 +180,7 @@ export function toOrderProduct(
     shortDescription: product.shortDescription ?? undefined,
     type: typeCode !== undefined && isProductType(typeCode) ? typeCode : FALLBACK_TYPE,
     date: product.date ? new Date(product.date) : undefined,
-    thumbnail: product.thumbnailUrl ? cardImage(product.thumbnailUrl, assetBase) : undefined,
+    thumbnail: product.thumbnail ? cardImage(product.thumbnail, assetBase) : undefined,
     icon: undefined,
     images: [],
     price: definition.basePrice,
@@ -217,6 +217,6 @@ export function toOrderThreadColors(
     color_id: color.id,
     label: color.label,
     hex: color.hex ?? undefined,
-    image: color.swatchUrl ? swatchImage(color.swatchUrl, assetBase) : undefined,
+    image: color.swatch ? swatchImage(color.swatch, assetBase) : undefined,
   }));
 }
