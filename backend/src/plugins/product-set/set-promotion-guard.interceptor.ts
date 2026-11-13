@@ -3,11 +3,15 @@ import { GqlExecutionContext } from "@nestjs/graphql";
 import {
   EventBus,
   internal_getRequestContext,
+  LanguageCode,
+  Logger,
+  Product,
   Promotion,
   TransactionalConnection,
   UserInputError,
+  type RequestContext,
 } from "@vendure/core";
-import { IsNull } from "typeorm";
+import { In, IsNull } from "typeorm";
 import type {
   CreatePromotionInput,
   ConfigurableOperationInput,
@@ -15,6 +19,7 @@ import type {
 } from "@vendure/common/lib/generated-types";
 import { switchMap, tap, type Observable } from "rxjs";
 import { z } from "zod";
+import { canonicalJson, byCodeUnit } from "../../shared/product-definition/index";
 import {
   huName,
   memberIdsFromArgs,
@@ -23,6 +28,7 @@ import {
   PRODUCT_SET_CONDITION_CODE,
 } from "./set-basket";
 import { AuditEntryEvent, auditActor } from "../audit/audit.event";
+import type { AuditDetail } from "../audit/details";
 
 const GUARDED_MUTATIONS = new Set(["createPromotion", "updatePromotion"]);
 
@@ -33,6 +39,35 @@ const SavedPromotionSchema = z.object({
   name: z.string().optional(),
   translations: z.array(z.object({ languageCode: z.string(), name: z.string() })).default([]),
 });
+
+/** The promotion's set membership, amount and state before the save. */
+interface PriorPromotion {
+  enabled: boolean;
+  huName: string | null;
+  memberIds: string[] | null;
+  amount: number | null;
+}
+
+function membersChanged(
+  before: ReadonlyArray<string> | null,
+  after: ReadonlyArray<string> | null
+): boolean {
+  return (
+    canonicalJson((before ?? []).toSorted(byCodeUnit)) !==
+    canonicalJson((after ?? []).toSorted(byCodeUnit))
+  );
+}
+
+function memberText(
+  ids: ReadonlyArray<string> | null,
+  names: ReadonlyMap<string, string>
+): string | null {
+  if (ids === null) {
+    return null;
+  }
+
+  return ids.map((id) => names.get(id) ?? id).join(", ");
+}
 
 interface ConditionArgs {
   condition: ConfigurableOperationInput | undefined;
@@ -84,6 +119,7 @@ export class SetPromotionGuardInterceptor implements NestInterceptor {
     }>().req;
     const ctx = internal_getRequestContext(req);
     const action = info.fieldName === "createPromotion" ? "created" : "updated";
+    const prior = action === "updated" && "id" in input ? await this.prior(ctx, input.id) : null;
 
     return handle.pipe(
       switchMap((result: unknown) => Promise.resolve(result)),
@@ -94,18 +130,148 @@ export class SetPromotionGuardInterceptor implements NestInterceptor {
           return;
         }
 
-        void this.eventBus.publish(
-          new AuditEntryEvent(ctx, {
-            entityType: "promotion",
-            entityKey: String(saved.data.id),
-            action,
-            summary: huName(saved.data.translations) ?? saved.data.name ?? null,
-            source: "admin",
-            actor: auditActor(ctx),
-          })
-        );
+        void this.publishAudit(ctx, action, saved.data, prior);
       })
     );
+  }
+  /** The promotion's state before the save, read on the request's transaction
+   * connection (the save has not run yet). */
+  private async prior(ctx: RequestContext, id: string | number): Promise<PriorPromotion | null> {
+    const promotion = await this.connection.getRepository(ctx, Promotion).findOne({
+      where: { id: Number(id) },
+      relations: { translations: true },
+    });
+
+    if (promotion === null) {
+      return null;
+    }
+
+    const condition = promotion.conditions.find((c) => c.code === PRODUCT_SET_CONDITION_CODE);
+    const action = promotion.actions.find((a) => a.code === PRODUCT_SET_ACTION_CODE);
+
+    return {
+      enabled: promotion.enabled,
+      huName: huName(promotion.translations) ?? null,
+      memberIds: condition === undefined ? null : (memberIdsFromArgs(condition.args) ?? null),
+      amount: action === undefined ? null : amountFromArgs(action.args),
+    };
+  }
+
+  /** One row per saved set promotion; updates carry the field-level details. */
+  private async publishAudit(
+    ctx: RequestContext,
+    action: "created" | "updated",
+    saved: z.output<typeof SavedPromotionSchema>,
+    prior: PriorPromotion | null
+  ): Promise<void> {
+    try {
+      const current = await this.current(ctx, Number(saved.id));
+      const summary = huName(current.translations) ?? saved.name ?? null;
+
+      await this.eventBus.publish(
+        new AuditEntryEvent(ctx, {
+          entityType: "promotion",
+          entityKey: String(saved.id),
+          action,
+          summary,
+          details: prior === null ? null : await this.details(ctx, prior, current),
+          source: "admin",
+          actor: auditActor(ctx),
+        })
+      );
+    } catch (error: unknown) {
+      Logger.error(
+        `A szett-promóció változásnapló-bejegyzésének előállítása sikertelen ` +
+          `(${String(saved.id)}): ` +
+          (error instanceof Error ? error.message : String(error))
+      );
+    }
+  }
+
+  /** The saved promotion, read on the request's transaction connection so the
+   * diff sees the save this response is about to report. */
+  private async current(ctx: RequestContext, id: number): Promise<Promotion> {
+    const promotion = await this.connection.getRepository(ctx, Promotion).findOne({
+      where: { id },
+      relations: { translations: true },
+    });
+
+    if (promotion === null) {
+      throw new Error(`A mentett szett-promóció nem található: ${id}`);
+    }
+
+    return promotion;
+  }
+
+  private async details(
+    ctx: RequestContext,
+    prior: PriorPromotion,
+    current: Promotion
+  ): Promise<AuditDetail[]> {
+    const condition = current.conditions.find((c) => c.code === PRODUCT_SET_CONDITION_CODE);
+    const action = current.actions.find((a) => a.code === PRODUCT_SET_ACTION_CODE);
+    const memberIds = condition === undefined ? null : (memberIdsFromArgs(condition.args) ?? null);
+    const amount = action === undefined ? null : amountFromArgs(action.args);
+    const name = huName(current.translations) ?? null;
+    const details: AuditDetail[] = [];
+
+    if (name !== prior.huName) {
+      details.push({ field: "Név", from: prior.huName, to: name });
+    }
+
+    if (current.enabled !== prior.enabled) {
+      details.push({
+        field: "Engedélyezve",
+        from: prior.enabled ? "igen" : "nem",
+        to: current.enabled ? "igen" : "nem",
+      });
+    }
+
+    if (membersChanged(prior.memberIds, memberIds)) {
+      const names = await this.memberNames(ctx, [...(prior.memberIds ?? []), ...(memberIds ?? [])]);
+
+      details.push({
+        field: "Szett tagjai",
+        from: memberText(prior.memberIds, names),
+        to: memberText(memberIds, names),
+      });
+    }
+
+    if (amount !== prior.amount) {
+      details.push({
+        field: "Kedvezmény összege",
+        from: prior.amount === null ? null : `${prior.amount} Ft`,
+        to: amount === null ? null : `${amount} Ft`,
+      });
+    }
+
+    return details;
+  }
+
+  /** The members' product names, keyed by native product id. */
+  private async memberNames(
+    ctx: RequestContext,
+    ids: ReadonlyArray<string>
+  ): Promise<Map<string, string>> {
+    const numeric = ids.map(Number).filter((id) => Number.isInteger(id));
+
+    if (numeric.length === 0) {
+      return new Map();
+    }
+
+    const products = await this.connection.getRepository(ctx, Product).find({
+      where: { id: In(numeric) },
+      relations: { translations: true },
+    });
+    const names = new Map<string, string>();
+
+    for (const product of products) {
+      const hu = product.translations.find((t) => t.languageCode === LanguageCode.hu);
+
+      names.set(String(product.id), hu?.name ?? String(product.id));
+    }
+
+    return names;
   }
 
   private isSetPromotion(input: CreatePromotionInput | UpdatePromotionInput): boolean {

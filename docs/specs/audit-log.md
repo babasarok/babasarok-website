@@ -32,6 +32,36 @@ known) and its source (`admin`, `sync` or `system`).
   - WHEN a save is refused (a thrown error or an `ErrorResult`)
   - THEN no audit row is recorded
 
+### What changed
+
+Every `updated` row SHALL carry its change as structured `details`: one entry
+per changed field, with a Hungarian field label and the previous and new value
+(`from`/`to`, null when the field was added or removed). `created` and
+`deleted` rows carry no details. Values are display-ready strings, truncated,
+so one save cannot flood the log.
+
+- **Scenario: Stock-form rename**
+  - WHEN the owner renames a product on the stock product form
+  - THEN the product's `updated` row lists `Név: <régi> → <új>` (per language)
+    and its summary is the new name; the sync it re-enqueues reports the
+    variant's rename as the `synced` row's details
+- **Scenario: Definition save**
+  - WHEN a definition save changes the base price and a field's price
+  - THEN the definition's `updated` row lists both changes with their old and
+    new values, and nothing for the fields that did not change
+- **Scenario: Sync outcome**
+  - WHEN a sync job applies a drift (SKU, name or price)
+  - THEN the `synced` row's details list what it changed; a sync with nothing
+    to apply has no details, and a failed sync records the error message
+- **Scenario: Material edit**
+  - WHEN a material's labels, subtitle, description, thumbnail or colors change
+  - THEN the material's `updated` row lists the changes keyed by language and
+    color
+- **Scenario: Set promotion edit**
+  - WHEN a set promotion's members, amount, enabled state or name change
+  - THEN the promotion's `updated` row lists the changes, members named by
+    their product names
+
 ### Attribution
 
 The system SHALL attribute each row to the acting admin (user id and login)
@@ -57,7 +87,8 @@ could not be written; the failure is logged instead.
 The system SHALL list audit rows newest first on a "Változásnapló" page under
 the catalog navigation, readable with the catalog-read permission, paged 50 at
 a time, filterable by entity type, source and a date range whose end date is
-inclusive (local days).
+inclusive (local days). Each row's Részletek column SHALL show the summary and
+the changed fields with their old and new values.
 
 - **Scenario: Filtering by entity type**
   - WHEN the owner selects "Termékdefiníció"

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { LanguageCode } from "@vendure/core";
 import { auditActor, type ActorContext } from "./audit.event";
-import { materialEntry, productEntry } from "./audit.service";
+import { productEntry } from "./audit.service";
 
 describe("auditActor", () => {
   it("reads the acting admin from the session", () => {
@@ -20,51 +21,32 @@ describe("auditActor", () => {
   });
 });
 
-describe("materialEntry", () => {
-  it("maps a material event to an admin row keyed by slug", () => {
-    const entry = materialEntry({
-      ctx: ctx({ id: 3, identifier: "owner@babasarok.hu" }),
-      type: "updated",
-      materialSlug: "gyongy",
-    });
-
-    expect(entry).toEqual({
-      entityType: "material",
-      entityKey: "gyongy",
-      action: "updated",
-      summary: null,
-      source: "admin",
-      actor: { id: 3, identifier: "owner@babasarok.hu" },
-    });
-  });
-
-  it("marks userless material writes as system", () => {
-    const entry = materialEntry({ ctx: ctx(), type: "created", materialSlug: "gyongy" });
-
-    expect(entry.source).toBe("system");
-    expect(entry.actor).toBeNull();
-  });
-});
-
 describe("productEntry", () => {
   it("maps a product event to a row keyed by the native id, named in the summary", () => {
     const entry = productEntry({
       ctx: ctx({ id: 3, identifier: "owner@babasarok.hu" }),
-      type: "updated",
-      entity: { id: 41, name: "Babafészek" },
+      type: "created",
+      entity: {
+        id: 41,
+        translations: [
+          { languageCode: LanguageCode.en, name: "Woven baby nest" },
+          { languageCode: LanguageCode.hu, name: "Babafészek" },
+        ],
+      },
     });
 
     expect(entry).toEqual({
       entityType: "product",
       entityKey: "41",
-      action: "updated",
+      action: "created",
       summary: "Babafészek",
+      details: null,
       source: "admin",
       actor: { id: 3, identifier: "owner@babasarok.hu" },
     });
   });
 
-  it("summarizes with null when the entity carries no name", () => {
+  it("summarizes with null when the entity carries no hu name", () => {
     const entry = productEntry({
       ctx: ctx(),
       type: "deleted",

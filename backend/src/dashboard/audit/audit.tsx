@@ -41,10 +41,21 @@ const auditLogQuery = graphql(`
         entityKey
         actorIdentifier
         summary
+        details {
+          field
+          from
+          to
+        }
       }
     }
   }
 `);
+
+interface AuditDetail {
+  field: string;
+  from: string | null;
+  to: string | null;
+}
 
 interface AuditRow {
   id: string;
@@ -55,6 +66,7 @@ interface AuditRow {
   entityKey: string;
   actorIdentifier: string | null;
   summary: string | null;
+  details: AuditDetail[] | null;
 }
 
 interface Filters {
@@ -178,6 +190,7 @@ function AuditLogPage(): ReactElement {
             entityKey: entry.entityKey,
             actorIdentifier: entry.actorIdentifier ?? null,
             summary: entry.summary ?? null,
+            details: entry.details ?? null,
           }))
         );
         setTotalItems(result.auditLogEntries.totalItems);
@@ -257,7 +270,9 @@ function AuditLogPage(): ReactElement {
                       <td className="py-2 pr-4">{entityLabel(row.entityType)}</td>
                       <td className="py-2 pr-4 font-mono text-xs">{row.entityKey}</td>
                       <td className="py-2 pr-4">{row.actorIdentifier ?? "—"}</td>
-                      <td className="py-2 pr-4">{row.summary ?? "—"}</td>
+                      <td className="py-2 pr-4">
+                        <DetailsCell row={row} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -310,4 +325,28 @@ function entityLabel(entityType: string): string {
     default:
       return entityType;
   }
+}
+
+/** The row's summary with the changed fields listed under it. */
+function DetailsCell({ row }: { row: AuditRow }): ReactElement {
+  const details = row.details ?? [];
+
+  if (row.summary === null && details.length === 0) {
+    return <>—</>;
+  }
+
+  return (
+    <div className="max-w-120 min-w-40">
+      {row.summary !== null && <div className="font-medium">{row.summary}</div>}
+      {details.length > 0 && (
+        <ul className="m-0 list-none p-0">
+          {details.map((detail) => (
+            <li key={detail.field} className="whitespace-pre-wrap">
+              {detail.field}: {detail.from ?? "—"} → {detail.to ?? "—"}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }

@@ -1,10 +1,14 @@
 import { Injectable, OnApplicationBootstrap } from "@nestjs/common";
-import { EventBus, Logger, ProductEvent, TransactionalConnection } from "@vendure/core";
+import {
+  EventBus,
+  LanguageCode,
+  Logger,
+  ProductEvent,
+  TransactionalConnection,
+} from "@vendure/core";
 import { Between, FindOptionsWhere, LessThanOrEqual, MoreThanOrEqual } from "typeorm";
-import type { MaterialChangeType } from "../material/material.event";
 import { ActorContext, AuditEntryEvent, AuditEntryInput, auditActor } from "./audit.event";
 import { AuditLogEntry } from "./audit.entity";
-import { MaterialEvent } from "../material/material.event";
 
 export interface AuditLogListOptions {
   skip?: number | null;
@@ -20,40 +24,38 @@ export interface AuditLogList {
   totalItems: number;
 }
 
-/** The audit row a MaterialEvent maps to: one row per material write. */
-export function materialEntry(event: {
-  ctx: ActorContext;
-  type: MaterialChangeType;
-  materialSlug: string;
-}): AuditEntryInput {
-  const actor = auditActor(event.ctx);
-
-  return {
-    entityType: "material",
-    entityKey: event.materialSlug,
-    action: event.type,
-    summary: null,
-    source: actor === null ? "system" : "admin",
-    actor,
-  };
-}
-
-/** The audit row a native product event maps to. */
+/** The audit row a native product event maps to. Updates are not mapped here:
+ * the ProductAuditInterceptor owns them, since only it has the before state
+ * for the field-level details. */
 export function productEntry(event: {
   ctx: ActorContext;
-  type: "created" | "updated" | "deleted";
-  entity: { id: unknown; name?: unknown };
+  type: "created" | "deleted";
+  entity: {
+    id: unknown;
+    translations?: ReadonlyArray<{ languageCode: LanguageCode; name: string }> | null;
+  };
 }): AuditEntryInput {
   const actor = auditActor(event.ctx);
+  const huName = event.entity.translations?.find(
+    (translation) => translation.languageCode === LanguageCode.hu
+  )?.name;
 
   return {
     entityType: "product",
     entityKey: String(event.entity.id),
     action: event.type,
-    summary: typeof event.entity.name === "string" ? event.entity.name : null,
+    summary: typeof huName === "string" && huName !== "" ? huName : null,
+    details: null,
     source: actor === null ? "system" : "admin",
     actor,
   };
+}
+
+/** Updates are audited by the interceptor (which has the before state). */
+function isLifecycleEvent(
+  event: ProductEvent
+): event is ProductEvent & { type: "created" | "deleted" } {
+  return event.type !== "updated";
 }
 
 @Injectable()
@@ -67,10 +69,11 @@ export class AuditService implements OnApplicationBootstrap {
     this.eventBus.ofType(AuditEntryEvent).subscribe((event) => {
       void this.record(event.entry);
     });
-    this.eventBus.ofType(MaterialEvent).subscribe((event) => {
-      void this.record(materialEntry(event));
-    });
     this.eventBus.ofType(ProductEvent).subscribe((event) => {
+      if (!isLifecycleEvent(event)) {
+        return;
+      }
+
       void this.record(productEntry(event));
     });
   }
@@ -83,6 +86,7 @@ export class AuditService implements OnApplicationBootstrap {
         entityKey: entry.entityKey,
         action: entry.action,
         summary: entry.summary,
+        details: entry.details,
         source: entry.source,
         actorUserId: entry.actor?.id ?? null,
         actorIdentifier: entry.actor?.identifier ?? null,

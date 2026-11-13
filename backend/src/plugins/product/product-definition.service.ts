@@ -41,6 +41,7 @@ import { materialReferenceSlugs, toLanguageCode } from "../material/material.ser
 import { Material } from "../material/material.entity";
 import { lockMaterials } from "../material/material-lock";
 import { AuditEntryEvent, auditActor } from "../audit/audit.event";
+import { definitionDetails, truncate, type AuditDetail } from "../audit/details";
 import { sortDefinitions } from "./definition-sort";
 import { deletedNativeProductId, updatedNativeProductId } from "./product-event";
 import { SyncJobDataSchema, updateInputCarriesName, type SyncJobData } from "./sync-job";
@@ -48,7 +49,7 @@ import { validateProductDefinition } from "./product-definition";
 import { ProductDefinition } from "./product.entity";
 import { memoPerRequest } from "./request-memo";
 import { definitionsToRequeue } from "./sync-recovery";
-import { huName, nativeProductTexts, textOf } from "./native-names";
+import { huName, nativeProductNames, nativeProductTexts, textOf } from "./native-names";
 import {
   plannedVariant,
   variantDrift,
@@ -67,6 +68,23 @@ function nameTranslations(
 
 /** Jobs per page when inspecting the queue, within Vendure's list-query limit. */
 const JOB_PAGE_SIZE = 100;
+
+const DRIFT_FIELD: Record<VariantDrift["kind"], string> = {
+  presence: "Változat",
+  sku: "SKU",
+  rename: "Név",
+  price: "Ár",
+};
+
+/** What the sync applied, as the row's details; the label covers the
+ * presence kinds whose change has no from/to pair. */
+function driftDetails(drift: VariantDrift[]): AuditDetail[] {
+  return drift.map((entry) => ({
+    field: DRIFT_FIELD[entry.kind],
+    from: entry.from,
+    to: entry.to ?? entry.label,
+  }));
+}
 
 /** The job queue processes jobs strictly sequentially (Vendure's default concurrency 1),
  * so a re-save while a sync is running simply queues a second pass. */
@@ -286,9 +304,11 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       return txRepo.findOneByOrFail({ productId });
     });
 
+    const details = definitionDetails(existing.definition, row.definition);
+
     await this.withNativeLabels(ctx, [row]);
     await this.enqueueSync(ctx, row.productId);
-    await this.publishDefinitionAudit(ctx, row.productId, "updated", row.label);
+    await this.publishDefinitionAudit(ctx, row.productId, "updated", row.label, details);
 
     return row;
   }
@@ -319,7 +339,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     ctx: RequestContext,
     productId: string,
     action: "created" | "updated" | "deleted",
-    label: string | null
+    label: string | null,
+    details: AuditDetail[] | null = null
   ): Promise<void> {
     await this.eventBus.publish(
       new AuditEntryEvent(ctx, {
@@ -327,6 +348,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         entityKey: productId,
         action,
         summary: label,
+        details,
         source: "admin",
         actor: auditActor(ctx),
       })
@@ -508,6 +530,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     }
 
     try {
+      let drift: VariantDrift[] = [];
+
       await this.connection.withTransaction(ctx, async (txCtx) => {
         let nativeProductId = row.nativeProductId;
 
@@ -525,13 +549,15 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
             .update({ productId }, { nativeProductId });
         }
 
-        await this.sync(txCtx, nativeProductId, row.definition);
+        drift = await this.sync(txCtx, nativeProductId, row.definition);
         await this.connection
           .getRepository(txCtx, ProductDefinition)
           .update({ productId }, { syncState: "synced", syncError: null });
       });
 
-      await this.publishSyncAudit(ctx, productId, "synced", null, actor);
+      const summary = await this.syncSummary(ctx, row);
+
+      await this.publishSyncAudit(ctx, productId, "synced", summary, actor, driftDetails(drift));
     } catch (error: unknown) {
       // The stored syncError carries only the message; the job queue's own
       // error line drops the stack, so the full trace is logged here.
@@ -548,10 +574,26 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
           syncError: error instanceof Error ? error.message : String(error),
         }
       );
-      await this.publishSyncAudit(ctx, productId, "sync-failed", null, actor);
+      const message = error instanceof Error ? error.message : String(error);
+      const summary = await this.syncSummary(ctx, row);
+
+      await this.publishSyncAudit(ctx, productId, "sync-failed", summary, actor, [
+        { field: "Hiba", from: null, to: truncate(message) },
+      ]);
 
       throw error;
     }
+  }
+
+  /** The synced row's summary: the product's human name, resolved on the worker. */
+  private async syncSummary(ctx: RequestContext, row: ProductDefinition): Promise<string | null> {
+    if (row.nativeProductId === null) {
+      return row.productId;
+    }
+
+    const names = await nativeProductNames(this.connection, ctx, [row.nativeProductId]);
+
+    return names.get(row.nativeProductId) ?? row.productId;
   }
 
   /** One audit row per sync job, attributed to the enqueueing admin (ADR 0015). */
@@ -560,7 +602,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     productId: string,
     action: "synced" | "sync-failed",
     summary: string | null,
-    actor: SyncJobData["actor"]
+    actor: SyncJobData["actor"],
+    details: AuditDetail[] | null
   ): Promise<void> {
     await this.eventBus.publish(
       new AuditEntryEvent(ctx, {
@@ -568,6 +611,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         entityKey: productId,
         action,
         summary,
+        details,
         source: "sync",
         actor,
       })
@@ -615,7 +659,7 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
     ctx: RequestContext,
     nativeProductId: number,
     definition: CanonicalProductDefinition
-  ): Promise<void> {
+  ): Promise<VariantDrift[]> {
     const product = await this.connection.getRepository(ctx, Product).findOne({
       where: { id: nativeProductId, deletedAt: IsNull() },
       relations: { translations: true },
@@ -655,7 +699,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
           translations: nameTranslations(planned.name),
         },
       ]);
-      return;
+
+      return variantDrift(planned, []);
     }
 
     const current = this.variantState(ctx, existing);
@@ -666,18 +711,20 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
       update.trackInventory = GlobalFlag.FALSE;
     }
 
-    for (const drift of variantDrift(planned, [current])) {
+    const drift = variantDrift(planned, [current]);
+
+    for (const entry of drift) {
       changed = true;
 
-      if (drift.kind === "sku") {
+      if (entry.kind === "sku") {
         update.sku = planned.sku;
       }
 
-      if (drift.kind === "price") {
+      if (entry.kind === "price") {
         update.price = planned.price;
       }
 
-      if (drift.kind === "rename") {
+      if (entry.kind === "rename") {
         update.translations = nameTranslations(planned.name);
       }
     }
@@ -692,6 +739,8 @@ export class ProductDefinitionService implements OnApplicationBootstrap {
         `delete from product_variant_translation where "baseId" = $1 and not ("languageCode" = any($2))`,
         [existing.id, Object.keys(planned.name)]
       );
+
+    return drift;
   }
 
   /** The live variants of the native products, keyed by product id. */

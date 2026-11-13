@@ -20,6 +20,7 @@ declare module "@vendure/core/dist/entity/custom-entity-fields" {
     date: Date | null;
     icon: Asset | null;
     iconId: number | null;
+    popularityRank: number | null;
   }
 
   interface CustomProductFieldsTranslation {

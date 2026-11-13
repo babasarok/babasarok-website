@@ -36,6 +36,7 @@ export const MaterialDefinitionSchema = z.strictObject({
 });
 
 export type MaterialDefinition = z.output<typeof MaterialDefinitionSchema>;
+export type MaterialDefinitionInput = z.input<typeof MaterialDefinitionSchema>;
 export type MaterialColorDefinition = z.output<typeof MaterialColorDefinitionSchema>;
 export type ColorAppearance = z.output<typeof ColorAppearanceSchema>;
 export type MaterialColorId = z.output<typeof MaterialColorIdSchema>;
