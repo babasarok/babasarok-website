@@ -527,8 +527,11 @@ the interim until test-env access exists. Absent credentials default to
 missing. The only other real-network check is a hand-run smoke script
 gated behind `GLS_SMOKE_API_URL` (read-only calls), like the catalog
 contract test's env gating. A live label creates a real parcel
-(`DeleteLabels` cleans up) — the deliberate real-label verification is an
-owner-run step.
+(`DeleteLabels` cleans up). **The epic's done-condition includes a manual
+live verification, run by the owner:** one real label created through the
+finished plugin's path, checked in MyGLS, then deleted — development
+itself never touches the live API, so without this step nothing proves
+her contract issues labels with the services and COD behavior she needs.
 
 **Credential check (done 2026-11-13, read-only):** the MyGLS **web
 credentials (email + password) authenticate on the live API** —
