@@ -508,7 +508,13 @@ address (+ COD when utánvét, amount = total − deposit) → the tracking
 number goes onto the fulfillment's native `trackingCode` and the PDF is
 stored → a worker polls `GetParcelStatuses` and fires the delivered event
 that epic 7's settle-on-delivery leg listens to. MyGLS (the web UI) stays
-the manual fallback until the credentials exist.
+the manual fallback until the credentials exist. **No hooks exist:** the
+API has no webhooks/callbacks — polling is the only tracking mechanism —
+and no COD payout/settlement surface at all. GLS status 5 (delivered) is
+therefore only a proxy for the COD money; the money-confirmed signal
+stays bank-side: AutoKassza pairs the bank statement line via the
+parcel's `CODReference`, and `PaymentSettled` happens on that, not on
+delivery.
 
 **Test mode (Stripe-style, per account `mode`: `test`/`live`/`fake`).**
 The plugin's service depends on a narrow `GlsClient` interface.
