@@ -510,6 +510,38 @@ stored → a worker polls `GetParcelStatuses` and fires the delivered event
 that epic 7's settle-on-delivery leg listens to. MyGLS (the web UI) stays
 the manual fallback until the credentials exist.
 
+**Test mode (Stripe-style, per account `mode`: `test`/`live`/`fake`).**
+The plugin's service depends on a narrow `GlsClient` interface.
+`live` (`api.mygls.hu`) is prod only. `test` (`api.test.mygls.hu`) is the
+intended developer surface — the doc's country table lists it for
+"testing and development" and the published samples run against it — but
+accounts must be provisioned on it by GLS (the owner's web credentials
+get `Unauthorized.` there; the doc offers no self-serve path, only
+"contact your local GLS representative"). Once provisioned, `test` is the
+default for local dev and previews: real HTTP, real contract, no real
+parcels, no COD money. The in-process **fake** exists only where the
+testing rules demand it: unit tests of pure logic and the CI
+backend-integration suite (network-free, no GLS secrets in CI) — and as
+the interim until test-env access exists. Absent credentials default to
+`fake` with a loud log line; prod fails to boot if its credentials are
+missing. The only other real-network check is a hand-run smoke script
+gated behind `GLS_SMOKE_API_URL` (read-only calls), like the catalog
+contract test's env gating. A live label creates a real parcel
+(`DeleteLabels` cleans up) — the deliberate real-label verification is an
+owner-run step.
+
+**Credential check (done 2026-11-13, read-only):** the MyGLS **web
+credentials (email + password) authenticate on the live API** —
+`GetParcelStatuses` returned the account-scoped `ErrorCode: 5 "Access
+denied for this parcel ID"`, not `Unauthorized.` — so no separate API
+credential set is needed. The account id (`100021942`, 9-digit like the
+doc's sample) rides per-parcel as `ClientNumber`; it is not part of
+authentication. The test env rejects the web login, so test-env access
+goes into the GLS email. Wire format confirmed: the JSON password is the
+SHA-512 digest as a 64-number array (base64 only in XML mode; the
+server's deserializer rejects base64 in JSON), dates are WCF
+`\/Date(ms)\/` strings.
+
 **Open questions (design time):** which `TypeOfPrinter` the owner wants
 (A4 PDF vs thermal), the COD max in her contract, whether her client
 number requires weights, test-environment credentials.
