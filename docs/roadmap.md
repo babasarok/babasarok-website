@@ -447,7 +447,11 @@ ShipIT: REST/JSON first (SOAP exists; we will not use it), at
 `.../MasterDataService.svc/json/<Method>` (versioned method names like
 `GetPrintedLabels_20251022` pin behavior). **A test environment exists**:
 `https://api.test.mygls.hu/`. The same API covers SK/RO/HR/CZ/SI/RS on
-their own country domains — epic 9's GLS work rides this same integration.
+their own country domains (uniform path shape, only the TLD differs) —
+epic 9's GLS work rides this same integration: the client takes its base
+URL from config, but a country is a separate contract (its own ügyfélszám
+and API password, chosen per order's delivery-country code), not just a
+URL swap.
 
 - **Auth — no API keys, no OAuth:** every request body carries `Username`
   (the MyGLS e-mail), `Password` (the SHA-512 hash of the password, as a
