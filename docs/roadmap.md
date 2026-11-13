@@ -466,10 +466,18 @@ transmitted per call) become properties of the HU account.
 - **Auth — no API keys, no OAuth:** every request body carries `Username`
   (the MyGLS e-mail), `Password` (the SHA-512 hash of the password, as a
   byte array) and an optional `WebshopEngine` tag; the client number rides
-  on each parcel. GLS issues a dedicated API username/password + ügyfélszám
-  for the MyGLS account — requested from GLS Hungary customer service
-  (connect@gls-hungary.com, 06-29-88-66-88). Off-repo onboarding step; the
-  credentials become box secrets, never CI variables.
+  on each parcel. **Wire format verified against the test endpoint
+  (2026-11-13):** in JSON the password hash is a _JSON number array_ of the
+  64 bytes (base64 is only the XML format — the server's own deserializer
+  rejects base64 in JSON); the endpoint answered a well-formed JSON error
+  envelope. GLS's published sample credentials no longer authenticate
+  ("Unauthorized."), so a real account is needed. GLS issues a dedicated
+  API username/password + ügyfélszám for the MyGLS account — requested
+  from GLS Hungary customer service (connect@gls-hungary.com,
+  06-29-88-66-88) — or the existing MyGLS web login may work; the
+  read-only `GetParcelStatuses` call against the test environment decides
+  it with zero side effects. Off-repo onboarding step; the credentials
+  become box secrets, never CI variables.
 - **Label creation:** `PrintLabels` (one step) or `PrepareLabels` +
   `GetPrintedLabels`; the response is the **label PDF as a byte array**
   (`TypeOfPrinter`: `A4_2x2`/`A4_4x1` for A4 sheets, Thermo/ZPL variants
