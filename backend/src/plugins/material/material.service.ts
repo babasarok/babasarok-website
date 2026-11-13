@@ -16,18 +16,21 @@ import {
 import { In } from "typeorm";
 import { z } from "zod";
 import type {
+  LocalizedText,
   MaterialDefinition,
+  MaterialDefinitionInput,
   ProductDefinition as CanonicalProductDefinition,
 } from "../../shared/product-definition/index";
 import { nativeProductNames } from "../product/native-names";
 import { ProductDefinition } from "../product/product.entity";
+import { AuditEntryEvent, auditActor } from "../audit/audit.event";
+import { materialDetails } from "../audit/details";
 import {
   Material,
   MaterialColor,
   MaterialColorTranslation,
   MaterialTranslation,
 } from "./material.entity";
-import { MaterialEvent } from "./material.event";
 import { lockMaterials } from "./material-lock";
 import { validateMaterialInput, type MaterialInputData } from "./material-definition";
 
@@ -90,6 +93,83 @@ export function materialInUseError(
   return new MaterialInUseError(
     `Az anyag nem törölhető, mert ezek a termékek hivatkoznak rá: ${labels.join(", ")}`
   );
+}
+
+function localizedOf(
+  entries: ReadonlyArray<{ languageCode: LanguageCode; value: string | null | undefined }>
+): LocalizedText | null {
+  const present = entries.filter((entry) => (entry.value?.trim() ?? "") !== "");
+
+  if (present.length === 0) {
+    return null;
+  }
+
+  const hu = present.find((entry) => entry.languageCode === LanguageCode.hu);
+  const text: LocalizedText = { hu: hu?.value?.trim() ?? "" };
+
+  for (const entry of present) {
+    const value = entry.value?.trim() ?? "";
+
+    if (value !== "") {
+      text[entry.languageCode] = value;
+    }
+  }
+
+  return text;
+}
+
+/** The stored material's canonical definition — the diff's before side. */
+export function materialSnapshot(material: Material): MaterialDefinitionInput {
+  const translations = material.translations;
+  const byLanguage = (
+    pick: (translation: MaterialTranslation) => string | null | undefined
+  ): Array<{ languageCode: LanguageCode; value: string | null | undefined }> =>
+    translations.map((translation) => ({
+      languageCode: translation.languageCode,
+      value: pick(translation),
+    }));
+
+  return {
+    id: material.slug,
+    label: localizedOf(byLanguage((translation) => translation.label)) ?? { hu: "" },
+    subtitle: localizedOf(byLanguage((translation) => translation.subtitle)),
+    description: localizedOf(byLanguage((translation) => translation.description)),
+    thumbnail: material.thumbnail === null ? null : { assetId: String(material.thumbnail.id) },
+    colors: material.colors.map((color) => {
+      const colorLabel = localizedOf(
+        color.translations.map((translation) => ({
+          languageCode: translation.languageCode,
+          value: translation.label,
+        }))
+      );
+
+      if (color.hex === null) {
+        return {
+          id: color.colorId,
+          label: colorLabel ?? { hu: "" },
+          appearance: { kind: "image" as const, assetId: String(color.asset?.id ?? "") },
+        };
+      }
+
+      return {
+        id: color.colorId,
+        label: colorLabel ?? { hu: "" },
+        appearance: { kind: "hex" as const, value: color.hex },
+      };
+    }),
+  };
+}
+
+function huLabel(definition: { id: string; label: { hu: string } }): string {
+  if (definition.label.hu === "") {
+    return definition.id;
+  }
+
+  return definition.label.hu;
+}
+
+function auditSource(ctx: RequestContext): "admin" | "system" {
+  return auditActor(ctx) === null ? "system" : "admin";
 }
 
 @Injectable()
@@ -165,7 +245,18 @@ export class MaterialService {
       return updated;
     });
 
-    await this.eventBus.publish(new MaterialEvent(ctx, "created", material.slug));
+    await this.eventBus.publish(
+      new AuditEntryEvent(ctx, {
+        entityType: "material",
+        entityKey: material.slug,
+        action: "created",
+        summary: huLabel(materialSnapshot(material)),
+        details: null,
+        source: auditSource(ctx),
+        actor: auditActor(ctx),
+      })
+    );
+
     return material;
   }
 
@@ -185,6 +276,7 @@ export class MaterialService {
       throw new UserInputError("Az anyag azonosítója nem módosítható.");
     }
 
+    const before = materialSnapshot(existing);
     const definition = await this.validated(input, ctx);
 
     const material = await this.connection.withTransaction(ctx, async (txCtx) => {
@@ -199,7 +291,17 @@ export class MaterialService {
       return updated;
     });
 
-    await this.eventBus.publish(new MaterialEvent(ctx, "updated", material.slug));
+    await this.eventBus.publish(
+      new AuditEntryEvent(ctx, {
+        entityType: "material",
+        entityKey: material.slug,
+        action: "updated",
+        summary: huLabel(definition),
+        details: materialDetails(before, definition),
+        source: auditSource(ctx),
+        actor: auditActor(ctx),
+      })
+    );
 
     return material;
   }
@@ -238,7 +340,18 @@ export class MaterialService {
       await this.connection.getRepository(txCtx, Material).delete({ id });
     });
 
-    await this.eventBus.publish(new MaterialEvent(ctx, "deleted", material.slug));
+    await this.eventBus.publish(
+      new AuditEntryEvent(ctx, {
+        entityType: "material",
+        entityKey: material.slug,
+        action: "deleted",
+        summary: huLabel(materialSnapshot(material)),
+        details: null,
+        source: auditSource(ctx),
+        actor: auditActor(ctx),
+      })
+    );
+
     return true;
   }
 

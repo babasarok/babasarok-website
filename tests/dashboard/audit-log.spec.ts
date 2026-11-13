@@ -97,6 +97,8 @@ test("shows and filters the audit rows of catalog changes", async ({ page }) => 
   await expect(row).toContainText("Anyag");
   await expect(row).toContainText("módosítva");
   await expect(row).toContainText("admin@babasarok.local");
+  await expect(row).toContainText("Alcím (hu):");
+  await expect(row).toContainText("naplózott módosítás");
 
   await page.getByRole("combobox").first().click();
   await page.getByRole("option", { name: "Termékdefiníció" }).click();
