@@ -56,9 +56,9 @@ and `phoneNumber`) — no site changes are needed for the label work.
    and admin-API extensions for the dashboard. Wire format, SHA-512
    password hashing and URL scheme never leave the plugin.
 2. **Accounts are env-backed plugin options** (`GlsPlugin.init({
-   accounts })`, values from the stack's `.env`): `{ id, country,
-   clientNumber, username, apiPassword, pickupAddress, typeOfPrinter,
-   mode }`. Decided against a DB entity: handler registration and the
+accounts })`, values from the stack's `.env`): `{ id, country,
+clientNumber, username, apiPassword, pickupAddress, typeOfPrinter,
+mode }`. Decided against a DB entity: handler registration and the
    handler-arg dropdowns are boot-time static, so runtime-addable accounts
    would buy nothing; adding an account is a config entry + deploy. The
    handler validates its `account` arg against the configured list.
@@ -80,7 +80,7 @@ and `phoneNumber`) — no site changes are needed for the label work.
    `Shipped` until the COD payment is recorded — the order's `Delivered`
    state can only transition to `Cancelled`, so delivering an unsettled
    COD order would dead-end the settle leg (`Shipped → Modifying →
-   PaymentSettled`). This makes `Delivered` an invariant: fully paid and
+PaymentSettled`). This makes `Delivered` an invariant: fully paid and
    physically delivered.
 6. **COD money confirmation stays bank-side.** The API has no
    payout/settlement surface; GLS status 5 is only a proxy for the money.
@@ -103,7 +103,7 @@ and `phoneNumber`) — no site changes are needed for the label work.
   account-scoped `ErrorCode: 5 "Access denied for this parcel ID"`, not
   `Unauthorized.` (GLS's published demo credentials return
   `Unauthorized.`, so per-account API access is enforced). No separate API
-  credential set is known to be needed; whether it is *allowed* is part of
+  credential set is known to be needed; whether it is _allowed_ is part of
   the GLS email. The account id (`100021942`) is not part of
   authentication; it rides per-parcel as `ClientNumber` (9-digit, like the
   doc's sample).
@@ -137,9 +137,40 @@ and `phoneNumber`) — no site changes are needed for the label work.
    Development never touches live; without this step nothing proves her
    contract issues labels with the services and COD behavior she needs.
 
-The GLS email to send meanwhile (drafted): asks (1) whether the web
-credentials may be used on the live API or a dedicated set is required,
-and (2) test-environment provisioning + credentials for the account.
+The GLS email to send meanwhile (drafted; also linked from
+[external-services.md](../external-services.md)):
+
+> **Tárgy:** MyGLS API-integráció – az API-hozzáférés tisztázása és
+> tesztkörnyezeti hozzáférés igénylése
+>
+> Tisztelt Ügyfélszolgálat!
+>
+> Webáruházunk (babasarok.net) rendeléskezelését a MyGLS API-hoz
+> szeretnénk kapcsolni, hogy a csomagcímkék automatikusan készüljenek el.
+> Ezzel kapcsolatban két kérdéssel fordulok Önökhöz.
+>
+> **1. Hozzáférés az éles API-hoz** — A MyGLS webes felületre most is
+> használt belépési adatainkkal (e-mail-cím és jelszó, ügyfélazonosító: 100021942) sikerült hitelesítenünk az éles API-n (api.mygls.hu). Ehhez
+> egy csak lekérdező teszthívást használtunk (csomagstátusz-lekérdezés).
+> Szeretném megkérdezni, hogy az integrációnkban használhatjuk-e ezeket a
+> meglévő belépési adatokat az éles API-hoz, vagy ehhez külön
+> API-felhasználónevet és jelszót kell igényelnünk.
+>
+> **2. Hozzáférés a tesztkörnyezethez** — A fejlesztés idejére a
+> tesztkörnyezetet (api.test.mygls.hu) használnánk, hogy valódi
+> csomagfeladás nélkül, biztonságosan fejleszthessük és tesztelhessük az
+> integrációt. Kérem, hozzák létre a fiókunkat a tesztkörnyezetben is, és
+> küldjék meg a hozzá tartozó felhasználónevet, jelszót és ügyfélszámot.
+> Az API-dokumentációban közölt minta belépési adatokkal nem sikerült
+> hitelesíteni, ezért úgy látjuk, hogy ezek már nem érvényesek.
+>
+> Ha további adatra van szükségük, kérem, jelezzék.
+>
+> Segítségüket előre is köszönöm.
+>
+> Üdvözlettel:
+> \<név\>
+> Babasarok – babasarok.net
 
 ## Open questions (design/implementation time)
 
