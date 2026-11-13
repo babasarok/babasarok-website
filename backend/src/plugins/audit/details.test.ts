@@ -79,10 +79,10 @@ describe("definitionDetails", () => {
     ]);
   });
 
-  it("reports added and removed fields", () => {
+  it("reports added and removed fields without an id in their path", () => {
     const before = ProductDefinitionSchema.parse({
       ...base,
-      fields: [inputField("hossz", "Hossz", 100)],
+      fields: [inputField("hossz", "Hossz", 100), inputField("regi", "Régi mező", 200)],
     });
     const after = ProductDefinitionSchema.parse({
       ...base,
@@ -90,7 +90,8 @@ describe("definitionDetails", () => {
     });
 
     expect(definitionDetails(before, after)).toEqual([
-      { field: "Mezők / felirat", from: null, to: "„Felirat” (felirat, beviteli mező)" },
+      { field: "Mezők", from: null, to: "„Felirat” (felirat, beviteli mező)" },
+      { field: "Mezők", from: "„Régi mező” (regi, beviteli mező)", to: null },
     ]);
   });
 

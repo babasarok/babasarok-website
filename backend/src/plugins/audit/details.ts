@@ -469,11 +469,14 @@ function diffArrays(
   const removed = before.filter((item) => !afterKeys.has(keyOf(item)));
 
   return [
+    // One-sided entries name the item in their value already, so the path
+    // stays at the array itself — no phantom reference to an id that exists
+    // on only one side of the change.
     ...added.flatMap((item) => {
       const key = keyOf(item);
 
       return isRecord(item) && key !== undefined
-        ? [{ field: `${path} / ${key}`, from: null, to: formatItem(item) }]
+        ? [{ field: path, from: null, to: formatItem(item) }]
         : [];
     }),
     ...matched.flatMap(([beforeItem, afterItem]) => {
@@ -487,7 +490,7 @@ function diffArrays(
       const key = keyOf(item);
 
       return isRecord(item) && key !== undefined
-        ? [{ field: `${path} / ${key}`, from: formatItem(item), to: null }]
+        ? [{ field: path, from: formatItem(item), to: null }]
         : [];
     }),
   ];
