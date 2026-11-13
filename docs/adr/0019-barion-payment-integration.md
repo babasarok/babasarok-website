@@ -133,6 +133,14 @@ HUF has no decimal digits (matches `ForintMoneyStrategy`).
   `ArrangingAdditionalPayment`'s exit guard also demands full coverage
   (the settle leg goes through `Modifying`). The 6 000 Ft deposit alone
   can therefore not reach any settled state at placement.
+- **`Delivered` keeps its condition (owner, 2026-11-13):** fully paid and
+  physically delivered — the GLS "delivered" status alone never marks the
+  order `Delivered` because `Delivered` is not reversible. That means
+  **partially paid orders must be representable in the states before
+  `Delivered`** (the deposit branch spends its whole life there: deposit
+  paid at placement, remainder collected on delivery). Which earlier
+  states accept partial payment, and what each of them must therefore
+  allow, is not yet known — see question 1.
 - **The deposit is an invoice-flow fact, not just a payment amount:** the
   6 000 Ft exists because the owner issues an előlegszámla for it, and
   the végszámla only when the product is done. The amount of the Barion
@@ -179,10 +187,22 @@ work plan for the refinement phase.
 
 ### Order state (the deposit problem)
 
-1. Which order state does the order sit in between the deposit payment
-   and the COD settlement — a relaxed `configureDefaultOrderProcess`, a
-   custom order process/state, or something else? What does the owner
-   see in the dashboard at each step of both branches?
+The `Delivered` invariant is fixed (fully paid and physically delivered —
+see the verified constraints); the design question is the states before
+it.
+
+1. **Enumerate the order process states from placement to `Delivered` and
+   decide, state by state, which of them accept partially paid orders
+   (the deposit branch lives in them) — with every consequence locked
+   down before starting.** Partial payment has to survive placement and
+   reach shipping (the GLS label is created and the parcel travels while
+   only the deposit is paid), so "partially paid" cannot be confined to
+   one waiting state. Each state that accepts it must answer: can it be
+   cancelled (and what happens to the deposit — refund path), can it be
+   modified, can it transition onward, what does the dashboard show, and
+   what does the GLS worker (ADR 0018) do with it. The states that stay
+   full-payment-only must refuse the deposit branch explicitly, not
+   silently.
 2. How do the two payments on one order stay distinguishable (Barion
    deposit vs. COD remainder) — Vendure `Payment` metadata, custom
    fields, separate handlers — for the invoice branch, the dashboard and
