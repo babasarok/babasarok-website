@@ -40,17 +40,17 @@ ordering).
 
 ## Epics
 
-| #   | Epic                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Status                                                                                                                                                                                                                                                                      |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Deploy Vendure, use it exactly how we used web3forms** — self-hosted backend receiving order requests, nothing more                                                                                                                                                                                                                                                                                                                                                                                                                                                          | done                                                                                                                                                                                                                                                                        |
-| 2   | **Implement the product catalog fully in Vendure with a good, manageable admin UX — this epic.** Includes set discounts. The delivery plan lives in [ADR 0010](adr/0010-native-generated-product-model.md) (product model: native-with-generation; dashboard configurator, facets/collections, promotions, set discounts) with the migration architecture in [ADR 0009](adr/0009-side-by-side-vendure-catalog-migration.md). Materials are already ported (PR #76). Variant matrix retirement: [ADR 0016 plan](#adr-0016-plan-one-variant-per-configurable-product)            | in progress                                                                                                                                                                                                                                                                 |
-| 3   | **Move the Astro site over to Vendure** — show products from Vendure, place orders the new way against the epic-2 order-line fields and server pricing (quote/order handover). Plan: [Epic 3 plan](#epic-3-plan-site-cutover)                                                                                                                                                                                                                                                                                                                                                  | done (2026-11-07)                                                                                                                                                                                                                                                           |
-| 4   | **Remove the product Tina backend** — delete the product collections and their tooling once the site no longer reads them                                                                                                                                                                                                                                                                                                                                                                                                                                                      | done (2026-11-06)                                                                                                                                                                                                                                                           |
-| 5   | **Order resolution management** — the owner works orders in the Vendure dashboard: manual order-line stage changes (paid, order sent, fulfilled, …). Drives the later steps                                                                                                                                                                                                                                                                                                                                                                                                    | not started                                                                                                                                                                                                                                                                 |
-| 6   | **Native delivery methods** — replace the email/request-era delivery handling with Vendure-native shipping; the checkout address becomes structured (native shipping-address columns: postcode, city, street, country — carrier labels need them)                                                                                                                                                                                                                                                                                                                              | in progress (2026-11-11: the checkout is a multi-step wizard with the structured address, the house number in streetLine2; open: the GLS parcel-shop picker, carrier labels)                                                                                                |
-| 7   | **Barion payment provider on the site** — including proper tax setup and invoicing integration to the Hungarian tax entity (NAV). Tax note: the channel is `pricesIncludeTax` (stored prices are gross — `ChannelSetupPlugin`); this step adds the 27% HU `TaxRate` so invoices show the extracted ÁFA without changing any stored price. Checkout gains an optional separate billing address ("differs from delivery") with company name and tax number, stored as the order's native billing address (`setOrderBillingAddress`) and reusing epic 6's structured address form | in progress (2026-11-11: the Számlázás step, the billing address and the taxNumber order field shipped; open: Barion, tax, NAV invoicing, payment-method selection, Meta purchase-tracking handle — see [Epic 7 design notes](#epic-7-design-notes-meta-purchase-tracking)) |
-| 8   | **English translation of the site**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | in progress (ADR 0015): routing, Tina content and backend language plumbing merged; UI dictionaries in progress                                                                                                                                                             |
-| 9   | **Expand to Slovakia** — accept orders from Slovakia (delivery, tax, translations as needed)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | not started                                                                                                                                                                                                                                                                 |
+| #   | Epic                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Status                                                                                                                                                                                                                                                                                                                                                                                     |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | **Deploy Vendure, use it exactly how we used web3forms** — self-hosted backend receiving order requests, nothing more                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | done                                                                                                                                                                                                                                                                                                                                                                                       |
+| 2   | **Implement the product catalog fully in Vendure with a good, manageable admin UX — this epic.** Includes set discounts. The delivery plan lives in [ADR 0010](adr/0010-native-generated-product-model.md) (product model: native-with-generation; dashboard configurator, facets/collections, promotions, set discounts) with the migration architecture in [ADR 0009](adr/0009-side-by-side-vendure-catalog-migration.md). Materials are already ported (PR #76). Variant matrix retirement: [ADR 0016 plan](#adr-0016-plan-one-variant-per-configurable-product)                                                                                                                                | in progress                                                                                                                                                                                                                                                                                                                                                                                |
+| 3   | **Move the Astro site over to Vendure** — show products from Vendure, place orders the new way against the epic-2 order-line fields and server pricing (quote/order handover). Plan: [Epic 3 plan](#epic-3-plan-site-cutover)                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | done (2026-11-07)                                                                                                                                                                                                                                                                                                                                                                          |
+| 4   | **Remove the product Tina backend** — delete the product collections and their tooling once the site no longer reads them                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | done (2026-11-06)                                                                                                                                                                                                                                                                                                                                                                          |
+| 5   | **Order resolution management** — the owner works orders in the Vendure dashboard. Its state design is part of epic 7's payment integration (that is when payment at placement — full or the 6 000 Ft deposit — gives the order a state that can progress to delivery); until then the owner tracks the steps manually, which is enough. See [Owner post-order flow](#owner-post-order-flow-epics-5-6-and-7)                                                                                                                                                                                                                                                                                       | not started                                                                                                                                                                                                                                                                                                                                                                                |
+| 6   | **Native delivery methods** — replace the email/request-era delivery handling with Vendure-native shipping; the checkout address becomes structured (native shipping-address columns: postcode, city, street, country — carrier labels need them)                                                                                                                                                                                                                                                                                                                                                                                                                                                  | in progress (2026-11-11: the checkout is a multi-step wizard with the structured address, the house number in streetLine2; open: the GLS parcel-shop picker, carrier labels — see [Owner post-order flow](#owner-post-order-flow-epics-5-6-and-7))                                                                                                                                         |
+| 7   | **Barion payment provider on the site** — including proper tax setup and invoicing integration to the Hungarian tax entity (NAV) — the invoicing flow it must support is recorded in [Owner post-order flow](#owner-post-order-flow-epics-5-6-and-7). Tax note: the channel is `pricesIncludeTax` (stored prices are gross — `ChannelSetupPlugin`); this step adds the 27% HU `TaxRate` so invoices show the extracted ÁFA without changing any stored price. Checkout gains an optional separate billing address ("differs from delivery") with company name and tax number, stored as the order's native billing address (`setOrderBillingAddress`) and reusing epic 6's structured address form | in progress (2026-11-11: the Számlázás step, the billing address and the taxNumber order field shipped; open: Barion (incl. the order-state design it forces — see [Owner post-order flow](#owner-post-order-flow-epics-5-6-and-7)), tax, NAV invoicing, payment-method selection, Meta purchase-tracking handle — see [Epic 7 design notes](#epic-7-design-notes-meta-purchase-tracking)) |
+| 8   | **English translation of the site**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | in progress (ADR 0015): routing, Tina content and backend language plumbing merged; UI dictionaries in progress                                                                                                                                                                                                                                                                            |
+| 9   | **Expand to Slovakia** — accept orders from Slovakia (delivery, tax, translations as needed)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | not started                                                                                                                                                                                                                                                                                                                                                                                |
 
 ## Epic 3 plan (site cutover)
 
@@ -330,6 +330,168 @@ browser ids. Epic 7 (or a follow-up) should:
 
 Sending the handle to the basket without a server-side consumer buys
 nothing — do it with the Barion conversion work, not before.
+
+## Owner post-order flow (epics 5, 6 and 7)
+
+The owner's workflow after an order (árajánlat) comes in, recorded 2026-11-13
+from the owner. It is done manually today (Számlázz.hu, MyGLS, AutoKassza);
+epics 5–7 must support it and, where noted, automate parts of it. It branches
+on the payment method the buyer chose at checkout:
+
+**Előre utalás (advance bank transfer):**
+
+1. A díjbekérő (payment request) for the full order total, itemized per
+   order line, is issued in Számlázz.hu.
+2. When the buyer pays, AutoKassza pairs the bank transfer with the
+   díjbekérő and the owner gets a notification.
+3. The owner issues the számla (final invoice) from the paid díjbekérő.
+4. The GLS label is created in MyGLS and saved without printing, so the
+   delivery data does not have to be looked up again when the product is
+   done. Personal pickup follows the same flow without a label.
+
+**Utánvét (cash on delivery) — the deposit flow:**
+
+1. A díjbekérő is issued fixed at 6 000 Ft (Hungary), regardless of the
+   order total — this is the előleg (deposit).
+2. AutoKassza pairs the payment and notifies as above; the owner issues an
+   előlegszámla (deposit invoice) for the 6 000 Ft, based on the díjbekérő.
+3. The GLS label is saved the same way, but flagged as utánvét; the deposit
+   is deducted from the amount the courier collects.
+4. When the product/set is finished, the végszámla (final invoice) is issued
+   with the 6 000 Ft deposit deducted — Számlázz.hu puts the deposit among
+   the line items automatically (előleg beszámítása) — and the invoice's
+   payment method is switched to utánvét; the remaining amount is what the
+   courier must collect.
+
+Every díjbekérő and invoice carries a +3-day payment deadline (settable in
+Számlázz.hu).
+
+**Why invoice issuance is manual today.** Számlázz.hu can auto-generate the
+előlegszámla when a díjbekérő's payment succeeds, but the owner switched it
+off: the rule is per-account, not per-branch, so an előre-utalás order (whose
+full-total díjbekérő is paid) would get a deposit invoice too instead of its
+final számla. Telling the two apart seems to need invoice prefixes
+(előtagok) — beyond what she has worked out. Any automation we build must
+branch on the payment method: full-total díjbekérő → final számla, 6 000 Ft
+deposit díjbekérő → előlegszámla (and the végszámla only when the product is
+done).
+
+**Target order states (designed with epic 7's payment integration, not
+before).** Manual tracking is enough until payments are native; the first
+true test is the payment integration, which is when payment at placement
+gives the order a state that can progress to delivery. The sketch:
+
+- At placement the buyer pays through Barion — the full total (card) or the
+  fixed 6 000 Ft deposit (utánvét). The payment lands as a native Payment
+  and the order leaves `ArrangingPayment` the same way for both branches.
+- Bank transfer stays a first-class branch (both utánvét and bank transfer
+  are popular in Hungary; Barion does not absorb it): díjbekérő → AutoKassza
+  pairing → the owner records the payment in the dashboard (the native
+  manual-payment action) and reaches the same states with a manual trigger.
+- Ready to ship: the fulfillment is created (`Shipped` is not a bare status
+  change — the guards verify fulfillment states), and that transition is the
+  trigger point for preparing the végszámla (utánvét) / számla (prepaid).
+- Utánvét: when the courier collects the remainder on delivery, that amount
+  is recorded as the second payment and the order settles
+  (`PaymentSettled`) — settlement tied to the delivery event.
+
+Design decision parked on epic 7: the default `checkPaymentsCoverTotal`
+guard requires authorized/settled payments to cover the full total, so a
+6 000 Ft deposit cannot enter `PaymentAuthorized` under defaults — either
+relax the option (`configureDefaultOrderProcess`) or add a custom state
+(which would also give "in production" a home). The settle-on-delivery leg
+should go through `Modifying` (`Shipped → PaymentSettled` once the COD
+payment is recorded), not `ArrangingAdditionalPayment`, whose exit guard
+also demands full coverage.
+
+What this implies per epic:
+
+- **Epic 5 (order resolution):** the state design is part of epic 7's
+  payment integration, not separate work — until then the owner tracks the
+  steps manually, which is enough. Today's progression: díjbekérő issued →
+  payment paired (AutoKassza) → invoice(s) issued → label saved → product
+  finished → (utánvét) final invoice → shipped. The payment-paired
+  notification must reach the owner.
+- **Epic 7 (invoicing):** the Számlázz.hu integration needs díjbekérő,
+  előlegszámla and végszámla with deposit set-off (előleg beszámítása),
+  payment-method switching (átutalás ↔ utánvét), line-itemized payment
+  requests and the configurable (+3-day) deadline. If issuance is automated
+  (Számlázz.hu's auto-előlegszámla-on-payment setting exists but is unusable
+  for the full-total branch — see above), the trigger must branch on the
+  payment method, possibly via per-branch invoice prefixes. AutoKassza
+  pairing and its notification stay outside Vendure unless the owner asks to
+  replace it.
+- **Epic 6 (delivery):** the open "carrier labels" item is exactly this —
+  GLS labels created and saved (not printed) per order, with a COD flag on
+  utánvét orders.
+- **Epic 9 (Slovakia):** the 6 000 Ft deposit is a Hungary rule; the COD
+  deposit for SK, if any, is decided there.
+
+## Epic 6 design notes (GLS labels)
+
+The backend slice: create the fulfillment from a placed order, generate the
+GLS label, store the tracking code. No site changes — everything a label
+needs (the structured address, the house number in `streetLine2`, the
+recipient's `fullName` and `phoneNumber`) already ships in the checkout
+(2026-11-11). The only site-facing epic-6 item, the GLS parcel-shop picker,
+is a separate slice with its own data-modeling question (where the selected
+shop lives on the order).
+
+### The GLS API (rundown, verified 2026-11-13)
+
+GLS's group-wide shipping interface is **ShipIT** (REST and SOAP; the REST
+Doxygen pages are public):
+
+- **Auth:** HTTP Basic over TLS with the ShipIT credentials from the GLS
+  contract, plus an optional `Requester` header tagging the caller for
+  data-protection logging. Third-party integrations describe the login as a
+  ShipIT user + password + contact ID. The base URL is not published — GLS
+  hands it out with the credentials (centrally hosted ShipIT). Access is
+  requested through the owner's GLS contact / MyGLS account; this is an
+  off-repo onboarding step and the credentials become box secrets, never CI
+  variables.
+- **Shipment creation:** `POST /backend/rs/shipments` (`createParcels`) —
+  shipper, consignee, shipment units (weight, references), services,
+  printing options, custom content. Labels come back in the response via
+  the `ReturnLabels` printing option (PDF/PNG/ZEBRA — centrally hosted
+  ShipIT supports only `ReturnLabels`, which is exactly our "save without
+  printing" requirement). Also: `/shipments/cancel/{trackID}`,
+  `/shipments/allowedservices`, `/shipments/endofday`,
+  `/shipments/updateparcelweight`.
+- **Hungary quirk (stated in the docs):** Hungary does not assign dedicated
+  Contact IDs to customers, so the full shipper address must be transmitted
+  in every `createParcels` call — the shop's address becomes configuration.
+- **Services** are per-shipment-unit objects with fixed `ServiceName`
+  values; the docs list ShopDelivery (parcel-shop delivery — the future
+  picker), ShopReturn, Exchange, DeliveryAtWork, Intercompany. COD appears
+  as a per-unit attribute (the validator's sample response shows
+  `shipmentunit.attribute.cod.toohigh` with an `ARTICLES_PRODUCT_MAX_COD`
+  rule — a product-level max amount). The exact HU COD service name and max
+  amount must be confirmed with credentials at design time.
+- **Tracking:** `POST /parcels` (bulk status), `POST /parceldetails` (event
+  history), `POST /parcelpod` (proof of delivery). Poll-based; the event
+  vocabulary is GLS-proprietary. The newer dev-portal APIs
+  (dev-portal.gls-group.net — OAuth2 Authentication, Delivery, ParcelShop,
+  POD) hide their catalog behind login and "restricted" APIs need local GLS
+  approval; webhooks are documented only on the Dutch national portal. Plan
+  for polling `parceldetails` for the delivered event.
+- **No public sandbox** — testing runs on the real contract (or a GLS-provided
+  test environment if the contact offers one).
+
+Practical mapping to our flow: fulfillment created → `createParcels` with
+the order's address (+ the COD attribute on utánvét orders, amount =
+total − deposit) → the returned trackID/tracking number goes onto the
+fulfillment's native `trackingCode` and the label PDF is stored → a worker
+polls `parceldetails` and fires the delivered event that epic 7's
+settle-on-delivery leg listens to. MyGLS stays the manual fallback until
+the credentials exist.
+
+**Open questions (design time):** ShipIT version to target, the label
+format the owner's setup wants (PDF vs ZPL), the HU COD service name and
+max amount, whether GLS offers a Hungarian test environment, and **parcel
+weights** — GLS requires an expected weight per unit and the catalog
+carries none (per-product defaults vs a fixed value until real weights
+exist).
 
 ## Epic 9 design notes (multi-market tax & pricing)
 
