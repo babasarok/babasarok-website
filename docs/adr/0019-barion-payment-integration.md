@@ -51,7 +51,7 @@ Going live, Security Measures).
   endpoints. Optional HMAC-SHA512 signing of requests and of Barion's
   callback messages (`x-timestamp`/`x-nonce`/`x-signature-sha512`).
 - Flow: `Payment/Start` (POSKey, `PaymentType: Immediate | Reservation |
-  DelayedCapture`, `PaymentRequestId`, `FundingSources`, `Currency`,
+DelayedCapture`, `PaymentRequestId`, `FundingSources`, `Currency`,
   `RedirectUrl`, required `CallbackUrl`, `Transactions[]` with `Payee`,
   `Total`, `Items`) → the response carries `GatewayUrl`, the buyer pays
   on `secure.barion.com`, is redirected back with the paymentId. Barion
@@ -73,13 +73,13 @@ Going live, Security Measures).
 
 Per-payment `FundingSources` flags:
 
-| Value | Method | Notes |
-| --- | --- | --- |
-| `Balance` | Barion wallet balance | cannot be disabled |
-| `BankCard` | Bank card | guest or Barion user |
-| `GooglePay` | Google Pay | guest only, capable devices; **gated by the merchant's contract**, not the API call |
-| `ApplePay` | Apple Pay | guest only, capable devices; same contract gate |
-| `BankTransfer` | Online bank transfer | ⚠️ "no longer supported" as of 2026-01-09, replacement being sought |
+| Value          | Method                | Notes                                                                               |
+| -------------- | --------------------- | ----------------------------------------------------------------------------------- |
+| `Balance`      | Barion wallet balance | cannot be disabled                                                                  |
+| `BankCard`     | Bank card             | guest or Barion user                                                                |
+| `GooglePay`    | Google Pay            | guest only, capable devices; **gated by the merchant's contract**, not the API call |
+| `ApplePay`     | Apple Pay             | guest only, capable devices; same contract gate                                     |
+| `BankTransfer` | Online bank transfer  | ⚠️ "no longer supported" as of 2026-01-09, replacement being sought                 |
 
 No PayPal, no iDEAL. QR Platba is CZK-only. The deprecated bank-transfer
 source confirms the roadmap's design: the bank-transfer branch stays
@@ -109,8 +109,8 @@ HUF has no decimal digits (matches `ForintMoneyStrategy`).
   gateway surface.
 - **No Vendure Barion plugin exists** (GitHub and the Vendure plugin
   catalogs: nothing) — the integration is a custom `PaymentMethodHandler`
-  + callback controller, written from scratch; the Mollie plugin is the
-  closest behavioral reference.
+  - callback controller, written from scratch; the Mollie plugin is the
+    closest behavioral reference.
 
 ### Onboarding
 
@@ -150,10 +150,34 @@ HUF has no decimal digits (matches `ForintMoneyStrategy`).
   full-total díjbekérő would get a deposit invoice too. Telling the two
   branches apart needs invoice prefixes (előtagok) or our own logic.
 - **The COD remainder's money confirmation is bank-side:** AutoKassza
-  pairs the bank statement line via the parcel's `CODReference` (ADR
-  0018) and notifies the owner. There is no hook from that notification
+  pairs the bank statement line via the parcel's `CODReference` (ADR 0018) and notifies the owner. There is no hook from that notification
   into the backend today; GLS's own statuses are only a proxy for the
   money.
+- **Manual payments are only addable in two states** (verified
+  2026-11-13, `OrderService.addManualPaymentToOrder`): the dashboard's
+  manual-payment action returns `ManualPaymentStateError` unless the
+  order is in `ArrangingPayment` or `ArrangingAdditionalPayment`. Two
+  consequences: the bank-transfer branch works today _because_ orders
+  sit in `ArrangingPayment`; and once the deposit moves an order to
+  `PaymentAuthorized`, the COD remainder can be recorded only after the
+  order enters `ArrangingAdditionalPayment` — where the action computes
+  the amount itself as the outstanding deficit
+  (`totalWithTax − totalCoveredByPayments`), so the deposit must already
+  be a recorded `Payment` on the order.
+- **Multiple payments per order are native** (same code path): the
+  coverage guard sums across all `Payment` rows, so deposit + COD
+  remainder can be two `Payment`s on one order — only their labeling
+  (handler / metadata) is ours to design (question 2).
+- **A complete state path exists for the deposit branch, but it leans on
+  guard quirks** (all verified in the 3.8.1 source): `ArrangingPayment →
+PaymentAuthorized` needs `checkPaymentsCoverTotal` relaxed (the 6 000
+  Ft deposit alone cannot cover); `PaymentAuthorized → Shipped` has no
+  direct edge — the working hop is through `Modifying`, whose exit guard
+  is vacuous with zero modifications, because
+  `ArrangingAdditionalPayment`'s exit demands full coverage; the COD
+  remainder then records inside `ArrangingAdditionalPayment` (see above)
+  and the order settles. Question 1 must decide whether to keep this hop
+  sequence or design custom states instead.
 - **The Meta purchase-tracking note (roadmap design note)** applies: once
   Barion redirects buyers to the gateway, the honest Purchase signal is a
   server-side event on payment confirmation, and the attribution handle
@@ -207,10 +231,17 @@ it.
    deposit vs. COD remainder) — Vendure `Payment` metadata, custom
    fields, separate handlers — for the invoice branch, the dashboard and
    refunds?
-3. Does the settle-on-delivery leg record the COD payment directly in
-   `Shipped` → `Modifying` → `PaymentSettled` (the roadmap sketch), and
-   what happens if the delivery fails or the buyer never pays (state
-   and owner fallback for unpaid delivered orders)?
+3. Does the settle-on-delivery leg record the COD payment through the
+   verified path — `PaymentAuthorized → ArrangingAdditionalPayment →
+addManualPaymentToOrder (amount = the deficit) → PaymentSettled` —
+   rather than through `Modifying` as the roadmap sketch says (`Modifying`
+   is the order-modification flow, and its exit guard vacuously passes
+   with zero modifications; the recording action itself is not available
+   there)? And what happens if the delivery fails or the buyer never pays
+   (state and owner fallback for unpaid delivered orders — note the GLS
+   worker's deliver-when-settled rule, ADR 0018, keeps such an order out
+   of the irreversible `Delivered` state, which is what keeps recording
+   possible at that point)?
 
 ### Invoicing (Számlázz.hu)
 
@@ -247,7 +278,18 @@ it.
     payment, or the full order with a partial transaction — and which do
     we want the buyer to see?
 11. `PaymentType: Immediate` for both branches, or does a
-    reservation/capture shape serve a story we have not identified?
+    reservation/capture shape serve a story we have not identified? One
+    such story exists, from the API facts above: `Reservation` could
+    authorize the **full** total at placement and capture in two steps —
+    `FinishReservation` takes per-transaction amounts, a partial finish
+    auto-refunds the difference, and its window is up to **365 days**
+    (unlike `Capture`'s 7 days / 21 days for HU shops — too short for
+    made-to-order lead times). That shape would make the COD remainder
+    electronic — the courier never touches money, and the
+    deposit-vs-remainder state problem collapses into one authorized
+    payment — at the cost of authorizing the full amount on the buyer's
+    card at placement. A product decision, not a technical one; it also
+    changes what the COD delivery option means for the buyer.
 12. Refund/chargeback policy: who issues refunds and when, and how does
     a Barion refund map to számla corrections (Számlázz.hu
     stornó)?
