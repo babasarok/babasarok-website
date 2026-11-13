@@ -102,7 +102,7 @@ const ORDER_FIELDS = `
     ${SET_LINE_FIELDS}
     productVariant {
       id name
-      product { slug name featuredAsset { source } productDefinition }
+      product { slug name featuredAsset { source focalPoint { x y } } productDefinition }
     }
   }
 `;

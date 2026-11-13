@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { ASSET_PRESETS } from "./asset-presets";
+import { ASSET_PRESETS } from "./shared/asset-presets";
 import { PresetOrOriginalStrategy } from "./preset-or-original-strategy";
 
 const strategy = new PresetOrOriginalStrategy({
   defaultPreset: "card-lg",
   permittedQuality: [75],
   permittedFormats: ["webp"],
+  allowFocalPoint: true,
 });
 const base = {
   width: 9999,
@@ -45,5 +46,15 @@ describe("PresetOrOriginalStrategy", () => {
 
   it("rejects unknown presets", async () => {
     await expect(Promise.resolve().then(() => run("huge"))).rejects.toThrow();
+  });
+
+  it("passes the requested focal point through to a preset transform", async () => {
+    expect(
+      await strategy.getImageTransformParameters({
+        req: {} as never,
+        availablePresets: [...ASSET_PRESETS],
+        input: { ...base, preset: "card-sm", fpx: 0.3, fpy: 0.7 },
+      })
+    ).toMatchObject({ width: 300, height: 300, mode: "crop", fpx: 0.3, fpy: 0.7 });
   });
 });

@@ -42,7 +42,7 @@
             <CatalogCard
               href={localizedPath(`/material/${material.slug}/`, locale)}
               title={material.label}
-              image={material.thumbnailUrl ?? undefined}
+              image={material.thumbnail ?? undefined}
               category={material.subtitle || undefined}
               detailsLabel={i18n.t("common.details")}
             />

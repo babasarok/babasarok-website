@@ -51,7 +51,7 @@ describe("toProductPageData", () => {
     const product = { ...tornazsak(), gallery: [] };
     const page = toProductPageData(product, await loadCatalog(), "hu", ASSET_BASE);
 
-    expect(page.gallery).toEqual([{ src: product.thumbnailUrl, alt: product.name }]);
+    expect(page.gallery).toEqual([{ asset: product.thumbnail, alt: product.name }]);
   });
 });
 

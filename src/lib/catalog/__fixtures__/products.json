@@ -13,7 +13,8 @@
           "popularityRank": 2
         },
         "featuredAsset": {
-          "source": "http://localhost:4010/assets/source/5c/noemi-41.webp"
+          "source": "http://localhost:4010/assets/source/5c/noemi-41.webp",
+          "focalPoint": null
         },
         "facetValues": [
           {
@@ -157,7 +158,8 @@
           "popularityRank": 14
         },
         "featuredAsset": {
-          "source": "http://localhost:4010/assets/source/ed/img_8048.jpeg"
+          "source": "http://localhost:4010/assets/source/ed/img_8048.jpeg",
+          "focalPoint": null
         },
         "facetValues": [
           {
@@ -219,7 +221,8 @@
           "popularityRank": 22
         },
         "featuredAsset": {
-          "source": "http://localhost:4010/assets/source/0b/img_5520.jpeg"
+          "source": "http://localhost:4010/assets/source/0b/img_5520.jpeg",
+          "focalPoint": null
         },
         "facetValues": [
           {

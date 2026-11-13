@@ -37,7 +37,7 @@ describe("getProducts", () => {
       popularityRank: 22,
     });
     expect(bag?.definition.id).toBe("tornazsak");
-    expect(bag?.thumbnailUrl).toMatch(/^http/);
+    expect(bag?.thumbnail?.source).toMatch(/^http/);
   });
 
   it("pages until every product is loaded", async () => {
@@ -108,7 +108,7 @@ describe("getProduct", () => {
     };
 
     expect(await getProduct("tornazsak", runReturning(bare))).toMatchObject({
-      thumbnailUrl: null,
+      thumbnail: null,
       type: null,
       gallery: [],
     });
@@ -127,7 +127,7 @@ describe("materials", () => {
 
     expect(result).toHaveLength(2);
     expect(result[0].colors.length).toBeGreaterThan(0);
-    expect(Object.keys(result[0].colors[0])).toEqual(["id", "label", "hex", "imageUrl"]);
+    expect(Object.keys(result[0].colors[0])).toEqual(["id", "label", "hex", "image"]);
   });
 
   it("is null for an unknown material", async () => {

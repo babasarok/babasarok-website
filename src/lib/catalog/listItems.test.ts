@@ -25,7 +25,7 @@ function product(overrides: Partial<CatalogProduct> & { slug: string }): Catalog
     shortDescription: null,
     date: null,
     popularityRank: null,
-    thumbnailUrl: null,
+    thumbnail: null,
     type: null,
     definition: ProductDefinitionSchema.parse({ ...baseProduct.definition, id: overrides.slug }),
     ...overrides,
@@ -87,7 +87,13 @@ describe("toProductListData", () => {
 
   it("maps tagline to the category line and builds the card image", () => {
     const { items } = toProductListData(
-      [product({ slug: "a", tagline: "Alcím", thumbnailUrl: "source/ab/a.jpg" })],
+      [
+        product({
+          slug: "a",
+          tagline: "Alcím",
+          thumbnail: { source: "source/ab/a.jpg", focalPoint: null },
+        }),
+      ],
       [],
       BASE,
       "hu"

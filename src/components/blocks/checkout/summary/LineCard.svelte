@@ -50,7 +50,14 @@
   );
   const setState = $derived(lineSetState(line));
   const thumbnail = $derived(
-    product.featuredAsset ? imageUrl(product.featuredAsset.source, "card-sm", ASSET_BASE) : null
+    product.featuredAsset
+      ? imageUrl(
+          product.featuredAsset.source,
+          "card-sm",
+          ASSET_BASE,
+          product.featuredAsset.focalPoint
+        )
+      : null
   );
 </script>
 

@@ -61,11 +61,11 @@
               <p>{material.subtitle}</p>
             {/if}
 
-            {#if material.thumbnailUrl}
+            {#if material.thumbnail}
               <div class="mt-7.5 mb-12 flex flex-col items-center">
                 <div class="overflow-hidden rounded-[20px]">
                   <VendureImage
-                    src={material.thumbnailUrl}
+                    asset={material.thumbnail}
                     alt={material.label}
                     presets={["hero-sm", "hero-md", "hero-lg"]}
                     sizes="(min-width: 768px) 1000px, 100vw"
@@ -87,9 +87,9 @@
                 <div class="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] items-start gap-5">
                   {#each material.colors as color (color.id)}
                     <div class="flex flex-col items-center">
-                      {#if color.imageUrl}
+                      {#if color.image}
                         <VendureImage
-                          src={color.imageUrl}
+                          asset={color.image}
                           alt={color.label}
                           presets={["card-sm"]}
                           width={150}

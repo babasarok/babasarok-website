@@ -24,7 +24,7 @@
 {#if images.length === 1}
   <div class="w-full overflow-hidden rounded-[30px]">
     <VendureImage
-      src={images[0].src}
+      asset={images[0].asset}
       alt={images[0].alt}
       {presets}
       {sizes}
@@ -39,10 +39,10 @@
           class="flex items-start transition-transform duration-450 ease-out"
           style:transform={`translateX(-${current * 100}%)`}
         >
-          {#each images as image, index (image.src)}
+          {#each images as image, index (image.asset.source)}
             <div class="flex min-w-full flex-col items-center" inert={index !== current}>
               <VendureImage
-                src={image.src}
+                asset={image.asset}
                 alt={image.alt}
                 {presets}
                 {sizes}

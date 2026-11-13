@@ -2,7 +2,7 @@ import type { SlimImage } from "@/lib/order/types";
 import { localizedPath, type Locale } from "@/lib/i18n";
 import { isProductType } from "@/lib/product/productTypes";
 import type { ListProduct } from "@/lib/product-list/query";
-import { imageSrcSet, imageUrl } from "@/lib/vendure/imageUrl";
+import { imageSrcSet, imageUrl, type VendureAsset } from "@/lib/vendure/imageUrl";
 import { byPopularity, type CatalogProduct, type CatalogProductGroup } from "./mappers";
 
 export interface ProductListItem extends Omit<ListProduct, "date"> {
@@ -20,10 +20,12 @@ export interface ProductListData {
 
 const CARD_SIZES = "(min-width: 1024px) 300px, 250px";
 
-export function cardImage(source: string, assetBase: string): SlimImage {
+export function cardImage(asset: VendureAsset, assetBase: string): SlimImage {
   return {
-    src: imageUrl(source, "card-lg", assetBase),
-    srcSet: { attribute: imageSrcSet(source, ["card-sm", "card-lg"], assetBase) },
+    src: imageUrl(asset.source, "card-lg", assetBase, asset.focalPoint),
+    srcSet: {
+      attribute: imageSrcSet(asset.source, ["card-sm", "card-lg"], assetBase, asset.focalPoint),
+    },
     attributes: { width: 300, height: 300, sizes: CARD_SIZES, loading: "lazy", decoding: "async" },
   };
 }
@@ -54,7 +56,7 @@ export function toProductListData(
       sets: sets.filter((set) => set.productIds.includes(id)).map((set) => set.id),
       href: localizedPath(`/product/${product.slug}/`, locale),
       category: product.tagline ?? undefined,
-      image: product.thumbnailUrl ? cardImage(product.thumbnailUrl, assetBase) : undefined,
+      image: product.thumbnail ? cardImage(product.thumbnail, assetBase) : undefined,
     };
   });
 
