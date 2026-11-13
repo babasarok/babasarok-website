@@ -448,10 +448,15 @@ ShipIT: REST/JSON first (SOAP exists; we will not use it), at
 `GetPrintedLabels_20251022` pin behavior). **A test environment exists**:
 `https://api.test.mygls.hu/`. The same API covers SK/RO/HR/CZ/SI/RS on
 their own country domains (uniform path shape, only the TLD differs) —
-epic 9's GLS work rides this same integration: the client takes its base
-URL from config, but a country is a separate contract (its own ügyfélszám
-and API password, chosen per order's delivery-country code), not just a
-URL swap.
+but a country is **not** a URL swap: each market has its own GLS contract
+(ügyfélszám, API password) and its own delivery methods (names, EUR
+prices, available services) existing side by side with the Hungarian ones.
+Model it as **per-market carrier accounts bound to Vendure channels**
+(epic 9's one-channel-per-market option): each GLS account carries its
+base URL, credentials, pickup address and available services; the GLS
+fulfillment handler resolves the account from the order's channel, so
+adding a market is configuration, not code. The HU quirks (the full
+shipper address transmitted per call) become properties of the HU account.
 
 - **Auth — no API keys, no OAuth:** every request body carries `Username`
   (the MyGLS e-mail), `Password` (the SHA-512 hash of the password, as a
