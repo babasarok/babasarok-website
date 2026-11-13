@@ -455,8 +455,13 @@ Model it as **per-market carrier accounts bound to Vendure channels**
 (epic 9's one-channel-per-market option): each GLS account carries its
 base URL, credentials, pickup address and available services; the GLS
 fulfillment handler resolves the account from the order's channel, so
-adding a market is configuration, not code. The HU quirks (the full
-shipper address transmitted per call) become properties of the HU account.
+adding a market is configuration, not code. Accounts live in plugin
+options (env-backed, box secrets — decided: a DB entity buys nothing,
+since handler registration and the handler-arg options are boot-time
+static, so accounts could not be added at runtime anyway; adding one is a
+config entry + deploy). The handler validates its `account` arg against
+the configured list at call time. The HU quirks (the full shipper address
+transmitted per call) become properties of the HU account.
 
 - **Auth — no API keys, no OAuth:** every request body carries `Username`
   (the MyGLS e-mail), `Password` (the SHA-512 hash of the password, as a
