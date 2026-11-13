@@ -181,6 +181,25 @@ account (account id `b64cf6f65472d9a85a44d39f7a68c81a`).
   (previews, when enabled).
 - Issues live on `Gr3q/babasarok-website` (see `docs/agents/issue-tracker.md`).
 
+## GLS / MyGLS (shipping)
+
+- **Contract:** GLS Hungary business account (ügyfélazonosító
+  `100021942`); the owner works parcels in the MyGLS web UI (mygls.hu).
+- **API:** the MyGLS API (`api.mygls.hu`, REST/JSON — SOAP exists, unused;
+  group ShipIT is not used for HU) — integration design in
+  [ADR 0018](adr/0018-gls-labels-via-mygls-api.md), developer docs at
+  `api.mygls.hu/docs/MyGLS_API.pdf`. A test environment exists at
+  `api.test.mygls.hu`.
+- **API access status (2026-11-13):** the web login (email + password)
+  authenticates on the live API (verified read-only); whether it may be
+  used there, and test-environment provisioning for the account, are being
+  asked from GLS (connect@gls-hungary.com, 06-29-88-66-88) — the drafted
+  email is in ADR 0018's rollout plan.
+- **Credentials placement:** `MYGLS_HU_{ACCOUNT_ID,EMAIL,PASSWORD}`
+  currently in `backend/.env` for the credential test; they move to the
+  prod stack's box `.env` (never CI) when the plugin ships, per the
+  account design in ADR 0018.
+
 ## Retired / rejected (kept so nobody re-proposes them)
 
 - **Web3Forms** — order/quote email form service, replaced by Vendure (ADR to
