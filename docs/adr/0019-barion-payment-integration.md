@@ -14,7 +14,7 @@ Today no payment is native. Orders stop at `ArrangingPayment` (the
 `QuoteOrderPlacedStrategy` marks them placed — ADR 0013 decision 5);
 prod (2026-11-13) holds placed orders, 0 payments. Epic 6 has since added
 the multi-step checkout with the structured address and the Számlázás step
-(billing address, `taxNumber`), so the checkout is ready for a payment
+(billing address), so the checkout is ready for a payment
 step.
 
 The owner's post-order flow branches on the payment method the buyer chose
