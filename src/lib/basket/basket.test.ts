@@ -232,8 +232,6 @@ const EMPTY_VALUES: CheckoutValues = {
     sameAsShipping: true,
     fullName: "",
     address: EMPTY_ADDRESS,
-    company: "",
-    taxNumber: "",
   },
   message: "",
 };
@@ -250,8 +248,6 @@ const values: CheckoutValues = {
     sameAsShipping: true,
     fullName: "",
     address: EMPTY_ADDRESS,
-    company: "",
-    taxNumber: "",
   },
   message: "",
 };
@@ -423,8 +419,6 @@ describe("placeOrder", () => {
         sameAsShipping: false,
         fullName: "Minta Kft.",
         address: { ...EMPTY_ADDRESS, street: "Piac tér", houseNumber: "2." },
-        company: "Minta Kft.",
-        taxNumber: "12345678-2-42",
       },
     };
 

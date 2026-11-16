@@ -2,7 +2,7 @@ import type { BasketApi, Result } from "./api";
 import type { Reason } from "./refusalText";
 import { requiresAddress, type Order, type ShippingQuote } from "./schemas";
 import {
-  billingPlan,
+  billingAddressInput,
   customerInput,
   recipientOf,
   shippingAddressInput,
@@ -39,11 +39,11 @@ async function runSequence(api: BasketApi, input: SubmitInput): Promise<Result<O
     return customer;
   }
 
-  const plan = billingPlan(values.billing, shippingMethod);
+  const billingAddress = billingAddressInput(values.billing, shippingMethod);
 
   if (requiresAddress(shippingMethod)) {
     const address = await api.setShippingAddress(
-      shippingAddressInput(values.address, recipientOf(values.contact), plan.shippingCompany)
+      shippingAddressInput(values.address, recipientOf(values.contact), "")
     );
 
     if (!address.ok) {
@@ -58,9 +58,9 @@ async function runSequence(api: BasketApi, input: SubmitInput): Promise<Result<O
   }
 
   const billing =
-    plan.billingAddress === null
+    billingAddress === null
       ? await api.unsetBillingAddress()
-      : await api.setBillingAddress(plan.billingAddress);
+      : await api.setBillingAddress(billingAddress);
 
   if (!billing.ok) {
     return billing;
@@ -69,7 +69,6 @@ async function runSequence(api: BasketApi, input: SubmitInput): Promise<Result<O
   const fields = await api.setOrderCustomFields({
     message: values.message,
     termsAccepted: input.termsAccepted,
-    taxNumber: values.billing.taxNumber,
   });
 
   if (!fields.ok) {

@@ -131,7 +131,7 @@ progress the checkout SHALL save each step onto the active order through the
 same native mutations the submission uses (`setCustomerForOrder` only when
 name and email are valid, `setOrderShippingAddress` with the structured
 fields, `setOrderBillingAddress` / `unsetOrderBillingAddress`,
-`setOrderCustomFields` with `message` and the `taxNumber`,
+`setOrderCustomFields` with `message`,
 `setOrderShippingMethod` on selection) whenever a field's value is committed
 (the native `change` event, which browsers also fire for autofill) and on the
 step's `Tovább`. A save sends the values the inputs currently hold — read
@@ -147,7 +147,7 @@ unchanged and remains authoritative.
 - **Scenario: Returning to an unfinished basket**
   - WHEN a buyer fills in the details, then reloads, opens another tab or
     returns on a later visit
-  - THEN name, email, phone, the addresses, the company and tax number, the
+  - THEN name, email, phone, the addresses, the
     message and the delivery method are pre-filled from the active order and
     the ÁSZF box is unchecked
 - **Scenario: Autofill**
@@ -193,13 +193,11 @@ billing address off the order (`unsetOrderBillingAddress`); turning it off
 reveals the billing fields, which then must be complete. For delivery methods
 without a delivery address (`Személyes átvétel`) there is no toggle: the
 billing address is mandatory, because it is the buyer's only address. No
-billing field is copied from the delivery address. Company data is a separate
-optional group (`Cégnév`, `Adószám`) shown for both toggle states, stored in
-native columns where Vendure has them: the company name goes to the `company`
-column of the address that stands for the invoice buyer — the billing address
-when the order has one, otherwise the delivery address — and the tax number,
-which has no native column, to the order's `taxNumber` custom field. The
-invoice buyer is therefore always `billingAddress ?? shippingAddress`.
+billing field is copied from the delivery address. No company or tax data is
+collected: we do not sell to businesses, and the backend's `taxNumber` order
+field and native `company` address column stay supported without the site
+ever setting them. The invoice buyer is therefore always
+`billingAddress ?? shippingAddress`.
 
 ### Order submission
 
@@ -211,14 +209,13 @@ this order, each result checked before the next:
 2. `setCustomerForOrder` — email, first/last name (surname first), `phoneNumber`;
 3. `setOrderShippingAddress` — the structured address (street in
    `streetLine1`, house number in `streetLine2`, postcode, city, the shop's
-   `countryCode`, the recipient's `fullName` and `phoneNumber`, and the
-   company when the order has no billing address); required only when the
-   method `requiresAddress`;
+   `countryCode`, the recipient's `fullName` and `phoneNumber`); required
+   only when the method `requiresAddress`;
 4. `setOrderShippingMethod` — one of `eligibleShippingMethods`;
 5. `setOrderBillingAddress` — the billing step's own address with its
-   `fullName` and `company`, or `unsetOrderBillingAddress` when the toggle
+   `fullName`, or `unsetOrderBillingAddress` when the toggle
    keeps the billing address off the order (the billing section above);
-6. `setOrderCustomFields` — `message`, `termsAccepted` and `taxNumber`;
+6. `setOrderCustomFields` — `message` and `termsAccepted`;
 7. `transitionOrderToState("ArrangingPayment")` — the order is placed (there
    is no payment step yet).
 
@@ -248,9 +245,9 @@ promotion zeroed a charged price) and the only price in the confirmation is
 the order total. The set-discount summary is generated from the order's
 discount adjustments. Both emails SHALL show the delivery address (street and
 house number, then postcode and city) when the order has one, and the billing
-details: the buyer's own billing address (name, company, street and house
-number, postcode and city) when they gave one, otherwise "same as the delivery
-address" with the company stored on it, plus the tax number when given.
+details: the buyer's own billing address (name, street and house number,
+postcode and city) when they gave one, otherwise "same as the delivery
+address".
 
 - **Scenario: Successful submission**
   - WHEN a complete order is transitioned to `ArrangingPayment`

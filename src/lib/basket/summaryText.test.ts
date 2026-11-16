@@ -44,8 +44,6 @@ const ticked: BillingValues = {
   sameAsShipping: true,
   fullName: "",
   address: empty,
-  company: "",
-  taxNumber: "",
 };
 
 const addressValue = "Fő u. 12, 3894 Telkibánya, checkout.countryHU";
@@ -97,14 +95,6 @@ describe("billingRows", () => {
   it("says same-as-shipping when ticked for an address method", () => {
     expect(billingRows(ticked, gls, t)).toEqual([
       { label: "checkout.detail.address", value: "checkout.sameAsShipping" },
-    ]);
-  });
-
-  it("labels the company and tax number", () => {
-    expect(billingRows({ ...ticked, company: "Minta Kft.", taxNumber: "123" }, gls, t)).toEqual([
-      { label: "checkout.detail.address", value: "checkout.sameAsShipping" },
-      { label: "checkout.company", value: "Minta Kft." },
-      { label: "checkout.taxNumber", value: "123" },
     ]);
   });
 
