@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   FIELD,
+  billingAddressInput,
   billingFromForm,
-  billingPlan,
   contactFromForm,
   hasBillingAddress,
   recipientOf,
@@ -103,11 +103,10 @@ describe("valuesFromOrder", () => {
     expect(values.message).toBe("szia");
   });
 
-  it("is ticked with the delivery address's company when no billing address is stored", () => {
+  it("is ticked when no billing address is stored", () => {
     const values = valuesFromOrder(order({ shippingAddress: shipping }));
 
     expect(values.billing.sameAsShipping).toBe(true);
-    expect(values.billing.company).toBe("Minta Kft.");
   });
 
   it("is unticked with the billing address's own fields when one is stored", () => {
@@ -120,7 +119,6 @@ describe("valuesFromOrder", () => {
 
     expect(values.billing.sameAsShipping).toBe(false);
     expect(values.billing.fullName).toBe("Számla Név");
-    expect(values.billing.company).toBe("Másik Kft.");
   });
 
   it("treats Vendure's all-null address object as no address", () => {
@@ -149,8 +147,6 @@ describe("the native mapping", () => {
     sameAsShipping: true,
     fullName: "",
     address: { street: "", houseNumber: "", postalCode: "", city: "", country: "HU" },
-    company: "Minta Kft.",
-    taxNumber: "123",
   };
 
   it("names the delivery recipient surname first, with the phone for the carrier", () => {
@@ -159,15 +155,12 @@ describe("the native mapping", () => {
     ).toEqual({ fullName: "Kovács Anna", phoneNumber: "+3630" });
   });
 
-  it("keeps no billing address when ticked and puts the company on the delivery address", () => {
-    expect(billingPlan(billing, gls)).toEqual({
-      billingAddress: null,
-      shippingCompany: "Minta Kft.",
-    });
+  it("keeps no billing address when ticked", () => {
+    expect(billingAddressInput(billing, gls)).toBeNull();
   });
 
-  it("stores the billing address with its company when unticked", () => {
-    const plan = billingPlan(
+  it("stores the billing address when unticked", () => {
+    const billingAddress = billingAddressInput(
       {
         ...billing,
         sameAsShipping: false,
@@ -183,22 +176,18 @@ describe("the native mapping", () => {
       gls
     );
 
-    expect(plan).toEqual({
-      billingAddress: {
-        fullName: "Számla Név",
-        company: "Minta Kft.",
-        streetLine1: "Piac tér",
-        streetLine2: "2",
-        postalCode: "1053",
-        city: "Budapest",
-        countryCode: "HU",
-      },
-      shippingCompany: "",
+    expect(billingAddress).toEqual({
+      fullName: "Számla Név",
+      streetLine1: "Piac tér",
+      streetLine2: "2",
+      postalCode: "1053",
+      city: "Budapest",
+      countryCode: "HU",
     });
   });
 
   it("always stores the billing address for a method without a delivery address", () => {
-    expect(billingPlan(billing, pickup).billingAddress).not.toBeNull();
+    expect(billingAddressInput(billing, pickup)).not.toBeNull();
   });
 
   it("writes the structured delivery address with the house number in streetLine2", () => {

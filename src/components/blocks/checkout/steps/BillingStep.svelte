@@ -102,36 +102,6 @@
         </div>
       </Collapse>
 
-      <div class="flex flex-col gap-3 rounded-xl bg-brown-50 p-3">
-        <p class="text-xs text-brown-600">{i18n.t("checkout.companyGroupLabel")}</p>
-
-        <div class="flex flex-col gap-1">
-          <label for="billing-company" class="text-sm font-medium text-body">
-            {i18n.t("checkout.company")}
-          </label>
-          <TextInput
-            id="billing-company"
-            name={FIELD.company}
-            type="text"
-            autocomplete="organization"
-            value={initial.company}
-          />
-        </div>
-
-        <div class="flex flex-col gap-1">
-          <label for="billing-taxNumber" class="text-sm font-medium text-body">
-            {i18n.t("checkout.taxNumber")}
-          </label>
-          <TextInput
-            id="billing-taxNumber"
-            name={FIELD.taxNumber}
-            type="text"
-            autocomplete="off"
-            value={initial.taxNumber}
-          />
-        </div>
-      </div>
-
       <div class="mt-2 hidden items-center justify-between gap-3 lg:flex">
         <Button type="button" variant="outlined" class="h-11 px-6" onclick={onBack}>
           {i18n.t("checkout.back")}

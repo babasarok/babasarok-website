@@ -46,13 +46,6 @@ function addressLine(address: AddressValues, t: T): string {
   return joined([street, locality, country], ", ");
 }
 
-function companyRows(billing: BillingValues, t: T): DetailRow[] {
-  return rows([
-    { label: t("checkout.company"), value: billing.company },
-    { label: t("checkout.taxNumber"), value: billing.taxNumber },
-  ]);
-}
-
 export function contactRows(contact: ContactValues, t: T): DetailRow[] {
   return rows([
     { label: t("checkout.detail.name"), value: joined([contact.lastName, contact.firstName], " ") },
@@ -96,13 +89,8 @@ export function billingRows(
   method: ShippingQuote | undefined,
   t: T
 ): DetailRow[] {
-  const company = companyRows(billing, t);
-
   if (!billingUsesOwnFields(billing, method)) {
-    return [
-      { label: t("checkout.detail.address"), value: t("checkout.sameAsShipping") },
-      ...company,
-    ];
+    return [{ label: t("checkout.detail.address"), value: t("checkout.sameAsShipping") }];
   }
 
   const own = rows([
@@ -110,11 +98,11 @@ export function billingRows(
     { label: t("checkout.detail.address"), value: addressLine(billing.address, t) },
   ]);
 
-  if (own.length === 0 && company.length === 0) {
+  if (own.length === 0) {
     return [{ label: t("checkout.detail.address"), value: t("checkout.noBilling") }];
   }
 
-  return [...own, ...company];
+  return own;
 }
 
 /** The one-line form of a step's details, for the collapsed step summaries. */
