@@ -58,8 +58,8 @@ Slovakia/EUR (9).
    structured addresses (epic 6) fill the other native address columns
    without a data move. A separate billing address (epic 7, invoicing)
    is the order's native billing address, set with `setOrderBillingAddress`
-   from the same structured form; no billing data is collected before then. `message`, `termsAccepted` and
-   `taxNumber` are the Order custom fields set through
+   from the same structured form; no billing data is collected before then. `message` and
+   `termsAccepted` are the Order custom fields set through
    `setOrderCustomFields` (never named `transactionId`: it collides with the
    native payment-derived field).
 5. **Placing the order is one native sequence** ending in
