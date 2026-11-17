@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { i18n as I18n } from "i18next";
   import ProductOrder from "@/components/blocks/order/ProductOrder.svelte";
+  import ReadyMadeOrder from "@/components/blocks/order/ReadyMadeOrder.svelte";
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import Markdown from "@/components/ui/Markdown.svelte";
   import ProductGallery from "@/components/ui/ProductGallery.svelte";
@@ -73,16 +74,25 @@
                   <p class="mt-3">{loadedProduct.shortDescription}</p>
                 {/if}
                 <div class="mt-6">
-                  <ProductOrder
-                    {locale}
-                    slug={loadedProduct.slug}
-                    product={page.orderProduct}
-                    definition={page.definition}
-                    products={page.orderCatalog}
-                    productGroups={page.productGroups}
-                    slugByProductId={page.slugByProductId}
-                    threadColors={page.threadColors}
-                  />
+                  {#if page.kind === "configurable"}
+                    <ProductOrder
+                      {locale}
+                      slug={loadedProduct.slug}
+                      product={page.orderProduct}
+                      definition={page.definition}
+                      products={page.orderCatalog}
+                      productGroups={page.productGroups}
+                      slugByProductId={page.slugByProductId}
+                      threadColors={page.threadColors}
+                    />
+                  {:else}
+                    <ReadyMadeOrder
+                      {locale}
+                      slug={loadedProduct.slug}
+                      unitPriceWithTax={page.unitPriceWithTax}
+                      currencyCode={page.currencyCode}
+                    />
+                  {/if}
                 </div>
               </div>
             </div>

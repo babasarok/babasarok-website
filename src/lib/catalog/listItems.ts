@@ -44,7 +44,10 @@ export function toProductListData(
 ): ProductListData {
   const sets = groups.filter((group) => group.kind === "set");
   const items = listedByPopularity(products).map((product): ProductListItem => {
-    const { id } = product.definition;
+    // Ready-made products are never set members: their id never matches a
+    // group's definition ids.
+    const id =
+      product.ordering.kind === "configurable" ? product.ordering.definition.id : product.id;
     const typeCode = product.type?.code;
 
     return {

@@ -3,7 +3,7 @@ import { localizedPath, VENDURE_LANGUAGE_CODE, type Locale } from "@/lib/i18n";
 import type { OrderProduct, OrderProductGroup, OrderThreadColor } from "@/lib/order/types";
 import type { VendureAsset } from "@/lib/vendure/imageUrl";
 import type { Catalog } from "./index";
-import type { CatalogProduct, CatalogProductDetail } from "./mappers";
+import { configurableProducts, type CatalogProduct, type CatalogProductDetail } from "./mappers";
 import { toOrderGroups, toOrderProduct, toOrderThreadColors } from "./orderProduct";
 
 export interface GalleryImage {
@@ -17,17 +17,30 @@ export interface NavLink {
   label: string;
 }
 
-export interface ProductPageData {
+interface ProductPageBase {
+  gallery: GalleryImage[];
+  previous: NavLink | undefined;
+  next: NavLink | undefined;
+}
+
+export interface ConfigurableProductPageData extends ProductPageBase {
+  kind: "configurable";
   definition: ProductDefinition;
   orderProduct: OrderProduct;
   orderCatalog: Record<string, OrderProduct>;
   productGroups: OrderProductGroup[];
   slugByProductId: Record<string, string>;
   threadColors: OrderThreadColor[];
-  gallery: GalleryImage[];
-  previous: NavLink | undefined;
-  next: NavLink | undefined;
 }
+
+/** A ready-made product has no configurator and is never a set/related member. */
+export interface ReadyMadeProductPageData extends ProductPageBase {
+  kind: "ready-made";
+  unitPriceWithTax: number;
+  currencyCode: string;
+}
+
+export type ProductPageData = ConfigurableProductPageData | ReadyMadeProductPageData;
 
 function navLink(product: CatalogProduct | undefined, locale: Locale): NavLink | undefined {
   if (product === undefined) {
@@ -51,6 +64,23 @@ function galleryOf(product: CatalogProductDetail): GalleryImage[] {
   return gallery;
 }
 
+function neighbours(
+  product: CatalogProductDetail,
+  catalog: Catalog,
+  locale: Locale
+): Pick<ProductPageBase, "gallery" | "previous" | "next"> {
+  const newestFirst = catalog.products.toSorted(
+    (a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
+  );
+  const index = newestFirst.findIndex((candidate) => candidate.slug === product.slug);
+
+  return {
+    gallery: galleryOf(product),
+    previous: navLink(newestFirst.slice(0, index).at(-1), locale),
+    next: navLink(newestFirst.at(index + 1), locale),
+  };
+}
+
 /** Everything the product detail page renders, derived from the product and the shared catalog. */
 export function toProductPageData(
   product: CatalogProductDetail,
@@ -59,11 +89,18 @@ export function toProductPageData(
   assetBase: string
 ): ProductPageData {
   const languageCode = VENDURE_LANGUAGE_CODE[locale];
-  const { definition } = product;
-  const newestFirst = catalog.products.toSorted(
-    (a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
-  );
-  const index = newestFirst.findIndex((candidate) => candidate.slug === product.slug);
+
+  if (product.ordering.kind === "ready-made") {
+    return {
+      ...neighbours(product, catalog, locale),
+      kind: "ready-made",
+      unitPriceWithTax: product.ordering.unitPriceWithTax,
+      currencyCode: product.ordering.currencyCode,
+    };
+  }
+
+  const definition = product.ordering.definition;
+  const configurable = configurableProducts(catalog.products);
   const relatedIds = new Set(
     catalog.groups
       .filter((group) => group.productIds.includes(definition.id))
@@ -71,23 +108,28 @@ export function toProductPageData(
   );
 
   return {
+    ...neighbours(product, catalog, locale),
+    kind: "configurable",
     definition,
-    orderProduct: toOrderProduct(product, catalog.materials, assetBase, languageCode),
+    orderProduct: toOrderProduct(product, definition, catalog.materials, assetBase, languageCode),
     orderCatalog: Object.fromEntries(
-      catalog.products
-        .filter((candidate) => relatedIds.has(candidate.definition.id))
+      configurable
+        .filter((candidate) => relatedIds.has(candidate.ordering.definition.id))
         .map((candidate) => [
-          candidate.definition.id,
-          toOrderProduct(candidate, catalog.materials, assetBase, languageCode),
+          candidate.ordering.definition.id,
+          toOrderProduct(
+            candidate,
+            candidate.ordering.definition,
+            catalog.materials,
+            assetBase,
+            languageCode
+          ),
         ])
     ),
     productGroups: toOrderGroups(catalog.groups),
     slugByProductId: Object.fromEntries(
-      catalog.products.map((candidate) => [candidate.definition.id, candidate.slug])
+      configurable.map((candidate) => [candidate.ordering.definition.id, candidate.slug])
     ),
     threadColors: toOrderThreadColors(catalog.threadColors, assetBase),
-    gallery: galleryOf(product),
-    previous: navLink(newestFirst.slice(0, index).at(-1), locale),
-    next: navLink(newestFirst.at(index + 1), locale),
   };
 }

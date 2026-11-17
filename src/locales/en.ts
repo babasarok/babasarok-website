@@ -221,6 +221,7 @@ const translation = {
   },
   refusals: {
     VARIANT_UNAVAILABLE: "The selected variant of {{productName}} is no longer available.",
+    OUT_OF_STOCK: "{{productName}} is out of stock.",
     LENGTH_MISSING: 'The "{{productName}}" fabric product requires a length in centimetres.',
     UNKNOWN_FIELD: 'The "{{productName}}" product does not know this field: {{fieldId}}',
     VALUE_NOT_OFFERED: 'The "{{fieldLabel}}" field does not offer this value: {{value}}',
@@ -289,6 +290,7 @@ const translation = {
   errorCodes: {
     EMAIL_ADDRESS_CONFLICT_ERROR:
       "This email address already belongs to a registered account. Please enter a different email address.",
+    INSUFFICIENT_STOCK_ERROR: "Not enough stock. Please order a smaller quantity.",
   },
   privacy: {
     controllerHeading: "1. Data controller",

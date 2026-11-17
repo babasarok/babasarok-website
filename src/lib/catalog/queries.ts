@@ -5,6 +5,7 @@ const PRODUCT_FIELDS = `
   customFields { shortDescription tagline date popularityRank }
   featuredAsset { source focalPoint { x y } }
   facetValues { code name facet { code } }
+  variants { currencyCode priceWithTax stockLevel }
   productDefinition
 `;
 

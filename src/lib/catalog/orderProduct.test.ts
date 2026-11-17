@@ -73,16 +73,16 @@ const catalogProduct: CatalogProduct = {
   popularityRank: null,
   thumbnail: { source: "source/ab/kosar.jpg", focalPoint: null },
   type: { code: "zsak", name: "Zsák" },
-  definition,
+  ordering: { kind: "configurable", definition },
 };
 
 function configured(): IProduct {
-  return instantiateProduct(toOrderProduct(catalogProduct, materials, BASE, "hu"));
+  return instantiateProduct(toOrderProduct(catalogProduct, definition, materials, BASE, "hu"));
 }
 
 describe("toOrderProduct", () => {
   it("maps the definition onto the configurator's product shape", () => {
-    const product = toOrderProduct(catalogProduct, materials, BASE, "hu");
+    const product = toOrderProduct(catalogProduct, definition, materials, BASE, "hu");
 
     expect(product).toMatchObject({
       product_id: "kosar",
@@ -103,7 +103,7 @@ describe("toOrderProduct", () => {
   });
 
   it("offers only materials the catalog knows", () => {
-    const material = toOrderProduct(catalogProduct, materials, BASE, "hu").fields?.[3];
+    const material = toOrderProduct(catalogProduct, definition, materials, BASE, "hu").fields?.[3];
 
     expect(material?.materials?.map((option) => option?.material_path.material_id)).toEqual(["a"]);
   });
@@ -126,8 +126,8 @@ describe("toOrderProduct", () => {
       ],
     });
 
-    const hu = toOrderProduct({ ...catalogProduct, definition: bilingual }, materials, BASE, "hu");
-    const en = toOrderProduct({ ...catalogProduct, definition: bilingual }, materials, BASE, "en");
+    const hu = toOrderProduct(catalogProduct, bilingual, materials, BASE, "hu");
+    const en = toOrderProduct(catalogProduct, bilingual, materials, BASE, "en");
 
     expect(hu.fields?.[0]?.label).toBe("Méret");
     expect(en.fields?.[0]?.label).toBe("Size");
@@ -207,7 +207,7 @@ describe("liveUnitPrice", () => {
       ],
     });
     const item = instantiateProduct(
-      toOrderProduct({ ...catalogProduct, definition: lengthDefinition }, materials, BASE, "hu")
+      toOrderProduct(catalogProduct, lengthDefinition, materials, BASE, "hu")
     );
 
     expect(liveUnitPrice(lengthDefinition, "Szalag", item)).toBeNull();
