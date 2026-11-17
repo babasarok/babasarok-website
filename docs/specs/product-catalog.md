@@ -267,6 +267,10 @@ line is removed; at the transition Vendure's own stock guard refuses
 additionally. Configurator products are unaffected: their variants are
 untracked, so they are never out of stock.
 
+The checkout's production-time note (owner content) shows when the basket
+contains at least one made-to-order line; a basket of ready-made lines only
+shows that they ship right away.
+
 - **Scenario: One unit, two baskets**
   - WHEN two buyers both add the single ready-made unit to their baskets
   - THEN both adds succeed (a basket holds nothing), and the first submitted
@@ -285,6 +289,10 @@ untracked, so they are never out of stock.
 - **Scenario: Ordering no more than there is**
   - WHEN a buyer raises the quantity of a ready-made product with 1 unit
   - THEN the stepper stops at the stock and the page shows the stock count
+- **Scenario: In-stock-only basket at checkout**
+  - WHEN the basket holds only ready-made lines
+  - THEN the checkout shows that they ship right away, not the production
+    time; with a made-to-order line in the basket it shows the production time
 
 ### Product page order configurator
 

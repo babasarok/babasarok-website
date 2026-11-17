@@ -128,6 +128,7 @@ const translation = {
     backToProducts: "Vissza a termékekhez",
     basketUnavailable: "A kosár most nem érhető el.",
     basketEmpty: "A kosarad üres.",
+    readyMadeNote: "A raktári termékeket azonnal postázzuk.",
     viewProducts: "Nézd meg a termékeket",
     lastName: "Vezetéknév *",
     firstName: "Keresztnév *",
