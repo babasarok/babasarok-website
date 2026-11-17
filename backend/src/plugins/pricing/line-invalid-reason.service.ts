@@ -1,11 +1,12 @@
 import { Injectable } from "@nestjs/common";
-import { OrderLine, TransactionalConnection } from "@vendure/core";
+import { OrderLine, ProductVariantService, TransactionalConnection } from "@vendure/core";
 import type { ID, RequestContext } from "@vendure/core";
 import { DatabaseLineFacts } from "./database-line-facts";
 import {
   lineInvalidReason,
   type LineInvalidReason,
   type LineInvalidReasonDeps,
+  type LineInvalidReasonOptions,
 } from "./line-invalid-reason";
 import { lineValuationDeps } from "./line-valuation";
 
@@ -13,14 +14,27 @@ import { lineValuationDeps } from "./line-valuation";
 export class LineInvalidReasonService {
   private deps: LineInvalidReasonDeps;
 
-  constructor(private connection: TransactionalConnection) {
+  constructor(
+    private connection: TransactionalConnection,
+    private productVariantService: ProductVariantService
+  ) {
     this.deps = {
       ...lineValuationDeps(connection),
       lineFacts: (ctx) => new DatabaseLineFacts(connection, ctx),
+      saleableStock: (ctx, variant, lock) =>
+        this.productVariantService.getSaleableStockLevel(
+          ctx,
+          variant,
+          lock ? { lockStockLevels: true } : undefined
+        ),
     };
   }
 
-  async reasonForLine(ctx: RequestContext, lineId: ID): Promise<LineInvalidReason | undefined> {
+  async reasonForLine(
+    ctx: RequestContext,
+    lineId: ID,
+    options: LineInvalidReasonOptions = {}
+  ): Promise<LineInvalidReason | undefined> {
     const line = await this.connection.getRepository(ctx, OrderLine).findOne({
       where: { id: lineId },
       relations: { productVariant: true },
@@ -31,12 +45,13 @@ export class LineInvalidReasonService {
       return undefined;
     }
 
-    return lineInvalidReason(this.deps, ctx, line);
+    return lineInvalidReason(this.deps, ctx, line, options);
   }
 
   async firstReasonForOrder(
     ctx: RequestContext,
-    orderId: ID
+    orderId: ID,
+    options: LineInvalidReasonOptions = {}
   ): Promise<LineInvalidReason | undefined> {
     const lines = await this.connection.getRepository(ctx, OrderLine).find({
       where: { order: { id: orderId } },
@@ -45,7 +60,7 @@ export class LineInvalidReasonService {
     });
 
     for (const line of lines) {
-      const reason = await lineInvalidReason(this.deps, ctx, line);
+      const reason = await lineInvalidReason(this.deps, ctx, line, options);
 
       if (reason !== undefined) {
         return reason;

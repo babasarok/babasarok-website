@@ -28,6 +28,7 @@ export const AddressPartSchema = z.enum(["STREET", "HOUSE_NUMBER", "POSTAL_CODE"
 
 export const RefusalSchema = z.discriminatedUnion("code", [
   z.strictObject({ code: z.literal("VARIANT_UNAVAILABLE"), productName: z.string() }),
+  z.strictObject({ code: z.literal("OUT_OF_STOCK"), productName: z.string() }),
   z.strictObject({ code: z.literal("LENGTH_MISSING"), productName: z.string() }),
   z.strictObject({
     code: z.literal("UNKNOWN_FIELD"),

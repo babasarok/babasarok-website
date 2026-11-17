@@ -20,7 +20,12 @@ const ctx = new RequestContext({
   languageCode: LanguageCode.hu,
 });
 
-function depsFor(row: ProductDefinition | null): LineInvalidReasonDeps {
+const lockRequests: boolean[] = [];
+
+function depsFor(
+  row: ProductDefinition | null,
+  saleable = Number.MAX_SAFE_INTEGER
+): LineInvalidReasonDeps {
   return {
     findDefinition: async () => row,
     productName: async () => "Párna",
@@ -30,6 +35,11 @@ function depsFor(row: ProductDefinition | null): LineInvalidReasonDeps {
       materialColors: async () => new Map(),
       knownThreadColors: async () => new Set(),
     }),
+    saleableStock: async (_ctx, _variant, lock) => {
+      lockRequests.push(lock);
+
+      return saleable;
+    },
   };
 }
 
@@ -72,6 +82,26 @@ describe("lineInvalidReason", () => {
     const reason = await lineInvalidReason(depsFor(row), ctx, lineOf({ deletedAt: new Date() }));
 
     expect(reason?.code).toBe("VARIANT_UNAVAILABLE");
+  });
+
+  it("reports a line whose quantity exceeds the saleable stock", async () => {
+    lockRequests.length = 0;
+    const line = lineOf({});
+
+    line.quantity = 1;
+
+    const reason = await lineInvalidReason(depsFor(null, 0), ctx, line, { lockStock: true });
+
+    expect(reason).toEqual({ code: "OUT_OF_STOCK", productName: "Párna" });
+    expect(lockRequests).toEqual([true]);
+  });
+
+  it("does not lock the stock rows for the read-only check", async () => {
+    lockRequests.length = 0;
+
+    await lineInvalidReason(depsFor(null, 0), ctx, lineOf({}));
+
+    expect(lockRequests).toEqual([false]);
   });
 
   it("reports selections the definition no longer offers", async () => {
