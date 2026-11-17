@@ -9,6 +9,8 @@ export interface ProductListViewState {
   types: ProductType[];
   /** Selected product set ids; OR-combined within the dimension. */
   sets: string[];
+  /** Only ready-made products (ordered as-is from stock, no configurator). */
+  readyMade: boolean;
   sort: ListSort;
 }
 
@@ -16,6 +18,7 @@ export const DEFAULT_LIST_STATE: ProductListViewState = {
   q: "",
   types: [],
   sets: [],
+  readyMade: false,
   sort: "popular",
 };
 
@@ -50,9 +53,10 @@ export function parseListState(search: string): ProductListViewState {
     .map((value) => value.trim())
     .filter((value) => value !== "");
 
+  const readyMade = params.get("ready-made") === "1";
   const sort = parseListSort(params.get("sort"));
 
-  return { q, types, sets, sort };
+  return { q, types, sets, readyMade, sort };
 }
 
 /**
@@ -68,6 +72,8 @@ export interface ListProduct {
   type?: ProductType | undefined;
   date?: Date | undefined | null;
   sets: string[];
+  /** A ready-made product: ordered as-is from stock (the ready-made filter matches it). */
+  readyMade?: boolean | undefined;
 }
 
 /**
@@ -102,6 +108,9 @@ export function applyListState<TProduct extends ListProduct>(
       return false;
     }
     if (state.sets.length > 0 && !product.sets.some((set) => state.sets.includes(set))) {
+      return false;
+    }
+    if (state.readyMade && !product.readyMade) {
       return false;
     }
     return true;
@@ -159,6 +168,10 @@ export function serializeListState(state: ProductListViewState): string {
   }
   for (const set of state.sets) {
     params.append("set", set);
+  }
+
+  if (state.readyMade) {
+    params.set("ready-made", "1");
   }
 
   if (state.sort !== DEFAULT_LIST_STATE.sort) {

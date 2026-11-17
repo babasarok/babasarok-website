@@ -91,6 +91,27 @@ describe("toProductListData", () => {
     expect(items.map((item) => item.type)).toEqual(["takaro", undefined, undefined]);
   });
 
+  it("marks a ready-made product with its stock and leaves a configurator product unmarked", () => {
+    const readyMade = product({
+      slug: "kesz-kanal",
+      ordering: {
+        kind: "ready-made",
+        unitPriceWithTax: 6500,
+        currencyCode: "HUF",
+        saleableStock: 1,
+      },
+    });
+    const { items } = toProductListData(
+      [product({ slug: "konfiguralo" }), readyMade],
+      [],
+      BASE,
+      "hu"
+    );
+
+    expect(items[0]).toMatchObject({ readyMade: undefined, stock: undefined });
+    expect(items[1]).toMatchObject({ readyMade: true, stock: 1 });
+  });
+
   it("maps tagline to the category line and builds the card image", () => {
     const { items } = toProductListData(
       [

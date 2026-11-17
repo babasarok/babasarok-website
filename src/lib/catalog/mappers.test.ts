@@ -32,21 +32,31 @@ function detailRow(overrides: Record<string, unknown>): DetailRow {
   return row;
 }
 
-const readyMadeVariant = { currencyCode: "HUF", priceWithTax: 6500, stockLevel: "IN_STOCK" };
+const readyMadeVariant = {
+  currencyCode: "HUF",
+  priceWithTax: 6500,
+  stockLevel: "IN_STOCK",
+  saleableStock: 3,
+};
 
 describe("toProduct", () => {
   it("maps a definition-backed product to the configurable ordering", () => {
     expect(toProduct(listRow({}))?.ordering).toMatchObject({ kind: "configurable" });
   });
 
-  it("maps a definition-less product to its variant price", () => {
+  it("maps a definition-less product to its variant price and stock", () => {
     const product = toProduct(
       listRow({ slug: "kesz-kanal", productDefinition: null, variants: [readyMadeVariant] })
     );
 
     expect(product).toMatchObject({
       slug: "kesz-kanal",
-      ordering: { kind: "ready-made", unitPriceWithTax: 6500, currencyCode: "HUF" },
+      ordering: {
+        kind: "ready-made",
+        unitPriceWithTax: 6500,
+        currencyCode: "HUF",
+        saleableStock: 3,
+      },
     });
   });
 
@@ -69,6 +79,18 @@ describe("toProduct", () => {
       toProduct(listRow({ slug: "kesz-kanal", productDefinition: null, variants: [] }))
     ).toBeNull();
   });
+
+  it("carries a null stock for an untracked ready-made variant", () => {
+    expect(
+      toProduct(
+        listRow({
+          slug: "kesz-kanal",
+          productDefinition: null,
+          variants: [{ ...readyMadeVariant, saleableStock: null }],
+        })
+      )?.ordering
+    ).toMatchObject({ kind: "ready-made", saleableStock: null });
+  });
 });
 
 describe("toProductDetail", () => {
@@ -78,7 +100,12 @@ describe("toProductDetail", () => {
     );
 
     expect(detail).toMatchObject({
-      ordering: { kind: "ready-made", unitPriceWithTax: 6500, currencyCode: "HUF" },
+      ordering: {
+        kind: "ready-made",
+        unitPriceWithTax: 6500,
+        currencyCode: "HUF",
+        saleableStock: 3,
+      },
       description: "**Tornazsák** leírása",
     });
     expect(detail?.gallery.length).toBeGreaterThan(0);

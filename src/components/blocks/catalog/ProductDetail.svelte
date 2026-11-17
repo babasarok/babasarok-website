@@ -73,6 +73,13 @@
                 {#if loadedProduct.shortDescription}
                   <p class="mt-3">{loadedProduct.shortDescription}</p>
                 {/if}
+                {#if page.kind === "ready-made"}
+                  <span
+                    class="text-body mt-3 inline-block rounded-full bg-sand-100 px-3 py-1 text-xs text-sand-800"
+                  >
+                    {i18n.t("readyMade.badge")}
+                  </span>
+                {/if}
                 <div class="mt-6">
                   {#if page.kind === "configurable"}
                     <ProductOrder
@@ -91,6 +98,7 @@
                       slug={loadedProduct.slug}
                       unitPriceWithTax={page.unitPriceWithTax}
                       currencyCode={page.currencyCode}
+                      saleableStock={page.saleableStock}
                     />
                   {/if}
                 </div>

@@ -18,7 +18,13 @@ type MaterialRow = z.output<typeof MaterialsResponseSchema>["materials"][number]
 /** How a product is ordered: through its configurator definition, or as-is from the variant. */
 export type CatalogProductOrdering =
   | { kind: "configurable"; definition: ProductDefinition }
-  | { kind: "ready-made"; unitPriceWithTax: number; currencyCode: string };
+  | {
+      kind: "ready-made";
+      unitPriceWithTax: number;
+      currencyCode: string;
+      /** Real stock the storefront may show and cap the quantity at; null when untracked. */
+      saleableStock: number | null;
+    };
 
 export type ConfigurableCatalogProduct = CatalogProduct & {
   ordering: Extract<CatalogProductOrdering, { kind: "configurable" }>;
@@ -106,6 +112,7 @@ function orderingOf(row: ProductRow): CatalogProductOrdering | null {
     kind: "ready-made",
     unitPriceWithTax: variant.priceWithTax,
     currencyCode: variant.currencyCode,
+    saleableStock: variant.saleableStock,
   };
 }
 

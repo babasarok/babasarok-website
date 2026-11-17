@@ -120,6 +120,12 @@ const translation = {
     noResults: "No results",
     type: "Product type",
     sets: "Sets",
+    readyMade: "Stock",
+    readyMadeOnly: "Ready-made products",
+  },
+  readyMade: {
+    badge: "In-stock product",
+    stock: "{{count}} in stock",
   },
   checkout: {
     title: "Checkout",

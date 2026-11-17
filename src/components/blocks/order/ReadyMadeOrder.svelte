@@ -17,9 +17,11 @@
     slug: string;
     unitPriceWithTax: number;
     currencyCode: string;
+    /** The stock the quantity is capped at; null when untracked (no cap). */
+    saleableStock: number | null;
   }
 
-  let { locale, slug, unitPriceWithTax, currencyCode }: Props = $props();
+  let { locale, slug, unitPriceWithTax, currencyCode, saleableStock }: Props = $props();
 
   let count = $state(1);
   let editingLineId = $state<string | null>(null);
@@ -32,6 +34,7 @@
   let restored = false;
 
   const isDirty = $derived(savedCount !== null && count !== savedCount);
+  const maxCount = $derived(saleableStock ?? undefined);
 
   onMount(() => {
     basket.start();
@@ -47,7 +50,7 @@
     const prefill = countFromParams(new URLSearchParams(globalThis.location.search));
 
     if (prefill !== undefined) {
-      count = prefill;
+      count = maxCount === undefined ? prefill : Math.min(prefill, maxCount);
     }
 
     return () => {
@@ -266,6 +269,7 @@
             class="text-xl"
             type="button"
             aria-label={i18n.t("common.quantityIncrease")}
+            disabled={maxCount !== undefined && count >= maxCount}
             onclick={() => {
               count++;
               saved = false;
@@ -274,6 +278,12 @@
             <Icon icon="mdi:add" class="h-[1em]" />
           </IconButton>
         </div>
+
+        {#if saleableStock !== null}
+          <p class="mt-2 text-sm text-sand-700">
+            {i18n.t("readyMade.stock", { count: saleableStock })}
+          </p>
+        {/if}
 
         <Button
           class="h-11 flex-1 uppercase"

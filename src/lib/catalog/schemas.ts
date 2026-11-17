@@ -25,6 +25,7 @@ const ProductRowSchema = z.object({
       currencyCode: z.string(),
       priceWithTax: z.number(),
       stockLevel: z.enum(["IN_STOCK", "LOW_STOCK", "OUT_OF_STOCK"]),
+      saleableStock: z.number().int().nullable(),
     })
   ),
   productDefinition: ProductDefinitionSchema.nullable(),

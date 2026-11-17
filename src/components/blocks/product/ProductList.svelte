@@ -28,6 +28,17 @@
     href: string;
     category?: string | undefined;
     image?: SlimImage | undefined;
+    stock?: number | undefined;
+  }
+
+  function stockBadge(i18n: I18n, product: ProductView): string | undefined {
+    if (!product.readyMade) {
+      return undefined;
+    }
+
+    return product.stock === undefined
+      ? i18n.t("readyMade.badge")
+      : i18n.t("readyMade.stock", { count: product.stock });
   }
 
   interface Props {
@@ -52,6 +63,8 @@
       type: item.type,
       date: item.date ? new Date(item.date) : undefined,
       sets: item.sets,
+      readyMade: item.readyMade,
+      stock: item.stock,
       href: item.href,
       category: item.category,
       image: item.image,
@@ -86,6 +99,10 @@
       ...view,
       sets: view.sets.includes(id) ? view.sets.filter((s) => s !== id) : [...view.sets, id],
     });
+  }
+
+  function toggleReadyMade(): void {
+    setView({ ...view, readyMade: !view.readyMade });
   }
 
   function clearView(): void {
@@ -140,8 +157,10 @@
           {sets}
           selectedTypes={view.types}
           selectedSets={view.sets}
+          readyMadeOnly={view.readyMade}
           onToggleType={toggleType}
           onToggleSet={toggleSet}
+          onToggleReadyMade={toggleReadyMade}
         />
       </aside>
     {/snippet}
@@ -163,8 +182,10 @@
             {sets}
             selectedTypes={view.types}
             selectedSets={view.sets}
+            readyMadeOnly={view.readyMade}
             onToggleType={toggleType}
             onToggleSet={toggleSet}
+            onToggleReadyMade={toggleReadyMade}
             onClear={clearView}
           />
           {@render sortSelect(i18n, "sm")}
@@ -172,23 +193,21 @@
         <div class="mb-8 hidden justify-end sm:flex">
           {@render sortSelect(i18n, "lg")}
         </div>
-      {/snippet}
-    </I18nGate>
-    <div
-      class="grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-8 gap-y-12 px-4 sm:gap-y-8 sm:px-0"
-    >
-      {#each visible as product (product.id)}
-        <ProductCard
-          href={product.href}
-          title={product.title}
-          category={product.category}
-          image={product.image}
-        />
-      {/each}
-    </div>
-    {#if visible.length === 0}
-      <I18nGate {locale}>
-        {#snippet children(i18n: I18n)}
+        <div
+          class="grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-8 gap-y-12 px-4 sm:gap-y-8 sm:px-0"
+        >
+          {#each visible as product (product.id)}
+            {@const badge = stockBadge(i18n, product)}
+            <ProductCard
+              href={product.href}
+              title={product.title}
+              category={product.category}
+              {badge}
+              image={product.image}
+            />
+          {/each}
+        </div>
+        {#if visible.length === 0}
           <div class="text-body py-20 text-center">
             <p class="text-headings mb-5 text-h4">{i18n.t("filters.noResults")}</p>
             <button
@@ -199,8 +218,8 @@
               {i18n.t("filters.clear")}
             </button>
           </div>
-        {/snippet}
-      </I18nGate>
-    {/if}
+        {/if}
+      {/snippet}
+    </I18nGate>
   </div>
 </div>

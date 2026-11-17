@@ -54,7 +54,13 @@ const ShopProductSchema = z.object({
       enabled: z.boolean(),
       name: z.string(),
       productDefinition: z.unknown(),
-      variants: z.array(z.object({ priceWithTax: z.number(), stockLevel: z.string() })),
+      variants: z.array(
+        z.object({
+          priceWithTax: z.number(),
+          stockLevel: z.string(),
+          saleableStock: z.number().nullable(),
+        })
+      ),
     })
     .nullable(),
 });
@@ -160,7 +166,7 @@ describe("ready-made migration", () => {
 
     const data = await run(
       server.newShopSession(),
-      `query($slug: String!) { product(slug: $slug) { enabled name productDefinition variants { priceWithTax stockLevel } } }`,
+      `query($slug: String!) { product(slug: $slug) { enabled name productDefinition variants { priceWithTax stockLevel saleableStock } } }`,
       { slug: "babafeszek-szett" },
       ShopProductSchema
     );
@@ -169,7 +175,7 @@ describe("ready-made migration", () => {
       enabled: true,
       name: "Babafészek szett",
       productDefinition: null,
-      variants: [{ priceWithTax: BASE_PRICE, stockLevel: "LOW_STOCK" }],
+      variants: [{ priceWithTax: BASE_PRICE, stockLevel: "LOW_STOCK", saleableStock: 1 }],
     });
   });
 

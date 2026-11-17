@@ -63,7 +63,14 @@ describe("getProducts", () => {
       ...first,
       slug: "placeholder-x",
       productDefinition: null,
-      variants: [{ currencyCode: "HUF", priceWithTax: 5000, stockLevel: "OUT_OF_STOCK" as const }],
+      variants: [
+        {
+          currencyCode: "HUF",
+          priceWithTax: 5000,
+          stockLevel: "OUT_OF_STOCK" as const,
+          saleableStock: 0,
+        },
+      ],
     };
     const run = runReturning(
       { products: { totalItems: 4, items: [placeholder] } },
@@ -86,7 +93,14 @@ describe("getProducts", () => {
       ...first,
       slug: "kesz-kanal",
       productDefinition: null,
-      variants: [{ currencyCode: "HUF", priceWithTax: 6500, stockLevel: "IN_STOCK" as const }],
+      variants: [
+        {
+          currencyCode: "HUF",
+          priceWithTax: 6500,
+          stockLevel: "IN_STOCK" as const,
+          saleableStock: 2,
+        },
+      ],
     };
 
     const result = await getProducts(
@@ -147,7 +161,14 @@ describe("getProduct", () => {
       product: {
         ...product.product,
         productDefinition: null,
-        variants: [{ currencyCode: "HUF", priceWithTax: 6500, stockLevel: "IN_STOCK" as const }],
+        variants: [
+          {
+            currencyCode: "HUF",
+            priceWithTax: 6500,
+            stockLevel: "IN_STOCK" as const,
+            saleableStock: 2,
+          },
+        ],
       },
     };
 
@@ -163,7 +184,12 @@ describe("getProduct", () => {
         ...product.product,
         productDefinition: null,
         variants: [
-          { currencyCode: "HUF", priceWithTax: 6500, stockLevel: "OUT_OF_STOCK" as const },
+          {
+            currencyCode: "HUF",
+            priceWithTax: 6500,
+            stockLevel: "OUT_OF_STOCK" as const,
+            saleableStock: 0,
+          },
         ],
       },
     };

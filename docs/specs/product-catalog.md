@@ -85,13 +85,16 @@ inline error with a retry instead of partial data. With:
 - **Text search** over product title and short description.
 - **Filtering by product type**: multiple selections within the type
   dimension are OR-combined.
+- **Filtering to ready-made products**: one checkbox selecting the products
+  ordered as-is from stock; it AND-combines with the other dimensions.
 - **Filtering by product set**: a product matches the set filter when it is
   a member of a selected set; multiple set selections are OR-combined.
 - **Sorting**: by the `popularityRank` order (default), newest first,
   or by name (title, ascending). Products without a curated popularity
   position follow the ordered ones, name-ascending among themselves.
 
-The active search text, selected types, selected sets, and sort order SHALL
+The active search text, selected types, selected sets, the ready-made
+filter, and sort order SHALL
 be expressed in URL query parameters; the page SHALL apply them on load and
 update them as the visitor changes the view, so any filtered view is
 shareable. Dimensions are AND-combined with each other and with the search
@@ -247,7 +250,11 @@ configured, and no order line can target it.
 The system SHALL track a ready-made product's stock on its single variant with
 Vendure's default inventory (`stockOnHand` on the stock product page; a
 sold-out unit is `saleable stock = stockOnHand − stockAllocated − threshold ≤
-0` and hides the product everywhere). A basket only checks the stock:
+0` and hides the product everywhere). The shop API exposes the variant's
+`saleableStock` (null for an untracked variant). The storefront SHALL present a
+ready-made product as a stocked, not made-to-order item: a "raktári termék"
+badge on its page and list card, its stock count on both, and the quantity
+stepper capped at the saleable stock. A basket only checks the stock:
 adding or adjusting a line is refused or clamped when the saleable stock does
 not cover the quantity, but the line holds nothing. A **placed order holds the
 unit**: stock allocates when the buyer submits checkout (the
@@ -275,6 +282,9 @@ untracked, so they are never out of stock.
   - WHEN the unit is fulfilled or the owner sets `stockOnHand` to 0
   - THEN the product drops out of the list, search, sitemap and home block,
     and its detail page shows "not found"
+- **Scenario: Ordering no more than there is**
+  - WHEN a buyer raises the quantity of a ready-made product with 1 unit
+  - THEN the stepper stops at the stock and the page shows the stock count
 
 ### Product page order configurator
 

@@ -38,6 +38,8 @@ export interface ReadyMadeProductPageData extends ProductPageBase {
   kind: "ready-made";
   unitPriceWithTax: number;
   currencyCode: string;
+  /** Real stock the quantity is capped at; null when untracked. */
+  saleableStock: number | null;
 }
 
 export type ProductPageData = ConfigurableProductPageData | ReadyMadeProductPageData;
@@ -96,6 +98,7 @@ export function toProductPageData(
       kind: "ready-made",
       unitPriceWithTax: product.ordering.unitPriceWithTax,
       currencyCode: product.ordering.currencyCode,
+      saleableStock: product.ordering.saleableStock,
     };
   }
 

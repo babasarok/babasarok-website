@@ -114,6 +114,12 @@ const translation = {
     noResults: "Nincs találat",
     type: "Terméktípus",
     sets: "Szettek",
+    readyMade: "Készlet",
+    readyMadeOnly: "Raktári termékek",
+  },
+  readyMade: {
+    badge: "Raktári termék",
+    stock: "{{count}} db raktáron",
   },
   checkout: {
     title: "Pénztár",
