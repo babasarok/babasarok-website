@@ -268,8 +268,9 @@ additionally. Configurator products are unaffected: their variants are
 untracked, so they are never out of stock.
 
 The checkout's production-time note (owner content) shows when the basket
-contains at least one made-to-order line; a basket of ready-made lines only
-shows that they ship right away.
+contains at least one made-to-order line (mixed baskets included — it covers
+the whole order, without any separate-shipment claim); a basket of only
+ready-made lines shows no production note.
 
 - **Scenario: One unit, two baskets**
   - WHEN two buyers both add the single ready-made unit to their baskets
@@ -291,8 +292,11 @@ shows that they ship right away.
   - THEN the stepper stops at the stock and the page shows the stock count
 - **Scenario: In-stock-only basket at checkout**
   - WHEN the basket holds only ready-made lines
-  - THEN the checkout shows that they ship right away, not the production
-    time; with a made-to-order line in the basket it shows the production time
+  - THEN the checkout shows no production-time note
+- **Scenario: Mixed basket at checkout**
+  - WHEN the basket holds a ready-made line together with a made-to-order line
+  - THEN the checkout shows only the production time of the made-to-order
+    line, covering the whole order, without claiming a separate shipment
 
 ### Product page order configurator
 

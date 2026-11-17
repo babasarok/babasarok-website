@@ -505,9 +505,7 @@
         ></div>
       {:else}
         {@const t = translator(i18n)}
-        {@const basketNote = hasConfigurableLine(order)
-          ? basketInfo
-          : i18n.t("checkout.readyMadeNote")}
+        {@const basketNote = hasConfigurableLine(order) ? basketInfo : undefined}
         <div class="grid grid-cols-1 items-start gap-6 pb-24 lg:grid-cols-[1fr_420px] lg:pb-0">
           <div class="flex min-w-0 flex-col">
             <div class="pb-4">

@@ -134,7 +134,6 @@ const translation = {
     backToProducts: "Back to the products",
     basketUnavailable: "The basket is currently unavailable.",
     basketEmpty: "Your basket is empty.",
-    readyMadeNote: "In-stock products ship right away.",
     viewProducts: "View the products",
     lastName: "Last name *",
     firstName: "First name *",
