@@ -17,7 +17,11 @@ custom fields `selections` (the buyer's field values, including the
 products). Lines are changed with `addItemToOrder`, `adjustOrderLine` and
 `removeOrderLine`; the line's price is the server pricing strategy's unit
 price, and the order exposes each line's `unitPriceWithTax`, the order totals
-and `currencyCode` (nothing in the API is currency-specific).
+and `currencyCode` (nothing in the API is currency-specific). A line on a
+ready-made product's variant (a product without a definition, product-catalog
+spec) carries `selections: "{}"` and is priced from the variant itself; it is
+valid while the product is enabled and the variant's saleable stock covers the
+line's quantity.
 
 - **Scenario: Adding a product**
   - WHEN a buyer configures a product (quantity, options, materials) and adds
@@ -88,13 +92,28 @@ removed once), not migrated.
 The system SHALL expose on every shop-API `OrderLine` an `invalidReason`, a
 refusal (a `code` plus the values that explain it, the shared `Refusal`
 schema; null when the line is fine): `VARIANT_UNAVAILABLE` when the product's
-variant is disabled or deleted, otherwise the code of whatever no longer fits
+variant is disabled or deleted, `OUT_OF_STOCK` when the variant's saleable
+stock no longer covers the line's quantity (ready-made products), otherwise
+the code of whatever no longer fits
 the product definition or cannot be priced (for example `VALUE_NOT_OFFERED`,
 `SELECTION_INVALID` with a nested reason, `LENGTH_MISSING`). The site words
 every code from its locale files in the page's language. A line keeps the price it
 had when it was added or last adjusted; the site compares `unitPriceWithTax`
 with the price its page showed. Placing an order with an invalid line is
-refused (order-submission spec).
+refused (order-submission spec); at the checkout transition the stock check
+additionally runs under a row lock together with the stock allocation, so two
+simultaneous checkouts cannot both take the last unit — the native check's own
+translated message may surface there instead of the coded refusal.
+
+- **Scenario: Option withdrawn after adding**
+  - WHEN the owner removes an option a basket line selected
+  - THEN the line's `invalidReason` is a refusal naming the field and the
+    withdrawn value, and removing or re-adjusting the line clears it
+- **Scenario: Ready-made unit taken by another order**
+  - WHEN the single unit of a ready-made product is taken by a placed order
+    while a basket still holds a line for it
+  - THEN the line's `invalidReason` is `OUT_OF_STOCK` naming the product, and
+    checkout is blocked until the line is removed
 
 - **Scenario: Option withdrawn after adding**
   - WHEN the owner removes an option a basket line selected
