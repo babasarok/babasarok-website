@@ -24,10 +24,15 @@
             <p style="margin:0 0 12px 0;">Kedves vásárlónk!</p>
             <p style="margin:0 0 12px 0;">Köszönjük szépen, hogy a Babasarok termékeit választottad!
               🥰</p>
-            <p style="margin:0 0 12px 0;">Megrendelésed megérkezett hozzánk – hamarosan nekilátunk,
-              hogy elkészítsük neked 🧵✂️</p>
-            <p style="margin:0 0 12px 0;">Az elkészítési idő várhatóan kb. 3 hét, amely a fizetés
-              beérkezésétől számítandó.</p>
+            {{#if madeToOrder}}
+              <p style="margin:0 0 12px 0;">Megrendelésed megérkezett hozzánk – hamarosan
+                nekilátunk, hogy elkészítsük neked 🧵✂️</p>
+              <p style="margin:0 0 12px 0;">Az elkészítési idő várhatóan kb. 3 hét, amely a
+                fizetés beérkezésétől számítandó.</p>
+            {{else}}
+              <p style="margin:0 0 12px 0;">Megrendelésed megérkezett hozzánk – a raktári
+                termékeket készletről 2-3 napon belül postázzuk 📦</p>
+            {{/if}}
             <p style="margin:0 0 12px 0;">💳 Ha az előre utalásos fizetési módot választottad:<br />
               A megrendeléshez tartozó számlát 1–2 munkanapon belül e-mailben küldjük. A számla
               alapján a fizetést banki átutalással vagy online bankkártyás fizetéssel is
@@ -74,6 +79,14 @@
                       <span style="font-size:13px; color:#444444;">({{quantity}} db)</span></p>
                   </td>
                 </tr>
+                {{#if stocked}}
+                  <tr>
+                    <td style="padding:2px 14px 2px 14px; font-size:13px; line-height:1.5;">
+                      <span style="color:#6f5447;">Raktári termék:</span>
+                      <strong style="color:#28341d;">készletről 2-3 napon belül postázzuk</strong>
+                    </td>
+                  </tr>
+                {{/if}}
                 {{#if details}}
                   {{#each details}}
                     <tr>

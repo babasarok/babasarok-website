@@ -236,6 +236,23 @@ describe("applyListState", () => {
     expect(result.map((p) => p.title)).toEqual(["B", "C", "D"]);
   });
 
+  it("lists ready-made products first within every sort", () => {
+    const products = [
+      product({ title: "Rendelésre", date: day("2026-01-01") }),
+      product({ title: "Raktári", readyMade: true, date: day("2024-01-01") }),
+      product({ title: "Újabb", date: day("2026-06-01") }),
+    ];
+
+    // Popular and name sort the rest among themselves by name; newest by date.
+    for (const sort of ["popular", "name"] as const) {
+      const result = applyListState(products, { ...defaultState, sort });
+      expect(result.map((p) => p.title)).toEqual(["Raktári", "Rendelésre", "Újabb"]);
+    }
+
+    const newest = applyListState(products, { ...defaultState, sort: "newest" });
+    expect(newest.map((p) => p.title)).toEqual(["Raktári", "Újabb", "Rendelésre"]);
+  });
+
   it("uses the first occurrence when the popularity order repeats an id", () => {
     const products = [product({ title: "A" }), product({ title: "B" })];
     const result = applyListState(products, { ...defaultState }, ["B", "A", "B"]);
