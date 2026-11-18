@@ -240,14 +240,14 @@ value as `Egyedi: <value>`; the line title is the product's name and a
 length-priced line shows its length. Each product is a heading (number,
 title, quantity) over a label: value list, with no option prices or
 subtotals, in the buyer confirmation and the owner notification alike.
-Ready-made lines (no definition) carry no configuration rows: they show the
-in-stock indication ("Raktári termék — készletről 2-3 napon belül
-postázzuk"), lead the product list with the list renumbered (both emails),
-and the owner notification additionally marks them (`[RAKTÁRI]`) and
-summarizes their line numbers in a prominent block. The confirmation's
-production-time copy shows only when the order holds a made-to-order line;
-a ready-made-only confirmation says the products ship from stock within
-2-3 days instead. Delivery SHALL be its own row (method name and its price, or "ingyenes" when a
+Ready-made lines (no definition) carry no configuration rows: they lead the
+product list with the list renumbered (both emails), and the owner
+notification marks them (`[RAKTÁRI]`). Neither email SHALL promise a
+shipping time for ready-made lines: the delivery method the buyer chose
+governs shipping or personal pickup, so the emails carry no per-line or
+summary stock/shipping copy. The confirmation's production-time copy shows
+only when the order holds a made-to-order line; a ready-made-only
+confirmation carries a plain acknowledgment only. Delivery SHALL be its own row (method name and its price, or "ingyenes" when a
 promotion zeroed a charged price) and the only price in the confirmation is
 the order total. The set-discount summary is generated from the order's
 discount adjustments and uses the displayed line numbering. Both emails SHALL show the delivery address (street and

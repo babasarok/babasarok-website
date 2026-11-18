@@ -18,8 +18,6 @@ const hu = {
   detailToggleOn: (): string => "Igen",
   deliveryFree: (): string => "ingyenes",
   productOrdinal: (number: number): string => `${number}. termék`,
-  stockedLines: (numbers: number[]): string =>
-    `Raktári termékek: ${numbers.map((number) => `${number}. tétel`).join(", ")} – készletről 2-3 napon belül postázzuk.`,
   orderConfirmationSubject: (orderCode: string): string => `Köszönjük a rendelésed: ${orderCode}`,
   orderNotificationSubject: (orderCode: string): string => `Új árajánlatkérés: ${orderCode}`,
 };
@@ -34,8 +32,6 @@ const en: Messages = {
   detailToggleOn: () => "Yes",
   deliveryFree: () => "free",
   productOrdinal: (number) => `product ${number}`,
-  stockedLines: (numbers) =>
-    `In-stock products: items ${numbers.join(", ")} – shipped from stock within 2-3 days.`,
   orderConfirmationSubject: (orderCode) => `Thank you for your order: ${orderCode}`,
   orderNotificationSubject: (orderCode) => `New quote request: ${orderCode}`,
 };
