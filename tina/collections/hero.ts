@@ -45,6 +45,12 @@ export const HeroCollection: Collection = {
       label: "Gomb URL",
     },
     {
+      type: "string",
+      name: "readyMadeButtonName",
+      label: "Raktári gomb szövege",
+      description: "A „Termékek raktárról, azonnal” gomb szövege; üresen rejtett.",
+    },
+    {
       type: "image",
       name: "image",
       label: "Hero kép",

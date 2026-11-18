@@ -3,6 +3,7 @@ enable: true
 topTitle: Babasarok
 buttonName: Browse the products
 buttonURL: product
+readyMadeButtonName: Ready-made products
 image: /src/assets/Noémi-22.webp
 ---
 

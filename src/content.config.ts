@@ -27,6 +27,7 @@ const heroBlock = defineCollection({
       topTitle: z.string(),
       buttonName: z.string().optional(),
       buttonURL: z.string().optional(),
+      readyMadeButtonName: z.string().optional(),
       image: image().optional(),
       enable: z.boolean().optional(),
     }),

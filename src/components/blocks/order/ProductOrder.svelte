@@ -6,7 +6,7 @@
   import OrderItem from "./OrderItem.svelte";
   import SetPanel from "./SetPanel.svelte";
   import RelatedItems from "./RelatedItems.svelte";
-  import Button from "@/components/ui/Button.svelte";
+  import Button from "@/components/ui/ActionButton.svelte";
   import IconButton from "@/components/ui/IconButton.svelte";
   import { basket } from "@/lib/basket/basket.svelte";
   import type { LineInput } from "@/lib/basket/api";

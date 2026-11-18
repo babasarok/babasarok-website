@@ -62,17 +62,17 @@ These are listed in priority order. When values conflict, prefer the one higher 
   global CSS files without checking the existing structure of `global.css` and
   its imports.
 - **Imports:** use the `@/*` path alias for imports from `src/`.
-- **New shared UI:** create a small reusable component (see
-  [src/components/ui/](src/components/ui/)) rather than duplicating markup or adding
-  global utilities.
-- **Rendering:** prefer Astro components and build-time rendering; only add a Svelte
-  island / client hydration when interactivity actually requires it. Once JS is
-  genuinely unavoidable, prefer one cohesive hydrated island over a server
-  component plus a detached `<script>` that reaches into it via DOM selectors.
-  Prefer Astro's built-in features (content collections, middleware, SSR) over
-  reinventing them in a framework component. When solving something with an
-  older-but-safe approach, flag newer standard APIs that could replace it as a
-  possible TODO.
+- **New shared UI:** create a small reusable Svelte component (see
+  [src/components/ui/](src/components/ui/) and
+  [docs/agents/components.md](docs/agents/components.md)) rather than duplicating
+  markup or adding global utilities.
+- **Rendering:** components are Svelte by default — see
+  [docs/agents/components.md](docs/agents/components.md). `.astro` stays for
+  routes and page-composition glue. Hydrate a component with `client:*` only
+  when interactivity genuinely requires JS; prefer one cohesive hydrated
+  island over a server component plus a detached `<script>` that reaches into
+  it via DOM selectors. When solving something with an older-but-safe
+  approach, flag newer standard APIs that could replace it as a possible TODO.
 - **Data fetching:** in Astro frontmatter (the `---` block), not in client-side code.
   Exception: the Vendure catalog loads in the browser through the catalog store
   (`src/lib/catalog/store.ts`), so pages never wait for the backend

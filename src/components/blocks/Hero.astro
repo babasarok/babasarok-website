@@ -2,21 +2,26 @@
 import { Image } from "astro:assets";
 import { getEntry, render } from "astro:content";
 import figureSvg from "../../assets/images/hero/figure-svg.svg?url";
-import Button from "../ui/Button.astro";
+import Button from "../ui/Button.svelte";
+import ReadyMadeButton from "./ReadyMadeButton.svelte";
 import TopTitle from "../ui/TopTitle.astro";
 import { entryIdForLocale, localeFromPathname, localizedPath } from "@/lib/i18n";
 
+const locale = localeFromPathname(Astro.url.pathname);
+
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const entry = (await getEntry(
-  "heroBlock",
-  entryIdForLocale(localeFromPathname(Astro.url.pathname), "hero")
-))!;
-const { enable, topTitle, buttonName, image: heroImage, buttonURL } = entry.data;
+const entry = (await getEntry("heroBlock", entryIdForLocale(locale, "hero")))!;
+const {
+  enable,
+  topTitle,
+  buttonName,
+  image: heroImage,
+  buttonURL,
+  readyMadeButtonName,
+} = entry.data;
 const { Content } = await render(entry);
 
-const buttonHref = buttonURL
-  ? localizedPath(`/${buttonURL}`, localeFromPathname(Astro.url.pathname))
-  : undefined;
+const buttonHref = buttonURL ? localizedPath(`/${buttonURL}`, locale) : undefined;
 ---
 
 {
@@ -82,9 +87,12 @@ const buttonHref = buttonURL
                 </div>
               </div>
 
-              <Button href={buttonHref} size="lg">
-                {buttonName}
-              </Button>
+              <div class="flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
+                <Button href={buttonHref} size="lg">
+                  {buttonName}
+                </Button>
+                <ReadyMadeButton client:load {locale} label={readyMadeButtonName} />
+              </div>
             </div>
           </div>
 
