@@ -11,7 +11,14 @@ const locale = localeFromPathname(Astro.url.pathname);
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const entry = (await getEntry("heroBlock", entryIdForLocale(locale, "hero")))!;
-const { enable, topTitle, buttonName, image: heroImage, buttonURL, readyMadeButtonName } = entry.data;
+const {
+  enable,
+  topTitle,
+  buttonName,
+  image: heroImage,
+  buttonURL,
+  readyMadeButtonName,
+} = entry.data;
 const { Content } = await render(entry);
 
 const buttonHref = buttonURL ? localizedPath(`/${buttonURL}`, locale) : undefined;
