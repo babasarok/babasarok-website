@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import Button from "@/components/ui/Button.svelte";
+  import Button from "@/components/ui/ActionButton.svelte";
   import Tooltip from "@/components/ui/Tooltip.svelte";
   import TextInput from "@/components/ui/TextInput.svelte";
   import { slide } from "svelte/transition";

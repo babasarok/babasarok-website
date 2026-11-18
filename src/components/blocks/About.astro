@@ -2,7 +2,7 @@
 import { Image } from "astro:assets";
 import { Markdown } from "astro-md-2";
 import figureSvg from "../../assets/images/hero/figure-svg.svg?url";
-import Button from "../ui/Button.astro";
+import Button from "../ui/Button.svelte";
 import { getEntry } from "astro:content";
 import { entryIdForLocale, localeFromPathname, localizedPath } from "@/lib/i18n";
 
@@ -85,7 +85,7 @@ const button2Href = button2Target ? localizedPath(`/${button2Target}`, locale) :
             </div>
 
             <div class="flex flex-wrap gap-4">
-              <Button href={button1Href} size="lg" primary>
+              <Button href={button1Href} size="lg">
                 {button1Name}
               </Button>
               <Button href={button2Href} size="lg" variant="outline">

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Icon from "@iconify/svelte";
-  import Button from "@/components/ui/Button.svelte";
+  import Button from "@/components/ui/ActionButton.svelte";
   import IconButton from "@/components/ui/IconButton.svelte";
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import { basket } from "@/lib/basket/basket.svelte";

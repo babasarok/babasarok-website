@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Button from "@/components/ui/Button.svelte";
+  import Button from "@/components/ui/ActionButton.svelte";
   import Chip from "@/components/ui/Chip.svelte";
   import Icon from "@iconify/svelte";
   import Color from "@/components/ui/Color.svelte";
