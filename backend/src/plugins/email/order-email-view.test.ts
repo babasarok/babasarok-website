@@ -103,9 +103,6 @@ describe("orderEmailView", () => {
       [3, "Takaró", false],
     ]);
     expect(view.madeToOrder).toBe(true);
-    expect(view.stockedSummary).toBe(
-      "Raktári termékek: 1. tétel – készletről 2-3 napon belül postázzuk."
-    );
   });
 
   it("names the production time only when a made-to-order line is present", () => {
@@ -117,14 +114,10 @@ describe("orderEmailView", () => {
     );
 
     expect(readyMadeOnly.madeToOrder).toBe(false);
-    expect(readyMadeOnly.stockedSummary).toBe(
-      "Raktári termékek: 1. tétel – készletről 2-3 napon belül postázzuk."
-    );
 
     const madeToOrderOnly = orderEmailView(order(), content, money, "hu");
 
     expect(madeToOrderOnly.madeToOrder).toBe(true);
-    expect(madeToOrderOnly.stockedSummary).toBe("");
   });
 
   it("shows a promotion-zeroed charged delivery as free", () => {

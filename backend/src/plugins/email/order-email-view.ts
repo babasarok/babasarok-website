@@ -65,8 +65,6 @@ export interface OrderEmailView {
   setDiscountSummary: string;
   /** The order holds at least one made-to-order line, so production time applies. */
   madeToOrder: boolean;
-  /** The owner's summary of the lines that ship from stock; empty when none. */
-  stockedSummary: string;
 }
 
 export interface EmailMoney {
@@ -214,18 +212,5 @@ export function orderEmailView(
     total: formatMoney(order.totalWithTax, money, languageCode),
     setDiscountSummary: setDiscountSummary(display, money, languageCode),
     madeToOrder: madeToOrder.length > 0,
-    stockedSummary: stockedSummary(
-      display.filter((entry) => entry.content.stocked).map((entry) => entry.number),
-      languageCode
-    ),
   };
-}
-
-/** The owner's one-line summary of which displayed lines ship from stock. */
-function stockedSummary(numbers: number[], languageCode: string): string {
-  if (numbers.length === 0) {
-    return "";
-  }
-
-  return messages(languageCode).stockedLines(numbers);
 }
