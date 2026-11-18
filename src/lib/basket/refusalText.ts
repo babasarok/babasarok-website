@@ -61,6 +61,8 @@ export function refusalText(i18n: I18n, refusal: Refusal): string {
   switch (refusal.code) {
     case "VARIANT_UNAVAILABLE":
       return i18n.t("refusals.VARIANT_UNAVAILABLE", { productName: refusal.productName });
+    case "OUT_OF_STOCK":
+      return i18n.t("refusals.OUT_OF_STOCK", { productName: refusal.productName });
     case "LENGTH_MISSING":
       return i18n.t("refusals.LENGTH_MISSING", { productName: refusal.productName });
     case "UNKNOWN_FIELD":

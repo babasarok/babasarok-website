@@ -23,6 +23,14 @@
         }
       }
     ],
+    "variants": [
+      {
+        "currencyCode": "HUF",
+        "priceWithTax": 4000,
+        "stockLevel": "IN_STOCK",
+        "saleableStock": null
+      }
+    ],
     "productDefinition": {
       "id": "tornazsak",
       "fields": [

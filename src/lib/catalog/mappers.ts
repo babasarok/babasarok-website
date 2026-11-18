@@ -15,6 +15,21 @@ type ProductRow = z.output<typeof ProductsResponseSchema>["products"]["items"][n
 type DetailRow = NonNullable<z.output<typeof ProductResponseSchema>["product"]>;
 type MaterialRow = z.output<typeof MaterialsResponseSchema>["materials"][number];
 
+/** How a product is ordered: through its configurator definition, or as-is from the variant. */
+export type CatalogProductOrdering =
+  | { kind: "configurable"; definition: ProductDefinition }
+  | {
+      kind: "ready-made";
+      unitPriceWithTax: number;
+      currencyCode: string;
+      /** Real stock the storefront may show and cap the quantity at; null when untracked. */
+      saleableStock: number | null;
+    };
+
+export type ConfigurableCatalogProduct = CatalogProduct & {
+  ordering: Extract<CatalogProductOrdering, { kind: "configurable" }>;
+};
+
 export interface CatalogProduct {
   id: string;
   slug: string;
@@ -25,7 +40,7 @@ export interface CatalogProduct {
   popularityRank: number | null;
   thumbnail: VendureAsset | null;
   type: { code: string; name: string } | null;
-  definition: ProductDefinition;
+  ordering: CatalogProductOrdering;
 }
 
 export type CatalogProductGroup = z.output<
@@ -46,9 +61,23 @@ export interface CatalogMaterial {
   colors: Array<{ id: string; label: string; hex: string | null; image: VendureAsset | null }>;
 }
 
-/** Null for products without a configurator definition: not storefront products. */
+/** The products ordered through a configurator definition; ready-made ones are excluded. */
+export function configurableProducts(
+  products: readonly CatalogProduct[]
+): ConfigurableCatalogProduct[] {
+  return products.filter(
+    (product): product is ConfigurableCatalogProduct => product.ordering.kind === "configurable"
+  );
+}
+
+/**
+ * Null for a sold-out ready-made product (and a definition-less product with
+ * no variant): not storefront products.
+ */
 export function toProduct(row: ProductRow): CatalogProduct | null {
-  if (row.productDefinition === null) {
+  const ordering = orderingOf(row);
+
+  if (ordering === null) {
     return null;
   }
 
@@ -64,7 +93,26 @@ export function toProduct(row: ProductRow): CatalogProduct | null {
     popularityRank: row.customFields.popularityRank,
     thumbnail: row.featuredAsset ?? null,
     type: type === undefined ? null : { code: type.code, name: type.name },
-    definition: row.productDefinition,
+    ordering,
+  };
+}
+
+function orderingOf(row: ProductRow): CatalogProductOrdering | null {
+  if (row.productDefinition !== null) {
+    return { kind: "configurable", definition: row.productDefinition };
+  }
+
+  const variant = row.variants.at(0);
+
+  if (variant === undefined || variant.stockLevel === "OUT_OF_STOCK") {
+    return null;
+  }
+
+  return {
+    kind: "ready-made",
+    unitPriceWithTax: variant.priceWithTax,
+    currencyCode: variant.currencyCode,
+    saleableStock: variant.saleableStock,
   };
 }
 

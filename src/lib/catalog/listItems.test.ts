@@ -13,8 +13,8 @@ const fixtureProducts = ProductsResponseSchema.parse(products).products.items.fl
 const baseProduct = fixtureProducts.at(0);
 
 function product(overrides: Partial<CatalogProduct> & { slug: string }): CatalogProduct {
-  if (baseProduct === undefined) {
-    throw new Error("fixture has no products");
+  if (baseProduct === undefined || baseProduct.ordering.kind !== "configurable") {
+    throw new Error("fixture has no configurable product");
   }
 
   return {
@@ -27,7 +27,13 @@ function product(overrides: Partial<CatalogProduct> & { slug: string }): Catalog
     popularityRank: null,
     thumbnail: null,
     type: null,
-    definition: ProductDefinitionSchema.parse({ ...baseProduct.definition, id: overrides.slug }),
+    ordering: {
+      kind: "configurable",
+      definition: ProductDefinitionSchema.parse({
+        ...baseProduct.ordering.definition,
+        id: overrides.slug,
+      }),
+    },
     ...overrides,
   };
 }
@@ -83,6 +89,27 @@ describe("toProductListData", () => {
     );
 
     expect(items.map((item) => item.type)).toEqual(["takaro", undefined, undefined]);
+  });
+
+  it("marks a ready-made product with its stock and leaves a configurator product unmarked", () => {
+    const readyMade = product({
+      slug: "kesz-kanal",
+      ordering: {
+        kind: "ready-made",
+        unitPriceWithTax: 6500,
+        currencyCode: "HUF",
+        saleableStock: 1,
+      },
+    });
+    const { items } = toProductListData(
+      [product({ slug: "konfiguralo" }), readyMade],
+      [],
+      BASE,
+      "hu"
+    );
+
+    expect(items[0]).toMatchObject({ readyMade: undefined, stock: undefined });
+    expect(items[1]).toMatchObject({ readyMade: true, stock: 1 });
   });
 
   it("maps tagline to the category line and builds the card image", () => {

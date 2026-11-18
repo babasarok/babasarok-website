@@ -9,6 +9,8 @@ export interface ProductListViewState {
   types: ProductType[];
   /** Selected product set ids; OR-combined within the dimension. */
   sets: string[];
+  /** Only ready-made products (ordered as-is from stock, no configurator). */
+  readyMade: boolean;
   sort: ListSort;
 }
 
@@ -16,6 +18,7 @@ export const DEFAULT_LIST_STATE: ProductListViewState = {
   q: "",
   types: [],
   sets: [],
+  readyMade: false,
   sort: "popular",
 };
 
@@ -50,9 +53,10 @@ export function parseListState(search: string): ProductListViewState {
     .map((value) => value.trim())
     .filter((value) => value !== "");
 
+  const readyMade = params.get("ready-made") === "1";
   const sort = parseListSort(params.get("sort"));
 
-  return { q, types, sets, sort };
+  return { q, types, sets, readyMade, sort };
 }
 
 /**
@@ -68,6 +72,8 @@ export interface ListProduct {
   type?: ProductType | undefined;
   date?: Date | undefined | null;
   sets: string[];
+  /** A ready-made product: ordered as-is from stock (the ready-made filter matches it). */
+  readyMade?: boolean | undefined;
 }
 
 /**
@@ -77,8 +83,9 @@ export interface ListProduct {
  * each other and the search. Returns a new array sorted by the state's sort
  * ("popular": position in `popularOrder`, products without a curated position
  * following it name-ascending among themselves; "newest": date descending,
- * missing dates last, stable; "name": title ascending, Hungarian locale). The
- * input is not mutated.
+ * missing dates last, stable; "name": title ascending, Hungarian locale), with
+ * ready-made products leading the list within every sort. The input is not
+ * mutated.
  */
 export function applyListState<TProduct extends ListProduct>(
   products: readonly TProduct[],
@@ -102,6 +109,9 @@ export function applyListState<TProduct extends ListProduct>(
       return false;
     }
     if (state.sets.length > 0 && !product.sets.some((set) => state.sets.includes(set))) {
+      return false;
+    }
+    if (state.readyMade && !product.readyMade) {
       return false;
     }
     return true;
@@ -141,7 +151,11 @@ export function applyListState<TProduct extends ListProduct>(
       break;
   }
 
-  return sorted;
+  // Ready-made products lead within every sort; both groups keep their order.
+  return [
+    ...sorted.filter((product) => product.readyMade === true),
+    ...sorted.filter((product) => product.readyMade !== true),
+  ];
 }
 
 /** Serialize a view state to a URL search string ("" for the default state). */
@@ -159,6 +173,10 @@ export function serializeListState(state: ProductListViewState): string {
   }
   for (const set of state.sets) {
     params.append("set", set);
+  }
+
+  if (state.readyMade) {
+    params.set("ready-made", "1");
   }
 
   if (state.sort !== DEFAULT_LIST_STATE.sort) {

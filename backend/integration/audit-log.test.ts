@@ -136,11 +136,15 @@ async function auditEntries(
 /** The audit row lands right after the sync state flips; poll for it. */
 async function waitForAuditRow(
   entityType: string,
-  action: string
+  action: string,
+  entityKey?: string
 ): Promise<z.output<typeof AuditEntrySchema>> {
   for (let attempt = 0; attempt < 20; attempt += 1) {
     const { items } = await auditEntries(entityType);
-    const row = items.find((entry) => entry.action === action);
+    const row = items.find(
+      (entry) =>
+        entry.action === action && (entityKey === undefined || entry.entityKey === entityKey)
+    );
 
     if (row !== undefined) {
       return row;
@@ -222,16 +226,12 @@ describe("the audit log over the admin write path", () => {
       UpdatedMaterialSchema
     );
 
-    const rows = await auditEntries("material");
-    const row = rows.items.find(
-      (entry) => entry.action === "updated" && entry.entityKey === "int-pamut"
-    );
+    const row = await waitForAuditRow("material", "updated", "int-pamut");
 
-    expect(row).toBeDefined();
-    expect(row?.source).toBe("admin");
-    expect(row?.actorIdentifier).not.toBeNull();
-    expect(row?.summary).toBe(material.translations.find((t) => t.languageCode === "hu")?.label);
-    expect(row?.details).toContainEqual({
+    expect(row.source).toBe("admin");
+    expect(row.actorIdentifier).not.toBeNull();
+    expect(row.summary).toBe(material.translations.find((t) => t.languageCode === "hu")?.label);
+    expect(row.details).toContainEqual({
       field: "Alcím (hu)",
       from: subtitle.trim() === "" ? null : subtitle,
       to: changed,

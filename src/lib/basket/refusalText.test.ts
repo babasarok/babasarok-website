@@ -13,6 +13,13 @@ describe("refusalText", () => {
     expect(refusalText(en, refusal)).toBe("The selected variant of Párna is no longer available.");
   });
 
+  it("words the sold-out refusal", () => {
+    const refusal = { code: "OUT_OF_STOCK", productName: "Hímzett póló" } as const;
+
+    expect(refusalText(hu, refusal)).toBe("A(z) Hímzett póló termék már nincs raktáron.");
+    expect(refusalText(en, refusal)).toBe("Hímzett póló is out of stock.");
+  });
+
   it("words the nested selection reason", () => {
     expect(
       refusalText(en, {

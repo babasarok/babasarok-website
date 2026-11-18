@@ -36,7 +36,10 @@ describe("getProducts", () => {
       type: { code: "zsak", name: "Zsák és tároló" },
       popularityRank: 22,
     });
-    expect(bag?.definition.id).toBe("tornazsak");
+    expect(bag?.ordering).toMatchObject({
+      kind: "configurable",
+      definition: { id: "tornazsak" },
+    });
     expect(bag?.thumbnail?.source).toMatch(/^http/);
   });
 
@@ -54,9 +57,21 @@ describe("getProducts", () => {
     ]);
   });
 
-  it("leaves out products without a definition, still paging by fetched rows", async () => {
+  it("leaves out a sold-out ready-made product, still paging by fetched rows", async () => {
     const [first, ...rest] = products.products.items;
-    const placeholder = { ...first, slug: "placeholder-x", productDefinition: null };
+    const placeholder = {
+      ...first,
+      slug: "placeholder-x",
+      productDefinition: null,
+      variants: [
+        {
+          currencyCode: "HUF",
+          priceWithTax: 5000,
+          stockLevel: "OUT_OF_STOCK" as const,
+          saleableStock: 0,
+        },
+      ],
+    };
     const run = runReturning(
       { products: { totalItems: 4, items: [placeholder] } },
       { products: { totalItems: 4, items: [first, ...rest] } }
@@ -70,6 +85,33 @@ describe("getProducts", () => {
       { skip: 0, take: 100 },
       { skip: 1, take: 100 },
     ]);
+  });
+
+  it("lists a definition-less product as ready-made with its variant price", async () => {
+    const [first, ...rest] = products.products.items;
+    const handmade = {
+      ...first,
+      slug: "kesz-kanal",
+      productDefinition: null,
+      variants: [
+        {
+          currencyCode: "HUF",
+          priceWithTax: 6500,
+          stockLevel: "IN_STOCK" as const,
+          saleableStock: 2,
+        },
+      ],
+    };
+
+    const result = await getProducts(
+      runReturning({ products: { totalItems: 4, items: [handmade, first, ...rest] } })
+    );
+
+    expect(result.find((entry) => entry.slug === "kesz-kanal")?.ordering).toMatchObject({
+      kind: "ready-made",
+      unitPriceWithTax: 6500,
+      currencyCode: "HUF",
+    });
   });
 
   it("rejects a definition that is not a valid canonical definition", async () => {
@@ -114,10 +156,45 @@ describe("getProduct", () => {
     });
   });
 
-  it("is null for a product without a definition", async () => {
-    const placeholder = { product: { ...product.product, productDefinition: null } };
+  it("maps a definition-less product to a ready-made detail", async () => {
+    const handmade = {
+      product: {
+        ...product.product,
+        productDefinition: null,
+        variants: [
+          {
+            currencyCode: "HUF",
+            priceWithTax: 6500,
+            stockLevel: "IN_STOCK" as const,
+            saleableStock: 2,
+          },
+        ],
+      },
+    };
 
-    expect(await getProduct("tornazsak", runReturning(placeholder))).toBeNull();
+    expect((await getProduct("tornazsak", runReturning(handmade)))?.ordering).toMatchObject({
+      kind: "ready-made",
+      unitPriceWithTax: 6500,
+    });
+  });
+
+  it("is null for a sold-out ready-made product", async () => {
+    const soldOut = {
+      product: {
+        ...product.product,
+        productDefinition: null,
+        variants: [
+          {
+            currencyCode: "HUF",
+            priceWithTax: 6500,
+            stockLevel: "OUT_OF_STOCK" as const,
+            saleableStock: 0,
+          },
+        ],
+      },
+    };
+
+    expect(await getProduct("tornazsak", runReturning(soldOut))).toBeNull();
   });
 });
 

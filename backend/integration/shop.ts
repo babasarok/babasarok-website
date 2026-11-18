@@ -323,7 +323,7 @@ export async function settledLineSummaries(
     }),
   });
 
-  for (let attempt = 0; attempt < 50; attempt += 1) {
+  for (let attempt = 0; attempt < 120; attempt += 1) {
     const data = await run(
       server.admin,
       `query($code: String!) {
@@ -344,10 +344,14 @@ export async function settledLineSummaries(
       return lines.map((line) => line.customFields);
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    // 120 × 500 ms: the summaries are worker jobs; a loaded CI runner can
+    // take tens of seconds to settle an order's lines.
+    await new Promise((resolve) => setTimeout(resolve, 500));
   }
 
-  throw new Error(`The config summaries of order ${code} did not land in time.`);
+  throw new Error(
+    `The config summaries of order ${code} did not land in 60 s — the worker job writing configText either failed or is stuck.`
+  );
 }
 
 export async function chooseShipping(shopper: Shopper, code: string): Promise<Order> {

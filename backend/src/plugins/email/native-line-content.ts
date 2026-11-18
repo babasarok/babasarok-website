@@ -32,11 +32,12 @@ export async function loadNativeLineContent(
     const title = names.get(productId) ?? line.productVariant.name;
 
     if (definition === undefined) {
-      return { title, details: [] };
+      return { title, details: [], stocked: true };
     }
 
     return {
       title,
+      stocked: false,
       details: selectionDetails({
         definition,
         selections: selections[index],

@@ -153,6 +153,12 @@ splits into two PRs.
   prerendered, catalog islands load the catalog in the browser through a
   nanostores catalog store shared across ClientRouter navigations, and only the
   detail routes render on demand so crawlers get the item's meta.
+- ✅ **Ready-made products** (2026-11-17, [ADR 0018](adr/0018-ready-made-products-and-stock.md))
+  — definition-less native products are storefront products: a plain order
+  block on the detail page (variant price, quantity, no configurator), stock
+  tracked on their variant, a sold-out product hides itself, and a placed
+  order holds the unit (allocation at the checkout transition; the losing
+  basket's line flags `OUT_OF_STOCK`). The Babafészek szett (native product 46) migrates from a configurator product to a ready-made one (stock 1).
 - **Edge-cache verification** — on the deployed site, request
   `/search-index.json` and an asset preset URL twice: the second response shows
   `CF-Cache-Status: HIT`. Record whether asset URLs are edge-cached at all

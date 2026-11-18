@@ -16,8 +16,10 @@
     sets: SetOption[];
     selectedTypes: ProductType[];
     selectedSets: string[];
+    readyMadeOnly: boolean;
     onToggleType: (value: ProductType) => void;
     onToggleSet: (id: string) => void;
+    onToggleReadyMade: () => void;
     onClear: () => void;
   }
 
@@ -27,12 +29,16 @@
     sets,
     selectedTypes,
     selectedSets,
+    readyMadeOnly,
     onToggleType,
     onToggleSet,
+    onToggleReadyMade,
     onClear,
   }: Props = $props();
 
-  const activeFilterCount = $derived(selectedTypes.length + selectedSets.length);
+  const activeFilterCount = $derived(
+    selectedTypes.length + selectedSets.length + (readyMadeOnly ? 1 : 0)
+  );
 
   let open = $state(false);
 </script>
@@ -60,8 +66,10 @@
     {sets}
     {selectedTypes}
     {selectedSets}
+    {readyMadeOnly}
     {onToggleType}
     {onToggleSet}
+    {onToggleReadyMade}
   />
   <div class="mt-8 flex items-center justify-between gap-4">
     {#if activeFilterCount > 0}

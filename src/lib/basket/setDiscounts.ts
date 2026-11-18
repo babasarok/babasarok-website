@@ -81,7 +81,7 @@ export type SetMembers = Record<string, PartnerLink[]>;
 
 export function setMembersByGroup(
   groups: ReadonlyArray<{ id: string; kind: string; productIds: readonly string[] }>,
-  products: ReadonlyArray<{ slug: string; name: string; definition: { id: string } }>
+  products: ReadonlyArray<{ slug: string; name: string; definitionId: string }>
 ): SetMembers {
   return Object.fromEntries(
     groups
@@ -89,7 +89,7 @@ export function setMembersByGroup(
       .map((group) => [
         group.id,
         group.productIds.flatMap((productId) => {
-          const product = products.find((candidate) => candidate.definition.id === productId);
+          const product = products.find((candidate) => candidate.definitionId === productId);
 
           return product === undefined ? [] : [{ slug: product.slug, name: product.name }];
         }),

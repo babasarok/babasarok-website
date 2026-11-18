@@ -5,6 +5,7 @@ import {
   ProductFieldResolver,
   productDefinitionSchema,
   ShopProductFieldResolver,
+  ShopVariantFieldResolver,
   shopProductSchema,
 } from "./product.resolver";
 import { ShopThreadColorResolver } from "./thread-color.resolver";
@@ -19,7 +20,7 @@ import { ProductDefinitionService } from "./product-definition.service";
   },
   shopApiExtensions: {
     schema: shopProductSchema,
-    resolvers: [ShopProductFieldResolver, ShopThreadColorResolver],
+    resolvers: [ShopProductFieldResolver, ShopVariantFieldResolver, ShopThreadColorResolver],
   },
   providers: [ProductDefinitionService],
   dashboard: "../../dashboard/product/product-definition.tsx",

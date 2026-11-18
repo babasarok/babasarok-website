@@ -18,12 +18,23 @@
     sets: SetOption[];
     selectedTypes: ProductType[];
     selectedSets: string[];
+    readyMadeOnly: boolean;
     onToggleType: (value: ProductType) => void;
     onToggleSet: (id: string) => void;
+    onToggleReadyMade: () => void;
   }
 
-  let { i18n, locale, sets, selectedTypes, selectedSets, onToggleType, onToggleSet }: Props =
-    $props();
+  let {
+    i18n,
+    locale,
+    sets,
+    selectedTypes,
+    selectedSets,
+    readyMadeOnly,
+    onToggleType,
+    onToggleSet,
+    onToggleReadyMade,
+  }: Props = $props();
 </script>
 
 <fieldset>
@@ -41,6 +52,20 @@
         {productTypeLabel(type.value, locale)}
       </label>
     {/each}
+  </div>
+</fieldset>
+<fieldset class="mt-8">
+  <legend class="text-headings mb-2.5 text-h5">{i18n.t("filters.readyMade")}</legend>
+  <div class="flex flex-col gap-1.5">
+    <label class="text-body flex cursor-pointer items-center gap-2.5 text-sm">
+      <input
+        type="checkbox"
+        checked={readyMadeOnly}
+        onchange={() => onToggleReadyMade()}
+        class="size-4 accent-accent"
+      />
+      {i18n.t("filters.readyMadeOnly")}
+    </label>
   </div>
 </fieldset>
 <fieldset class="mt-8">

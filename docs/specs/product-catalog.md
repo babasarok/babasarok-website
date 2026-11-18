@@ -23,7 +23,16 @@ epic 4).
 > SKU = the definition id, name = the native product's name in every language,
 > price = the base price (display only — orders price from the definition and
 > the line's selections); no option groups. A rename on the stock product form
-> re-syncs it; a stock product save without a name does not. The product type is a value of the public
+> re-syncs it; a stock product save without a name does not.
+>
+> A product without a definition is a **ready-made product**: an enabled native
+> product ordered as-is, with no configurator. Its single variant's price is
+> the product's price (display and order pass-through) and its stock is
+> tracked (`stockOnHand` on the stock product page, Vendure's default global
+> tracking); a sold-out unit hides it from the storefront (below). Only
+> configurator products carry configuration on their product pages.
+>
+> The product type is a value of the public
 > `babasarok-product-type` facet on the native product (ADR 0011 decision 2),
 > not a definition field. Display fields are native Vendure custom fields:
 > `shortDescription`, `tagline`, `date` ("newest first" sorting),
@@ -65,9 +74,10 @@ products (no pagination), each entry linking to the product detail page, with
 its tagline as the category line. Visibility and orderability are one switch —
 the native product's `enabled` (the shop API serves only enabled products); a
 product without a known type is
-listed and only drops out of type filters. A product without a definition
-is not a storefront product: it appears in no
-list, search, sitemap or home block, and its detail page shows "not found". The
+listed and only drops out of type filters. A sold-out ready-made product
+(saleable stock 0) is not a storefront product: it drops out of the
+list, search, sitemap and home block, and its detail page shows "not found".
+The
 page is a prerendered shell whose list island loads the catalog in the browser
 (ADR 0017): a skeleton first, then the list; an unreachable backend shows an
 inline error with a retry instead of partial data. With:
@@ -75,13 +85,18 @@ inline error with a retry instead of partial data. With:
 - **Text search** over product title and short description.
 - **Filtering by product type**: multiple selections within the type
   dimension are OR-combined.
+- **Filtering to ready-made products**: one checkbox selecting the products
+  ordered as-is from stock; it AND-combines with the other dimensions.
+- **Ready-made products first**: within every sort, ready-made products lead
+  the list (each group keeps its sort order).
 - **Filtering by product set**: a product matches the set filter when it is
   a member of a selected set; multiple set selections are OR-combined.
 - **Sorting**: by the `popularityRank` order (default), newest first,
   or by name (title, ascending). Products without a curated popularity
   position follow the ordered ones, name-ascending among themselves.
 
-The active search text, selected types, selected sets, and sort order SHALL
+The active search text, selected types, selected sets, the ready-made
+filter, and sort order SHALL
 be expressed in URL query parameters; the page SHALL apply them on load and
 update them as the visitor changes the view, so any filtered view is
 shareable. Dimensions are AND-combined with each other and with the search
@@ -155,8 +170,11 @@ materials; a catalog hit replaces a Pagefind hit for the same URL.
 The system SHALL render a detail page per product showing its title, an image
 gallery (thumbnail plus gallery images with descriptions), its body content,
 and sharing links to social networks. Markdown descriptions render in the browser with raw HTML escaped, unsafe link schemes dropped, and host-relative asset image paths (`source/ab/file.jpg`) rewritten to asset-server preset URLs. The page SHALL
-additionally embed an order configurator for that product (every product the
-shop API serves is enabled and orderable).
+additionally embed an order form for that product (every product the
+shop API serves is enabled and orderable): an order configurator for a
+configurator product, and for a ready-made product a plain order block — the
+variant's price, a quantity picker and add-to-basket — with no configuration
+controls.
 
 - **Scenario: Viewing a product**
   - WHEN a visitor opens a product's detail page
@@ -164,15 +182,16 @@ shop API serves is enabled and orderable).
     built from the product's canonical URL
 - **Scenario: Viewing an orderable product**
   - WHEN a visitor opens the detail page of a product that can be ordered
-  - THEN the page embeds an order configurator for that product alongside the
-    gallery
+  - THEN the page embeds an order form for that product alongside the
+    gallery — the configurator on a configurator product, the plain quantity
+    and price block on a ready-made one
 
 The detail page is one on-demand page at `/product/<slug>/` that never waits
 for the backend for a visitor (ADR 0017): it answers a shell at once and its
 island loads the product and the shared catalog in the browser, showing a
 skeleton, then the page (and the product name as the tab title), an inline
 error with a retry when the backend is unreachable, or "not found" for an
-unknown slug or a product without a definition. Its data comes from the shop
+unknown slug or a sold-out ready-made product. Its data comes from the shop
 API: the gallery is the product's Vendure assets as `hero-*` presets (the
 featured asset when there are none), previous/next link the newest-first
 product order, and the set and related panels come from the product groups.
@@ -227,6 +246,59 @@ Every product the ordering UI can reach is orderable: visibility and
 orderability are one switch (the native product's `enabled`; the shop API
 serves only enabled products). A disabled product is not listed, cannot be
 configured, and no order line can target it.
+
+### Ready-made stock
+
+The system SHALL track a ready-made product's stock on its single variant with
+Vendure's default inventory (`stockOnHand` on the stock product page; a
+sold-out unit is `saleable stock = stockOnHand − stockAllocated − threshold ≤
+0` and hides the product everywhere). The shop API exposes the variant's
+`saleableStock` (null for an untracked variant). The storefront SHALL present a
+ready-made product as a stocked, not made-to-order item: a "raktári termék"
+badge on its page and list card, its stock count on both, and the quantity
+stepper capped at the saleable stock. A basket only checks the stock:
+adding or adjusting a line is refused or clamped when the saleable stock does
+not cover the quantity, but the line holds nothing. A **placed order holds the
+unit**: stock allocates when the buyer submits checkout (the
+`AddingItems → ArrangingPayment` transition, the flow's final state), so the
+next buyer cannot add or check out the unit any more. Cancelling the placed
+order releases the unit; fulfilling it sells it (`stockOnHand` drops) and
+releases the allocation. A buyer whose basket line lost the unit race sees the
+`OUT_OF_STOCK` line reason (order-basket spec) and cannot check out until the
+line is removed; at the transition Vendure's own stock guard refuses
+additionally. Configurator products are unaffected: their variants are
+untracked, so they are never out of stock.
+
+The checkout's production-time note (owner content) shows when the basket
+contains at least one made-to-order line (mixed baskets included — it covers
+the whole order, without any separate-shipment claim); a basket of only
+ready-made lines shows no production note.
+
+- **Scenario: One unit, two baskets**
+  - WHEN two buyers both add the single ready-made unit to their baskets
+  - THEN both adds succeed (a basket holds nothing), and the first submitted
+    checkout takes the unit
+- **Scenario: The losing basket**
+  - WHEN the second buyer submits checkout after the unit was taken
+  - THEN their line is flagged `OUT_OF_STOCK`, the transition is refused, and
+    removing the line is the way forward
+- **Scenario: Cancel frees the unit**
+  - WHEN the owner cancels the placed order
+  - THEN the unit is saleable again and the next buyer can check it out
+- **Scenario: Sold out hides the product**
+  - WHEN the unit is fulfilled or the owner sets `stockOnHand` to 0
+  - THEN the product drops out of the list, search, sitemap and home block,
+    and its detail page shows "not found"
+- **Scenario: Ordering no more than there is**
+  - WHEN a buyer raises the quantity of a ready-made product with 1 unit
+  - THEN the stepper stops at the stock and the page shows the stock count
+- **Scenario: In-stock-only basket at checkout**
+  - WHEN the basket holds only ready-made lines
+  - THEN the checkout shows no production-time note
+- **Scenario: Mixed basket at checkout**
+  - WHEN the basket holds a ready-made line together with a made-to-order line
+  - THEN the checkout shows only the production time of the made-to-order
+    line, covering the whole order, without claiming a separate shipment
 
 ### Product page order configurator
 

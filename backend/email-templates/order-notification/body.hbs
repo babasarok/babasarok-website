@@ -73,12 +73,17 @@
               <div
                 style="border:1px solid #e0c0a3; border-radius:6px; padding:10px 14px; margin:0 0 10px 0;"
               >
-                <p
-                  style="margin:0 0 4px 0; font-size:13px; font-weight:bold; color:#6f5447;"
-                >{{number}}.
+                <p style="margin:0 0 4px 0; font-size:13px; font-weight:bold; color:#6f5447;">{{#if
+                    stocked
+                  }}<span style="color:#28341d;">[RAKTÁRI]</span>
+                  {{/if}}{{number}}.
                   {{title}}
                   ({{quantity}}
                   db)</p>
+                {{#if stocked}}
+                  <p style="margin:0 0 4px 0; font-size:13px; line-height:1.5; color:#28341d;">
+                    Készletről 2-3 napon belül postázzuk.</p>
+                {{/if}}
                 {{#if details}}
                   {{#each details}}
                     <p
@@ -88,6 +93,15 @@
                 {{/if}}
               </div>
             {{/each}}
+            {{#if stockedSummary}}
+              <div
+                style="border:2px solid #28341d; border-radius:6px; padding:10px 14px; margin:0 0 10px 0; background-color:#f3e7dc;"
+              >
+                <p
+                  style="margin:0; font-size:13px; line-height:1.5; white-space:pre-line; color:#28341d;"
+                ><strong>{{stockedSummary}}</strong></p>
+              </div>
+            {{/if}}
             {{#if setDiscountSummary}}
               <div
                 style="border:1px solid #e0c0a3; border-radius:6px; padding:10px 14px; margin:0 0 10px 0;"

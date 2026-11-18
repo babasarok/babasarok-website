@@ -22,7 +22,7 @@ export class LineValidityProcess implements OrderProcess<string> {
       return undefined;
     }
 
-    const reason = await this.reasons.firstReasonForOrder(ctx, order.id);
+    const reason = await this.reasons.firstReasonForOrder(ctx, order.id, { lockStock: true });
 
     return reason === undefined ? undefined : encodeRefusal(reason);
   }

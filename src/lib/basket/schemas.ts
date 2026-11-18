@@ -94,6 +94,12 @@ export function requiresAddress(method: ShippingQuote | undefined): boolean {
   return method?.customFields?.requiresAddress === true;
 }
 
+/** A basket needs production when any line's product carries a configurator
+ * definition; definition-less (ready-made) lines ship from stock. */
+export function hasConfigurableLine(order: Order): boolean {
+  return order.lines.some((line) => line.productVariant.product.productDefinition !== null);
+}
+
 export const ProductVariantIdsSchema = z.object({
   product: z.object({ variants: z.array(z.object({ id: z.string() })) }).nullable(),
 });

@@ -61,8 +61,8 @@ function order(overrides: Partial<EmailViewOrder> = {}): EmailViewOrder {
 }
 
 const content = [
-  { title: "Párna", details: [{ label: "Méret", value: "Nagy", depth: 0 }] },
-  { title: "Takaró", details: [{ label: "Felirat", value: "Bence", depth: 1 }] },
+  { title: "Párna", stocked: false, details: [{ label: "Méret", value: "Nagy", depth: 0 }] },
+  { title: "Takaró", stocked: false, details: [{ label: "Felirat", value: "Bence", depth: 1 }] },
 ];
 
 describe("orderEmailView", () => {
@@ -81,6 +81,50 @@ describe("orderEmailView", () => {
     expect(view.deliveryPrice).toBe(formatMoney(2500, money, "hu"));
     expect(view.deliveryAddress).toEqual(["Rózsa utca 12.", "3900 Szerencs"]);
     expect(view.billing).toEqual({ sameAsDelivery: true, lines: [], taxNumber: "" });
+  });
+
+  it("leads the product list with the ready-made lines, renumbering the list", () => {
+    const view = orderEmailView(
+      order({ lines: [line(), line(), line()] }),
+      [
+        { title: "Párna", stocked: false, details: [] },
+        { title: "Takaró", stocked: false, details: [] },
+        { title: "Babafészek", stocked: true, details: [] },
+      ],
+      money,
+      "hu"
+    );
+
+    expect(
+      view.products.map((product) => [product.number, product.title, product.stocked])
+    ).toEqual([
+      [1, "Babafészek", true],
+      [2, "Párna", false],
+      [3, "Takaró", false],
+    ]);
+    expect(view.madeToOrder).toBe(true);
+    expect(view.stockedSummary).toBe(
+      "Raktári termékek: 1. tétel – készletről 2-3 napon belül postázzuk."
+    );
+  });
+
+  it("names the production time only when a made-to-order line is present", () => {
+    const readyMadeOnly = orderEmailView(
+      order({ lines: [line()] }),
+      [{ title: "Babafészek", stocked: true, details: [] }],
+      money,
+      "hu"
+    );
+
+    expect(readyMadeOnly.madeToOrder).toBe(false);
+    expect(readyMadeOnly.stockedSummary).toBe(
+      "Raktári termékek: 1. tétel – készletről 2-3 napon belül postázzuk."
+    );
+
+    const madeToOrderOnly = orderEmailView(order(), content, money, "hu");
+
+    expect(madeToOrderOnly.madeToOrder).toBe(true);
+    expect(madeToOrderOnly.stockedSummary).toBe("");
   });
 
   it("shows a promotion-zeroed charged delivery as free", () => {
@@ -180,18 +224,31 @@ describe("billingView", () => {
 });
 
 describe("setDiscountSummary", () => {
+  const numbered = (
+    lines: readonly EmailViewLine[]
+  ): Array<{
+    line: EmailViewLine;
+    number: number;
+  }> => lines.map((line, index) => ({ line, number: index + 1 }));
+
   it("names the products each discount covers", () => {
-    expect(setDiscountSummary(order().lines, money, "hu")).toBe(
+    expect(setDiscountSummary(numbered(order().lines), money, "hu")).toBe(
       `Szett kedvezmény: ${formatMoney(-3000, money, "hu")} (1. termék, 2. termék)`
     );
   });
 
+  it("keeps each discount's number attached to its line", () => {
+    expect(setDiscountSummary(numbered(order().lines).toReversed(), money, "hu")).toBe(
+      `Szett kedvezmény: ${formatMoney(-3000, money, "hu")} (2. termék, 1. termék)`
+    );
+  });
+
   it("is empty without discounts", () => {
-    expect(setDiscountSummary([line()], money, "hu")).toBe("");
+    expect(setDiscountSummary(numbered([line()]), money, "hu")).toBe("");
   });
 
   it("names the products in the request language", () => {
-    expect(setDiscountSummary(order().lines, money, "en")).toBe(
+    expect(setDiscountSummary(numbered(order().lines), money, "en")).toBe(
       `Szett kedvezmény: ${formatMoney(-3000, money, "en")} (product 1, product 2)`
     );
   });
