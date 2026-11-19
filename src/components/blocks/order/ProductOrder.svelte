@@ -17,6 +17,7 @@
     type ConfiguredLine,
   } from "@/lib/basket/lineInput";
   import { formatMoney } from "@/lib/basket/money";
+  import { replaceUrl } from "@/lib/history";
   import { reasonText, type Reason } from "@/lib/basket/refusalText";
   import { findLine, lineMatches, type PriceChange } from "@/lib/basket/stale";
   import { liveUnitPrice } from "@/lib/catalog/livePrice";
@@ -267,7 +268,7 @@
 
     const url = new URL(globalThis.location.href);
     url.searchParams.set("line", placed.id);
-    globalThis.history.replaceState(null, "", url);
+    replaceUrl(url);
 
     return true;
   }
