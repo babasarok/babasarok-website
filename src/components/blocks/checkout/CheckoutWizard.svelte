@@ -17,6 +17,7 @@
   import { localizedPath, type Locale } from "@/lib/i18n";
   import { basket } from "@/lib/basket/basket.svelte";
   import { createCheckoutSaves } from "@/lib/basket/checkoutSaves";
+  import { pushUrl, replaceUrl } from "@/lib/history";
   import {
     addressFromForm,
     billingFromForm,
@@ -133,7 +134,7 @@
     step = entryStep(values, steps, method, stepFromHash(globalThis.location.hash.slice(1)));
 
     if (globalThis.location.hash.slice(1) !== step) {
-      history.replaceState(null, "", `#${step}`);
+      replaceUrl(`#${step}`);
     }
   });
 
@@ -145,7 +146,7 @@
     }
 
     step = own;
-    history.replaceState(null, "", `#${own}`);
+    replaceUrl(`#${own}`);
   });
 
   async function loadMethods(): Promise<void> {
@@ -184,7 +185,7 @@
     const own = stepIn(steps, hashStep);
 
     if (own !== hashStep) {
-      history.replaceState(null, "", `#${own}`);
+      replaceUrl(`#${own}`);
     }
 
     if (own === step) {
@@ -199,7 +200,7 @@
   }
 
   function goTo(id: StepId): void {
-    history.pushState(null, "", `#${id}`);
+    pushUrl(`#${id}`);
     fieldError = undefined;
     error = null;
     submitFailure = null;

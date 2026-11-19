@@ -34,6 +34,16 @@ describe("PresetOrOriginalStrategy", () => {
     });
   });
 
+  it("serves the original for the dashboard's full-size preset", async () => {
+    expect(await run("full")).toMatchObject({
+      width: undefined,
+      height: undefined,
+      mode: undefined,
+      format: undefined,
+      quality: undefined,
+    });
+  });
+
   it("uses the preset dimensions, ignoring requested ones", async () => {
     expect(await run("card-sm")).toMatchObject({
       width: 300,
