@@ -121,13 +121,12 @@ PaymentSettled`). This makes `Delivered` an invariant: fully paid and
   parcel number, while a deliberately wrong password returned
   `Unauthorized.` (`ErrorCode: -1`) — authentication works, S4 is
   unblocked. The test account id rides in `TEST_MYGLS_HU_ACCOUNT_ID`.
-- **Live credentials:** the owner's MyGLS web login (email + password)
-  authenticates on the live API — `GetParcelStatuses` returned the
+- **Live credentials:** GLS confirmed (2026-11-19) that the owner's MyGLS
+  web login (email + password) is the credential set for the live API.
+  It authenticates there — `GetParcelStatuses` returned the
   account-scoped `ErrorCode: 5 "Access denied for this parcel ID"`, not
   `Unauthorized.` (GLS's published demo credentials return
-  `Unauthorized.`, so per-account API access is enforced). No separate API
-  credential set is known to be needed; whether it is _allowed_ there is
-  still GLS's to answer. The account id (`100021942`) is not part of
+  `Unauthorized.`, so per-account API access is enforced). The account id (`100021942`) is not part of
   authentication; it rides per-parcel as `ClientNumber` (9-digit, like the
   doc's sample).
 - **Wire format:** in JSON, `Password` is the SHA-512 digest as a
@@ -162,6 +161,29 @@ PaymentSettled`). This makes `Delivered` an invariant: fully paid and
   `PaymentAuthorized` under defaults — the payment-state design (relax the
   option vs a custom state) belongs to epic 7's Barion work, not this ADR.
 
+## Owner decisions (2026-11-19)
+
+- **Credentials reach deployments as Cloudflare build variables**: the
+  Production set holds `MYGLS_HU_*` (live), the Preview set
+  `TEST_MYGLS_HU_*` (test); the deploy writes them per stack into the
+  stack's `.env.cloudflare`, allowlisted (a preview never receives the
+  live keys). Rotation: edit in Cloudflare, then redeploy — the live
+  password is the owner's MyGLS web password, so changing it there breaks
+  label creation until the variable follows.
+- **Cancelling a GLS fulfillment deletes the parcel in GLS**; when GLS
+  refuses (e.g. already handed over), the cancel is blocked with GLS's
+  reason.
+- **The stored label PDF is dropped** once the fulfillment is delivered or
+  cancelled; later reprints go through MyGLS.
+- **The buyer's phone and email** go to GLS as the delivery contact; no
+  extra GLS services (plain parcel, plus COD on utánvét).
+- **Polling every 30 minutes**; on a delivery problem (no cash, refused,
+  returned, wrong address) the worker emails the owner once and records
+  it on the order — it never cancels anything.
+- **The buyer gets a "shipped" email** with the GLS tracking link when the
+  parcel is handed over (fulfillment → `Shipped`), in the order's
+  language.
+
 ## Rollout plan
 
 1. **S1 Client + fake** (done) — the typed `GlsClient` interface
@@ -182,43 +204,6 @@ PaymentSettled`). This makes `Delivered` an invariant: fully paid and
    created through the finished plugin's path, checked in MyGLS, deleted.
    Development never touches live; without this step nothing proves her
    contract issues labels with the services and COD behavior she needs.
-
-The GLS email (drafted; also linked from
-[external-services.md](../external-services.md)) asked two things — the
-test-environment provisioning arrived on 2026-11-19 (see the verified
-facts), so only the live-API permission question remains open:
-
-> **Tárgy:** MyGLS API-integráció – az API-hozzáférés tisztázása és
-> tesztkörnyezeti hozzáférés igénylése
->
-> Tisztelt Ügyfélszolgálat!
->
-> Webáruházunk (babasarok.net) rendeléskezelését a MyGLS API-hoz
-> szeretnénk kapcsolni, hogy a csomagcímkék automatikusan készüljenek el.
-> Ezzel kapcsolatban két kérdéssel fordulok Önökhöz.
->
-> **1. Hozzáférés az éles API-hoz** — A MyGLS webes felületre most is
-> használt belépési adatainkkal (e-mail-cím és jelszó, ügyfélazonosító: 100021942) sikerült hitelesítenünk az éles API-n (api.mygls.hu). Ehhez
-> egy csak lekérdező teszthívást használtunk (csomagstátusz-lekérdezés).
-> Szeretném megkérdezni, hogy az integrációnkban használhatjuk-e ezeket a
-> meglévő belépési adatokat az éles API-hoz, vagy ehhez külön
-> API-felhasználónevet és jelszót kell igényelnünk.
->
-> **2. Hozzáférés a tesztkörnyezethez** — A fejlesztés idejére a
-> tesztkörnyezetet (api.test.mygls.hu) használnánk, hogy valódi
-> csomagfeladás nélkül, biztonságosan fejleszthessük és tesztelhessük az
-> integrációt. Kérem, hozzák létre a fiókunkat a tesztkörnyezetben is, és
-> küldjék meg a hozzá tartozó felhasználónevet, jelszót és ügyfélszámot.
-> Az API-dokumentációban közölt minta belépési adatokkal nem sikerült
-> hitelesíteni, ezért úgy látjuk, hogy ezek már nem érvényesek.
->
-> Ha további adatra van szükségük, kérem, jelezzék.
->
-> Segítségüket előre is köszönöm.
->
-> Üdvözlettel:
-> \<név\>
-> Babasarok – babasarok.net
 
 ## Open questions (design/implementation time)
 
