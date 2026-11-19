@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import type { i18n as I18n } from "i18next";
   import I18nGate from "@/components/ui/I18nGate.svelte";
+  import { replaceUrl } from "@/lib/history";
   import type { Locale } from "@/lib/i18n";
   import type { SlimImage } from "@/lib/order/types";
   import type { ProductListItem } from "@/lib/catalog/listItems";
@@ -77,7 +78,7 @@
 
   function syncUrl(): void {
     const search = serializeListState(view);
-    globalThis.history.replaceState(null, "", globalThis.location.pathname + search);
+    replaceUrl(globalThis.location.pathname + search);
   }
 
   function setView(next: ProductListViewState): void {
