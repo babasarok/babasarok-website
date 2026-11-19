@@ -57,6 +57,36 @@ describe("toProductPageData", () => {
 
     expect(page.gallery).toEqual([{ asset: product.thumbnail, alt: product.name }]);
   });
+
+  it("opens the gallery with the list thumbnail even when the assets omit it", async () => {
+    const product = tornazsak();
+    const featured = { source: "source/ab/featured.webp", focalPoint: null };
+    const page = toProductPageData(
+      { ...product, thumbnail: featured },
+      await loadCatalog(),
+      "hu",
+      ASSET_BASE
+    );
+
+    expect(page.gallery[0]).toEqual({ asset: featured, alt: product.name });
+    expect(page.gallery.slice(1).map((image) => image.asset.source)).toEqual(
+      product.gallery.map((image) => image.asset.source)
+    );
+  });
+
+  it("does not duplicate the thumbnail when the assets already include it", async () => {
+    const product = tornazsak();
+    const page = toProductPageData(
+      { ...product, thumbnail: product.gallery[0]?.asset ?? null },
+      await loadCatalog(),
+      "hu",
+      ASSET_BASE
+    );
+
+    expect(page.gallery.map((image) => image.asset.source)).toEqual(
+      product.gallery.map((image) => image.asset.source)
+    );
+  });
 });
 
 describe("toCheckoutCatalog", () => {

@@ -192,9 +192,11 @@ island loads the product and the shared catalog in the browser, showing a
 skeleton, then the page (and the product name as the tab title), an inline
 error with a retry when the backend is unreachable, or "not found" for an
 unknown slug or a sold-out ready-made product. Its data comes from the shop
-API: the gallery is the product's Vendure assets as `hero-*` presets (the
-featured asset when there are none), previous/next link the newest-first
-product order, and the set and related panels come from the product groups.
+API: the gallery is the featured asset followed by the product's remaining
+Vendure assets as `hero-*` presets (the assets alone when there is no featured
+asset), so the first picture always matches the list thumbnail; previous/next
+link the newest-first product order, and the set and related panels come from
+the product groups.
 Search and link-preview crawlers (recognised by user agent) instead wait for
 the item: their HTML carries its title, short description and preview image,
 an unknown slug answers 404 and an unreachable backend 503. Material pages
