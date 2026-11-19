@@ -60,7 +60,9 @@ and `phoneNumber`) — no site changes are needed for the label work.
    format (`GLS_LABEL_FORMAT`, `A4_2x2` by default — what the owner prints
    on is still open). The sender (pickup) address is not an env value: it
    comes from Vendure settings, so the owner can edit it (owner decision
-   2026-11-19; the exact entity is S2's to pick). Decided against a DB
+   2026-11-19): the channel's **GLS feladó** custom field, next to the
+   channel's other owner settings (order-email sender, owner mailbox) —
+   per channel, so per market. Decided against a DB
    entity for the accounts: handler registration and the
    handler-arg dropdowns are boot-time static, so runtime-addable accounts
    would buy nothing; adding an account is a config entry + deploy. The
@@ -190,11 +192,15 @@ PaymentSettled`). This makes `Delivered` an invariant: fully paid and
    (create/delete label), the REST client, the in-memory fake and the
    env-only mode selection; unit tests, plus the hand-run test-env smoke
    test.
-2. **S2 Plugin + handler** — the env wiring, the `gls` fulfillment
-   handler (label + COD, one label per order), the private label table
-   and its admin download, the sender address in Vendure settings, a
-   data migration switching the GLS shipping methods to the `gls`
-   handler; backend integration test (real Vendure server, fake GLS).
+2. **S2 Plugin + handler** — S2a (done): the env wiring and the
+   per-stack deploy plumbing. S2b (done): the `gls` fulfillment handler
+   (label + COD, one label per order, cancel deletes at GLS), the private
+   `gls_parcel` table and the `glsLabel` admin query, the channel's GLS
+   sender, the migration switching the GLS delivery methods to the `gls`
+   handler; backend integration test against the fake
+   (`backend/integration/gls-labels.test.ts`), behavior in
+   [the gls-labels spec](../specs/gls-labels.md). S2c: the dashboard's
+   label download on the order page.
 3. **S3 Polling worker** — statuses, the deliver-when-settled rule,
    `trackingCode` handling.
 4. **S4 Test-env round-trip** — test access is provisioned and verified

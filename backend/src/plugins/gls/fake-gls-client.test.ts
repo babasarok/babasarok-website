@@ -47,9 +47,32 @@ describe("FakeGlsClient", () => {
   });
 });
 
+describe("FakeGlsClient label text", () => {
+  it("prints the cash-on-delivery amount like a real label", async () => {
+    const label = await new FakeGlsClient(0).createLabel({
+      ...parcel,
+      cashOnDelivery: { amount: 15_000, reference: "ORD-1", currency: "HUF" },
+    });
+
+    expect(new TextDecoder().decode(label.pdf)).toContain(
+      `FAKE GLS LABEL ${label.parcelNumber} COD 15000 HUF`
+    );
+  });
+});
+
+describe("FakeGlsClient across restarts", () => {
+  it("does not reuse the previous process's parcel numbers", async () => {
+    const before = await new FakeGlsClient(1000).createLabel(parcel);
+    const after = await new FakeGlsClient(2000).createLabel(parcel);
+
+    expect(after.parcelNumber).not.toBe(before.parcelNumber);
+    expect(after.parcelId).not.toBe(before.parcelId);
+  });
+});
+
 describe("placeholderLabelPdf", () => {
   it("is a structurally valid PDF whose xref points at its objects", () => {
-    const text = new TextDecoder().decode(placeholderLabelPdf(90_000_000_001));
+    const text = new TextDecoder().decode(placeholderLabelPdf("FAKE GLS LABEL 90000000001"));
 
     expect(text.startsWith("%PDF-1.4\n")).toBe(true);
     expect(text.trimEnd().endsWith("%%EOF")).toBe(true);

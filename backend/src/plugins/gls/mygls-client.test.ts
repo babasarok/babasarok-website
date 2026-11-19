@@ -4,7 +4,7 @@ import { GlsError, type GlsClient, type GlsParcelRequest } from "./gls-client";
 import { placeholderLabelPdf } from "./fake-gls-client";
 import { createMyGlsClient, myGlsBaseUrl, passwordDigest } from "./mygls-client";
 
-const PDF = Array.from(placeholderLabelPdf(1));
+const PDF = Array.from(placeholderLabelPdf("FAKE GLS LABEL 1"));
 
 const parcel: GlsParcelRequest = {
   clientReference: "ORD-1",

@@ -6,26 +6,30 @@ export interface FakeParcel {
   request: GlsParcelRequest;
 }
 
-const FIRST_PARCEL_ID = 900_000_001;
+const PARCEL_ID_BASE = 1_000_000_000;
 
-const FIRST_PARCEL_NUMBER = 90_000_000_001;
+const PARCEL_NUMBER_BASE = 90_000_000_000;
+
+const BOOT_OFFSET_RANGE = 1_000_000_000;
 
 export class FakeGlsClient implements GlsClient {
   private readonly created = new Map<number, FakeParcel>();
   private nextIndex = 0;
+
+  constructor(private readonly bootOffset = Date.now() % BOOT_OFFSET_RANGE) {}
 
   get parcels(): readonly FakeParcel[] {
     return [...this.created.values()];
   }
 
   async createLabel(parcel: GlsParcelRequest): Promise<GlsLabel> {
-    const index = this.nextIndex++;
-    const parcelId = FIRST_PARCEL_ID + index;
-    const parcelNumber = FIRST_PARCEL_NUMBER + index;
+    const index = this.bootOffset + this.nextIndex++;
+    const parcelId = PARCEL_ID_BASE + index;
+    const parcelNumber = PARCEL_NUMBER_BASE + index;
 
     this.created.set(parcelId, { parcelId, parcelNumber, request: parcel });
 
-    return { parcelId, parcelNumber, pdf: placeholderLabelPdf(parcelNumber) };
+    return { parcelId, parcelNumber, pdf: placeholderLabelPdf(labelText(parcelNumber, parcel)) };
   }
 
   async deleteLabel(parcelId: number): Promise<void> {
@@ -38,8 +42,17 @@ export class FakeGlsClient implements GlsClient {
   }
 }
 
-export function placeholderLabelPdf(parcelNumber: number): Uint8Array {
-  const text = `FAKE GLS LABEL ${parcelNumber}`;
+function labelText(parcelNumber: number, parcel: GlsParcelRequest): string {
+  const cod = parcel.cashOnDelivery;
+
+  if (!cod) {
+    return `FAKE GLS LABEL ${parcelNumber}`;
+  }
+
+  return `FAKE GLS LABEL ${parcelNumber} COD ${cod.amount} ${cod.currency}`;
+}
+
+export function placeholderLabelPdf(text: string): Uint8Array {
   const stream = `BT /F1 18 Tf 40 760 Td (${text}) Tj ET`;
 
   const objects = [

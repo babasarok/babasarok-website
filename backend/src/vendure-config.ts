@@ -23,6 +23,8 @@ import type { EmailPluginDevModeOptions, EmailPluginOptions } from "@vendure/ema
 import { ASSET_PRESETS, ASSET_QUALITY } from "./shared/asset-presets";
 import { PresetOrOriginalStrategy } from "./preset-or-original-strategy";
 import { env } from "./env";
+import { GLS_SENDER_FIELD } from "./plugins/gls/gls-sender";
+import { GlsPlugin } from "./plugins/gls/gls.plugin";
 import { z } from "zod";
 import { HandlebarsHtmlGenerator } from "./plugins/email/handlebars-html-generator";
 import { CloudflareEmailSender } from "./plugins/email/cloudflare-email-sender";
@@ -207,6 +209,7 @@ export const config: VendureConfig = {
     AuditPlugin,
     PricingPlugin,
     CheckoutPlugin,
+    GlsPlugin,
     ChannelSetupPlugin,
     // Owns the material/product imagery (ADR 0009): uploads and previews are
     // stored on local disk (a docker volume in deploys) and served at /assets.
@@ -301,6 +304,7 @@ export const config: VendureConfig = {
         ],
         nullable: true,
       },
+      GLS_SENDER_FIELD,
     ],
     Product: [
       {
