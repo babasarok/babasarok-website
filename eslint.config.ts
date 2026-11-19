@@ -16,6 +16,11 @@ import {
   onDemandPageSelectors,
 } from "./eslint/catalog-rendering";
 import {
+  historyStateAllowlist,
+  historyStateFiles,
+  historyStateSelectors,
+} from "./eslint/history-state";
+import {
   hungarianTextAllowlist,
   localizedPathAllowlist,
   siteLanguageFiles,
@@ -252,6 +257,13 @@ export default defineConfig([
     ignores: onDemandPageAllowlist,
     rules: {
       "no-restricted-syntax": ["error", ...onDemandPageSelectors],
+    },
+  },
+  {
+    files: historyStateFiles,
+    ignores: historyStateAllowlist,
+    rules: {
+      "no-restricted-syntax": ["error", ...historyStateSelectors],
     },
   },
   {
