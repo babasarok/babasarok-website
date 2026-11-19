@@ -199,8 +199,9 @@ PaymentSettled`). This makes `Delivered` an invariant: fully paid and
    sender, the migration switching the GLS delivery methods to the `gls`
    handler; backend integration test against the fake
    (`backend/integration/gls-labels.test.ts`), behavior in
-   [the gls-labels spec](../specs/gls-labels.md). S2c: the dashboard's
-   label download on the order page.
+   [the gls-labels spec](../specs/gls-labels.md). S2c (done): the order
+   page's "GLS-címke" block downloading the label PDF
+   (`backend/src/dashboard/gls/gls.tsx`).
 3. **S3 Polling worker** — statuses, the deliver-when-settled rule,
    `trackingCode` handling.
 4. **S4 Test-env round-trip** — test access is provisioned and verified

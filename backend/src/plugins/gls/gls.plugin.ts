@@ -15,6 +15,7 @@ import { GLS_CLIENT, GLS_MODE, GlsService } from "./gls.service";
     { provide: GLS_MODE, useValue: env.gls.mode },
   ],
   adminApiExtensions: { schema: glsAdminSchema, resolvers: [GlsResolver] },
+  dashboard: "../../dashboard/gls/gls.tsx",
   configuration: (config) => {
     config.shippingOptions.fulfillmentHandlers.push(glsFulfillmentHandler);
     return config;
