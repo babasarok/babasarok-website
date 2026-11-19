@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
-import { CatalogOptionGroupSchema, CatalogVariantSchema } from "./readyMadeOptions";
+import { CatalogOptionGroupSchema, CatalogVariantSchema } from "./variantOptions";
 
 const AssetSchema = z.object({
   source: z.string(),

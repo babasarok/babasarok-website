@@ -4,10 +4,9 @@ import {
   isOptionAvailable,
   totalStock,
   variantForOption,
-  variantOptionRows,
   type ReadyMadeOrdering,
   type ReadyMadeVariant,
-} from "./readyMadeOptions";
+} from "./readyMade";
 
 // Colour (red 1, blue 2) × size (S 3, L 4). Red/L was never created and
 // Blue/S is sold out, so neither can be picked.
@@ -104,21 +103,5 @@ describe("totalStock", () => {
 
   it("is null when an in-stock variant is untracked", () => {
     expect(totalStock({ ...ordering, variants: [{ ...redS, saleableStock: null }] })).toBeNull();
-  });
-});
-
-describe("variantOptionRows", () => {
-  it("lists a line's options as group: option rows", () => {
-    expect(
-      variantOptionRows({
-        options: [
-          { name: "Kék", group: { name: "Szín" } },
-          { name: "L", group: { name: "Méret" } },
-        ],
-      })
-    ).toEqual([
-      { label: "Szín", value: "Kék" },
-      { label: "Méret", value: "L" },
-    ]);
   });
 });

@@ -1,6 +1,6 @@
-import type { OrderFieldMaterial } from "../order/types";
-import type { Field, IProduct, MaterialField, ProductMaterialValue } from "../types.svelte";
-import { findFieldByName, resolveNumericValue } from "./field";
+import type { OrderFieldMaterial } from "@/lib/order/types";
+import type { Field, IProduct, MaterialField, ProductMaterialValue } from "@/lib/types.svelte";
+import { findFieldByName, resolveNumericValue } from "@/lib/product/field";
 
 /** The option in `field`'s `materials` list whose material is `materialId`. */
 export function findMaterialOption(

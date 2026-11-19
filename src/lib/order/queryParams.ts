@@ -1,7 +1,7 @@
 import type { LineSelections } from "@babasarok/pricing";
-import { localizedPath, type Locale } from "../i18n";
-import type { IProduct } from "../types.svelte";
-import { FIELD_BEHAVIORS } from "../product/behavior";
+import type { IProduct } from "@/lib/types.svelte";
+import { FIELD_BEHAVIORS } from "@/lib/product/behavior";
+import { countFromParams } from "@/lib/product/pageParams";
 
 /**
  * Prefill an order item from URL query parameters, so product pages can be
@@ -26,16 +26,6 @@ import { FIELD_BEHAVIORS } from "../product/behavior";
  * name, material id, or colour outside the chosen material's palette is
  * ignored, so the configurator starts unselected for that part.
  */
-/** The `count` query param as a quantity (integer ≥ 1), or undefined. */
-export function countFromParams(params: URLSearchParams): number | undefined {
-  const count = params.get("count");
-  if (count == null) {
-    return undefined;
-  }
-  const parsed = Number.parseInt(count, 10);
-  return Number.isFinite(parsed) && parsed >= 1 ? parsed : undefined;
-}
-
 export function prefillFromParams(item: IProduct, params: URLSearchParams): void {
   const count = countFromParams(params);
   if (count !== undefined) {
@@ -187,16 +177,4 @@ export function selectionMaterialParams(selections: LineSelections): URLSearchPa
   }
 
   return params;
-}
-
-/** A product page's path in `locale`, with the query appended when it carries any params. */
-export function productPath(slug: string, locale: Locale, params = new URLSearchParams()): string {
-  const path = localizedPath(`/product/${slug}/`, locale);
-  const query = params.toString();
-
-  if (query === "") {
-    return path;
-  }
-
-  return `${path}?${query}`;
 }

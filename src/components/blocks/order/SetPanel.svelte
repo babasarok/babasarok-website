@@ -4,7 +4,7 @@
   import type { i18n as I18n } from "i18next";
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import type { Locale } from "@/lib/i18n";
-  import { productPath } from "@/lib/order/queryParams";
+  import { productPath } from "@/lib/product/pageParams";
   import type { OrderProduct } from "@/lib/order/types";
 
   interface Props {

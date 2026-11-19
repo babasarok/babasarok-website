@@ -23,7 +23,8 @@
   import { liveUnitPrice } from "@/lib/catalog/livePrice";
   import { instantiateProduct, hasConfigurableOptions } from "@/lib/order/product";
   import { siblingsFor, relatedGroupsFor, resolveSetDiscount } from "@/lib/order/groups";
-  import { prefillFromParams, buildMaterialParams, productPath } from "@/lib/order/queryParams";
+  import { prefillFromParams, buildMaterialParams } from "@/lib/order/queryParams";
+  import { productPath } from "@/lib/product/pageParams";
   import { sanitizeItem, isItemValid, validateItem } from "@/lib/product/validation";
   import type { OrderThreadColor, OrderProduct, OrderProductGroup } from "@/lib/order/types";
   import type { IProduct } from "@/lib/types.svelte";

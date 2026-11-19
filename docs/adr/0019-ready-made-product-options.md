@@ -141,8 +141,9 @@ variants. Rejected (owner decision, 2026-11-19).
    (ADR 0016 step 7 deleted it); it applies `no-restricted-syntax` to all of
    `backend/src/**` and `src/**`. Ready-made variant options are read in
    two modules only, listed in its `variantOptionReadAllowlist` and exempted
-   in `eslint.config.ts`: the site's `src/lib/catalog/readyMadeOptions.ts`
-   (catalog mapping, option picking, basket line rows) and the order
+   in `eslint.config.ts`: the site's `src/lib/catalog/variantOptions.ts`
+   (catalog mapping and basket line rows; option picking works on the
+   mapped option ids in `src/lib/catalog/readyMade.ts`) and the order
    emails' `backend/src/plugins/email/variant-option-details.ts` (the emails
    name the ordered variant's options; the dashboard's order view already
    shows the variant name under the product). A unit test fails when an

@@ -1,4 +1,4 @@
-import type { Field } from "../../types.svelte";
+import type { Field } from "@/lib/types.svelte";
 import { defineBehavior } from "./index";
 import {
   bannedMaterialFieldNames,
@@ -6,7 +6,7 @@ import {
   formatMaterialValue,
   isMaterialInOption,
   resolveColorCount,
-} from "../materials";
+} from "@/lib/product/materials";
 
 export const materialBehavior = defineBehavior("material", {
   normalize: (f, ctx) => {

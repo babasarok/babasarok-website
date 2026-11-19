@@ -1,7 +1,8 @@
 import type { z } from "zod";
 import type { ProductDefinition } from "@babasarok/product-definition";
 import type { VendureAsset } from "@/lib/vendure/imageUrl";
-import { toReadyMadeOrdering, type ReadyMadeOrdering } from "./readyMadeOptions";
+import type { ReadyMadeOrdering } from "./readyMade";
+import { toReadyMadeOrdering } from "./variantOptions";
 import type {
   MaterialsResponseSchema,
   ProductGroupsResponseSchema,

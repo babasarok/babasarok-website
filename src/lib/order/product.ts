@@ -1,7 +1,7 @@
-import { sanitizeItem } from "../product/validation";
-import { randomUUID } from "../uuid";
-import type { OrderProduct } from "./types";
-import type { IProduct } from "../types.svelte";
+import { sanitizeItem } from "@/lib/product/validation";
+import { randomUUID } from "@/lib/uuid";
+import type { OrderProduct } from "@/lib/order/types";
+import type { IProduct } from "@/lib/types.svelte";
 
 /** Whether a product carries its own configurable options (fields such as
  * size, toggles or embroidery), so it needs to be configured on its own page

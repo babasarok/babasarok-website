@@ -1,3 +1,4 @@
+import type { GetImageResult } from "astro";
 import { ASSET_PRESETS } from "@babasarok/asset-presets";
 
 export type ImagePreset = (typeof ASSET_PRESETS)[number]["name"];
@@ -59,4 +60,16 @@ export function imageSrcSet(
         `${imageUrl(source, preset, assetBase, focalPoint)} ${IMAGE_PRESET_WIDTHS[preset]}w`
     )
     .join(", ");
+}
+
+/**
+ * The subset of a `GetImageResult` an island actually renders: its plain
+ * `<img>` reads only `src`, the `srcset` string, and the spread `attributes`.
+ * Serializing the full result ballooned pages (images repeat across every
+ * product), so island-bound images keep just these fields.
+ */
+export interface SlimImage {
+  src: string;
+  srcSet: { attribute: GetImageResult["srcSet"]["attribute"] };
+  attributes: GetImageResult["attributes"];
 }

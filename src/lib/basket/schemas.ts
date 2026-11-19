@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { RefusalSchema } from "@babasarok/pricing";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
-import { LineVariantOptionsSchema } from "@/lib/catalog/readyMadeOptions";
+import { LineVariantOptionsSchema } from "@/lib/catalog/variantOptions";
 import { SetDiscountSchema, SetStateSchema } from "./setDiscounts";
 
 export const OrderLineSchema = z.object({

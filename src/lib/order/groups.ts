@@ -1,4 +1,4 @@
-import type { OrderProductGroup } from "./types";
+import type { OrderProductGroup } from "@/lib/order/types";
 
 /**
  * Whether a product group grants a set discount (a positive flat amount). A

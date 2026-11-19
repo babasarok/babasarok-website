@@ -1,5 +1,5 @@
-import type { OrderField, OrderProduct, OrderProductMaterials } from "./order/types";
-import type { ProductFieldType, StringValuedFieldType } from "./product/fieldTypes";
+import type { OrderField, OrderProduct, OrderProductMaterials } from "@/lib/order/types";
+import type { ProductFieldType, StringValuedFieldType } from "@/lib/product/fieldTypes";
 
 /** Why a field's value is not orderable; the form shows it as `fieldErrors.<kind>`. */
 export type FieldError =

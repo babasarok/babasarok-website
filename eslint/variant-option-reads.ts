@@ -14,6 +14,6 @@ export const variantOptionReadFiles = ["backend/src/**/*.ts", "src/**/*.ts", "sr
 
 /** The only readers of ready-made products' native options (ADR 0019): the site's and the order emails'. */
 export const variantOptionReadAllowlist = [
-  "src/lib/catalog/readyMadeOptions.ts",
+  "src/lib/catalog/variantOptions.ts",
   "backend/src/plugins/email/variant-option-details.ts",
 ];

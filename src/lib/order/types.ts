@@ -7,21 +7,9 @@
  * with `undefined | null` values — the shape the form's defensive reads were
  * written against — and the mappers normalize away the nulls.
  */
-import type { GetImageResult } from "astro";
-import type { EmbroideryPriceUnit, ProductFieldType } from "../product/fieldTypes";
-import type { ProductType } from "../product/productTypes";
-
-/**
- * The subset of a `GetImageResult` an island actually renders: its plain
- * `<img>` reads only `src`, the `srcset` string, and the spread `attributes`.
- * Serializing the full result ballooned pages (images repeat across every
- * product), so island-bound images keep just these fields.
- */
-export interface SlimImage {
-  src: string;
-  srcSet: { attribute: GetImageResult["srcSet"]["attribute"] };
-  attributes: GetImageResult["attributes"];
-}
+import type { SlimImage } from "@/lib/vendure/imageUrl";
+import type { EmbroideryPriceUnit, ProductFieldType } from "@/lib/product/fieldTypes";
+import type { ProductType } from "@/lib/product/productTypes";
 
 /** Structured configuration for length-based pricing. */
 export interface LengthBasedPricingConfig {

@@ -1,5 +1,5 @@
-import type { Field } from "../types.svelte";
-import { FIELD_BEHAVIORS } from "./behavior";
+import type { Field } from "@/lib/types.svelte";
+import { FIELD_BEHAVIORS } from "@/lib/product/behavior";
 
 /**
  * The value a product field currently holds, tagged by `kind` so consumers

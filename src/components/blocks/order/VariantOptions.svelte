@@ -4,7 +4,7 @@
     isOptionAvailable,
     type ReadyMadeOrdering,
     type ReadyMadeVariant,
-  } from "@/lib/catalog/readyMadeOptions";
+  } from "@/lib/catalog/readyMade";
   import type { i18n as I18n } from "i18next";
 
   interface Props {

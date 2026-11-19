@@ -5,7 +5,7 @@ import type { VendureAsset } from "@/lib/vendure/imageUrl";
 import type { Catalog } from "./index";
 import { configurableProducts, type CatalogProduct, type CatalogProductDetail } from "./mappers";
 import { toOrderGroups, toOrderProduct, toOrderThreadColors } from "./orderProduct";
-import type { ReadyMadeOrdering } from "./readyMadeOptions";
+import type { ReadyMadeOrdering } from "./readyMade";
 
 export interface GalleryImage {
   asset: VendureAsset;

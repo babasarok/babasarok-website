@@ -1,10 +1,9 @@
-import type { SlimImage } from "@/lib/order/types";
 import { localizedPath, type Locale } from "@/lib/i18n";
 import { isProductType } from "@/lib/product/productTypes";
 import type { ListProduct } from "@/lib/product-list/query";
-import { imageSrcSet, imageUrl, type VendureAsset } from "@/lib/vendure/imageUrl";
+import { imageSrcSet, imageUrl, type SlimImage, type VendureAsset } from "@/lib/vendure/imageUrl";
 import { byPopularity, type CatalogProduct, type CatalogProductGroup } from "./mappers";
-import { totalStock } from "./readyMadeOptions";
+import { totalStock } from "./readyMade";
 
 export interface ProductListItem extends Omit<ListProduct, "date"> {
   date?: string | undefined;

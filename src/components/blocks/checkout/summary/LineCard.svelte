@@ -2,7 +2,7 @@
   import Icon from "@iconify/svelte";
   import { fade } from "svelte/transition";
   import { describeLine, type Labels } from "@/lib/basket/lineRows";
-  import { variantOptionRows } from "@/lib/catalog/readyMadeOptions";
+  import { variantOptionRows } from "@/lib/catalog/variantOptions";
   import { formatMoney } from "@/lib/basket/money";
   import { refusalText } from "@/lib/basket/refusalText";
   import type { OrderLine } from "@/lib/basket/schemas";

@@ -8,11 +8,10 @@ import type {
   OrderThreadColor,
   OrderProduct,
   OrderProductGroup,
-  SlimImage,
 } from "@/lib/order/types";
 import { isProductType } from "@/lib/product/productTypes";
 import type { ProductDefinition } from "@babasarok/product-definition";
-import { imageUrl, type VendureAsset } from "@/lib/vendure/imageUrl";
+import { imageUrl, type SlimImage, type VendureAsset } from "@/lib/vendure/imageUrl";
 import { cardImage } from "./listItems";
 import type {
   CatalogMaterial,

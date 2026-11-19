@@ -5,10 +5,10 @@
  * orders with — so this module only decides which parts show and what each is
  * labelled.
  */
-import type { IProduct } from "../types.svelte";
-import { isFieldVisible } from "../product/field";
-import { FIELD_BEHAVIORS } from "../product/behavior";
-import type { FieldPricePart } from "../product/behavior";
+import type { IProduct } from "@/lib/types.svelte";
+import { isFieldVisible } from "@/lib/product/field";
+import { FIELD_BEHAVIORS } from "@/lib/product/behavior";
+import type { FieldPricePart } from "@/lib/product/behavior";
 
 export interface PriceBreakdown {
   basePrice: Pick<FieldPricePart, "price">;

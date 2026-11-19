@@ -1,6 +1,6 @@
-import type { ProductFieldType } from "../fieldTypes";
-import type { Field } from "../../types.svelte";
-import type { OrderThreadColor } from "../../order/types";
+import type { ProductFieldType } from "@/lib/product/fieldTypes";
+import type { Field } from "@/lib/types.svelte";
+import type { OrderThreadColor } from "@/lib/order/types";
 import { inputBehavior } from "./input";
 import { selectBehavior } from "./select";
 import { radioBehavior } from "./radio";

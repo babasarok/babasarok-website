@@ -13,8 +13,8 @@
     initialVariant,
     variantForOption,
     type ReadyMadeOrdering,
-  } from "@/lib/catalog/readyMadeOptions";
-  import { countFromParams } from "@/lib/order/queryParams";
+  } from "@/lib/catalog/readyMade";
+  import { countFromParams } from "@/lib/product/pageParams";
   import { localizedPath, type Locale } from "@/lib/i18n";
   import type { i18n as I18n } from "i18next";
   import VariantOptions from "./VariantOptions.svelte";

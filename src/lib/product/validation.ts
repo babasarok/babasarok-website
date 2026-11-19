@@ -1,7 +1,7 @@
-import { bannedCombinationIds } from "./materials";
-import type { IProduct } from "../types.svelte";
-import { isFieldVisible } from "./field";
-import { FIELD_BEHAVIORS } from "./behavior";
+import { bannedCombinationIds } from "@/lib/product/materials";
+import type { IProduct } from "@/lib/types.svelte";
+import { isFieldVisible } from "@/lib/product/field";
+import { FIELD_BEHAVIORS } from "@/lib/product/behavior";
 
 export function sanitizeItem(item: IProduct): IProduct {
   // Prefill fields with default values and clamp overreaching ones, to make
