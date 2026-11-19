@@ -202,8 +202,24 @@ PaymentSettled`). This makes `Delivered` an invariant: fully paid and
    [the gls-labels spec](../specs/gls-labels.md). S2c (done): the order
    page's "GLS-címke" block downloading the label PDF
    (`backend/src/dashboard/gls/gls.tsx`).
-3. **S3 Polling worker** — statuses, the deliver-when-settled rule,
-   `trackingCode` handling.
+3. **S3 Polling worker** — next. A Vendure `ScheduledTask` every 30
+   minutes (core 3.8.1 ships `ScheduledTask`; tasks only run with
+   `DefaultSchedulerPlugin` registered — the default strategy is a no-op)
+   polls the live parcels of this mode (`gls_parcel` rows not deleted,
+   fulfillment not `Delivered`/`Cancelled`) with `GetParcelListStatuses`
+   (≤100 per call; a not-yet-handed-over parcel answers error 26). A pure
+   decision maps the status history to: `Shipped` on hand-over (status 1
+   and later transit codes); `Delivered` on 5/54/58/92 only when the
+   order's payments cover the total (COD orders hold in `Shipped` until the
+   owner records the COD payment); a one-time owner email on problem codes
+   (16 no cash, 17 refused, 20 address, 23/40 returned). The worker moves
+   only the fulfillment (Vendure moves the order). On `Delivered` the
+   stored PDF is dropped. The buyer's "shipped" email (hu/en templates,
+   with the GLS tracking link — the public tracking URL format still to be
+   verified) fires on the fulfillment's transition to `Shipped`. The fake
+   keeps per-process state, so the worker in fake mode sees no parcels:
+   the decision is unit-tested, the poll loop gets an integration test
+   that injects statuses.
 4. **S4 Test-env round-trip** — test access is provisioned and verified
    (2026-11-19): `PrintLabels` → PDF → `DeleteLabels` on
    `api.test.mygls.hu`.
