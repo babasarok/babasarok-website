@@ -1,10 +1,18 @@
 import type { ProductDefinition } from "@babasarok/product-definition";
 import { localizedPath, VENDURE_LANGUAGE_CODE, type Locale } from "@/lib/i18n";
-import type { OrderProduct, OrderProductGroup, OrderThreadColor } from "@/lib/order/types";
+import type {
+  ConfiguratorProduct,
+  ConfiguratorProductGroup,
+  ConfiguratorThreadColor,
+} from "@/lib/configurator/types";
 import type { VendureAsset } from "@/lib/vendure/imageUrl";
 import type { Catalog } from "./index";
-import { configurableProducts, type CatalogProduct, type CatalogProductDetail } from "./mappers";
-import { toOrderGroups, toOrderProduct, toOrderThreadColors } from "./orderProduct";
+import { configuratorProducts, type CatalogProduct, type CatalogProductDetail } from "./mappers";
+import {
+  toConfiguratorGroups,
+  toConfiguratorProduct,
+  toConfiguratorThreadColors,
+} from "./configuratorProduct";
 import type { ReadyMadeOrdering } from "./readyMade";
 
 export interface GalleryImage {
@@ -24,14 +32,14 @@ interface ProductPageBase {
   next: NavLink | undefined;
 }
 
-export interface ConfigurableProductPageData extends ProductPageBase {
-  kind: "configurable";
+export interface ConfiguratorProductPageData extends ProductPageBase {
+  kind: "configurator";
   definition: ProductDefinition;
-  orderProduct: OrderProduct;
-  orderCatalog: Record<string, OrderProduct>;
-  productGroups: OrderProductGroup[];
+  configuratorProduct: ConfiguratorProduct;
+  configuratorCatalog: Record<string, ConfiguratorProduct>;
+  productGroups: ConfiguratorProductGroup[];
   slugByProductId: Record<string, string>;
-  threadColors: OrderThreadColor[];
+  threadColors: ConfiguratorThreadColor[];
 }
 
 /** A ready-made product has no configurator and is never a set/related member. */
@@ -40,7 +48,7 @@ export interface ReadyMadeProductPageData extends ProductPageBase {
   ordering: ReadyMadeOrdering;
 }
 
-export type ProductPageData = ConfigurableProductPageData | ReadyMadeProductPageData;
+export type ProductPageData = ConfiguratorProductPageData | ReadyMadeProductPageData;
 
 function navLink(product: CatalogProduct | undefined, locale: Locale): NavLink | undefined {
   if (product === undefined) {
@@ -101,7 +109,7 @@ export function toProductPageData(
   }
 
   const definition = product.ordering.definition;
-  const configurable = configurableProducts(catalog.products);
+  const configurators = configuratorProducts(catalog.products);
   const relatedIds = new Set(
     catalog.groups
       .filter((group) => group.productIds.includes(definition.id))
@@ -110,15 +118,21 @@ export function toProductPageData(
 
   return {
     ...neighbours(product, catalog, locale),
-    kind: "configurable",
+    kind: "configurator",
     definition,
-    orderProduct: toOrderProduct(product, definition, catalog.materials, assetBase, languageCode),
-    orderCatalog: Object.fromEntries(
-      configurable
+    configuratorProduct: toConfiguratorProduct(
+      product,
+      definition,
+      catalog.materials,
+      assetBase,
+      languageCode
+    ),
+    configuratorCatalog: Object.fromEntries(
+      configurators
         .filter((candidate) => relatedIds.has(candidate.ordering.definition.id))
         .map((candidate) => [
           candidate.ordering.definition.id,
-          toOrderProduct(
+          toConfiguratorProduct(
             candidate,
             candidate.ordering.definition,
             catalog.materials,
@@ -127,10 +141,10 @@ export function toProductPageData(
           ),
         ])
     ),
-    productGroups: toOrderGroups(catalog.groups),
+    productGroups: toConfiguratorGroups(catalog.groups),
     slugByProductId: Object.fromEntries(
-      configurable.map((candidate) => [candidate.ordering.definition.id, candidate.slug])
+      configurators.map((candidate) => [candidate.ordering.definition.id, candidate.slug])
     ),
-    threadColors: toOrderThreadColors(catalog.threadColors, assetBase),
+    threadColors: toConfiguratorThreadColors(catalog.threadColors, assetBase),
   };
 }

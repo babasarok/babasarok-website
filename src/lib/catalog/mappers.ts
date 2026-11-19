@@ -19,10 +19,10 @@ type MaterialRow = z.output<typeof MaterialsResponseSchema>["materials"][number]
 
 /** How a product is ordered: through its configurator definition, or as-is as one of its variants. */
 export type CatalogProductOrdering =
-  { kind: "configurable"; definition: ProductDefinition } | ReadyMadeOrdering;
+  { kind: "configurator"; definition: ProductDefinition } | ReadyMadeOrdering;
 
-export type ConfigurableCatalogProduct = CatalogProduct & {
-  ordering: Extract<CatalogProductOrdering, { kind: "configurable" }>;
+export type ConfiguratorCatalogProduct = CatalogProduct & {
+  ordering: Extract<CatalogProductOrdering, { kind: "configurator" }>;
 };
 
 export interface CatalogProduct {
@@ -57,11 +57,11 @@ export interface CatalogMaterial {
 }
 
 /** The products ordered through a configurator definition; ready-made ones are excluded. */
-export function configurableProducts(
+export function configuratorProducts(
   products: readonly CatalogProduct[]
-): ConfigurableCatalogProduct[] {
+): ConfiguratorCatalogProduct[] {
   return products.filter(
-    (product): product is ConfigurableCatalogProduct => product.ordering.kind === "configurable"
+    (product): product is ConfiguratorCatalogProduct => product.ordering.kind === "configurator"
   );
 }
 
@@ -94,7 +94,7 @@ export function toProduct(row: ProductRow): CatalogProduct | null {
 
 function orderingOf(row: ProductRow): CatalogProductOrdering | null {
   if (row.productDefinition !== null) {
-    return { kind: "configurable", definition: row.productDefinition };
+    return { kind: "configurator", definition: row.productDefinition };
   }
 
   return toReadyMadeOrdering(row);

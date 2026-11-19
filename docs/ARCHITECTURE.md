@@ -92,19 +92,22 @@ src/
     src/                    # (Tina admin image-serving endpoint area)
   components/
     blocks/                 # Page-section components (Hero, Service, About, Product, Blog, Header, Footer)
-    blocks/order/           # Order configurator Svelte island + sub-components
+    blocks/configurator/    # Configurator product order island + its fields, set and related panels
+    blocks/ready-made/      # Ready-made product order block + option chips
+    blocks/basket/          # Nav basket (both product kinds)
     ui/                     # Reusable presentational components (Button, *Card, Pagination, ...)
     blocks/ConsentBanner.svelte  # Consent banner island; gates GTM + Meta pixel loading
   lib/                      # Framework-agnostic logic + data loaders
     config.ts               # The one Tina client read: global site config
-    catalog/                # Vendure shop-API queries, zod schemas, mappers, live pricing
+    catalog/                # Vendure shop-API queries, zod schemas, mappers; ready-made ordering + option reading
+    configurator/           # Configurator item, fields, behaviours, materials, validation, pricing, sets, deep links
+    basket/                 # Active order (Vendure basket), checkout, line kinds and rows
     tracking.ts             # Consent storage + consent-gated GTM / Meta pixel loading
-    types.svelte.ts / typeHelpers.ts / cn.ts / uuid.ts / scrollSnapper.ts
+    typeHelpers.ts / cn.ts / uuid.ts / scrollSnapper.ts
     assets/                 # resolveImage() (index.ts), tinaImageUrl, remarkAssetImages
-    product/                # field{Types,Value,Visibility}, materials, validation (product-config domain)
-    order/                  # types, basket.svelte, product, queryParams, storage, submit, groups, priceBreakdown
+    product/                # Shared by both kinds: product types, product page params
     vendure/                # Shop-API transport + image URLs
-    __tests__/              # Vitest specs + fixtures
+    __tests__/              # Vitest specs without a home module
   styles/                   # global.css (@theme tokens), base.css, prose.css, theme.css
   content/                  # Tina-managed md/json (the data)
 tina/                       # Tina schema (collections/*.ts), config.ts, generated client
@@ -130,19 +133,19 @@ fonts, wires favicons through the Vite asset pipeline, and includes
   the epic-4 cleanup — the catalog lives in Vendure only.
 - **Astro collections** (`src/content.config.ts`) re-declare the non-catalog
   content with Zod schemas so pages can use `getCollection()` + `<Image>`.
-- **Order-island types.** `src/lib/order/types.ts` hand-writes the shapes the
-  order island consumes (`OrderProduct`, `OrderField`, `OrderThreadColor`,
-  …); `src/lib/catalog/orderProduct.ts` maps Vendure data into them. The
+- **Configurator types.** `src/lib/configurator/types.ts` hand-writes the shapes the
+  configurator island consumes (`ConfiguratorProduct`, `ConfiguratorField`,
+  `ConfiguratorThreadColor`, …); `src/lib/catalog/configuratorProduct.ts` maps Vendure data into them. The
   mappers' assignments and the components keep the types honest in both
   directions — there is no generated schema behind them anymore.
 - **Shared value lists live in one module.** Where the same enumerated values are
   needed by the Tina schema, the Zod schema, and runtime code, they are defined
-  once and imported by all three (e.g. `src/lib/product/fieldTypes.ts`).
+  once and imported by all three (e.g. `src/lib/configurator/fieldTypes.ts`).
   Tina config imports these with a **relative** path — its esbuild bundling
   ignores the `@/` tsconfig alias.
 - **Discriminated unions are a runtime/form-side concern.** The flat stored
   shape keeps a single record with an enum tag; per-type value unions are built
-  by distributing over the shared tag in `src/lib/types.svelte.ts`, not
+  by distributing over the shared tag in `src/lib/configurator/item.svelte.ts`, not
   declared in the schema.
 
 ### 4.3 Image resolution
@@ -158,11 +161,13 @@ in cloud builds) while Astro wants `ImageMetadata` objects from `src/assets`.
 - `scripts/test/no-tina-cloud-urls.ts` is a CI guard that fails the build if any
   `assets.tina.io` URL survives into `dist/`.
 
-### 4.4 The order islands (`components/blocks/order/`, `components/blocks/checkout/`)
+### 4.4 The order islands (`components/blocks/{configurator,ready-made}/`, `components/blocks/checkout/`)
 
 The main pieces of client-side state are the product-page configurator and the
-checkout. Product pages render `<ProductOrder client:load>` (in
-`blocks/order/`) to build up a basket item. `checkout.astro` renders
+checkout. A product page renders the order island for its product kind (the
+catalog's `ordering.kind`): `<ConfiguratorOrder>` (in `blocks/configurator/`)
+for a configurator product, `<ReadyMadeOrder>` (in `blocks/ready-made/`) for a
+ready-made one; both add to the basket. `checkout.astro` renders
 `<CheckoutSection client:load>` (in `blocks/checkout/`), which loads the
 catalog labels and mounts the checkout wizard: `steps/` holds one form per
 flow (the mobile-only Kosár, then Kapcsolat, Szállítás, Számlázás,
@@ -173,13 +178,17 @@ no copy of the form: inputs start from the active order, saves read the forms
 with `FormData` and replace the order with Vendure's response. Domain logic is
 extracted into `src/lib/`:
 
-- `order/types.ts` — the island's data shapes, mapped from Vendure by
-  `catalog/orderProduct.ts`
-- `order/priceBreakdown.ts` — the display-only price breakdown; the
+- `configurator/types.ts` — the configurator's data shapes, mapped from Vendure by
+  `catalog/configuratorProduct.ts`
+- `configurator/priceBreakdown.ts` — the display-only price breakdown; the
   authoritative unit price comes from the shared pricing package via
-  `catalog/livePrice.ts` (the same logic the server prices orders with)
-- `order/groups.ts` — set/related-items grouping over catalog product groups
-- `materialUtils`/`validation` (`product/`) — material/color resolution and
+  `configurator/livePrice.ts` (the same logic the server prices orders with)
+- `configurator/groups.ts` — set/related-items grouping over catalog product groups
+- `catalog/readyMade.ts` — a ready-made product's variants and option picking;
+  `catalog/variantOptions.ts` is the only reader of variant options (ADR 0019)
+- `basket/lineKind.ts` — a basket line's kind (configurator or ready-made),
+  mirroring the catalog's `ordering`
+- `materials`/`validation` (`configurator/`) — material/color resolution and
   field validation
 - `basket/` — the active order: the Vendure session token, add/adjust/remove,
   the checkout's order ↔ form ↔ native-mutation mapping
@@ -260,14 +269,8 @@ enumeration, deep-link fill, persistence shape, validation, order-email record)
 are currently re-implemented as a `switch (field.type)` in each consumer, which
 makes a new field type an ~8-file change.
 ADR 0006 moves them into an exhaustive `Record<ProductFieldType, FieldBehavior>`
-(`src/lib/product/behavior/`) so implementation coverage is a compile error and
+(`src/lib/configurator/behavior/`) so implementation coverage is a compile error and
 usage is enforced by a lint rule. (In progress.)
-
-### 5.8 Island types next to their entity
-
-`src/lib/types.svelte.ts` still holds the product-form types (`Field`, the
-per-type value shapes, `IProduct`) derived from `order/types.ts`; moving them
-next to the product domain completes an open task of ADR 0002.
 
 ### 5.9 Single source of truth for the remaining discriminants
 

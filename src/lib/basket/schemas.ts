@@ -2,6 +2,7 @@ import { z } from "zod";
 import { RefusalSchema } from "@babasarok/pricing";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { LineVariantOptionsSchema } from "@/lib/catalog/variantOptions";
+import { lineKind } from "./lineKind";
 import { SetDiscountSchema, SetStateSchema } from "./setDiscounts";
 
 export const OrderLineSchema = z.object({
@@ -96,10 +97,9 @@ export function requiresAddress(method: ShippingQuote | undefined): boolean {
   return method?.customFields?.requiresAddress === true;
 }
 
-/** A basket needs production when any line's product carries a configurator
- * definition; definition-less (ready-made) lines ship from stock. */
-export function hasConfigurableLine(order: Order): boolean {
-  return order.lines.some((line) => line.productVariant.product.productDefinition !== null);
+/** A basket needs production when it holds a configurator line; ready-made lines ship from stock. */
+export function hasConfiguratorLine(order: Order): boolean {
+  return order.lines.some((line) => lineKind(line).kind === "configurator");
 }
 
 export const ProductVariantIdsSchema = z.object({

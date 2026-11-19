@@ -49,7 +49,7 @@ export function toProductListData(
     // Ready-made products are never set members: their id never matches a
     // group's definition ids.
     const id =
-      product.ordering.kind === "configurable" ? product.ordering.definition.id : product.id;
+      product.ordering.kind === "configurator" ? product.ordering.definition.id : product.id;
     const typeCode = product.type?.code;
 
     const [readyMade, stock] =

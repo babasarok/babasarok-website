@@ -37,7 +37,7 @@ describe("getProducts", () => {
       popularityRank: 22,
     });
     expect(bag?.ordering).toMatchObject({
-      kind: "configurable",
+      kind: "configurator",
       definition: { id: "tornazsak" },
     });
     expect(bag?.thumbnail?.source).toMatch(/^http/);

@@ -61,8 +61,8 @@ const largeVariant = {
 };
 
 describe("toProduct", () => {
-  it("maps a definition-backed product to the configurable ordering", () => {
-    expect(toProduct(listRow({}))?.ordering).toMatchObject({ kind: "configurable" });
+  it("maps a definition-backed product to the configurator ordering", () => {
+    expect(toProduct(listRow({}))?.ordering).toMatchObject({ kind: "configurator" });
   });
 
   it("maps a definition-less product to its variant price and stock", () => {

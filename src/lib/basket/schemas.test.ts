@@ -1,7 +1,7 @@
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
-import { hasConfigurableLine, type Order, type OrderLine } from "./schemas";
+import { hasConfiguratorLine, type Order, type OrderLine } from "./schemas";
 
 // Seam: the basket's line composition vs. the checkout's lead-time note —
 // a made-to-order line means production time; a ready-made-only basket ships
@@ -48,16 +48,16 @@ const order = (lines: OrderLine[]): Order => ({
   lines,
 });
 
-describe("hasConfigurableLine", () => {
+describe("hasConfiguratorLine", () => {
   it("is true when a line's product has a definition", () => {
-    expect(hasConfigurableLine(order([line(null), line(definition)]))).toBe(true);
+    expect(hasConfiguratorLine(order([line(null), line(definition)]))).toBe(true);
   });
 
   it("is false for a ready-made-only basket", () => {
-    expect(hasConfigurableLine(order([line(null), line(null)]))).toBe(false);
+    expect(hasConfiguratorLine(order([line(null), line(null)]))).toBe(false);
   });
 
   it("is false for an empty basket", () => {
-    expect(hasConfigurableLine(order([]))).toBe(false);
+    expect(hasConfiguratorLine(order([]))).toBe(false);
   });
 });

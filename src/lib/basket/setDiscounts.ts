@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { parseLineSelections, type LineSelections } from "@babasarok/pricing";
 import type { Locale } from "@/lib/i18n";
-import { selectionMaterialParams } from "@/lib/order/queryParams";
+import { selectionMaterialParams } from "@/lib/configurator/queryParams";
 import { productPath } from "@/lib/product/pageParams";
 import type { Order, OrderLine } from "./schemas";
 
