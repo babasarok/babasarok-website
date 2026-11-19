@@ -53,17 +53,19 @@ function navLink(product: CatalogProduct | undefined, locale: Locale): NavLink |
 }
 
 function galleryOf(product: CatalogProductDetail): GalleryImage[] {
-  const gallery = product.gallery.map((image) => ({
-    asset: image.asset,
-    alt: product.name,
-    description: image.description ?? undefined,
-  }));
+  const gallery = product.gallery
+    .filter((image) => image.asset.source !== product.thumbnail?.source)
+    .map((image) => ({
+      asset: image.asset,
+      alt: product.name,
+      description: image.description ?? undefined,
+    }));
 
-  if (gallery.length === 0 && product.thumbnail !== null) {
-    return [{ asset: product.thumbnail, alt: product.name }];
+  if (product.thumbnail === null) {
+    return gallery;
   }
 
-  return gallery;
+  return [{ asset: product.thumbnail, alt: product.name }, ...gallery];
 }
 
 function neighbours(
