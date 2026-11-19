@@ -55,27 +55,40 @@ and `phoneNumber`) — no site changes are needed for the label work.
    account configuration, one fulfillment handler, the status-polling job
    and admin-API extensions for the dashboard. Wire format, SHA-512
    password hashing and URL scheme never leave the plugin.
-2. **Accounts are env-backed plugin options** (`GlsPlugin.init({
-accounts })`, values from the stack's `.env`): `{ id, country,
-clientNumber, username, apiPassword, pickupAddress, typeOfPrinter,
-mode }`. Decided against a DB entity: handler registration and the
+2. **Accounts are env-backed** (values from the stack's `.env`): the
+   client number, username and password per account, plus the label
+   format (`GLS_LABEL_FORMAT`, `A4_2x2` by default — what the owner prints
+   on is still open). The sender (pickup) address is not an env value: it
+   comes from Vendure settings, so the owner can edit it (owner decision
+   2026-11-19; the exact entity is S2's to pick). Decided against a DB
+   entity for the accounts: handler registration and the
    handler-arg dropdowns are boot-time static, so runtime-addable accounts
    would buy nothing; adding an account is a config entry + deploy. The
    handler validates its `account` arg against the configured list.
 3. **Delivery options stay native ShippingMethods** (eligibility checker +
    calculator, dashboard-editable, channel-scoped). The plugin contributes
    the fulfillment piece, not the options.
-4. **Label creation in the fulfillment handler.** `createFulfillment`
-   calls `PrintLabels` (one step) with the order's address, the `COD`
-   service and `CODAmount` = total − deposit on utánvét orders
-   (`CODReference` carries the order code — it is GLS's own "payment
-   pairing" reference), stores the returned PDF, and returns the parcel
-   number as the fulfillment's native `trackingCode`.
+4. **Label creation in the fulfillment handler.** The owner fulfills when
+   the product is done (owner decision 2026-11-19 — the delivery data
+   already lives in Vendure, so MyGLS's "saved unprinted" step has no
+   job). `createFulfillment` calls `PrintLabels` (one step) with the
+   order's address and, on utánvét orders, `CODAmount` = total − recorded
+   payments (`CODReference` carries the order code — GLS's own "payment
+   pairing" reference); it returns the parcel number as the fulfillment's
+   native `trackingCode` and keeps the GLS `ParcelId` (needed to delete
+   the label). GLS returns the PDF only in that response, so the handler
+   saves it in a private plugin table served only through an
+   admin-permission endpoint (owner decision 2026-11-19 — Vendure assets
+   are publicly served, and the PDF carries the buyer's address). GLS
+   does not deduplicate, so two guards keep one order from getting two
+   parcels: the client never retries label creation, and the handler
+   refuses when the order already has a non-cancelled GLS fulfillment.
 5. **Shipped → delivered via a polling worker, under one rule: deliver
    only when the order's payments cover the total.** The MyGLS API has no
    webhooks — polling `GetParcelStatuses` is the only tracking mechanism.
-   The worker transitions the fulfillment and then the order
-   (`FulfillmentService.transitionToState` does not move the order).
+   The worker transitions only the fulfillment: Vendure's default
+   fulfillment process moves the order to `Shipped`/`Delivered` itself
+   once that order state is reachable.
    Prepaid orders deliver on GLS status 5 (delivered); COD orders hold in
    `Shipped` until the COD payment is recorded — the order's `Delivered`
    state can only transition to `Cancelled`, so delivering an unsettled
@@ -86,15 +99,17 @@ PaymentSettled`). This makes `Delivered` an invariant: fully paid and
    payout/settlement surface; GLS status 5 is only a proxy for the money.
    AutoKassza pairs the bank statement line via the parcel's
    `CODReference`, and the owner records the payment in the dashboard.
-7. **Test modes.** `live` (prod only), `test` (`api.test.mygls.hu` — the
-   doc's stated testing/development surface; accounts must be provisioned
-   on it by GLS) and an in-process **fake** (deterministic parcel numbers
-   from the `ClientReference`, a generated valid placeholder PDF, scripted
-   status progression) used by unit tests, the CI integration suite, and
-   as the interim until test-env access exists. Absent credentials default
-   to `fake`; prod fails to boot if its credentials are missing. The only
-   real-network check is a hand-run smoke script gated behind
-   `GLS_SMOKE_API_URL` (read-only), like the catalog contract test.
+7. **Test modes, chosen from the environment only** (`glsConfigFromEnv`):
+   `live` only when `NODE_ENV=production` (previews run `development`,
+   hard-coded in their compose file) and only from `MYGLS_HU_*`; prod
+   fails to boot without them. Outside production `MYGLS_HU_*` is never
+   read: `TEST_MYGLS_HU_*` selects `test` (`api.test.mygls.hu`), and no
+   credentials select the in-process **fake** (sequential parcel ids, a
+   generated valid placeholder PDF), used by unit tests and the CI
+   integration suite. The host is derived from the mode — there is no
+   URL override. The real-network check is a hand-run smoke test against
+   the test environment (`GLS_SMOKE=1`, see `docs/agents/testing.md`)
+   that deletes every parcel it creates.
 
 ## Verified facts (2026-11-13, 2026-11-19)
 
@@ -119,6 +134,25 @@ PaymentSettled`). This makes `Delivered` an invariant: fully paid and
   64-number array (base64 only in XML mode — the server's deserializer
   rejects base64 in JSON); datetimes are WCF `\/Date(ms)\/` strings; every
   response is a JSON envelope with an error list.
+- **Test-environment behavior (probed 2026-11-19, all parcels deleted):**
+  `PrintLabels` requires `WebshopEngine` (error 56, missing from the
+  doc's error table); `CODAmount` alone prints "Utánvét: N HUF" on the
+  label — no `COD` service entry needed; `Content` prints on the label;
+  neither `GetPrintedLabels` nor `GetPrintData` returns an existing
+  label (error 18 "already generated") — the PDF exists only in the
+  `PrintLabels` response; a repeated `ClientReference` creates a second
+  parcel (no deduplication); a parcel not yet handed over answers
+  `GetParcelStatuses` with error 26 (the worker reads it as "not handed
+  over yet"); deleting twice answers error 4.
+- **Fulfilling needs a settled order** (Vendure dashboard 3.8.1
+  `canAddFulfillment`): the dashboard offers "Fulfill order" only when the
+  order can move to `Shipped`/`PartiallyShipped`/`Delivered`, i.e. from
+  `PaymentSettled`, and preselects the shipping method's
+  `fulfillmentHandlerCode`. Prepaid orders reach it once the owner records
+  the bank transfer; utánvét orders (deposit only) cannot until epic 7's
+  payment states land — the handler supports COD and is tested through
+  the fake meanwhile, and the owner keeps making COD labels in MyGLS.
+  `OrderService.createFulfillment` itself has no order-state guard.
 - **State machine guards** (Vendure 3.8.1 `default-order-process.js`):
   `PaymentAuthorized`/`PaymentSettled` require full payment coverage
   (`checkPaymentsCoverTotal`), `Shipped`/`Delivered` require fulfillments
@@ -130,12 +164,15 @@ PaymentSettled`). This makes `Delivered` an invariant: fully paid and
 
 ## Rollout plan
 
-1. **S1 Client + fake** — the typed `GlsClient` interface, the REST client
-   and the in-memory fake; unit tests (wire-format serialization, error
-   mapping).
-2. **S2 Plugin + handler** — accounts, the `gls` fulfillment handler
-   (label + COD), the dashboard admin extension; backend integration test
-   (real Vendure server, fake GLS).
+1. **S1 Client + fake** (done) — the typed `GlsClient` interface
+   (create/delete label), the REST client, the in-memory fake and the
+   env-only mode selection; unit tests, plus the hand-run test-env smoke
+   test.
+2. **S2 Plugin + handler** — the env wiring, the `gls` fulfillment
+   handler (label + COD, one label per order), the private label table
+   and its admin download, the sender address in Vendure settings, a
+   data migration switching the GLS shipping methods to the `gls`
+   handler; backend integration test (real Vendure server, fake GLS).
 3. **S3 Polling worker** — statuses, the deliver-when-settled rule,
    `trackingCode` handling.
 4. **S4 Test-env round-trip** — test access is provisioned and verified
@@ -185,10 +222,9 @@ facts), so only the live-API permission question remains open:
 
 ## Open questions (design/implementation time)
 
-- `TypeOfPrinter` — A4 PDF (`A4_2x2`/`A4_4x1`) vs thermal; what the owner
-  prints on.
+- `TypeOfPrinter` — what the owner prints on (`GLS_LABEL_FORMAT`:
+  `A4_2x2` default, `A4_4x1`, `Thermo`; only `A4_2x2` is verified).
 - The COD max in her contract (the doc validates a per-product max).
 - Whether her client number requires parcel weights (optional by default;
   if required, they get modeled like pricing: base weight + per-field
   additional weights in the canonical definition).
-- Where the label PDF is stored (Vendure Asset vs private storage).
