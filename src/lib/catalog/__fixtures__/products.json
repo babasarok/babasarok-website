@@ -25,6 +25,14 @@
             }
           }
         ],
+        "variants": [
+          {
+            "currencyCode": "HUF",
+            "priceWithTax": 7500,
+            "stockLevel": "IN_STOCK",
+            "saleableStock": null
+          }
+        ],
         "productDefinition": {
           "id": "babatakaro-szett",
           "fields": [
@@ -170,6 +178,14 @@
             }
           }
         ],
+        "variants": [
+          {
+            "currencyCode": "HUF",
+            "priceWithTax": 9500,
+            "stockLevel": "IN_STOCK",
+            "saleableStock": null
+          }
+        ],
         "productDefinition": {
           "id": "kismama-parna",
           "fields": [
@@ -231,6 +247,14 @@
             "facet": {
               "code": "babasarok-product-type"
             }
+          }
+        ],
+        "variants": [
+          {
+            "currencyCode": "HUF",
+            "priceWithTax": 4000,
+            "stockLevel": "IN_STOCK",
+            "saleableStock": null
           }
         ],
         "productDefinition": {

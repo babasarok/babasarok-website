@@ -1,4 +1,4 @@
-import type { OrderLine, RequestContext } from "@vendure/core";
+import type { OrderLine, ProductVariant, RequestContext } from "@vendure/core";
 import { messages } from "../../shared/messages";
 import type { Refusal } from "../../shared/refusal";
 import { lineRejection, type LineFacts } from "./line-rejection";
@@ -8,6 +8,12 @@ export type LineInvalidReason = Refusal;
 
 export interface LineInvalidReasonDeps extends LineValuationDeps {
   lineFacts(ctx: RequestContext): LineFacts;
+  saleableStock(ctx: RequestContext, variant: ProductVariant, lock: boolean): Promise<number>;
+}
+
+export interface LineInvalidReasonOptions {
+  /** Lock the stock rows: the transition guard must not race a concurrent checkout. */
+  lockStock?: boolean;
 }
 
 /**
@@ -18,7 +24,8 @@ export interface LineInvalidReasonDeps extends LineValuationDeps {
 export async function lineInvalidReason(
   deps: LineInvalidReasonDeps,
   ctx: RequestContext,
-  line: OrderLine
+  line: OrderLine,
+  options: LineInvalidReasonOptions = {}
 ): Promise<LineInvalidReason | undefined> {
   const productId = Number(line.productVariant.productId);
   const m = messages(ctx.languageCode);
@@ -26,6 +33,12 @@ export async function lineInvalidReason(
 
   if (!line.productVariant.enabled || line.productVariant.deletedAt !== null) {
     return { code: "VARIANT_UNAVAILABLE", productName };
+  }
+
+  const stock = await deps.saleableStock(ctx, line.productVariant, options.lockStock ?? false);
+
+  if (stock < line.quantity) {
+    return { code: "OUT_OF_STOCK", productName };
   }
 
   const definitionRow = await deps.findDefinition(ctx, productId);

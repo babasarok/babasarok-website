@@ -5,10 +5,12 @@
     href: string;
     title: string;
     category?: string | undefined | null;
+    /** A readiness note under the title, e.g. a ready-made product's stock. */
+    badge?: string | undefined;
     image?: SlimImage | undefined | null;
   }
 
-  let { href, title, category, image }: Props = $props();
+  let { href, title, category, badge, image }: Props = $props();
 </script>
 
 <a
@@ -33,4 +35,7 @@
   >
     {title}
   </h3>
+  {#if badge}
+    <span class="text-body mt-1 block text-xs text-sand-700">{badge}</span>
+  {/if}
 </a>

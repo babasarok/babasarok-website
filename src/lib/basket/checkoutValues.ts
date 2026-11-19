@@ -16,8 +16,6 @@ export const FIELD = {
   country: "country",
   sameAsShipping: "sameAsShipping",
   fullName: "fullName",
-  company: "company",
-  taxNumber: "taxNumber",
   message: "message",
   terms: "terms",
 } as const;
@@ -41,8 +39,6 @@ export interface BillingValues {
   sameAsShipping: boolean;
   fullName: string;
   address: AddressValues;
-  company: string;
-  taxNumber: string;
 }
 
 export interface CheckoutValues {
@@ -107,8 +103,6 @@ export function valuesFromOrder(order: Order): CheckoutValues {
       sameAsShipping: !billingStored,
       fullName: billingStored ? text(billing?.fullName) : "",
       address: billingStored ? addressValues(billing) : addressValues(null),
-      company: billingStored ? text(billing?.company) : text(order.shippingAddress?.company),
-      taxNumber: text(order.customFields?.taxNumber),
     },
     message: text(order.customFields?.message),
   };
@@ -144,8 +138,6 @@ export function billingFromForm(data: FormData): BillingValues {
     sameAsShipping: data.has(FIELD.sameAsShipping),
     fullName: field(data, FIELD.fullName),
     address: addressFromForm(data),
-    company: field(data, FIELD.company),
-    taxNumber: field(data, FIELD.taxNumber),
   };
 }
 
@@ -204,34 +196,24 @@ export function shippingAddressInput(
 }
 
 /**
- * Where the billing step's data lands natively: its own billing address
- * (company included) when it collects one, otherwise no billing address and
- * the company on the delivery address — the invoice buyer is then the
- * delivery address.
+ * The billing step's data lands natively: its own billing address when it
+ * collects one, otherwise no billing address and the delivery address is the
+ * invoice buyer.
  */
-export interface BillingPlan {
-  billingAddress: AddressInput | null;
-  shippingCompany: string;
-}
-
-export function billingPlan(
+export function billingAddressInput(
   billing: BillingValues,
   method: ShippingQuote | undefined
-): BillingPlan {
+): AddressInput | null {
   if (!billingUsesOwnFields(billing, method)) {
-    return { billingAddress: null, shippingCompany: billing.company };
+    return null;
   }
 
   return {
-    billingAddress: {
-      fullName: billing.fullName,
-      company: billing.company,
-      streetLine1: billing.address.street,
-      streetLine2: billing.address.houseNumber,
-      postalCode: billing.address.postalCode,
-      city: billing.address.city,
-      countryCode: billing.address.country,
-    },
-    shippingCompany: "",
+    fullName: billing.fullName,
+    streetLine1: billing.address.street,
+    streetLine2: billing.address.houseNumber,
+    postalCode: billing.address.postalCode,
+    city: billing.address.city,
+    countryCode: billing.address.country,
   };
 }

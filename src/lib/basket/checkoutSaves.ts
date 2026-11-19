@@ -1,9 +1,8 @@
 import type { BasketApi, Result } from "./api";
 import {
-  billingPlan,
+  billingAddressInput,
   customerInput,
   hasBillingAddress,
-  hasShippingAddress,
   recipientOf,
   shippingAddressInput,
   valuesFromOrder,
@@ -11,7 +10,7 @@ import {
   type BillingValues,
   type ContactValues,
 } from "./checkoutValues";
-import { requiresAddress, type Order, type ShippingQuote } from "./schemas";
+import type { Order, ShippingQuote } from "./schemas";
 
 export type SaveApi = Pick<
   BasketApi,
@@ -84,36 +83,13 @@ export function createCheckoutSaves(api: SaveApi, port: OrderPort): CheckoutSave
       }),
     billing: (billing, method) =>
       enqueue(async (order) => {
-        const plan = billingPlan(billing, method);
+        const billingAddress = billingAddressInput(billing, method);
 
-        if (plan.billingAddress !== null) {
-          await apply(api.setBillingAddress(plan.billingAddress));
+        if (billingAddress !== null) {
+          await apply(api.setBillingAddress(billingAddress));
         } else if (hasBillingAddress(order)) {
           await apply(api.unsetBillingAddress());
         }
-
-        const current = port.order() ?? order;
-        const storedCompany = current.shippingAddress?.company ?? "";
-
-        if (
-          requiresAddress(method) &&
-          hasShippingAddress(current) &&
-          storedCompany !== plan.shippingCompany
-        ) {
-          const values = valuesFromOrder(current);
-
-          await apply(
-            api.setShippingAddress(
-              shippingAddressInput(
-                values.address,
-                recipientOf(values.contact),
-                plan.shippingCompany
-              )
-            )
-          );
-        }
-
-        await apply(api.setOrderCustomFields({ taxNumber: billing.taxNumber }));
       }),
     method: (shippingMethodId) => {
       let taken = false;

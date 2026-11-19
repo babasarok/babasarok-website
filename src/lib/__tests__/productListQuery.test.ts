@@ -21,6 +21,7 @@ describe("parseListState", () => {
       q: "",
       types: [],
       sets: [],
+      readyMade: false,
       sort: "popular",
     });
   });
@@ -32,6 +33,7 @@ describe("parseListState", () => {
       q: "minky",
       types: ["takaro", "racsvedo"],
       sets: ["ovis-szett", "babafeszek"],
+      readyMade: false,
       sort: "name",
     });
   });
@@ -41,6 +43,7 @@ describe("parseListState", () => {
       q: "x",
       types: ["takaro"],
       sets: [],
+      readyMade: false,
       sort: "popular",
     });
   });
@@ -54,6 +57,7 @@ describe("parseListState", () => {
       q: "",
       types: [],
       sets: ["real-set", "ghost"],
+      readyMade: false,
       sort: "popular",
     });
   });
@@ -63,6 +67,7 @@ describe("parseListState", () => {
       q: "óvoda zsák",
       types: [],
       sets: [],
+      readyMade: false,
       sort: "popular",
     });
   });
@@ -73,16 +78,17 @@ describe("serializeListState", () => {
     q: "minky",
     types: ["takaro", "racsvedo"],
     sets: ["ovis-szett"],
+    readyMade: true,
     sort: "name",
   };
 
   it("serializes the default state to an empty string", () => {
-    expect(serializeListState({ q: "", types: [], sets: [], sort: "popular" })).toBe("");
+    expect(serializeListState({ ...defaultState })).toBe("");
   });
 
   it("serializes all state (repeated keys for multi-values)", () => {
     expect(serializeListState(state)).toBe(
-      "?q=minky&type=takaro&type=racsvedo&set=ovis-szett&sort=name"
+      "?q=minky&type=takaro&type=racsvedo&set=ovis-szett&ready-made=1&sort=name"
     );
   });
 
@@ -103,6 +109,7 @@ describe("applyListState", () => {
     type?: ProductType;
     date?: Date;
     sets?: string[];
+    readyMade?: boolean;
   }): ListProduct => ({
     id: over.title,
     title: over.title,
@@ -110,6 +117,7 @@ describe("applyListState", () => {
     type: over.type ?? "takaro",
     date: over.date,
     sets: over.sets ?? [],
+    readyMade: over.readyMade,
   });
 
   it("matches the search text against the title, case-insensitively", () => {
@@ -169,6 +177,17 @@ describe("applyListState", () => {
     expect(result.map((p) => p.id)).toEqual(["A"]);
   });
 
+  it("filters to ready-made products only when the dimension is on", () => {
+    const products = [
+      product({ title: "Raktári", readyMade: true }),
+      product({ title: "Rendelésre" }),
+    ];
+    const result = applyListState(products, { ...defaultState, readyMade: true });
+
+    expect(result.map((p) => p.id)).toEqual(["Raktári"]);
+    expect(applyListState(products, defaultState)).toHaveLength(2);
+  });
+
   it("ANDs the dimensions with the search text", () => {
     const products = [
       product({ title: "Takaró minky", type: "takaro" }),
@@ -215,6 +234,23 @@ describe("applyListState", () => {
     const products = [product({ title: "D" }), product({ title: "C" }), product({ title: "B" })];
     const result = applyListState(products, { ...defaultState }, ["B"]);
     expect(result.map((p) => p.title)).toEqual(["B", "C", "D"]);
+  });
+
+  it("lists ready-made products first within every sort", () => {
+    const products = [
+      product({ title: "Rendelésre", date: day("2026-01-01") }),
+      product({ title: "Raktári", readyMade: true, date: day("2024-01-01") }),
+      product({ title: "Újabb", date: day("2026-06-01") }),
+    ];
+
+    // Popular and name sort the rest among themselves by name; newest by date.
+    for (const sort of ["popular", "name"] as const) {
+      const result = applyListState(products, { ...defaultState, sort });
+      expect(result.map((p) => p.title)).toEqual(["Raktári", "Rendelésre", "Újabb"]);
+    }
+
+    const newest = applyListState(products, { ...defaultState, sort: "newest" });
+    expect(newest.map((p) => p.title)).toEqual(["Raktári", "Újabb", "Rendelésre"]);
   });
 
   it("uses the first occurrence when the popularity order repeats an id", () => {

@@ -23,10 +23,14 @@
           <td style="padding:28px 28px 8px 28px;">
             <p style="margin:0 0 12px 0;">Dear customer,</p>
             <p style="margin:0 0 12px 0;">Thank you for choosing Babasarok products! 🥰</p>
-            <p style="margin:0 0 12px 0;">Your order has reached us – we will soon start crafting it
-              for you 🧵✂️</p>
-            <p style="margin:0 0 12px 0;">Production takes roughly 3 weeks, counted from the receipt
-              of your payment.</p>
+            {{#if madeToOrder}}
+              <p style="margin:0 0 12px 0;">Your order has reached us – we will soon start crafting
+                it for you 🧵✂️</p>
+              <p style="margin:0 0 12px 0;">Production takes roughly 3 weeks, counted from the
+                receipt of your payment.</p>
+            {{else}}
+              <p style="margin:0 0 12px 0;">Your order has reached us.</p>
+            {{/if}}
             <p style="margin:0 0 12px 0;">💳 If you chose the bank-transfer payment method:<br />
               We will send the invoice by email within 1–2 working days. You can settle the invoice
               by bank transfer or online card payment.</p>

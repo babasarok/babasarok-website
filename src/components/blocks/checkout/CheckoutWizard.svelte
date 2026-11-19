@@ -37,7 +37,7 @@
     shippingCheck,
     type FieldCheck,
   } from "@/lib/basket/readiness";
-  import type { Order, ShippingQuote } from "@/lib/basket/schemas";
+  import { hasConfigurableLine, type Order, type ShippingQuote } from "@/lib/basket/schemas";
   import type { SetMembers } from "@/lib/basket/setDiscounts";
   import {
     layoutSteps,
@@ -505,6 +505,7 @@
         ></div>
       {:else}
         {@const t = translator(i18n)}
+        {@const basketNote = hasConfigurableLine(order) ? basketInfo : undefined}
         <div class="grid grid-cols-1 items-start gap-6 pb-24 lg:grid-cols-[1fr_420px] lg:pb-0">
           <div class="flex min-w-0 flex-col">
             <div class="pb-4">
@@ -537,7 +538,7 @@
                           {labels}
                           {setMembers}
                           {highlightedLines}
-                          {basketInfo}
+                          basketInfo={basketNote}
                           shownPrices={basket.shownPrices}
                           {busy}
                           onContinue={() => void onContinue("basket", new FormData())}
@@ -602,7 +603,7 @@
                           onSave={(data) => void saveMessage(data)}
                           {onSubmit}
                           {supportEmail}
-                          {basketInfo}
+                          basketInfo={basketNote}
                           shownPrices={basket.shownPrices}
                           {busy}
                           onHighlight={(lineIds) => (highlightedLines = lineIds)}
@@ -654,7 +655,7 @@
             {setMembers}
             {highlightedLines}
             hint={step !== "review"}
-            {basketInfo}
+            basketInfo={basketNote}
             shownPrices={basket.shownPrices}
             {busy}
             onHighlight={(lineIds) => (highlightedLines = lineIds)}

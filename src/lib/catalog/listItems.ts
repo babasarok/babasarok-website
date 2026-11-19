@@ -10,6 +10,8 @@ export interface ProductListItem extends Omit<ListProduct, "date"> {
   href: string;
   category?: string | undefined;
   image?: SlimImage | undefined;
+  /** Real stock of a ready-made product; absent for a configurator product. */
+  stock?: number | undefined;
 }
 
 export interface ProductListData {
@@ -44,8 +46,16 @@ export function toProductListData(
 ): ProductListData {
   const sets = groups.filter((group) => group.kind === "set");
   const items = listedByPopularity(products).map((product): ProductListItem => {
-    const { id } = product.definition;
+    // Ready-made products are never set members: their id never matches a
+    // group's definition ids.
+    const id =
+      product.ordering.kind === "configurable" ? product.ordering.definition.id : product.id;
     const typeCode = product.type?.code;
+
+    const [readyMade, stock] =
+      product.ordering.kind === "ready-made"
+        ? [true, product.ordering.saleableStock]
+        : [false, undefined];
 
     return {
       id,
@@ -57,6 +67,8 @@ export function toProductListData(
       href: localizedPath(`/product/${product.slug}/`, locale),
       category: product.tagline ?? undefined,
       image: product.thumbnail ? cardImage(product.thumbnail, assetBase) : undefined,
+      readyMade: readyMade || undefined,
+      stock: stock ?? undefined,
     };
   });
 

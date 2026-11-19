@@ -232,8 +232,6 @@ const EMPTY_VALUES: CheckoutValues = {
     sameAsShipping: true,
     fullName: "",
     address: EMPTY_ADDRESS,
-    company: "",
-    taxNumber: "",
   },
   message: "",
 };
@@ -250,8 +248,6 @@ const values: CheckoutValues = {
     sameAsShipping: true,
     fullName: "",
     address: EMPTY_ADDRESS,
-    company: "",
-    taxNumber: "",
   },
   message: "",
 };
@@ -423,8 +419,6 @@ describe("placeOrder", () => {
         sameAsShipping: false,
         fullName: "Minta Kft.",
         address: { ...EMPTY_ADDRESS, street: "Piac tér", houseNumber: "2." },
-        company: "Minta Kft.",
-        taxNumber: "12345678-2-42",
       },
     };
 
@@ -480,6 +474,28 @@ describe("createBasketApi", () => {
       failure: {
         reason: "errorCodes.EMAIL_ADDRESS_CONFLICT_ERROR",
       },
+    });
+  });
+
+  it("maps the insufficient-stock error to a locale dictionary key", async () => {
+    const { api } = apiWith({
+      data: {
+        addItemToOrder: {
+          __typename: "InsufficientStockError",
+          errorCode: "INSUFFICIENT_STOCK_ERROR",
+          message: "Only 0 items left.",
+        },
+      },
+    });
+    const result = await api.addItem({
+      productVariantId: "1",
+      quantity: 2,
+      customFields: { selections: "{}" },
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      failure: { reason: "errorCodes.INSUFFICIENT_STOCK_ERROR" },
     });
   });
 
@@ -635,9 +651,9 @@ describe("set discount adapter", () => {
         { id: "rel", kind: "related", productIds: ["a", "z"] },
       ],
       [
-        { slug: "parna", name: "Párna", definition: { id: "a" } },
-        { slug: "takaro", name: "Takaró", definition: { id: "b" } },
-        { slug: "kosar", name: "Kosár", definition: { id: "c" } },
+        { slug: "parna", name: "Párna", definitionId: "a" },
+        { slug: "takaro", name: "Takaró", definitionId: "b" },
+        { slug: "kosar", name: "Kosár", definitionId: "c" },
       ]
     );
     const [active, , partner] = fixtureOrder.lines;

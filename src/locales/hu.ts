@@ -114,6 +114,12 @@ const translation = {
     noResults: "Nincs találat",
     type: "Terméktípus",
     sets: "Szettek",
+    readyMade: "Készlet",
+    readyMadeOnly: "Raktári termékek",
+  },
+  readyMade: {
+    badge: "Raktári termék",
+    stock: "{{count}} db raktáron",
   },
   checkout: {
     title: "Pénztár",
@@ -184,9 +190,6 @@ const translation = {
     phoneHint: "GLS SMS értesítéshez",
     sameAsShipping: "Azonos a szállítási címmel",
     fullName: "Név *",
-    companyGroupLabel: "Cégnév és adószám (vállalkozásoknak, opcionális)",
-    company: "Cégnév",
-    taxNumber: "Adószám",
     pickupBillingNote: "Személyes átvétel esetén is szükségünk van a címedre a számlához.",
     setInstances: "{{count}} példány",
     setIncomplete: "még nem teljes",
@@ -218,6 +221,7 @@ const translation = {
   },
   refusals: {
     VARIANT_UNAVAILABLE: "A(z) {{productName}} kiválasztott változata már nem elérhető.",
+    OUT_OF_STOCK: "A(z) {{productName}} termék már nincs raktáron.",
     LENGTH_MISSING: 'A(z) "{{productName}}" méteráru — a hossz (cm) megadása kötelező.',
     UNKNOWN_FIELD: 'A(z) "{{productName}}" termék nem ismeri ezt a mezőt: {{fieldId}}',
     VALUE_NOT_OFFERED: 'A(z) "{{fieldLabel}}" mező nem kínálja ezt az értéket: {{value}}',
@@ -286,6 +290,7 @@ const translation = {
   errorCodes: {
     EMAIL_ADDRESS_CONFLICT_ERROR:
       "Ez az email cím már regisztrált fiókhoz tartozik. Kérlek, adj meg egy másik email címet.",
+    INSUFFICIENT_STOCK_ERROR: "Nincs elég raktárkészlet. Kérlek, rendelj kevesebbet.",
   },
   privacy: {
     controllerHeading: "1. Adatkezelő",

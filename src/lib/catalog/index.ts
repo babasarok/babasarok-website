@@ -28,13 +28,15 @@ import {
   ProductsResponseSchema,
 } from "./schemas";
 
-export { byPopularity } from "./mappers";
+export { byPopularity, configurableProducts } from "./mappers";
 export type {
   CatalogMaterial,
   CatalogProduct,
   CatalogProductDetail,
   CatalogProductGroup,
+  CatalogProductOrdering,
   CatalogThreadColor,
+  ConfigurableCatalogProduct,
 } from "./mappers";
 
 const PAGE_SIZE = 100;

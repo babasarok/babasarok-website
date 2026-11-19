@@ -26,13 +26,20 @@ import { FIELD_BEHAVIORS } from "../product/behavior";
  * name, material id, or colour outside the chosen material's palette is
  * ignored, so the configurator starts unselected for that part.
  */
-export function prefillFromParams(item: IProduct, params: URLSearchParams): void {
+/** The `count` query param as a quantity (integer ≥ 1), or undefined. */
+export function countFromParams(params: URLSearchParams): number | undefined {
   const count = params.get("count");
-  if (count != null) {
-    const parsed = Number.parseInt(count, 10);
-    if (Number.isFinite(parsed) && parsed >= 1) {
-      item.count = parsed;
-    }
+  if (count == null) {
+    return undefined;
+  }
+  const parsed = Number.parseInt(count, 10);
+  return Number.isFinite(parsed) && parsed >= 1 ? parsed : undefined;
+}
+
+export function prefillFromParams(item: IProduct, params: URLSearchParams): void {
+  const count = countFromParams(params);
+  if (count !== undefined) {
+    item.count = count;
   }
 
   for (const [key, raw] of params.entries()) {

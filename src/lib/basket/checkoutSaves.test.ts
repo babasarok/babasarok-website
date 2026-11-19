@@ -133,8 +133,6 @@ const ticked: BillingValues = {
   sameAsShipping: true,
   fullName: "",
   address: { street: "", houseNumber: "", postalCode: "", city: "", country: "HU" },
-  company: "Minta Kft.",
-  taxNumber: "123",
 };
 
 describe("createCheckoutSaves", () => {
@@ -167,7 +165,7 @@ describe("createCheckoutSaves", () => {
     expect(shop.current()?.shippingAddress?.company).toBe("Minta Kft.");
   });
 
-  it("stores no billing address when ticked and moves the company onto the delivery address", async () => {
+  it("stores no billing address when ticked", async () => {
     const shop = fakeShop({
       shippingAddress: toAddress({ streetLine1: "Fő u.", countryCode: "HU" }),
       billingAddress: toAddress({
@@ -180,17 +178,12 @@ describe("createCheckoutSaves", () => {
 
     await shop.saves.billing(ticked, gls);
 
-    expect(shop.calls).toEqual([
-      "unsetBillingAddress",
-      "setShippingAddress",
-      "setOrderCustomFields",
-    ]);
+    expect(shop.calls).toEqual(["unsetBillingAddress"]);
     expect(shop.current()?.billingAddress?.streetLine1).toBeNull();
-    expect(shop.current()?.shippingAddress?.company).toBe("Minta Kft.");
-    expect(shop.current()?.customFields?.taxNumber).toBe("123");
+    expect(shop.current()?.shippingAddress?.company).toBeNull();
   });
 
-  it("clears the delivery-address company once the billing address carries it", async () => {
+  it("stores the split billing address without a company and leaves the delivery address alone", async () => {
     const shop = fakeShop({
       shippingAddress: toAddress({
         company: "Minta Kft.",
@@ -204,8 +197,13 @@ describe("createCheckoutSaves", () => {
       gls
     );
 
-    expect(shop.current()?.billingAddress?.company).toBe("Minta Kft.");
-    expect(shop.current()?.shippingAddress?.company).toBe("");
+    expect(shop.calls).toEqual(["setBillingAddress"]);
+    expect(shop.current()?.billingAddress).toMatchObject({
+      fullName: "Számla Név",
+      streetLine1: "Fő u.",
+      company: null,
+    });
+    expect(shop.current()?.shippingAddress?.company).toBe("Minta Kft.");
   });
 
   it("does not resave an unchanged ticked billing step", async () => {
@@ -219,7 +217,7 @@ describe("createCheckoutSaves", () => {
 
     await shop.saves.billing(ticked, gls);
 
-    expect(shop.calls).toEqual(["setOrderCustomFields"]);
+    expect(shop.calls).toEqual([]);
   });
 
   it("reports whether the order took a delivery method", async () => {

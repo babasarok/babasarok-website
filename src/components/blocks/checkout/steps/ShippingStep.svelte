@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import Button from "@/components/ui/Button.svelte";
+  import Button from "@/components/ui/ActionButton.svelte";
   import AddressFields from "./AddressFields.svelte";
   import Collapse from "@/components/blocks/checkout/wizard/Collapse.svelte";
   import I18nGate from "@/components/ui/I18nGate.svelte";

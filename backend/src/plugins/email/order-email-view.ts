@@ -37,12 +37,15 @@ export interface EmailViewOrder {
 export interface NativeLineContent {
   title: string;
   details: EmailDetail[];
+  /** A definition-less (ready-made) line ships from stock instead of production. */
+  stocked: boolean;
 }
 
 export interface EmailProductView {
   number: number;
   title: string;
   quantity: number;
+  stocked: boolean;
   details: Array<EmailDetail & { paddingLeft: number; indent: number }> | undefined;
 }
 
@@ -60,6 +63,8 @@ export interface OrderEmailView {
   deliveryPrice: string;
   total: string;
   setDiscountSummary: string;
+  /** The order holds at least one made-to-order line, so production time applies. */
+  madeToOrder: boolean;
 }
 
 export interface EmailMoney {
@@ -135,13 +140,13 @@ export function billingView(order: EmailViewOrder): EmailBillingView | undefined
 
 /** One line per discount that touched the order's lines, naming the products it covers. */
 export function setDiscountSummary(
-  lines: readonly EmailViewLine[],
+  lines: ReadonlyArray<{ line: EmailViewLine; number: number }>,
   money: EmailMoney,
   languageCode: string
 ): string {
   const bySource = new Map<string, { description: string; amount: number; numbers: number[] }>();
 
-  for (const [index, line] of lines.entries()) {
+  for (const { line, number } of lines) {
     for (const discount of line.discounts) {
       const entry = bySource.get(discount.adjustmentSource) ?? {
         description: discount.description,
@@ -150,7 +155,7 @@ export function setDiscountSummary(
       };
 
       entry.amount += discount.amountWithTax;
-      entry.numbers.push(index + 1);
+      entry.numbers.push(number);
       bySource.set(discount.adjustmentSource, entry);
     }
   }
@@ -167,8 +172,10 @@ export function setDiscountSummary(
 
 /**
  * The email's order content (ADR 0013 decision 7): built from the order's
- * lines and shipping line. Orders from the legacy mutation keep their own
- * handlers and templates, built from the stored payload.
+ * lines and shipping line. Ready-made lines lead the list (they ship from
+ * stock while the rest is in production) and the numbering follows the
+ * displayed order. Orders from the legacy mutation keep their own handlers
+ * and templates, built from the stored payload.
  */
 export function orderEmailView(
   order: EmailViewOrder,
@@ -180,12 +187,21 @@ export function orderEmailView(
   const freed =
     shipping !== undefined && shipping.priceWithTax > 0 && shipping.discountedPriceWithTax === 0;
 
+  const numbered = order.lines.map((line, index) => ({ line, content: nativeLines[index] }));
+  const stocked = numbered.filter((entry) => entry.content.stocked);
+  const madeToOrder = numbered.filter((entry) => !entry.content.stocked);
+  const display = [...stocked, ...madeToOrder].map((entry, index) => ({
+    ...entry,
+    number: index + 1,
+  }));
+
   return {
-    products: order.lines.map((line, index) => ({
-      number: index + 1,
-      title: nativeLines[index].title,
+    products: display.map(({ line, content, number }) => ({
+      number,
+      title: content.title,
       quantity: line.quantity,
-      details: indented(nativeLines[index].details),
+      stocked: content.stocked,
+      details: indented(content.details),
     })),
     deliveryAddress: addressLines(order.shippingAddress),
     billing: billingView(order),
@@ -194,6 +210,7 @@ export function orderEmailView(
       ? messages(languageCode).deliveryFree()
       : formatMoney(shipping?.discountedPriceWithTax ?? 0, money, languageCode),
     total: formatMoney(order.totalWithTax, money, languageCode),
-    setDiscountSummary: setDiscountSummary(order.lines, money, languageCode),
+    setDiscountSummary: setDiscountSummary(display, money, languageCode),
+    madeToOrder: madeToOrder.length > 0,
   };
 }

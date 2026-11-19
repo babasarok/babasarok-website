@@ -110,6 +110,7 @@ const ORDER_FIELDS = `
 // Vendure ErrorCode → i18next key; islands translate via their client i18n.
 const ERROR_KEYS: Record<string, string> = {
   EMAIL_ADDRESS_CONFLICT_ERROR: "errorCodes.EMAIL_ADDRESS_CONFLICT_ERROR",
+  INSUFFICIENT_STOCK_ERROR: "errorCodes.INSUFFICIENT_STOCK_ERROR",
 };
 
 const ERROR_FIELDS = `__typename ... on ErrorResult { errorCode message }`;

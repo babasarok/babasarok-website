@@ -1,5 +1,13 @@
 import gql from "graphql-tag";
-import { Allow, Ctx, Permission, Product, RequestContext } from "@vendure/core";
+import {
+  Allow,
+  Ctx,
+  Permission,
+  Product,
+  ProductVariant,
+  ProductVariantService,
+  RequestContext,
+} from "@vendure/core";
 import type { ID } from "@vendure/core";
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { ProductDefinition } from "./product.entity";
@@ -176,9 +184,32 @@ export class ShopProductFieldResolver {
   }
 }
 
+/** The ready-made storefront needs the real stock: the quantity stepper is
+ * capped at it and the page shows it. Null when the variant does not track
+ * inventory (configurator products — never out of stock). */
+@Resolver("ProductVariant")
+export class ShopVariantFieldResolver {
+  constructor(private productVariantService: ProductVariantService) {}
+
+  @ResolveField()
+  @Allow(Permission.Public)
+  async saleableStock(
+    @Ctx() ctx: RequestContext,
+    @Parent() variant: ProductVariant
+  ): Promise<number | null> {
+    const stock = await this.productVariantService.getSaleableStockLevel(ctx, variant);
+
+    return stock >= Number.MAX_SAFE_INTEGER ? null : stock;
+  }
+}
+
 export const shopProductSchema = gql`
   extend type Product {
     productDefinition: JSON
+  }
+
+  extend type ProductVariant {
+    saleableStock: Int
   }
 
   ${shopThreadColorTypes}

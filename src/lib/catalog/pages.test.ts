@@ -43,6 +43,10 @@ describe("toProductPageData", () => {
   it("offers the products sharing a group with this one to the configurator", async () => {
     const page = toProductPageData(tornazsak(), await loadCatalog(), "hu", ASSET_BASE);
 
+    if (page.kind !== "configurable") {
+      throw new Error("fixture product must be configurable");
+    }
+
     expect(Object.keys(page.orderCatalog)).toEqual(["tornazsak"]);
     expect(page.slugByProductId).toMatchObject({ "kismama-parna": "kismama-parna" });
   });

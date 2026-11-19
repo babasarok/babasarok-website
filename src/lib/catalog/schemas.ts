@@ -20,6 +20,14 @@ const ProductRowSchema = z.object({
   facetValues: z.array(
     z.object({ code: z.string(), name: z.string(), facet: z.object({ code: z.string() }) })
   ),
+  variants: z.array(
+    z.object({
+      currencyCode: z.string(),
+      priceWithTax: z.number(),
+      stockLevel: z.enum(["IN_STOCK", "LOW_STOCK", "OUT_OF_STOCK"]),
+      saleableStock: z.number().int().nullable(),
+    })
+  ),
   productDefinition: ProductDefinitionSchema.nullable(),
 });
 

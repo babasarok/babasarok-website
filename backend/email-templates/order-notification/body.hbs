@@ -73,9 +73,10 @@
               <div
                 style="border:1px solid #e0c0a3; border-radius:6px; padding:10px 14px; margin:0 0 10px 0;"
               >
-                <p
-                  style="margin:0 0 4px 0; font-size:13px; font-weight:bold; color:#6f5447;"
-                >{{number}}.
+                <p style="margin:0 0 4px 0; font-size:13px; font-weight:bold; color:#6f5447;">{{#if
+                    stocked
+                  }}<span style="color:#28341d;">[RAKTÁRI]</span>
+                  {{/if}}{{number}}.
                   {{title}}
                   ({{quantity}}
                   db)</p>

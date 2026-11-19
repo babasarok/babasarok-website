@@ -1,4 +1,4 @@
-# ADR 0018 — GLS labels via the MyGLS API
+# ADR 0020 — GLS labels via the MyGLS API
 
 Status: proposed
 

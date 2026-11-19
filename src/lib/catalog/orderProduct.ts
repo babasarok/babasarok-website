@@ -11,6 +11,7 @@ import type {
   SlimImage,
 } from "@/lib/order/types";
 import { isProductType } from "@/lib/product/productTypes";
+import type { ProductDefinition } from "@babasarok/product-definition";
 import { imageUrl, type VendureAsset } from "@/lib/vendure/imageUrl";
 import { cardImage } from "./listItems";
 import type {
@@ -156,11 +157,11 @@ function toOrderField(
 
 export function toOrderProduct(
   product: CatalogProduct,
+  definition: ProductDefinition,
   materials: readonly CatalogMaterial[],
   assetBase: string,
   languageCode: string
 ): OrderProduct {
-  const { definition } = product;
   const orderMaterials = new Map(
     materials.map((material) => [material.slug, toOrderMaterial(material, assetBase)])
   );

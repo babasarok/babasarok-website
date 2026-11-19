@@ -1,5 +1,10 @@
 import path from "node:path";
-import type { OrderPlacedStrategy, RequestContext, VendureConfig } from "@vendure/core";
+import type {
+  OrderPlacedStrategy,
+  RequestContext,
+  StockAllocationStrategy,
+  VendureConfig,
+} from "@vendure/core";
 import {
   Asset,
   configureDefaultOrderProcess,
@@ -109,6 +114,18 @@ export class QuoteOrderPlacedStrategy implements OrderPlacedStrategy {
   }
 }
 
+// Stock-tracked variants: a basket only checks stock, a placed order holds it.
+// The checkout transition is the flow's final state (QuoteOrderPlacedStrategy),
+// so allocation happens there; cancelling or fulfilling the placed order
+// releases or sells the stock (Vendure's default behaviour). The transition
+// guard's stock check locks the same rows, so two simultaneous checkouts
+// cannot both take the last unit.
+export class PlacedOrderStockAllocationStrategy implements StockAllocationStrategy {
+  shouldAllocateStock(_ctx: RequestContext, fromState: string, toState: string): boolean {
+    return fromState === "AddingItems" && toState === "ArrangingPayment";
+  }
+}
+
 const CORS_PREFLIGHT_MAX_AGE_SECONDS = 7200;
 
 export const config: VendureConfig = {
@@ -161,6 +178,7 @@ export const config: VendureConfig = {
   orderOptions: {
     process: [configureDefaultOrderProcess({ arrangingPaymentRequiresShipping: false })],
     orderPlacedStrategy: new QuoteOrderPlacedStrategy(),
+    stockAllocationStrategy: new PlacedOrderStockAllocationStrategy(),
     orderItemPriceCalculationStrategy: new ServerPricingStrategy(),
   },
   // Prices are whole Forints everywhere (definitions, seed, sync, order lines);
