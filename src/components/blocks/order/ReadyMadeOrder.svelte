@@ -6,6 +6,7 @@
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import { basket } from "@/lib/basket/basket.svelte";
   import { formatMoney } from "@/lib/basket/money";
+  import { replaceUrl } from "@/lib/history";
   import { reasonText, type Reason } from "@/lib/basket/refusalText";
   import { findLine, type PriceChange } from "@/lib/basket/stale";
   import { countFromParams } from "@/lib/order/queryParams";
@@ -164,7 +165,7 @@
 
     const url = new URL(globalThis.location.href);
     url.searchParams.set("line", placed.id);
-    globalThis.history.replaceState(null, "", url);
+    replaceUrl(url);
   }
 </script>
 
