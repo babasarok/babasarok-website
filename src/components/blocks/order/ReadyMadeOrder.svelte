@@ -8,23 +8,28 @@
   import { formatMoney } from "@/lib/basket/money";
   import { reasonText, type Reason } from "@/lib/basket/refusalText";
   import { findLine, type PriceChange } from "@/lib/basket/stale";
+  import {
+    initialVariant,
+    variantForOption,
+    type ReadyMadeOrdering,
+  } from "@/lib/catalog/readyMadeOptions";
   import { countFromParams } from "@/lib/order/queryParams";
   import { localizedPath, type Locale } from "@/lib/i18n";
   import type { i18n as I18n } from "i18next";
+  import VariantOptions from "./VariantOptions.svelte";
 
   interface Props {
     locale: Locale;
     slug: string;
-    unitPriceWithTax: number;
-    currencyCode: string;
-    /** The stock the quantity is capped at; null when untracked (no cap). */
-    saleableStock: number | null;
+    ordering: ReadyMadeOrdering;
   }
 
-  let { locale, slug, unitPriceWithTax, currencyCode, saleableStock }: Props = $props();
+  let { locale, slug, ordering }: Props = $props();
 
+  let pickedVariantId = $state<string>();
   let count = $state(1);
   let editingLineId = $state<string | null>(null);
+  let savedVariantId = $state<string | null>(null);
   let savedCount = $state<number | null>(null);
   let saved = $state(false);
   let busy = $state(false);
@@ -33,8 +38,11 @@
   let priceNotice = $state<(PriceChange & { currencyCode: string }) | null>(null);
   let restored = false;
 
-  const isDirty = $derived(savedCount !== null && count !== savedCount);
-  const maxCount = $derived(saleableStock ?? undefined);
+  const variant = $derived(initialVariant(ordering, pickedVariantId));
+  const isDirty = $derived(
+    savedCount !== null && (count !== savedCount || variant?.id !== savedVariantId)
+  );
+  const maxCount = $derived(variant?.saleableStock ?? undefined);
 
   onMount(() => {
     basket.start();
@@ -78,7 +86,24 @@
     count = line.quantity;
     editingLineId = line.id;
     savedCount = line.quantity;
+    pickedVariantId = line.productVariant.id;
+    savedVariantId = line.productVariant.id;
   });
+
+  function pick(optionId: string): void {
+    const next = variantForOption(ordering, variant, optionId);
+
+    if (next === undefined) {
+      return;
+    }
+
+    pickedVariantId = next.id;
+    saved = false;
+
+    if (next.saleableStock !== null && count > next.saleableStock) {
+      count = Math.max(1, next.saleableStock);
+    }
+  }
 
   function refuse(reason: Reason): false {
     error = reason;
@@ -105,26 +130,21 @@
   }
 
   async function upsertLine(): Promise<void> {
-    const variantId = await basket.api.productVariantId(slug);
-
-    if (!variantId.ok) {
-      refuse(variantId.failure.reason);
-      return;
-    }
-
-    if (variantId.value === undefined) {
+    if (variant === undefined) {
       refuse("errors.notOrderable");
       return;
     }
 
+    const chosen = variant;
     const existing =
       editingLineId === null
         ? undefined
         : basket.order?.lines.find((candidate) => candidate.id === editingLineId);
-    const result = await (existing
+    const sameVariant = existing?.productVariant.id === chosen.id;
+    const result = await (existing && sameVariant
       ? basket.adjust(existing.id, count)
       : basket.add({
-          productVariantId: variantId.value,
+          productVariantId: chosen.id,
           quantity: count,
           customFields: { selections: "{}" },
         }));
@@ -134,24 +154,31 @@
       return;
     }
 
-    const placed = existing
-      ? result.value.lines.find((candidate) => candidate.id === existing.id)
-      : findLine(result.value, {
-          variantId: variantId.value,
-          selections: "{}",
-          lengthCm: undefined,
-        });
+    const placed = findLine(result.value, {
+      variantId: chosen.id,
+      selections: "{}",
+      lengthCm: undefined,
+    });
 
     if (!placed) {
       refuse("errors.addFailed");
       return;
     }
 
-    basket.rememberShownPrice(placed.id, unitPriceWithTax);
+    if (existing && placed.id !== existing.id) {
+      const removal = await basket.remove(existing.id);
 
-    if (unitPriceWithTax !== placed.unitPriceWithTax) {
+      if (!removal.ok) {
+        refuse(removal.failure.reason);
+        return;
+      }
+    }
+
+    basket.rememberShownPrice(placed.id, chosen.priceWithTax);
+
+    if (chosen.priceWithTax !== placed.unitPriceWithTax) {
       priceNotice = {
-        shown: unitPriceWithTax,
+        shown: chosen.priceWithTax,
         actual: placed.unitPriceWithTax,
         currencyCode: result.value.currencyCode,
       };
@@ -159,6 +186,7 @@
 
     count = placed.quantity;
     savedCount = placed.quantity;
+    savedVariantId = chosen.id;
     editingLineId = placed.id;
     saved = true;
 
@@ -171,28 +199,36 @@
 <I18nGate {locale}>
   {#snippet children(i18n: I18n)}
     <div class="not-prose w-full text-left text-body">
-      <div class="flex flex-col gap-1">
-        {#if count > 1}
-          <div class="flex justify-between text-xs text-brown-600">
-            <p>{i18n.t("price.perUnit")}</p>
-            <p>{formatMoney(unitPriceWithTax, currencyCode)}</p>
+      {#if variant}
+        {#if ordering.optionGroups.length > 0}
+          <div class="mb-4">
+            <VariantOptions {i18n} {ordering} selected={variant} onPick={pick} />
           </div>
         {/if}
 
-        <div class="flex justify-between items-baseline pt-0.5">
-          <p class="text-sm font-medium">
-            {i18n.t("price.total")}
-            {#if count > 1}
-              <span class="text-xs font-normal text-brown-500"
-                >({count} {i18n.t("common.piece")})</span
-              >
-            {/if}
-          </p>
-          <p class="text-base font-semibold text-brown-800">
-            {formatMoney(unitPriceWithTax * count, currencyCode)}
-          </p>
+        <div class="flex flex-col gap-1">
+          {#if count > 1}
+            <div class="flex justify-between text-xs text-brown-600">
+              <p>{i18n.t("price.perUnit")}</p>
+              <p>{formatMoney(variant.priceWithTax, ordering.currencyCode)}</p>
+            </div>
+          {/if}
+
+          <div class="flex justify-between items-baseline pt-0.5">
+            <p class="text-sm font-medium">
+              {i18n.t("price.total")}
+              {#if count > 1}
+                <span class="text-xs font-normal text-brown-500"
+                  >({count} {i18n.t("common.piece")})</span
+                >
+              {/if}
+            </p>
+            <p class="text-base font-semibold text-brown-800">
+              {formatMoney(variant.priceWithTax * count, ordering.currencyCode)}
+            </p>
+          </div>
         </div>
-      </div>
+      {/if}
 
       {#if error}
         <div class="mt-3 flex flex-col items-start gap-2 text-sm text-danger-500">
@@ -279,9 +315,9 @@
           </IconButton>
         </div>
 
-        {#if saleableStock !== null}
+        {#if variant?.saleableStock != null}
           <p class="mt-2 text-sm text-sand-700">
-            {i18n.t("readyMade.stock", { count: saleableStock })}
+            {i18n.t("readyMade.stock", { count: variant.saleableStock })}
           </p>
         {/if}
 
@@ -289,7 +325,7 @@
           class="h-11 flex-1 uppercase"
           variant="contained"
           type="button"
-          disabled={busy}
+          disabled={busy || variant === undefined}
           onclick={save}
         >
           {editingLineId === null ? i18n.t("order.addToBasket") : i18n.t("order.updateBasket")}

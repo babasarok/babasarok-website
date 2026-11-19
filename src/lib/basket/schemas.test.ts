@@ -25,6 +25,7 @@ const line = (productDefinition: z.output<typeof ProductDefinitionSchema> | null
   productVariant: {
     id: "3",
     name: "v",
+    options: [],
     product: { slug: "parna", name: "Párna", featuredAsset: null, productDefinition },
   },
 });

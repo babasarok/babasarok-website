@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
+import { CatalogOptionGroupSchema, CatalogVariantSchema } from "./readyMadeOptions";
 
 const AssetSchema = z.object({
   source: z.string(),
@@ -20,14 +21,8 @@ const ProductRowSchema = z.object({
   facetValues: z.array(
     z.object({ code: z.string(), name: z.string(), facet: z.object({ code: z.string() }) })
   ),
-  variants: z.array(
-    z.object({
-      currencyCode: z.string(),
-      priceWithTax: z.number(),
-      stockLevel: z.enum(["IN_STOCK", "LOW_STOCK", "OUT_OF_STOCK"]),
-      saleableStock: z.number().int().nullable(),
-    })
-  ),
+  variants: z.array(CatalogVariantSchema),
+  optionGroups: z.array(CatalogOptionGroupSchema),
   productDefinition: ProductDefinitionSchema.nullable(),
 });
 

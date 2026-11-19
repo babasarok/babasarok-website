@@ -27,12 +27,15 @@
         ],
         "variants": [
           {
+            "id": "101",
             "currencyCode": "HUF",
             "priceWithTax": 7500,
             "stockLevel": "IN_STOCK",
-            "saleableStock": null
+            "saleableStock": null,
+            "options": []
           }
         ],
+        "optionGroups": [],
         "productDefinition": {
           "id": "babatakaro-szett",
           "fields": [
@@ -180,12 +183,15 @@
         ],
         "variants": [
           {
+            "id": "102",
             "currencyCode": "HUF",
             "priceWithTax": 9500,
             "stockLevel": "IN_STOCK",
-            "saleableStock": null
+            "saleableStock": null,
+            "options": []
           }
         ],
+        "optionGroups": [],
         "productDefinition": {
           "id": "kismama-parna",
           "fields": [
@@ -251,12 +257,15 @@
         ],
         "variants": [
           {
+            "id": "103",
             "currencyCode": "HUF",
             "priceWithTax": 4000,
             "stockLevel": "IN_STOCK",
-            "saleableStock": null
+            "saleableStock": null,
+            "options": []
           }
         ],
+        "optionGroups": [],
         "productDefinition": {
           "id": "tornazsak",
           "fields": [

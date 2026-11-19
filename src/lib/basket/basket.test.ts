@@ -187,6 +187,7 @@ const line = (over: Partial<OrderLine> = {}): OrderLine => ({
   productVariant: {
     id: "3",
     name: "v",
+    options: [],
     product: { slug: "parna", name: "Párna", featuredAsset: null, productDefinition: null },
   },
   ...over,

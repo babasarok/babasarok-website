@@ -93,13 +93,7 @@
                       threadColors={page.threadColors}
                     />
                   {:else}
-                    <ReadyMadeOrder
-                      {locale}
-                      slug={loadedProduct.slug}
-                      unitPriceWithTax={page.unitPriceWithTax}
-                      currencyCode={page.currencyCode}
-                      saleableStock={page.saleableStock}
-                    />
+                    <ReadyMadeOrder {locale} slug={loadedProduct.slug} ordering={page.ordering} />
                   {/if}
                 </div>
               </div>

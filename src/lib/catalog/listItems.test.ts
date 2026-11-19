@@ -96,9 +96,11 @@ describe("toProductListData", () => {
       slug: "kesz-kanal",
       ordering: {
         kind: "ready-made",
-        unitPriceWithTax: 6500,
         currencyCode: "HUF",
-        saleableStock: 1,
+        optionGroups: [],
+        variants: [
+          { id: "71", priceWithTax: 6500, saleableStock: 1, soldOut: false, optionIds: [] },
+        ],
       },
     });
     const { items } = toProductListData(

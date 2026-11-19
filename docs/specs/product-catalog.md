@@ -26,11 +26,16 @@ epic 4).
 > re-syncs it; a stock product save without a name does not.
 >
 > A product without a definition is a **ready-made product**: an enabled native
-> product ordered as-is, with no configurator. Its single variant's price is
-> the product's price (display and order pass-through) and its stock is
-> tracked (`stockOnHand` on the stock product page, Vendure's default global
-> tracking); a sold-out unit hides it from the storefront (below). Only
-> configurator products carry configuration on their product pages.
+> product ordered as-is, with no configurator, managed entirely on the stock
+> product page ([ADR 0018](../adr/0018-ready-made-products-and-stock.md),
+> [ADR 0019](../adr/0019-ready-made-product-options.md)). It has either a
+> single variant, or option groups with one owner-made variant per offered
+> combination (Vendure's own option groups and variants — not every
+> combination has to exist). Each variant's price is its own price (display
+> and order pass-through) and its stock is tracked (`stockOnHand` per
+> variant, Vendure's default global tracking); a product whose every variant
+> is sold out hides from the storefront (below). Only configurator products
+> carry configuration on their product pages.
 >
 > The product type is a value of the public
 > `babasarok-product-type` facet on the native product (ADR 0011 decision 2),
@@ -75,7 +80,7 @@ its tagline as the category line. Visibility and orderability are one switch —
 the native product's `enabled` (the shop API serves only enabled products); a
 product without a known type is
 listed and only drops out of type filters. A sold-out ready-made product
-(saleable stock 0) is not a storefront product: it drops out of the
+(saleable stock 0 on every variant) is not a storefront product: it drops out of the
 list, search, sitemap and home block, and its detail page shows "not found".
 The
 page is a prerendered shell whose list island loads the catalog in the browser
@@ -174,7 +179,23 @@ additionally embed an order form for that product (every product the
 shop API serves is enabled and orderable): an order configurator for a
 configurator product, and for a ready-made product a plain order block — the
 variant's price, a quantity picker and add-to-basket — with no configuration
-controls.
+controls. A ready-made product with option groups additionally shows one
+chip row per option group (the options some live variant carries, in the
+groups' and options' own order); the picked chips select one variant, whose
+price and stock the block shows. The page starts on the first variant in
+stock (or, when editing a basket line, the line's variant while it is in
+stock). An option no in-stock variant carries renders disabled ("elfogyott"
+for screen readers); picking an option moves to the in-stock variant that
+keeps the most of the other picks, so a combination that does not exist or
+is sold out can never be selected.
+
+- **Scenario: Picking an option**
+  - WHEN a visitor picks "L" on a ready-made product with sizes
+  - THEN the block shows the L variant's price and stock, and the quantity
+    is capped at the L variant's stock
+- **Scenario: A sold-out option**
+  - WHEN every variant carrying "S" is sold out but "L" is in stock
+  - THEN the product stays listed and the "S" chip is disabled
 
 - **Scenario: Viewing a product**
   - WHEN a visitor opens a product's detail page
@@ -251,14 +272,15 @@ configured, and no order line can target it.
 
 ### Ready-made stock
 
-The system SHALL track a ready-made product's stock on its single variant with
+The system SHALL track a ready-made product's stock on each of its variants with
 Vendure's default inventory (`stockOnHand` on the stock product page; a
-sold-out unit is `saleable stock = stockOnHand − stockAllocated − threshold ≤
-0` and hides the product everywhere). The shop API exposes the variant's
+sold-out variant is `saleable stock = stockOnHand − stockAllocated − threshold ≤
+0`; the product hides everywhere once every variant is sold out). The shop API exposes each variant's
 `saleableStock` (null for an untracked variant). The storefront SHALL present a
 ready-made product as a stocked, not made-to-order item: a "raktári termék"
-badge on its page and list card, its stock count on both, and the quantity
-stepper capped at the saleable stock. A basket only checks the stock:
+badge on its page and list card, its stock count on both (the list card sums
+its in-stock variants; none when one is untracked), and the quantity
+stepper capped at the picked variant's saleable stock. A basket only checks the stock:
 adding or adjusting a line is refused or clamped when the saleable stock does
 not cover the quantity, but the line holds nothing. A **placed order holds the
 unit**: stock allocates when the buyer submits checkout (the
@@ -491,6 +513,11 @@ language as `?languageCode=` (currently `hu`).
   with `resolveText`. The configurator adds to the product's one variant,
   read with the stock `product(slug) { variants { id } }`; the page decides
   orderability.
+- Ready-made products use the stock `Product.optionGroups` (names and order)
+  and each variant's `id`, price, `stockLevel`, `saleableStock` and
+  `options { id }`; a basket line reads its variant's
+  `options { name group { name } }`. Reading variant options is confined to
+  the modules allowlisted in `eslint/variant-option-reads.ts` (ADR 0019).
 - `materials` / `material(slug)` — materials with request-language
   `label`/`subtitle`/`description`, thumbnail and colors (`id`, `label`,
   `hex`, `asset`).

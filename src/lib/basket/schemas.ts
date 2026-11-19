@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { RefusalSchema } from "@babasarok/pricing";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
+import { LineVariantOptionsSchema } from "@/lib/catalog/readyMadeOptions";
 import { SetDiscountSchema, SetStateSchema } from "./setDiscounts";
 
 export const OrderLineSchema = z.object({
@@ -16,6 +17,7 @@ export const OrderLineSchema = z.object({
   productVariant: z.object({
     id: z.string(),
     name: z.string(),
+    options: LineVariantOptionsSchema,
     product: z.object({
       slug: z.string(),
       name: z.string(),

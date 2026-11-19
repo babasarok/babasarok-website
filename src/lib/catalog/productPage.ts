@@ -5,6 +5,7 @@ import type { VendureAsset } from "@/lib/vendure/imageUrl";
 import type { Catalog } from "./index";
 import { configurableProducts, type CatalogProduct, type CatalogProductDetail } from "./mappers";
 import { toOrderGroups, toOrderProduct, toOrderThreadColors } from "./orderProduct";
+import type { ReadyMadeOrdering } from "./readyMadeOptions";
 
 export interface GalleryImage {
   asset: VendureAsset;
@@ -36,10 +37,7 @@ export interface ConfigurableProductPageData extends ProductPageBase {
 /** A ready-made product has no configurator and is never a set/related member. */
 export interface ReadyMadeProductPageData extends ProductPageBase {
   kind: "ready-made";
-  unitPriceWithTax: number;
-  currencyCode: string;
-  /** Real stock the quantity is capped at; null when untracked. */
-  saleableStock: number | null;
+  ordering: ReadyMadeOrdering;
 }
 
 export type ProductPageData = ConfigurableProductPageData | ReadyMadeProductPageData;
@@ -98,9 +96,7 @@ export function toProductPageData(
     return {
       ...neighbours(product, catalog, locale),
       kind: "ready-made",
-      unitPriceWithTax: product.ordering.unitPriceWithTax,
-      currencyCode: product.ordering.currencyCode,
-      saleableStock: product.ordering.saleableStock,
+      ordering: product.ordering,
     };
   }
 
