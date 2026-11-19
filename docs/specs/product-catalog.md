@@ -87,8 +87,6 @@ inline error with a retry instead of partial data. With:
   dimension are OR-combined.
 - **Filtering to ready-made products**: one checkbox selecting the products
   ordered as-is from stock; it AND-combines with the other dimensions.
-- **Ready-made products first**: within every sort, ready-made products lead
-  the list (each group keeps its sort order).
 - **Filtering by product set**: a product matches the set filter when it is
   a member of a selected set; multiple set selections are OR-combined.
 - **Sorting**: by the `popularityRank` order (default), newest first,

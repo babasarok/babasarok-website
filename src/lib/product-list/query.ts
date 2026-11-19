@@ -83,9 +83,8 @@ export interface ListProduct {
  * each other and the search. Returns a new array sorted by the state's sort
  * ("popular": position in `popularOrder`, products without a curated position
  * following it name-ascending among themselves; "newest": date descending,
- * missing dates last, stable; "name": title ascending, Hungarian locale), with
- * ready-made products leading the list within every sort. The input is not
- * mutated.
+ * missing dates last, stable; "name": title ascending, Hungarian locale). The
+ * input is not mutated.
  */
 export function applyListState<TProduct extends ListProduct>(
   products: readonly TProduct[],
@@ -151,11 +150,7 @@ export function applyListState<TProduct extends ListProduct>(
       break;
   }
 
-  // Ready-made products lead within every sort; both groups keep their order.
-  return [
-    ...sorted.filter((product) => product.readyMade === true),
-    ...sorted.filter((product) => product.readyMade !== true),
-  ];
+  return sorted;
 }
 
 /** Serialize a view state to a URL search string ("" for the default state). */
