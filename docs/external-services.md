@@ -187,18 +187,19 @@ account (account id `b64cf6f65472d9a85a44d39f7a68c81a`).
   `100021942`); the owner works parcels in the MyGLS web UI (mygls.hu).
 - **API:** the MyGLS API (`api.mygls.hu`, REST/JSON — SOAP exists, unused;
   group ShipIT is not used for HU) — integration design in
-  [ADR 0018](adr/0018-gls-labels-via-mygls-api.md), developer docs at
+  [ADR 0020](adr/0020-gls-labels-via-mygls-api.md), developer docs at
   `api.mygls.hu/docs/MyGLS_API.pdf`. A test environment exists at
   `api.test.mygls.hu`.
-- **API access status (2026-11-13):** the web login (email + password)
-  authenticates on the live API (verified read-only); whether it may be
-  used there, and test-environment provisioning for the account, are being
-  asked from GLS (connect@gls-hungary.com, 06-29-88-66-88) — the drafted
-  email is in ADR 0018's rollout plan.
-- **Credentials placement:** `MYGLS_HU_{ACCOUNT_ID,EMAIL,PASSWORD}`
-  currently in `backend/.env` for the credential test; they move to the
-  prod stack's box `.env` (never CI) when the plugin ships, per the
-  account design in ADR 0018.
+- **API access status:** test environment verified working (2026-11-19,
+  read-only probe — authenticated, wrong password bounces with
+  `Unauthorized.`); the web login also authenticates on the live API
+  (2026-11-13), but whether it may be _used_ there is still GLS's to
+  answer (connect@gls-hungary.com, 06-29-88-66-88) — the drafted email in
+  ADR 0020's rollout plan now carries only that question.
+- **Credentials placement:** `MYGLS_HU_{ACCOUNT_ID,EMAIL,PASSWORD}` (live)
+  and `TEST_MYGLS_HU_{ACCOUNT_ID,EMAIL,PASSWORD}` (test env) in
+  `backend/.env`; they move to the stack's box `.env` (never CI) when the
+  plugin ships, per the account design in ADR 0020.
 
 ## Retired / rejected (kept so nobody re-proposes them)
 

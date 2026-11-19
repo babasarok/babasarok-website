@@ -96,15 +96,23 @@ PaymentSettled`). This makes `Delivered` an invariant: fully paid and
    real-network check is a hand-run smoke script gated behind
    `GLS_SMOKE_API_URL` (read-only), like the catalog contract test.
 
-## Verified facts (2026-11-13)
+## Verified facts (2026-11-13, 2026-11-19)
 
-- **Credentials:** the owner's MyGLS web login (email + password)
+- **Test-env credentials (verified 2026-11-19):** GLS provisioned the
+  account on the test environment; `GetParcelStatuses` on
+  `api.test.mygls.hu` with the test trio (`TEST_MYGLS_HU_{EMAIL,PASSWORD}`
+  in `backend/.env`) returned the account-scoped
+  `ErrorCode: 26 "Parcel not found with current settings"` for a fabricated
+  parcel number, while a deliberately wrong password returned
+  `Unauthorized.` (`ErrorCode: -1`) — authentication works, S4 is
+  unblocked. The test account id rides in `TEST_MYGLS_HU_ACCOUNT_ID`.
+- **Live credentials:** the owner's MyGLS web login (email + password)
   authenticates on the live API — `GetParcelStatuses` returned the
   account-scoped `ErrorCode: 5 "Access denied for this parcel ID"`, not
   `Unauthorized.` (GLS's published demo credentials return
   `Unauthorized.`, so per-account API access is enforced). No separate API
-  credential set is known to be needed; whether it is _allowed_ is part of
-  the GLS email. The account id (`100021942`) is not part of
+  credential set is known to be needed; whether it is _allowed_ there is
+  still GLS's to answer. The account id (`100021942`) is not part of
   authentication; it rides per-parcel as `ClientNumber` (9-digit, like the
   doc's sample).
 - **Wire format:** in JSON, `Password` is the SHA-512 digest as a
@@ -130,15 +138,18 @@ PaymentSettled`). This makes `Delivered` an invariant: fully paid and
    (real Vendure server, fake GLS).
 3. **S3 Polling worker** — statuses, the deliver-when-settled rule,
    `trackingCode` handling.
-4. **S4 Test-env round-trip** — once GLS provisions the test account:
-   `PrintLabels` → PDF → `DeleteLabels` on `api.test.mygls.hu`.
+4. **S4 Test-env round-trip** — test access is provisioned and verified
+   (2026-11-19): `PrintLabels` → PDF → `DeleteLabels` on
+   `api.test.mygls.hu`.
 5. **S5 Live verification (done-condition, owner-run)** — one real label
    created through the finished plugin's path, checked in MyGLS, deleted.
    Development never touches live; without this step nothing proves her
    contract issues labels with the services and COD behavior she needs.
 
-The GLS email to send meanwhile (drafted; also linked from
-[external-services.md](../external-services.md)):
+The GLS email (drafted; also linked from
+[external-services.md](../external-services.md)) asked two things — the
+test-environment provisioning arrived on 2026-11-19 (see the verified
+facts), so only the live-API permission question remains open:
 
 > **Tárgy:** MyGLS API-integráció – az API-hozzáférés tisztázása és
 > tesztkörnyezeti hozzáférés igénylése
