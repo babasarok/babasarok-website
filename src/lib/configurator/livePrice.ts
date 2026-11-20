@@ -1,0 +1,52 @@
+import type { ProductDefinition } from "@babasarok/product-definition";
+import { valueConfiguredLine } from "@babasarok/pricing";
+import { buildSelections } from "@/lib/basket/configuratorLine";
+import type { Field, ConfiguratorItem } from "@/lib/configurator/item.svelte";
+
+const LANGUAGE = "hu";
+
+function enteredString(field: Field | undefined): string | undefined {
+  switch (field?.type) {
+    case "input":
+    case "select":
+    case "radio":
+    case "color":
+      return field.value?.value;
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * The unit price (Ft) the shared pricing package gives the configured item —
+ * from the same selections the basket line carries — or null while it is
+ * unpriceable (e.g. no length yet). Axis fields the buyer has not
+ * picked yet price at their first listed option.
+ */
+export function liveUnitPrice(
+  definition: ProductDefinition,
+  productName: string,
+  item: Pick<ConfiguratorItem, "fields">
+): number | null {
+  const { pricing } = definition;
+  const lengthCm =
+    pricing.kind === "length"
+      ? Math.round(
+          Number(enteredString(item.fields.find((field) => field.name === pricing.sourceFieldId)))
+        )
+      : null;
+
+  const valuation = valueConfiguredLine({
+    definition,
+    productName,
+    selections: buildSelections(item.fields),
+    lengthCm: lengthCm === null || Number.isNaN(lengthCm) ? null : lengthCm,
+    languageCode: LANGUAGE,
+  });
+
+  if (valuation.kind === "invalid") {
+    return null;
+  }
+
+  return valuation.price;
+}

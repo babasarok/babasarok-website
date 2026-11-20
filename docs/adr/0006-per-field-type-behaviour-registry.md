@@ -38,7 +38,7 @@ Two consequences bite:
 ## Decision
 
 Each field type declares its behaviour **once**, in
-`src/lib/product/behavior/<type>.ts`, and `behavior/index.ts` gathers them into
+`src/lib/configurator/behavior/<type>.ts`, and `behavior/index.ts` gathers them into
 an exhaustive record:
 
 ```ts
@@ -120,13 +120,13 @@ extended from _values_ to _behaviour_.
 Implementation coverage alone does not stop a new `switch (field.type)`
 appearing in a consumer. Usage is enforced by a **type-aware ESLint rule** that
 flags a `switch` whose discriminant's type is `ProductFieldType`, scoped to
-`src/lib/` **excluding** `src/lib/product/behavior/`:
+`src/lib/` **excluding** `src/lib/configurator/behavior/`:
 
 - It is **type-aware** (the repo already runs `strictTypeChecked`), so it
   catches the identifier form (`const { type } = field; switch (type)`) that a
   purely syntactic `switch (x.type)` selector would miss.
 - It is **scoped to `src/lib/`**, so the presentational per-type renders in
-  `src/components/blocks/order/` (which branch on type to _choose UI_) are not
+  `src/components/blocks/configurator/` (which branch on type to _choose UI_) are not
   flagged.
 - It has **no false positives** on the current tree: the only `switch`es on a
   field type in `src/lib/` are exactly the bypasses this refactor removes

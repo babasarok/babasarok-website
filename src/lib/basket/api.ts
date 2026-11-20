@@ -75,7 +75,7 @@ export interface BasketApi {
   adjustLine(orderLineId: string, quantity: number): Promise<Result<Order>>;
   removeLine(orderLineId: string): Promise<Result<Order>>;
   /** The id of the product's one variant, or undefined when it is not orderable. */
-  productVariantId(slug: string): Promise<Result<string | undefined>>;
+  configuratorVariantId(slug: string): Promise<Result<string | undefined>>;
   eligibleShippingMethods(): Promise<Result<ShippingQuote[]>>;
   setCustomer(input: CustomerInput): Promise<Result<Order>>;
   setShippingAddress(input: AddressInput): Promise<Result<Order>>;
@@ -102,6 +102,7 @@ const ORDER_FIELDS = `
     ${SET_LINE_FIELDS}
     productVariant {
       id name
+      options { name group { name } }
       product { slug name featuredAsset { source focalPoint { x y } } productDefinition }
     }
   }
@@ -326,7 +327,7 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
         { id: orderLineId },
         INTERCEPTOR_FIELDS
       ),
-    async productVariantId(slug) {
+    async configuratorVariantId(slug) {
       const result = await request(
         `query ProductVariant($slug: String!) { product(slug: $slug) { variants { id } } }`,
         { slug },

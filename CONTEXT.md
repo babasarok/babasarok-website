@@ -7,9 +7,34 @@ into a basket.
 ## Language
 
 **Product**:
-A handmade baby item offered for sale, modelled as one canonical product
-definition (plus its generated native product) in Vendure.
+A handmade baby item offered for sale, stored in Vendure and edited in the
+dashboard. Every product is either a configurator product or a ready-made
+product (see below).
 _Avoid_: item, SKU
+
+**Configurator product**:
+A product the buyer assembles from **configurable fields** (size, material,
+embroidery, …) before ordering. The choices are made fresh on each order;
+the product itself offers no selectable variants.
+_Avoid_: variant product
+
+**Ready-made product**:
+A product managed entirely in the dashboard without a configurator
+definition; it carries stock. It is either single-variant (ordered as-is)
+or has **option groups** whose variants the owner defines. A ready-made
+product hides itself only when every variant is sold out.
+_Avoid_: native product, custom product
+
+**Option group**:
+A buyer-selectable axis of a ready-made product (e.g. size); the chosen
+combination of options across groups selects one variant.
+_Avoid_: configurable field (that is the configurator's priced field),
+attribute
+
+**Variant**:
+One purchasable form of a product, with its own price and stock. Ready-made
+products are ordered by variant; a configurator product has exactly one.
+_Avoid_: SKU, option
 
 **Product type**:
 The single classification a product belongs to (e.g. rácsvédő, takaró, lepedő,

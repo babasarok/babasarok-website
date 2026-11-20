@@ -23,9 +23,9 @@
     "test:dashboard-e2e": "playwright test --config playwright.dashboard.config.ts",
     "test:checkout-e2e": "playwright test --config playwright.checkout.config.ts",
     "check": "npx astro check && npx sv check",
-    "lint": "eslint . --ext .ts,.tsx,.js,.jsx,.astro,.svelte",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx,.astro,.svelte --cache",
     "lint:style": "stylelint \"**/*.{css,astro,svelte}\"",
-    "format": "prettier --write .",
+    "format": "prettier --write . --cache",
     "dev:tina": "tinacms dev -c \"astro dev --host\""
   },
   "imports": {

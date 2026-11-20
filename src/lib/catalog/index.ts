@@ -28,7 +28,7 @@ import {
   ProductsResponseSchema,
 } from "./schemas";
 
-export { byPopularity, configurableProducts } from "./mappers";
+export { byPopularity, configuratorProducts } from "./mappers";
 export type {
   CatalogMaterial,
   CatalogProduct,
@@ -36,7 +36,7 @@ export type {
   CatalogProductGroup,
   CatalogProductOrdering,
   CatalogThreadColor,
-  ConfigurableCatalogProduct,
+  ConfiguratorCatalogProduct,
 } from "./mappers";
 
 const PAGE_SIZE = 100;

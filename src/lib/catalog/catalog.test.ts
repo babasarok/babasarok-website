@@ -37,7 +37,7 @@ describe("getProducts", () => {
       popularityRank: 22,
     });
     expect(bag?.ordering).toMatchObject({
-      kind: "configurable",
+      kind: "configurator",
       definition: { id: "tornazsak" },
     });
     expect(bag?.thumbnail?.source).toMatch(/^http/);
@@ -65,10 +65,12 @@ describe("getProducts", () => {
       productDefinition: null,
       variants: [
         {
+          id: "91",
           currencyCode: "HUF",
           priceWithTax: 5000,
           stockLevel: "OUT_OF_STOCK" as const,
           saleableStock: 0,
+          options: [],
         },
       ],
     };
@@ -95,10 +97,12 @@ describe("getProducts", () => {
       productDefinition: null,
       variants: [
         {
+          id: "92",
           currencyCode: "HUF",
           priceWithTax: 6500,
           stockLevel: "IN_STOCK" as const,
           saleableStock: 2,
+          options: [],
         },
       ],
     };
@@ -109,8 +113,8 @@ describe("getProducts", () => {
 
     expect(result.find((entry) => entry.slug === "kesz-kanal")?.ordering).toMatchObject({
       kind: "ready-made",
-      unitPriceWithTax: 6500,
       currencyCode: "HUF",
+      variants: [{ priceWithTax: 6500 }],
     });
   });
 
@@ -163,10 +167,12 @@ describe("getProduct", () => {
         productDefinition: null,
         variants: [
           {
+            id: "93",
             currencyCode: "HUF",
             priceWithTax: 6500,
             stockLevel: "IN_STOCK" as const,
             saleableStock: 2,
+            options: [],
           },
         ],
       },
@@ -174,7 +180,7 @@ describe("getProduct", () => {
 
     expect((await getProduct("tornazsak", runReturning(handmade)))?.ordering).toMatchObject({
       kind: "ready-made",
-      unitPriceWithTax: 6500,
+      variants: [{ priceWithTax: 6500 }],
     });
   });
 
@@ -185,10 +191,12 @@ describe("getProduct", () => {
         productDefinition: null,
         variants: [
           {
+            id: "94",
             currencyCode: "HUF",
             priceWithTax: 6500,
             stockLevel: "OUT_OF_STOCK" as const,
             saleableStock: 0,
+            options: [],
           },
         ],
       },

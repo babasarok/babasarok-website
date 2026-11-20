@@ -5,6 +5,7 @@ import { In } from "typeorm";
 import { nativeProductNames } from "../product/native-names";
 import { ProductDefinition as ProductDefinitionEntity } from "../product/product.entity";
 import { selectionLabels, selectionsOf } from "../product/line-labels";
+import { loadVariantOptionDetails } from "./variant-option-details";
 import type { NativeLineContent } from "./order-email-view";
 
 /**
@@ -25,6 +26,8 @@ export async function loadNativeLineContent(
   const definitions = new Map(rows.map((row) => [row.nativeProductId, row.definition]));
   const selections = order.lines.map((line) => selectionsOf(line.customFields.selections));
   const labels = await selectionLabels(connection, ctx, selections);
+  const variantIds = order.lines.map((line) => Number(line.productVariant.id));
+  const optionDetails = await loadVariantOptionDetails(connection, ctx, variantIds);
 
   return order.lines.map((line, index) => {
     const productId = Number(line.productVariant.productId);
@@ -32,7 +35,11 @@ export async function loadNativeLineContent(
     const title = names.get(productId) ?? line.productVariant.name;
 
     if (definition === undefined) {
-      return { title, details: [], stocked: true };
+      return {
+        title,
+        stocked: true,
+        details: optionDetails.get(String(line.productVariant.id)) ?? [],
+      };
     }
 
     return {

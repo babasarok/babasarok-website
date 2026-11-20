@@ -28,6 +28,12 @@ unit), and surface the formed set discounts to the buyer at basket level.
 > per-line status surfacing (active / pending-partner / pending-material
 > with material sync), the related-items presentation, and the email's
 > per-instance provenance are Vendure-owned data.
+>
+> Ready-made products (no definition, product-catalog spec) are out of scope
+> for sets and related items (owner decision, ADR 0019): a ready-made line
+> carries no material picks, so it never forms a set instance even when a
+> set lists its product, and the storefront never shows one as a set or
+> related member.
 
 ## Requirements
 

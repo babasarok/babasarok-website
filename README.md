@@ -65,7 +65,8 @@ src/
   pages/        # Routes (index, contact, product, material, blog, …)
   components/
     blocks/     # Page sections (Hero, Service, About, Product, Blog, Header, Footer)
-    blocks/order/  # Order configurator Svelte island
+    blocks/configurator/  # Configurator product order island
+    blocks/ready-made/    # Ready-made product order block
     ui/         # Reusable presentational components
   lib/          # Data loaders (data.ts) + order domain logic + helpers
   content/      # Tina-managed Markdown/JSON content

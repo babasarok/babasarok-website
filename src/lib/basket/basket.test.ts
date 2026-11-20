@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
-import { makeField } from "../__tests__/fixtures";
-import type { Field } from "@/lib/types.svelte";
+import { makeField } from "@/lib/configurator/__fixtures__/item";
+import type { Field } from "@/lib/configurator/item.svelte";
 import { createBasketApi, type BasketApi, type Result } from "./api";
 import type { AddressValues, CheckoutValues } from "./checkoutValues";
-import { applySelections, buildLine, buildSelections } from "./lineInput";
-import { describeLine } from "./lineRows";
+import { applySelections, buildLine, buildSelections } from "./configuratorLine";
+import { describeLine, lineRows } from "./lineRows";
 import { formatMoney, majorUnits } from "./money";
 import {
   billingCheck,
@@ -135,6 +135,43 @@ describe("line rows", () => {
       { label: "Size", value: "50 by 50" },
     ]);
   });
+
+  it("lists a ready-made line's variant options", () => {
+    const readyMade = line({
+      productVariant: {
+        id: "3",
+        name: "v",
+        options: [{ name: "L", group: { name: "Méret" } }],
+        product: { slug: "kosar", name: "Kosár", featuredAsset: null, productDefinition: null },
+      },
+    });
+
+    expect(lineRows(readyMade, { materials: {}, threadColors: {} }, "hu")).toEqual([
+      { label: "Méret", value: "L" },
+    ]);
+  });
+
+  it("lists a configurator line's configuration from its definition", () => {
+    const configured = line({
+      customFields: { selections: JSON.stringify(buildSelections(fields())), lengthCm: null },
+      productVariant: {
+        id: "3",
+        name: "v",
+        options: [],
+        product: {
+          slug: "parna",
+          name: "Párna",
+          featuredAsset: null,
+          productDefinition: definition,
+        },
+      },
+    });
+
+    expect(lineRows(configured, { materials: {}, threadColors: {} }, "hu")).toEqual([
+      { label: "Méret", value: "50x50" },
+      { label: "Fodorral", value: "Igen" },
+    ]);
+  });
 });
 
 describe("money", () => {
@@ -187,6 +224,7 @@ const line = (over: Partial<OrderLine> = {}): OrderLine => ({
   productVariant: {
     id: "3",
     name: "v",
+    options: [],
     product: { slug: "parna", name: "Párna", featuredAsset: null, productDefinition: null },
   },
   ...over,
@@ -550,7 +588,7 @@ describe("createBasketApi", () => {
       data: { product: { variants: [{ id: "7" }] } },
     });
 
-    expect(await api.productVariantId("parna")).toEqual({ ok: true, value: "7" });
+    expect(await api.configuratorVariantId("parna")).toEqual({ ok: true, value: "7" });
 
     const init = fetchMock.mock.calls[0]?.[1];
     const body = RequestBodySchema.safeParse(
@@ -563,7 +601,7 @@ describe("createBasketApi", () => {
   it("reports no variant for a product the shop does not serve", async () => {
     const { api } = apiWith({ data: { product: null } });
 
-    expect(await api.productVariantId("rejtett")).toEqual({ ok: true, value: undefined });
+    expect(await api.configuratorVariantId("rejtett")).toEqual({ ok: true, value: undefined });
   });
 
   it("reports malformed responses instead of throwing", async () => {

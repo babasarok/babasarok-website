@@ -1,6 +1,8 @@
 import type { z } from "zod";
 import type { ProductDefinition } from "@babasarok/product-definition";
 import type { VendureAsset } from "@/lib/vendure/imageUrl";
+import type { ReadyMadeOrdering } from "./readyMade";
+import { toReadyMadeOrdering } from "./variantOptions";
 import type {
   MaterialsResponseSchema,
   ProductGroupsResponseSchema,
@@ -15,19 +17,12 @@ type ProductRow = z.output<typeof ProductsResponseSchema>["products"]["items"][n
 type DetailRow = NonNullable<z.output<typeof ProductResponseSchema>["product"]>;
 type MaterialRow = z.output<typeof MaterialsResponseSchema>["materials"][number];
 
-/** How a product is ordered: through its configurator definition, or as-is from the variant. */
+/** How a product is ordered: through its configurator definition, or as-is as one of its variants. */
 export type CatalogProductOrdering =
-  | { kind: "configurable"; definition: ProductDefinition }
-  | {
-      kind: "ready-made";
-      unitPriceWithTax: number;
-      currencyCode: string;
-      /** Real stock the storefront may show and cap the quantity at; null when untracked. */
-      saleableStock: number | null;
-    };
+  { kind: "configurator"; definition: ProductDefinition } | ReadyMadeOrdering;
 
-export type ConfigurableCatalogProduct = CatalogProduct & {
-  ordering: Extract<CatalogProductOrdering, { kind: "configurable" }>;
+export type ConfiguratorCatalogProduct = CatalogProduct & {
+  ordering: Extract<CatalogProductOrdering, { kind: "configurator" }>;
 };
 
 export interface CatalogProduct {
@@ -62,17 +57,17 @@ export interface CatalogMaterial {
 }
 
 /** The products ordered through a configurator definition; ready-made ones are excluded. */
-export function configurableProducts(
+export function configuratorProducts(
   products: readonly CatalogProduct[]
-): ConfigurableCatalogProduct[] {
+): ConfiguratorCatalogProduct[] {
   return products.filter(
-    (product): product is ConfigurableCatalogProduct => product.ordering.kind === "configurable"
+    (product): product is ConfiguratorCatalogProduct => product.ordering.kind === "configurator"
   );
 }
 
 /**
- * Null for a sold-out ready-made product (and a definition-less product with
- * no variant): not storefront products.
+ * Null for a ready-made product with no variant in stock (or none at all):
+ * not a storefront product.
  */
 export function toProduct(row: ProductRow): CatalogProduct | null {
   const ordering = orderingOf(row);
@@ -99,21 +94,10 @@ export function toProduct(row: ProductRow): CatalogProduct | null {
 
 function orderingOf(row: ProductRow): CatalogProductOrdering | null {
   if (row.productDefinition !== null) {
-    return { kind: "configurable", definition: row.productDefinition };
+    return { kind: "configurator", definition: row.productDefinition };
   }
 
-  const variant = row.variants.at(0);
-
-  if (variant === undefined || variant.stockLevel === "OUT_OF_STOCK") {
-    return null;
-  }
-
-  return {
-    kind: "ready-made",
-    unitPriceWithTax: variant.priceWithTax,
-    currencyCode: variant.currencyCode,
-    saleableStock: variant.saleableStock,
-  };
+  return toReadyMadeOrdering(row);
 }
 
 export function toProductDetail(row: DetailRow): CatalogProductDetail | null {
