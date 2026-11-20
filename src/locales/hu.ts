@@ -120,6 +120,7 @@ const translation = {
   readyMade: {
     badge: "Raktári termék",
     stock: "{{count}} db raktáron",
+    soldOut: "elfogyott",
   },
   checkout: {
     title: "Pénztár",

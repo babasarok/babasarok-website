@@ -5,6 +5,9 @@ import {
   type SelectionLabels,
 } from "@babasarok/product-definition";
 import { parseLineSelections } from "@babasarok/pricing";
+import { variantOptionRows } from "@/lib/catalog/variantOptions";
+import { lineKind } from "./lineKind";
+import type { OrderLine } from "./schemas";
 
 export interface Labels {
   materials: Partial<Record<string, { label: string; colors: Partial<Record<string, string>> }>>;
@@ -70,4 +73,20 @@ export function describeLine(
     labels: asMaps(labels),
     languageCode,
   }).map(({ label, value }) => ({ label, value }));
+}
+
+/** A basket line's buyer-visible rows: a configurator line's configuration, a ready-made line's options. */
+export function lineRows(line: OrderLine, labels: Labels, languageCode: string): LineRow[] {
+  const ordered = lineKind(line);
+
+  if (ordered.kind === "ready-made") {
+    return variantOptionRows(line.productVariant);
+  }
+
+  return describeLine(
+    ordered.definition,
+    line.customFields?.selections ?? null,
+    labels,
+    languageCode
+  );
 }

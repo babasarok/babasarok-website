@@ -20,8 +20,8 @@ prices at its default (`nem` for a toggle, the first listed option
 otherwise), as does a custom value naming no listed option; a selection the
 field does not offer is unpriceable. The configurator's live price and the
 server price start from the same selections. The site's configurator shows a
-live unit price from the shared code (`src/lib/catalog/livePrice.ts`) and an
-option breakdown from `src/lib/order/priceBreakdown.ts` (display only); every basket
+live unit price from the shared code (`src/lib/configurator/livePrice.ts`) and an
+option breakdown from `src/lib/configurator/priceBreakdown.ts` (display only); every basket
 and checkout amount is read from the Vendure order, and the set discount is a
 server promotion.
 

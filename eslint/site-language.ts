@@ -12,6 +12,7 @@ export const siteLanguageFiles = ["src/**/*.ts", "src/**/*.astro", "src/**/*.sve
 export const siteLanguageIgnores = [
   "src/**/*.test.ts",
   "src/lib/__tests__/**",
+  "src/**/__fixtures__/**",
   "src/locales/**",
   "src/content/**",
 ];
@@ -35,7 +36,7 @@ export const hungarianTextAllowlist = [
   // A bilingual table: productTypeLabel picks label or labelEn by locale.
   "src/lib/product/productTypes.ts",
   // Labels for the Tina admin's field-type picker; the site never renders them.
-  "src/lib/product/fieldTypes.ts",
+  "src/lib/configurator/fieldTypes.ts",
   // The RSS feed is the Hungarian blog only.
   "src/pages/rss.xml.ts",
 ];

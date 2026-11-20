@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ConfiguredLine } from "./lineInput";
+import type { ConfiguredLine } from "./configuratorLine";
 import type { Order, OrderLine } from "./schemas";
 
 const SHOWN_PRICES_KEY = "babasarok-basket-shown-prices-v1";

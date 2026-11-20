@@ -4,7 +4,7 @@
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import { replaceUrl } from "@/lib/history";
   import type { Locale } from "@/lib/i18n";
-  import type { SlimImage } from "@/lib/order/types";
+  import type { SlimImage } from "@/lib/vendure/imageUrl";
   import type { ProductListItem } from "@/lib/catalog/listItems";
   import {
     applyListState,

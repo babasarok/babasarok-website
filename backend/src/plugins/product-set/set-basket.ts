@@ -295,8 +295,8 @@ export function setBasketState(input: {
     const definition = productId === undefined ? undefined : definitionByProductId.get(productId);
 
     if (productId === undefined || definition === undefined) {
-      // Legacy quote-order lines (their products had no definition) carry no
-      // configuration.
+      // Lines of products without a definition (ready-made products) carry no
+      // configuration and never form a set instance.
       continue;
     }
 

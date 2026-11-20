@@ -21,7 +21,17 @@ and `currencyCode` (nothing in the API is currency-specific). A line on a
 ready-made product's variant (a product without a definition, product-catalog
 spec) carries `selections: "{}"` and is priced from the variant itself; it is
 valid while the product is enabled and the variant's saleable stock covers the
-line's quantity.
+line's quantity. A ready-made product with option groups adds the variant the
+buyer picked, so its lines differ by variant; the basket lists such a line's
+options as "group: option" rows, the way a configurator line lists its
+configuration. Editing the line to another variant replaces it (a new line
+for the new variant, the old one removed), as changing a configurator line's
+selections does.
+
+- **Scenario: Picking a ready-made option**
+  - WHEN a buyer picks "L" on a ready-made product with sizes and adds it
+  - THEN the order holds a line for the L variant at the L variant's price,
+    shown with a "Méret: L" row
 
 - **Scenario: Adding a product**
   - WHEN a buyer configures a product (quantity, options, materials) and adds

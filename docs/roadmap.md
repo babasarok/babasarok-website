@@ -159,6 +159,12 @@ splits into two PRs.
   tracked on their variant, a sold-out product hides itself, and a placed
   order holds the unit (allocation at the checkout transition; the losing
   basket's line flags `OUT_OF_STOCK`). The Babafészek szett (native product 46) migrates from a configurator product to a ready-made one (stock 1).
+- ✅ **Ready-made products with options** (2026-11-19, [ADR 0019](adr/0019-ready-made-product-options.md))
+  — ready-made products may carry Vendure's own option groups and variants
+  (owner-made in the stock dashboard, per-variant price and stock): option
+  chips on the detail page, per-variant pricing, stock and allocation, the
+  options on basket lines and in the order emails. Sets and related items
+  stay configurator-only.
 - **Edge-cache verification** — on the deployed site, request
   `/search-index.json` and an asset preset URL twice: the second response shows
   `CF-Cache-Status: HIT`. Record whether asset URLs are edge-cached at all

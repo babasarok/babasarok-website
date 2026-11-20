@@ -240,7 +240,9 @@ value as `Egyedi: <value>`; the line title is the product's name and a
 length-priced line shows its length. Each product is a heading (number,
 title, quantity) over a label: value list, with no option prices or
 subtotals, in the buyer confirmation and the owner notification alike.
-Ready-made lines (no definition) carry no configuration rows: they lead the
+Ready-made lines (no definition) carry no configuration rows — a ready-made
+product with option groups lists the ordered variant's options instead
+("group: option", in the email's language): they lead the
 product list with the list renumbered (both emails), and the owner
 notification marks them (`[RAKTÁRI]`). Neither email SHALL promise a
 shipping time for ready-made lines: the delivery method the buyer chose

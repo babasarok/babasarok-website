@@ -13,8 +13,8 @@ const fixtureProducts = ProductsResponseSchema.parse(products).products.items.fl
 const baseProduct = fixtureProducts.at(0);
 
 function product(overrides: Partial<CatalogProduct> & { slug: string }): CatalogProduct {
-  if (baseProduct === undefined || baseProduct.ordering.kind !== "configurable") {
-    throw new Error("fixture has no configurable product");
+  if (baseProduct === undefined || baseProduct.ordering.kind !== "configurator") {
+    throw new Error("fixture has no configurator product");
   }
 
   return {
@@ -28,7 +28,7 @@ function product(overrides: Partial<CatalogProduct> & { slug: string }): Catalog
     thumbnail: null,
     type: null,
     ordering: {
-      kind: "configurable",
+      kind: "configurator",
       definition: ProductDefinitionSchema.parse({
         ...baseProduct.ordering.definition,
         id: overrides.slug,
@@ -96,9 +96,11 @@ describe("toProductListData", () => {
       slug: "kesz-kanal",
       ordering: {
         kind: "ready-made",
-        unitPriceWithTax: 6500,
         currencyCode: "HUF",
-        saleableStock: 1,
+        optionGroups: [],
+        variants: [
+          { id: "71", priceWithTax: 6500, saleableStock: 1, soldOut: false, optionIds: [] },
+        ],
       },
     });
     const { items } = toProductListData(
