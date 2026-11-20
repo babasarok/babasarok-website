@@ -31,7 +31,8 @@
     ConfiguratorProduct,
     ConfiguratorProductGroup,
   } from "@/lib/configurator/types";
-  import type { ConfiguratorItem } from "@/lib/configurator/item.svelte";
+  // The type can't take the component's name here: both are `ConfiguratorItem`.
+  import type { ConfiguratorItem as ConfiguratorItemModel } from "@/lib/configurator/item.svelte";
   import type { i18n as I18n } from "i18next";
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import { localizedPath, type Locale } from "@/lib/i18n";
@@ -58,7 +59,7 @@
     threadColors,
   }: Props = $props();
 
-  let item = $state<ConfiguratorItem | null>(null);
+  let item = $state<ConfiguratorItemModel | null>(null);
   let editingLineId = $state<string | null>(null);
   let savedKey = $state<string | null>(null);
   let saved = $state(false);
@@ -95,7 +96,7 @@
     return map;
   });
 
-  function configKey(current: ConfiguratorItem): string {
+  function configKey(current: ConfiguratorItemModel): string {
     return JSON.stringify([buildSelections($state.snapshot(current.fields)), current.count]);
   }
 
@@ -214,7 +215,7 @@
     }
   }
 
-  async function upsertLine(current: ConfiguratorItem): Promise<boolean> {
+  async function upsertLine(current: ConfiguratorItemModel): Promise<boolean> {
     const variantId = await basket.api.configuratorVariantId(slug);
 
     if (!variantId.ok) {
