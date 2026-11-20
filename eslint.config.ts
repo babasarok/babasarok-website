@@ -7,7 +7,11 @@ import svelte from "eslint-plugin-svelte";
 import svelteConfig from "./svelte.config";
 
 import { defineConfig, globalIgnores } from "eslint/config";
-import { variantOptionReadFiles, variantOptionReadSelectors } from "./eslint/variant-option-reads";
+import {
+  variantOptionReadAllowlist,
+  variantOptionReadFiles,
+  variantOptionReadSelectors,
+} from "./eslint/variant-option-reads";
 import {
   catalogFetchFiles,
   catalogFetchImports,
@@ -239,6 +243,7 @@ export default defineConfig([
   },
   {
     files: variantOptionReadFiles,
+    ignores: variantOptionReadAllowlist,
     rules: {
       "no-restricted-syntax": ["error", ...variantOptionReadSelectors],
     },

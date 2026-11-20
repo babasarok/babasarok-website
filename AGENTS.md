@@ -191,8 +191,8 @@ max-h-none`); `width: 100%` on a `position: fixed` element stops short of
 - **Lint:** `npm run lint` · **Styles:** `npm run lint:style`
 - **Format:** `npm run format` (Prettier)
 - **Unit tests:** `npm test` (Vitest, `vitest run`) · watch with `npm run test:watch`.
-  Specs live in `src/**/*.test.ts` (e.g. the order-form logic in
-  [src/lib/**tests**/](src/lib/__tests__/)); fast pure-function tests, no build needed.
+  Specs live in `src/**/*.test.ts` (e.g. the configurator logic in
+  [src/lib/configurator/](src/lib/configurator/)); fast pure-function tests, no build needed.
 - **Backend plugin layout:** custom Vendure plugins live in
   `backend/src/plugins/<name>/` — one folder per plugin, with the plugin's
   entity/entities, service, resolver and plugin file together. Dashboard

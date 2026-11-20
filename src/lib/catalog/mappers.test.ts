@@ -33,15 +33,36 @@ function detailRow(overrides: Record<string, unknown>): DetailRow {
 }
 
 const readyMadeVariant = {
+  id: "71",
   currencyCode: "HUF",
   priceWithTax: 6500,
   stockLevel: "IN_STOCK",
   saleableStock: 3,
+  options: [],
+};
+
+const sizeGroup = {
+  id: "5",
+  name: "Méret",
+  options: [
+    { id: "51", name: "S" },
+    { id: "52", name: "M" },
+    { id: "53", name: "L" },
+  ],
+};
+
+const smallVariant = { ...readyMadeVariant, id: "81", options: [{ id: "51" }] };
+const largeVariant = {
+  ...readyMadeVariant,
+  id: "83",
+  priceWithTax: 8000,
+  saleableStock: 1,
+  options: [{ id: "53" }],
 };
 
 describe("toProduct", () => {
-  it("maps a definition-backed product to the configurable ordering", () => {
-    expect(toProduct(listRow({}))?.ordering).toMatchObject({ kind: "configurable" });
+  it("maps a definition-backed product to the configurator ordering", () => {
+    expect(toProduct(listRow({}))?.ordering).toMatchObject({ kind: "configurator" });
   });
 
   it("maps a definition-less product to its variant price and stock", () => {
@@ -53,9 +74,11 @@ describe("toProduct", () => {
       slug: "kesz-kanal",
       ordering: {
         kind: "ready-made",
-        unitPriceWithTax: 6500,
         currencyCode: "HUF",
-        saleableStock: 3,
+        optionGroups: [],
+        variants: [
+          { id: "71", priceWithTax: 6500, saleableStock: 3, soldOut: false, optionIds: [] },
+        ],
       },
     });
   });
@@ -89,7 +112,63 @@ describe("toProduct", () => {
           variants: [{ ...readyMadeVariant, saleableStock: null }],
         })
       )?.ordering
-    ).toMatchObject({ kind: "ready-made", saleableStock: null });
+    ).toMatchObject({ kind: "ready-made", variants: [{ saleableStock: null }] });
+  });
+
+  it("maps a product with options to its variants, offering only the options a variant carries", () => {
+    const product = toProduct(
+      listRow({
+        productDefinition: null,
+        optionGroups: [sizeGroup],
+        variants: [smallVariant, largeVariant],
+      })
+    );
+
+    expect(product?.ordering).toEqual({
+      kind: "ready-made",
+      currencyCode: "HUF",
+      optionGroups: [
+        {
+          id: "5",
+          name: "Méret",
+          options: [
+            { id: "51", name: "S" },
+            { id: "53", name: "L" },
+          ],
+        },
+      ],
+      variants: [
+        { id: "81", priceWithTax: 6500, saleableStock: 3, soldOut: false, optionIds: ["51"] },
+        { id: "83", priceWithTax: 8000, saleableStock: 1, soldOut: false, optionIds: ["53"] },
+      ],
+    });
+  });
+
+  it("keeps a product with options listed while any variant is in stock, with its sold-out ones", () => {
+    const soldOutSmall = { ...smallVariant, stockLevel: "OUT_OF_STOCK", saleableStock: 0 };
+    const listed = toProduct(
+      listRow({
+        productDefinition: null,
+        optionGroups: [sizeGroup],
+        variants: [soldOutSmall, largeVariant],
+      })
+    );
+
+    expect(listed?.ordering).toMatchObject({
+      variants: [
+        { id: "81", soldOut: true },
+        { id: "83", soldOut: false },
+      ],
+    });
+    expect(
+      toProduct(
+        listRow({
+          productDefinition: null,
+          optionGroups: [sizeGroup],
+          variants: [soldOutSmall, { ...largeVariant, stockLevel: "OUT_OF_STOCK" }],
+        })
+      )
+    ).toBeNull();
   });
 });
 
@@ -102,9 +181,8 @@ describe("toProductDetail", () => {
     expect(detail).toMatchObject({
       ordering: {
         kind: "ready-made",
-        unitPriceWithTax: 6500,
         currencyCode: "HUF",
-        saleableStock: 3,
+        variants: [{ id: "71", priceWithTax: 6500, saleableStock: 3 }],
       },
       description: "**Tornazsák** leírása",
     });

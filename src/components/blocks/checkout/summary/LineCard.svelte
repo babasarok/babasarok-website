@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { fade } from "svelte/transition";
-  import { describeLine, type Labels } from "@/lib/basket/lineRows";
+  import { lineRows, type Labels } from "@/lib/basket/lineRows";
   import { formatMoney } from "@/lib/basket/money";
   import { refusalText } from "@/lib/basket/refusalText";
   import type { OrderLine } from "@/lib/basket/schemas";
@@ -38,16 +38,7 @@
   }: Props = $props();
 
   const product = $derived(line.productVariant.product);
-  const rows = $derived(
-    product.productDefinition
-      ? describeLine(
-          product.productDefinition,
-          line.customFields?.selections ?? null,
-          labels,
-          VENDURE_LANGUAGE_CODE[locale]
-        )
-      : []
-  );
+  const rows = $derived(lineRows(line, labels, VENDURE_LANGUAGE_CODE[locale]));
   const setState = $derived(lineSetState(line));
   const thumbnail = $derived(
     product.featuredAsset

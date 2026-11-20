@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { SlimImage } from "@/lib/order/types";
+  import type { SlimImage } from "@/lib/vendure/imageUrl";
   import IconButton from "./IconButton.svelte";
   import Tooltip from "./Tooltip.svelte";
 

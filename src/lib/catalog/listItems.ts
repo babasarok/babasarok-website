@@ -1,16 +1,16 @@
-import type { SlimImage } from "@/lib/order/types";
 import { localizedPath, type Locale } from "@/lib/i18n";
 import { isProductType } from "@/lib/product/productTypes";
 import type { ListProduct } from "@/lib/product-list/query";
-import { imageSrcSet, imageUrl, type VendureAsset } from "@/lib/vendure/imageUrl";
+import { imageSrcSet, imageUrl, type SlimImage, type VendureAsset } from "@/lib/vendure/imageUrl";
 import { byPopularity, type CatalogProduct, type CatalogProductGroup } from "./mappers";
+import { totalStock } from "./readyMade";
 
 export interface ProductListItem extends Omit<ListProduct, "date"> {
   date?: string | undefined;
   href: string;
   category?: string | undefined;
   image?: SlimImage | undefined;
-  /** Real stock of a ready-made product; absent for a configurator product. */
+  /** Real stock of a ready-made product across its variants; absent for a configurator product. */
   stock?: number | undefined;
 }
 
@@ -49,12 +49,12 @@ export function toProductListData(
     // Ready-made products are never set members: their id never matches a
     // group's definition ids.
     const id =
-      product.ordering.kind === "configurable" ? product.ordering.definition.id : product.id;
+      product.ordering.kind === "configurator" ? product.ordering.definition.id : product.id;
     const typeCode = product.type?.code;
 
     const [readyMade, stock] =
       product.ordering.kind === "ready-made"
-        ? [true, product.ordering.saleableStock]
+        ? [true, totalStock(product.ordering)]
         : [false, undefined];
 
     return {

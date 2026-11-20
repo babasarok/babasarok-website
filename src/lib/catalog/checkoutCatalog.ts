@@ -1,6 +1,6 @@
 import type { Labels } from "@/lib/basket/lineRows";
 import { setMembersByGroup, type SetMembers } from "@/lib/basket/setDiscounts";
-import { configurableProducts } from "./mappers";
+import { configuratorProducts } from "./mappers";
 import type { Catalog } from "./index";
 
 export interface CheckoutCatalog {
@@ -27,7 +27,7 @@ export function toCheckoutCatalog(catalog: Catalog): CheckoutCatalog {
     },
     setMembers: setMembersByGroup(
       catalog.groups,
-      configurableProducts(catalog.products).map((product) => ({
+      configuratorProducts(catalog.products).map((product) => ({
         slug: product.slug,
         name: product.name,
         definitionId: product.ordering.definition.id,

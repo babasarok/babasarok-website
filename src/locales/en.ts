@@ -126,6 +126,7 @@ const translation = {
   readyMade: {
     badge: "In-stock product",
     stock: "{{count}} in stock",
+    soldOut: "sold out",
   },
   checkout: {
     title: "Checkout",

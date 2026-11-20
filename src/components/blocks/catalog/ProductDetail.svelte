@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { i18n as I18n } from "i18next";
-  import ProductOrder from "@/components/blocks/order/ProductOrder.svelte";
-  import ReadyMadeOrder from "@/components/blocks/order/ReadyMadeOrder.svelte";
+  import ConfiguratorOrder from "@/components/blocks/configurator/ConfiguratorOrder.svelte";
+  import ReadyMadeOrder from "@/components/blocks/ready-made/ReadyMadeOrder.svelte";
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import Markdown from "@/components/ui/Markdown.svelte";
   import ProductGallery from "@/components/ui/ProductGallery.svelte";
@@ -81,25 +81,19 @@
                   </span>
                 {/if}
                 <div class="mt-6">
-                  {#if page.kind === "configurable"}
-                    <ProductOrder
+                  {#if page.kind === "configurator"}
+                    <ConfiguratorOrder
                       {locale}
                       slug={loadedProduct.slug}
-                      product={page.orderProduct}
+                      product={page.configuratorProduct}
                       definition={page.definition}
-                      products={page.orderCatalog}
+                      products={page.configuratorCatalog}
                       productGroups={page.productGroups}
                       slugByProductId={page.slugByProductId}
                       threadColors={page.threadColors}
                     />
                   {:else}
-                    <ReadyMadeOrder
-                      {locale}
-                      slug={loadedProduct.slug}
-                      unitPriceWithTax={page.unitPriceWithTax}
-                      currencyCode={page.currencyCode}
-                      saleableStock={page.saleableStock}
-                    />
+                    <ReadyMadeOrder {locale} slug={loadedProduct.slug} ordering={page.ordering} />
                   {/if}
                 </div>
               </div>
