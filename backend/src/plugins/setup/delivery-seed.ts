@@ -6,6 +6,12 @@ import type {
   TransactionalConnection,
 } from "@vendure/core";
 
+import {
+  GLS_CASH_ON_DELIVERY_METHOD_CODE,
+  GLS_HANDLER_CODE,
+  GLS_PREPAID_METHOD_CODE,
+} from "../gls/gls-label-request";
+
 const SEED_LOCK_KEY = 5_130_001;
 
 export interface SeedShippingMethod {
@@ -13,26 +19,30 @@ export interface SeedShippingMethod {
   name: string;
   rate: number;
   requiresAddress: boolean;
+  fulfillmentHandler: typeof GLS_HANDLER_CODE | "manual-fulfillment";
 }
 
 export const SHIPPING_METHODS: readonly SeedShippingMethod[] = [
   {
-    code: "gls-elore-utalas",
+    code: GLS_PREPAID_METHOD_CODE,
     name: "GLS házhozszállítás előre utalással",
     rate: 2500,
     requiresAddress: true,
+    fulfillmentHandler: GLS_HANDLER_CODE,
   },
   {
-    code: "gls-utanvet",
+    code: GLS_CASH_ON_DELIVERY_METHOD_CODE,
     name: "GLS házhozszállítás utánvéttel (előleg szükséges)",
     rate: 3500,
     requiresAddress: true,
+    fulfillmentHandler: GLS_HANDLER_CODE,
   },
   {
     code: "szemelyes",
     name: "Személyes átvétel Telkibányán",
     rate: 0,
     requiresAddress: false,
+    fulfillmentHandler: "manual-fulfillment",
   },
 ];
 
@@ -76,7 +86,7 @@ async function seedShippingMethod(
 
   await shippingMethodService.create(ctx, {
     code: method.code,
-    fulfillmentHandler: "manual-fulfillment",
+    fulfillmentHandler: method.fulfillmentHandler,
     checker: {
       code: "default-shipping-eligibility-checker",
       arguments: [{ name: "orderMinimum", value: "0" }],

@@ -5,6 +5,12 @@ declare module "@vendure/core/dist/entity/custom-entity-fields" {
   interface CustomChannelFields {
     orderEmailFrom: string | null;
     shopOwnerEmail: string | null;
+    glsSender: Partial<
+      Record<
+        "name" | "street" | "houseNumber" | "city" | "zipCode" | "countryCode" | "phone" | "email",
+        string | null
+      >
+    > | null;
   }
 
   interface CustomOrderFields {

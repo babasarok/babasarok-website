@@ -22,7 +22,7 @@ import { orderEmailView, type OrderEmailView } from "./order-email-view";
 
 // Channel-level email config, editable in the dashboard's channel settings;
 // fall back to the env values while unset.
-async function loadChannelEmails(
+export async function loadChannelEmails(
   connection: TransactionalConnection,
   ctx: RequestContext
 ): Promise<{ orderEmailFrom: string; ownerEmail: string }> {

@@ -20,7 +20,11 @@ services:
   migrate:
     build: ./repo
     restart: "no"
-    env_file: .env
+    env_file:
+      - .env
+      # Written by the deploy script from the cloudflare Preview build env
+      # (scripts/deploy-runtime-env.ts): the GLS test account only.
+      - .env.cloudflare
     environment:
       NODE_ENV: development
       DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/${PREVIEW_DB_NAME}
@@ -33,7 +37,11 @@ services:
       default:
         aliases:
           - vendure-${PREVIEW_SLUG}
-    env_file: .env
+    env_file:
+      - .env
+      # Written by the deploy script from the cloudflare Preview build env
+      # (scripts/deploy-runtime-env.ts): the GLS test account only.
+      - .env.cloudflare
     environment:
       NODE_ENV: development
       DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/${PREVIEW_DB_NAME}
@@ -62,7 +70,11 @@ services:
   worker:
     build: ./repo
     restart: unless-stopped
-    env_file: .env
+    env_file:
+      - .env
+      # Written by the deploy script from the cloudflare Preview build env
+      # (scripts/deploy-runtime-env.ts): the GLS test account only.
+      - .env.cloudflare
     environment:
       NODE_ENV: development
       DATABASE_URL: postgres://babasarok:${POSTGRES_PASSWORD}@postgres:5432/${PREVIEW_DB_NAME}

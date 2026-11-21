@@ -1,0 +1,55 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body style="margin:0; padding:0; background-color:#fbf7f4;">
+    <div style="background-color:#fbf7f4; padding:24px 12px;">
+      <table
+        role="presentation"
+        width="100%"
+        cellpadding="0"
+        cellspacing="0"
+        style="max-width:600px; margin:0 auto; background-color:#ffffff; border-radius:8px; overflow:hidden; font-family: Arial, Helvetica, sans-serif; color:#444444;"
+      >
+        <tr>
+          <td style="background-color:#6f5447; padding:20px 24px; text-align:center;">
+            <span
+              style="font-family: Georgia, 'Times New Roman', serif; font-size:26px; color:#fbf7f4; letter-spacing:1px;"
+            >Babasarok</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:28px 28px 8px 28px;">
+            <p style="margin:0 0 12px 0;">Dear customer!</p>
+            <p style="margin:0 0 12px 0;">Good news: your order
+              <strong>{{orderCode}}</strong>
+              is on its way! 📦</p>
+            <p style="margin:0 0 12px 0;">Your parcel is carried by GLS. You can follow it with the
+              button below, or by entering parcel number
+              <strong>{{parcelNumber}}</strong>.</p>
+            <p style="margin:0 0 24px 0;">
+              <a
+                href="{{{trackingUrl}}}"
+                style="display:inline-block; background-color:#6f5447; color:#fbf7f4; padding:10px 22px; border-radius:6px; text-decoration:none; font-size:14px;"
+              >GLS parcel tracking</a>
+            </p>
+            <p style="margin:0 0 12px 0;">Thank you for your trust! 🤍</p>
+            <p style="margin:0 0 12px 0;">Best wishes,<br />
+              The Babasarok team 🤍</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:#f3e7dc; padding:14px 28px; text-align:center;">
+            <p style="margin:0; font-size:12px; color:#6f5447;">
+              <a
+                href="https://babasarok.net"
+                style="color:#6f5447; text-decoration:none;"
+              >babasarok.net</a>
+            </p>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

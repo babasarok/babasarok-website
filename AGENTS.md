@@ -202,7 +202,7 @@ max-h-none`); `width: 100%` on a `position: fixed` element stops short of
   migrations, gql) stays at `backend/src/` top level.
 - **Behavior specs:** normative specs live in [docs/specs/](docs/specs/) (one
   file per capability: `product-catalog`, `order-pricing`, `order-basket`,
-  `order-submission`, `product-sets`, `audit-log`). Read the relevant spec
+  `order-submission`, `product-sets`, `audit-log`, `gls-labels`). Read the relevant spec
   before touching its behavior and keep it in sync when behavior changes.
 - **ADRs:** architectural decisions live in [docs/adr/](docs/adr/); read the
   ones touching your area and surface conflicts rather than overriding them.
