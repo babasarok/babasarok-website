@@ -7,6 +7,8 @@ import {
   type GlsErrorInfo,
   type GlsLabel,
   type GlsParcelRequest,
+  type GlsParcelStatuses,
+  type GlsStatusError,
 } from "./gls-client";
 
 export type MyGlsEnvironment = "live" | "test";
@@ -65,6 +67,55 @@ const DeleteLabelsResponseSchema = z.object({
   DeleteLabelsErrorList: ErrorListSchema,
   SuccessfullyDeletedList: z
     .array(z.object({ ParcelId: z.number().int() }))
+    .nullish()
+    .transform((list) => list ?? []),
+});
+
+const ParcelStatusSchema = z.object({
+  StatusCode: z.string(),
+  StatusDate: z.string(),
+  StatusDescription: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+});
+
+const ParcelStatusesSchema = z.object({
+  ParcelId: z.number().int(),
+  ParcelNumber: z.number().int(),
+  ClientReference: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
+  ParcelStatusList: z
+    .array(ParcelStatusSchema)
+    .nullish()
+    .transform((list) => list ?? []),
+});
+
+const StatusErrorSchema = z.object({
+  ErrorCode: z.number().int(),
+  ErrorDescription: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  ClientReferenceList: z
+    .array(z.string())
+    .nullish()
+    .transform((list) => list ?? []),
+  ParcelIdList: z
+    .array(z.number().int())
+    .nullish()
+    .transform((list) => list ?? []),
+});
+
+const GetParcelListStatusesResponseSchema = z.object({
+  GetParcelListStatusesErrors: z
+    .array(StatusErrorSchema)
+    .nullish()
+    .transform((list) => list ?? []),
+  ParcelList: z
+    .array(ParcelStatusesSchema)
     .nullish()
     .transform((list) => list ?? []),
 });
@@ -200,6 +251,20 @@ export function createMyGlsClient(options: MyGlsClientOptions): GlsClient {
         });
       }
     },
+
+    async getParcelStatuses(parcelNumbers) {
+      const response = await post(
+        "getParcelStatuses",
+        "GetParcelListStatuses",
+        { ParcelNumberList: [...parcelNumbers], LanguageIsoCode: options.country },
+        GetParcelListStatusesResponseSchema
+      );
+
+      return {
+        parcels: response.ParcelList.map(wireStatuses),
+        errors: response.GetParcelListStatusesErrors.map(wireStatusError),
+      };
+    },
   };
 }
 
@@ -267,6 +332,40 @@ function wireAddress(address: GlsAddress): WireAddress {
 
 function errorInfo(error: z.output<typeof ErrorInfoSchema>): GlsErrorInfo {
   return { code: error.ErrorCode, description: error.ErrorDescription ?? "" };
+}
+
+function wireStatuses(parcel: z.output<typeof ParcelStatusesSchema>): GlsParcelStatuses {
+  return {
+    parcelId: parcel.ParcelId,
+    parcelNumber: parcel.ParcelNumber,
+    clientReference: parcel.ClientReference,
+    statuses: parcel.ParcelStatusList.map((status) => ({
+      code: status.StatusCode,
+      date: parseStatusDate(status.StatusDate),
+      description: status.StatusDescription,
+    })),
+  };
+}
+
+function wireStatusError(error: z.output<typeof StatusErrorSchema>): GlsStatusError {
+  return {
+    code: error.ErrorCode,
+    description: error.ErrorDescription,
+    parcelIds: error.ParcelIdList,
+    clientReferences: error.ClientReferenceList,
+  };
+}
+
+/** WCF JSON dates (`/Date(1585663200000+0100)/`) and ISO strings both occur in GLS APIs. */
+function parseStatusDate(value: string): number | null {
+  const wcf = /^\/Date\((-?\d+)/.exec(value);
+
+  if (wcf) {
+    return Number(wcf[1]);
+  }
+
+  const iso = Date.parse(value);
+  return Number.isNaN(iso) ? null : iso;
 }
 
 function isPdf(bytes: Uint8Array): boolean {

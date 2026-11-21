@@ -94,7 +94,7 @@ export function glsLabelRequest(
     return { ok: true, request };
   }
 
-  const outstanding = order.totalWithTax - coveredAmount(order.payments);
+  const outstanding = outstandingTotal(order);
 
   if (outstanding <= 0) {
     return { ok: true, request };
@@ -150,6 +150,11 @@ function coveredAmount(payments: LabelOrder["payments"]): number {
   return payments
     .filter((p) => COVERING_PAYMENT_STATES.has(p.state))
     .reduce((sum, p) => sum + p.amount, 0);
+}
+
+/** The part of the order's gross total not covered by authorized/settled payments. */
+export function outstandingTotal(order: Pick<LabelOrder, "totalWithTax" | "payments">): number {
+  return order.totalWithTax - coveredAmount(order.payments);
 }
 
 type DeliveryAddressResult = { ok: true; address: GlsAddress } | { ok: false; missing: string[] };

@@ -20,6 +20,8 @@ const hu = {
   productOrdinal: (number: number): string => `${number}. termék`,
   orderConfirmationSubject: (orderCode: string): string => `Köszönjük a rendelésed: ${orderCode}`,
   orderNotificationSubject: (orderCode: string): string => `Új árajánlatkérés: ${orderCode}`,
+  glsShippedSubject: (orderCode: string): string => `Rendelésed úton van: ${orderCode}`,
+  glsProblemSubject: (orderCode: string): string => `GLS-probléma a(z) ${orderCode} rendelésnél`,
 };
 
 type Messages = typeof hu;
@@ -34,6 +36,8 @@ const en: Messages = {
   productOrdinal: (number) => `product ${number}`,
   orderConfirmationSubject: (orderCode) => `Thank you for your order: ${orderCode}`,
   orderNotificationSubject: (orderCode) => `New quote request: ${orderCode}`,
+  glsShippedSubject: (orderCode) => `Your order is on its way: ${orderCode}`,
+  glsProblemSubject: (orderCode) => `GLS problem with order ${orderCode}`,
 };
 
 const TABLE: Record<MessageLanguage, Messages> = { hu, en };

@@ -36,12 +36,14 @@ export interface GlsErrorInfo {
   description: string;
 }
 
+export type GlsOperation = "createLabel" | "deleteLabel" | "getParcelStatuses";
+
 export type GlsFailure =
   { kind: "rejected"; errors: GlsErrorInfo[] } | { kind: "unreachable"; reason: string };
 
 export class GlsError extends Error {
   constructor(
-    readonly operation: "createLabel" | "deleteLabel",
+    readonly operation: GlsOperation,
     readonly failure: GlsFailure
   ) {
     super(glsErrorMessage(operation, failure));
@@ -62,6 +64,29 @@ function glsErrorMessage(operation: GlsError["operation"], failure: GlsFailure):
   return `GLS did not answer ${operation} (${failure.reason})`;
 }
 
+export interface GlsParcelStatus {
+  /** GLS's status code as a string (e.g. "1" handed over, "5" delivered). */
+  code: string;
+  /** Epoch milliseconds, or null when GLS's date cannot be parsed. */
+  date: number | null;
+  description: string;
+}
+
+export interface GlsParcelStatuses {
+  parcelId: number;
+  parcelNumber: number;
+  clientReference: string | null;
+  statuses: GlsParcelStatus[];
+}
+
+/** A per-parcel error of a status call; `parcelIds`/`clientReferences` name the affected parcels. */
+export interface GlsStatusError {
+  code: number;
+  description: string;
+  parcelIds: number[];
+  clientReferences: string[];
+}
+
 /**
  * GLS creates a new parcel on every `createLabel` call, even for a repeated
  * `clientReference`, and hands out the label PDF only in that call's result.
@@ -69,4 +94,8 @@ function glsErrorMessage(operation: GlsError["operation"], failure: GlsFailure):
 export interface GlsClient {
   createLabel(parcel: GlsParcelRequest): Promise<GlsLabel>;
   deleteLabel(parcelId: number): Promise<void>;
+  /** One `GetParcelListStatuses` call: at most 100 parcel numbers. */
+  getParcelStatuses(
+    parcelNumbers: readonly number[]
+  ): Promise<{ parcels: GlsParcelStatuses[]; errors: GlsStatusError[] }>;
 }

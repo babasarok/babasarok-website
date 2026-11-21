@@ -35,4 +35,15 @@ export class GlsParcel extends VendureEntity {
 
   @Column({ type: "timestamp", nullable: true })
   deletedInGlsAt!: Date | null;
+
+  /**
+   * The problem status the owner was last emailed about (16 no cash, 17
+   * refused, 20 address problem, 23/40 returned). A different problem code
+   * later notifies again; the same code never repeats.
+   */
+  @Column({ type: "varchar", nullable: true })
+  problemNotifiedCode!: string | null;
+
+  @Column({ type: "timestamp", nullable: true })
+  problemNotifiedAt!: Date | null;
 }

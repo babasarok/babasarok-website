@@ -12,119 +12,16 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { seedCatalog } from "./fixtures";
 import { run, startServer, type IntegrationServer } from "./harness";
-import { kendo, szalag } from "./lines";
 import {
-  addLine,
-  chooseShipping,
-  newShopper,
-  setAddress,
-  setCustomer,
-  setOrderNotes,
-  transitionTo,
-} from "./shop";
+  fulfill,
+  GLS_SENDER as SENDER,
+  handlerError,
+  placeOrder,
+  recordBankTransfer,
+  setSender,
+} from "./gls-flow";
 
 let server: IntegrationServer;
-
-const SENDER = {
-  name: "Babasarok",
-  street: "Fő utca",
-  houseNumber: "1",
-  city: "Telkibánya",
-  zipCode: "3896",
-  countryCode: "HU",
-  phone: "+36301234567",
-  email: "bolt@example.com",
-};
-
-const PlacedSchema = z.object({
-  id: z.string(),
-  code: z.string(),
-  totalWithTax: z.number(),
-  lines: z.array(z.object({ id: z.string(), quantity: z.number() })),
-});
-
-type Placed = z.output<typeof PlacedSchema>;
-
-const FulfillResultSchema = z.object({
-  addFulfillmentToOrder: z.union([
-    z.object({
-      __typename: z.literal("Fulfillment"),
-      id: z.string(),
-      method: z.string(),
-      trackingCode: z.string(),
-      state: z.string(),
-    }),
-    z.object({
-      __typename: z.string(),
-      errorCode: z.string(),
-      fulfillmentHandlerError: z.string().optional(),
-    }),
-  ]),
-});
-
-async function placeOrder(shippingCode: string): Promise<Placed> {
-  const shopper = newShopper(server);
-
-  await addLine(shopper, kendo(2));
-  await addLine(shopper, szalag(120));
-  await setCustomer(shopper);
-  await setAddress(shopper, { fullName: "Kovács Béla", phoneNumber: "+36309999999" });
-  await chooseShipping(shopper, shippingCode);
-  await setOrderNotes(shopper, { message: "", termsAccepted: true });
-
-  const result = await transitionTo(shopper, "ArrangingPayment");
-
-  if ("refusal" in result) {
-    throw new Error(JSON.stringify(result.refusal));
-  }
-
-  const data = await run(
-    server.admin,
-    `query($code: String!) {
-      orders(options: { filter: { code: { eq: $code } } }) { items { id code totalWithTax lines { id quantity } } }
-    }`,
-    { code: result.order.code },
-    z.object({ orders: z.object({ items: z.tuple([PlacedSchema]) }) })
-  );
-
-  return data.orders.items[0];
-}
-
-async function recordBankTransfer(order: Placed): Promise<string> {
-  const data = await run(
-    server.admin,
-    `mutation($orderId: ID!) {
-      addManualPaymentToOrder(input: { orderId: $orderId, method: "banki-atutalas", metadata: {} }) {
-        __typename ... on Order { state }
-      }
-    }`,
-    { orderId: order.id },
-    z.object({ addManualPaymentToOrder: z.object({ state: z.string() }) })
-  );
-
-  return data.addManualPaymentToOrder.state;
-}
-
-async function fulfill(
-  order: Placed,
-  lines = order.lines.map((l) => ({ orderLineId: l.id, quantity: l.quantity }))
-): Promise<z.output<typeof FulfillResultSchema>["addFulfillmentToOrder"]> {
-  const data = await run(
-    server.admin,
-    `mutation($input: FulfillOrderInput!) {
-      addFulfillmentToOrder(input: $input) {
-        __typename
-        ... on Fulfillment { id method trackingCode state }
-        ... on CreateFulfillmentError { errorCode fulfillmentHandlerError }
-        ... on ErrorResult { errorCode }
-      }
-    }`,
-    { input: { lines, handler: { code: "gls", arguments: [] } } },
-    FulfillResultSchema
-  );
-
-  return data.addFulfillmentToOrder;
-}
 
 async function labelText(fulfillmentId: string): Promise<string | null> {
   const data = await run(
@@ -139,30 +36,6 @@ async function labelText(fulfillmentId: string): Promise<string | null> {
   }
 
   return Buffer.from(data.glsLabel.base64, "base64").toString("latin1");
-}
-
-async function setSender(sender: typeof SENDER): Promise<void> {
-  const { activeChannel } = await run(
-    server.admin,
-    `query { activeChannel { id } }`,
-    {},
-    z.object({ activeChannel: z.object({ id: z.string() }) })
-  );
-
-  await run(
-    server.admin,
-    `mutation($input: UpdateChannelInput!) { updateChannel(input: $input) { __typename } }`,
-    { input: { id: activeChannel.id, customFields: { glsSender: sender } } },
-    z.unknown()
-  );
-}
-
-function handlerError(result: Awaited<ReturnType<typeof fulfill>>): string | undefined {
-  if (result.__typename === "Fulfillment" || !("fulfillmentHandlerError" in result)) {
-    return undefined;
-  }
-
-  return result.fulfillmentHandlerError;
 }
 
 beforeAll(async () => {
@@ -197,25 +70,25 @@ describe("GLS labels", () => {
   });
 
   it("refuses while the channel's GLS sender address is incomplete, naming what is missing", async () => {
-    await setSender({ ...SENDER, street: "", phone: " " });
+    await setSender(server, { ...SENDER, street: "", phone: " " });
 
-    const order = await placeOrder("gls-elore-utalas");
+    const order = await placeOrder(server, "gls-elore-utalas");
 
-    await recordBankTransfer(order);
+    await recordBankTransfer(server, order);
 
-    expect(handlerError(await fulfill(order))).toContain(
+    expect(handlerError(await fulfill(server, order))).toContain(
       "Hiányos a GLS feladó címe (utca, telefonszám)"
     );
   });
 
   it("labels a paid prepaid order: tracking code, private PDF, no cash on delivery", async () => {
-    await setSender(SENDER);
+    await setSender(server, SENDER);
 
-    const order = await placeOrder("gls-elore-utalas");
+    const order = await placeOrder(server, "gls-elore-utalas");
 
-    expect(await recordBankTransfer(order)).toBe("PaymentSettled");
+    expect(await recordBankTransfer(server, order)).toBe("PaymentSettled");
 
-    const fulfillment = await fulfill(order);
+    const fulfillment = await fulfill(server, order);
 
     expect(fulfillment).toMatchObject({
       __typename: "Fulfillment",
@@ -236,13 +109,13 @@ describe("GLS labels", () => {
   });
 
   it("deletes the parcel on cancel, drops the PDF, and allows a new label", async () => {
-    await setSender(SENDER);
+    await setSender(server, SENDER);
 
-    const order = await placeOrder("gls-elore-utalas");
+    const order = await placeOrder(server, "gls-elore-utalas");
 
-    await recordBankTransfer(order);
+    await recordBankTransfer(server, order);
 
-    const first = await fulfill(order);
+    const first = await fulfill(server, order);
 
     if (first.__typename !== "Fulfillment" || !("id" in first)) {
       throw new Error(`fulfillment refused: ${JSON.stringify(first)}`);
@@ -262,17 +135,17 @@ describe("GLS labels", () => {
     expect(cancelled.transitionFulfillmentToState).toMatchObject({ state: "Cancelled" });
     expect(await labelText(first.id)).toBeNull();
 
-    const second = await fulfill(order);
+    const second = await fulfill(server, order);
 
     expect(second).toMatchObject({ __typename: "Fulfillment", method: "GLS" });
     expect("trackingCode" in second && second.trackingCode).not.toBe(first.trackingCode);
   });
 
   it("collects the outstanding total on an utánvét order", async () => {
-    await setSender(SENDER);
+    await setSender(server, SENDER);
 
-    const order = await placeOrder("gls-utanvet");
-    const fulfillment = await fulfill(order);
+    const order = await placeOrder(server, "gls-utanvet");
+    const fulfillment = await fulfill(server, order);
 
     if (fulfillment.__typename !== "Fulfillment" || !("id" in fulfillment)) {
       throw new Error(`fulfillment refused: ${JSON.stringify(fulfillment)}`);
@@ -282,11 +155,11 @@ describe("GLS labels", () => {
   });
 
   it("refuses a partial fulfillment and an order not delivered by GLS", async () => {
-    await setSender(SENDER);
+    await setSender(server, SENDER);
 
-    const prepaid = await placeOrder("gls-elore-utalas");
+    const prepaid = await placeOrder(server, "gls-elore-utalas");
 
-    await recordBankTransfer(prepaid);
+    await recordBankTransfer(server, prepaid);
 
     const firstLine = prepaid.lines.at(0);
 
@@ -296,14 +169,16 @@ describe("GLS labels", () => {
 
     expect(
       handlerError(
-        await fulfill(prepaid, [{ orderLineId: firstLine.id, quantity: firstLine.quantity }])
+        await fulfill(server, prepaid, [
+          { orderLineId: firstLine.id, quantity: firstLine.quantity },
+        ])
       )
     ).toContain("összes tételét");
 
-    const pickup = await placeOrder("szemelyes");
+    const pickup = await placeOrder(server, "szemelyes");
 
-    await recordBankTransfer(pickup);
+    await recordBankTransfer(server, pickup);
 
-    expect(handlerError(await fulfill(pickup))).toContain("nem GLS-szállítású");
+    expect(handlerError(await fulfill(server, pickup))).toContain("nem GLS-szállítású");
   });
 });

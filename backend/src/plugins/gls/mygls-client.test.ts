@@ -224,3 +224,123 @@ describe("deleteLabel", () => {
     });
   });
 });
+
+describe("getParcelStatuses", () => {
+  it("posts the parcel numbers with the API language and maps the history", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      jsonResponse({
+        GetParcelListStatusesErrors: [],
+        ParcelList: [
+          {
+            ParcelId: 16_466_168,
+            ParcelNumber: 3_244_968_187,
+            ClientNumber: 100_021_942,
+            ClientReference: "ORD-1",
+            Weight: null,
+            ParcelStatusList: [
+              {
+                StatusCode: "1",
+                StatusDate: "/Date(1764000000000+0100)/",
+                StatusDescription: "A csomagot átadtuk a GLS-nek.",
+                DepotNumber: "1234",
+                DepotCity: "Miskolc",
+                StatusInfo: null,
+              },
+              {
+                StatusCode: "5",
+                StatusDate: "2026-11-21T10:00:00.000Z",
+                StatusDescription: "A csomagot kézbesítettük.",
+                DepotNumber: "1234",
+                DepotCity: "Miskolc",
+              },
+            ],
+          },
+        ],
+      })
+    );
+
+    const result = await clientWith(fetchMock).getParcelStatuses([3_244_968_187]);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api.test.mygls.hu/ParcelService.svc/json/GetParcelListStatuses"
+    );
+
+    expect(sentBody(fetchMock)).toMatchObject({
+      ParcelNumberList: [3_244_968_187],
+      LanguageIsoCode: "HU",
+    });
+
+    expect(result.parcels).toEqual([
+      {
+        parcelId: 16_466_168,
+        parcelNumber: 3_244_968_187,
+        clientReference: "ORD-1",
+        statuses: [
+          { code: "1", date: 1_764_000_000_000, description: "A csomagot átadtuk a GLS-nek." },
+          {
+            code: "5",
+            date: Date.parse("2026-11-21T10:00:00.000Z"),
+            description: "A csomagot kézbesítettük.",
+          },
+        ],
+      },
+    ]);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("maps per-parcel errors without failing the call", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      jsonResponse({
+        GetParcelListStatusesErrors: [
+          {
+            ErrorCode: 26,
+            ErrorDescription: "Parcel not handed over yet",
+            ParcelIdList: [16_466_168],
+            ClientReferenceList: ["ORD-1"],
+          },
+        ],
+        ParcelList: [],
+      })
+    );
+
+    const result = await clientWith(fetchMock).getParcelStatuses([3_244_968_187]);
+
+    expect(result.parcels).toEqual([]);
+    expect(result.errors).toEqual([
+      {
+        code: 26,
+        description: "Parcel not handed over yet",
+        parcelIds: [16_466_168],
+        clientReferences: ["ORD-1"],
+      },
+    ]);
+  });
+
+  it("keeps unparseable dates as null", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      jsonResponse({
+        GetParcelListStatusesErrors: [],
+        ParcelList: [
+          {
+            ParcelId: 1,
+            ParcelNumber: 2,
+            ClientReference: null,
+            ParcelStatusList: [{ StatusCode: "1", StatusDate: "not a date" }],
+          },
+        ],
+      })
+    );
+
+    const result = await clientWith(fetchMock).getParcelStatuses([2]);
+
+    expect(result.parcels[0].statuses).toEqual([{ code: "1", date: null, description: "" }]);
+  });
+
+  it("treats an unreachable GLS like the other operations", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockRejectedValue(new Error("socket hang up"));
+
+    await expect(clientWith(fetchMock).getParcelStatuses([2])).rejects.toMatchObject({
+      failure: { kind: "unreachable" },
+    });
+  });
+});

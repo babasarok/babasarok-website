@@ -47,6 +47,47 @@ describe("FakeGlsClient", () => {
   });
 });
 
+describe("FakeGlsClient statuses", () => {
+  it("answers the injected statuses until the parcel is deleted", async () => {
+    const client = new FakeGlsClient();
+    const label = await client.createLabel(parcel);
+
+    expect(await client.getParcelStatuses([label.parcelNumber])).toEqual({
+      parcels: [],
+      errors: [],
+    });
+
+    const statuses = [{ code: "1", date: 100, description: "átadva" }];
+    client.setStatuses(label.parcelNumber, statuses);
+
+    expect(await client.getParcelStatuses([label.parcelNumber])).toEqual({
+      parcels: [
+        {
+          parcelId: label.parcelId,
+          parcelNumber: label.parcelNumber,
+          clientReference: "ORD-1",
+          statuses,
+        },
+      ],
+      errors: [],
+    });
+
+    await client.deleteLabel(label.parcelId);
+    expect(await client.getParcelStatuses([label.parcelNumber])).toEqual({
+      parcels: [],
+      errors: [],
+    });
+  });
+
+  it("answers nothing for parcels it did not create", async () => {
+    const client = new FakeGlsClient();
+
+    client.setStatuses(123, [{ code: "5", date: 100, description: "" }]);
+
+    expect(await client.getParcelStatuses([123])).toEqual({ parcels: [], errors: [] });
+  });
+});
+
 describe("FakeGlsClient label text", () => {
   it("prints the cash-on-delivery amount like a real label", async () => {
     const label = await new FakeGlsClient(0).createLabel({

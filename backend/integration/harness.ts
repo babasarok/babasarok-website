@@ -17,6 +17,7 @@
 import "reflect-metadata";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
+import type { INestApplication } from "@nestjs/common";
 import { setTimeout as sleep } from "node:timers/promises";
 import { defaultConfig, mergeConfig, runMigrations, NoopLogger } from "@vendure/core";
 import { createTestEnvironment, SimpleGraphQLClient } from "@vendure/testing";
@@ -39,6 +40,8 @@ export interface IntegrationServer {
   admin: SimpleGraphQLClient;
   /** A shop-API session; `languageCode` sets the request language as the site does. */
   newShopSession(languageCode?: string): SimpleGraphQLClient;
+  /** The booted Nest application, for plugin providers and direct task runs. */
+  app: INestApplication;
   stop(): Promise<void>;
 }
 
@@ -77,6 +80,7 @@ export async function startServer(): Promise<IntegrationServer> {
 
   return {
     admin: adminClient,
+    app: server.app,
     newShopSession: (languageCode) => {
       const url = new URL(
         `http://localhost:${config.apiOptions.port}/${config.apiOptions.shopApiPath}`

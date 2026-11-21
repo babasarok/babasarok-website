@@ -1,26 +1,44 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, type InjectionToken } from "@nestjs/common";
 import {
   Channel,
+  EventBus,
   Fulfillment,
+  FulfillmentService,
+  isGraphQlErrorResult,
   Logger,
   Order,
+  OrderService,
   TransactionalConnection,
   type RequestContext,
 } from "@vendure/core";
+import { In, IsNull } from "typeorm";
 import type { OrderLineInput } from "@vendure/common/lib/generated-types";
-import { GlsError, type GlsClient } from "./gls-client";
+import { GlsError, type GlsClient, type GlsParcelStatuses } from "./gls-client";
 import type { GlsConfig } from "./gls-config";
-import { glsLabelRequest, GLS_HANDLER_CODE, type LabelOrder } from "./gls-label-request";
+import {
+  glsLabelRequest,
+  GLS_HANDLER_CODE,
+  outstandingTotal,
+  type LabelOrder,
+} from "./gls-label-request";
 import { GlsParcel } from "./gls-parcel.entity";
+import { GlsParcelProblemEvent } from "./gls-parcel-problem-event";
+import { glsStatusDecision, wasHandedOver } from "./gls-status-decision";
 import { glsSenderAddress } from "./gls-sender";
 
-export const GLS_CLIENT = Symbol("GLS_CLIENT");
+export const GLS_CLIENT: InjectionToken<GlsClient> = Symbol("GLS_CLIENT");
 
-export const GLS_MODE = Symbol("GLS_MODE");
+export const GLS_MODE: InjectionToken<GlsConfig["mode"]> = Symbol("GLS_MODE");
 
 const LOG_CONTEXT = "GlsService";
 
 const PARCEL_GONE_CODE = 4;
+
+/** "A parcel not yet handed over answers err 26" — the quiet state between creation and hand-over. */
+const NOT_YET_HANDED_OVER_CODE = 26;
+
+/** GetParcelListStatuses takes at most 100 parcel numbers per call. */
+const STATUS_BATCH_SIZE = 100;
 
 export interface GlsLabelFile {
   fileName: string;
@@ -31,6 +49,9 @@ export interface GlsLabelFile {
 export class GlsService {
   constructor(
     private readonly connection: TransactionalConnection,
+    private readonly eventBus: EventBus,
+    private readonly fulfillmentService: FulfillmentService,
+    private readonly orderService: OrderService,
     @Inject(GLS_CLIENT) private readonly client: GlsClient,
     @Inject(GLS_MODE) private readonly mode: GlsConfig["mode"]
   ) {}
@@ -162,6 +183,236 @@ export class GlsService {
       base64: parcel.labelPdf.toString("base64"),
     };
   }
+
+  /** The scheduled poll: GLS's status history decides shipped/delivered/problem per open parcel. */
+  async pollStatuses(ctx: RequestContext): Promise<void> {
+    const parcels = await this.pollableParcels(ctx);
+
+    for (const batch of batches(parcels, STATUS_BATCH_SIZE)) {
+      const result = await this.client
+        .getParcelStatuses(batch.map((p) => Number(p.parcelNumber)))
+        .catch((error: unknown) => {
+          Logger.error(`A GLS státusz-lekérdezés nem sikerült: ${errorText(error)}`, LOG_CONTEXT);
+          return null;
+        });
+
+      if (!result) {
+        continue;
+      }
+
+      for (const error of result.errors.filter((e) => e.code !== NOT_YET_HANDED_OVER_CODE)) {
+        Logger.warn(
+          `A GLS státusz-lekérdezés hibát adott: ${error.code}: ${error.description} (${error.parcelIds.join(", ")})`,
+          LOG_CONTEXT
+        );
+      }
+
+      const errored = new Set(result.errors.flatMap((e) => e.parcelIds));
+
+      for (const parcel of batch) {
+        if (errored.has(parcel.parcelId)) {
+          continue;
+        }
+
+        const wire = result.parcels.find((p) => p.parcelNumber === Number(parcel.parcelNumber));
+
+        if (wire) {
+          await this.applyStatusAction(ctx, parcel, wire);
+        }
+      }
+    }
+  }
+
+  private async pollableParcels(ctx: RequestContext): Promise<GlsParcel[]> {
+    const parcels = await this.connection
+      .getRepository(ctx, GlsParcel)
+      .find({ where: { mode: this.mode, deletedInGlsAt: IsNull() } });
+
+    if (parcels.length === 0) {
+      return parcels;
+    }
+
+    const fulfillments = await this.connection
+      .getRepository(ctx, Fulfillment)
+      .find({ where: { trackingCode: In(parcels.map((p) => p.parcelNumber)) } });
+    const byCode = new Map(fulfillments.map((f) => [f.trackingCode, f]));
+
+    return parcels.filter((parcel) => {
+      const state = byCode.get(parcel.parcelNumber)?.state;
+
+      if (state === undefined) {
+        Logger.warn(
+          `A(z) ${parcel.parcelNumber} GLS-csomaghoz nem található teljesítés — nem pollolható.`,
+          LOG_CONTEXT
+        );
+        return false;
+      }
+
+      return state !== "Delivered" && state !== "Cancelled";
+    });
+  }
+
+  private async applyStatusAction(
+    ctx: RequestContext,
+    parcel: GlsParcel,
+    wire: GlsParcelStatuses
+  ): Promise<void> {
+    const fulfillment = await this.connection
+      .getRepository(ctx, Fulfillment)
+      .findOne({ where: { trackingCode: parcel.parcelNumber } });
+
+    if (!fulfillment) {
+      Logger.warn(
+        `A(z) ${parcel.parcelNumber} GLS-csomaghoz nem található teljesítés.`,
+        LOG_CONTEXT
+      );
+      return;
+    }
+
+    const action = glsStatusDecision(wire.statuses);
+
+    if (action.kind === "none") {
+      return;
+    }
+
+    if (action.kind === "shipped") {
+      if (fulfillment.state === "Pending") {
+        await this.transition(ctx, parcel, fulfillment, "Shipped");
+      }
+
+      return;
+    }
+
+    // A handed-over parcel reflects on the fulfillment even when a problem
+    // status is also in the history — the buyer email depends on the Shipped
+    // transition. A delivered parcel needs no "it's on its way".
+    if (
+      action.kind !== "delivered" &&
+      fulfillment.state === "Pending" &&
+      wasHandedOver(wire.statuses)
+    ) {
+      await this.transition(ctx, parcel, fulfillment, "Shipped");
+    }
+
+    if (action.kind === "delivered") {
+      if (fulfillment.state === "Delivered") {
+        return;
+      }
+
+      if (!(await this.paymentsCoverTotal(ctx, parcel))) {
+        // Utánvét: the cash is collected in person — the order holds in Shipped
+        // until the owner records the payment (no email; GLS's refusal path
+        // never reaches "delivered", so this is only a recorded-payment lag).
+        Logger.info(
+          `A(z) ${parcel.parcelNumber} GLS-csomag kézbesítve, de a(z) ${parcel.orderId} rendelés kifizetetlen — Shipped-ben marad.`,
+          LOG_CONTEXT
+        );
+        return;
+      }
+
+      await this.transition(ctx, parcel, fulfillment, "Delivered");
+      await this.connection
+        .getRepository(ctx, GlsParcel)
+        .update({ id: parcel.id }, { labelPdf: null });
+
+      return;
+    }
+
+    if (action.status.code === parcel.problemNotifiedCode) {
+      return;
+    }
+
+    const order = await this.connection
+      .getRepository(ctx, Order)
+      .findOne({ where: { id: parcel.orderId } });
+
+    if (!order) {
+      Logger.warn(
+        `A(z) ${parcel.parcelNumber} GLS-csomag rendelése (${parcel.orderId}) nem található.`,
+        LOG_CONTEXT
+      );
+      return;
+    }
+
+    await this.connection
+      .getRepository(ctx, GlsParcel)
+      .update(
+        { id: parcel.id },
+        { problemNotifiedCode: action.status.code, problemNotifiedAt: new Date() }
+      );
+
+    await this.eventBus.publish(
+      new GlsParcelProblemEvent(
+        ctx,
+        String(parcel.orderId),
+        order.code,
+        parcel.parcelNumber,
+        action.status.code,
+        action.status.description
+      )
+    );
+
+    await this.orderService.addNoteToOrder(ctx, {
+      id: parcel.orderId,
+      isPublic: false,
+      note: `GLS ${action.status.code}: ${action.status.description || "problémás állapot"} — a(z) ${parcel.parcelNumber} csomag. Részletek a MyGLS-ben.`,
+    });
+  }
+
+  private async transition(
+    ctx: RequestContext,
+    parcel: GlsParcel,
+    fulfillment: Fulfillment,
+    state: "Shipped" | "Delivered"
+  ): Promise<void> {
+    const result = await this.fulfillmentService.transitionToState(ctx, fulfillment.id, state);
+
+    if (isGraphQlErrorResult(result)) {
+      Logger.error(
+        `A(z) ${parcel.parcelNumber} GLS-csomag teljesítése nem állítható ${state} állapotba: ${result.message}`,
+        LOG_CONTEXT
+      );
+    }
+  }
+
+  private async paymentsCoverTotal(ctx: RequestContext, parcel: GlsParcel): Promise<boolean> {
+    const order = await this.connection
+      .getRepository(ctx, Order)
+      .findOne({ where: { id: parcel.orderId }, relations: { payments: true } });
+
+    if (!order) {
+      Logger.warn(
+        `A(z) ${parcel.parcelNumber} GLS-csomag rendelése (${parcel.orderId}) nem található.`,
+        LOG_CONTEXT
+      );
+      return false;
+    }
+
+    return (
+      outstandingTotal({
+        totalWithTax: order.totalWithTax,
+        payments: order.payments.map((p) => ({ state: p.state, amount: p.amount })),
+      }) <= 0
+    );
+  }
+}
+
+function batches<T>(items: readonly T[], size: number): T[][] {
+  const result: T[][] = [];
+
+  for (let start = 0; start < items.length; start += size) {
+    result.push(items.slice(start, start + size));
+  }
+
+  return result;
+}
+
+function errorText(error: unknown): string {
+  if (error instanceof GlsError) {
+    return error.message;
+  }
+
+  return String(error);
 }
 
 function labelOrder(order: Order): LabelOrder {

@@ -1,4 +1,11 @@
-import { GlsError, type GlsClient, type GlsLabel, type GlsParcelRequest } from "./gls-client";
+import {
+  GlsError,
+  type GlsClient,
+  type GlsLabel,
+  type GlsParcelRequest,
+  type GlsParcelStatus,
+  type GlsParcelStatuses,
+} from "./gls-client";
 
 export interface FakeParcel {
   parcelId: number;
@@ -14,12 +21,18 @@ const BOOT_OFFSET_RANGE = 1_000_000_000;
 
 export class FakeGlsClient implements GlsClient {
   private readonly created = new Map<number, FakeParcel>();
+  private readonly statuses = new Map<number, GlsParcelStatus[]>();
   private nextIndex = 0;
 
   constructor(private readonly bootOffset = Date.now() % BOOT_OFFSET_RANGE) {}
 
   get parcels(): readonly FakeParcel[] {
     return [...this.created.values()];
+  }
+
+  /** The polling tests' seam: GLS's own network is what reports these in production. */
+  setStatuses(parcelNumber: number | string, statuses: readonly GlsParcelStatus[]): void {
+    this.statuses.set(Number(parcelNumber), [...statuses]);
   }
 
   async createLabel(parcel: GlsParcelRequest): Promise<GlsLabel> {
@@ -33,12 +46,46 @@ export class FakeGlsClient implements GlsClient {
   }
 
   async deleteLabel(parcelId: number): Promise<void> {
-    if (!this.created.delete(parcelId)) {
+    const parcel = this.created.get(parcelId);
+
+    if (!parcel || !this.created.delete(parcelId)) {
       throw new GlsError("deleteLabel", {
         kind: "rejected",
         errors: [{ code: 4, description: "Parcel ID not exists" }],
       });
     }
+
+    this.statuses.delete(parcel.parcelNumber);
+  }
+
+  async getParcelStatuses(
+    parcelNumbers: readonly number[]
+  ): Promise<{ parcels: GlsParcelStatuses[]; errors: [] }> {
+    return {
+      parcels: parcelNumbers.flatMap((parcelNumber) => {
+        const statuses = this.statuses.get(parcelNumber) ?? [];
+
+        if (statuses.length === 0) {
+          return [];
+        }
+
+        const parcel = [...this.created.values()].find((p) => p.parcelNumber === parcelNumber);
+
+        if (!parcel) {
+          return [];
+        }
+
+        return [
+          {
+            parcelId: parcel.parcelId,
+            parcelNumber: parcel.parcelNumber,
+            clientReference: parcel.request.clientReference,
+            statuses: [...statuses],
+          },
+        ];
+      }),
+      errors: [],
+    };
   }
 }
 

@@ -18,6 +18,7 @@ import {
 import { AssetServerPlugin } from "@vendure/asset-server-plugin";
 import { DashboardPlugin } from "@vendure/dashboard/plugin";
 import { EmailPlugin } from "@vendure/email-plugin";
+import { DefaultSchedulerPlugin } from "@vendure/core";
 import { LocaleTemplateLoader } from "./plugins/email/localized-template-loader";
 import type { EmailPluginDevModeOptions, EmailPluginOptions } from "@vendure/email-plugin";
 import { ASSET_PRESETS, ASSET_QUALITY } from "./shared/asset-presets";
@@ -25,6 +26,8 @@ import { PresetOrOriginalStrategy } from "./preset-or-original-strategy";
 import { env } from "./env";
 import { GLS_SENDER_FIELD } from "./plugins/gls/gls-sender";
 import { GlsPlugin } from "./plugins/gls/gls.plugin";
+import { glsProblemHandler, glsShippedHandler } from "./plugins/gls/gls-emails";
+import { glsStatusPollTask } from "./plugins/gls/gls-poll-task";
 import { z } from "zod";
 import { HandlebarsHtmlGenerator } from "./plugins/email/handlebars-html-generator";
 import { CloudflareEmailSender } from "./plugins/email/cloudflare-email-sender";
@@ -65,7 +68,12 @@ function emailPluginOptions(): EmailPluginOptions | EmailPluginDevModeOptions {
     templateLoader: new LocaleTemplateLoader(path.join(__dirname, "..", "email-templates")),
     // Plain-HTML handlebars templates, not MJML.
     emailGenerator: new HandlebarsHtmlGenerator(),
-    handlers: [nativeOrderConfirmationHandler, nativeOrderNotificationHandler],
+    handlers: [
+      nativeOrderConfirmationHandler,
+      nativeOrderNotificationHandler,
+      glsShippedHandler,
+      glsProblemHandler,
+    ],
     globalTemplateVars: { fromAddress: env.orderEmailFrom },
   };
 
@@ -202,7 +210,11 @@ export const config: VendureConfig = {
     // run by the server and worker on boot. No synchronize anywhere: server
     // and worker share one database.
   },
+  // The GLS poll runs in the worker only (the DefaultSchedulerStrategy's
+  // database bookkeeping keeps it exactly-once across processes).
+  schedulerOptions: { tasks: [glsStatusPollTask] },
   plugins: [
+    DefaultSchedulerPlugin.init(),
     MaterialPlugin,
     ProductPlugin,
     ProductSetPlugin,

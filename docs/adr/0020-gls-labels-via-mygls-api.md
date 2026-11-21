@@ -145,6 +145,16 @@ PaymentSettled`). This makes `Delivered` an invariant: fully paid and
   parcel (no deduplication); a parcel not yet handed over answers
   `GetParcelStatuses` with error 26 (the worker reads it as "not handed
   over yet"); deleting twice answers error 4.
+- **Public tracking URL** (verified 2026-11-21): a parcel is tracked at
+  `https://gls-group.eu/HU/en/parcel-tracking?match=<parcel number>` (HTTP
+  200, "GLS Parcel Tracking | GLS Hungary"); the Hungarian `/hu/` slugs 404
+  — GLS serves the tracking page in English only.
+- **`GetParcelListStatuses`** (MyGLS API doc ver. 25.12.11): POST with
+  `ParcelNumberList` (≤100) + `LanguageIsoCode` (HU supported) returns
+  `ParcelList` entries with the full `ParcelStatusList` history
+  (`StatusCode` string, `StatusDate`, `StatusDescription`); per-parcel
+  errors land in `GetParcelListStatusesErrors` as `ErrorInfo` entries
+  carrying `ParcelIdList`/`ClientReferenceList`.
 - **Fulfilling needs a settled order** (Vendure dashboard 3.8.1
   `canAddFulfillment`): the dashboard offers "Fulfill order" only when the
   order can move to `Shipped`/`PartiallyShipped`/`Delivered`, i.e. from
@@ -183,8 +193,15 @@ PaymentSettled`). This makes `Delivered` an invariant: fully paid and
   returned, wrong address) the worker emails the owner once and records
   it on the order — it never cancels anything.
 - **The buyer gets a "shipped" email** with the GLS tracking link when the
-  parcel is handed over (fulfillment → `Shipped`), in the order's
-  language.
+  parcel is handed over (fulfillment → `Shipped`), in the order's language
+  (revised 2026-11-21: the order does not record the checkout language, so
+  the email goes out in Hungarian; the English variant stays as the
+  template loader's fallback).
+- **Delivered-but-unpaid stays silent** (2026-11-21): a parcel GLS reports
+  delivered while the order's payments do not cover the total holds in
+  `Shipped` without email — GLS's refusal path (16/17) never reports
+  "delivered", so the gap is only the recording lag, not a lost parcel. The
+  problem statuses cover the refusal path.
 
 ## Rollout plan
 
@@ -202,24 +219,29 @@ PaymentSettled`). This makes `Delivered` an invariant: fully paid and
    [the gls-labels spec](../specs/gls-labels.md). S2c (done): the order
    page's "GLS-címke" block downloading the label PDF
    (`backend/src/dashboard/gls/gls.tsx`).
-3. **S3 Polling worker** — next. A Vendure `ScheduledTask` every 30
-   minutes (core 3.8.1 ships `ScheduledTask`; tasks only run with
-   `DefaultSchedulerPlugin` registered — the default strategy is a no-op)
-   polls the live parcels of this mode (`gls_parcel` rows not deleted,
+3. **S3 Polling worker** (done) — a Vendure `ScheduledTask` every 30
+   minutes (`DefaultSchedulerPlugin.init()` + `schedulerOptions.tasks`;
+   tasks run in the worker process only, the default strategy is a no-op)
+   polls the open parcels of this mode (`gls_parcel` rows not deleted,
    fulfillment not `Delivered`/`Cancelled`) with `GetParcelListStatuses`
-   (≤100 per call; a not-yet-handed-over parcel answers error 26). A pure
-   decision maps the status history to: `Shipped` on hand-over (status 1
+   (≤100 per call, `LanguageIsoCode: HU`; a not-yet-handed-over parcel
+   answers error 26 and is skipped quietly). A pure decision over the
+   date-ordered status history maps it to: `Shipped` on hand-over (status 1
    and later transit codes); `Delivered` on 5/54/58/92 only when the
-   order's payments cover the total (COD orders hold in `Shipped` until the
-   owner records the COD payment); a one-time owner email on problem codes
-   (16 no cash, 17 refused, 20 address, 23/40 returned). The worker moves
-   only the fulfillment (Vendure moves the order). On `Delivered` the
-   stored PDF is dropped. The buyer's "shipped" email (hu/en templates,
-   with the GLS tracking link — the public tracking URL format still to be
-   verified) fires on the fulfillment's transition to `Shipped`. The fake
-   keeps per-process state, so the worker in fake mode sees no parcels:
-   the decision is unit-tested, the poll loop gets an integration test
-   that injects statuses.
+   order's payments cover the total (COD orders hold until the owner
+   records the COD payment — GLS's refusal path never reports "delivered",
+   so the hold covers only the recording lag and stays silent); a one-time
+   owner email per **distinct problem code** (16 no cash, 17 refused, 20
+   address, 23/40 returned — a new code notifies again, the same code never
+   repeats; the last notified code rides on the `gls_parcel` row), plus a
+   private note on the order. The worker moves only the fulfillment
+   (Vendure moves the order). On `Delivered` the stored PDF is dropped. The
+   buyer's "shipped" email (hu/en templates with the tracking link) fires
+   on the fulfillment's transition to `Shipped`; the order does not record
+   the checkout language, so the email goes out in Hungarian. The fake
+   takes injected statuses (`setStatuses`), so the poll loop has an
+   integration test (`backend/integration/gls-status-poll.test.ts`) and
+   the decision unit tests.
 4. **S4 Test-env round-trip** — test access is provisioned and verified
    (2026-11-19): `PrintLabels` → PDF → `DeleteLabels` on
    `api.test.mygls.hu`.
