@@ -241,9 +241,10 @@ function GapsBlock({ entityType }: { entityType: string }): ReactElement {
             header: "Magyar szöveg",
             enableSorting: false,
             cell: ({ row }) => (
-              <div className="max-w-60 truncate" title={row.original.huValue}>
-                {row.original.huValue}
-              </div>
+              // The table's cells are whitespace-nowrap; this column must
+              // opt into wrapping so the full Hungarian source stays readable
+              // and the table fits its frame.
+              <div className="wrap-anywhere whitespace-normal">{row.original.huValue}</div>
             ),
           },
           {
@@ -376,11 +377,8 @@ function DriftsBlock({ entityType }: { entityType: string }): ReactElement {
             header: "Magyar változás",
             enableSorting: false,
             cell: ({ row }) => (
-              <div className="max-w-60">
-                <div
-                  className="truncate"
-                  title={`${row.original.huFrom ?? "—"} → ${row.original.huTo}`}
-                >
+              <div>
+                <div className="wrap-anywhere whitespace-normal">
                   {row.original.huFrom ?? "—"} → {row.original.huTo}
                 </div>
                 <div className="text-muted-foreground text-xs">
