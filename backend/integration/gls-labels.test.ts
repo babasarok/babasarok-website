@@ -141,6 +141,34 @@ describe("GLS labels", () => {
     expect("trackingCode" in second && second.trackingCode).not.toBe(first.trackingCode);
   });
 
+  it("drops the PDF when the owner marks the fulfillment delivered", async () => {
+    await setSender(server, SENDER);
+
+    const order = await placeOrder(server, "gls-elore-utalas");
+    await recordBankTransfer(server, order);
+    const fulfillment = await fulfill(server, order);
+
+    if (fulfillment.__typename !== "Fulfillment" || !("id" in fulfillment)) {
+      throw new Error(`fulfillment refused: ${JSON.stringify(fulfillment)}`);
+    }
+
+    expect(await labelText(fulfillment.id)).not.toBeNull();
+
+    const delivered = await run(
+      server.admin,
+      `mutation($id: ID!) {
+        transitionFulfillmentToState(id: $id, state: "Delivered") {
+          __typename ... on Fulfillment { state } ... on ErrorResult { errorCode message }
+        }
+      }`,
+      { id: fulfillment.id },
+      z.object({ transitionFulfillmentToState: z.object({ __typename: z.string() }).loose() })
+    );
+
+    expect(delivered.transitionFulfillmentToState).toMatchObject({ state: "Delivered" });
+    expect(await labelText(fulfillment.id)).toBeNull();
+  });
+
   it("collects the outstanding total on an utánvét order", async () => {
     await setSender(server, SENDER);
 

@@ -158,6 +158,13 @@ export class GlsService {
     return undefined;
   }
 
+  /** Drops the stored label PDF; the GLS record itself stays (reprints go through MyGLS). */
+  async dropLabelPdfFor(ctx: RequestContext, fulfillment: Fulfillment): Promise<void> {
+    await this.connection
+      .getRepository(ctx, GlsParcel)
+      .update({ parcelNumber: fulfillment.trackingCode }, { labelPdf: null });
+  }
+
   async labelFile(ctx: RequestContext, fulfillmentId: string): Promise<GlsLabelFile | undefined> {
     const fulfillment = await this.connection
       .getRepository(ctx, Fulfillment)
@@ -311,9 +318,7 @@ export class GlsService {
       }
 
       await this.transition(ctx, parcel, fulfillment, "Delivered");
-      await this.connection
-        .getRepository(ctx, GlsParcel)
-        .update({ id: parcel.id }, { labelPdf: null });
+      await this.dropLabelPdfFor(ctx, fulfillment);
 
       return;
     }

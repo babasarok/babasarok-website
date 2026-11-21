@@ -24,6 +24,11 @@ export const glsFulfillmentHandler = new FulfillmentHandler({
   },
   createFulfillment: (ctx, orders, lines) => service().createLabel(ctx, orders, lines),
   onFulfillmentTransition: async (_from, to, { ctx, fulfillment }) => {
+    if (to === "Delivered") {
+      await service().dropLabelPdfFor(ctx, fulfillment);
+      return;
+    }
+
     if (to !== "Cancelled") {
       return;
     }
