@@ -8,10 +8,16 @@
  * Type-checked by src/dashboard/tsconfig.json (`check:dashboard` runs it);
  * at build time the dashboard's vite pipeline bundles this file. The typed
  * graphql documents come from the backend's generated schema (src/gql).
+ * The lists are stock DataTables: below 640px of table width the patched
+ * DataTable molecule renders the rows as cards (ADR 0013), and the page
+ * ships no table CSS of its own.
  */
 import { useCallback, useEffect, useState, type ReactElement } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   api,
+  Button,
+  DataTable,
   defineDashboardExtension,
   Input,
   Page,
@@ -75,6 +81,7 @@ const dismissTranslationDriftMutation = graphql(`
 `);
 
 interface GapRow {
+  id: string;
   entityType: string;
   entityKey: string;
   entityLabel: string;
@@ -84,6 +91,7 @@ interface GapRow {
 }
 
 interface DriftRow {
+  id: string;
   entityType: string;
   entityKey: string;
   entityLabel: string | null;
@@ -160,121 +168,164 @@ function TranslationDriftPage(): ReactElement {
 
 function GapsBlock({ entityType }: { entityType: string }): ReactElement {
   const [skip, setSkip] = useState(0);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [rows, setRows] = useState<GapRow[] | null>(null);
   const [totalItems, setTotalItems] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback((currentType: string, currentSkip: number): void => {
-    api
-      .query(translationGapsQuery, {
-        options: {
-          skip: currentSkip,
-          take: PAGE_SIZE,
-          entityType: currentType === ALL ? null : currentType,
-        },
-      })
-      .then((result) => {
-        setRows(result.translationGaps.items);
-        setTotalItems(result.translationGaps.totalItems);
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        setError(String(err));
-      });
-  }, []);
+  const load = useCallback(
+    (currentType: string, currentSkip: number, currentSize: number): void => {
+      api
+        .query(translationGapsQuery, {
+          options: {
+            skip: currentSkip,
+            take: currentSize,
+            entityType: currentType === ALL ? null : currentType,
+          },
+        })
+        .then((result) => {
+          setRows(
+            result.translationGaps.items.map((row) => ({
+              ...row,
+              id: `${row.entityType}.${row.entityKey}.${row.field}`,
+            }))
+          );
+          setTotalItems(result.translationGaps.totalItems);
+          setError(null);
+        })
+        .catch((err: unknown) => {
+          setError(String(err));
+        });
+    },
+    []
+  );
 
   useEffect(() => {
     setSkip(0);
-    load(entityType, 0);
-  }, [entityType, load]);
+  }, [entityType]);
+
+  useEffect(() => {
+    load(entityType, skip, pageSize);
+  }, [entityType, skip, pageSize, load]);
+
+  const columns: Array<ColumnDef<GapRow>> = [
+    {
+      id: "name",
+      accessorKey: "entityLabel",
+      header: "Név",
+      enableSorting: false,
+      cell: ({ row }) => <span className="font-medium">{row.original.entityLabel}</span>,
+    },
+    {
+      id: "entityType",
+      header: "Entitás",
+      enableSorting: false,
+      cell: ({ row }) => ENTITY_LABELS[row.original.entityType] ?? row.original.entityType,
+    },
+    {
+      id: "field",
+      accessorKey: "fieldLabel",
+      header: "Mező",
+      enableSorting: false,
+      cell: ({ row }) => <span className="font-mono text-xs">{row.original.fieldLabel}</span>,
+    },
+    {
+      id: "hu",
+      accessorKey: "huValue",
+      header: "Magyar szöveg",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <div className="max-w-120 truncate" title={row.original.huValue}>
+          {row.original.huValue}
+        </div>
+      ),
+    },
+    {
+      id: "fix",
+      header: "Angol fordítás",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <FixCell
+          multiline={row.original.huValue.length > 60 || row.original.field.endsWith("description")}
+          onCommit={async (value) => {
+            await api.query(setTranslationMutation, {
+              input: {
+                entityType: row.original.entityType,
+                entityKey: row.original.entityKey,
+                field: row.original.field,
+                languageCode: "en",
+                value,
+                expectedHu: row.original.huValue,
+              },
+            });
+            load(entityType, skip, pageSize);
+          }}
+        />
+      ),
+    },
+  ];
 
   return (
     <>
       {error !== null && <ErrorNotice message={error} />}
-      {rows !== null && rows.length === 0 && <p>Minden fordítás megvan.</p>}
-      {rows !== null && rows.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-muted-foreground border-b text-left">
-                <th className="py-2 pr-4 font-medium">Entitás</th>
-                <th className="py-2 pr-4 font-medium">Név</th>
-                <th className="py-2 pr-4 font-medium">Mező</th>
-                <th className="py-2 pr-4 font-medium">Magyar szöveg</th>
-                <th className="py-2 pr-4 font-medium">Angol fordítás</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={`${row.entityType}.${row.entityKey}.${row.field}`} className="border-b">
-                  <td className="py-2 pr-4 whitespace-nowrap">
-                    {ENTITY_LABELS[row.entityType] ?? row.entityType}
-                  </td>
-                  <td className="py-2 pr-4">{row.entityLabel}</td>
-                  <td className="py-2 pr-4 font-mono text-xs">{row.fieldLabel}</td>
-                  <td className="py-2 pr-4">
-                    <div className="max-w-120 truncate" title={row.huValue}>
-                      {row.huValue}
-                    </div>
-                  </td>
-                  <td className="py-2 pr-4">
-                    <FixCell
-                      multiline={row.huValue.length > 60 || row.field.endsWith("description")}
-                      onCommit={async (value) => {
-                        await api.query(setTranslationMutation, {
-                          input: {
-                            entityType: row.entityType,
-                            entityKey: row.entityKey,
-                            field: row.field,
-                            languageCode: "en",
-                            value,
-                            expectedHu: row.huValue,
-                          },
-                        });
-                        load(entityType, skip);
-                      }}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      <Pager skip={skip} setSkip={setSkip} totalItems={totalItems} />
+      <DataTable
+        columns={columns}
+        data={rows ?? []}
+        totalItems={totalItems}
+        isLoading={rows === null}
+        page={Math.floor(skip / pageSize) + 1}
+        itemsPerPage={pageSize}
+        setTableOptions={(options) => ({ ...options, enableSorting: false })}
+        onPageChange={(_, newPage, newPageSize) => {
+          setPageSize(newPageSize);
+          setSkip((newPage - 1) * newPageSize);
+        }}
+      />
     </>
   );
 }
 
 function DriftsBlock({ entityType }: { entityType: string }): ReactElement {
   const [skip, setSkip] = useState(0);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [rows, setRows] = useState<DriftRow[] | null>(null);
   const [totalItems, setTotalItems] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback((currentType: string, currentSkip: number): void => {
-    api
-      .query(translationDriftsQuery, {
-        options: {
-          skip: currentSkip,
-          take: PAGE_SIZE,
-          entityType: currentType === ALL ? null : currentType,
-        },
-      })
-      .then((result) => {
-        setRows(result.translationDrifts.items);
-        setTotalItems(result.translationDrifts.totalItems);
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        setError(String(err));
-      });
-  }, []);
+  const load = useCallback(
+    (currentType: string, currentSkip: number, currentSize: number): void => {
+      api
+        .query(translationDriftsQuery, {
+          options: {
+            skip: currentSkip,
+            take: currentSize,
+            entityType: currentType === ALL ? null : currentType,
+          },
+        })
+        .then((result) => {
+          setRows(
+            result.translationDrifts.items.map((row) => ({
+              ...row,
+              id: `${row.entityType}.${row.entityKey}.${row.field}.${row.languageCode}`,
+            }))
+          );
+          setTotalItems(result.translationDrifts.totalItems);
+          setError(null);
+        })
+        .catch((err: unknown) => {
+          setError(String(err));
+        });
+    },
+    []
+  );
 
   useEffect(() => {
     setSkip(0);
-    load(entityType, 0);
-  }, [entityType, load]);
+  }, [entityType]);
+
+  useEffect(() => {
+    load(entityType, skip, pageSize);
+  }, [entityType, skip, pageSize, load]);
 
   async function dismiss(row: DriftRow): Promise<void> {
     await api.query(dismissTranslationDriftMutation, {
@@ -286,123 +337,108 @@ function DriftsBlock({ entityType }: { entityType: string }): ReactElement {
         auditEntryId: row.auditEntryId,
       },
     });
-    load(entityType, skip);
+    load(entityType, skip, pageSize);
   }
+
+  const columns: Array<ColumnDef<DriftRow>> = [
+    {
+      id: "name",
+      accessorKey: "entityLabel",
+      header: "Név",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.entityLabel ?? row.original.entityKey}</span>
+      ),
+    },
+    {
+      id: "entityType",
+      header: "Entitás",
+      enableSorting: false,
+      cell: ({ row }) => ENTITY_LABELS[row.original.entityType] ?? row.original.entityType,
+    },
+    {
+      id: "field",
+      accessorKey: "fieldLabel",
+      header: "Mező",
+      enableSorting: false,
+      cell: ({ row }) => <span className="font-mono text-xs">{row.original.fieldLabel}</span>,
+    },
+    {
+      id: "hu",
+      header: "Magyar változás",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <div>
+          <div>
+            {row.original.huFrom ?? "—"} → {row.original.huTo}
+          </div>
+          <div className="text-muted-foreground text-xs">
+            {new Date(row.original.lastHuChangeAt).toLocaleString("hu-HU")}
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "fix",
+      header: "Fordítás javítása",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <FixCell
+          multiline={
+            (row.original.translatedValue?.length ?? 0) > 60 ||
+            row.original.field.endsWith("description")
+          }
+          initialValue={row.original.translatedValue ?? ""}
+          onCommit={async (value) => {
+            await api.query(setTranslationMutation, {
+              input: {
+                entityType: row.original.entityType,
+                entityKey: row.original.entityKey,
+                field: row.original.field,
+                languageCode: row.original.languageCode,
+                value,
+              },
+            });
+            load(entityType, skip, pageSize);
+          }}
+        />
+      ),
+    },
+    {
+      id: "dismiss",
+      header: "Álriasztás",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            void dismiss(row.original);
+          }}
+        >
+          Álriasztás
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <>
       {error !== null && <ErrorNotice message={error} />}
-      {rows !== null && rows.length === 0 && <p>Nincs elavult fordítás.</p>}
-      {rows !== null && rows.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-muted-foreground border-b text-left">
-                <th className="py-2 pr-4 font-medium">Entitás</th>
-                <th className="py-2 pr-4 font-medium">Név</th>
-                <th className="py-2 pr-4 font-medium">Mező</th>
-                <th className="py-2 pr-4 font-medium">Magyar változás</th>
-                <th className="py-2 pr-4 font-medium">Fordítás javítása</th>
-                <th className="py-2 pr-4 font-medium">Álriasztás</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={`${row.entityType}.${row.entityKey}.${row.field}`} className="border-b">
-                  <td className="py-2 pr-4 whitespace-nowrap">
-                    {ENTITY_LABELS[row.entityType] ?? row.entityType}
-                  </td>
-                  <td className="py-2 pr-4">{row.entityLabel ?? row.entityKey}</td>
-                  <td className="py-2 pr-4 font-mono text-xs">{row.fieldLabel}</td>
-                  <td className="py-2 pr-4">
-                    <div className="max-w-120">
-                      {row.huFrom ?? "—"} → {row.huTo}
-                    </div>
-                    <div className="text-muted-foreground text-xs">
-                      {new Date(row.lastHuChangeAt).toLocaleString("hu-HU")}
-                    </div>
-                  </td>
-                  <td className="py-2 pr-4">
-                    <FixCell
-                      multiline={
-                        (row.translatedValue?.length ?? 0) > 60 || row.field.endsWith("description")
-                      }
-                      initialValue={row.translatedValue ?? ""}
-                      onCommit={async (value) => {
-                        await api.query(setTranslationMutation, {
-                          input: {
-                            entityType: row.entityType,
-                            entityKey: row.entityKey,
-                            field: row.field,
-                            languageCode: row.languageCode,
-                            value,
-                          },
-                        });
-                        load(entityType, skip);
-                      }}
-                    />
-                  </td>
-                  <td className="py-2 pr-4">
-                    <button
-                      type="button"
-                      className="rounded border px-3 py-1 text-sm"
-                      onClick={() => {
-                        void dismiss(row);
-                      }}
-                    >
-                      Álriasztás
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      <Pager skip={skip} setSkip={setSkip} totalItems={totalItems} />
+      <DataTable
+        columns={columns}
+        data={rows ?? []}
+        totalItems={totalItems}
+        isLoading={rows === null}
+        page={Math.floor(skip / pageSize) + 1}
+        itemsPerPage={pageSize}
+        setTableOptions={(options) => ({ ...options, enableSorting: false })}
+        onPageChange={(_, newPage, newPageSize) => {
+          setPageSize(newPageSize);
+          setSkip((newPage - 1) * newPageSize);
+        }}
+      />
     </>
-  );
-}
-
-function Pager({
-  skip,
-  setSkip,
-  totalItems,
-}: {
-  skip: number;
-  setSkip: (next: number) => void;
-  totalItems: number;
-}): ReactElement | null {
-  if (totalItems <= PAGE_SIZE) {
-    return null;
-  }
-
-  return (
-    <div className="mt-4 flex items-center gap-2 text-sm">
-      <button
-        type="button"
-        className="rounded border px-3 py-1 disabled:opacity-40"
-        disabled={skip === 0}
-        onClick={() => {
-          setSkip(Math.max(skip - PAGE_SIZE, 0));
-        }}
-      >
-        Előző
-      </button>
-      <span>
-        {skip + 1}–{Math.min(skip + PAGE_SIZE, totalItems)} / {totalItems}
-      </span>
-      <button
-        type="button"
-        className="rounded border px-3 py-1 disabled:opacity-40"
-        disabled={skip + PAGE_SIZE >= totalItems}
-        onClick={() => {
-          setSkip(skip + PAGE_SIZE);
-        }}
-      >
-        Következő
-      </button>
-    </div>
   );
 }
 
@@ -453,16 +489,16 @@ function FixCell({
             }}
           />
         )}
-        <button
-          type="button"
-          className="rounded border px-3 py-1 text-sm disabled:opacity-40"
+        <Button
+          variant="outline"
+          size="sm"
           disabled={saving || value.trim() === ""}
           onClick={() => {
             void commit();
           }}
         >
           Mentés
-        </button>
+        </Button>
       </div>
       {error !== null && <div className="text-destructive mt-1 text-xs">{error}</div>}
     </div>
