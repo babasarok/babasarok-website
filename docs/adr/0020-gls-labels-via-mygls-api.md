@@ -242,9 +242,11 @@ PaymentSettled`). This makes `Delivered` an invariant: fully paid and
    takes injected statuses (`setStatuses`), so the poll loop has an
    integration test (`backend/integration/gls-status-poll.test.ts`) and
    the decision unit tests.
-4. **S4 Test-env round-trip** — test access is provisioned and verified
-   (2026-11-19): `PrintLabels` → PDF → `DeleteLabels` on
-   `api.test.mygls.hu`.
+4. **S4 Test-env round-trip** (done) — test access was provisioned and
+   verified (2026-11-19); the round-trip itself ran 2026-11-21 via the
+   `GLS_SMOKE=1` smoke test: a prepaid and a COD parcel created on
+   `api.test.mygls.hu`, both PDFs `%PDF-`-valid, both deleted, the second
+   delete answered error 4.
 5. **S5 Live verification (done-condition, owner-run)** — one real label
    created through the finished plugin's path, checked in MyGLS, deleted.
    Development never touches live; without this step nothing proves her
