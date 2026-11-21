@@ -49,6 +49,7 @@ import { ProductPlugin } from "./plugins/product/product.plugin";
 import { AuditPlugin } from "./plugins/audit/audit.plugin";
 import { hexColorError } from "./plugins/product/thread-color";
 import { ChannelSetupPlugin } from "./plugins/setup/channel-setup.plugin";
+import { bankTransferChecker, bankTransferHandler } from "./bank-transfer-handler";
 
 // Zod's built-in validation messages surface to the owner (definition and
 // material validation); the Hungarian locale localizes them for every process
@@ -197,7 +198,10 @@ export const config: VendureConfig = {
   entityOptions: {
     moneyStrategy: new ForintMoneyStrategy(),
   },
-  paymentOptions: { paymentMethodHandlers: [] },
+  paymentOptions: {
+    paymentMethodHandlers: [bankTransferHandler],
+    paymentMethodEligibilityCheckers: [bankTransferChecker],
+  },
   promotionOptions: {
     promotionConditions: [...defaultPromotionConditions, productSetMembersCondition],
     promotionActions: [...defaultPromotionActions, productSetDiscountAction],
