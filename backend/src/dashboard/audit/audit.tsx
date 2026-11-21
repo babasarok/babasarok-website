@@ -17,14 +17,9 @@ import {
   PageBlock,
   PageLayout,
   PageTitle,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from "@vendure/dashboard";
 import { graphql } from "@/gql";
-import { ErrorNotice } from "../shared";
+import { ALL, ErrorNotice, FilterSelect } from "../shared";
 
 const PAGE_SIZE = 50;
 
@@ -78,9 +73,6 @@ interface Filters {
 
 const EMPTY_FILTERS: Filters = { entityType: "", source: "", from: "", to: "" };
 
-/** The sentinel value the "no filter" option carries. */
-const ALL = "all";
-
 const ENTITY_TYPES: Array<{ value: string; label: string }> = [
   { value: ALL, label: "Minden entitás" },
   { value: "material", label: "Anyag" },
@@ -124,37 +116,6 @@ function optionsFor(
     from: filters.from === "" ? null : new Date(`${filters.from}T00:00:00`).toISOString(),
     to: filters.to === "" ? null : new Date(`${filters.to}T23:59:59.999`).toISOString(),
   };
-}
-
-function FilterSelect({
-  value,
-  items,
-  onChange,
-}: {
-  value: string;
-  items: Record<string, string>;
-  onChange: (value: string) => void;
-}): ReactElement {
-  return (
-    <Select
-      value={value}
-      onValueChange={(next: string | null) => {
-        onChange(next ?? ALL);
-      }}
-      items={items}
-    >
-      <SelectTrigger className="w-56">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {Object.entries(items).map(([itemValue, label]) => (
-          <SelectItem key={itemValue} value={itemValue}>
-            {label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
 }
 
 // Extensions load for side effects only (the dashboard's virtual module

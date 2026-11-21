@@ -43,6 +43,9 @@ interface EngineConfig {
   itemFormats: Record<string, ItemFormatter>;
   /** Identity keys tried in order for array items, keyed like formats. */
   arrayKeys: Record<string, ReadonlyArray<string>>;
+  /** Added array entries explode into per-field details instead of one
+   * whole-item line, keyed like formats. */
+  explodeAdded?: Record<string, (item: Record<string, unknown>, path: string) => AuditDetail[]>;
 }
 
 const KIND_LABELS: Record<string, string> = {
@@ -312,7 +315,32 @@ const PRODUCT_ENGINE: EngineConfig = {
   arrayKeys: {
     translations: ["languageCode"],
   },
+  explodeAdded: {
+    translations: explodedTranslation,
+  },
 };
+
+/** A newly added translation reads as one detail per filled field, so a
+ * language's first save lists what it set (and per-language drift detection
+ * sees the values). */
+function explodedTranslation(item: Record<string, unknown>, path: string): AuditDetail[] {
+  const language = String(item.languageCode);
+
+  return Object.entries(item)
+    .filter(
+      ([key, value]) =>
+        key !== "languageCode" &&
+        !ENGINE_SKIP.has(key) &&
+        value !== undefined &&
+        value !== null &&
+        value !== ""
+    )
+    .map(([key, value]) => ({
+      field: `${path} / ${language} / ${PRODUCT_LABELS[key] ?? key}`,
+      from: null,
+      to: genericFormat(value),
+    }));
+}
 
 function formatAppearance(value: unknown): string | null {
   if (!isRecord(value)) {
@@ -475,9 +503,15 @@ function diffArrays(
     ...added.flatMap((item) => {
       const key = keyOf(item);
 
-      return isRecord(item) && key !== undefined
+      if (!(isRecord(item) && key !== undefined)) {
+        return [];
+      }
+
+      const explode = resolveEntry(config.explodeAdded ?? {}, parents);
+
+      return explode === undefined
         ? [{ field: path, from: null, to: formatItem(item) }]
-        : [];
+        : explode(item, path);
     }),
     ...matched.flatMap(([beforeItem, afterItem]) => {
       const key = keyOf(afterItem);
