@@ -53,6 +53,11 @@ so one save cannot flood the log.
   - WHEN a sync job applies a drift (SKU, name or price)
   - THEN the `synced` row's details list what it changed; a sync with nothing
     to apply has no details, and a failed sync records the error message
+- **Scenario: A language's first save**
+  - WHEN a save adds a language row to a product's translations
+  - THEN the row's details list each filled field of the new language with its
+    value (`Fordítás / <nyelv> / <mező>: — → <érték>`), not one opaque line
+    for the whole row
 - **Scenario: Material edit**
   - WHEN a material's labels, subtitle, description, thumbnail or colors change
   - THEN the material's `updated` row lists the changes keyed by language and

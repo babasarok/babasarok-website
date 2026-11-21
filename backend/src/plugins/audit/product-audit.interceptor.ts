@@ -4,7 +4,6 @@ import {
   EventBus,
   internal_getRequestContext,
   Logger,
-  Product,
   TransactionalConnection,
   type RequestContext,
 } from "@vendure/core";
@@ -12,31 +11,11 @@ import { switchMap, tap, type Observable } from "rxjs";
 import { z } from "zod";
 import { AuditEntryEvent, auditActor } from "./audit.event";
 import { productDetails, type ProductSnapshot } from "./details";
+import { huNameOf, readSnapshot } from "./product-snapshot";
 
 const GUARDED_MUTATION = "updateProduct";
 
 const SavedProductSchema = z.object({ id: z.union([z.number(), z.string()]) });
-
-const TranslationCustomFieldsSchema = z.object({
-  shortDescription: z.string().nullish(),
-  tagline: z.string().nullish(),
-});
-
-/** The translation custom fields the diff tracks, read defensively: Vendure
- * types translation custom fields loosely. */
-function customFieldsOf(customFields: unknown): {
-  shortDescription: string | null;
-  tagline: string | null;
-} {
-  const parsed = TranslationCustomFieldsSchema.safeParse(customFields);
-
-  return parsed.success
-    ? {
-        shortDescription: parsed.data.shortDescription ?? null,
-        tagline: parsed.data.tagline ?? null,
-      }
-    : { shortDescription: null, tagline: null };
-}
 
 function numberOrNull(value: unknown): number | null {
   const parsed = Number(value);
@@ -44,49 +23,12 @@ function numberOrNull(value: unknown): number | null {
   return Number.isFinite(parsed) && value !== null ? parsed : null;
 }
 
-/** The persisted product state the stock form's save is diffed against. */
-async function readSnapshot(
-  connection: TransactionalConnection,
-  ctx: RequestContext,
-  id: number
-): Promise<ProductSnapshot | null> {
-  const product = await connection.getRepository(ctx, Product).findOne({
-    where: { id },
-    relations: { translations: true },
-  });
-
-  if (product === null) {
-    return null;
-  }
-
-  const date = product.customFields.date;
-
-  return {
-    enabled: product.enabled,
-    featuredAssetId: numberOrNull(product.featuredAssetId),
-    iconId: numberOrNull(product.customFields.iconId),
-    date: date === null ? null : date.toISOString(),
-    popularityRank: numberOrNull(product.customFields.popularityRank),
-    translations: product.translations.map((translation) => ({
-      languageCode: translation.languageCode,
-      name: translation.name,
-      slug: translation.slug,
-      description: translation.description,
-      ...customFieldsOf(translation.customFields),
-    })),
-  };
-}
-
-function huNameOf(snapshot: ProductSnapshot): string | null {
-  const hu = snapshot.translations.find((translation) => translation.languageCode === "hu");
-
-  return hu === undefined || hu.name === "" ? null : hu.name;
-}
-
 /**
  * The audit publisher for stock product edits: only this interceptor sees the
  * before state of an `updateProduct` save, so it owns the row's field-level
- * details (the ProductEvent subscriber records create/delete only).
+ * details (the ProductEvent subscriber records create/delete only). Product
+ * writes that bypass the mutation (e.g. the translation-drift plugin's fix)
+ * publish their own row from the same snapshot helpers.
  */
 @Injectable()
 export class ProductAuditInterceptor implements NestInterceptor {
