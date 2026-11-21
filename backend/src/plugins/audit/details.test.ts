@@ -194,6 +194,29 @@ describe("productDetails", () => {
     ]);
   });
 
+  it("explodes an added translation into one detail per filled field", () => {
+    const after: ProductSnapshot = {
+      ...base,
+      translations: [
+        huTranslation,
+        {
+          languageCode: "en",
+          name: "Woven babanest",
+          slug: "fonott-babafeszek",
+          description: "",
+          shortDescription: null,
+          tagline: "Woven",
+        },
+      ],
+    };
+
+    expect(productDetails(base, after)).toEqual([
+      { field: "Fordítás / en / Név", from: null, to: "Woven babanest" },
+      { field: "Fordítás / en / Webcím", from: null, to: "fonott-babafeszek" },
+      { field: "Fordítás / en / Alcím", from: null, to: "Woven" },
+    ]);
+  });
+
   it("reports the orderability switch", () => {
     expect(productDetails(base, { ...base, enabled: false })).toEqual([
       { field: "Rendelhető", from: "igen", to: "nem" },

@@ -17,6 +17,23 @@ export const LocalizedTextSchema = z
 
 export type LocalizedText = z.output<typeof LocalizedTextSchema>;
 
+/** Whether the value is a plain object shaped like a LocalizedText: a `hu`
+ * string plus only language-coded string keys. */
+export function isLocalizedTextShape(value: unknown): value is LocalizedText {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+
+  return (
+    typeof record.hu === "string" &&
+    Object.entries(record).every(
+      ([key, entry]) => LANGUAGE_KEY.test(key) && typeof entry === "string"
+    )
+  );
+}
+
 export function resolveText(text: LocalizedText, languageCode: string): string {
   if (!Object.hasOwn(text, languageCode)) {
     return text.hu;
