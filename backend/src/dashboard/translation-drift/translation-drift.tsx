@@ -13,7 +13,6 @@
  * ships no table CSS of its own.
  */
 import { useCallback, useEffect, useState, type ReactElement } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
 import {
   api,
   Button,
@@ -208,68 +207,71 @@ function GapsBlock({ entityType }: { entityType: string }): ReactElement {
     load(entityType, skip, pageSize);
   }, [entityType, skip, pageSize, load]);
 
-  const columns: Array<ColumnDef<GapRow>> = [
-    {
-      id: "name",
-      accessorKey: "entityLabel",
-      header: "Név",
-      enableSorting: false,
-      cell: ({ row }) => <span className="font-medium">{row.original.entityLabel}</span>,
-    },
-    {
-      id: "entityType",
-      header: "Entitás",
-      enableSorting: false,
-      cell: ({ row }) => ENTITY_LABELS[row.original.entityType] ?? row.original.entityType,
-    },
-    {
-      id: "field",
-      accessorKey: "fieldLabel",
-      header: "Mező",
-      enableSorting: false,
-      cell: ({ row }) => <span className="font-mono text-xs">{row.original.fieldLabel}</span>,
-    },
-    {
-      id: "hu",
-      accessorKey: "huValue",
-      header: "Magyar szöveg",
-      enableSorting: false,
-      cell: ({ row }) => (
-        <div className="max-w-120 truncate" title={row.original.huValue}>
-          {row.original.huValue}
-        </div>
-      ),
-    },
-    {
-      id: "fix",
-      header: "Angol fordítás",
-      enableSorting: false,
-      cell: ({ row }) => (
-        <FixCell
-          multiline={row.original.huValue.length > 60 || row.original.field.endsWith("description")}
-          onCommit={async (value) => {
-            await api.query(setTranslationMutation, {
-              input: {
-                entityType: row.original.entityType,
-                entityKey: row.original.entityKey,
-                field: row.original.field,
-                languageCode: "en",
-                value,
-                expectedHu: row.original.huValue,
-              },
-            });
-            load(entityType, skip, pageSize);
-          }}
-        />
-      ),
-    },
-  ];
-
   return (
     <>
       {error !== null && <ErrorNotice message={error} />}
+      {/* The columns array lives inline so the DataTable's prop type provides
+       * the tanstack ColumnDef types without importing from
+       * @tanstack/react-table (a transitive dep CI cannot resolve). */}
       <DataTable
-        columns={columns}
+        columns={[
+          {
+            id: "name",
+            accessorKey: "entityLabel",
+            header: "Név",
+            enableSorting: false,
+            cell: ({ row }) => <span className="font-medium">{row.original.entityLabel}</span>,
+          },
+          {
+            id: "entityType",
+            header: "Entitás",
+            enableSorting: false,
+            cell: ({ row }) => ENTITY_LABELS[row.original.entityType] ?? row.original.entityType,
+          },
+          {
+            id: "field",
+            accessorKey: "fieldLabel",
+            header: "Mező",
+            enableSorting: false,
+            cell: ({ row }) => <span className="font-mono text-xs">{row.original.fieldLabel}</span>,
+          },
+          {
+            id: "hu",
+            accessorKey: "huValue",
+            header: "Magyar szöveg",
+            enableSorting: false,
+            cell: ({ row }) => (
+              <div className="max-w-120 truncate" title={row.original.huValue}>
+                {row.original.huValue}
+              </div>
+            ),
+          },
+          {
+            id: "fix",
+            header: "Angol fordítás",
+            enableSorting: false,
+            cell: ({ row }) => (
+              <FixCell
+                multiline={
+                  row.original.huValue.length > 60 || row.original.field.endsWith("description")
+                }
+                onCommit={async (value) => {
+                  await api.query(setTranslationMutation, {
+                    input: {
+                      entityType: row.original.entityType,
+                      entityKey: row.original.entityKey,
+                      field: row.original.field,
+                      languageCode: "en",
+                      value,
+                      expectedHu: row.original.huValue,
+                    },
+                  });
+                  load(entityType, skip, pageSize);
+                }}
+              />
+            ),
+          },
+        ]}
         data={rows ?? []}
         totalItems={totalItems}
         isLoading={rows === null}
@@ -340,93 +342,93 @@ function DriftsBlock({ entityType }: { entityType: string }): ReactElement {
     load(entityType, skip, pageSize);
   }
 
-  const columns: Array<ColumnDef<DriftRow>> = [
-    {
-      id: "name",
-      accessorKey: "entityLabel",
-      header: "Név",
-      enableSorting: false,
-      cell: ({ row }) => (
-        <span className="font-medium">{row.original.entityLabel ?? row.original.entityKey}</span>
-      ),
-    },
-    {
-      id: "entityType",
-      header: "Entitás",
-      enableSorting: false,
-      cell: ({ row }) => ENTITY_LABELS[row.original.entityType] ?? row.original.entityType,
-    },
-    {
-      id: "field",
-      accessorKey: "fieldLabel",
-      header: "Mező",
-      enableSorting: false,
-      cell: ({ row }) => <span className="font-mono text-xs">{row.original.fieldLabel}</span>,
-    },
-    {
-      id: "hu",
-      header: "Magyar változás",
-      enableSorting: false,
-      cell: ({ row }) => (
-        <div>
-          <div>
-            {row.original.huFrom ?? "—"} → {row.original.huTo}
-          </div>
-          <div className="text-muted-foreground text-xs">
-            {new Date(row.original.lastHuChangeAt).toLocaleString("hu-HU")}
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "fix",
-      header: "Fordítás javítása",
-      enableSorting: false,
-      cell: ({ row }) => (
-        <FixCell
-          multiline={
-            (row.original.translatedValue?.length ?? 0) > 60 ||
-            row.original.field.endsWith("description")
-          }
-          initialValue={row.original.translatedValue ?? ""}
-          onCommit={async (value) => {
-            await api.query(setTranslationMutation, {
-              input: {
-                entityType: row.original.entityType,
-                entityKey: row.original.entityKey,
-                field: row.original.field,
-                languageCode: row.original.languageCode,
-                value,
-              },
-            });
-            load(entityType, skip, pageSize);
-          }}
-        />
-      ),
-    },
-    {
-      id: "dismiss",
-      header: "Álriasztás",
-      enableSorting: false,
-      cell: ({ row }) => (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            void dismiss(row.original);
-          }}
-        >
-          Álriasztás
-        </Button>
-      ),
-    },
-  ];
-
   return (
     <>
       {error !== null && <ErrorNotice message={error} />}
       <DataTable
-        columns={columns}
+        columns={[
+          {
+            id: "name",
+            accessorKey: "entityLabel",
+            header: "Név",
+            enableSorting: false,
+            cell: ({ row }) => (
+              <span className="font-medium">
+                {row.original.entityLabel ?? row.original.entityKey}
+              </span>
+            ),
+          },
+          {
+            id: "entityType",
+            header: "Entitás",
+            enableSorting: false,
+            cell: ({ row }) => ENTITY_LABELS[row.original.entityType] ?? row.original.entityType,
+          },
+          {
+            id: "field",
+            accessorKey: "fieldLabel",
+            header: "Mező",
+            enableSorting: false,
+            cell: ({ row }) => <span className="font-mono text-xs">{row.original.fieldLabel}</span>,
+          },
+          {
+            id: "hu",
+            header: "Magyar változás",
+            enableSorting: false,
+            cell: ({ row }) => (
+              <div>
+                <div>
+                  {row.original.huFrom ?? "—"} → {row.original.huTo}
+                </div>
+                <div className="text-muted-foreground text-xs">
+                  {new Date(row.original.lastHuChangeAt).toLocaleString("hu-HU")}
+                </div>
+              </div>
+            ),
+          },
+          {
+            id: "fix",
+            header: "Fordítás javítása",
+            enableSorting: false,
+            cell: ({ row }) => (
+              <FixCell
+                multiline={
+                  (row.original.translatedValue?.length ?? 0) > 60 ||
+                  row.original.field.endsWith("description")
+                }
+                initialValue={row.original.translatedValue ?? ""}
+                onCommit={async (value) => {
+                  await api.query(setTranslationMutation, {
+                    input: {
+                      entityType: row.original.entityType,
+                      entityKey: row.original.entityKey,
+                      field: row.original.field,
+                      languageCode: row.original.languageCode,
+                      value,
+                    },
+                  });
+                  load(entityType, skip, pageSize);
+                }}
+              />
+            ),
+          },
+          {
+            id: "dismiss",
+            header: "Álriasztás",
+            enableSorting: false,
+            cell: ({ row }) => (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  void dismiss(row.original);
+                }}
+              >
+                Álriasztás
+              </Button>
+            ),
+          },
+        ]}
         data={rows ?? []}
         totalItems={totalItems}
         isLoading={rows === null}
