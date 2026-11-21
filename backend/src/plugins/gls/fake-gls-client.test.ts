@@ -63,7 +63,6 @@ describe("FakeGlsClient statuses", () => {
     expect(await client.getParcelStatuses([label.parcelNumber])).toEqual({
       parcels: [
         {
-          parcelId: label.parcelId,
           parcelNumber: label.parcelNumber,
           clientReference: "ORD-1",
           statuses,

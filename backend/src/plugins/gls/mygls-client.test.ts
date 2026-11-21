@@ -272,7 +272,6 @@ describe("getParcelStatuses", () => {
 
     expect(result.parcels).toEqual([
       {
-        parcelId: 16_466_168,
         parcelNumber: 3_244_968_187,
         clientReference: "ORD-1",
         statuses: [
@@ -286,6 +285,46 @@ describe("getParcelStatuses", () => {
       },
     ]);
     expect(result.errors).toEqual([]);
+  });
+
+  it("parses the live response, whose list entries carry no ParcelId", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      jsonResponse({
+        GetParcelListStatusesErrors: [],
+        ParcelList: [
+          {
+            ClientNumber: 100_021_942,
+            ClientReference: "2RRJ4XMP5PRTLBGT",
+            DeliveryCountryCode: "HU",
+            DeliveryZipCode: "1123",
+            POD: null,
+            ParcelNumber: 3_244_979_442,
+            ParcelStatusList: [
+              {
+                DepotCity: null,
+                DepotNumber: null,
+                StatusCode: "51",
+                StatusDate: "/Date(1795283461020+0100)/",
+                StatusDescription: "Csomag rögzítve",
+                StatusInfo: "MyGLS-16494244",
+              },
+            ],
+            Weight: null,
+          },
+        ],
+      })
+    );
+
+    const result = await clientWith(fetchMock).getParcelStatuses([3_244_979_442]);
+
+    expect(result.errors).toEqual([]);
+    expect(result.parcels).toEqual([
+      {
+        parcelNumber: 3_244_979_442,
+        clientReference: "2RRJ4XMP5PRTLBGT",
+        statuses: [{ code: "51", date: 1_795_283_461_020, description: "Csomag rögzítve" }],
+      },
+    ]);
   });
 
   it("maps per-parcel errors without failing the call", async () => {

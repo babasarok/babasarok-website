@@ -81,7 +81,6 @@ const ParcelStatusSchema = z.object({
 });
 
 const ParcelStatusesSchema = z.object({
-  ParcelId: z.number().int(),
   ParcelNumber: z.number().int(),
   ClientReference: z
     .string()
@@ -336,7 +335,6 @@ function errorInfo(error: z.output<typeof ErrorInfoSchema>): GlsErrorInfo {
 
 function wireStatuses(parcel: z.output<typeof ParcelStatusesSchema>): GlsParcelStatuses {
   return {
-    parcelId: parcel.ParcelId,
     parcelNumber: parcel.ParcelNumber,
     clientReference: parcel.ClientReference,
     statuses: parcel.ParcelStatusList.map((status) => ({

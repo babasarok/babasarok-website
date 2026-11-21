@@ -77,7 +77,6 @@ export class FakeGlsClient implements GlsClient {
 
         return [
           {
-            parcelId: parcel.parcelId,
             parcelNumber: parcel.parcelNumber,
             clientReference: parcel.request.clientReference,
             statuses: [...statuses],

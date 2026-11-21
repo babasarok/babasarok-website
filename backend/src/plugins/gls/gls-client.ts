@@ -73,7 +73,6 @@ export interface GlsParcelStatus {
 }
 
 export interface GlsParcelStatuses {
-  parcelId: number;
   parcelNumber: number;
   clientReference: string | null;
   statuses: GlsParcelStatus[];
