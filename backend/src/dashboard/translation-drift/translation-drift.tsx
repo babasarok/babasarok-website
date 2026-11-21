@@ -143,9 +143,16 @@ function TranslationDriftPage(): ReactElement {
           }}
         />
       </PageActionBar>
+      {/* PageLayout renders only its direct PageBlock children (they are
+       * recognized by their column/blockId props) — the data blocks live
+       * inside them. */}
       <PageLayout>
-        <GapsBlock entityType={entityType} />
-        <DriftsBlock entityType={entityType} />
+        <PageBlock column="main" blockId="translation-gaps" title="Hiányzó angol fordítások">
+          <GapsBlock entityType={entityType} />
+        </PageBlock>
+        <PageBlock column="main" blockId="translation-drifts" title="Valószínű elavult fordítások">
+          <DriftsBlock entityType={entityType} />
+        </PageBlock>
       </PageLayout>
     </Page>
   );
@@ -182,7 +189,7 @@ function GapsBlock({ entityType }: { entityType: string }): ReactElement {
   }, [entityType, load]);
 
   return (
-    <PageBlock column="main" blockId="translation-gaps" title="Hiányzó angol fordítások">
+    <>
       {error !== null && <ErrorNotice message={error} />}
       {rows !== null && rows.length === 0 && <p>Minden fordítás megvan.</p>}
       {rows !== null && rows.length > 0 && (
@@ -235,7 +242,7 @@ function GapsBlock({ entityType }: { entityType: string }): ReactElement {
         </div>
       )}
       <Pager skip={skip} setSkip={setSkip} totalItems={totalItems} />
-    </PageBlock>
+    </>
   );
 }
 
@@ -283,7 +290,7 @@ function DriftsBlock({ entityType }: { entityType: string }): ReactElement {
   }
 
   return (
-    <PageBlock column="main" blockId="translation-drifts" title="Valószínű elavult fordítások">
+    <>
       {error !== null && <ErrorNotice message={error} />}
       {rows !== null && rows.length === 0 && <p>Nincs elavult fordítás.</p>}
       {rows !== null && rows.length > 0 && (
@@ -353,7 +360,7 @@ function DriftsBlock({ entityType }: { entityType: string }): ReactElement {
         </div>
       )}
       <Pager skip={skip} setSkip={setSkip} totalItems={totalItems} />
-    </PageBlock>
+    </>
   );
 }
 
