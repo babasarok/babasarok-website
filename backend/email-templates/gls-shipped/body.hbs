@@ -25,6 +25,12 @@
             <p style="margin:0 0 12px 0;">Jó hírek: a(z)
               <strong>{{orderCode}}</strong>
               számú rendelésed úton van feléd! 📦</p>
+            <p style="margin:0 0 4px 0;">A csomag tartalma:</p>
+            {{#each products}}
+              <p style="margin:0 0 4px 0; font-size:14px;">{{number}}.
+                {{title}}
+                <span style="font-size:13px; color:#6f5447;">({{quantity}} db)</span></p>
+            {{/each}}
             <p style="margin:0 0 12px 0;">A csomagot a GLS szállítja. A csomag nyomon követhető a
               lenti gombra kattintva, vagy a(z)
               <strong>{{parcelNumber}}</strong>

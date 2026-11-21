@@ -187,22 +187,10 @@ export function orderEmailView(
   const freed =
     shipping !== undefined && shipping.priceWithTax > 0 && shipping.discountedPriceWithTax === 0;
 
-  const numbered = order.lines.map((line, index) => ({ line, content: nativeLines[index] }));
-  const stocked = numbered.filter((entry) => entry.content.stocked);
-  const madeToOrder = numbered.filter((entry) => !entry.content.stocked);
-  const display = [...stocked, ...madeToOrder].map((entry, index) => ({
-    ...entry,
-    number: index + 1,
-  }));
+  const display = displayOrder(order, nativeLines);
 
   return {
-    products: display.map(({ line, content, number }) => ({
-      number,
-      title: content.title,
-      quantity: line.quantity,
-      stocked: content.stocked,
-      details: indented(content.details),
-    })),
+    products: emailProducts(order, nativeLines),
     deliveryAddress: addressLines(order.shippingAddress),
     billing: billingView(order),
     deliveryName: shipping?.shippingMethod.name ?? "",
@@ -211,6 +199,32 @@ export function orderEmailView(
       : formatMoney(shipping?.discountedPriceWithTax ?? 0, money, languageCode),
     total: formatMoney(order.totalWithTax, money, languageCode),
     setDiscountSummary: setDiscountSummary(display, money, languageCode),
-    madeToOrder: madeToOrder.length > 0,
+    madeToOrder: display.some(({ content }) => !content.stocked),
   };
+}
+
+/** The lines in email display order: ready-made lead (they ship from stock), then numbering. */
+function displayOrder(
+  order: Pick<EmailViewOrder, "lines">,
+  nativeLines: readonly NativeLineContent[]
+): Array<{ line: EmailViewLine; content: NativeLineContent; number: number }> {
+  const numbered = order.lines.map((line, index) => ({ line, content: nativeLines[index] }));
+  const stocked = numbered.filter((entry) => entry.content.stocked);
+  const madeToOrder = numbered.filter((entry) => !entry.content.stocked);
+
+  return [...stocked, ...madeToOrder].map((entry, index) => ({ ...entry, number: index + 1 }));
+}
+
+/** The email's product cards: ready-made lines lead (they ship from stock), then numbering. */
+export function emailProducts(
+  order: Pick<EmailViewOrder, "lines">,
+  nativeLines: readonly NativeLineContent[]
+): EmailProductView[] {
+  return displayOrder(order, nativeLines).map(({ line, content, number }) => ({
+    number,
+    title: content.title,
+    quantity: line.quantity,
+    stocked: content.stocked,
+    details: indented(content.details),
+  }));
 }

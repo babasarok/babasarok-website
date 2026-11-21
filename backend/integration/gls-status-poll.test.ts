@@ -157,6 +157,9 @@ describe("GLS status poll", () => {
     expect(buyer.recipient).toBe("vevo@example.com");
     expect(buyer.body).toContain(trackingCode);
     expect(buyer.body).toContain(`parcel-tracking?match=${trackingCode}`);
+    expect(buyer.body).toContain("A csomag tartalma:");
+    expect(buyer.body).toContain("Kendő");
+    expect(buyer.body).toContain("(2 db)");
   });
 
   it("delivers a paid order, drops the label, and closes the order", async () => {

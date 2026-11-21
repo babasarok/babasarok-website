@@ -7,7 +7,9 @@ import {
 import { EmailEventListener } from "@vendure/email-plugin";
 import { env } from "../../env";
 import { messages } from "../../shared/messages";
+import { loadNativeLineContent } from "../email/native-line-content";
 import { loadChannelEmails } from "../email/order-emails";
+import { emailProducts } from "../email/order-email-view";
 import { GLS_HANDLER_CODE } from "./gls-label-request";
 import { GlsParcel } from "./gls-parcel.entity";
 import { GlsParcelProblemEvent } from "./gls-parcel-problem-event";
@@ -39,9 +41,10 @@ export const glsShippedHandler = new EmailEventListener("gls-shipped")
       );
     }
 
-    const order = await connection
-      .getRepository(event.ctx, Order)
-      .findOne({ where: { id: parcel.orderId }, relations: { customer: true } });
+    const order = await connection.getRepository(event.ctx, Order).findOne({
+      where: { id: parcel.orderId },
+      relations: { customer: true, lines: { productVariant: true } },
+    });
 
     if (!order) {
       throw new Error(`No order ${parcel.orderId} for GLS parcel ${parcel.parcelNumber}`);
@@ -52,6 +55,7 @@ export const glsShippedHandler = new EmailEventListener("gls-shipped")
       buyerEmail: order.customer?.emailAddress ?? "",
       subject: messages(LanguageCode.hu).glsShippedSubject(order.code),
       parcelNumber: parcel.parcelNumber,
+      products: emailProducts(order, await loadNativeLineContent(connection, event.ctx, order)),
       ...(await loadChannelEmails(connection, event.ctx)),
     };
   })
@@ -62,6 +66,7 @@ export const glsShippedHandler = new EmailEventListener("gls-shipped")
     orderCode: event.data.orderCode,
     parcelNumber: event.data.parcelNumber,
     trackingUrl: glsTrackingUrl(event.data.parcelNumber),
+    products: event.data.products,
     subject: event.data.subject,
     fromAddress: event.data.orderEmailFrom,
   }));
