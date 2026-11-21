@@ -241,7 +241,7 @@ function GapsBlock({ entityType }: { entityType: string }): ReactElement {
             header: "Magyar szöveg",
             enableSorting: false,
             cell: ({ row }) => (
-              <div className="max-w-120 truncate" title={row.original.huValue}>
+              <div className="max-w-60 truncate" title={row.original.huValue}>
                 {row.original.huValue}
               </div>
             ),
@@ -376,8 +376,11 @@ function DriftsBlock({ entityType }: { entityType: string }): ReactElement {
             header: "Magyar változás",
             enableSorting: false,
             cell: ({ row }) => (
-              <div>
-                <div>
+              <div className="max-w-60">
+                <div
+                  className="truncate"
+                  title={`${row.original.huFrom ?? "—"} → ${row.original.huTo}`}
+                >
                   {row.original.huFrom ?? "—"} → {row.original.huTo}
                 </div>
                 <div className="text-muted-foreground text-xs">
@@ -472,37 +475,36 @@ function FixCell({
   }
 
   return (
-    <div className="max-w-120">
-      <div className="flex items-start gap-2">
-        {multiline === true ? (
-          <textarea
-            className="min-h-16 flex-1 rounded border px-2 py-1 text-sm"
-            value={value}
-            onChange={(e) => {
-              setValue(e.target.value);
-            }}
-          />
-        ) : (
-          <Input
-            className="flex-1"
-            value={value}
-            onChange={(e) => {
-              setValue(e.target.value);
-            }}
-          />
-        )}
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={saving || value.trim() === ""}
-          onClick={() => {
-            void commit();
+    <div className="flex w-64 max-w-full flex-col gap-1.5">
+      {multiline === true ? (
+        <textarea
+          className="min-h-16 w-full min-w-0 rounded border px-2 py-1 text-sm"
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
           }}
-        >
-          Mentés
-        </Button>
-      </div>
-      {error !== null && <div className="text-destructive mt-1 text-xs">{error}</div>}
+        />
+      ) : (
+        <Input
+          className="w-full min-w-0"
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+          }}
+        />
+      )}
+      <Button
+        variant="outline"
+        size="sm"
+        className="self-end"
+        disabled={saving || value.trim() === ""}
+        onClick={() => {
+          void commit();
+        }}
+      >
+        Mentés
+      </Button>
+      {error !== null && <div className="text-destructive text-xs">{error}</div>}
     </div>
   );
 }
