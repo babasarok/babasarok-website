@@ -116,19 +116,51 @@ export function loadGtmContainer(containerId: string, consent: Choice): void {
 
 let metaPixelLoading = false;
 
+/**
+ * The official Meta pixel shim: fbevents.js requires `window.fbq` (with a
+ * `queue` array) to exist before it executes — it processes queued calls and
+ * takes over `callMethod` itself.
+ */
+type MetaPixelStub = ((event: string, ...params: unknown[]) => void) & {
+  /** Receives the full argument list as a single array-like (fbevents.js reads `args[0]`). */
+  callMethod?: (args: [event: string, ...params: unknown[]]) => void;
+  queue: unknown[][];
+  push: MetaPixelStub;
+  loaded: boolean;
+  version: string;
+};
+
+function installMetaPixelStub(): void {
+  if (globalThis.window.fbq) {
+    return;
+  }
+
+  const fbq: MetaPixelStub = function (event: string, ...params: unknown[]): void {
+    if (fbq.callMethod) {
+      fbq.callMethod([event, ...params]);
+      return;
+    }
+
+    fbq.queue.push([event, ...params]);
+  };
+  fbq.queue = [];
+  fbq.push = fbq;
+  fbq.loaded = true;
+  fbq.version = "2.0";
+  globalThis.window._fbq = fbq;
+  globalThis.window.fbq = fbq;
+}
+
 export function loadMetaPixel(pixelId: string): void {
   if (metaPixelLoading) {
     return;
   }
   metaPixelLoading = true;
+  installMetaPixelStub();
   const script = document.createElement("script");
   script.async = true;
   script.src = "https://connect.facebook.net/en_US/fbevents.js";
-  // fbevents.js installs the real `window.fbq` when it executes, so calling
-  // it from the load event needs no pre-load queue shim.
-  script.addEventListener("load", () => {
-    globalThis.window.fbq?.("init", pixelId);
-    globalThis.window.fbq?.("track", "PageView");
-  });
   document.head.append(script);
+  globalThis.window.fbq?.("init", pixelId);
+  globalThis.window.fbq?.("track", "PageView");
 }
