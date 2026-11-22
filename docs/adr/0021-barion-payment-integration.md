@@ -39,9 +39,9 @@ at checkout:
   the deposit set-off (előleg beszámítása) is issued when the product is
   done.
 
-(The flow as recorded 2026-11-13. The decided design modifies one part of
-it: personal pickup becomes full-prepay-only — see "The delivery ×
-payment model".)
+(The flow as recorded 2026-11-13; during refinement a deferred
+personal-pickup variant was considered and dropped — see "The delivery
+× payment model".)
 
 Today everything after the order email is manual: the owner issues
 díjbekérők in Számlázz.hu, **AutoKassza pairs the bank transfer with the
@@ -127,7 +127,10 @@ Per-payment `FundingSources` flags:
 | `ApplePay`     | Apple Pay             | guest only, capable devices; same contract gate                                        |
 | `BankTransfer` | Online bank transfer  | ⚠️ "no longer supported" as of 2026-01-09, replacement still being sought (2026-11-15) |
 
-No PayPal, no iDEAL. QR Platba is CZK-only. The deprecated bank-transfer
+No PayPal, no iDEAL as funding sources (per the table above);
+QR Platba is CZK-only, and "the per-currency minimums apply in tests
+too" — both beyond the gathered docs (UNVERIFIED; see residual
+uncertainties). The deprecated bank-transfer
 source confirms the roadmap's design: the bank-transfer branch stays
 manual (díjbekérő → AutoKassza), outside Barion.
 
@@ -146,8 +149,8 @@ undocumented; verify before epic 9). HUF has no decimal digits (matches
 - Self-serve (unlike GLS): register, create a shop, the POSKey is
   generated automatically and sandbox shops are approved automatically
   (live shops need human approval).
-- Card payments are a simulator: any future expiry, any CVC. The
-  per-currency minimums apply in tests too. Each `ProcessResult` has a
+- Card payments are a simulator: any future expiry, any CVC. Each
+  `ProcessResult` has a
   dedicated test card (success, decline, fraud, SCA-soft-decline) — see
   [barion-api.md](../barion-api.md) §8.
 - Recurring/token payments are enabled by default in the sandbox.
@@ -183,9 +186,11 @@ undocumented; verify before epic 9). HUF has no decimal digits (matches
 
 - **The order state machine blocks partial settlement** (verified in
   [ADR 0020 — GLS labels](0020-gls-labels-via-mygls-api.md), Vendure
-  3.8.1): `checkPaymentsCoverTotal` requires
-  authorized/settled payments to cover the full total before
-  `PaymentAuthorized`/`PaymentSettled`; `Delivered.to = [Cancelled]`;
+  3.8.1): `checkPaymentsCoverTotal` requires **authorized** payments to
+  cover the full total before `PaymentAuthorized`, and **settled
+  payments only** to cover it before `PaymentSettled`
+  ([vendure-payments.md](../vendure-payments.md) §2's nuance);
+  `Delivered.to = [Cancelled]`;
   `ArrangingAdditionalPayment`'s exit guard also demands full coverage
   (the settle leg goes through `Modifying`). The 6 000 Ft deposit alone
   can therefore not reach any settled state at placement.
@@ -469,15 +474,21 @@ fallback channel is ever adopted.
   fallback. Refund asymmetry note: with `Immediate` everywhere, Barion
   payments settle at confirmation, so `refundOrder` (needs `Settled`
   payments) is the normal path for full payments and deposits alike; the
-  `cancelPayment` → `CancelAuthorization` path stays reserved for future
-  two-phase methods.
-- **Settle-on-delivery leg:** the verified path stands —
-  `PaymentAuthorized → ArrangingAdditionalPayment →
-  addManualPaymentToOrder (amount = the deficit) → PaymentSettled` —
-  sound in source ([vendure-payments.md](../vendure-payments.md)
-  implications §3), with the standing caveat that the manual-payment
-  action records only the exact deficit, so the 6 000 Ft deposit itself
-  enters through the handler path.
+  `cancelPayment` path stays reserved for future two-phase methods.
+  Under the guard-relaxation *fallback* the deposit-only order rests in
+  `PaymentAuthorized`, where `refundOrder` is refused
+  (`RefundOrderStateError`) even for a settled deposit — there the
+  handler's cancel path does the money: `CancelAuthorization` for an
+  authorized hold, a Barion `Refund` for a settled payment.
+- **Settle-on-delivery leg:** the verified path stands, entered from
+  the state the order actually occupies at delivery — it sits `Shipped`
+  (it shipped partially paid via the `Modifying` hop), and the grounded
+  full path is `Shipped → Modifying → ArrangingAdditionalPayment →
+  addManualPaymentToOrder (amount = the deficit) → PaymentSettled`
+  ([vendure-payments.md](../vendure-payments.md) implications §3), with
+  the standing caveat that the manual-payment action records only the
+  exact deficit, so the 6 000 Ft deposit itself enters through the
+  handler path.
 - **Fulfillment-started boundary: a custom-field flag
   `fulfillmentStartedAt`** on the order, set by a dashboard action when
   the owner starts making the product (her definition spans production
@@ -487,12 +498,18 @@ fallback channel is ever adopted.
   note: Vendure core "fulfillment" means shipping only — the flag is
   ours and means the owner's broader sense.
 - **Failed delivery: a custom `Returned` state**, entered automatically
-  when the GLS worker sees the parcel returned/error (no auto-cancel —
-  the automatic act is flagging); owner-chosen exits from `Returned`:
-  → `Cancelled` (deposit kept per the refund policy, előlegszámla
-  untouched) or → back into the fulfillment path (re-fulfill after
-  talking to the customer — honest mistake). `Cancelled` stays terminal
-  — no custom edge out of it.
+  by the GLS worker when the parcel is **actually returned to sender**
+  (GLS problem codes 23/40). This amends ADR 0020 decision 5 ("the
+  worker moves only the fulfillment"): the state entry is the flag —
+  the automatic act stops at flagging, no auto-cancel. The other
+  problem statuses (16 no cash, 17 refused, 20 address) never leave
+  the delivery path and are not `Returned` material — they stay
+  owner-flagged as today (ADR 0020's email + order note); how they map
+  to order states is the consequence matrix's job. Owner-chosen exits
+  from `Returned`: → `Cancelled` (deposit kept per the refund policy,
+  előlegszámla untouched) or → back into the fulfillment path
+  (re-fulfill after talking to the customer — honest mistake).
+  `Cancelled` stays terminal — no custom edge out of it.
 - **Delivered but remainder never confirmed: a flagged resting state**
   (the deliver-when-settled rule keeps it out of `Delivered`); the
   remittance-lag threshold before flagging needs grounding (owner
@@ -506,8 +523,10 @@ Two confirmation sources, one recording path into the order state:
 
 - **Barion's callback** (gateway payments): one callback route on the
   backend — **the API subdomain directly** (e.g.
-  `https://api.babasarok.net/payments/barion/callback`, registered via
-  the plugin like the GLS controller); no site-side endpoint or proxy —
+  `https://api.babasarok.net/payments/barion/callback`, registered
+  through the plugin as an HTTP controller — the Mollie plugin's
+  webhook pattern is the reference; the GLS plugin has only admin
+  GraphQL extensions, no controller); no site-side endpoint or proxy —
   Barion's `RedirectUrl` and `CallbackUrl` are independent per-payment
   parameters and may live on different domains. The **redirect goes to
   the site directly** (proper confirmation page, landed on straight
@@ -515,7 +534,9 @@ Two confirmation sources, one recording path into the order state:
   customer. **One state-driven confirmation page:** it renders by the
   order's state, never by the redirect — **Processing** (the default on
   arrival; the callback + `PaymentState` re-query resolves it, and the
-  page polls), **Success** (order confirmed, what-happens-next per the
+  page polls the order state via the shop API — never PaymentState from
+  the browser, the POSKey must not reach the client), **Success**
+  (order confirmed, what-happens-next per the
   invoice flows), **Failed/Expired** (declined, window lapsed,
   gateway-cancelled). Failed/Expired takes the buyer **back to the
   checkout with the basket intact**, on the payment/confirmation step
@@ -524,7 +545,10 @@ Two confirmation sources, one recording path into the order state:
   escape hatch. This requires the wizard to resume from the placed
   order's lines: orders are placed at checkout submission, so the
   "basket" after a failed payment is the placed order in the payment
-  state. *Buyer never returns from the gateway:* acceptable — the
+  state. The resume mechanism itself (reactivating the placed order vs.
+  cloning its lines into a fresh active order) is not grounded in the
+  gathered Vendure docs — see residual uncertainties.
+  *Buyer never returns from the gateway:* acceptable — the
   confirmation email exists, the callback records a successful payment
   even without the redirect, and the sweep catches abandonment;
   abandoned-in-payment orders rest flagged. *Multi-domain (owner: babasarok.net and babacot.eu
@@ -533,9 +557,10 @@ Two confirmation sources, one recording path into the order state:
   (store the origin host on the order at placement or derive from the
   channel) — cookies are per-domain, so a cross-domain return would land
   her session-less. HMAC is domain-agnostic. *15 s ACK budget:* validate
-  minimally, enqueue the re-query task, respond `200` immediately (the
-  [ADR 0020 — GLS labels](0020-gls-labels-via-mygls-api.md) worker
-  architecture fits); the callback body is a pointer (`paymentId`),
+  minimally, enqueue the re-query task, respond `200` immediately (an
+  enqueue-and-job mechanism — the GLS worker is a 30-minute scheduled
+  task, which does not fit an on-demand callback); the callback body is
+  a pointer (`paymentId`),
   never a status. *IP list:* logged/soft-checked, **not hard-blocked** —
   Barion states the callback IP "may change any time"; the real
   authentication is that only a real paymentId resolves (Mollie
@@ -553,7 +578,16 @@ Two confirmation sources, one recording path into the order state:
   reports it): **adopted as a payment-confirmation source.** The
   receiver records bank-transfer payments on the order automatically
   (prepaid and COD deposit alike — the deposit order-state path is
-  payment-method-agnostic). Grounded design constraints: idempotent on
+  payment-method-agnostic). **The COD remainder is confirmed, not
+  auto-recorded:** the IPN (GLS remits after delivery → AutoKassza pairs
+  the bank line via the order code → the document's paid amount changes)
+  is its confirmation source and flags the order, but the recording is
+  the owner's manual action — a `cod-remainder` payment with amount =
+  the deficit, through the settle-on-delivery leg (§4). Auto-recording
+  it would settle and deliver the order as a side effect of a bank
+  line — the owner must see the money state first (the same principle
+  as the refund policy: automation flags, the owner decides).
+  Grounded design constraints: idempotent on
   **cumulative** amounts (overwrite, never add — duplicates collapse to
   the newest state per document), verify by re-querying the document via
   `action-szamla_agent_xml`, and never return a non-200 on processing
@@ -636,7 +670,11 @@ reconciliation function, our DB indexing both.
   makes AutoKassza pairing and IPN correlation trivial.
 - **NAV/ÁFA:** reporting is automatic once the account's NAV technical
   user is connected; 27% is the per-line `<afakulcs>` value the backend
-  sends; a Barion payment changes only the `fizmod` string.
+  sends; a Barion payment changes only the `fizmod` string. The 27%
+  reaches the invoice from the order, not as a constant: epic 7's
+  Vendure-side tax step (roadmap) sets the 27% HU `TaxRate`, and the
+  invoice builder reads the rate off the order's lines — the invoice
+  side assumes it, it does not set it.
 
 ### 7. Refunds and cancellations
 
@@ -769,6 +807,16 @@ from the start:
 - Barion idempotency-key exact mechanics (the page is live-wiki only;
   which endpoints accept the key, header vs body — re-check when
   fetchable).
+- Whether iDEAL/PayPal-type funding sources exist beyond the documented
+  enum, and QR Platba's currency scope (verify against
+  [barion-api.md](../barion-api.md)'s funding-sources and
+  currency pages at build time).
+- Whether sandbox card payments enforce the per-currency minimums the
+  same way production does (verify at build time).
+- The failed-payment return path's order-resume mechanism (reactivate
+  the placed order vs. clone its lines into a fresh active order) —
+  not grounded in the gathered Vendure docs; the "basket intact" UX
+  promise depends on it. Verify in source at build time.
 
 ## Going live (owner actions — tracked on PR #133's pre-merge checklist)
 

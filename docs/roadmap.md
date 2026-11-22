@@ -158,7 +158,7 @@ browser ids. Epic 7 (or a follow-up) should:
   retention story
 
 Sending the handle to the basket without a server-side consumer buys
-nothing — per ADR 0021 Q16 (2026-11-22): **epic 7 stores the handle on
+nothing — per ADR 0021 §8 (2026-11-22): **epic 7 stores the handle on
 the order** (under `marketing` consent); the server-side
 Conversions-API consumer, `event_id` dedupe, item-level payload, basket
 tracking and the privacy-notice update are the follow-up rework tracked
@@ -186,11 +186,13 @@ off — Számlázz.hu puts the deposit among the line items automatically and
 the payment method switches to utánvét. Every díjbekérő and invoice
 carries a +3-day payment deadline.
 
-Invoice issuance stays manual because Számlázz.hu's auto-előlegszámla
-setting is per-account, not per-branch; any automation must branch on the
-payment method (invoice prefixes are the suspected mechanism).
+Invoice issuance is automated, backend-issued per
+[ADR 0021](adr/0021-barion-payment-integration.md) §6 (decided
+2026-11-22): documents fire on (payment arrangement, confirmation
+event); Számlázz.hu's auto-előlegszámla setting is per-prefix and stays
+unused (its Online fizetés was rejected as the architecture).
 
-Implications: **epic 5** is done as manual tracking — the owner works orders in the dashboard with state changes and notes; the automated state design (payment at placement — full, or the 6 000 Ft deposit on utánvét — giving the order a state that can progress to delivery) folds into **epic 7**'s payment integration; bank transfer stays a first-class branch (the owner records the payment in the dashboard). **Epic 7** must support the three invoice kinds with deposit set-off, payment-method switching and the branch-aware trigger; AutoKassza stays outside Vendure. **Epic 6**'s carrier labels: [ADR 0020](adr/0020-gls-labels-via-mygls-api.md). **Epic 9** decides the SK deposit rule separately.
+Implications: **epic 5** is done as manual tracking — the owner works orders in the dashboard with state changes and notes; the automated state design (payment at placement — full, or the 6 000 Ft deposit on utánvét — giving the order a state that can progress to delivery) folds into **epic 7**'s payment integration; bank transfer stays a first-class branch, recorded on the order automatically via the Számlázz.hu IPN receiver with a manual fallback (ADR 0021 §5). **Epic 7** must support the three invoice kinds with deposit set-off, payment-method switching and the (arrangement, confirmation-event) trigger, plus the 27% HU `TaxRate` on order lines so invoices show the extracted ÁFA; AutoKassza stays outside Vendure. **Epic 6**'s carrier labels: [ADR 0020](adr/0020-gls-labels-via-mygls-api.md). **Epic 9** decides the SK deposit rule separately.
 
 ## Epic 6 (GLS labels) plan
 
@@ -239,7 +241,7 @@ none of the options below changes stored prices.
   the default channel's context only; a second channel needs a source for
   its price rows — manual per-channel pricing in the dashboard, a conversion
   rule applied at resync, or per-market prices in the canonical definition
-  model. **Owner confirmed the intent (2026-11-22, ADR 0021 Q17):** no
+  model. **Owner confirmed the intent (2026-11-22, ADR 0021 §9):** no
   HUF→EUR conversion — EUR prices are issued manually per product, with
   values chosen independently of the HUF price; a second channel shares
   the default channel's products. Do not create the SK channel before
@@ -247,11 +249,11 @@ none of the options below changes stored prices.
 - **Currency precision.** `MoneyStrategy` is process-global, not
   per-channel: `ForintMoneyStrategy`'s `precision: 0` would also render
   whole-euro prices on a SK channel. **Owner constraint (2026-11-22,
-  ADR 0021 Q17): 2-decimal EUR precision is required** — the money
+  ADR 0021 §9): 2-decimal EUR precision is required** — the money
   strategy must become currency-aware (HUF 0 digits, EUR 2) before any
   SK work; whole-euro rounding is not acceptable. Hardcoding HUF is
   not tolerated anywhere in payment code.
-- **Currency selection seam (2026-11-22, ADR 0021 Q17).** Language is
+- **Currency selection seam (2026-11-22, ADR 0021 §9).** Language is
   driven by the user's browser locale; **currency/channel by the
   user's location** — an IP lookup (Cloudflare geo is already in the
   request). Two separate axes: the epic 8 "prices stay HUF for
