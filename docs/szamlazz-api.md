@@ -1,9 +1,9 @@
-# Számlázz.hu and AutoKassza — API grounding for ADR 0019
+# Számlázz.hu and AutoKassza — API grounding for ADR 0021
 
 Last verified: 2026-11-15.
 
 This document grounds the Számlázz.hu and AutoKassza claims in
-[ADR 0019](adr/0019-barion-payment-integration.md) against primary sources.
+[ADR 0021](adr/0021-barion-payment-integration.md) against primary sources.
 Every claim below was read on an official page the day it was verified; the
 URL follows each claim. Hungarian terms are quoted and translated inline.
 
@@ -433,7 +433,7 @@ invoice must show?
   monthly) the 1–50 tier (2 690 Ft + áfa/hó) applies.
   <https://szamlazz.hu/szamla-agent-api>
 
-## Implications for ADR 0019
+## Implications for ADR 0021
 
 - **Question 4 has a de-facto answer: everything the flow needs exists.**
   Díjbekérő, előlegszámla, végszámla (one-to-one with its előlegszámla, with

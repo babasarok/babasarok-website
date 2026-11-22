@@ -1,9 +1,9 @@
-# Vendure payments — source grounding for ADR 0019
+# Vendure payments — source grounding for ADR 0021
 
 Last verified: 2026-11-15
 
 This document grounds the Vendure claims in
-[ADR 0019](adr/0019-barion-payment-integration.md) ("What we know about
+[ADR 0021](adr/0021-barion-payment-integration.md) ("What we know about
 ourselves") in primary sources: the actually-installed Vendure 3.8.1 source
 under `backend/node_modules/@vendure/core/dist/`, this repo's own
 `backend/src/vendure-config.ts`, and docs.vendure.io / the Vendure plugin
@@ -443,9 +443,9 @@ prevents the underlying facts:
 - The documented answer for a flow that needs a resting state at partial
   payment is a custom `OrderProcess`/`PaymentProcess` state (the
   custom-payment-flows section) — which is exactly the design space ADR
-  0019's question 1 is exploring.
+  0020's question 1 is exploring.
 
-## Implications for ADR 0019
+## Implications for ADR 0021
 
 The evidence constrains ADR questions 1–3 as follows:
 

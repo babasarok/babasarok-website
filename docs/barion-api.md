@@ -1,8 +1,8 @@
-# Barion API — grounding document for ADR 0019
+# Barion API — grounding document for ADR 0021
 
 Last verified: 2026-11-15
 
-Grounds the claims in [docs/adr/0019-barion-payment-integration.md](adr/0019-barion-payment-integration.md)
+Grounds the claims in [docs/adr/0021-barion-payment-integration.md](adr/0021-barion-payment-integration.md)
 (sections "What we know about Barion" and "Barion-side choices", questions 9–14) against
 Barion's official documentation at docs.barion.com.
 
@@ -27,7 +27,7 @@ landscape was checked against npm and GitHub APIs directly.
 - [12. Payer data and SCA/3DS](#12-payer-data-and-sca3ds)
 - [13. Refund](#13-refund)
 - [14. Things the ADR missed](#14-things-the-adr-missed)
-- [Implications for ADR 0019](#implications-for-adr-0019)
+- [Implications for ADR 0021](#implications-for-adr-0020)
 
 ## 1. Payment/Start
 
@@ -509,7 +509,7 @@ Matters for the open questions or the implementation:
     upgrades the payment to a "sharing economy scenario" — keep the Payee = shop wallet
     invariant in the handler.
 
-## Implications for ADR 0019
+## Implications for ADR 0021
 
 **Question 11 (Reservation for the full total) — the idea survives grounding, with two
 new caveats and one strengthening fact:**
