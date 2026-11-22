@@ -186,8 +186,9 @@ undocumented; verify before epic 9). HUF has no decimal digits (matches
 
 - **The order state machine blocks partial settlement** (verified in
   [ADR 0020 — GLS labels](0020-gls-labels-via-mygls-api.md), Vendure
-  3.8.1): `checkPaymentsCoverTotal` requires **authorized** payments to
-  cover the full total before `PaymentAuthorized`, and **settled
+  3.8.1): `checkPaymentsCoverTotal` requires the sum of authorized and
+  settled payments to cover the full total, with at least one authorized
+  payment, before `PaymentAuthorized`, and **settled
   payments only** to cover it before `PaymentSettled`
   ([vendure-payments.md](../vendure-payments.md) §2's nuance);
   `Delivered.to = [Cancelled]`;
@@ -482,7 +483,8 @@ fallback channel is ever adopted.
   authorized hold, a Barion `Refund` for a settled payment.
 - **Settle-on-delivery leg:** the verified path stands, entered from
   the state the order actually occupies at delivery — it sits `Shipped`
-  (it shipped partially paid via the `Modifying` hop), and the grounded
+  (shipped partially paid, whatever route brought it there), and the
+  grounded
   full path is `Shipped → Modifying → ArrangingAdditionalPayment →
   addManualPaymentToOrder (amount = the deficit) → PaymentSettled`
   ([vendure-payments.md](../vendure-payments.md) implications §3), with
