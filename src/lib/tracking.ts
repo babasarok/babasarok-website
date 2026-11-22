@@ -122,7 +122,8 @@ let metaPixelLoading = false;
  * takes over `callMethod` itself.
  */
 type MetaPixelStub = ((event: string, ...params: unknown[]) => void) & {
-  callMethod?: (...params: unknown[]) => void;
+  /** Receives the full argument list as a single array-like (fbevents.js reads `args[0]`). */
+  callMethod?: (args: [event: string, ...params: unknown[]]) => void;
   queue: unknown[][];
   push: MetaPixelStub;
   loaded: boolean;
@@ -136,7 +137,7 @@ function installMetaPixelStub(): void {
 
   const fbq: MetaPixelStub = function (event: string, ...params: unknown[]): void {
     if (fbq.callMethod) {
-      fbq.callMethod(event, ...params);
+      fbq.callMethod([event, ...params]);
       return;
     }
 
