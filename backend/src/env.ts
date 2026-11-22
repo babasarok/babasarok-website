@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { glsConfigFromEnv, type GlsConfig } from "./plugins/gls/gls-config";
 
 const EnvSchema = z
   .object({
@@ -141,6 +142,15 @@ function emailConfig(): EmailConfig {
   return { kind: "file" };
 }
 
+function glsConfig(): GlsConfig {
+  try {
+    return glsConfigFromEnv(process.env, value.NODE_ENV === "production");
+  } catch (error) {
+    console.error(`Invalid env: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  }
+}
+
 export const env = {
   isProduction: value.NODE_ENV === "production",
   port: value.PORT,
@@ -157,4 +167,5 @@ export const env = {
     email: value.SUPERADMIN_EMAIL,
     password: value.SUPERADMIN_PASSWORD,
   },
+  gls: glsConfig(),
 } as const;

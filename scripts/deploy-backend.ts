@@ -24,6 +24,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { z } from "zod";
 import { previewSlug } from "../src/lib/preview-slug";
+import { runtimeEnvFragment } from "./deploy-runtime-env";
 
 const REPO_ROOT = path.resolve(import.meta.dirname, "..");
 
@@ -38,8 +39,6 @@ const envSchema = z.object({
   DEPLOY_STACK: z.enum(["prod", "preview"]),
   DEPLOY_SSH_KEY: z.string().min(1),
   WORKERS_CI_BRANCH: z.string().min(1).optional(),
-  CLOUDFLARE_EMAIL_TOKEN: z.string().optional(),
-  CLOUDFLARE_ACCOUNT_ID: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -62,6 +61,11 @@ if (cfg.DEPLOY_STACK === "preview") {
     die("WORKERS_CI_BRANCH contains a quote character, refusing");
   }
   slug = previewSlug(branch);
+}
+
+const runtimeEnv = runtimeEnvFragment(cfg.DEPLOY_STACK, process.env);
+if (!runtimeEnv.ok) {
+  die(`runtime env invalid:\n${runtimeEnv.problems.map((p) => `  ${p}`).join("\n")}`);
 }
 
 const stack = slug || cfg.DEPLOY_STACK;
@@ -164,31 +168,19 @@ try {
     die("tar transfer failed");
   }
 
-  // Cloudflare-owned runtime secrets: written from the build env so rotation
-  // in the cloudflare dashboard propagates on the next deploy. Only
-  // allowlisted keys are carried; anything absent leaves the box's
-  // bootstrapped value. Piped via stdin (the secret never appears in the
-  // remote command line) into a per-build temp file that the locked remote
-  // script atomically moves into place — concurrent writes cannot tear the
-  // live file. Previews get no fragment: their compose has no .env.cloudflare
-  // entry and their .env has no email transport at all.
-  let secretTmp = "";
-  if (cfg.DEPLOY_STACK !== "preview") {
-    secretTmp = `${dir}/.env.cloudflare-${process.pid}.tmp`;
-    const lines: string[] = [];
-    if (cfg.CLOUDFLARE_EMAIL_TOKEN) {
-      lines.push(`CLOUDFLARE_EMAIL_TOKEN=${cfg.CLOUDFLARE_EMAIL_TOKEN}`);
-    }
-    if (cfg.CLOUDFLARE_ACCOUNT_ID) {
-      lines.push(`CLOUDFLARE_ACCOUNT_ID=${cfg.CLOUDFLARE_ACCOUNT_ID}`);
-    }
-    const putSecrets = spawnSync("ssh", sshArgs(["cat", ">", secretTmp]), {
-      input: `${lines.join("\n")}\n`,
-      stdio: ["pipe", "inherit", "inherit"],
-    });
-    if (putSecrets.status !== 0) {
-      die("secret fragment transfer failed");
-    }
+  // Cloudflare-owned runtime secrets (scripts/deploy-runtime-env.ts):
+  // written from the build env so rotation in the cloudflare dashboard
+  // propagates on the next deploy. Piped via stdin (the secret never appears
+  // in the remote command line) into a per-build temp file that the locked
+  // remote script atomically moves into place — concurrent writes cannot
+  // tear the live file.
+  const secretTmp = `${dir}/.env.cloudflare-${process.pid}.tmp`;
+  const putSecrets = spawnSync("ssh", sshArgs(["cat", ">", secretTmp]), {
+    input: runtimeEnv.text,
+    stdio: ["pipe", "inherit", "inherit"],
+  });
+  if (putSecrets.status !== 0) {
+    die("secret fragment transfer failed");
   }
 
   // Everything that mutates the stack runs under the two flock'd locks taken

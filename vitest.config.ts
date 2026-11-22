@@ -32,7 +32,7 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   test: {
-    include: ["src/**/*.test.ts", "eslint/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "eslint/**/*.test.ts", "scripts/**/*.test.ts"],
     exclude: ["tests/**", "node_modules/**", "dist/**"],
     environment: "node",
   },

@@ -46,9 +46,12 @@ Content edits ──▶ Tina Cloud (CMS) ──▶ GitHub repo ──▶ Workers
   - Cloudflare-only, never on the box: `DEPLOY_HOST/USER/SSH_KEY`,
     `TINA_CMS_*`, `GTM_ID`, `SITE_URL`, `PUBLIC_VENDURE_API_URL`.
   - Cloudflare-owned runtime secrets carried into the box at deploy time via
-    `.env.cloudflare` (env_file layering, last file wins):
-    `CLOUDFLARE_EMAIL_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` — rotation in the CF
-    dashboard propagates on the next deploy.
+    the stack's `.env.cloudflare` (env_file layering, last file wins),
+    allowlisted per stack in `scripts/deploy-runtime-env.ts` — rotation in
+    the CF dashboard propagates on the next deploy. Prod:
+    `CLOUDFLARE_EMAIL_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `MYGLS_HU_*`,
+    `GLS_LABEL_FORMAT`; previews: `TEST_MYGLS_HU_*`, `GLS_LABEL_FORMAT`
+    (never the live account or the email transport).
 - **Cron on the box:** nightly `docker system prune -af` (in the `deploy`
   user's crontab, installed by every deploy — note it runs as `deploy`, whose
   docker-group membership makes it work); hourly `preview-teardown.ts` plus
@@ -180,6 +183,44 @@ account (account id `b64cf6f65472d9a85a44d39f7a68c81a`).
   watches the repo and deploys on push to `main` (prod) and non-main branches
   (previews, when enabled).
 - Issues live on `Gr3q/babasarok-website` (see `docs/agents/issue-tracker.md`).
+
+## GLS / MyGLS (shipping)
+
+- **Contract:** GLS Hungary business account (ügyfélazonosító
+  `100021942`); the owner works parcels in the MyGLS web UI (mygls.hu).
+- **API:** the MyGLS API (`api.mygls.hu`, REST/JSON — SOAP exists, unused;
+  group ShipIT is not used for HU) — integration design in
+  [ADR 0020](adr/0020-gls-labels-via-mygls-api.md), developer docs at
+  `api.mygls.hu/docs/MyGLS_API.pdf`. A test environment exists at
+  `api.test.mygls.hu`.
+- **API access status:** the test environment works with the test
+  account GLS provisioned (verified 2026-11-19); GLS confirmed
+  (2026-11-19) that the owner's MyGLS web login is the live API credential
+  set. GLS contact: connect@gls-hungary.com, 06-29-88-66-88.
+- **Credentials placement** — the Workers Builds build variables (the
+  same place as `DEPLOY_SSH_KEY`, see "Workers Builds" above), one set
+  per environment (store the passwords as secrets):
+
+  | Variable                   | Production (prod stack)                          | Preview (branch stacks)              |
+  | -------------------------- | ------------------------------------------------ | ------------------------------------ |
+  | `MYGLS_HU_ACCOUNT_ID`      | `100021942` (the GLS client number)              | — never                              |
+  | `MYGLS_HU_EMAIL`           | the owner's MyGLS login email                    | — never                              |
+  | `MYGLS_HU_PASSWORD`        | the owner's MyGLS password (secret)              | — never                              |
+  | `TEST_MYGLS_HU_ACCOUNT_ID` | —                                                | the test account's client number     |
+  | `TEST_MYGLS_HU_EMAIL`      | —                                                | the test account's login             |
+  | `TEST_MYGLS_HU_PASSWORD`   | —                                                | the test account's password (secret) |
+  | `GLS_LABEL_FORMAT`         | optional: `A4_2x2` (default), `A4_4x1`, `Thermo` | optional, same values                |
+
+  The deploy carries them into the stack's `.env.cloudflare` (allowlisted
+  per stack, so a preview never receives the live account). A prod deploy
+  without the three `MYGLS_HU_*` variables stops before touching the box,
+  and the prod backend refuses to boot without them. Previews without the
+  `TEST_*` set run the in-process fake. Values may not contain a single
+  quote or a line break. The live password is the owner's MyGLS web
+  password: when she changes it in MyGLS, update the variable and
+  redeploy, or label creation fails until then. Locally, put the
+  `TEST_MYGLS_HU_*` set in `backend/.env` (see `backend/.env.example`);
+  the live set never belongs there — non-production never reads it.
 
 ## Retired / rejected (kept so nobody re-proposes them)
 

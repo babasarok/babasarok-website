@@ -191,11 +191,18 @@ try {
     // network name. Previews ride the infra network and must NOT be listed —
     // they mark themselves with branch.txt instead.
     writeFileSync(`${DIR}/network`, `babasarok-${stack}_default\n`);
-    if (secretTmp && existsSync(secretTmp)) {
-      rmSync(`${DIR}/.env.cloudflare`, { force: true });
-      copyFileSync(secretTmp, `${DIR}/.env.cloudflare`);
-      chmodSync(`${DIR}/.env.cloudflare`, 0o600);
-    }
+  }
+
+  // Both stacks read .env.cloudflare (written per stack by
+  // scripts/deploy-runtime-env.ts); compose refuses a missing env_file.
+  if (secretTmp && existsSync(secretTmp)) {
+    rmSync(`${DIR}/.env.cloudflare`, { force: true });
+    copyFileSync(secretTmp, `${DIR}/.env.cloudflare`);
+    chmodSync(`${DIR}/.env.cloudflare`, 0o600);
+  }
+  if (!existsSync(`${DIR}/.env.cloudflare`)) {
+    writeFileSync(`${DIR}/.env.cloudflare`, "\n");
+    chmodSync(`${DIR}/.env.cloudflare`, 0o600);
   }
 
   // Bring the stack up; --wait blocks until the vendure healthcheck is green,

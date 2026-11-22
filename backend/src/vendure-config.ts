@@ -18,11 +18,16 @@ import {
 import { AssetServerPlugin } from "@vendure/asset-server-plugin";
 import { DashboardPlugin } from "@vendure/dashboard/plugin";
 import { EmailPlugin } from "@vendure/email-plugin";
+import { DefaultSchedulerPlugin } from "@vendure/core";
 import { LocaleTemplateLoader } from "./plugins/email/localized-template-loader";
 import type { EmailPluginDevModeOptions, EmailPluginOptions } from "@vendure/email-plugin";
 import { ASSET_PRESETS, ASSET_QUALITY } from "./shared/asset-presets";
 import { PresetOrOriginalStrategy } from "./preset-or-original-strategy";
 import { env } from "./env";
+import { GLS_SENDER_FIELD } from "./plugins/gls/gls-sender";
+import { GlsPlugin } from "./plugins/gls/gls.plugin";
+import { glsProblemHandler, glsShippedHandler } from "./plugins/gls/gls-emails";
+import { glsStatusPollTask } from "./plugins/gls/gls-poll-task";
 import { z } from "zod";
 import { HandlebarsHtmlGenerator } from "./plugins/email/handlebars-html-generator";
 import { CloudflareEmailSender } from "./plugins/email/cloudflare-email-sender";
@@ -45,6 +50,7 @@ import { AuditPlugin } from "./plugins/audit/audit.plugin";
 import { TranslationDriftPlugin } from "./plugins/translation-drift/translation-drift.plugin";
 import { hexColorError } from "./plugins/product/thread-color";
 import { ChannelSetupPlugin } from "./plugins/setup/channel-setup.plugin";
+import { bankTransferChecker, bankTransferHandler } from "./bank-transfer-handler";
 
 // Zod's built-in validation messages surface to the owner (definition and
 // material validation); the Hungarian locale localizes them for every process
@@ -64,7 +70,12 @@ function emailPluginOptions(): EmailPluginOptions | EmailPluginDevModeOptions {
     templateLoader: new LocaleTemplateLoader(path.join(__dirname, "..", "email-templates")),
     // Plain-HTML handlebars templates, not MJML.
     emailGenerator: new HandlebarsHtmlGenerator(),
-    handlers: [nativeOrderConfirmationHandler, nativeOrderNotificationHandler],
+    handlers: [
+      nativeOrderConfirmationHandler,
+      nativeOrderNotificationHandler,
+      glsShippedHandler,
+      glsProblemHandler,
+    ],
     globalTemplateVars: { fromAddress: env.orderEmailFrom },
   };
 
@@ -188,7 +199,10 @@ export const config: VendureConfig = {
   entityOptions: {
     moneyStrategy: new ForintMoneyStrategy(),
   },
-  paymentOptions: { paymentMethodHandlers: [] },
+  paymentOptions: {
+    paymentMethodHandlers: [bankTransferHandler],
+    paymentMethodEligibilityCheckers: [bankTransferChecker],
+  },
   promotionOptions: {
     promotionConditions: [...defaultPromotionConditions, productSetMembersCondition],
     promotionActions: [...defaultPromotionActions, productSetDiscountAction],
@@ -201,7 +215,11 @@ export const config: VendureConfig = {
     // run by the server and worker on boot. No synchronize anywhere: server
     // and worker share one database.
   },
+  // The GLS poll runs in the worker only (the DefaultSchedulerStrategy's
+  // database bookkeeping keeps it exactly-once across processes).
+  schedulerOptions: { tasks: [glsStatusPollTask] },
   plugins: [
+    DefaultSchedulerPlugin.init(),
     MaterialPlugin,
     ProductPlugin,
     ProductSetPlugin,
@@ -209,6 +227,7 @@ export const config: VendureConfig = {
     TranslationDriftPlugin,
     PricingPlugin,
     CheckoutPlugin,
+    GlsPlugin,
     ChannelSetupPlugin,
     // Owns the material/product imagery (ADR 0009): uploads and previews are
     // stored on local disk (a docker volume in deploys) and served at /assets.
@@ -303,6 +322,7 @@ export const config: VendureConfig = {
         ],
         nullable: true,
       },
+      GLS_SENDER_FIELD,
     ],
     Product: [
       {

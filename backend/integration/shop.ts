@@ -409,12 +409,16 @@ export async function setCustomer(
   );
 }
 
-export async function setAddress(shopper: Shopper): Promise<void> {
+export async function setAddress(
+  shopper: Shopper,
+  recipient: { fullName?: string; phoneNumber?: string } = {}
+): Promise<void> {
   await run(
     shopper.client,
     `mutation($input: CreateAddressInput!) { setOrderShippingAddress(input: $input) { ... on Order { code } } }`,
     {
       input: {
+        ...recipient,
         streetLine1: BUYER_ADDRESS.street,
         streetLine2: BUYER_ADDRESS.houseNumber,
         postalCode: BUYER_ADDRESS.postalCode,
