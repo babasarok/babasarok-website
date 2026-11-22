@@ -93,9 +93,9 @@ are lines 258–268:
 
 - Option name `checkPaymentsCoverTotal` (default `true`) is defined in
   `default-order-process.d.ts:90` (`DefaultOrderProcessOptions`).
-- **Entering `PaymentAuthorized`** (lines 259–264) requires *both*
+- **Entering `PaymentAuthorized`** (lines 259–264) requires _both_
   `orderTotalIsCovered(order, ['Authorized', 'Settled'])` — i.e. payments in
-  either state sum to at least `totalWithTax` — *and* at least one payment
+  either state sum to at least `totalWithTax` — _and_ at least one payment
   actually in the `Authorized` state.
 - **Entering `PaymentSettled`** (lines 265–267) requires
   `orderTotalIsCovered(order, 'Settled')` — only `Settled` payments count.
@@ -106,7 +106,7 @@ The coverage math lives in
 `dist/service/helpers/utils/order-utils.js`:
 
 - `orderTotalIsCovered` (lines 22–25): `totalCoveredByPayments(order,
-  state) >= order.totalWithTax`.
+state) >= order.totalWithTax`.
 - `totalCoveredByPayments` (lines 29–43): sums `payment.amount` over all
   payments **not** in `Error`/`Declined`/`Cancelled` (or, when a state
   filter is given, only the listed states), minus the total of each
@@ -146,11 +146,11 @@ ADR's "Modifying's exit guard is vacuous with zero modifications".
   split via `OrderSplitter`.
 - **This repo's config** (`backend/src/vendure-config.ts:106–110`):
   `QuoteOrderPlacedStrategy` returns true for `AddingItems →
-  ArrangingPayment`, so orders are placed the moment checkout submits and
+ArrangingPayment`, so orders are placed the moment checkout submits and
   then sit in `ArrangingPayment`. It is wired at line 163
   (`orderPlacedStrategy: new QuoteOrderPlacedStrategy()`). The order
   process is `configureDefaultOrderProcess({
-  arrangingPaymentRequiresShipping: false })` (line 162) — every other
+arrangingPaymentRequiresShipping: false })` (line 162) — every other
   default check (including `checkPaymentsCoverTotal`) stays on. Payment
   handlers: `paymentOptions: { paymentMethodHandlers: [] }` (line 172) —
   none registered yet.
@@ -166,7 +166,7 @@ Source: `dist/service/services/order.service.js:1337–1383`.
 - **State eligibility** (lines 1340–1342): returns
   `ManualPaymentStateError` unless
   `order.state === 'ArrangingAdditionalPayment' || order.state ===
-  'ArrangingPayment'`. Confirmed exactly as the ADR states.
+'ArrangingPayment'`. Confirmed exactly as the ADR states.
 - **Amount** (lines 1346–1350): the existing payments are loaded, then
   `amount = order.totalWithTax − totalCoveredByPayments(order)` — the
   outstanding deficit. The Admin API input `ManualPaymentInput` (admin-api
@@ -212,7 +212,7 @@ Confirmed on three levels:
   order" (`packages/mollie-plugin/src/mollie.service.ts`,
   `createPaymentIntent` / `handleMolliePaymentStatus`).
 
-State eligibility for the *shop* API's `addPaymentToOrder`:
+State eligibility for the _shop_ API's `addPaymentToOrder`:
 `canAddPaymentToOrder` (`order.service.js:1320–1328`) allows
 `ArrangingPayment` plus any state that can transition to **both**
 `PaymentAuthorized` and `PaymentSettled` — under the default transitions
@@ -305,9 +305,9 @@ Payment states themselves: the `PaymentState` type is only
     `p.state !== 'Settled'` out). An `Authorized`-only payment cannot be
     refunded through this flow at all — it can only be cancelled.
   - Refunds have their own state machine: `RefundState = 'Pending' |
-    'Settled' | 'Failed'` (`dist/service/helpers/refund-state-machine/refund-state.d.ts`),
+'Settled' | 'Failed'` (`dist/service/helpers/refund-state-machine/refund-state.d.ts`),
     settled via `settleRefund` (`order.service.js:1666–1690`). Only
-    *settled* refunds reduce coverage (`totalCoveredByPayments`,
+    _settled_ refunds reduce coverage (`totalCoveredByPayments`,
     order-utils.js:37–42).
 - **Order modification** (`Modifying` state, entered via the
   `modifyOrder` mutation) can carry refunds/payments per modification
@@ -483,11 +483,11 @@ The evidence constrains ADR questions 1–3 as follows:
    chargeback policy (question 12).
 3. **Question 3 (the settle-on-delivery leg).** The ADR's proposed path
    `PaymentAuthorized → ArrangingAdditionalPayment →
-   addManualPaymentToOrder → PaymentSettled` is sound in source: the
+addManualPaymentToOrder → PaymentSettled` is sound in source: the
    direct edge exists (default-order-process.js:69–71), entry into
    `ArrangingAdditionalPayment` from `PaymentAuthorized` has **no native
-   guard** (the additional-payment checks only run when *leaving* the
-   state, and the `Modifying`-entry check only applies when coming *from*
+   guard** (the additional-payment checks only run when _leaving_ the
+   state, and the `Modifying`-entry check only applies when coming _from_
    `Modifying`), the manual-payment action is legal there and computes
    the exact deficit, and the exit guard then demands full coverage —
    which the recorded remainder satisfies. The `Modifying` hop is only
@@ -496,7 +496,7 @@ The evidence constrains ADR questions 1–3 as follows:
    `PaymentSettled`): there the zero-modification vacuous exit makes
    `Shipped → Modifying → ArrangingAdditionalPayment → PaymentSettled`
    work, as ADR 0018 recorded. One constraint to carry into the design:
-   `addManualPaymentToOrder` can never record an *arbitrary* amount —
+   `addManualPaymentToOrder` can never record an _arbitrary_ amount —
    only the exact deficit — so the 6 000 Ft deposit itself must be
    created through the payment handler (or `PaymentService.createPayment`),
    exactly as the Mollie webhook path does with its admin

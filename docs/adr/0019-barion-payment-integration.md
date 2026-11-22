@@ -70,7 +70,7 @@ Going live, Security Measures) — full per-claim citations in
   official PHP library and the Barion Shop Authentication page (not
   Security Measures).
 - Flow: `Payment/Start` (`PaymentType: Immediate | Reservation |
-  DelayedCapture`, `Transactions[]` with `Payee`, `Total`, `Items`) → the
+DelayedCapture`, `Transactions[]` with `Payee`, `Total`, `Items`) → the
   response carries `GatewayUrl`, the buyer pays on `secure.barion.com`,
   is redirected back with the paymentId. Optional `PaymentWindow`
   (default 30 min, max one week) caps how long the buyer may sit on the
@@ -81,14 +81,14 @@ Going live, Security Measures) — full per-claim citations in
   supported) from documented per-environment IPs; querying PaymentState
   for the same payment more than once per 5 s returns 429. Flooding the
   API instead of relying on callbacks may get the shop suspended — while
-  the docs *prescribe* bounded fallback polling (after redirect and after
+  the docs _prescribe_ bounded fallback polling (after redirect and after
   window expiry). The callback's state is never trusted — the server
   re-queries `PaymentState` and branches on that. Idempotency keys are
   supported on requests (relevant for `Payment/Start` retries).
 - `Payment/Start` accepts 3DS-related payer data (name, e-mail, phone,
   shipping address); sending it raises SCA pass rates.
 - **A Reservation charges the buyer immediately** — for card payments the
-  money moves to the merchant's wallet and stays reserved *there* (not
+  money moves to the merchant's wallet and stays reserved _there_ (not
   held on the card) for up to 365 days; `FinishReservation` takes
   per-transaction amounts, a partial finish releases the finished part
   and auto-refunds the rest, and finishing is possible per transaction
@@ -108,12 +108,12 @@ Going live, Security Measures) — full per-claim citations in
 
 Per-payment `FundingSources` flags:
 
-| Value          | Method                | Notes                                                                               |
-| -------------- | --------------------- | ----------------------------------------------------------------------------------- |
-| `Balance`      | Barion wallet balance | cannot be disabled                                                                  |
-| `BankCard`     | Bank card             | guest or Barion user                                                                |
-| `GooglePay`    | Google Pay            | guest only, capable devices; **gated by the merchant's contract**, not the API call |
-| `ApplePay`     | Apple Pay             | guest only, capable devices; same contract gate                                     |
+| Value          | Method                | Notes                                                                                  |
+| -------------- | --------------------- | -------------------------------------------------------------------------------------- |
+| `Balance`      | Barion wallet balance | cannot be disabled                                                                     |
+| `BankCard`     | Bank card             | guest or Barion user                                                                   |
+| `GooglePay`    | Google Pay            | guest only, capable devices; **gated by the merchant's contract**, not the API call    |
+| `ApplePay`     | Apple Pay             | guest only, capable devices; same contract gate                                        |
 | `BankTransfer` | Online bank transfer  | ⚠️ "no longer supported" as of 2026-01-09, replacement still being sought (2026-11-15) |
 
 No PayPal, no iDEAL. QR Platba is CZK-only. The deprecated bank-transfer
@@ -201,7 +201,7 @@ undocumented; verify before epic 9). HUF has no decimal digits (matches
   invoice — but the document type the auto-invoice gets (előlegszámla vs
   normál számla) is configured **per invoice prefix (előtag)**. Branches
   separated by prefix therefore get correct invoice types automatically;
-  the rule still applies to *every* paid díjbekérő on that prefix. See
+  the rule still applies to _every_ paid díjbekérő on that prefix. See
   question 5.
 - **The COD remainder's money confirmation is bank-side:** AutoKassza
   pairs the bank statement line via the parcel's `CODReference` (ADR 0020) and notifies the owner. There is no hook from that notification
@@ -272,8 +272,8 @@ These are not questions — they follow from what was verified:
 - **A custom payment method handler + callback controller is the only
   Vendure plugin path.** Nothing to buy or adopt; a small typed client
   (ADR 0020's GLS-client pattern) or `node-barion` — an implementation
-  choice, not a design question. Whether a custom handler is needed *at
-  all* is now question 19: Számlázz.hu's own Online fizetés runs on
+  choice, not a design question. Whether a custom handler is needed _at
+  all_ is now question 19: Számlázz.hu's own Online fizetés runs on
   Barion and could serve the full-total branch thin.
 
 ## Questions to answer before starting
@@ -331,7 +331,7 @@ addManualPaymentToOrder (amount = the deficit) → PaymentSettled` —
 5. When a Barion payment succeeds, which invoice fires — and what is the
    rule that tells the deposit branch from the full-total branch?
    (Premise revised 2026-11-15: the auto-előlegszámla document type is
-   configured **per prefix**, so prefix-per-branch *is* a working rule —
+   configured **per prefix**, so prefix-per-branch _is_ a working rule —
    but the auto path fires only on AutoKassza/online settlements and
    applies to every paid díjbekérő on the prefix.) Open part: is the
    first version automated at all, or does the owner issue invoices by
@@ -351,10 +351,10 @@ addManualPaymentToOrder (amount = the deficit) → PaymentSettled` —
 7. ~~Does Számlázz.hu or AutoKassza expose an API/webhook for payment
    pairing or díjbekérő payment events?~~ **ANSWERED — yes**
    ([szamlazz-api.md](../szamlazz-api.md) §6): the Számlázz.hu **IPN**
-   POSTs on every paid-amount change of a számla *or díjbekérő*
+   POSTs on every paid-amount change of a számla _or díjbekérő_
    (including AutoKassza pairings and partial payments), carrying the
    document number, the parent díjbekérő's number, the order number, the
-   *cumulative* paid amount and the payment method. Trust model:
+   _cumulative_ paid amount and the payment method. Trust model:
    unsigned (secret-in-URL + IP allowlist; verify by re-querying via
    `action-szamla_agent_xml`); any non-200 response drops the IPN
    permanently (only missing responses retry — 11 attempts, 5-day

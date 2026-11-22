@@ -46,7 +46,7 @@ the response; idempotency key support.
   languages incl. `hu-HU`, `en-US`).
 - The ADR's field list is correct but incomplete: **`GuestCheckOut` and `Locale` are
   also required** and would fail a minimal request.
-- `RedirectUrl` is marked *Required* but its description also says "If not provided, the
+- `RedirectUrl` is marked _Required_ but its description also says "If not provided, the
   system will use the redirect URL assigned to the shop" — an internal inconsistency in
   the doc; treat it as required-but-overridable.
 - `PaymentTransaction` requires `POSTransactionId`, `Payee` ("must be the e-mail address
@@ -87,11 +87,11 @@ endpoints][endpoints], snapshot 2026-02-12):
   "(deprecated)" marker. ✓
 - The v4 page says it is "the preferred API endpoint for querying the state of a
   payment".
-- **Authentication differs from v2:** v4 uses *header-based* shop authentication
+- **Authentication differs from v2:** v4 uses _header-based_ shop authentication
   (`x-pos-key` header), not a body/query `POSKey`.
 - Output includes `Status`, `PaymentType`, `AllowedFundingSources`, `FundingSource`
   (`Balance`, `BankCard` or `BankTransfer`), `FundingInformation`, `GuestCheckout`,
-  `CreatedAt`, `CompletedAt`, `ValidUntil`, `ReservedUntil` (reservations), 
+  `CreatedAt`, `CompletedAt`, `ValidUntil`, `ReservedUntil` (reservations),
   `DelayedCaptureUntil` (delayed captures), `Transactions`
   ([DetailedPaymentTransaction][dtx] array), `Total` ("If a reservation was finished
   with a lower amount … this can be lower than at payment creation time"), `Currency`,
@@ -126,7 +126,7 @@ can get the shop suspended."
   about flooding, not polling per se:** "WARNING: Flooding the Barion servers with
   unnecessary API calls, instead of relying on the callback mechanism, **may lead to
   suspension of the shop**." ✓ (exact wording above). At the same time, the callback
-  page *prescribes* a fallback: poll PaymentState after the buyer is redirected back,
+  page _prescribes_ a fallback: poll PaymentState after the buyer is redirected back,
   and again ~15 minutes after the payment window expires if no final callback arrived.
   So the correct reading is: callbacks are the primary mechanism, occasional fallback
   polling is expected, hammering the state endpoint is not.
@@ -153,7 +153,7 @@ messages (`x-timestamp`/`x-nonce`/`x-signature-sha512`).
 **What the docs say:**
 
 - **The cited source is wrong, the claim itself is right.** The [Security
-  Measures][security] page (snapshot 2025-05-01, edited 2024-12-30) contains *no*
+  Measures][security] page (snapshot 2025-05-01, edited 2024-12-30) contains _no_
   signing content — only the callback IP list and TLS requirements. The signing
   mechanics are documented in the README of Barion's **official PHP library**
   ([barion/barion-web-php][php-readme], repo pushed 2026-11-09) and, per a search-index
@@ -167,7 +167,7 @@ messages (`x-timestamp`/`x-nonce`/`x-signature-sha512`).
   "Barion ignores the signature until the key is activated, and once the key is active,
   it **rejects every unsigned request**. Its callbacks are only signed while the key is
   active." So adoption is opt-in; once activated it is mandatory in both directions, and
-  the callback signature check must be switched on only *after* activation (before that,
+  the callback signature check must be switched on only _after_ activation (before that,
   callbacks arrive unsigned).
 - The signature embeds the current time; server clocks must be accurate within
   **5 minutes** (`InvalidResponseSignature` / `InvalidResponseTimestamp` error codes
@@ -185,19 +185,19 @@ auto-refunds the difference; CancelAuthorization exists.
 **The docs say** — all numbers check out:
 
 - **Delayed capture** ([Payment-Start-v2][start], [Delayed Capture][dcp] — snapshot
-  2026-01-22, edited 2025-06-25): the payer is *not* charged at payment; the amount is
+  2026-01-22, edited 2025-06-25): the payer is _not_ charged at payment; the amount is
   blocked on the payer's card; the merchant captures (or cancels) within
   `DelayedCapturePeriod` — **max 7 days, 21 days for Hungarian shops**. ✓ Capture is a
-  single shot: "The same payment cannot be captured more than once", and *all*
+  single shot: "The same payment cannot be captured more than once", and _all_
   transactions must be captured in one call. Capturing less than authorized simply
   releases the difference ("no refund transaction is generated"). Only bank-card
   funding works. If the issuer lifts the hold or the card dies before capture, **the
   capture fails and the merchant gets nothing** — "you should wait until the capture is
   successful before fulfilling the purchase".
 - **Reservation** ([Reservation payment][rsv] — snapshot 2026-01-31; [Payment-Start-v2][start]):
-  the payer *is* charged immediately; the money is reserved in the Barion system — for
+  the payer _is_ charged immediately; the money is reserved in the Barion system — for
   card payments it is "transferred to the merchant, and stays reserved in the wallet
-  *of the merchant*" (not held on the card). The window is `ReservationPeriod`, **up to
+  _of the merchant_" (not held on the card). The window is `ReservationPeriod`, **up to
   365 days**. ✓
   - Finishing is per payment transaction with `0 ≤ Y ≤ X`; **partial finish releases Y
     to the merchant and auto-refunds the rest to the customer**; finish with 0 is a
@@ -247,7 +247,7 @@ user; GooglePay/ApplePay guest-only and gated by the merchant contract; BankTran
 - "There is no option to disallow payment by balance since that would deny Barion Wallet
   users with a balance the ability to pay. There is an option to exclude cards, but not
   balance." ✓ (`All` is equivalent to `["Balance", "Card", "GooglePay", "ApplePay"]` —
-  note BankTransfer is *not* part of `All`.)
+  note BankTransfer is _not_ part of `All`.)
 - `BankCard`: "either as a guest or as a logged-in Barion user" ✓.
 - `GooglePay` / `ApplePay`: "Only available as guest on capable devices" ✓; and the
   contract gate is explicit: "Available payment methods may be limited by Barion
@@ -347,7 +347,7 @@ Sources: [Sandbox][sandbox] · [Making a test payment][testpay]
   Smart Gateway electronic payment system". ✓ (the ADR's "v4.0.0, 2026" holds; it is a
   community package, not official.)
 - The docs' own Libraries page could not be verified: no Wayback snapshot of any
-  "Libraries" page on docs.barion.com exists, so the *documented* official-library list
+  "Libraries" page on docs.barion.com exists, so the _documented_ official-library list
   is unverified — the org listing above is the evidence.
 
 Sources: npm registry (`node-barion`) · GitHub API (`orgs/barion/repos`)
@@ -401,7 +401,7 @@ account][account] — snapshot 2024-09-10; [Token payment][token] — snapshot 2
   permitted to purchase in your own shop!" ([Responsive web payment][rwp]); enforced
   again at the API level — the Refund endpoint returns
   `TheSourceAndDestinationAccountsAreMatched` "in case the payment was payed by the shop
-  owner". Also note: if a transaction's `Payee` is a *different* wallet than the shop's,
+  owner". Also note: if a transaction's `Payee` is a _different_ wallet than the shop's,
   the payment "automatically will be upgraded to sharing economy scenario" — the Payee
   must belong to the shop's own wallet for a normal scenario.
 - Going-live extras the ADR missed (relevant to question 14): the shop's own T&C must
@@ -485,16 +485,16 @@ Matters for the open questions or the implementation:
    `20.223.214.216`; TLS 1.2+ required, and **callbacks do not support TLS 1.3 yet**.
    Directly relevant to question 13 (the deployed endpoint must accept TLS 1.2 from
    those IPs).
-9. **HMAC signing semantics** (question 13): opt-in until activated, then *mandatory*
+9. **HMAC signing semantics** (question 13): opt-in until activated, then _mandatory_
    in both directions; 5-minute clock tolerance; 24-hour rotation overlap. The ADR's
    "HMAC (yes/no)" question needs this activation-ordering detail (set key → activate →
    enable callback check).
 10. **Reservation fee pre-reservation:** the merchant wallet must cover Barion's fees
-    *at Start time* for a Reservation payment, even if the finish amount will be lower.
+    _at Start time_ for a Reservation payment, even if the finish amount will be lower.
     A 6 000 Ft-deposit-only or reservation-based flow needs wallet balance up front.
 11. **Card-death risk on long reservations:** if the payer's card is expired/blocked at
     finish time, the refund of the un-finished difference fails, the merchant receives
-    the *full* prepared amount, and repaying the buyer becomes the merchant's manual
+    the _full_ prepared amount, and repaying the buyer becomes the merchant's manual
     job. Grows with the reservation window (365 days allowed).
 12. **Refund payments stay `Succeeded`** — refund results live in new refund-type
     transactions, not in the payment status. Matters for question 12's state mapping.
@@ -522,8 +522,8 @@ new caveats and one strengthening fact:**
   API shape. The COD remainder could genuinely be electronic: the buyer's money is
   already in the merchant's (reserved) wallet the moment the reservation is set up.
 - **Caveat 1 — the money model is the opposite of what "authorize on card" suggests.**
-  A Barion Reservation *charges the payer immediately*; for card payments the money
-  moves to the merchant's wallet and sits reserved *there*. The buyer is charged the
+  A Barion Reservation _charges the payer immediately_; for card payments the money
+  moves to the merchant's wallet and sits reserved _there_. The buyer is charged the
   full total at placement — full stop. The ADR already says "at the cost of authorizing
   the full amount on the buyer's card at placement", but the doc makes it stronger:
   it's a completed charge that Barion holds, not a card authorization hold. What the
@@ -548,8 +548,8 @@ factual half directly:** the gateway shows the payment we started, nothing more 
 transaction" mode: if we start a 6 000 Ft payment, the buyer sees a 6 000 Ft payment
 whose item list is whatever we choose to render (e.g. one line "Előleg — <product>").
 If we want the buyer to see the full order context, we must put it into the `Items`
-array ourselves; the gateway adds nothing. Remaining for the ADR: only the *product
-decision* of what the Items should say.
+array ourselves; the gateway adds nothing. Remaining for the ADR: only the _product
+decision_ of what the Items should say.
 
 **Question 13 (callback endpoint) — three concrete inputs:** the 15-second ACK budget
 is real and exact (5 retries then an email, ~4 minutes total); TLS 1.2 works but TLS

@@ -29,7 +29,7 @@ docs are unconfirmed.
   óta folyamatosan működik" (the Számlázz.hu API interface, running
   continuously since 2010). It exchanges simple XML messages over HTTP.
   There is **no "Számlázz.hu API v3"** — the 3.0/4.0/5.0 versioning found in
-  the docs belongs to a different product, the *Pénzügyi adatkapcsolat*
+  the docs belongs to a different product, the _Pénzügyi adatkapcsolat_
   (financial data connection, see §6), not to the Agent.
   <https://docs.szamlazz.hu/hu/agent/basics/what-is>
 - **Canonical doc site:** <https://docs.szamlazz.hu> (Docusaurus-based,
@@ -42,7 +42,7 @@ docs are unconfirmed.
   the form field carrying the XML selects the operation**:
   `action-xmlagentxmlfile` (invoice), `action-szamla_agent_st` (storno),
   `action-szamla_agent_kifiz` (credit entry), `action-szamla_agent_pdf` /
-  `action-szamla_agent_xml` (document queries), 
+  `action-szamla_agent_xml` (document queries),
   `action-szamla_agent_dijbekero_torlese` (díjbekérő deletion), nyugta
   (receipt) operations, `action-szamla_agent_taxpayer`. One XML = one
   document. <https://docs.szamlazz.hu/hu/agent/basics/sending-requests>
@@ -159,7 +159,7 @@ switches between átutalás (transfer) and utánvét (COD).
   unit, unit price, VAT, amounts, comment). The Agent does **no arithmetic**:
   the caller must send every amount, and the service only validates
   `nettoEgysegar × mennyiseg = nettoErtek` and `nettoErtek + afaErtek =
-  bruttoErtek` per line (errors 259–264 otherwise).
+bruttoErtek` per line (errors 259–264 otherwise).
   <https://docs.szamlazz.hu/hu/agent/generating_invoice/xml>
 - **Deadline:** `<fizetesiHataridoDatum>` (payment deadline) is a required
   explicit `date` in the header — the +3 business days is computed by the
@@ -195,7 +195,7 @@ rule is per-account, not per-branch."
   beállításaiban." (You can regulate the setting per invoice-number block.)
   <https://tudastar.szamlazz.hu/gyik/dijbekero-automatikus-szamlazasa>
 - **CONTRADICTION:** the ADR's premise ("per-account, not per-branch") does
-  not hold as stated — the per-prefix setting *is* a branch lever, because
+  not hold as stated — the per-prefix setting _is_ a branch lever, because
   the branches can use different prefixes (§4). The full rule set is
   "account-level on/off × per-prefix document type", still not
   per-invoice/per-order. Two caveats survive from the ADR's instinct: the
@@ -204,7 +204,7 @@ rule is per-account, not per-branch."
   helyett, akkor abból a számla nem készül el automatikusan" (a díjbekérő
   manually marked paid produces no automatic invoice);
   <https://tudastar.szamlazz.hu/gyik/hogyan-mukodik-az-autokassza> — and the
-  rule applies to *every* paid díjbekérő using that prefix, which is why the
+  rule applies to _every_ paid díjbekérő using that prefix, which is why the
   branches must be separated by prefix (or the backend issues everything via
   the Agent and leaves the account-level switch off).
 
@@ -235,15 +235,15 @@ external systems only through these two channels.
 - Shape: HTTP POST, body `application/x-www-form-urlencoded` (the tudástár
   shows the same fields GET-style for readability). Fields:
 
-  | Field | Meaning |
-  | --- | --- |
-  | `szlahu_szamlaszam` | number of the document (invoice, or the díjbekérő itself) |
-  | `szlahu_dijbekero_szama` | the parent díjbekérő's number when the invoice was made from one, else empty |
-  | `szlahu_rendelesszam` | order number, if it appears on the document |
-  | `szlahu_bruttovegosszeg` | gross total of the document |
-  | `szlahu_kifizetettbrutto` | **cumulative** gross paid so far (state, not delta — overwrite, never add) |
-  | `szlahu_fizetesmod` | payment method of the payment: `kp`, `bankkártya`, `átutalás` |
-  | `szlahu_kifizdat` | payment date (YYYY-MM-DD) — **off by default, must be activated via customer support** |
+  | Field                     | Meaning                                                                                |
+  | ------------------------- | -------------------------------------------------------------------------------------- |
+  | `szlahu_szamlaszam`       | number of the document (invoice, or the díjbekérő itself)                              |
+  | `szlahu_dijbekero_szama`  | the parent díjbekérő's number when the invoice was made from one, else empty           |
+  | `szlahu_rendelesszam`     | order number, if it appears on the document                                            |
+  | `szlahu_bruttovegosszeg`  | gross total of the document                                                            |
+  | `szlahu_kifizetettbrutto` | **cumulative** gross paid so far (state, not delta — overwrite, never add)             |
+  | `szlahu_fizetesmod`       | payment method of the payment: `kp`, `bankkártya`, `átutalás`                          |
+  | `szlahu_kifizdat`         | payment date (YYYY-MM-DD) — **off by default, must be activated via customer support** |
 
 - Díjbekérő specifics: with "Díjbekérő automatikus számlázása" on, the paid
   díjbekérő becomes an invoice and the IPN comes from the invoice
@@ -255,7 +255,7 @@ external systems only through these two channels.
 - Response: HTTP 200 with an irrelevant body. Retry semantics are unusual
   and must shape the receiver: delivery runs every 3 minutes; if the
   receiver returns **any non-200 HTTP status, the IPN is dropped and never
-  retried** (the sender records the status code); only a *missing* HTTP
+  retried** (the sender records the status code); only a _missing_ HTTP
   response (timeout, refused connection, DNS failure) is retried, up to 11
   attempts total. Queued IPNs are only retried for 5 days. On processing
   failure the correct recovery is to re-query the document via
@@ -449,7 +449,7 @@ invoice must show?
   settlements, so "backend issues everything via the Agent" remains the
   cleaner default; prefixes remain the branch marker either way.
 - **Question 7 has a de-facto answer: listen via IPN.** The IPN covers
-  díjbekérő *and* invoice payment events, including partial payments and
+  díjbekérő _and_ invoice payment events, including partial payments and
   AutoKassza pairings, and carries the order number — enough to record the
   payment on the Vendure order automatically (question 8's first branch).
   Its trust model (unsigned POST, drop-on-non-200, cumulative amount) and
