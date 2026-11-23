@@ -329,7 +329,7 @@ above.
 ### 1. The delivery × payment model — the arrangement axis
 
 Delivery and payment split into orthogonal dimensions. The matrix below
-is the current *product* of the dimensions — the implementation must
+is the current _product_ of the dimensions — the implementation must
 compose them, never enumerate pairs.
 
 Delivery variants (Vendure `ShippingMethod`s; the GLS parcel shop is a
@@ -348,7 +348,7 @@ future row):
 - **Personal pickup is full-prepay only.** A deferred pickup variant was
   considered and dropped (owner, 2026-11-22); the arrangement axis makes
   re-adding it a new variant row, not a redesign.
-- *Full-now* vs. *deposit-now + rest-at-handover* is a **capability of
+- _Full-now_ vs. _deposit-now + rest-at-handover_ is a **capability of
   the delivery variant** (a shipping-method custom field), not a payment
   method and not an enumerated pair. New delivery options declare the
   flag and immediately work with every payment method.
@@ -423,7 +423,7 @@ auto-invoice → IPN chain would come for free
 — is rejected because the buyer would pay through Számlázz.hu's own
 page: no in-checkout redirect, no `Payment/Start`-level payer data for
 3DS pass rates, no deposit collection at placement, no payment metadata
-on the order. It may return later as a *fallback re-payment channel*
+on the order. It may return later as a _fallback re-payment channel_
 (e.g. gateway abandonment), not as the architecture.
 
 Shape: one plugin at `backend/src/plugins/barion/` (the GLS pattern) —
@@ -435,7 +435,7 @@ mapping task, raising SCA pass rates. The handler is **currency-agnostic
 by construction** (currency always from the order — see multi-market).
 
 **Rejected architecture detail:** with Számlázz.hu's Online fizetés the
-per-prefix auto-invoicing setting *would* fire — under the decided
+per-prefix auto-invoicing setting _would_ fire — under the decided
 architecture it cannot (our payments settle in the Barion wallet, not in
 Számlázz.hu), so the per-prefix setting stays relevant only if the thin
 fallback channel is ever adopted.
@@ -476,7 +476,7 @@ fallback channel is ever adopted.
   payments settle at confirmation, so `refundOrder` (needs `Settled`
   payments) is the normal path for full payments and deposits alike; the
   `cancelPayment` path stays reserved for future two-phase methods.
-  Under the guard-relaxation *fallback* the deposit-only order rests in
+  Under the guard-relaxation _fallback_ the deposit-only order rests in
   `PaymentAuthorized`, where `refundOrder` is refused
   (`RefundOrderStateError`) even for a settled deposit — there the
   handler's cancel path does the money: `CancelAuthorization` for an
@@ -486,7 +486,7 @@ fallback channel is ever adopted.
   (shipped partially paid, whatever route brought it there), and the
   grounded
   full path is `Shipped → Modifying → ArrangingAdditionalPayment →
-  addManualPaymentToOrder (amount = the deficit) → PaymentSettled`
+addManualPaymentToOrder (amount = the deficit) → PaymentSettled`
   ([vendure-payments.md](../vendure-payments.md) implications §3), with
   the standing caveat that the manual-payment action records only the
   exact deficit, so the 6 000 Ft deposit itself enters through the
@@ -550,25 +550,25 @@ Two confirmation sources, one recording path into the order state:
   state. The resume mechanism itself (reactivating the placed order vs.
   cloning its lines into a fresh active order) is not grounded in the
   gathered Vendure docs — see residual uncertainties.
-  *Buyer never returns from the gateway:* acceptable — the
+  _Buyer never returns from the gateway:_ acceptable — the
   confirmation email exists, the callback records a successful payment
   even without the redirect, and the sweep catches abandonment;
-  abandoned-in-payment orders rest flagged. *Multi-domain (owner: babasarok.net and babacot.eu
-  simultaneously, same site/infra):* no structural problem; the one rule
+  abandoned-in-payment orders rest flagged. _Multi-domain (owner: babasarok.net and babacot.eu
+  simultaneously, same site/infra):_ no structural problem; the one rule
   is that `RedirectUrl` **echoes the origin the buyer started from**
   (store the origin host on the order at placement or derive from the
   channel) — cookies are per-domain, so a cross-domain return would land
-  her session-less. HMAC is domain-agnostic. *15 s ACK budget:* validate
+  her session-less. HMAC is domain-agnostic. _15 s ACK budget:_ validate
   minimally, enqueue the re-query task, respond `200` immediately (an
   enqueue-and-job mechanism — the GLS worker is a 30-minute scheduled
   task, which does not fit an on-demand callback); the callback body is
   a pointer (`paymentId`),
-  never a status. *IP list:* logged/soft-checked, **not hard-blocked** —
+  never a status. _IP list:_ logged/soft-checked, **not hard-blocked** —
   Barion states the callback IP "may change any time"; the real
   authentication is that only a real paymentId resolves (Mollie
-  baseline). *TLS:* callbacks require TLS 1.2+ and do not support
+  baseline). _TLS:_ callbacks require TLS 1.2+ and do not support
   TLS 1.3 yet — verification lives in PR #133's pre-merge checklist.
-  *HMAC-SHA512:* **capable but inactive at first ship** — pointer-only
+  _HMAC-SHA512:_ **capable but inactive at first ship** — pointer-only
   trust makes a forged callback cost one idempotent, rate-limited
   re-query, while activation is a one-way street (signing becomes
   mandatory in both directions, 5-minute clock tolerance). Build the
@@ -647,6 +647,7 @@ reconciliation function, our DB indexing both.
   this shape and the credit-entry shape (`action-szamla_agent_kifiz` can
   mark díjbekérők and számlák paid); Barion branches use the
   already-marked-paid shape.
+
 - **The demand-document seam: a díjbekérő exists iff the payment option
   is not self-demanding.** Barion branches (prepaid and COD deposit)
   issue no díjbekérő — the gateway is the demand; bank-transfer branches
@@ -688,7 +689,7 @@ reconciliation function, our DB indexing both.
 - **Refunds are always owner-authorized on the dashboard; no auto-refund
   on cancellation** — customer-initiated cancellations arrive through
   the owner, who authorizes full or partial. (A future customer-facing
-  order-management page may *request* cancellation/refund; it surfaces
+  order-management page may _request_ cancellation/refund; it surfaces
   in Vendure for the owner to authorize — on the roadmap as follow-up
   work, not part of epic 7.)
 - **Document mapping (grounded):** full refund → számla **stornó**;
