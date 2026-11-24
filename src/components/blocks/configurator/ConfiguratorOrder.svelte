@@ -104,6 +104,14 @@
 
   const setInfo = $derived(resolveSetDiscount(product.product_id, productGroups));
 
+  function startFresh(): void {
+    const fresh = instantiateProduct($state.snapshot(product));
+    prefillFromParams(fresh, new URLSearchParams(globalThis.location.search));
+    item = sanitizeItem(fresh);
+    editingLineId = null;
+    savedKey = null;
+  }
+
   onMount(() => {
     basket.start();
 
@@ -115,9 +123,7 @@
 
     globalThis.addEventListener("beforeunload", onBeforeUnload);
 
-    const fresh = instantiateProduct($state.snapshot(product));
-    prefillFromParams(fresh, new URLSearchParams(globalThis.location.search));
-    item = sanitizeItem(fresh);
+    startFresh();
 
     return () => {
       globalThis.removeEventListener("beforeunload", onBeforeUnload);
@@ -265,15 +271,26 @@
       }
     }
 
-    if (item) {
-      item.count = placed.quantity;
-      savedKey = configKey(item);
+    if (editingLineId !== null) {
+      if (item) {
+        item.count = placed.quantity;
+        savedKey = configKey(item);
+      }
+
+      editingLineId = placed.id;
+
+      const url = new URL(globalThis.location.href);
+      url.searchParams.set("line", placed.id);
+      replaceUrl(url);
+
+      return true;
     }
 
-    editingLineId = placed.id;
+    startFresh();
 
     const url = new URL(globalThis.location.href);
-    url.searchParams.set("line", placed.id);
+    url.searchParams.delete("line");
+    url.searchParams.delete("syncFrom");
     replaceUrl(url);
 
     return true;
@@ -285,7 +302,13 @@
   }
 
   async function addRelated(target: ConfiguratorProduct): Promise<void> {
-    if (!item || !(await persistCurrent())) {
+    if (!item) {
+      return;
+    }
+
+    const materials = buildMaterialParams($state.snapshot(item));
+
+    if (!(await persistCurrent())) {
       return;
     }
 
@@ -296,11 +319,7 @@
     }
 
     if (hasConfigurableOptions($state.snapshot(target))) {
-      globalThis.location.href = productPath(
-        targetSlug,
-        locale,
-        buildMaterialParams($state.snapshot(item))
-      );
+      globalThis.location.href = productPath(targetSlug, locale, materials);
       return;
     }
 
