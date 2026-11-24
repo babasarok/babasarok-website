@@ -152,6 +152,26 @@ Saving adjusts the quantity when the configuration is unchanged; otherwise it
 adds the new configuration and then removes the old line (Vendure cannot change
 a line's custom fields in place), so a refused add leaves the old line intact.
 
+After a successful add from a fresh page the configurator resets to a fresh
+item (default options, quantity 1) and the `?line=` / `?syncFrom=` params are
+dropped from the URL, so the page is a fresh add page rather than the edit
+page of the line just placed. When the page is already editing a line (opened
+via the `?line=` deep link), saving keeps the page as the edit page of the
+placed line: quantity and URL follow the placed line and the button reads
+`Kosár frissítése` again.
+
+- **Scenario: Fresh configurator after adding**
+  - WHEN a buyer adds a line to the basket from a product page that is not
+    editing a line
+  - THEN the configurator resets to a fresh item, the URL carries no `?line=`,
+    and the button reads `Kosárba` again — a second line requires a new
+    configuration
+- **Scenario: Edit mode survives saving**
+  - WHEN a buyer opens a line's `?line=` deep link and saves an update
+  - THEN the page stays the edit page of the placed line: the button reads
+    `Kosár frissítése`, the URL carries the placed line's id, and the page
+    warns before leaving with unsaved changes
+
 ### Shared live basket
 
 The system SHALL expose a single live basket view shared by every order UI on

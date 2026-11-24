@@ -45,6 +45,20 @@
   );
   const maxCount = $derived(variant?.saleableStock ?? undefined);
 
+  function startFresh(): void {
+    pickedVariantId = undefined;
+    count = 1;
+    editingLineId = null;
+    savedCount = null;
+    savedVariantId = null;
+
+    const prefill = countFromParams(new URLSearchParams(globalThis.location.search));
+
+    if (prefill !== undefined) {
+      count = maxCount === undefined ? prefill : Math.min(prefill, maxCount);
+    }
+  }
+
   onMount(() => {
     basket.start();
 
@@ -56,11 +70,7 @@
 
     globalThis.addEventListener("beforeunload", onBeforeUnload);
 
-    const prefill = countFromParams(new URLSearchParams(globalThis.location.search));
-
-    if (prefill !== undefined) {
-      count = maxCount === undefined ? prefill : Math.min(prefill, maxCount);
-    }
+    startFresh();
 
     return () => {
       globalThis.removeEventListener("beforeunload", onBeforeUnload);
@@ -185,14 +195,25 @@
       };
     }
 
-    count = placed.quantity;
-    savedCount = placed.quantity;
-    savedVariantId = chosen.id;
-    editingLineId = placed.id;
+    if (editingLineId !== null) {
+      count = placed.quantity;
+      savedCount = placed.quantity;
+      savedVariantId = chosen.id;
+      editingLineId = placed.id;
+      saved = true;
+
+      const url = new URL(globalThis.location.href);
+      url.searchParams.set("line", placed.id);
+      replaceUrl(url);
+
+      return;
+    }
+
+    startFresh();
     saved = true;
 
     const url = new URL(globalThis.location.href);
-    url.searchParams.set("line", placed.id);
+    url.searchParams.delete("line");
     replaceUrl(url);
   }
 </script>
