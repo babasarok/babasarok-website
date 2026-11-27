@@ -13,6 +13,8 @@ export async function chooseOption(page: Page, name: RegExp): Promise<void> {
 export async function addToBasket(page: Page): Promise<void> {
   await page.getByRole("button", { name: /^(Kosárba|Kosár frissítése)$/ }).click();
   await expect(page.getByText("A termék a kosárban van.")).toBeVisible();
+  const label = new URL(page.url()).searchParams.has("line") ? /^Kosár frissítése$/ : /^Kosárba$/;
+  await expect(page.getByRole("button", { name: label })).toBeVisible();
 }
 
 export async function expectNavCount(page: Page, count: number): Promise<void> {
@@ -326,6 +328,10 @@ export async function expectShippingRow(page: Page, text: RegExp): Promise<void>
 
 export async function expectTotal(page: Page, total: RegExp): Promise<void> {
   await expect(summary(page).getByTestId("checkout-total")).toContainText(total);
+}
+
+export async function expectProductionNote(page: Page, text: string): Promise<void> {
+  await expect(summary(page).getByText(text)).toBeVisible();
 }
 
 export async function expectNoDeliveryChosen(page: Page): Promise<void> {

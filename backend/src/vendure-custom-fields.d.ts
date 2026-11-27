@@ -5,6 +5,8 @@ declare module "@vendure/core/dist/entity/custom-entity-fields" {
   interface CustomChannelFields {
     orderEmailFrom: string | null;
     shopOwnerEmail: string | null;
+    configuratorProductionDays: number | null;
+    readyMadeProductionDays: number | null;
     glsSender: Partial<
       Record<
         "name" | "street" | "houseNumber" | "city" | "zipCode" | "countryCode" | "phone" | "email",
@@ -27,6 +29,7 @@ declare module "@vendure/core/dist/entity/custom-entity-fields" {
     icon: Asset | null;
     iconId: number | null;
     popularityRank: number | null;
+    productionDays: number | null;
   }
 
   interface CustomProductFieldsTranslation {

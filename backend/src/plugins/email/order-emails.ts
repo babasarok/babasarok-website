@@ -102,6 +102,7 @@ function onNativeOrderPlaced(
         relations: [
           "lines",
           "lines.productVariant",
+          "lines.productVariant.product",
           "customer",
           "shippingLines",
           "shippingLines.shippingMethod",

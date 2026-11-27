@@ -39,6 +39,8 @@ export interface NativeLineContent {
   details: EmailDetail[];
   /** A definition-less (ready-made) line ships from stock instead of production. */
   stocked: boolean;
+  /** The line's resolved production time in days (dashboard override or the kind's default). */
+  productionDays: number;
 }
 
 export interface EmailProductView {
@@ -65,6 +67,8 @@ export interface OrderEmailView {
   setDiscountSummary: string;
   /** The order holds at least one made-to-order line, so production time applies. */
   madeToOrder: boolean;
+  /** The longest line's production time, worded in the email's language. */
+  productionTime: string;
 }
 
 export interface EmailMoney {
@@ -170,6 +174,11 @@ export function setDiscountSummary(
     .join("\n");
 }
 
+/** The order's production time is its longest line's. */
+export function longestProductionDays(lines: ReadonlyArray<{ productionDays: number }>): number {
+  return lines.reduce((longest, line) => Math.max(longest, line.productionDays), 0);
+}
+
 /**
  * The email's order content (ADR 0013 decision 7): built from the order's
  * lines and shipping line. Ready-made lines lead the list (they ship from
@@ -200,6 +209,7 @@ export function orderEmailView(
     total: formatMoney(order.totalWithTax, money, languageCode),
     setDiscountSummary: setDiscountSummary(display, money, languageCode),
     madeToOrder: display.some(({ content }) => !content.stocked),
+    productionTime: messages(languageCode).productionTime(longestProductionDays(nativeLines)),
   };
 }
 

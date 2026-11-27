@@ -25,6 +25,7 @@ export const PRODUCT_QUERY = `
   query CatalogProduct($slug: String!) {
     product(slug: $slug) {
       ${PRODUCT_FIELDS}
+      productionTimeDays
       description
       assets { source focalPoint { x y } customFields { galleryDescription } }
     }

@@ -31,6 +31,7 @@ import {
   expectPartnerLink,
   expectPendingMaterial,
   expectPriceChangeNotice,
+  expectProductionNote,
   expectReviewPrefilled,
   expectSetChip,
   expectShippingRow,
@@ -78,6 +79,7 @@ test("product page to a placed order, surviving reload, navigation and a second 
   await goToCheckoutInApp(page);
   await expectLine(page, /50x50/, 1);
   await expectLine(page, /11\s?000\s?Ft/, 1);
+  await expectProductionNote(page, "Az elkészítési idő 3 hét.");
 
   await increaseLineQuantity(page, /E2E Párna/);
   await expectLine(page, /50x50/, 2);

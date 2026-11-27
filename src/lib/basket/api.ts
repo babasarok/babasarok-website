@@ -103,7 +103,7 @@ const ORDER_FIELDS = `
     productVariant {
       id name
       options { name group { name } }
-      product { slug name featuredAsset { source focalPoint { x y } } productDefinition }
+      product { slug name featuredAsset { source focalPoint { x y } } productDefinition productionTimeDays }
     }
   }
 `;
