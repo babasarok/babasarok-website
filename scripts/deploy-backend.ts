@@ -287,8 +287,9 @@ exec node "$DIR/repo/deploy/remote/deploy-stack.ts" "$@"
           `${dir}/.deploy.lock`,
           "bash",
           "-c",
-          `'sed -i "s|^ADMIN_URL=.*|ADMIN_URL=${adminUrl}|; s|^BARION_REDIRECT_BASE=.*|BARION_REDIRECT_BASE=${siteUrl}|" ${dir}/.env` +
-            ` && cd ${dir} && docker compose up -d --wait vendure worker'`,
+          `'upsert() { grep -q "^$1=" ${dir}/.env && sed -i "s|^$1=.*|$1=$2|" ${dir}/.env || echo "$1=$2" >> ${dir}/.env; }; ` +
+            `upsert ADMIN_URL ${adminUrl}; upsert BARION_REDIRECT_BASE ${siteUrl}; ` +
+            `cd ${dir} && docker compose up -d --wait vendure worker'`,
         ]),
         { stdio: "inherit" }
       );

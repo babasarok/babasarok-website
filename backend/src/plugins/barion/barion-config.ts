@@ -59,9 +59,11 @@ export function barionCallbackUrl(callbackBase: string): string {
 export function barionConfigFromEnv(source: EnvSource, isProduction: boolean): BarionConfig {
   const credentials = readCredentials(source, isProduction ? LIVE_KEYS : TEST_KEYS);
 
-  // Only an active shop needs real origins; a disabled one never redirects
-  // or receives callbacks, so the dev fallbacks are fine there.
-  const bases = readBases(source, isProduction && credentials !== undefined);
+  // Any configured shop (sandbox or live) needs real origins — a localhost
+  // fallback would silently redirect real buyers off-site after payment.
+  // Only the fake and disabled modes never redirect, so their dev fallbacks
+  // are fine there.
+  const bases = readBases(source, credentials !== undefined);
 
   if (isProduction) {
     if (!credentials) {

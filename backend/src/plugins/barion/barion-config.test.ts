@@ -69,6 +69,18 @@ describe("barionConfigFromEnv", () => {
     ).toThrow(/BARION_REDIRECT_BASE/);
   });
 
+  it("throws on a configured sandbox shop without the origins instead of redirecting to localhost", () => {
+    expect(() =>
+      barionConfigFromEnv(
+        {
+          TEST_BARION_POS_KEY: "12345678-abcd-abcd-abcd-123456789012",
+          TEST_BARION_PAYEE_EMAIL: "bolt@babasarok.test",
+        },
+        false
+      )
+    ).toThrow(/BARION_REDIRECT_BASE/);
+  });
+
   it("rejects a non-URL base", () => {
     expect(() =>
       barionConfigFromEnv({ ...BASES, PUBLIC_API_URL: "api.babasarok.net" }, false)
