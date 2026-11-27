@@ -247,9 +247,10 @@ product list with the list renumbered (both emails), and the owner
 notification marks them (`[RAKTÁRI]`). Neither email SHALL promise a
 shipping time for ready-made lines: the delivery method the buyer chose
 governs shipping or personal pickup, so the emails carry no per-line or
-summary stock/shipping copy. The confirmation's production-time copy shows
-only when the order holds a made-to-order line; a ready-made-only
-confirmation carries a plain acknowledgment only. Delivery SHALL be its own row (method name and its price, or "ingyenes" when a
+summary stock/shipping copy. Every confirmation names the order's production
+time — its longest line's, resolved from the products' dashboard-configurable
+production time (configurator default 3 weeks, ready-made 1 week) — worded in
+the email's language; production time is not a shipping promise. Delivery SHALL be its own row (method name and its price, or "ingyenes" when a
 promotion zeroed a charged price) and the only price in the confirmation is
 the order total. The set-discount summary is generated from the order's
 discount adjustments and uses the displayed line numbering. Both emails SHALL show the delivery address (street and

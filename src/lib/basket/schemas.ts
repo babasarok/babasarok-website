@@ -2,7 +2,6 @@ import { z } from "zod";
 import { RefusalSchema } from "@babasarok/pricing";
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { LineVariantOptionsSchema } from "@/lib/catalog/variantOptions";
-import { lineKind } from "./lineKind";
 import { SetDiscountSchema, SetStateSchema } from "./setDiscounts";
 
 export const OrderLineSchema = z.object({
@@ -29,6 +28,7 @@ export const OrderLineSchema = z.object({
         })
         .nullable(),
       productDefinition: ProductDefinitionSchema.nullable(),
+      productionTimeDays: z.number().int(),
     }),
   }),
 });
@@ -97,9 +97,13 @@ export function requiresAddress(method: ShippingQuote | undefined): boolean {
   return method?.customFields?.requiresAddress === true;
 }
 
-/** A basket needs production when it holds a configurator line; ready-made lines ship from stock. */
-export function hasConfiguratorLine(order: Order): boolean {
-  return order.lines.some((line) => lineKind(line).kind === "configurator");
+/** The basket's production time: its longest line's, in days. Undefined for an empty basket. */
+export function basketProductionDays(order: Order): number | undefined {
+  if (order.lines.length === 0) {
+    return undefined;
+  }
+
+  return Math.max(...order.lines.map((line) => line.productVariant.product.productionTimeDays));
 }
 
 export const ProductVariantIdsSchema = z.object({

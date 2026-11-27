@@ -140,6 +140,11 @@ const translation = {
     free: "Ingyenes",
     shippingLater: "A Szállítás lépésben választható",
     total: "Végösszeg",
+    productionTimeNote: "Az elkészítési idő {{time}}.",
+    productionWeeks: "{{n}} hét",
+    productionOneWeek: "1 hét",
+    productionDays: "{{n}} nap",
+    productionOneDay: "1 nap",
     testingNotice:
       "Jelenleg a rendelési folyamat tesztelés alatt áll. Ha bármilyen problémát tapasztalsz, kérlek, jelezd nekünk a",
     testingNoticeLink: "email címünkön",

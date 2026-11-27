@@ -43,7 +43,7 @@ export const glsShippedHandler = new EmailEventListener("gls-shipped")
 
     const order = await connection.getRepository(event.ctx, Order).findOne({
       where: { id: parcel.orderId },
-      relations: { customer: true, lines: { productVariant: true } },
+      relations: { customer: true, lines: { productVariant: { product: true } } },
     });
 
     if (!order) {

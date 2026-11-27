@@ -38,7 +38,7 @@
     shippingCheck,
     type FieldCheck,
   } from "@/lib/basket/readiness";
-  import { hasConfiguratorLine, type Order, type ShippingQuote } from "@/lib/basket/schemas";
+  import type { Order, ShippingQuote } from "@/lib/basket/schemas";
   import type { SetMembers } from "@/lib/basket/setDiscounts";
   import {
     layoutSteps,
@@ -58,6 +58,7 @@
     type T,
   } from "@/lib/basket/summaryText";
   import { placeOrder, type SubmitFailure } from "@/lib/basket/submit";
+  import { productionNote } from "@/lib/basket/productionTime";
   import { reportClientError } from "@/lib/errorReport";
   import { translateMessage } from "@/lib/i18next-client";
 
@@ -66,10 +67,9 @@
     labels: Labels;
     setMembers: SetMembers;
     supportEmail: string | null | undefined;
-    basketInfo?: string | undefined;
   }
 
-  let { locale, labels, setMembers, supportEmail, basketInfo }: Props = $props();
+  let { locale, labels, setMembers, supportEmail }: Props = $props();
 
   let methods = $state<ShippingQuote[]>([]);
   let methodsLoaded = $state(false);
@@ -361,7 +361,7 @@
   }
 
   function translator(i18n: I18n): T {
-    return (key: string) => translateMessage(i18n, key);
+    return (key, vars) => translateMessage(i18n, key, vars);
   }
 
   function mobileNextLabelKey(id: StepId): string {
@@ -506,7 +506,7 @@
         ></div>
       {:else}
         {@const t = translator(i18n)}
-        {@const basketNote = hasConfiguratorLine(order) ? basketInfo : undefined}
+        {@const basketNote = productionNote(order, t)}
         <div class="grid grid-cols-1 items-start gap-6 pb-24 lg:grid-cols-[1fr_420px] lg:pb-0">
           <div class="flex min-w-0 flex-col">
             <div class="pb-4">

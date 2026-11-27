@@ -322,6 +322,38 @@ export const config: VendureConfig = {
         ],
         nullable: true,
       },
+      {
+        name: "configuratorProductionDays",
+        type: "int",
+        min: 1,
+        label: [
+          { languageCode: LanguageCode.hu, value: "Alap elkészítési idő – konfigurálható termékek (nap)" },
+        ],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value:
+              "A konfigurálható termékek alap elkészítési ideje, ha a terméken nincs felülírva. Üresen hagyva 3 hét (21 nap).",
+          },
+        ],
+        nullable: true,
+      },
+      {
+        name: "readyMadeProductionDays",
+        type: "int",
+        min: 1,
+        label: [
+          { languageCode: LanguageCode.hu, value: "Alap elkészítési idő – késztermékek (nap)" },
+        ],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value:
+              "A késztermékek alap elkészítési ideje, ha a terméken nincs felülírva. Üresen hagyva 1 hét (7 nap).",
+          },
+        ],
+        nullable: true,
+      },
       GLS_SENDER_FIELD,
     ],
     Product: [
@@ -376,6 +408,20 @@ export const config: VendureConfig = {
             languageCode: LanguageCode.hu,
             value:
               "A „Népszerű” rendezés sorrendje (1 = legelöl). Az üresen hagyott termékek a rangsoroltak után kerülnek.",
+          },
+        ],
+        nullable: true,
+      },
+      {
+        name: "productionDays",
+        type: "int",
+        min: 1,
+        label: [{ languageCode: LanguageCode.hu, value: "Elkészítési idő (nap)" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value:
+              "A pénztár és a rendelés-e-mailek ezt mutatják. Üresen hagyva a csatorna beállításainál megadott alapértelmezés érvényes (konfigurálható termékeknél alapból 3 hét, késztermékeknél 1 hét).",
           },
         ],
         nullable: true,

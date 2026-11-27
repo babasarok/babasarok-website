@@ -146,6 +146,11 @@ const translation = {
     free: "Free",
     shippingLater: "Chosen at the Shipping step",
     total: "Total",
+    productionTimeNote: "Production time is {{time}}.",
+    productionWeeks: "{{n}} weeks",
+    productionOneWeek: "1 week",
+    productionDays: "{{n}} days",
+    productionOneDay: "1 day",
     testingNotice:
       "The ordering process is currently under testing. If you run into any problems, please let us know via",
     testingNoticeLink: "our email address",

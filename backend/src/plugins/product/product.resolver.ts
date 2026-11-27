@@ -11,6 +11,7 @@ import {
 import type { ID } from "@vendure/core";
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { ProductDefinition } from "./product.entity";
+import { productionDefaults, resolveProductionDays } from "./production-days";
 import { shopThreadColorTypes } from "./thread-color.resolver";
 import { ProductDefinitionService } from "./product-definition.service";
 
@@ -182,6 +183,25 @@ export class ShopProductFieldResolver {
 
     return definitions.get(Number(product.id)) ?? null;
   }
+
+  @ResolveField(() => Number, { name: "productionTimeDays" })
+  @Allow(Permission.Public)
+  async productionTimeDays(
+    @Ctx() ctx: RequestContext,
+    @Parent() product: Product
+  ): Promise<number> {
+    const definitions = await this.productDefinitionService.definitionsByNativeProduct(ctx);
+    const defaults = productionDefaults(
+      ctx.channel.customFields.configuratorProductionDays,
+      ctx.channel.customFields.readyMadeProductionDays
+    );
+
+    return resolveProductionDays(
+      product.customFields.productionDays,
+      definitions.has(Number(product.id)),
+      defaults
+    );
+  }
 }
 
 /** The ready-made storefront needs the real stock: the quantity stepper is
@@ -204,8 +224,14 @@ export class ShopVariantFieldResolver {
 }
 
 export const shopProductSchema = gql`
+  # productionTimeDays is the resolved production time (dashboard override or
+  # the kind's default). It cannot share the custom field's name: a field on
+  # Product also lands in ProductSortParameter/ProductFilterParameter via the
+  # list-options generation, which then collides with the custom field's own
+  # entries there.
   extend type Product {
     productDefinition: JSON
+    productionTimeDays: Int!
   }
 
   extend type ProductVariant {
