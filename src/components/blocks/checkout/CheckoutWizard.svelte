@@ -766,12 +766,12 @@
             {labels}
             {setMembers}
             {highlightedLines}
-            hint={step !== "review"}
+            hint={!pending && step !== "review"}
             basketInfo={basketNote}
             shownPrices={basket.shownPrices}
             {busy}
             onHighlight={(lineIds) => (highlightedLines = lineIds)}
-            onRemoveLine={(lineId) => removeLine(lineId)}
+            onRemoveLine={pending ? undefined : (lineId) => removeLine(lineId)}
           />
         </div>
 

@@ -272,8 +272,16 @@ test("a pending Barion order pays again from the payment step", async ({ page })
 
   // The delivery step is not offered: the placed order's details are fixed,
   // and the delivery methods list is empty for a session without an active
-  // order.
+  // order. The summary is read-only (no edit/delete on a placed order) and
+  // has no review hint.
   await expect(page.getByRole("button", { name: "Szállítás" })).toHaveCount(0);
+  await expect(
+    page.getByTestId("summary-column").getByRole("button", { name: "Törlés" })
+  ).toHaveCount(0);
+  await expect(
+    page.getByTestId("summary-column").getByRole("link", { name: "Szerkesztés" })
+  ).toHaveCount(0);
+  await expect(page.getByTestId("summary-column")).not.toContainText("Áttekintés");
 
   // Bank transfer: the order is already placed — the code is shown.
   await page.getByRole("radio", { name: /Átutalás/ }).check();

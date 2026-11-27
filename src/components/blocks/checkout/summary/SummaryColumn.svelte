@@ -19,7 +19,8 @@
     shownPrices?: ShownPrices | undefined;
     busy?: boolean;
     onHighlight: (lineIds: readonly string[]) => void;
-    onRemoveLine: (lineId: string) => void;
+    /** Undefined renders the lines read-only: a placed order's lines cannot change. */
+    onRemoveLine: ((lineId: string) => void) | undefined;
   }
 
   let {

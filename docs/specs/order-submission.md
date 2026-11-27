@@ -287,8 +287,9 @@ in `ArrangingPayment`): the retry happens on this page, not in the wizard.
     active order, so the earlier steps are unreachable anyway)
   - THEN the wizard shows only the Fizetés step: Barion restarts the gateway
     payment from the placed order, Átutalás shows the placed order's code
-    (the order is already placed; no conversion events fire again), and the
-    steps before the payment are not offered
+    (the order is already placed; no conversion events fire again), the steps
+    before the payment are not offered, and the summary column renders the
+    lines read-only — no edit or remove, no review hint
 
 - **Scenario: Payment confirmed while the buyer waits**
   - WHEN the polled status turns `Succeeded`
