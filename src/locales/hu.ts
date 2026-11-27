@@ -190,6 +190,7 @@ const translation = {
     back: "Vissza",
     continueShipping: "Tovább a szállításhoz",
     continueBilling: "Tovább a számlázáshoz",
+    continuePayment: "Tovább a fizetéshez",
     continueReview: "Tovább az áttekintéshez",
     street: "Utca *",
     houseNumber: "Házszám *",
@@ -227,7 +228,8 @@ const translation = {
       "Köszönjük a rendelést! A visszaigazoló emailt elküldjük, és hamarosan felvesszük veled a kapcsolatot a részletekkel.",
     failed: "A fizetés nem fejeződött be",
     failedNote:
-      "A fizetés most nem fejeződött be sikeresen. A pénztárban újra megpróbálhatod, vagy átutalást választhatsz.",
+      "A fizetés most nem fejeződött be sikeresen. Újra megpróbálhatod, vagy átváltasz átutalásra.",
+    tryAgain: "Fizetés újrapróbálása",
     stalledHint:
       "A feldolgozás a vártnál tovább tart. Ha nem érkezik meg a visszaigazoló email, írj nekünk:",
     backHome: "Vissza a főoldalra",

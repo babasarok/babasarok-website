@@ -196,6 +196,7 @@ const translation = {
     back: "Back",
     continueShipping: "Continue to shipping",
     continueBilling: "Continue to billing",
+    continuePayment: "Continue to payment",
     continueReview: "Continue to review",
     street: "Street *",
     houseNumber: "House number *",
@@ -233,7 +234,8 @@ const translation = {
       "Thank you for your order! We will send the confirmation email and contact you soon with the details.",
     failed: "The payment did not complete",
     failedNote:
-      "The payment did not complete successfully this time. You can try again at the checkout or choose a bank transfer.",
+      "The payment did not complete successfully this time. You can try again, or switch to a bank transfer.",
+    tryAgain: "Try the payment again",
     stalledHint:
       "Processing is taking longer than expected. If the confirmation email doesn't arrive, write to us:",
     backHome: "Back to the home page",

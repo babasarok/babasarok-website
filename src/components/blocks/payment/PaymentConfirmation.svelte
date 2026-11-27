@@ -28,6 +28,24 @@
   let params = $state<ParsedParams>("pending");
   let status = $state<string>();
   let elapsed = $state(0);
+  let retrying = $state(false);
+
+  /** Same session: the placed order is still the intent's target (ADR 0021 §5). */
+  async function retryPayment(): Promise<void> {
+    if (typeof params !== "object" || retrying) {
+      return;
+    }
+
+    retrying = true;
+    const intent = await basket.api.createBarionPaymentIntent();
+
+    if (intent.ok) {
+      globalThis.location.assign(intent.value.gatewayUrl);
+      return;
+    }
+
+    retrying = false;
+  }
 
   const view = $derived<ConfirmationView>(
     params === "invalid"
@@ -39,7 +57,8 @@
 
   $effect(() => {
     if (params === "pending") {
-      params = parseConfirmationParams(new URLSearchParams(globalThis.location.search)) ?? "invalid";
+      params =
+        parseConfirmationParams(new URLSearchParams(globalThis.location.search)) ?? "invalid";
       return;
     }
 
@@ -93,7 +112,9 @@
         <p class="text-lg font-semibold text-success-800">{i18n.t("payment.succeeded")}</p>
         <p class="text-success-800">
           {i18n.t("checkout.orderNumber")}
-          <strong data-testid="confirmation-order-code">{typeof params === "object" ? params.orderCode : ""}</strong>
+          <strong data-testid="confirmation-order-code"
+            >{typeof params === "object" ? params.orderCode : ""}</strong
+          >
         </p>
         <p class="text-sm text-success-800">{i18n.t("payment.succeededNote")}</p>
         <a
@@ -106,10 +127,20 @@
         <Icon icon="mdi:alert-circle" class="text-4xl text-danger-500" />
         <p class="text-lg font-semibold text-danger-500">{i18n.t("payment.failed")}</p>
         <p class="text-sm text-body">{i18n.t("payment.failedNote")}</p>
+        {#if typeof params === "object"}
+          <button
+            type="button"
+            onclick={retryPayment}
+            disabled={retrying}
+            class="mt-2 flex h-11 items-center justify-center rounded-md bg-brown-500 px-4 text-sm font-medium uppercase text-white transition-all hover:bg-brown-700 disabled:opacity-60"
+            data-testid="confirmation-retry"
+          >
+            {i18n.t("payment.tryAgain")}
+          </button>
+        {/if}
         <a
           href={localizedPath("/checkout", locale)}
-          class="mt-2 flex h-11 items-center justify-center rounded-md bg-brown-500 px-4 text-sm font-medium uppercase text-white transition-all hover:bg-brown-700"
-          data-testid="confirmation-retry"
+          class="text-sm text-body underline hover:text-brown-700"
         >
           {i18n.t("payment.backToCheckout")}
         </a>

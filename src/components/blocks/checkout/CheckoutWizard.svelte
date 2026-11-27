@@ -473,9 +473,12 @@
       const intent = await basket.api.createBarionPaymentIntent();
 
       if (!intent.ok) {
-        sending = false;
-        submitFailure = { reason: intent.failure.reason, reference: result.order.code };
-        revealError();
+        // The placed order is inactive, so re-submitting the wizard cannot
+        // retry: the confirmation page owns the retry (same session, the
+        // placed order is still the intent's target).
+        globalThis.location.assign(
+          `${localizedPath("/payment/confirmation", locale)}?orderCode=${encodeURIComponent(result.order.code)}`
+        );
         return;
       }
 

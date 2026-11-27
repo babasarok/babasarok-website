@@ -75,7 +75,7 @@ export async function expectLineHighlight(page: Page, text: RegExp, on: boolean)
   await expect(line).not.toHaveClass(/ring-2/);
 }
 
-function step(page: Page, id: "contact" | "shipping" | "billing" | "review"): Locator {
+function step(page: Page, id: "contact" | "shipping" | "billing" | "payment" | "review"): Locator {
   return page.getByTestId(`step-${id}`);
 }
 
@@ -121,6 +121,8 @@ export async function continueFromShipping(page: Page): Promise<void> {
 }
 
 export async function fillPickupBilling(page: Page): Promise<void> {
+  // Billing continues to the Fizetés step (checkout.stepIds), which continues
+  // to Áttekintés — the function ends on review, as before the payment step.
   const billing = step(page, "billing");
   const saved = shopMutation(page, "setOrderBillingAddress");
 
@@ -129,8 +131,13 @@ export async function fillPickupBilling(page: Page): Promise<void> {
   await billing.getByLabel(/^Házszám/).fill("1");
   await billing.getByLabel(/^Irányítószám/).fill("3896");
   await billing.getByLabel(/^Város/).fill("Telkibánya");
-  await billing.getByRole("button", { name: /Tovább az áttekintéshez/ }).click();
+  await billing.getByRole("button", { name: /Tovább a fizetéshez/ }).click();
   await saved;
+  await expect(page).toHaveURL(/#payment$/);
+
+  await step(page, "payment")
+    .getByRole("button", { name: /Tovább az áttekintéshez/ })
+    .click();
   await expect(page).toHaveURL(/#review$/);
 }
 

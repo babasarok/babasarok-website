@@ -14,15 +14,24 @@ describe("parseConfirmationParams", () => {
     ).toEqual({ orderCode: "ABC123", paymentId: "pay-1" });
   });
 
-  it("refuses a redirect missing either id", () => {
+  it("reads the wizard's failure redirect, which carries no payment id", () => {
+    expect(parseConfirmationParams(new URLSearchParams("orderCode=ABC123"))).toEqual({
+      orderCode: "ABC123",
+      paymentId: undefined,
+    });
+  });
+
+  it("refuses a redirect missing the order code", () => {
     expect(parseConfirmationParams(new URLSearchParams("paymentId=pay-1"))).toBeUndefined();
-    expect(parseConfirmationParams(new URLSearchParams("orderCode=ABC123"))).toBeUndefined();
     expect(parseConfirmationParams(new URLSearchParams(""))).toBeUndefined();
   });
 
   it("refuses empty ids", () => {
     expect(
       parseConfirmationParams(new URLSearchParams("orderCode=&paymentId=pay-1"))
+    ).toBeUndefined();
+    expect(
+      parseConfirmationParams(new URLSearchParams("orderCode=ABC123&paymentId="))
     ).toBeUndefined();
   });
 });

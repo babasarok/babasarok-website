@@ -219,9 +219,11 @@ only — the deposit/utánvét arrangements are later slices):
   issue #135).
 
 A refused payment intent (e.g. the coded refusal `BARION_INTENT_FAILED` or
-`BARION_ORDER_STATE`) SHALL surface through the review step's existing error
-surface — the same generic error, reason and reference as a failed
-submission — and SHALL NOT finish the basket or show the success panel.
+`BARION_ORDER_STATE`) SHALL redirect the buyer to the payment confirmation
+page (`?orderCode=<order code>`, no payment id) — the placed order is
+inactive, so re-submitting the wizard cannot retry, and the confirmation
+page owns the retry (the wizard's local basket view is not finished; the
+success panel does not appear).
 
 - **Scenario: Barion chosen**
   - WHEN the buyer picks Barion and submits
@@ -230,8 +232,9 @@ submission — and SHALL NOT finish the basket or show the success panel.
     gateway
 - **Scenario: Barion intent refused**
   - WHEN `createBarionPaymentIntent` returns a coded refusal
-  - THEN the review step shows the refusal wording with the order code as the
-    reference, the basket is not finished, and no success panel appears
+  - THEN the browser is redirected to the payment confirmation page with the
+    order code, which renders the declined view with the retry button (the
+    retry refuses again while the underlying cause persists)
 - **Scenario: Bank transfer chosen**
   - WHEN the buyer picks átutalás and submits
   - THEN the order is placed and the success panel appears as before the
@@ -241,27 +244,41 @@ submission — and SHALL NOT finish the basket or show the success panel.
 
 The system SHALL provide the payment confirmation page at
 `/payment/confirmation` (`/en/payment/confirmation` in English), the
-`RedirectUrl` the buyer lands on straight from the Barion gateway. It reads
-`orderCode` and `paymentId` from the query string (zod-validated; a query
-without them renders the declined view) and polls
-`barionPaymentStatus(orderCode)` every ~3 seconds through the site's shop-API
-transport (the POSKey never reaches the client). The page SHALL render by the
-polled status only, never by the redirect's parameters: **Processing** is the
-default on arrival (spinner copy, confirmation may take a moment; polling
-continues), **Succeeded** shows the confirmed order code and what happens
-next (the confirmation email), **Failed**/`Expired` shows decline copy with a
-link back to `/checkout` to retry. Polling stops after ~5 minutes and the
-page stays on the Processing copy with a hint to check the confirmation email
-or contact the shop. The basket-resume mechanics of the failed-payment return
-path are a later slice; the link back is plain.
+`RedirectUrl` the buyer lands on straight from the Barion gateway and the
+failure/retry hub for Barion payments. It reads `orderCode` (required) and
+`paymentId` (optional — the wizard's failure redirect omits it) from the
+query string (zod-validated; a query without an order code renders the
+declined view) and polls `barionPaymentStatus(orderCode)` every ~3 seconds
+through the site's shop-API transport (the POSKey never reaches the client).
+The page SHALL render by the polled status only, never by the redirect's
+parameters: **Processing** is the default on arrival (spinner copy,
+confirmation may take a moment; polling continues), **Succeeded** shows the
+confirmed order code and what happens next (the confirmation email),
+**Failed**/`Expired` shows decline copy with a same-session retry button —
+`createBarionPaymentIntent` again (the session's placed order is still the
+intent's target) and a redirect to the gateway on success — plus a plain
+link back to `/checkout`. The retry is refused (declined view persists) in
+a session that did not create the intent (`BARION_ORDER_STATE`). Polling
+stops after ~5 minutes and the page stays on the Processing copy with a
+hint to check the confirmation email or contact the shop. The basket after
+a failed payment is the placed order (inactive, not re-openable
+client-side): the retry happens on this page, not in the wizard.
 
 - **Scenario: Payment confirmed while the buyer waits**
   - WHEN the polled status turns `Succeeded`
   - THEN the page stops polling and shows the order code with the
     what-happens-next copy
-- **Scenario: Payment failed or expired**
-  - WHEN the polled status turns `Failed` or `Expired`
-  - THEN the page shows the decline copy and links back to the checkout
+- **Scenario: Payment failed or expired, buyer retries**
+  - WHEN the polled status turns `Failed` or `Expired` and the buyer presses
+    the retry button
+  - THEN the site starts a new payment intent for the same order (a new
+    gateway payment, the previous attempt id retired) and redirects to the
+    gateway
+- **Scenario: Retry from a foreign session**
+  - WHEN the retry button is pressed in a session that did not place the
+    order
+  - THEN the intent is refused (`BARION_ORDER_STATE`) and the declined view
+    persists
 - **Scenario: Polling exhausts the budget**
   - WHEN the status stays `Processing` for ~5 minutes
   - THEN the page stops polling, keeps the Processing copy and adds the hint

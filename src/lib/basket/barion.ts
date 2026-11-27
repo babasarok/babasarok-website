@@ -29,16 +29,17 @@ export type BarionPaymentStatus = z.output<typeof BarionPaymentStatusSchema>;
 
 const ConfirmationParamsSchema = z.object({
   orderCode: z.string().min(1),
-  paymentId: z.string().min(1),
+  // Barion appends it to the redirect; the wizard's failure redirect omits it.
+  paymentId: z.string().min(1).optional(),
 });
 
 export type ConfirmationParams = z.output<typeof ConfirmationParamsSchema>;
 
-/** The redirect's query (`orderCode` + `paymentId`), or undefined when it carries neither. */
+/** The redirect's query (`orderCode` + optional `paymentId`), or undefined when it carries neither. */
 export function parseConfirmationParams(params: URLSearchParams): ConfirmationParams | undefined {
   const parsed = ConfirmationParamsSchema.safeParse({
-    orderCode: params.get("orderCode"),
-    paymentId: params.get("paymentId"),
+    orderCode: params.get("orderCode") ?? undefined,
+    paymentId: params.get("paymentId") ?? undefined,
   });
 
   return parsed.success ? parsed.data : undefined;
