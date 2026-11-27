@@ -69,6 +69,9 @@ const translation = {
     remove: "Törlés",
     browse: "Termékek böngészése",
     checkout: "Pénztár",
+    pending:
+      "A rendelés leadva, a fizetés nincs lezárva. A tételek a fizetésig változatlanok maradnak.",
+    resumePayment: "Fizetés folytatása",
     inBasket: "Kosárban",
     configure: "Beállítom",
     add: "Hozzáadom",

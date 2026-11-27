@@ -86,10 +86,12 @@ export interface BasketApi {
   setShippingMethod(shippingMethodId: string): Promise<Result<Order>>;
   setOrderCustomFields(input: OrderCustomFieldsInput): Promise<Result<Order>>;
   transitionToArrangingPayment(): Promise<Result<Order>>;
-  /** The gateway redirect for the session's placed order in ArrangingPayment. */
-  createBarionPaymentIntent(): Promise<Result<BarionIntent>>;
+  /** The gateway redirect for the placed order, addressed by its code. */
+  createBarionPaymentIntent(orderCode: string): Promise<Result<BarionIntent>>;
   /** The placed order's payment status, without the order being active. */
   barionPaymentStatus(orderCode: string): Promise<Result<BarionPaymentStatus | null>>;
+  /** The caller's unpaid Barion order: placed, not settled, still theirs to pay. */
+  barionPendingOrder(): Promise<Result<Order | null>>;
 }
 
 const ORDER_FIELDS = `
@@ -384,10 +386,10 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
         { state: "ArrangingPayment" },
         TRANSITION_FIELDS
       ),
-    async createBarionPaymentIntent() {
+    async createBarionPaymentIntent(orderCode) {
       const result = await request(
-        `mutation BarionIntent { createBarionPaymentIntent { paymentId gatewayUrl } }`,
-        {},
+        `mutation BarionIntent($orderCode: String!) { createBarionPaymentIntent(orderCode: $orderCode) { paymentId gatewayUrl } }`,
+        { orderCode },
         z.object({ createBarionPaymentIntent: BarionIntentSchema })
       );
 
@@ -411,6 +413,15 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
       );
 
       return result.ok ? { ok: true, value: result.value.barionPaymentStatus } : result;
+    },
+    async barionPendingOrder() {
+      const result = await request(
+        `query BarionPendingOrder { barionPendingOrder { ${ORDER_FIELDS} } }`,
+        {},
+        z.object({ barionPendingOrder: OrderSchema.nullable() })
+      );
+
+      return result.ok ? { ok: true, value: result.value.barionPendingOrder } : result;
     },
   };
 }

@@ -75,6 +75,9 @@ const translation = {
     remove: "Delete",
     browse: "Browse products",
     checkout: "Checkout",
+    pending:
+      "The order is placed but its payment is unsettled. The lines stay as they are until it is.",
+    resumePayment: "Resume payment",
     inBasket: "In basket",
     configure: "Configure",
     add: "Add",

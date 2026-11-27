@@ -221,8 +221,9 @@ only — the deposit/utánvét arrangements are later slices):
 **The basket is cleared only when the order is truly on our end:** at
 placement for átutalás (the díjbekérő obligation starts), and on a
 **confirmed** Barion payment for the gateway path — never on the redirect
-itself, so a failed or abandoned gateway payment leaves the buyer's basket
-in view.
+itself. Vendure evicts the session's active-order pointer when it comes to
+rest on a placed order, so after placement the server-side basket is empty;
+the unpaid Barion order stays in view through `barionPendingOrder` (below).
 
 A refused payment intent (e.g. the coded refusal `BARION_INTENT_FAILED` or
 `BARION_ORDER_STATE`) SHALL redirect the buyer to the payment confirmation
@@ -262,14 +263,24 @@ parameters: **Processing** is the default on arrival (spinner copy,
 confirmation may take a moment; polling continues), **Succeeded** shows the
 confirmed order code and what happens next (the confirmation email),
 **Failed**/`Expired` shows decline copy with a same-session retry button —
-`createBarionPaymentIntent` again (the session's placed order is still the
-intent's target) and a redirect to the gateway on success — plus a plain
-link back to `/checkout`. The retry is refused (declined view persists) in
-a session that did not create the intent (`BARION_ORDER_STATE`). Polling
+`createBarionPaymentIntent(orderCode)` again, addressed by the order code
+and authorized by the session (this session's intent row, the order's
+registered buyer, or the session's not-yet-evicted placement pointer) with
+a redirect to the gateway on success — plus a plain link back to
+`/checkout`. The retry is refused (`BARION_ORDER_STATE`) for a caller that
+is neither the intent-creating session nor the order's buyer. Polling
 stops after ~5 minutes and the page stays on the Processing copy with a
 hint to check the confirmation email or contact the shop. The basket after
-a failed payment is the placed order (inactive, not re-openable
-client-side): the retry happens on this page, not in the wizard.
+a failed payment renders the placed order read-only (it cannot be modified
+in `ArrangingPayment`): the retry happens on this page, not in the wizard.
+
+- **Scenario: The caller's unpaid Barion order as the basket**
+  - WHEN the site loads with no active order but the caller's session (or
+    buyer record) started an intent whose order is placed, unpaid and in
+    `ArrangingPayment`
+  - THEN the basket renders that order's lines read-only with a
+    fizetés-folytatása link to its confirmation page, and stops rendering it
+    once the payment settles
 
 - **Scenario: Payment confirmed while the buyer waits**
   - WHEN the polled status turns `Succeeded`

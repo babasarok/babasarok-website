@@ -17,6 +17,8 @@ import {
   UserInputError,
 } from "@vendure/core";
 import type { JobQueue } from "@vendure/core";
+import type { FindOptionsWhere } from "typeorm";
+import type { ID } from "@vendure/core";
 import { z } from "zod";
 import { encodeRefusal } from "../../shared/refusal";
 import { BarionError, type BarionClient } from "./barion-client";
@@ -75,28 +77,27 @@ export class BarionService implements OnApplicationBootstrap {
   }
 
   /**
-   * Starts an Immediate Barion payment for the session's placed order's full
-   * total and returns the gateway URL. Refusals travel as coded refusals: the
-   * site owns the wording.
+   * Starts an Immediate Barion payment for the placed order's full total and
+   * returns the gateway URL. The order is addressed by its code and the caller
+   * is authorized by the session (the fresh placement pointer, this session's
+   * own intent row, or the order's registered buyer) — Vendure evicts a
+   * session's pointer when it comes to rest on a placed order, so the pointer
+   * alone cannot carry a retried payment. Refusals travel as coded refusals:
+   * the site owns the wording.
    */
   async createPaymentIntent(
-    ctx: RequestContext
+    ctx: RequestContext,
+    orderCode: string
   ): Promise<{ paymentId: string; gatewayUrl: string }> {
     if (this.config.mode === "disabled") {
       throw barionIntentFailed();
     }
 
-    const activeOrderId = ctx.session?.activeOrderId;
-
-    if (!activeOrderId) {
-      throw barionOrderState();
-    }
-
     const order = await this.connection.getRepository(ctx, Order).findOne({
-      where: { id: activeOrderId },
+      where: { code: orderCode },
       relations: {
         lines: { productVariant: true },
-        customer: true,
+        customer: { user: true },
         payments: true,
       },
     });
@@ -105,6 +106,9 @@ export class BarionService implements OnApplicationBootstrap {
       throw barionOrderState();
     }
 
+    if (!(await this.authorizedForOrder(ctx, order))) {
+      throw barionOrderState();
+    }
     const attempt = await this.connection
       .getRepository(ctx, BarionPayment)
       .count({ where: { orderId: order.id } });
@@ -143,7 +147,7 @@ export class BarionService implements OnApplicationBootstrap {
         paymentId: started.paymentId,
         orderId: order.id,
         orderCode: order.code,
-        sessionId: String(ctx.session.id),
+        sessionId: String(ctx.session?.id),
         status: "Processing",
         role: "full",
         amount: order.totalWithTax,
@@ -152,6 +156,83 @@ export class BarionService implements OnApplicationBootstrap {
     );
 
     return { paymentId: started.paymentId, gatewayUrl: started.gatewayUrl };
+  }
+
+  /**
+   * The caller's unpaid Barion order: placed, parked in `ArrangingPayment`,
+   * no live payment covering it, and anchored to the caller by an intent row
+   * of their own session or their buyer record. The basket store renders it
+   * once the active order is gone — the order leaves the basket only when the
+   * payment settles (or the caller is not the one who started it).
+   */
+  async pendingOrderId(ctx: RequestContext): Promise<ID | null> {
+    const rows = await this.pendingRows(ctx, {
+      sessionId: String(ctx.session?.id ?? ""),
+    });
+
+    const sessionRow = rows.find((row) => this.rowIsPending(row));
+
+    if (sessionRow !== undefined) {
+      return sessionRow.orderId;
+    }
+
+    if (ctx.activeUserId === undefined) {
+      return null;
+    }
+
+    const buyerRows = await this.pendingRows(ctx, {
+      order: { customer: { user: { id: ctx.activeUserId } } },
+    });
+
+    const buyerRow = buyerRows.find((row) => this.rowIsPending(row));
+
+    return buyerRow === undefined ? null : buyerRow.orderId;
+  }
+
+  private pendingRows(
+    ctx: RequestContext,
+    where: FindOptionsWhere<BarionPayment>
+  ): Promise<BarionPayment[]> {
+    return this.connection.getRepository(ctx, BarionPayment).find({
+      where,
+      order: { id: "DESC" },
+      relations: { order: { payments: true } },
+    });
+  }
+
+  private rowIsPending(row: BarionPayment): boolean {
+    const order = row.order;
+
+    return (
+      !order.active &&
+      order.state === "ArrangingPayment" &&
+      row.status !== "Succeeded" &&
+      !coveredByPayments(order)
+    );
+  }
+
+  /**
+   * The caller may act on the order: it is the session's fresh placement
+   * (the pointer Vendure has not evicted yet), the session already started an
+   * intent on it, or the caller is the order's registered buyer.
+   */
+  private async authorizedForOrder(ctx: RequestContext, order: Order): Promise<boolean> {
+    if (
+      ctx.session?.activeOrderId !== undefined &&
+      String(ctx.session.activeOrderId) === String(order.id)
+    ) {
+      return true;
+    }
+
+    if (buyerMatches(ctx, order)) {
+      return true;
+    }
+
+    const ownRow = await this.connection.getRepository(ctx, BarionPayment).exists({
+      where: { orderId: order.id, sessionId: String(ctx.session?.id ?? "") },
+    });
+
+    return ownRow;
   }
 
   /**
@@ -411,6 +492,11 @@ function accessible(ctx: RequestContext, order: Order, row: BarionPayment): bool
     return true;
   }
 
+  return buyerMatches(ctx, order);
+}
+
+/** The order's registered buyer is the caller. */
+function buyerMatches(ctx: RequestContext, order: Order): boolean {
   const ownerUserId = order.customer?.user?.id;
 
   return (

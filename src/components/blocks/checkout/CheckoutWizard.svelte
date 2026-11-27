@@ -481,7 +481,7 @@
     }
 
     if (paymentFromForm(formData("payment")) === "barion") {
-      const intent = await basket.api.createBarionPaymentIntent();
+      const intent = await basket.api.createBarionPaymentIntent(result.order.code);
 
       if (!intent.ok) {
         // The placed order is inactive, so re-submitting the wizard cannot

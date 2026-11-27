@@ -41,7 +41,7 @@
 
     retrying = true;
     retryError = undefined;
-    const intent = await basket.api.createBarionPaymentIntent();
+    const intent = await basket.api.createBarionPaymentIntent(params.orderCode);
 
     if (intent.ok) {
       globalThis.location.assign(intent.value.gatewayUrl);

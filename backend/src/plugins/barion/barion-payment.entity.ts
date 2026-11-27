@@ -1,5 +1,6 @@
 import { DeepPartial, VendureEntity, type ID } from "@vendure/core";
-import { Column, Entity, Index } from "typeorm";
+import { Column, Entity, Index, JoinColumn, ManyToOne } from "typeorm";
+import { Order } from "@vendure/core";
 import type { BarionStatus } from "./barion-payment-items";
 
 /**
@@ -24,6 +25,10 @@ export class BarionPayment extends VendureEntity {
   @Index()
   @Column({ type: "integer" })
   orderId!: ID;
+
+  @ManyToOne(() => Order, { nullable: false })
+  @JoinColumn({ name: "orderId" })
+  order!: Order;
 
   @Column({ type: "varchar" })
   orderCode!: string;

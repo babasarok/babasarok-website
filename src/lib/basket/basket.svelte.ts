@@ -28,6 +28,8 @@ class Basket {
   order = $state<Order | null>(null);
   loaded = $state(false);
   loadFailed = $state(false);
+  /** The rendered order is the caller's placed-but-unpaid Barion order: immutable, payment pending. */
+  pendingPayment = $state(false);
   shownPrices = $state<ShownPrices>({});
   #started = false;
 
@@ -69,15 +71,38 @@ class Basket {
     this.loaded = true;
     this.loadFailed = load === null;
 
-    if (load !== null) {
-      this.order = load.order;
-      this.shownPrices = loadShownPrices(priceStorage());
+    if (load === null) {
+      return;
     }
+
+    if (load.order !== null) {
+      this.order = load.order;
+      this.pendingPayment = false;
+      this.shownPrices = loadShownPrices(priceStorage());
+      return;
+    }
+
+    // No active order: the caller's unpaid Barion order still shows as the
+    // basket until its payment settles — coming back from the gateway or a
+    // reload must not look like the order vanished. A placed order is
+    // immutable, so the basket renders it read-only.
+    const pending = await this.api.barionPendingOrder();
+
+    if (pending.ok && pending.value !== null) {
+      this.order = pending.value;
+      this.pendingPayment = true;
+    } else {
+      this.order = null;
+      this.pendingPayment = false;
+    }
+
+    this.shownPrices = loadShownPrices(priceStorage());
   }
 
   apply(result: Result<Order>): Result<Order> {
     if (result.ok) {
       this.order = result.value;
+      this.pendingPayment = false;
       announceBasketChange();
     }
 
@@ -107,6 +132,7 @@ class Basket {
 
   finish(): void {
     this.order = null;
+    this.pendingPayment = false;
     announceBasketChange();
   }
 }
