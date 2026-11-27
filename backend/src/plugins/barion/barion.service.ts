@@ -201,7 +201,7 @@ export class BarionService implements OnApplicationBootstrap {
    * older Failed rows exist.
    */
   private latestPendingRow(rows: BarionPayment[]): BarionPayment | undefined {
-    const latest = rows[0];
+    const latest = rows.at(0);
 
     return latest !== undefined && this.rowIsPending(latest) ? latest : undefined;
   }

@@ -398,7 +398,7 @@ describe("Barion full-prepay", () => {
     const SWITCH_MUTATION = `mutation($orderCode: String!) { switchPendingOrderToBankTransfer(orderCode: $orderCode) }`;
 
     const foreign = await run(
-      (await newShopper(server)).client,
+      newShopper(server).client,
       SWITCH_MUTATION,
       { orderCode: order.code },
       z.unknown()
