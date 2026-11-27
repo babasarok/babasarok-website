@@ -828,6 +828,21 @@ from the start:
   locked out by 2FA (regaining access is the first step); approval is
   human-gated, and unverified accounts carry limits until full KYC
   (which triggers at volume thresholds or staff decision).
+- **Barion Pixel** (from the live registration checklist, added
+  2026-11-27): the base Pixel must be placed on the shop for fraud
+  prevention and the privacy notice must disclose it — the same
+  consent-gated pattern as the Meta pixel (`src/lib/tracking.ts`), plus
+  accepting Barion's additional GT&C for the Pixel in the Barion UI.
+  Owner task (T&C acceptance) + a small site slice; **do not submit the
+  live shop for approval before the privacy notice covers the Pixel**.
+- **Logo strip of accepted payment methods** on the main page and the
+  payments page (registration checklist): the payment step's method cards
+  are the natural place for the checkout half; the main-page strip is a
+  small site slice with the owner's placement call.
+- **Wallet top-up** (registration checklist): the owner transfers any
+  amount to the Barion wallet from her own/business bank account — card
+  top-up doesn't count. Also practically load-bearing: fees and refunds
+  are deducted from the wallet balance.
 - Token/recurring approval: **not needed** — nothing in the decided
   design recurs.
 - T&C covers Barion payment (Barion's staff check rejects shops whose
