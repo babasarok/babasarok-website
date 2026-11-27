@@ -12,9 +12,6 @@ const BARION_LIVE_KEYS = ["BARION_POS_KEY", "BARION_PAYEE_EMAIL"] as const;
 
 const BARION_TEST_KEYS = ["TEST_BARION_POS_KEY", "TEST_BARION_PAYEE_EMAIL"] as const;
 
-/** Both stacks need the two URL origins the Barion gateway works against. */
-const BARION_URL_KEYS = ["BARION_REDIRECT_BASE", "PUBLIC_API_URL"] as const;
-
 const CARRIED_KEYS = {
   prod: [
     "CLOUDFLARE_EMAIL_TOKEN",
@@ -22,9 +19,8 @@ const CARRIED_KEYS = {
     ...GLS_LIVE_KEYS,
     "GLS_LABEL_FORMAT",
     ...BARION_LIVE_KEYS,
-    ...BARION_URL_KEYS,
   ],
-  preview: [...GLS_TEST_KEYS, "GLS_LABEL_FORMAT", ...BARION_TEST_KEYS, ...BARION_URL_KEYS],
+  preview: [...GLS_TEST_KEYS, "GLS_LABEL_FORMAT", ...BARION_TEST_KEYS],
 } as const satisfies Record<DeployStack, readonly string[]>;
 
 const REQUIRED_KEYS = {
@@ -39,10 +35,18 @@ export type RuntimeEnvFragment = { ok: true; text: string } | { ok: false; probl
  * backend reads at runtime, allowlisted per stack. Values are single-quoted
  * because docker compose interpolates `$` in unquoted and double-quoted
  * env_file values.
+ *
+ * The Barion URL origins are derived, never set: PUBLIC_API_URL is the API
+ * origin (preview: the branch's `api-<slug>` host; prod: the existing
+ * PUBLIC_VENDURE_API_URL build variable), and BARION_REDIRECT_BASE is the
+ * site origin (prod: the SITE_URL build variable; preview: written by
+ * deploy-backend.ts after `wrangler preview` reports the URL, into the
+ * stack's .env beside ADMIN_URL).
  */
 export function runtimeEnvFragment(
   stack: DeployStack,
-  source: Readonly<Record<string, string | undefined>>
+  source: Readonly<Record<string, string | undefined>>,
+  context: { slug?: string } = {}
 ): RuntimeEnvFragment {
   const problems: string[] = [];
 
@@ -71,6 +75,20 @@ export function runtimeEnvFragment(
     }
 
     lines.push(`${key}='${value}'`);
+  }
+
+  if (stack === "preview" && context.slug) {
+    lines.push(`PUBLIC_API_URL='https://api-${context.slug}.babasarok.net'`);
+  }
+
+  if (stack === "prod") {
+    if (source.PUBLIC_VENDURE_API_URL) {
+      lines.push(`PUBLIC_API_URL='${source.PUBLIC_VENDURE_API_URL}'`);
+    }
+
+    if (source.SITE_URL) {
+      lines.push(`BARION_REDIRECT_BASE='${source.SITE_URL}'`);
+    }
   }
 
   if (problems.length > 0) {

@@ -8,6 +8,7 @@
     confirmationView,
     parseConfirmationParams,
     POLL_INTERVAL_MS,
+    type ConfirmationParams,
     type ConfirmationView,
   } from "@/lib/basket/barion";
 
@@ -18,16 +19,31 @@
 
   let { locale, supportEmail }: Props = $props();
 
-  const params = parseConfirmationParams(new URLSearchParams(globalThis.location.search));
+  /**
+   * The query is readable only in the browser (the page is prerendered), so
+   * server rendering starts at "pending" — the neutral Processing card.
+   */
+  type ParsedParams = ConfirmationParams | "invalid" | "pending";
+
+  let params = $state<ParsedParams>("pending");
   let status = $state<string>();
   let elapsed = $state(0);
 
   const view = $derived<ConfirmationView>(
-    params === undefined ? "failed" : confirmationView(status, elapsed)
+    params === "invalid"
+      ? "failed"
+      : params === "pending"
+        ? "processing"
+        : confirmationView(status, elapsed)
   );
 
   $effect(() => {
-    if (params === undefined) {
+    if (params === "pending") {
+      params = parseConfirmationParams(new URLSearchParams(globalThis.location.search)) ?? "invalid";
+      return;
+    }
+
+    if (params === "invalid") {
       return;
     }
 
@@ -77,7 +93,7 @@
         <p class="text-lg font-semibold text-success-800">{i18n.t("payment.succeeded")}</p>
         <p class="text-success-800">
           {i18n.t("checkout.orderNumber")}
-          <strong data-testid="confirmation-order-code">{params?.orderCode}</strong>
+          <strong data-testid="confirmation-order-code">{typeof params === "object" ? params.orderCode : ""}</strong>
         </p>
         <p class="text-sm text-success-800">{i18n.t("payment.succeededNote")}</p>
         <a

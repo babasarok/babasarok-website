@@ -41,11 +41,23 @@ describe("barionConfigFromEnv", () => {
     ).toThrow(/TEST_BARION_PAYEE_EMAIL/);
   });
 
-  it("throws in production without the live shop", () => {
-    expect(() => barionConfigFromEnv({ ...BASES }, true)).toThrow(/BARION_POS_KEY/);
+  it("boots production without the live shop as disabled, not crashed", () => {
+    expect(barionConfigFromEnv({ ...BASES }, true)).toEqual({
+      mode: "disabled",
+      redirectBase: "https://babasarok.net",
+      callbackBase: "https://api.babasarok.net",
+    });
   });
 
-  it("throws in production without the redirect and callback origins", () => {
+  it("boots a disabled production even without the URL origins", () => {
+    expect(barionConfigFromEnv({}, true)).toEqual({
+      mode: "disabled",
+      redirectBase: "http://localhost:4321",
+      callbackBase: "http://localhost:4000",
+    });
+  });
+
+  it("throws in production with an active shop but without the origins", () => {
     expect(() =>
       barionConfigFromEnv(
         {
@@ -87,7 +99,7 @@ describe("barionConfigFromEnv", () => {
     );
   });
 
-  it("builds the real client for test and live and the fake otherwise", () => {
+  it("builds the fake client for fake and disabled", () => {
     const testConfig: BarionConfig = {
       mode: "test",
       posKey: "12345678-abcd-abcd-abcd-123456789012",
@@ -100,6 +112,13 @@ describe("barionConfigFromEnv", () => {
     expect(
       barionClientFor({
         mode: "fake",
+        redirectBase: BASES.BARION_REDIRECT_BASE,
+        callbackBase: BASES.PUBLIC_API_URL,
+      })
+    ).toBeInstanceOf(FakeBarionClient);
+    expect(
+      barionClientFor({
+        mode: "disabled",
         redirectBase: BASES.BARION_REDIRECT_BASE,
         callbackBase: BASES.PUBLIC_API_URL,
       })

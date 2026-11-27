@@ -80,6 +80,10 @@ export class BarionService implements OnApplicationBootstrap {
   async createPaymentIntent(
     ctx: RequestContext
   ): Promise<{ paymentId: string; gatewayUrl: string }> {
+    if (this.config.mode === "disabled") {
+      throw barionIntentFailed();
+    }
+
     const activeOrderId = ctx.session?.activeOrderId;
 
     if (!activeOrderId) {
@@ -309,11 +313,11 @@ export class BarionService implements OnApplicationBootstrap {
   }
 
   private payeeEmail(): string {
-    if (this.config.mode === "fake") {
-      return "bolt@babasarok.test";
+    if (this.config.mode === "test" || this.config.mode === "live") {
+      return this.config.payeeEmail;
     }
 
-    return this.config.payeeEmail;
+    return "bolt@babasarok.test";
   }
 
   /** Stored minor units (whole forints at precision 0) → Barion major-unit decimals. */
@@ -350,7 +354,7 @@ export class BarionService implements OnApplicationBootstrap {
 
       await this.paymentMethodService.create(ctx, {
         code: BARION_PAYMENT_METHOD_CODE,
-        enabled: true,
+        enabled: this.config.mode !== "disabled",
         handler: { code: BARION_PAYMENT_METHOD_CODE, arguments: [] },
         translations: [
           {

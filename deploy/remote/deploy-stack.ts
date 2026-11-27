@@ -135,8 +135,11 @@ try {
           `API_ALLOWED_ORIGINS=${envValue(`${ROOT}/prod/.env`, "API_ALLOWED_ORIGINS")}`,
           // Fallback until deploy-backend.ts registers the preview site URL
           // (printed by wrangler preview) right after the frontend deploy;
-          // the URL does not exist before the first preview deploy.
+          // the URL does not exist before the first preview deploy. The same
+          // URL is the Barion BARION_REDIRECT_BASE (the gateway's buyer
+          // redirect, ADR 0021).
           `ADMIN_URL=https://babasarok.net/dashboard`,
+          `BARION_REDIRECT_BASE=https://babasarok.net`,
           "",
         ].join("\n")
       );

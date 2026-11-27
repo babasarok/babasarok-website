@@ -27,27 +27,28 @@ describe("runtimeEnvFragment", () => {
     });
   });
 
-  it("never carries the live Barion shop into a preview; the sandbox shop and the URL origins ride along", () => {
-    const fragment = runtimeEnvFragment("preview", {
-      BARION_POS_KEY: "live-poskey",
-      BARION_PAYEE_EMAIL: "live@babasarok.net",
-      TEST_BARION_POS_KEY: "sandbox-poskey",
-      TEST_BARION_PAYEE_EMAIL: "sandbox@example.test",
-      BARION_REDIRECT_BASE: "https://docs-adr-0019-barion-payment.babasarok.net",
-      PUBLIC_API_URL: "https://api-docs-adr-0019-barion-payment.babasarok.net",
-    });
+  it("never carries the live Barion shop into a preview; the sandbox shop rides along and the API origin is derived", () => {
+    const fragment = runtimeEnvFragment(
+      "preview",
+      {
+        BARION_POS_KEY: "live-poskey",
+        BARION_PAYEE_EMAIL: "live@babasarok.net",
+        TEST_BARION_POS_KEY: "sandbox-poskey",
+        TEST_BARION_PAYEE_EMAIL: "sandbox@example.test",
+      },
+      { slug: "docs-adr-0019-barion-payment" }
+    );
 
     expect(fragment).toEqual({
       ok: true,
       text:
         "TEST_BARION_POS_KEY='sandbox-poskey'\n" +
         "TEST_BARION_PAYEE_EMAIL='sandbox@example.test'\n" +
-        "BARION_REDIRECT_BASE='https://docs-adr-0019-barion-payment.babasarok.net'\n" +
         "PUBLIC_API_URL='https://api-docs-adr-0019-barion-payment.babasarok.net'\n",
     });
   });
 
-  it("carries the live account, email transport and label format into prod, not the test account", () => {
+  it("carries the live account, email transport and label format into prod, not the test account, and derives the Barion origins", () => {
     const fragment = runtimeEnvFragment("prod", {
       ...LIVE,
       ...TEST,
@@ -55,8 +56,8 @@ describe("runtimeEnvFragment", () => {
       GLS_LABEL_FORMAT: "A4_4x1",
       BARION_POS_KEY: "live-poskey",
       BARION_PAYEE_EMAIL: "live@babasarok.net",
-      BARION_REDIRECT_BASE: "https://babasarok.net",
-      PUBLIC_API_URL: "https://api.babasarok.net",
+      PUBLIC_VENDURE_API_URL: "https://api.babasarok.net",
+      SITE_URL: "https://babasarok.net",
     });
 
     expect(fragment).toEqual({
@@ -69,8 +70,8 @@ describe("runtimeEnvFragment", () => {
         "GLS_LABEL_FORMAT='A4_4x1'\n" +
         "BARION_POS_KEY='live-poskey'\n" +
         "BARION_PAYEE_EMAIL='live@babasarok.net'\n" +
-        "BARION_REDIRECT_BASE='https://babasarok.net'\n" +
-        "PUBLIC_API_URL='https://api.babasarok.net'\n",
+        "PUBLIC_API_URL='https://api.babasarok.net'\n" +
+        "BARION_REDIRECT_BASE='https://babasarok.net'\n",
     });
   });
 
@@ -89,6 +90,15 @@ describe("runtimeEnvFragment", () => {
 
   it("lets a preview deploy without the test account (the backend falls back to the fake)", () => {
     expect(runtimeEnvFragment("preview", {})).toEqual({ ok: true, text: "\n" });
+  });
+
+  it("derives the preview API origin only when the slug is known", () => {
+    const fragment = runtimeEnvFragment("preview", {}, { slug: "some-branch" });
+
+    expect(fragment).toEqual({
+      ok: true,
+      text: "PUBLIC_API_URL='https://api-some-branch.babasarok.net'\n",
+    });
   });
 
   it("refuses values the single-quoted env file cannot carry", () => {

@@ -63,7 +63,7 @@ if (cfg.DEPLOY_STACK === "preview") {
   slug = previewSlug(branch);
 }
 
-const runtimeEnv = runtimeEnvFragment(cfg.DEPLOY_STACK, process.env);
+const runtimeEnv = runtimeEnvFragment(cfg.DEPLOY_STACK, process.env, { slug });
 if (!runtimeEnv.ok) {
   die(`runtime env invalid:\n${runtimeEnv.problems.map((p) => `  ${p}`).join("\n")}`);
 }
@@ -260,21 +260,23 @@ exec node "$DIR/repo/deploy/remote/deploy-stack.ts" "$@"
   }
 
   if (isPreview) {
-    // Point the stack's ADMIN_URL (order-email deep links, ADR 0008) at this
-    // preview's stable site URL, as reported by wrangler preview. It cannot
-    // be known before the first preview deploy exists, so deploy-stack.ts
-    // seeds the prod dashboard as a fallback and this overwrites it as soon
-    // as the URL is real. Strict charset validation: the URL is embedded in
-    // a remote shell command below.
+    // Point the stack's ADMIN_URL (order-email deep links, ADR 0008) and the
+    // Barion BARION_REDIRECT_BASE (the gateway's buyer redirect, ADR 0021) at
+    // this preview's stable site URL, as reported by wrangler preview. It
+    // cannot be known before the first preview deploy exists, so
+    // deploy-stack.ts seeds the prod site as a fallback and this overwrites
+    // it as soon as the URL is real. Strict charset validation: the URL is
+    // embedded in a remote shell command below.
     const previewUrl = /^https:\/\/[a-z0-9.-]+\/?$/i.exec(
       /Preview URL:\s*(\S+)/.exec(`${frontend.stdout ?? ""}\n${frontend.stderr ?? ""}`)?.at(1) ?? ""
     )?.[0];
     if (!previewUrl) {
       console.error(
-        "warning: wrangler preview printed no Preview URL — ADMIN_URL keeps the prod dashboard fallback"
+        "warning: wrangler preview printed no Preview URL — ADMIN_URL keeps the prod dashboard fallback and BARION_REDIRECT_BASE the prod site fallback"
       );
     } else {
-      const adminUrl = `${previewUrl.replace(/\/$/, "")}/dashboard`;
+      const siteUrl = previewUrl.replace(/\/$/, "");
+      const adminUrl = `${siteUrl}/dashboard`;
       const update = spawnSync(
         "ssh",
         sshArgs([
@@ -285,13 +287,13 @@ exec node "$DIR/repo/deploy/remote/deploy-stack.ts" "$@"
           `${dir}/.deploy.lock`,
           "bash",
           "-c",
-          `'sed -i "s|^ADMIN_URL=.*|ADMIN_URL=${adminUrl}|" ${dir}/.env` +
+          `'sed -i "s|^ADMIN_URL=.*|ADMIN_URL=${adminUrl}|; s|^BARION_REDIRECT_BASE=.*|BARION_REDIRECT_BASE=${siteUrl}|" ${dir}/.env` +
             ` && cd ${dir} && docker compose up -d --wait vendure worker'`,
         ]),
         { stdio: "inherit" }
       );
       if (update.status !== 0) {
-        console.error("warning: ADMIN_URL update on the box failed");
+        console.error("warning: ADMIN_URL/BARION_REDIRECT_BASE update on the box failed");
       }
     }
   }

@@ -5,7 +5,20 @@ import { FakeBarionClient } from "./fake-barion-client";
 
 export type BarionConfig =
   | {
+      /** No shop configured outside production: the in-process fake answers. */
       mode: "fake";
+      redirectBase: string;
+      callbackBase: string;
+    }
+  | {
+      /**
+       * Production before the live shop is registered (no BARION_* keys):
+       * the backend boots and the shop works, but the Barion method is
+       * seeded disabled and payment intents are refused. Unlike GLS — whose
+       * absence only blocks owner-side label creation — letting the shop
+       * crash over a not-yet-approved Barion account is worse.
+       */
+      mode: "disabled";
       redirectBase: string;
       callbackBase: string;
     }
@@ -44,21 +57,19 @@ export function barionCallbackUrl(callbackBase: string): string {
  * sandbox shop is used when configured, and the in-process fake otherwise.
  */
 export function barionConfigFromEnv(source: EnvSource, isProduction: boolean): BarionConfig {
-  const bases = readBases(source, isProduction);
+  const credentials = readCredentials(source, isProduction ? LIVE_KEYS : TEST_KEYS);
+
+  // Only an active shop needs real origins; a disabled one never redirects
+  // or receives callbacks, so the dev fallbacks are fine there.
+  const bases = readBases(source, isProduction && credentials !== undefined);
 
   if (isProduction) {
-    const credentials = readCredentials(source, LIVE_KEYS);
-
     if (!credentials) {
-      throw new Error(
-        `Production needs the live Barion shop: set ${Object.values(LIVE_KEYS).join(", ")} in the stack's .env (see docs/adr/0021-barion-payment-integration.md)`
-      );
+      return { mode: "disabled", ...bases };
     }
 
     return { mode: "live", ...credentials, ...bases };
   }
-
-  const credentials = readCredentials(source, TEST_KEYS);
 
   if (!credentials) {
     return { mode: "fake", ...bases };
@@ -68,7 +79,7 @@ export function barionConfigFromEnv(source: EnvSource, isProduction: boolean): B
 }
 
 export function barionClientFor(config: BarionConfig): BarionClient {
-  if (config.mode === "fake") {
+  if (config.mode === "fake" || config.mode === "disabled") {
     return new FakeBarionClient();
   }
 
@@ -76,20 +87,22 @@ export function barionClientFor(config: BarionConfig): BarionClient {
 }
 
 export function barionApiBaseFor(config: BarionConfig): string {
-  return config.mode === "fake" ? barionApiBase("test") : barionApiBase(config.mode);
+  return config.mode === "fake" || config.mode === "disabled"
+    ? barionApiBase("test")
+    : barionApiBase(config.mode);
 }
 
 function readBases(
   source: EnvSource,
-  isProduction: boolean
+  required: boolean
 ): { redirectBase: string; callbackBase: string } {
   const redirectBase = source.BARION_REDIRECT_BASE;
   const callbackBase = source.PUBLIC_API_URL;
 
   if (!redirectBase || !callbackBase) {
-    if (isProduction) {
+    if (required) {
       throw new Error(
-        "Production needs BARION_REDIRECT_BASE (the site origin) and PUBLIC_API_URL (the backend origin): the Barion gateway redirects buyers to the first and POSTs its callbacks to the second"
+        "An active Barion shop needs BARION_REDIRECT_BASE (the site origin) and PUBLIC_API_URL (the backend origin): the Barion gateway redirects buyers to the first and POSTs its callbacks to the second"
       );
     }
 
