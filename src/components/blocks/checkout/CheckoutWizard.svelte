@@ -480,15 +480,16 @@
       if (!intent.ok) {
         // The placed order is inactive, so re-submitting the wizard cannot
         // retry: the confirmation page owns the retry (same session, the
-        // placed order is still the intent's target).
+        // placed order is still the intent's target). The basket stays — it
+        // is only cleared once the payment is confirmed.
         globalThis.location.assign(
           `${localizedPath("/payment/confirmation", locale)}?orderCode=${encodeURIComponent(result.order.code)}`
         );
         return;
       }
 
-      basket.finish();
-      success = { code: result.order.code };
+      // No success panel: the buyer goes straight to the gateway. The basket
+      // is cleared by the confirmation page once the payment is confirmed.
       globalThis.location.assign(intent.value.gatewayUrl);
       return;
     }

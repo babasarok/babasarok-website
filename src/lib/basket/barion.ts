@@ -77,8 +77,19 @@ export function confirmationView(status: string | undefined, elapsedMs: number):
  */
 const BARION_REFUSAL_PATTERN = /"code"\s*:\s*"(BARION_INTENT_FAILED|BARION_ORDER_STATE)"/;
 
-export function barionRefusalKey(text: string): string | undefined {
+export type BarionRefusalKey = "refusals.BARION_INTENT_FAILED" | "refusals.BARION_ORDER_STATE";
+
+export function barionRefusalKey(text: string): BarionRefusalKey | undefined {
   const match = BARION_REFUSAL_PATTERN.exec(text);
 
-  return match === null ? undefined : `refusals.${match[1]}`;
+  return match === null ? undefined : (`refusals.${match[1]}` as BarionRefusalKey);
+}
+
+/**
+ * The wording key for a refused retry: the scanned Barion refusal, or the
+ * generic "could not be started" wording for anything else (network errors,
+ * uncoded server failures).
+ */
+export function barionRetryErrorKey(detail: string): BarionRefusalKey {
+  return barionRefusalKey(detail) ?? "refusals.BARION_INTENT_FAILED";
 }

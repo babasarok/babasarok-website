@@ -209,14 +209,20 @@ only — the deposit/utánvét arrangements are later slices):
 - **Online fizetés (Barion)** — after the order is placed, the site calls
   `createBarionPaymentIntent` and redirects the browser to the returned
   `gatewayUrl` (a full-page redirect; the gateway must never sit in an
-  iframe). The choice lives only in the wizard's state and the payment step's
-  form (the submit re-reads the form like every step's inputs); it is not
-  saved onto the order.
-- **Átutalás** — the pre-Barion behavior, and the step's default: the order
-  parks in `ArrangingPayment`, the owner emails the díjbekérő, and the site
-  shows today's success panel (the conversion tracking above fires at
-  placement, per [ADR 0021](../adr/0021-barion-payment-integration.md) §8 /
-  issue #135).
+  iframe). No success panel precedes the redirect. The choice lives only in
+  the wizard's state and the payment step's form (the submit re-reads the
+  form like every step's inputs); it is not saved onto the order.
+- **Átutalás** — the pre-Barion behavior: the order parks in
+  `ArrangingPayment`, the owner emails the díjbekérő, and the site shows
+  today's success panel (the conversion tracking above fires at placement,
+  per [ADR 0021](../adr/0021-barion-payment-integration.md) §8 / issue
+  #135).
+
+**The basket is cleared only when the order is truly on our end:** at
+placement for átutalás (the díjbekérő obligation starts), and on a
+**confirmed** Barion payment for the gateway path — never on the redirect
+itself, so a failed or abandoned gateway payment leaves the buyer's basket
+in view.
 
 A refused payment intent (e.g. the coded refusal `BARION_INTENT_FAILED` or
 `BARION_ORDER_STATE`) SHALL redirect the buyer to the payment confirmation
@@ -229,7 +235,7 @@ success panel does not appear).
   - WHEN the buyer picks Barion and submits
   - THEN the order is placed by the unchanged submission sequence, the site
     requests the payment intent and the browser is redirected to the Barion
-    gateway
+    gateway without an intervening success panel, the basket staying intact
 - **Scenario: Barion intent refused**
   - WHEN `createBarionPaymentIntent` returns a coded refusal
   - THEN the browser is redirected to the payment confirmation page with the
@@ -237,7 +243,8 @@ success panel does not appear).
     retry refuses again while the underlying cause persists)
 - **Scenario: Bank transfer chosen**
   - WHEN the buyer picks átutalás and submits
-  - THEN the order is placed and the success panel appears as before the
+  - THEN the order is placed, the basket is cleared, and the success panel
+    appears as before the
     payment integration
 
 ### Payment confirmation page
@@ -273,7 +280,7 @@ client-side): the retry happens on this page, not in the wizard.
     the retry button
   - THEN the site starts a new payment intent for the same order (a new
     gateway payment, the previous attempt id retired) and redirects to the
-    gateway
+    gateway; the basket stays intact until a retry is confirmed
 - **Scenario: Retry from a foreign session**
   - WHEN the retry button is pressed in a session that did not place the
     order

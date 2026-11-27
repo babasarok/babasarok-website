@@ -5,6 +5,7 @@
   import { localizedPath, type Locale } from "@/lib/i18n";
   import { basket } from "@/lib/basket/basket.svelte";
   import {
+    barionRetryErrorKey,
     confirmationView,
     parseConfirmationParams,
     POLL_INTERVAL_MS,
@@ -29,6 +30,7 @@
   let status = $state<string>();
   let elapsed = $state(0);
   let retrying = $state(false);
+  let retryError = $state<string>();
 
   /** Same session: the placed order is still the intent's target (ADR 0021 §5). */
   async function retryPayment(): Promise<void> {
@@ -37,6 +39,7 @@
     }
 
     retrying = true;
+    retryError = undefined;
     const intent = await basket.api.createBarionPaymentIntent();
 
     if (intent.ok) {
@@ -44,6 +47,9 @@
       return;
     }
 
+    // A refused retry must be visible: the common case is a foreign session
+    // (the intent is session-scoped), which the backend refuses by code.
+    retryError = barionRetryErrorKey(intent.failure.detail);
     retrying = false;
   }
 
@@ -77,6 +83,12 @@
         // was ever started (e.g. the wizard redirected here after a refused
         // intent) — the declined view is the honest rendering.
         status = result.value.paymentId === null ? "Failed" : result.value.status;
+
+        // The basket is only cleared once the payment is confirmed — the
+        // order is truly on our end exactly here.
+        if (status === "Succeeded") {
+          basket.finish();
+        }
       }
     }
 
@@ -135,11 +147,14 @@
             type="button"
             onclick={retryPayment}
             disabled={retrying}
-            class="mt-2 flex h-11 items-center justify-center rounded-md bg-brown-500 px-4 text-sm font-medium uppercase text-white transition-all hover:bg-brown-700 disabled:opacity-60"
+            class="mt-2 flex h-11 cursor-pointer items-center justify-center rounded-md bg-brown-500 px-4 text-sm font-medium uppercase text-white transition-all hover:bg-brown-700 disabled:cursor-not-allowed disabled:opacity-60"
             data-testid="confirmation-retry"
           >
             {i18n.t("payment.tryAgain")}
           </button>
+        {/if}
+        {#if retryError}
+          <p class="text-sm text-danger-500">{i18n.t(retryError)}</p>
         {/if}
         <a
           href={localizedPath("/checkout", locale)}

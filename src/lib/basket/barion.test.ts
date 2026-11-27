@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   barionRefusalKey,
+  barionRetryErrorKey,
   confirmationView,
   parseConfirmationParams,
   POLL_BUDGET_MS,
@@ -33,6 +34,16 @@ describe("parseConfirmationParams", () => {
     expect(
       parseConfirmationParams(new URLSearchParams("orderCode=ABC123&paymentId="))
     ).toBeUndefined();
+  });
+
+  it("maps a retry refusal to its wording key and anything else to the generic one", () => {
+    expect(barionRetryErrorKey('USER_INPUT_ERROR: {"code":"BARION_ORDER_STATE"}')).toBe(
+      "refusals.BARION_ORDER_STATE"
+    );
+    expect(barionRetryErrorKey('USER_INPUT_ERROR: {"code":"BARION_INTENT_FAILED"}')).toBe(
+      "refusals.BARION_INTENT_FAILED"
+    );
+    expect(barionRetryErrorKey("Network error")).toBe("refusals.BARION_INTENT_FAILED");
   });
 });
 
