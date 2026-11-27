@@ -228,6 +228,8 @@ export async function createSet(): Promise<void> {
   await login();
 
   for (const material of SET_MATERIALS) {
+    // Idempotent: a retried run re-seeds into a database that already holds
+    // the material, and "Már létezik anyag" must not fail the seed.
     await gql(
       `mutation($input: MaterialInput!) { createMaterial(input: $input) { slug } }`,
       {
@@ -240,7 +242,11 @@ export async function createSet(): Promise<void> {
         },
       },
       z.unknown()
-    );
+    ).catch((error: unknown) => {
+      if (!(error instanceof Error) || !error.message.includes("Már létezik anyag")) {
+        throw error;
+      }
+    });
   }
 
   await createDefinition(setMemberDefinition("e2e-szett-fej", 3000), "E2E Szett Fej");

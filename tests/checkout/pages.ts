@@ -135,6 +135,12 @@ export async function fillPickupBilling(page: Page): Promise<void> {
   await saved;
   await expect(page).toHaveURL(/#payment$/);
 
+  // Nothing is preselected: the buyer picks explicitly (Átutalás keeps the
+  // placed-order behavior the suite asserts).
+  await step(page, "payment")
+    .getByRole("radio", { name: /Átutalás/ })
+    .check();
+
   await step(page, "payment")
     .getByRole("button", { name: /Tovább az áttekintéshez/ })
     .click();

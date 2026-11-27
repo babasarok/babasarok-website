@@ -113,7 +113,7 @@ export class BarionService implements OnApplicationBootstrap {
     const lines = order.lines.map((line) => ({
       // The entity load carries no translations: the variant name column is
       // on the translation row, so resolve it for the request's language.
-      name: this.translator.translate(line.productVariant, ctx).name ?? "",
+      name: this.translator.translate(line.productVariant, ctx).name,
       description: line.customFields.configText ?? null,
       quantity: line.quantity,
       linePriceWithTax: line.linePriceWithTax,
