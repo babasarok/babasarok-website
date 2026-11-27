@@ -195,8 +195,9 @@ interface WireStartRequest {
         Name: string;
         Description?: string;
         Quantity: number;
+        Unit: string;
         UnitPrice: number;
-        Total: number;
+        ItemTotal: number;
       }[];
     },
   ];
@@ -234,8 +235,9 @@ function startBody(request: BarionStartPaymentRequest, posKey: string): WireStar
           Name: item.name,
           ...(item.description === undefined ? {} : { Description: item.description }),
           Quantity: item.quantity,
+          Unit: item.unit,
           UnitPrice: item.unitPrice,
-          Total: item.total,
+          ItemTotal: item.total,
         })),
       },
     ],

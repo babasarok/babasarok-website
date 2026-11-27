@@ -59,6 +59,22 @@ const SHIPPING_ITEM_NAME = "Szállítás";
 
 const SHIPPING_ITEM_DESCRIPTION = "Kiszállítás a megrendeléshez";
 
+/** Measurement unit on the gateway's item lines (Hungarian: db, otherwise the English pcs). */
+function itemUnit(languageCode: string): string {
+  return barionLocale(languageCode) === "hu-HU" ? "db" : "pcs";
+}
+
+/** Fallback when a variant name is missing: Barion requires a non-empty item name. */
+function itemName(name: string, languageCode: string): string {
+  const trimmed = name.trim();
+
+  if (trimmed !== "") {
+    return trimmed;
+  }
+
+  return barionLocale(languageCode) === "hu-HU" ? "Termék" : "Product";
+}
+
 /**
  * The gateway shows exactly the Items and Total we send — the items must
  * honestly sum to the transaction total: the order's lines plus a shipping
@@ -79,11 +95,12 @@ export function barionStartRequest(
     const total = toBarionAmount(line.linePriceWithTax, precision);
 
     return {
-      name: line.name,
+      name: itemName(line.name, order.languageCode),
       ...(line.description
         ? { description: line.description.slice(0, MAX_ITEM_DESCRIPTION_LENGTH) }
         : {}),
       quantity: line.quantity,
+      unit: itemUnit(order.languageCode),
       unitPrice: line.quantity > 0 ? roundTo(total / line.quantity, precision) : total,
       total,
     };
@@ -96,6 +113,7 @@ export function barionStartRequest(
       name: SHIPPING_ITEM_NAME,
       description: SHIPPING_ITEM_DESCRIPTION,
       quantity: 1,
+      unit: itemUnit(order.languageCode),
       unitPrice: shipping,
       total: shipping,
     });

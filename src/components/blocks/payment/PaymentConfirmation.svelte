@@ -73,7 +73,10 @@
       const result = await basket.api.barionPaymentStatus(orderCode);
 
       if (result.ok && result.value !== null) {
-        status = result.value.status;
+        // A null paymentId means no intent row exists for the order: nothing
+        // was ever started (e.g. the wizard redirected here after a refused
+        // intent) — the declined view is the honest rendering.
+        status = result.value.paymentId === null ? "Failed" : result.value.status;
       }
     }
 

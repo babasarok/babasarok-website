@@ -18,6 +18,7 @@ export interface BarionItem {
   name: string;
   description?: string;
   quantity: number;
+  unit: string;
   unitPrice: number;
   total: number;
 }

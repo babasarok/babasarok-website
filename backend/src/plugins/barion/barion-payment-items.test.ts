@@ -83,6 +83,7 @@ describe("barionStartRequest", () => {
         name: "Párna",
         description: "Anyag: pamut",
         quantity: 2,
+        unit: "db",
         unitPrice: 12_500,
         total: 25_000,
       },
@@ -90,11 +91,25 @@ describe("barionStartRequest", () => {
         name: "Szállítás",
         description: "Kiszállítás a megrendeléshez",
         quantity: 1,
+        unit: "db",
         unitPrice: 1500,
         total: 1500,
       },
     ]);
     expect(options.callbackUrl.endsWith("/payments/barion/callback")).toBe(true);
+  });
+
+  it("falls back to a non-empty item name when the variant name is missing", () => {
+    const request = barionStartRequest(
+      {
+        ...order,
+        lines: [{ name: "  ", description: null, quantity: 1, linePriceWithTax: 25_000 }],
+      },
+      precision,
+      options
+    );
+
+    expect(request.items[0]?.name).toBe("Termék");
   });
 
   it("omits the shipping item when delivery is free", () => {
