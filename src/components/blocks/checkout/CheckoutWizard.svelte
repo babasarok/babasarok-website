@@ -42,7 +42,7 @@
   } from "@/lib/basket/readiness";
   import type { Order, ShippingQuote } from "@/lib/basket/schemas";
   import type { SetMembers } from "@/lib/basket/setDiscounts";
-  import type { PaymentMethodId } from "@/lib/basket/barion";
+  import { barionRetryErrorKey, type PaymentMethodId } from "@/lib/basket/barion";
   import {
     layoutSteps,
     nextStep,
@@ -101,6 +101,17 @@
   const blocker = $derived(orderBlocker(order));
   const submitDisabled = $derived(sending || blocker !== undefined || !termsAccepted);
 
+  /**
+   * A pending order is placed and immutable: everything before the payment is
+   * already fixed on it, and its buyer gets the payment step only — the
+   * earlier steps would run mutations the server refuses (the delivery
+   * methods list is empty for a session without an active order).
+   */
+  const pending = $derived(basket.pendingPayment && order !== null);
+  const wizardSteps = $derived(
+    pending ? steps.filter((stepDef) => stepDef.id === "payment") : steps
+  );
+
   const saves = createCheckoutSaves(basket.api, {
     order: () => basket.order,
     apply: (result) => basket.apply(result),
@@ -136,13 +147,15 @@
     const values = valuesFromOrder(order);
 
     initial = values;
-    step = entryStep(
-      values,
-      steps,
-      method,
-      stepFromHash(globalThis.location.hash.slice(1)),
-      paymentMethod
-    );
+    step = pending
+      ? "payment"
+      : entryStep(
+          values,
+          steps,
+          method,
+          stepFromHash(globalThis.location.hash.slice(1)),
+          paymentMethod
+        );
 
     if (globalThis.location.hash.slice(1) !== step) {
       replaceUrl(`#${step}`);
@@ -150,7 +163,7 @@
   });
 
   $effect(() => {
-    const own = stepIn(steps, step);
+    const own = stepIn(wizardSteps, step);
 
     if (initial === null || own === step) {
       return;
@@ -193,7 +206,7 @@
       return;
     }
 
-    const own = stepIn(steps, hashStep);
+    const own = stepIn(wizardSteps, hashStep);
 
     if (own !== hashStep) {
       replaceUrl(`#${own}`);
@@ -221,7 +234,7 @@
   }
 
   function onBack(id: StepId): void {
-    const previous = previousStep(steps, id);
+    const previous = previousStep(wizardSteps, id);
 
     if (previous === undefined) {
       return;
@@ -308,6 +321,12 @@
     }
 
     fieldError = undefined;
+
+    if (pending && id === "payment") {
+      await pendingSubmit(paymentFromForm(data));
+      return;
+    }
+
     advancing = true;
 
     try {
@@ -316,13 +335,49 @@
       advancing = false;
     }
 
-    const next = nextStep(steps, id);
+    const next = nextStep(wizardSteps, id);
 
     if (next === undefined) {
       return;
     }
 
     goTo(next);
+  }
+
+  /**
+   * The pending order is already placed: the payment re-submission branches on
+   * the method — Barion restarts the gateway payment, bank transfer shows the
+   * placed order's code (the díjbekérő obligation is on us). No conversion
+   * events: the placement fired them the first time.
+   */
+  async function pendingSubmit(methodId: PaymentMethodId | undefined): Promise<void> {
+    if (methodId === undefined || order === null) {
+      showError("blockers.payment");
+      return;
+    }
+
+    if (methodId === "bank-transfer") {
+      const code = order.code;
+
+      basket.finish();
+      success = { code };
+      return;
+    }
+
+    sending = true;
+
+    try {
+      const intent = await basket.api.createBarionPaymentIntent(order.code);
+
+      if (intent.ok) {
+        globalThis.location.assign(intent.value.gatewayUrl);
+        return;
+      }
+
+      showError(barionRetryErrorKey(intent.failure.detail));
+    } finally {
+      sending = false;
+    }
   }
 
   async function onMethod(shippingMethodId: string): Promise<void> {
@@ -555,10 +610,10 @@
         <div class="grid grid-cols-1 items-start gap-6 pb-24 lg:grid-cols-[1fr_420px] lg:pb-0">
           <div class="flex min-w-0 flex-col">
             <div class="pb-4">
-              <StepStrip {locale} {steps} current={step} onJump={goTo} />
+              <StepStrip {locale} steps={wizardSteps} current={step} onJump={goTo} />
             </div>
 
-            {#each steps as stepDef (stepDef.id)}
+            {#each wizardSteps as stepDef (stepDef.id)}
               {@const active = stepDef.id === step}
               {@const shown = stepIndex(stepDef.id) < currentIndex && step !== "review"}
 
@@ -632,9 +687,10 @@
                           {locale}
                           initial={paymentMethod}
                           pending={advancing}
-                          onBack={() => onBack("payment")}
+                          onBack={pending ? undefined : () => onBack("payment")}
                           onSelect={(payment) => (paymentMethod = payment)}
                           onContinue={(data) => void onContinue("payment", data)}
+                          payNow={pending}
                         />
                       {:else}
                         <ReviewStep
@@ -721,9 +777,12 @@
 
         <MobileActionBar
           {locale}
-          backVisible={step !== steps[0].id}
+          backVisible={!pending && step !== steps[0].id}
           onBack={() => onBack(step)}
-          nextLabel={translateMessage(i18n, mobileNextLabelKey(step))}
+          nextLabel={translateMessage(
+            i18n,
+            pending && step === "payment" ? "checkout.payment.pay" : mobileNextLabelKey(step)
+          )}
           nextDisabled={step === "review" ? submitDisabled : false}
           pending={step === "review" ? sending : advancing}
           formId={`wizard-step-${step}`}

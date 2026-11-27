@@ -226,6 +226,7 @@ const translation = {
       "bank-transferNote":
         "We issue a demand document (díjbekérő) for the order's total and send it by email; you can settle it by bank transfer.",
       hint: "You can start the payment after submitting the order.",
+      pay: "Pay now",
     },
   },
   payment: {

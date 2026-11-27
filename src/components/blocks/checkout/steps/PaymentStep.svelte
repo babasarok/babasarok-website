@@ -11,12 +11,14 @@
     locale: Locale;
     initial: PaymentMethodId | undefined;
     pending: boolean;
-    onBack: () => void;
+    onBack: (() => void) | undefined;
+    /** The pending order skips the review: the continue button pays directly. */
+    payNow: boolean;
     onSelect: (payment: PaymentMethodId) => void;
     onContinue: (data: FormData) => void;
   }
 
-  let { locale, initial, pending, onBack, onSelect, onContinue }: Props = $props();
+  let { locale, initial, pending, onBack, onSelect, onContinue, payNow }: Props = $props();
 
   function onChange(event: Event): void {
     if (event.target instanceof HTMLInputElement && event.target.name === FIELD.paymentMethod) {
@@ -71,9 +73,13 @@
       </p>
 
       <div class="mt-2 hidden items-center justify-between gap-3 lg:flex">
-        <Button type="button" variant="outlined" class="h-11 px-6" onclick={onBack}>
-          {i18n.t("checkout.back")}
-        </Button>
+        {#if onBack !== undefined}
+          <Button type="button" variant="outlined" class="h-11 px-6" onclick={onBack}>
+            {i18n.t("checkout.back")}
+          </Button>
+        {:else}
+          <span></span>
+        {/if}
 
         <Button
           type="submit"
@@ -82,7 +88,7 @@
           disabled={pending}
           aria-busy={pending}
         >
-          {i18n.t("checkout.continueReview")}
+          {i18n.t(payNow ? "checkout.payment.pay" : "checkout.continueReview")}
           <Icon
             icon={pending ? "mdi:loading" : "mdi:arrow-right"}
             class="text-lg {pending ? 'animate-spin' : ''}"

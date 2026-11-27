@@ -281,6 +281,14 @@ in `ArrangingPayment`): the retry happens on this page, not in the wizard.
   - THEN the basket renders that order's lines read-only with a
     fizetés-folytatása link to its confirmation page, and stops rendering it
     once the payment settles
+- **Scenario: The pending order in the checkout**
+  - WHEN the buyer opens the checkout while the rendered order is the
+    pending one (the delivery methods list is empty for a session without an
+    active order, so the earlier steps are unreachable anyway)
+  - THEN the wizard shows only the Fizetés step: Barion restarts the gateway
+    payment from the placed order, Átutalás shows the placed order's code
+    (the order is already placed; no conversion events fire again), and the
+    steps before the payment are not offered
 
 - **Scenario: Payment confirmed while the buyer waits**
   - WHEN the polled status turns `Succeeded`

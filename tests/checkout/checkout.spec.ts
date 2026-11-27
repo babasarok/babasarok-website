@@ -36,7 +36,8 @@ import {
   expectSetChip,
   expectShippingRow,
   expectTotal,
-  chooseBankTransfer,
+  choosePayment,
+  continueFromPayment,
   fillContact,
   fillPickupBilling,
   goToCheckoutInApp,
@@ -58,6 +59,7 @@ import {
   createSet,
   raisePrice,
   SET_TITLE,
+  restoreLargeSize,
   withdrawLargeSize,
 } from "./helpers";
 
@@ -121,13 +123,13 @@ test("every step's details are saved onto the order, restored on return, and the
   // re-asked on the Fizetés step; everything else is restored.
   await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/#payment$/);
-  await chooseBankTransfer(page);
+  await choosePayment(page, /Átutalás/);
   await expectReviewPrefilled(page, "Kék legyen");
   await expectContactFieldsPrefilled(page);
 
   await openCheckout(page);
   await expect(page).toHaveURL(/#payment$/);
-  await chooseBankTransfer(page);
+  await choosePayment(page, /Átutalás/);
   await expectReviewPrefilled(page, "Kék legyen");
 
   await acceptTermsAndSubmit(page);
@@ -236,4 +238,53 @@ test("each delivery method is priced, free delivery applies above the threshold 
   await addToBasket(page);
   await goToCheckoutInApp(page);
   await expectNoDeliveryChosen(page);
+});
+
+test("a pending Barion order pays again from the payment step", async ({ page }) => {
+  await restoreLargeSize();
+  await openProductFromList(page, /E2E Párna/);
+  await chooseOption(page, /50x50/);
+  await addToBasket(page);
+  await goToCheckoutInApp(page);
+
+  await fillContact(page);
+  await chooseDelivery(page, /Személyes átvétel/);
+  await continueFromShipping(page);
+  await fillPickupBilling(page);
+  await page.getByRole("button", { name: "Fizetés" }).click();
+  await choosePayment(page, /Online fizetés/);
+  await acceptTermsAndSubmit(page);
+
+  // The wizard requests the intent and redirects to the fake gateway; the
+  // navigation is cut off (the payment stays unfinished — the "buyer closed
+  // the gateway page" case).
+  await page.waitForURL(/secure\.test\.barion\.com/, { waitUntil: "commit" }).catch(() => {});
+
+  const paymentId = new URL(page.url()).searchParams.get("t") ?? "";
+
+  expect(paymentId).toContain("fake-payment-");
+
+  // Coming back: the pending order is the basket, at the payment step only.
+  await page.goto("/checkout");
+  await expect(page).toHaveURL(/#payment$/);
+  await expect(page.getByRole("radio", { name: /Átutalás/ })).toBeVisible();
+  await expect(page.getByTestId("summary-column")).toContainText("E2E Párna");
+
+  // The delivery step is not offered: the placed order's details are fixed,
+  // and the delivery methods list is empty for a session without an active
+  // order.
+  await expect(page.getByRole("button", { name: "Szállítás" })).toHaveCount(0);
+
+  // Bank transfer: the order is already placed — the code is shown.
+  await page.getByRole("radio", { name: /Átutalás/ }).check();
+  await continueFromPayment(page, /Fizetés most/);
+  await expectOrderPlaced(page);
+
+  // Barion: a new intent starts and the gateway takes over.
+  await page.goto("/checkout");
+  await expect(page).toHaveURL(/#payment$/);
+  await page.getByRole("radio", { name: /Online fizetés/ }).check();
+  await continueFromPayment(page, /Fizetés most/);
+  await page.waitForURL(/secure\.test\.barion\.com/, { waitUntil: "commit" }).catch(() => {});
+  await expect(page).toHaveURL(/secure\.test\.barion\.com/);
 });

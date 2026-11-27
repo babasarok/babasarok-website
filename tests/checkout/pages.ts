@@ -135,14 +135,12 @@ export async function fillPickupBilling(page: Page): Promise<void> {
   await saved;
   await expect(page).toHaveURL(/#payment$/);
 
-  await chooseBankTransfer(page);
+  await choosePayment(page, /Átutalás/);
 }
 
 /** Nothing is preselected: the buyer picks explicitly (Átutalás keeps the placed-order behavior the suite asserts). */
-export async function chooseBankTransfer(page: Page): Promise<void> {
-  await step(page, "payment")
-    .getByRole("radio", { name: /Átutalás/ })
-    .check();
+export async function choosePayment(page: Page, name: RegExp): Promise<void> {
+  await step(page, "payment").getByRole("radio", { name }).check();
 
   await step(page, "payment")
     .getByRole("button", { name: /Tovább az áttekintéshez/ })
@@ -172,6 +170,11 @@ export async function acceptTermsAndSubmit(page: Page): Promise<void> {
 
   await review.getByRole("checkbox", { name: /Elfogadom/ }).check();
   await review.getByTestId("place-order").click();
+}
+
+/** The payment step's continue button (its label differs for a pending order). */
+export async function continueFromPayment(page: Page, name: RegExp): Promise<void> {
+  await step(page, "payment").getByRole("button", { name }).click();
 }
 
 export async function expectOrderPlaced(page: Page): Promise<void> {

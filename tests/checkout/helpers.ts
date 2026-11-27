@@ -296,3 +296,12 @@ export async function withdrawLargeSize(): Promise<void> {
     z.unknown()
   );
 }
+
+/** Re-enables the size the withdrawn-option test takes away (the spec files share one catalog). */
+export async function restoreLargeSize(): Promise<void> {
+  await gql(
+    `mutation U($productId: String!, $definition: JSON!) { updateProductDefinition(productId: $productId, definition: $definition) { productId } }`,
+    { productId: PRODUCT_ID, definition: definition(true) },
+    z.unknown()
+  );
+}
