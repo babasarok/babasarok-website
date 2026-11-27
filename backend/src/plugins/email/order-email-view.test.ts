@@ -67,7 +67,12 @@ const content = [
     details: [{ label: "Méret", value: "Nagy", depth: 0 }],
     productionDays: 21,
   },
-  { title: "Takaró", stocked: false, details: [{ label: "Felirat", value: "Bence", depth: 1 }], productionDays: 21 },
+  {
+    title: "Takaró",
+    stocked: false,
+    details: [{ label: "Felirat", value: "Bence", depth: 1 }],
+    productionDays: 21,
+  },
 ];
 
 describe("orderEmailView", () => {

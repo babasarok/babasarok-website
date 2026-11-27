@@ -327,7 +327,10 @@ export const config: VendureConfig = {
         type: "int",
         min: 1,
         label: [
-          { languageCode: LanguageCode.hu, value: "Alap elkészítési idő – konfigurálható termékek (nap)" },
+          {
+            languageCode: LanguageCode.hu,
+            value: "Alap elkészítési idő – konfigurálható termékek (nap)",
+          },
         ],
         description: [
           {

@@ -30,11 +30,7 @@ const config = configEntry.data;
 
   <section class="py-6 sm:py-12.5">
     <div class="not-prose container">
-      <CheckoutSection
-        {locale}
-        supportEmail={config.address?.email}
-        client:load
-      />
+      <CheckoutSection {locale} supportEmail={config.address?.email} client:load />
     </div>
   </section>
 </Base>
