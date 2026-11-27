@@ -13,9 +13,10 @@ owner.
 
 The system SHALL provide the order form on a dedicated checkout page
 (`/checkout`) as a multi-step wizard: **Kapcsolat** (contact), **Szállítás**
-(delivery), **Számlázás** (billing) and **Áttekintés** (review). On mobile a
-**Kosár** (basket) step showing the order summary comes first; desktop has no
-such step because its summary column shows the basket beside every step. The
+(delivery), **Számlázás** (billing), **Fizetés** (payment) and **Áttekintés**
+(review). On mobile a **Kosár** (basket) step showing the order summary comes
+first; desktop has no such step because its summary column shows the basket
+beside every step. The
 step list is data rendered as a progress strip (completed ✓ / active /
 upcoming), and the active step's form is the only editable one. The step index
 is synced to the URL hash: browser back returns to the previous step, a
@@ -199,6 +200,73 @@ field and native `company` address column stay supported without the site
 ever setting them. The invoice buyer is therefore always
 `billingAddress ?? shippingAddress`.
 
+### Payment method
+
+The Fizetés step SHALL offer exactly two payment methods ([ADR
+0021](../adr/0021-barion-payment-integration.md) §2; slice 1 is full-prepay
+only — the deposit/utánvét arrangements are later slices):
+
+- **Online fizetés (Barion)** — after the order is placed, the site calls
+  `createBarionPaymentIntent` and redirects the browser to the returned
+  `gatewayUrl` (a full-page redirect; the gateway must never sit in an
+  iframe). The choice lives only in the wizard's state and the payment step's
+  form (the submit re-reads the form like every step's inputs); it is not
+  saved onto the order.
+- **Átutalás** — the pre-Barion behavior, and the step's default: the order
+  parks in `ArrangingPayment`, the owner emails the díjbekérő, and the site
+  shows today's success panel (the conversion tracking above fires at
+  placement, per [ADR 0021](../adr/0021-barion-payment-integration.md) §8 /
+  issue #135).
+
+A refused payment intent (e.g. the coded refusal `BARION_INTENT_FAILED` or
+`BARION_ORDER_STATE`) SHALL surface through the review step's existing error
+surface — the same generic error, reason and reference as a failed
+submission — and SHALL NOT finish the basket or show the success panel.
+
+- **Scenario: Barion chosen**
+  - WHEN the buyer picks Barion and submits
+  - THEN the order is placed by the unchanged submission sequence, the site
+    requests the payment intent and the browser is redirected to the Barion
+    gateway
+- **Scenario: Barion intent refused**
+  - WHEN `createBarionPaymentIntent` returns a coded refusal
+  - THEN the review step shows the refusal wording with the order code as the
+    reference, the basket is not finished, and no success panel appears
+- **Scenario: Bank transfer chosen**
+  - WHEN the buyer picks átutalás and submits
+  - THEN the order is placed and the success panel appears as before the
+    payment integration
+
+### Payment confirmation page
+
+The system SHALL provide the payment confirmation page at
+`/payment/confirmation` (`/en/payment/confirmation` in English), the
+`RedirectUrl` the buyer lands on straight from the Barion gateway. It reads
+`orderCode` and `paymentId` from the query string (zod-validated; a query
+without them renders the declined view) and polls
+`barionPaymentStatus(orderCode)` every ~3 seconds through the site's shop-API
+transport (the POSKey never reaches the client). The page SHALL render by the
+polled status only, never by the redirect's parameters: **Processing** is the
+default on arrival (spinner copy, confirmation may take a moment; polling
+continues), **Succeeded** shows the confirmed order code and what happens
+next (the confirmation email), **Failed**/`Expired` shows decline copy with a
+link back to `/checkout` to retry. Polling stops after ~5 minutes and the
+page stays on the Processing copy with a hint to check the confirmation email
+or contact the shop. The basket-resume mechanics of the failed-payment return
+path are a later slice; the link back is plain.
+
+- **Scenario: Payment confirmed while the buyer waits**
+  - WHEN the polled status turns `Succeeded`
+  - THEN the page stops polling and shows the order code with the
+    what-happens-next copy
+- **Scenario: Payment failed or expired**
+  - WHEN the polled status turns `Failed` or `Expired`
+  - THEN the page shows the decline copy and links back to the checkout
+- **Scenario: Polling exhausts the budget**
+  - WHEN the status stays `Processing` for ~5 minutes
+  - THEN the page stops polling, keeps the Processing copy and adds the hint
+    to check the email or contact the shop
+
 ### Order submission
 
 The system SHALL place the order with these native shop-API mutations, in
@@ -216,8 +284,9 @@ this order, each result checked before the next:
    `fullName`, or `unsetOrderBillingAddress` when the toggle
    keeps the billing address off the order (the billing section above);
 6. `setOrderCustomFields` — `message` and `termsAccepted`;
-7. `transitionOrderToState("ArrangingPayment")` — the order is placed (there
-   is no payment step yet).
+7. `transitionOrderToState("ArrangingPayment")` — the order is placed; the
+   buyer's payment-method choice (the section below) then decides what
+   happens next, without changing this sequence.
 
 Prices, set discounts, delivery and the total are the order's own
 (price authority: the server pricing strategy and promotions, ADR 0002).

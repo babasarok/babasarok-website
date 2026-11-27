@@ -4,6 +4,7 @@ import {
   type BillingValues,
   type ContactValues,
 } from "./checkoutValues";
+import type { PaymentMethodId } from "./barion";
 import { formatMoney } from "./money";
 import { requiresAddress, type ShippingQuote } from "./schemas";
 
@@ -108,4 +109,8 @@ export function billingRows(
 /** The one-line form of a step's details, for the collapsed step summaries. */
 export function summaryLine(details: readonly DetailRow[]): string {
   return details.map((row) => row.value).join(" · ");
+}
+
+export function paymentRows(payment: PaymentMethodId, t: T): DetailRow[] {
+  return rows([{ label: t("checkout.payment.label"), value: t(`checkout.payment.${payment}`) }]);
 }

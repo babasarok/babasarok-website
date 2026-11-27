@@ -9,6 +9,7 @@
   import ContactStep from "./steps/ContactStep.svelte";
   import ShippingStep from "./steps/ShippingStep.svelte";
   import BillingStep from "./steps/BillingStep.svelte";
+  import PaymentStep from "./steps/PaymentStep.svelte";
   import ReviewStep from "./steps/ReviewStep.svelte";
   import SummaryColumn from "./summary/SummaryColumn.svelte";
   import MobileActionBar from "./MobileActionBar.svelte";
@@ -23,6 +24,7 @@
     billingFromForm,
     contactFromForm,
     messageFromForm,
+    paymentFromForm,
     valuesFromOrder,
     type CheckoutValues,
   } from "@/lib/basket/checkoutValues";
@@ -40,6 +42,7 @@
   } from "@/lib/basket/readiness";
   import type { Order, ShippingQuote } from "@/lib/basket/schemas";
   import type { SetMembers } from "@/lib/basket/setDiscounts";
+  import { DEFAULT_PAYMENT_METHOD, type PaymentMethodId } from "@/lib/basket/barion";
   import {
     layoutSteps,
     nextStep,
@@ -52,6 +55,7 @@
   import {
     billingRows,
     contactRows,
+    paymentRows,
     shippingRows,
     summaryLine,
     type DetailRow,
@@ -86,6 +90,7 @@
   let success = $state<{ code: string } | null>(null);
   let highlightedLines = $state<readonly string[]>([]);
   let termsAccepted = $state(false);
+  let paymentMethod = $state<PaymentMethodId>(DEFAULT_PAYMENT_METHOD);
 
   const wide = new MediaQuery("min-width: 64rem");
   const steps = $derived(layoutSteps(wide.current));
@@ -271,6 +276,11 @@
       return saveBilling(data);
     }
 
+    if (id === "payment") {
+      paymentMethod = paymentFromForm(data);
+      return Promise.resolve();
+    }
+
     if (id === "review") {
       return saveMessage(data);
     }
@@ -357,6 +367,10 @@
       return shippingRows(method, values.address, fee, current.currencyCode, t);
     }
 
+    if (id === "payment") {
+      return paymentRows(paymentMethod, t);
+    }
+
     return billingRows(values.billing, method, t);
   }
 
@@ -427,9 +441,8 @@
       (report) => reportClientError({ kind: "order", ...report })
     );
 
-    sending = false;
-
     if (!result.ok) {
+      sending = false;
       submitFailure = result.failure;
       revealError();
       return;
@@ -456,6 +469,23 @@
       console.error("Failed to record purchase conversion", e);
     }
 
+    if (paymentFromForm(formData("payment")) === "barion") {
+      const intent = await basket.api.createBarionPaymentIntent();
+
+      if (!intent.ok) {
+        sending = false;
+        submitFailure = { reason: intent.failure.reason, reference: result.order.code };
+        revealError();
+        return;
+      }
+
+      basket.finish();
+      success = { code: result.order.code };
+      globalThis.location.assign(intent.value.gatewayUrl);
+      return;
+    }
+
+    sending = false;
     basket.finish();
     success = { code: result.order.code };
   }
@@ -582,6 +612,15 @@
                           onContinue={(data) => void onContinue("billing", data)}
                           onBack={() => onBack("billing")}
                         />
+                      {:else if stepDef.id === "payment"}
+                        <PaymentStep
+                          {locale}
+                          initial={paymentMethod}
+                          pending={advancing}
+                          onBack={() => onBack("payment")}
+                          onSelect={(payment) => (paymentMethod = payment)}
+                          onContinue={(data) => void onContinue("payment", data)}
+                        />
                       {:else}
                         <ReviewStep
                           {locale}
@@ -593,6 +632,7 @@
                           contactRows={stepRows("contact", saved, order, t)}
                           shippingRows={stepRows("shipping", saved, order, t)}
                           billingRows={stepRows("billing", saved, order, t)}
+                          paymentRows={paymentRows(paymentMethod, t)}
                           total={formatMoney(order.totalWithTax, order.currencyCode)}
                           bind:terms={termsAccepted}
                           {error}

@@ -1,4 +1,4 @@
-export type StepId = "basket" | "contact" | "shipping" | "billing" | "review";
+export type StepId = "basket" | "contact" | "shipping" | "billing" | "payment" | "review";
 
 export interface StepDef {
   id: StepId;
@@ -11,6 +11,7 @@ export const STEPS: readonly StepDef[] = [
   { id: "contact", labelKey: "checkout.steps.contact" },
   { id: "shipping", labelKey: "checkout.steps.shipping" },
   { id: "billing", labelKey: "checkout.steps.billing" },
+  { id: "payment", labelKey: "checkout.steps.payment" },
   { id: "review", labelKey: "checkout.steps.review" },
 ];
 

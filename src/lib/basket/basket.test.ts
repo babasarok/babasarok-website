@@ -394,7 +394,8 @@ describe("checkout readiness", () => {
     expect(nextStep(narrow, "basket")).toBe("contact");
     expect(previousStep(narrow, "contact")).toBe("basket");
     expect(previousStep(wide, "contact")).toBeUndefined();
-    expect(nextStep(wide, "billing")).toBe("review");
+    expect(nextStep(wide, "billing")).toBe("payment");
+    expect(nextStep(wide, "payment")).toBe("review");
     expect(nextStep(wide, "review")).toBeUndefined();
     expect(stepIn(wide, "basket")).toBe("contact");
     expect(stepIn(narrow, "basket")).toBe("basket");

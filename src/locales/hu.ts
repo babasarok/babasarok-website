@@ -159,6 +159,7 @@ const translation = {
       contact: "Kapcsolat",
       shipping: "Szállítás",
       billing: "Számlázás",
+      payment: "Fizetés",
       review: "Áttekintés",
     },
     summaryTitle: "Rendelés összegzése",
@@ -181,6 +182,7 @@ const translation = {
       contact: "Add meg az elérhetőségeidet, hogy kapcsolatba léphessünk a rendelésedről.",
       shipping: "Válaszd ki a szállítási módot, és add meg a szállítási címet.",
       billing: "Add meg a számlázási adatokat.",
+      payment: "Válaszd ki, hogyan szeretnéd rendezni a rendelés összegét.",
       review: "Ellenőrizd a rendelésed adatait, majd küldd el a rendelést.",
     },
     subtotal: "Részösszeg",
@@ -204,6 +206,32 @@ const translation = {
     setIncomplete: "még nem teljes",
     noBilling: "Nincs külön számlázási cím",
     setBadge: "Szett",
+    payment: {
+      label: "Fizetési mód",
+      barion: "Online fizetés (Barion)",
+      barionNote:
+        "Biztonságos online fizetés bankkártyával vagy Barion-egyenleggel. A rendelés leadása után a fizetési oldalra kerülsz.",
+      "bank-transfer": "Átutalás",
+      "bank-transferNote":
+        "A rendelés összegéről díjbekérőt állítunk ki, amit emailben küldünk el; ezt tudod átutalással rendezni.",
+      hint: "A fizetést a rendelés leadása után indíthatod el.",
+    },
+  },
+  payment: {
+    title: "Fizetés visszaigazolása",
+    processing: "A fizetés feldolgozás alatt…",
+    processingNote:
+      "A visszaigazolás eltarthat egy ideig; az oldal automatikusan frissül, nem kell csinálnod semmit.",
+    succeeded: "A fizetés sikeres!",
+    succeededNote:
+      "Köszönjük a rendelést! A visszaigazoló emailt elküldjük, és hamarosan felvesszük veled a kapcsolatot a részletekkel.",
+    failed: "A fizetés nem fejeződött be",
+    failedNote:
+      "A fizetés most nem fejeződött be sikeresen. A pénztárban újra megpróbálhatod, vagy átutalást választhatsz.",
+    stalledHint:
+      "A feldolgozás a vártnál tovább tart. Ha nem érkezik meg a visszaigazoló email, írj nekünk:",
+    backHome: "Vissza a főoldalra",
+    backToCheckout: "Vissza a pénztárhoz",
   },
   order: {
     priceChanged:
@@ -246,6 +274,10 @@ const translation = {
     SELECTIONS_INVALID: "A rendelési sor konfigurációja érvénytelen: {{issues}}",
     UNKNOWN_THREAD_COLOR: "Ismeretlen hímzőcérna-szín: {{colorIds}}.",
     CHECKOUT_INCOMPLETE: "A rendelés nem adható le, hiányzik: {{missing}}.",
+    BARION_INTENT_FAILED:
+      "A barionos fizetést most nem sikerült elindítani. Kérlek, próbáld meg újra, vagy válaszd az átutalást.",
+    BARION_ORDER_STATE:
+      "A rendelés jelenlegi állapota miatt a fizetés most nem indítható el. Kérlek, vedd fel velünk a kapcsolatot.",
     reasons: {
       UNKNOWN_MATERIAL: "ismeretlen anyagot tartalmaz",
       FOREIGN_COLOR: "az anyag által nem kínált színt tartalmaz",
