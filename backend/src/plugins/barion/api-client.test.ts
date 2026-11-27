@@ -50,7 +50,7 @@ const START_REQUEST = {
   payeeEmail: "bolt@babasarok.test",
   redirectUrl: "https://babasarok.net/payment/confirmation?orderCode=ABCD1234",
   callbackUrl: "https://api.babasarok.net/payments/barion/callback",
-  items: [{ name: "Párna", quantity: 2, unitPrice: 12_500, total: 25_000 }],
+  items: [{ name: "Párna", quantity: 2, unit: "db", unitPrice: 12_500, total: 25_000 }],
   payer: null,
 };
 

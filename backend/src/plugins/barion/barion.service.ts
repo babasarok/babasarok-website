@@ -13,6 +13,7 @@ import {
   RequestContext,
   RequestContextService,
   TransactionalConnection,
+  TranslatorService,
   UserInputError,
 } from "@vendure/core";
 import type { JobQueue } from "@vendure/core";
@@ -56,6 +57,7 @@ export class BarionService implements OnApplicationBootstrap {
     private readonly requestContextService: RequestContextService,
     private readonly channelService: ChannelService,
     private readonly configService: ConfigService,
+    private readonly translator: TranslatorService,
     @Inject(BARION_CLIENT) private readonly client: BarionClient,
     @Inject(BARION_CONFIG) private readonly config: BarionConfig
   ) {}
@@ -108,8 +110,17 @@ export class BarionService implements OnApplicationBootstrap {
       .count({ where: { orderId: order.id } });
 
     // Unique per attempt: a retried payment after a failure gets its own id.
+    const lines = order.lines.map((line) => ({
+      // The entity load carries no translations: the variant name column is
+      // on the translation row, so resolve it for the request's language.
+      name: this.translator.translate(line.productVariant, ctx).name ?? "",
+      description: line.customFields.configText ?? null,
+      quantity: line.quantity,
+      linePriceWithTax: line.linePriceWithTax,
+    }));
+
     const request = barionStartRequest(
-      orderSnapshot(order, ctx.languageCode),
+      orderSnapshot(order, lines, ctx.languageCode),
       this.moneyPrecision(),
       {
         paymentRequestId: `${order.code}-${attempt + 1}`,
@@ -409,7 +420,11 @@ function accessible(ctx: RequestContext, order: Order, row: BarionPayment): bool
   );
 }
 
-function orderSnapshot(order: Order, languageCode: string): BarionOrderSnapshot {
+function orderSnapshot(
+  order: Order,
+  lines: { name: string; description: string | null; quantity: number; linePriceWithTax: number }[],
+  languageCode: string
+): BarionOrderSnapshot {
   const customer = order.customer;
   const fullName = customer ? `${customer.lastName} ${customer.firstName}`.trim() : "";
   const shippingAddress = order.shippingAddress;
@@ -420,12 +435,7 @@ function orderSnapshot(order: Order, languageCode: string): BarionOrderSnapshot 
     languageCode,
     totalWithTax: order.totalWithTax,
     shippingWithTax: order.shippingWithTax,
-    lines: order.lines.map((line) => ({
-      name: line.productVariant.name,
-      description: line.customFields.configText ?? null,
-      quantity: line.quantity,
-      linePriceWithTax: line.linePriceWithTax,
-    })),
+    lines,
     customer: customer
       ? {
           emailAddress: customer.emailAddress,

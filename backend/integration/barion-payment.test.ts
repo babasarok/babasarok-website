@@ -185,6 +185,14 @@ describe("Barion full-prepay", () => {
       locale: "hu-HU",
       total: order.totalWithTax,
     });
+    // The gateway requires a non-empty Name, Unit and ItemTotal on every item
+    // (the sandbox rejected the first integration with exactly these).
+    expect(started?.items.length).toBeGreaterThan(0);
+    for (const item of started?.items ?? []) {
+      expect(item.name.trim().length).toBeGreaterThan(0);
+      expect(item.unit.trim().length).toBeGreaterThan(0);
+      expect(item.total).toBeGreaterThan(0);
+    }
     expect(started?.callbackUrl).toContain("/payments/barion/callback");
     expect(started?.redirectUrl).toContain(`/payment/confirmation?orderCode=${order.code}`);
 
