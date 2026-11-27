@@ -8,9 +8,23 @@ const GLS_TEST_KEYS = [
   "TEST_MYGLS_HU_PASSWORD",
 ] as const;
 
+const BARION_LIVE_KEYS = ["BARION_POS_KEY", "BARION_PAYEE_EMAIL"] as const;
+
+const BARION_TEST_KEYS = ["TEST_BARION_POS_KEY", "TEST_BARION_PAYEE_EMAIL"] as const;
+
+/** Both stacks need the two URL origins the Barion gateway works against. */
+const BARION_URL_KEYS = ["BARION_REDIRECT_BASE", "PUBLIC_API_URL"] as const;
+
 const CARRIED_KEYS = {
-  prod: ["CLOUDFLARE_EMAIL_TOKEN", "CLOUDFLARE_ACCOUNT_ID", ...GLS_LIVE_KEYS, "GLS_LABEL_FORMAT"],
-  preview: [...GLS_TEST_KEYS, "GLS_LABEL_FORMAT"],
+  prod: [
+    "CLOUDFLARE_EMAIL_TOKEN",
+    "CLOUDFLARE_ACCOUNT_ID",
+    ...GLS_LIVE_KEYS,
+    "GLS_LABEL_FORMAT",
+    ...BARION_LIVE_KEYS,
+    ...BARION_URL_KEYS,
+  ],
+  preview: [...GLS_TEST_KEYS, "GLS_LABEL_FORMAT", ...BARION_TEST_KEYS, ...BARION_URL_KEYS],
 } as const satisfies Record<DeployStack, readonly string[]>;
 
 const REQUIRED_KEYS = {
