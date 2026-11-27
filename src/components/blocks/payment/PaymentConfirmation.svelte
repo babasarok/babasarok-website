@@ -9,6 +9,7 @@
     confirmationView,
     parseConfirmationParams,
     POLL_INTERVAL_MS,
+    type BarionRefusalKey,
     type ConfirmationParams,
     type ConfirmationView,
   } from "@/lib/basket/barion";
@@ -30,7 +31,7 @@
   let status = $state<string>();
   let elapsed = $state(0);
   let retrying = $state(false);
-  let retryError = $state<string>();
+  let retryError = $state<BarionRefusalKey>();
 
   /** Same session: the placed order is still the intent's target (ADR 0021 §5). */
   async function retryPayment(): Promise<void> {
