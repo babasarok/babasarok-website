@@ -388,4 +388,54 @@ describe("Barion full-prepay", () => {
 
     expect(settled.barionPendingOrder).toBeNull();
   });
+
+  it("switches the pending order to bank transfer: the Barion track closes and the pending basket ends", async () => {
+    const { shopper, order } = await placedOrder();
+
+    // An abandoned Processing intent: the buyer closed the gateway page.
+    await startIntent(shopper, order.code);
+
+    const SWITCH_MUTATION = `mutation($orderCode: String!) { switchPendingOrderToBankTransfer(orderCode: $orderCode) }`;
+
+    const foreign = await run(
+      (await newShopper(server)).client,
+      SWITCH_MUTATION,
+      { orderCode: order.code },
+      z.unknown()
+    ).catch((e: unknown) => e);
+
+    expect(foreign).toBeInstanceOf(Error);
+    expect(decodeRefusal((foreign as Error).message)?.code).toBe("BARION_ORDER_STATE");
+
+    const switched = await run(
+      shopper.client,
+      SWITCH_MUTATION,
+      { orderCode: order.code },
+      z.object({ switchPendingOrderToBankTransfer: z.string() })
+    );
+
+    expect(switched.switchPendingOrderToBankTransfer).toBe(order.code);
+
+    // The pending basket is gone, and it stays gone across a reload (the
+    // store's fallback re-queries exactly this).
+    const pending = await run(shopper.client, PENDING_QUERY, {}, PendingSchema);
+
+    expect(pending.barionPendingOrder).toBeNull();
+
+    // The confirmation page reports the closed track, and a Barion retry is
+    // refused: the díjbekérő path replaced the gateway payment.
+    const status = await statusFor(shopper, order.code);
+
+    expect(status.status).toBe("Switched");
+
+    const retried = await run(
+      shopper.client,
+      INTENT_QUERY,
+      { orderCode: order.code },
+      z.unknown()
+    ).catch((e: unknown) => e);
+
+    expect(retried).toBeInstanceOf(Error);
+    expect(decodeRefusal((retried as Error).message)?.code).toBe("BARION_ORDER_STATE");
+  });
 });

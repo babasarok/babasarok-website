@@ -323,7 +323,14 @@
     fieldError = undefined;
 
     if (pending && id === "payment") {
-      await pendingSubmit(paymentFromForm(data));
+      advancing = true;
+
+      try {
+        await pendingSubmit(paymentFromForm(data));
+      } finally {
+        advancing = false;
+      }
+
       return;
     }
 
@@ -346,9 +353,10 @@
 
   /**
    * The pending order is already placed: the payment re-submission branches on
-   * the method — Barion restarts the gateway payment, bank transfer shows the
-   * placed order's code (the díjbekérő obligation is on us). No conversion
-   * events: the placement fired them the first time.
+   * the method — Barion restarts the gateway payment, bank transfer closes
+   * the Barion track on the server (the díjbekérő obligation replaces it) and
+   * shows the placed order's code. No conversion events: the placement fired
+   * them the first time.
    */
   async function pendingSubmit(methodId: PaymentMethodId | undefined): Promise<void> {
     if (methodId === undefined || order === null) {
@@ -357,7 +365,14 @@
     }
 
     if (methodId === "bank-transfer") {
-      const code = order.code;
+      const switched = await basket.api.switchPendingOrderToBankTransfer(order.code);
+
+      if (!switched.ok) {
+        showError(barionRetryErrorKey(switched.failure.detail));
+        return;
+      }
+
+      const code = switched.value;
 
       basket.finish();
       success = { code };

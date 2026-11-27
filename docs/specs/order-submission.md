@@ -286,10 +286,12 @@ in `ArrangingPayment`): the retry happens on this page, not in the wizard.
     pending one (the delivery methods list is empty for a session without an
     active order, so the earlier steps are unreachable anyway)
   - THEN the wizard shows only the Fizetés step: Barion restarts the gateway
-    payment from the placed order, Átutalás shows the placed order's code
-    (the order is already placed; no conversion events fire again), the steps
-    before the payment are not offered, and the summary column renders the
-    lines read-only — no edit or remove, no review hint
+    payment from the placed order, Átutalás closes the Barion track on the
+    server (`switchPendingOrderToBankTransfer` — the intent rows end as
+    `Switched`, an owner order note records the choice, and new Barion
+    intents are refused) and shows the placed order's code, the steps before
+    the payment are not offered, and the summary column renders the lines
+    read-only — no edit or remove, no review hint
 
 - **Scenario: Payment confirmed while the buyer waits**
   - WHEN the polled status turns `Succeeded`

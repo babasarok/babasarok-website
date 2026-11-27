@@ -109,6 +109,12 @@ export class BarionService implements OnApplicationBootstrap {
     if (!(await this.authorizedForOrder(ctx, order))) {
       throw barionOrderState();
     }
+
+    // The buyer switched the order to bank transfer: the Barion track is closed.
+    if ((await this.latestIntentRow(ctx, order.id))?.status === "Switched") {
+      throw barionOrderState();
+    }
+
     const attempt = await this.connection
       .getRepository(ctx, BarionPayment)
       .count({ where: { orderId: order.id } });
@@ -170,7 +176,7 @@ export class BarionService implements OnApplicationBootstrap {
       sessionId: String(ctx.session?.id ?? ""),
     });
 
-    const sessionRow = rows.find((row) => this.rowIsPending(row));
+    const sessionRow = this.latestPendingRow(rows);
 
     if (sessionRow !== undefined) {
       return sessionRow.orderId;
@@ -184,9 +190,67 @@ export class BarionService implements OnApplicationBootstrap {
       order: { customer: { user: { id: ctx.activeUserId } } },
     });
 
-    const buyerRow = buyerRows.find((row) => this.rowIsPending(row));
+    const buyerRow = this.latestPendingRow(buyerRows);
 
     return buyerRow === undefined ? null : buyerRow.orderId;
+  }
+
+  /**
+   * Only the newest intent row decides pendingness: it carries the order's
+   * payment verdict, so a Switched row retires the pending basket even when
+   * older Failed rows exist.
+   */
+  private latestPendingRow(rows: BarionPayment[]): BarionPayment | undefined {
+    const latest = rows[0];
+
+    return latest !== undefined && this.rowIsPending(latest) ? latest : undefined;
+  }
+
+  /**
+   * The buyer gives up on the gateway payment and switches the pending order
+   * to bank transfer: the intent rows close as "Switched" (the pending basket
+   * and the Barion track end), and the owner's order note records the choice
+   * — the díjbekérő is issued and the transfer is recorded manually while the
+   * order sits in `ArrangingPayment` (ADR 0021 §6).
+   */
+  async switchPendingOrderToBankTransfer(ctx: RequestContext, orderCode: string): Promise<ID> {
+    const order = await this.connection.getRepository(ctx, Order).findOne({
+      where: { code: orderCode },
+      relations: { payments: true, customer: { user: true } },
+    });
+
+    if (!order || order.active || order.state !== "ArrangingPayment" || coveredByPayments(order)) {
+      throw barionOrderState();
+    }
+
+    if (!(await this.authorizedForOrder(ctx, order))) {
+      throw barionOrderState();
+    }
+
+    const latest = await this.latestIntentRow(ctx, order.id);
+
+    if (latest?.status === "Switched") {
+      throw barionOrderState();
+    }
+
+    await this.connection
+      .getRepository(ctx, BarionPayment)
+      .update({ orderId: order.id, status: "Processing" }, { status: "Switched" });
+
+    await this.orderService.addNoteToOrder(ctx, {
+      id: order.id,
+      note: "A vevő lemondta a Barion-fizetést, és átutalást választott: díjbekérőt kell kiállítani, a beérkező átutalást a számlázás után kézzel rögzíteni.",
+      isPublic: false,
+    });
+
+    return order.id;
+  }
+
+  private async latestIntentRow(ctx: RequestContext, orderId: ID): Promise<BarionPayment | null> {
+    return this.connection.getRepository(ctx, BarionPayment).findOne({
+      where: { orderId },
+      order: { id: "DESC" },
+    });
   }
 
   private pendingRows(
@@ -207,6 +271,7 @@ export class BarionService implements OnApplicationBootstrap {
       !order.active &&
       order.state === "ArrangingPayment" &&
       row.status !== "Succeeded" &&
+      row.status !== "Switched" &&
       !coveredByPayments(order)
     );
   }

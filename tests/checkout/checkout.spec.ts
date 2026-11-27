@@ -283,16 +283,25 @@ test("a pending Barion order pays again from the payment step", async ({ page })
   ).toHaveCount(0);
   await expect(page.getByTestId("summary-column")).not.toContainText("Áttekintés");
 
-  // Bank transfer: the order is already placed — the code is shown.
-  await page.getByRole("radio", { name: /Átutalás/ }).check();
-  await continueFromPayment(page, /Fizetés most/);
-  await expectOrderPlaced(page);
-
-  // Barion: a new intent starts and the gateway takes over.
-  await page.goto("/checkout");
-  await expect(page).toHaveURL(/#payment$/);
+  // Barion: a new intent starts and the gateway takes over again.
   await page.getByRole("radio", { name: /Online fizetés/ }).check();
   await continueFromPayment(page, /Fizetés most/);
   await page.waitForURL(/secure\.test\.barion\.com/, { waitUntil: "commit" }).catch(() => {});
   await expect(page).toHaveURL(/secure\.test\.barion\.com/);
+
+  // Closing the gateway again leaves the order pending once more.
+  await page.goto("/checkout");
+  await expect(page).toHaveURL(/#payment$/);
+
+  // Bank transfer: the switch closes the Barion track on the server (the
+  // díjbekérő replaces it), then the code is shown.
+  await page.getByRole("radio", { name: /Átutalás/ }).check();
+  await continueFromPayment(page, /Fizetés most/);
+  await expectOrderPlaced(page);
+
+  // The switch is real: on reload the pending basket is gone — the checkout
+  // starts fresh instead of resurrecting the order.
+  await page.goto("/checkout");
+  await expect(page).not.toHaveURL(/#payment$/);
+  await expect(page.getByRole("radio", { name: /Átutalás/ })).toHaveCount(0);
 });

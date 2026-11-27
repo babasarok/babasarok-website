@@ -168,6 +168,13 @@
         <p class="text-brown-600">{i18n.t("payment.processing")}</p>
         <p class="text-sm text-brown-600">{i18n.t("payment.processingNote")}</p>
 
+        <a
+          href={localizedPath("/checkout", locale)}
+          class="text-sm text-body underline hover:text-brown-700"
+        >
+          {i18n.t("payment.backToCheckout")}
+        </a>
+
         {#if view === "stalled"}
           <p class="text-sm text-brown-600">
             {i18n.t("payment.stalledHint")}

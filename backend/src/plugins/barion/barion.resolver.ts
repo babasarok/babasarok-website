@@ -19,6 +19,9 @@ export const barionShopSchema = gql`
   extend type Mutation {
     "Starts a Barion Immediate payment for the placed order's full total, addressed by its code."
     createBarionPaymentIntent(orderCode: String!): BarionPaymentIntent!
+
+    "Closes the pending order's Barion track: the buyer pays the placed order by bank transfer instead."
+    switchPendingOrderToBankTransfer(orderCode: String!): String!
   }
 
   extend type Query {
@@ -44,6 +47,17 @@ export class BarionResolver {
   ): Promise<{ paymentId: string; gatewayUrl: string }> {
     // Failures travel as coded refusals in the error message (the site owns the wording).
     return this.barionService.createPaymentIntent(ctx, orderCode);
+  }
+
+  @Mutation()
+  async switchPendingOrderToBankTransfer(
+    @Ctx() ctx: RequestContext,
+    @Args("orderCode") orderCode: string
+  ): Promise<string> {
+    const id = await this.barionService.switchPendingOrderToBankTransfer(ctx, orderCode);
+    const order = await this.orderService.findOne(ctx, id);
+
+    return order?.code ?? orderCode;
   }
 
   @Query()

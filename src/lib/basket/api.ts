@@ -88,6 +88,11 @@ export interface BasketApi {
   transitionToArrangingPayment(): Promise<Result<Order>>;
   /** The gateway redirect for the placed order, addressed by its code. */
   createBarionPaymentIntent(orderCode: string): Promise<Result<BarionIntent>>;
+  /**
+   * Closes the pending order's Barion track: the buyer pays the placed order
+   * by bank transfer instead. Resolves the order's code.
+   */
+  switchPendingOrderToBankTransfer(orderCode: string): Promise<Result<string>>;
   /** The placed order's payment status, without the order being active. */
   barionPaymentStatus(orderCode: string): Promise<Result<BarionPaymentStatus | null>>;
   /** The caller's unpaid Barion order: placed, not settled, still theirs to pay. */
@@ -404,6 +409,25 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
       }
 
       return { ok: true, value: result.value.createBarionPaymentIntent };
+    },
+    async switchPendingOrderToBankTransfer(orderCode) {
+      const result = await request(
+        `mutation BarionSwitch($orderCode: String!) { switchPendingOrderToBankTransfer(orderCode: $orderCode) }`,
+        { orderCode },
+        z.object({ switchPendingOrderToBankTransfer: z.string() })
+      );
+
+      if (!result.ok) {
+        return {
+          ...result,
+          failure: {
+            ...result.failure,
+            reason: barionRefusalKey(result.failure.detail) ?? result.failure.reason,
+          },
+        };
+      }
+
+      return { ok: true, value: result.value.switchPendingOrderToBankTransfer };
     },
     async barionPaymentStatus(orderCode) {
       const result = await request(

@@ -11,7 +11,15 @@ import type {
   BarionStartPaymentRequest,
 } from "./barion-client";
 
-export type BarionStatus = "Processing" | "Succeeded" | "Failed" | "Expired";
+/**
+ * The intent's lifecycle on our side. "Processing"/"Succeeded"/"Failed"/
+ * "Expired" mirror the gateway's verdicts; "Switched" is local only — the
+ * buyer gave up on the gateway payment and switched the order to bank
+ * transfer, closing the Barion track (new intents are refused, the pending
+ * basket stops rendering). Distinct from Barion's own "Canceled" state,
+ * which maps to "Failed".
+ */
+export type BarionStatus = "Processing" | "Succeeded" | "Failed" | "Expired" | "Switched";
 
 /**
  * Barion's PaymentState verdict. The callback itself is never trusted — this

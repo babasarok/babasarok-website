@@ -19,7 +19,7 @@ export type BarionIntent = z.output<typeof BarionIntentSchema>;
 
 export const BarionPaymentStatusSchema = z.object({
   paymentId: z.string().nullable(),
-  status: z.enum(["Processing", "Succeeded", "Failed", "Expired"]),
+  status: z.enum(["Processing", "Succeeded", "Failed", "Expired", "Switched"]),
 });
 
 export type BarionPaymentStatus = z.output<typeof BarionPaymentStatusSchema>;
@@ -59,7 +59,10 @@ export function confirmationView(status: string | undefined, elapsedMs: number):
     return "succeeded";
   }
 
-  if (status === "Failed" || status === "Expired") {
+  if (status === "Failed" || status === "Expired" || status === "Switched") {
+    // "Switched": the buyer replaced this payment with a bank transfer — an
+    // old gateway tab returning sees the closed Barion track, and a retry is
+    // refused with the coded order-state refusal.
     return "failed";
   }
 
