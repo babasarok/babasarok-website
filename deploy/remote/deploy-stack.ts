@@ -17,6 +17,7 @@
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import {
+  appendFileSync,
   chmodSync,
   copyFileSync,
   existsSync,
@@ -143,6 +144,17 @@ try {
           "",
         ].join("\n")
       );
+      chmodSync(`${DIR}/.env`, 0o600);
+    }
+
+    // Ensure the Barion redirect-origin line exists on every deploy, not only
+    // at first provisioning: the migrate/backend containers boot before
+    // deploy-backend.ts patches the real preview URL in (right after the
+    // frontend deploy), and a configured Barion shop refuses to boot without
+    // it. The prod site is the same fallback ADMIN_URL uses; deploy-backend.ts
+    // upserts the real preview URL minutes into the deploy.
+    if (!readFileSync(`${DIR}/.env`, "utf8").includes("BARION_REDIRECT_BASE=")) {
+      appendFileSync(`${DIR}/.env`, "BARION_REDIRECT_BASE=https://babasarok.net\n");
       chmodSync(`${DIR}/.env`, 0o600);
     }
 
