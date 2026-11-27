@@ -142,7 +142,13 @@ describe("line rows", () => {
         id: "3",
         name: "v",
         options: [{ name: "L", group: { name: "Méret" } }],
-        product: { slug: "kosar", name: "Kosár", featuredAsset: null, productDefinition: null },
+        product: {
+          slug: "kosar",
+          name: "Kosár",
+          featuredAsset: null,
+          productDefinition: null,
+          productionTimeDays: 7,
+        },
       },
     });
 
@@ -163,6 +169,7 @@ describe("line rows", () => {
           name: "Párna",
           featuredAsset: null,
           productDefinition: definition,
+          productionTimeDays: 21,
         },
       },
     });
@@ -225,7 +232,13 @@ const line = (over: Partial<OrderLine> = {}): OrderLine => ({
     id: "3",
     name: "v",
     options: [],
-    product: { slug: "parna", name: "Párna", featuredAsset: null, productDefinition: null },
+    product: {
+      slug: "parna",
+      name: "Párna",
+      featuredAsset: null,
+      productDefinition: null,
+      productionTimeDays: 7,
+    },
   },
   ...over,
 });

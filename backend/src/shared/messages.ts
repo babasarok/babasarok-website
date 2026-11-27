@@ -18,6 +18,8 @@ const hu = {
   detailToggleOn: (): string => "Igen",
   deliveryFree: (): string => "ingyenes",
   productOrdinal: (number: number): string => `${number}. termék`,
+  productionTime: (days: number): string =>
+    days >= 7 && days % 7 === 0 ? `${days / 7} hét` : `${days} nap`,
   orderConfirmationSubject: (orderCode: string): string => `Köszönjük a rendelésed: ${orderCode}`,
   orderNotificationSubject: (orderCode: string): string => `Új árajánlatkérés: ${orderCode}`,
   glsShippedSubject: (orderCode: string): string => `Rendelésed úton van: ${orderCode}`,
@@ -34,6 +36,15 @@ const en: Messages = {
   detailToggleOn: () => "Yes",
   deliveryFree: () => "free",
   productOrdinal: (number) => `product ${number}`,
+  productionTime: (days) => {
+    if (days >= 7 && days % 7 === 0) {
+      const weeks = days / 7;
+
+      return weeks === 1 ? "1 week" : `${weeks} weeks`;
+    }
+
+    return days === 1 ? "1 day" : `${days} days`;
+  },
   orderConfirmationSubject: (orderCode) => `Thank you for your order: ${orderCode}`,
   orderNotificationSubject: (orderCode) => `New quote request: ${orderCode}`,
   glsShippedSubject: (orderCode) => `Your order is on its way: ${orderCode}`,

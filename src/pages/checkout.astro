@@ -10,18 +10,12 @@ const locale = localeFromPathname(Astro.url.pathname);
 const i18n = createI18n(locale);
 const t = i18n.t.bind(i18n);
 const configEntry = await getEntry("config", entryIdForLocale(locale, "config"));
-// The glob loader strips a trailing "/index" from the entry id (hu/index.md → hu).
-const checkout = await getEntry("checkout", locale);
 
 if (!configEntry) {
   throw new Error("Config entry not found");
 }
 
 const config = configEntry.data;
-
-if (!checkout) {
-  throw new Error("Checkout entry not found");
-}
 ---
 
 <Base title={t("checkout.title")} compactFooter>
@@ -36,12 +30,7 @@ if (!checkout) {
 
   <section class="py-6 sm:py-12.5">
     <div class="not-prose container">
-      <CheckoutSection
-        {locale}
-        basketInfo={checkout.data.basket_note}
-        supportEmail={config.address?.email}
-        client:load
-      />
+      <CheckoutSection {locale} supportEmail={config.address?.email} client:load />
     </div>
   </section>
 </Base>

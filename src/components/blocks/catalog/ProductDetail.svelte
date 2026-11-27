@@ -9,6 +9,8 @@
   import { remoteValue } from "@/lib/catalog/remote.svelte";
   import { bothReady, catalogStore } from "@/lib/catalog/store";
   import type { Locale } from "@/lib/i18n";
+  import { productionTimeLabel } from "@/lib/productionTime";
+  import { translateMessage } from "@/lib/i18next-client";
   import { ASSET_BASE } from "@/lib/vendure/client";
   import CatalogState from "./CatalogState.svelte";
   import DetailNav from "./DetailNav.svelte";
@@ -73,13 +75,25 @@
                 {#if loadedProduct.shortDescription}
                   <p class="mt-3">{loadedProduct.shortDescription}</p>
                 {/if}
-                {#if page.kind === "ready-made"}
-                  <span
-                    class="text-body mt-3 inline-block rounded-full bg-sand-100 px-3 py-1 text-xs text-sand-800"
-                  >
-                    {i18n.t("readyMade.badge")}
-                  </span>
-                {/if}
+                <div class="mt-3 flex flex-wrap gap-2">
+                  {#snippet badge(text: string)}
+                    <span
+                      class="text-body inline-block self-start rounded-full bg-sand-100 px-3 py-1 text-xs text-sand-800"
+                    >
+                      {text}
+                    </span>
+                  {/snippet}
+                  {#if page.kind === "ready-made"}
+                    {@render badge(i18n.t("readyMade.badge"))}
+                  {/if}
+                  {@render badge(
+                    translateMessage(i18n, "productionTime.badge", {
+                      time: productionTimeLabel(loadedProduct.productionTimeDays, (key, vars) =>
+                        translateMessage(i18n, key, vars)
+                      ),
+                    })
+                  )}
+                </div>
                 <div class="mt-6">
                   {#if page.kind === "configurator"}
                     <ConfiguratorOrder

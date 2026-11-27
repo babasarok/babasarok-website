@@ -1,11 +1,10 @@
 import { ProductDefinitionSchema } from "@babasarok/product-definition";
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
-import { hasConfiguratorLine, type Order, type OrderLine } from "./schemas";
+import { basketProductionDays, type Order, type OrderLine } from "./schemas";
 
-// Seam: the basket's line composition vs. the checkout's lead-time note —
-// a made-to-order line means production time; a ready-made-only basket ships
-// from stock.
+// Seam: the shop API's resolved per-product production days vs. the checkout's
+// note — the basket shows its longest line's time.
 
 const definition = ProductDefinitionSchema.parse({
   id: "parna",
@@ -15,7 +14,10 @@ const definition = ProductDefinitionSchema.parse({
   fields: [],
 });
 
-const line = (productDefinition: z.output<typeof ProductDefinitionSchema> | null): OrderLine => ({
+const line = (
+  productDefinition: z.output<typeof ProductDefinitionSchema> | null,
+  productionTimeDays = 21
+): OrderLine => ({
   id: "10",
   quantity: 1,
   unitPriceWithTax: 11_000,
@@ -26,7 +28,13 @@ const line = (productDefinition: z.output<typeof ProductDefinitionSchema> | null
     id: "3",
     name: "v",
     options: [],
-    product: { slug: "parna", name: "Párna", featuredAsset: null, productDefinition },
+    product: {
+      slug: "parna",
+      name: "Párna",
+      featuredAsset: null,
+      productDefinition,
+      productionTimeDays,
+    },
   },
 });
 
@@ -48,16 +56,14 @@ const order = (lines: OrderLine[]): Order => ({
   lines,
 });
 
-describe("hasConfiguratorLine", () => {
-  it("is true when a line's product has a definition", () => {
-    expect(hasConfiguratorLine(order([line(null), line(definition)]))).toBe(true);
+describe("basketProductionDays", () => {
+  it("is the longest line's production time", () => {
+    expect(basketProductionDays(order([line(null, 7), line(definition, 21)]))).toBe(21);
+    expect(basketProductionDays(order([line(definition, 21), line(null, 3)]))).toBe(21);
+    expect(basketProductionDays(order([line(null, 3)]))).toBe(3);
   });
 
-  it("is false for a ready-made-only basket", () => {
-    expect(hasConfiguratorLine(order([line(null), line(null)]))).toBe(false);
-  });
-
-  it("is false for an empty basket", () => {
-    expect(hasConfiguratorLine(order([]))).toBe(false);
+  it("is undefined for an empty basket", () => {
+    expect(basketProductionDays(order([]))).toBeUndefined();
   });
 });

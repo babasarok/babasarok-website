@@ -43,6 +43,7 @@ export type CatalogProductGroup = z.output<
 >["productGroups"][number];
 
 export interface CatalogProductDetail extends CatalogProduct {
+  productionTimeDays: number;
   description: string;
   gallery: Array<{ asset: VendureAsset; description: string | null }>;
 }
@@ -109,6 +110,7 @@ export function toProductDetail(row: DetailRow): CatalogProductDetail | null {
 
   return {
     ...product,
+    productionTimeDays: row.productionTimeDays,
     description: row.description,
     gallery: row.assets.map((asset) => ({
       asset,

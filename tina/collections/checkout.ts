@@ -18,12 +18,6 @@ export const CheckoutCollection: Collection = {
   fields: [
     {
       type: "string",
-      name: "basket_note",
-      label: "Kosár megjegyzés",
-      required: false,
-    },
-    {
-      type: "string",
       name: "contact_heading",
       label: "Kapcsolat fejléc",
       required: true,

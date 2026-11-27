@@ -2,6 +2,7 @@ import { selectionDetails } from "../../shared/product-definition/index";
 import type { TransactionalConnection } from "@vendure/core";
 import type { Order, RequestContext } from "@vendure/core";
 import { In } from "typeorm";
+import { productionDefaults, resolveProductionDays } from "../product/production-days";
 import { nativeProductNames } from "../product/native-names";
 import { ProductDefinition as ProductDefinitionEntity } from "../product/product.entity";
 import { selectionLabels, selectionsOf } from "../product/line-labels";
@@ -11,7 +12,7 @@ import type { NativeLineContent } from "./order-email-view";
 /**
  * Each order line's title and visible configuration from its `selections`
  * and the product's canonical definition, aligned with `order.lines`. The
- * order's lines must have their product variant loaded.
+ * order's lines must have their product variant and product loaded.
  */
 export async function loadNativeLineContent(
   connection: TransactionalConnection,
@@ -28,16 +29,26 @@ export async function loadNativeLineContent(
   const labels = await selectionLabels(connection, ctx, selections);
   const variantIds = order.lines.map((line) => Number(line.productVariant.id));
   const optionDetails = await loadVariantOptionDetails(connection, ctx, variantIds);
+  const defaults = productionDefaults(
+    ctx.channel.customFields.configuratorProductionDays,
+    ctx.channel.customFields.readyMadeProductionDays
+  );
 
   return order.lines.map((line, index) => {
     const productId = Number(line.productVariant.productId);
     const definition = definitions.get(productId);
     const title = names.get(productId) ?? line.productVariant.name;
+    const productionDays = resolveProductionDays(
+      line.productVariant.product.customFields.productionDays,
+      definition !== undefined,
+      defaults
+    );
 
     if (definition === undefined) {
       return {
         title,
         stocked: true,
+        productionDays,
         details: optionDetails.get(String(line.productVariant.id)) ?? [],
       };
     }
@@ -45,6 +56,7 @@ export async function loadNativeLineContent(
     return {
       title,
       stocked: false,
+      productionDays,
       details: selectionDetails({
         definition,
         selections: selections[index],

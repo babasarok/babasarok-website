@@ -330,6 +330,10 @@ export async function expectTotal(page: Page, total: RegExp): Promise<void> {
   await expect(summary(page).getByTestId("checkout-total")).toContainText(total);
 }
 
+export async function expectProductionNote(page: Page, text: string): Promise<void> {
+  await expect(summary(page).getByText(text)).toBeVisible();
+}
+
 export async function expectNoDeliveryChosen(page: Page): Promise<void> {
   const shipping = step(page, "shipping");
 

@@ -10,7 +10,6 @@
   interface Props {
     locale: Locale;
     supportEmail: string | null | undefined;
-    basketInfo?: string | undefined;
   }
 
   let { locale, ...content }: Props = $props();

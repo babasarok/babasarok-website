@@ -61,8 +61,18 @@ function order(overrides: Partial<EmailViewOrder> = {}): EmailViewOrder {
 }
 
 const content = [
-  { title: "Párna", stocked: false, details: [{ label: "Méret", value: "Nagy", depth: 0 }] },
-  { title: "Takaró", stocked: false, details: [{ label: "Felirat", value: "Bence", depth: 1 }] },
+  {
+    title: "Párna",
+    stocked: false,
+    details: [{ label: "Méret", value: "Nagy", depth: 0 }],
+    productionDays: 21,
+  },
+  {
+    title: "Takaró",
+    stocked: false,
+    details: [{ label: "Felirat", value: "Bence", depth: 1 }],
+    productionDays: 21,
+  },
 ];
 
 describe("orderEmailView", () => {
@@ -87,9 +97,9 @@ describe("orderEmailView", () => {
     const view = orderEmailView(
       order({ lines: [line(), line(), line()] }),
       [
-        { title: "Párna", stocked: false, details: [] },
-        { title: "Takaró", stocked: false, details: [] },
-        { title: "Babafészek", stocked: true, details: [] },
+        { title: "Párna", stocked: false, details: [], productionDays: 21 },
+        { title: "Takaró", stocked: false, details: [], productionDays: 21 },
+        { title: "Babafészek", stocked: true, details: [], productionDays: 7 },
       ],
       money,
       "hu"
@@ -108,7 +118,7 @@ describe("orderEmailView", () => {
   it("names the production time only when a made-to-order line is present", () => {
     const readyMadeOnly = orderEmailView(
       order({ lines: [line()] }),
-      [{ title: "Babafészek", stocked: true, details: [] }],
+      [{ title: "Babafészek", stocked: true, details: [], productionDays: 7 }],
       money,
       "hu"
     );
@@ -118,6 +128,38 @@ describe("orderEmailView", () => {
     const madeToOrderOnly = orderEmailView(order(), content, money, "hu");
 
     expect(madeToOrderOnly.madeToOrder).toBe(true);
+  });
+
+  it("words the longest line's production time in the email's language", () => {
+    const mixed = orderEmailView(
+      order({ lines: [line(), line()] }),
+      [
+        { title: "Babafészek", stocked: true, details: [], productionDays: 7 },
+        { title: "Párna", stocked: false, details: [], productionDays: 21 },
+      ],
+      money,
+      "hu"
+    );
+
+    expect(mixed.productionTime).toBe("3 hét");
+
+    const overridden = orderEmailView(
+      order({ lines: [line()] }),
+      [{ title: "Párna", stocked: false, details: [], productionDays: 3 }],
+      money,
+      "hu"
+    );
+
+    expect(overridden.productionTime).toBe("3 nap");
+
+    const english = orderEmailView(
+      order({ lines: [line()] }),
+      [{ title: "Párna", stocked: false, details: [], productionDays: 7 }],
+      money,
+      "en"
+    );
+
+    expect(english.productionTime).toBe("1 week");
   });
 
   it("shows a promotion-zeroed charged delivery as free", () => {
