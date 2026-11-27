@@ -4,16 +4,12 @@
   import I18nGate from "@/components/ui/I18nGate.svelte";
   import type { i18n as I18n } from "i18next";
   import type { Locale } from "@/lib/i18n";
-  import {
-    DEFAULT_PAYMENT_METHOD,
-    PAYMENT_METHODS,
-    type PaymentMethodId,
-  } from "@/lib/basket/barion";
+  import { PAYMENT_METHODS, type PaymentMethodId } from "@/lib/basket/barion";
   import { FIELD } from "@/lib/basket/checkoutValues";
 
   interface Props {
     locale: Locale;
-    initial: PaymentMethodId;
+    initial: PaymentMethodId | undefined;
     pending: boolean;
     onBack: () => void;
     onSelect: (payment: PaymentMethodId) => void;
@@ -24,7 +20,7 @@
 
   function onChange(event: Event): void {
     if (event.target instanceof HTMLInputElement && event.target.name === FIELD.paymentMethod) {
-      onSelect(event.target.value === "barion" ? "barion" : DEFAULT_PAYMENT_METHOD);
+      onSelect(event.target.value === "barion" ? "barion" : "bank-transfer");
     }
   }
 </script>

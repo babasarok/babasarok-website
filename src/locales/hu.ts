@@ -213,6 +213,7 @@ const translation = {
       barionNote:
         "Biztonságos online fizetés bankkártyával vagy Barion-egyenleggel. A rendelés leadása után a fizetési oldalra kerülsz.",
       "bank-transfer": "Átutalás",
+      unchosen: "Fizetés",
       "bank-transferNote":
         "A rendelés összegéről díjbekérőt állítunk ki, amit emailben küldünk el; ezt tudod átutalással rendezni.",
       hint: "A fizetést a rendelés leadása után indíthatod el.",
@@ -324,6 +325,7 @@ const translation = {
     email: "Kérem, add meg az email címed.",
     terms: "Az ÁSZF elfogadása kötelező.",
     method: "Kérem, válassz egy szállítási módot.",
+    payment: "Kérem, válassz fizetési módot.",
     street: "Kérjük, add meg az utcát.",
     houseNumber: "Kérjük, add meg a házszámot.",
     postalCode: "Kérjük, add meg az irányítószámot.",

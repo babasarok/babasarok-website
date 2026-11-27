@@ -111,6 +111,8 @@ export function summaryLine(details: readonly DetailRow[]): string {
   return details.map((row) => row.value).join(" · ");
 }
 
-export function paymentRows(payment: PaymentMethodId, t: T): DetailRow[] {
-  return rows([{ label: t("checkout.payment.label"), value: t(`checkout.payment.${payment}`) }]);
+export function paymentRows(payment: PaymentMethodId | undefined, t: T): DetailRow[] {
+  return rows([
+    { label: t("checkout.payment.label"), value: t(`checkout.payment.${payment ?? "unchosen"}`) },
+  ]);
 }

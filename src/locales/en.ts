@@ -219,6 +219,7 @@ const translation = {
       barionNote:
         "Secure online payment by bank card or Barion balance. After submitting the order you are taken to the payment page.",
       "bank-transfer": "Bank transfer",
+      unchosen: "Payment",
       "bank-transferNote":
         "We issue a demand document (díjbekérő) for the order's total and send it by email; you can settle it by bank transfer.",
       hint: "You can start the payment after submitting the order.",
@@ -330,6 +331,7 @@ const translation = {
     email: "Please enter your email address.",
     terms: "Accepting the GTC is required.",
     method: "Please choose a shipping method.",
+    payment: "Please choose a payment method.",
     street: "Please enter the street.",
     houseNumber: "Please enter the house number.",
     postalCode: "Please enter the postcode.",

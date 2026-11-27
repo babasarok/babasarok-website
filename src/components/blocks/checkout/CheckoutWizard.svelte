@@ -42,7 +42,7 @@
   } from "@/lib/basket/readiness";
   import type { Order, ShippingQuote } from "@/lib/basket/schemas";
   import type { SetMembers } from "@/lib/basket/setDiscounts";
-  import { DEFAULT_PAYMENT_METHOD, type PaymentMethodId } from "@/lib/basket/barion";
+  import { type PaymentMethodId } from "@/lib/basket/barion";
   import {
     layoutSteps,
     nextStep,
@@ -90,7 +90,7 @@
   let success = $state<{ code: string } | null>(null);
   let highlightedLines = $state<readonly string[]>([]);
   let termsAccepted = $state(false);
-  let paymentMethod = $state<PaymentMethodId>(DEFAULT_PAYMENT_METHOD);
+  let paymentMethod = $state<PaymentMethodId | undefined>(undefined);
 
   const wide = new MediaQuery("min-width: 64rem");
   const steps = $derived(layoutSteps(wide.current));
@@ -424,6 +424,11 @@
 
     if (method === undefined) {
       showError("blockers.method");
+      return;
+    }
+
+    if (paymentMethod === undefined) {
+      showError("blockers.payment");
       return;
     }
 

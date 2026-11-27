@@ -1,5 +1,5 @@
 import type { AddressInput, CustomerInput } from "./api";
-import { DEFAULT_PAYMENT_METHOD, type PaymentMethodId } from "./barion";
+import type { PaymentMethodId } from "./barion";
 import { requiresAddress, type Order, type OrderAddress, type ShippingQuote } from "./schemas";
 
 export const DEFAULT_COUNTRY = "HU";
@@ -147,9 +147,12 @@ export function messageFromForm(data: FormData): string {
   return field(data, FIELD.message);
 }
 
-/** The payment method the buyer picked on the payment step; anything else is today's default. */
-export function paymentFromForm(data: FormData): PaymentMethodId {
-  return data.get(FIELD.paymentMethod) === "barion" ? "barion" : DEFAULT_PAYMENT_METHOD;
+/** The payment method the buyer picked on the payment step; nothing is preselected. */
+export function paymentFromForm(data: FormData): PaymentMethodId | undefined {
+  return data.get(FIELD.paymentMethod) === "barion" ||
+    data.get(FIELD.paymentMethod) === "bank-transfer"
+    ? (data.get(FIELD.paymentMethod) as PaymentMethodId)
+    : undefined;
 }
 
 /**

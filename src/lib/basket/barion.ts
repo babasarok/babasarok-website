@@ -10,9 +10,6 @@ export const PAYMENT_METHODS = ["barion", "bank-transfer"] as const;
 
 export type PaymentMethodId = (typeof PAYMENT_METHODS)[number];
 
-/** Today's behavior: the order parks in ArrangingPayment, the owner emails a díjbekérő. */
-export const DEFAULT_PAYMENT_METHOD: PaymentMethodId = "bank-transfer";
-
 export const BarionIntentSchema = z.object({
   paymentId: z.string().min(1),
   gatewayUrl: z.url({ protocol: /^https$/ }),
