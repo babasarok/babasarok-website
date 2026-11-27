@@ -28,6 +28,8 @@ import { GLS_SENDER_FIELD } from "./plugins/gls/gls-sender";
 import { GlsPlugin } from "./plugins/gls/gls.plugin";
 import { glsProblemHandler, glsShippedHandler } from "./plugins/gls/gls-emails";
 import { glsStatusPollTask } from "./plugins/gls/gls-poll-task";
+import { BarionPlugin } from "./plugins/barion/barion.plugin";
+import { barionHandler } from "./plugins/barion/barion.handler";
 import { z } from "zod";
 import { HandlebarsHtmlGenerator } from "./plugins/email/handlebars-html-generator";
 import { CloudflareEmailSender } from "./plugins/email/cloudflare-email-sender";
@@ -200,7 +202,7 @@ export const config: VendureConfig = {
     moneyStrategy: new ForintMoneyStrategy(),
   },
   paymentOptions: {
-    paymentMethodHandlers: [bankTransferHandler],
+    paymentMethodHandlers: [bankTransferHandler, barionHandler],
     paymentMethodEligibilityCheckers: [bankTransferChecker],
   },
   promotionOptions: {
@@ -228,6 +230,10 @@ export const config: VendureConfig = {
     PricingPlugin,
     CheckoutPlugin,
     GlsPlugin,
+    // Payments (ADR 0021 slice 1: full prepay) — orders are placed at
+    // ArrangingPayment submission (QuoteOrderPlacedStrategy) and the Barion
+    // callback records the money afterwards.
+    BarionPlugin,
     ChannelSetupPlugin,
     // Owns the material/product imagery (ADR 0009): uploads and previews are
     // stored on local disk (a docker volume in deploys) and served at /assets.

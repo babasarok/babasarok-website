@@ -76,6 +76,8 @@ export const RefusalSchema = z.discriminatedUnion("code", [
     missing: z.array(CheckoutMissingSchema),
     addressParts: z.array(AddressPartSchema),
   }),
+  z.strictObject({ code: z.literal("BARION_ORDER_STATE") }),
+  z.strictObject({ code: z.literal("BARION_INTENT_FAILED") }),
 ]);
 
 export type SelectionReason = z.output<typeof SelectionReasonSchema>;
