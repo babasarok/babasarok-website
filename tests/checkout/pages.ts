@@ -135,8 +135,11 @@ export async function fillPickupBilling(page: Page): Promise<void> {
   await saved;
   await expect(page).toHaveURL(/#payment$/);
 
-  // Nothing is preselected: the buyer picks explicitly (Átutalás keeps the
-  // placed-order behavior the suite asserts).
+  await chooseBankTransfer(page);
+}
+
+/** Nothing is preselected: the buyer picks explicitly (Átutalás keeps the placed-order behavior the suite asserts). */
+export async function chooseBankTransfer(page: Page): Promise<void> {
   await step(page, "payment")
     .getByRole("radio", { name: /Átutalás/ })
     .check();

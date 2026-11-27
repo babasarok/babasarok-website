@@ -36,6 +36,7 @@ import {
   expectSetChip,
   expectShippingRow,
   expectTotal,
+  chooseBankTransfer,
   fillContact,
   fillPickupBilling,
   goToCheckoutInApp,
@@ -116,15 +117,19 @@ test("every step's details are saved onto the order, restored on return, and the
   await fillPickupBilling(page);
   await writeMessage(page, "Kék legyen");
 
+  // The payment choice is not saved onto the order, so a returning buyer is
+  // re-asked on the Fizetés step; everything else is restored.
   await page.reload({ waitUntil: "domcontentloaded" });
-  await expectReviewPrefilled(page, "Kék legyen");
-
-  await page.goBack();
-  await openCheckout(page);
+  await expect(page).toHaveURL(/#payment$/);
+  await chooseBankTransfer(page);
   await expectReviewPrefilled(page, "Kék legyen");
   await expectContactFieldsPrefilled(page);
 
   await openCheckout(page);
+  await expect(page).toHaveURL(/#payment$/);
+  await chooseBankTransfer(page);
+  await expectReviewPrefilled(page, "Kék legyen");
+
   await acceptTermsAndSubmit(page);
   await expectOrderPlaced(page);
 

@@ -1,3 +1,4 @@
+import type { PaymentMethodId } from "./barion";
 import { requiresAddress, type Order, type ShippingQuote } from "./schemas";
 import {
   billingUsesOwnFields,
@@ -115,8 +116,17 @@ export function orderBlocker(order: Order | null): FieldCheck | undefined {
   return undefined;
 }
 
-/** The first form step whose saved data is incomplete; the review step always passes. */
-export function furthestStep(values: CheckoutValues, method?: ShippingQuote): StepId {
+/**
+ * The first form step whose saved data is incomplete; an unchosen payment
+ * method stops the walk at the payment step — the choice is never saved onto
+ * the order, so a returning buyer always re-picks it there. The review step
+ * always passes.
+ */
+export function furthestStep(
+  values: CheckoutValues,
+  method?: ShippingQuote,
+  payment?: PaymentMethodId
+): StepId {
   if (contactCheck(values.contact) !== undefined) {
     return "contact";
   }
@@ -127,6 +137,10 @@ export function furthestStep(values: CheckoutValues, method?: ShippingQuote): St
 
   if (billingCheck(values.billing, method) !== undefined) {
     return "billing";
+  }
+
+  if (payment === undefined) {
+    return "payment";
   }
 
   return "review";
@@ -141,9 +155,10 @@ export function entryStep(
   values: CheckoutValues,
   steps: readonly StepDef[],
   method?: ShippingQuote,
-  hashStep?: StepId
+  hashStep?: StepId,
+  payment?: PaymentMethodId
 ): StepId {
-  const furthest = furthestStep(values, method);
+  const furthest = furthestStep(values, method, payment);
   const derived = furthest === "contact" ? steps[0].id : furthest;
 
   if (hashStep === undefined) {

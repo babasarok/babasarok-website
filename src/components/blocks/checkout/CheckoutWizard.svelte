@@ -136,7 +136,13 @@
     const values = valuesFromOrder(order);
 
     initial = values;
-    step = entryStep(values, steps, method, stepFromHash(globalThis.location.hash.slice(1)));
+    step = entryStep(
+      values,
+      steps,
+      method,
+      stepFromHash(globalThis.location.hash.slice(1)),
+      paymentMethod
+    );
 
     if (globalThis.location.hash.slice(1) !== step) {
       replaceUrl(`#${step}`);

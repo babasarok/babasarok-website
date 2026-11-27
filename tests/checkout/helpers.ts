@@ -256,7 +256,9 @@ export async function createSet(): Promise<void> {
   const lab = await nativeProductId("e2e-szett-lab");
 
   // A set is one promotion: members on the condition, the flat Ft amount on
-  // the action, the Hungarian name as the set label (ADR 0014).
+  // the action, the Hungarian name as the set label (ADR 0014). Idempotent:
+  // Playwright re-runs this seed when a worker restarts, and a database that
+  // already holds the set refuses a second promotion over the same members.
   await gql(
     `mutation($input: CreatePromotionInput!) { createPromotion(input: $input) { __typename } }`,
     {
@@ -278,7 +280,11 @@ export async function createSet(): Promise<void> {
       },
     },
     z.unknown()
-  );
+  ).catch((error: unknown) => {
+    if (!(error instanceof Error) || !error.message.includes("szett-promóció már tartalmazza")) {
+      throw error;
+    }
+  });
   await findShopProduct("e2e-szett-fej", () => true);
   await findShopProduct("e2e-szett-lab", () => true);
 }
