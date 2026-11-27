@@ -122,6 +122,13 @@ const translation = {
     stock: "{{count}} db raktáron",
     soldOut: "elfogyott",
   },
+  productionTime: {
+    weeks: "{{n}} hét",
+    week: "1 hét",
+    days: "{{n}} nap",
+    day: "1 nap",
+    badge: "Elkészítési idő: {{time}}",
+  },
   checkout: {
     title: "Pénztár",
     success: "Rendelésed sikeresen elküldve! Hamarosan felvesszük veled a kapcsolatot.",
@@ -141,10 +148,6 @@ const translation = {
     shippingLater: "A Szállítás lépésben választható",
     total: "Végösszeg",
     productionTimeNote: "Az elkészítési idő {{time}}.",
-    productionWeeks: "{{n}} hét",
-    productionOneWeek: "1 hét",
-    productionDays: "{{n}} nap",
-    productionOneDay: "1 nap",
     testingNotice:
       "Jelenleg a rendelési folyamat tesztelés alatt áll. Ha bármilyen problémát tapasztalsz, kérlek, jelezd nekünk a",
     testingNoticeLink: "email címünkön",

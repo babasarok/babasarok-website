@@ -32,6 +32,7 @@ export const ProductsResponseSchema = z.object({
 
 export const ProductResponseSchema = z.object({
   product: ProductRowSchema.extend({
+    productionTimeDays: z.number().int(),
     description: z.string(),
     assets: z.array(
       z.object({

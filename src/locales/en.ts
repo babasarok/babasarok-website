@@ -128,6 +128,13 @@ const translation = {
     stock: "{{count}} in stock",
     soldOut: "sold out",
   },
+  productionTime: {
+    weeks: "{{n}} weeks",
+    week: "1 week",
+    days: "{{n}} days",
+    day: "1 day",
+    badge: "Production time: {{time}}",
+  },
   checkout: {
     title: "Checkout",
     success: "Your order has been sent! We will contact you shortly.",
@@ -147,10 +154,6 @@ const translation = {
     shippingLater: "Chosen at the Shipping step",
     total: "Total",
     productionTimeNote: "Production time is {{time}}.",
-    productionWeeks: "{{n}} weeks",
-    productionOneWeek: "1 week",
-    productionDays: "{{n}} days",
-    productionOneDay: "1 day",
     testingNotice:
       "The ordering process is currently under testing. If you run into any problems, please let us know via",
     testingNoticeLink: "our email address",
