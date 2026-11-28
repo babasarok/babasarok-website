@@ -13,12 +13,15 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { seedCatalog } from "./fixtures";
 import { emailsFor, emailText, run, startServer, type IntegrationServer } from "./harness";
+import { szalag } from "./lines";
 import {
   fulfill,
   GLS_SENDER,
   placeOrder,
   recordBankTransfer,
+  recordDeposit,
   setSender,
+  transitionOrder,
   type Placed,
 } from "./gls-flow";
 import { FakeGlsClient } from "../dist/plugins/gls/fake-gls-client";
@@ -51,9 +54,26 @@ async function fulfilledOrder(
   shippingCode: string,
   pay = true
 ): Promise<{ order: Placed; fulfillmentId: string; trackingCode: string }> {
-  const order = await placeOrder(server, shippingCode);
+  // A basket above the 6 000 Ft deposit for the deferred variant (kendo would
+  // complete the Olcsó szett and zero the lines with its discount).
+  const order = await placeOrder(
+    server,
+    shippingCode,
+    shippingCode === "gls-utanvet" ? [szalag(120), szalag(150)] : undefined
+  );
 
-  if (pay) {
+  if (shippingCode === "gls-utanvet") {
+    // The deferred variant's promise: the deposit first, then the label
+    // collects the remainder only.
+    await recordDeposit(server, order);
+
+    if (pay) {
+      // The owner recorded the remainder early: the settle-on-delivery leg
+      // entered from DepositPaid.
+      await transitionOrder(server, order, "ArrangingAdditionalPayment");
+      await recordBankTransfer(server, order);
+    }
+  } else if (pay) {
     await recordBankTransfer(server, order);
   }
 
@@ -194,7 +214,12 @@ describe("GLS status poll", () => {
     });
     expect(await hasLabel(fulfillmentId)).toBe(true);
 
+    // The COD remainder's settle-on-delivery leg, entered from DepositPaid:
+    // ArrangingAdditionalPayment, the deficit, then the owner's manual
+    // transition out (the payment process leaves the order there by design).
+    await transitionOrder(server, order, "ArrangingAdditionalPayment");
     await recordBankTransfer(server, order);
+    await transitionOrder(server, order, "PaymentSettled");
     await poll();
 
     const closed = await orderState(order);

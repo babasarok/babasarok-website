@@ -12,12 +12,14 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { seedCatalog } from "./fixtures";
 import { run, startServer, type IntegrationServer } from "./harness";
+import { szalag } from "./lines";
 import {
   fulfill,
   GLS_SENDER as SENDER,
   handlerError,
   placeOrder,
   recordBankTransfer,
+  recordDeposit,
   setSender,
 } from "./gls-flow";
 
@@ -169,17 +171,40 @@ describe("GLS labels", () => {
     expect(await labelText(fulfillment.id)).toBeNull();
   });
 
-  it("collects the outstanding total on an utánvét order", async () => {
+  it("refuses a deposit-bearing utánvét order before its deposit is recorded", async () => {
     await setSender(server, SENDER);
 
-    const order = await placeOrder(server, "gls-utanvet");
+    // A basket above the 6 000 Ft deposit (kendo would complete the Olcsó
+    // szett and zero the lines with its discount).
+    const order = await placeOrder(server, "gls-utanvet", [szalag(120), szalag(150)]);
+
+    // Without the deposit the label would collect the deposit too — the
+    // handler refuses instead (the deposit's own dashboard action records it).
+    expect(
+      handlerError(
+        await fulfill(
+          server,
+          order,
+          order.lines.map((l) => ({ orderLineId: l.id, quantity: l.quantity }))
+        )
+      )
+    ).toContain("előlege még nincs rögzítve");
+  });
+
+  it("collects the remainder on a utánvét order after its deposit is recorded", async () => {
+    await setSender(server, SENDER);
+
+    // A basket above the 6 000 Ft deposit (kendo would complete the Olcsó
+    // szett and zero the lines with its discount).
+    const order = await placeOrder(server, "gls-utanvet", [szalag(120), szalag(150)]);
+    await recordDeposit(server, order);
     const fulfillment = await fulfill(server, order);
 
     if (fulfillment.__typename !== "Fulfillment" || !("id" in fulfillment)) {
       throw new Error(`fulfillment refused: ${JSON.stringify(fulfillment)}`);
     }
 
-    expect(await labelText(fulfillment.id)).toContain(`COD ${order.totalWithTax} HUF`);
+    expect(await labelText(fulfillment.id)).toContain(`COD ${order.totalWithTax - 6000} HUF`);
   });
 
   it("refuses a partial fulfillment and an order not delivered by GLS", async () => {

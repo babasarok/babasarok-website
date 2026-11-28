@@ -81,11 +81,21 @@ The system SHALL offer delivery as native Vendure shipping methods, seeded at
 backend start if missing (looked up by code, deleted rows included, never
 overwritten):
 
-| Code               | Name (hu)                                         | Price (Ft, gross) | `requiresAddress` |
-| ------------------ | ------------------------------------------------- | ----------------- | ----------------- |
-| `gls-elore-utalas` | GLS házhozszállítás előre utalással               | 2 500             | true              |
-| `gls-utanvet`      | GLS házhozszállítás utánvéttel (előleg szükséges) | 3 500             | true              |
-| `szemelyes`        | Személyes átvétel Telkibányán                     | 0                 | false             |
+| Code               | Name (hu)                                         | Price (Ft, gross) | `requiresAddress` | `deposit` |
+| ------------------ | ------------------------------------------------- | ----------------- | ----------------- | --------- |
+| `gls-elore-utalas` | GLS házhozszállítás előre utalással               | 2 500             | true              | 0         |
+| `gls-utanvet`      | GLS házhozszállítás utánvéttel (előleg szükséges) | 3 500             | true              | 6 000     |
+| `szemelyes`        | Személyes átvétel Telkibányán                     | 0                 | false             | 0         |
+
+The `deposit` column is the variant's payment arrangement ([ADR
+0021](../adr/0021-barion-payment-integration.md) §1, the
+[order-lifecycle spec](order-lifecycle.md)): 0 = full prepay, > 0 = the
+deposit collected at placement, the remainder at handover — read by the
+checkout, the Barion gateway request, the GLS label and the invoice builder
+from the variant itself, never hardcoded per consumer. Existing method rows
+carry the value from the `shipping-method-deposit` migration (the owner's
+dashboard edits keep it afterwards; the seed fills only freshly created
+rows).
 
 The system SHALL seed a promotion that gives free shipping when the order's
 subtotal with tax, after line and set discounts, is at least 60 000. The
@@ -203,8 +213,8 @@ ever setting them. The invoice buyer is therefore always
 ### Payment method
 
 The Fizetés step SHALL offer exactly two payment methods ([ADR
-0021](../adr/0021-barion-payment-integration.md) §2; slice 1 is full-prepay
-only — the deposit/utánvét arrangements are later slices):
+0021](../adr/0021-barion-payment-integration.md) §2), for every delivery
+variant:
 
 - **Online fizetés (Barion)** — after the order is placed, the site calls
   `createBarionPaymentIntent` and redirects the browser to the returned
@@ -217,6 +227,22 @@ only — the deposit/utánvét arrangements are later slices):
   today's success panel (the conversion tracking above fires at placement,
   per [ADR 0021](../adr/0021-barion-payment-integration.md) §8 / issue
   #135).
+
+The payment choice applies to the delivery variant's arrangement ([ADR
+0021](../adr/0021-barion-payment-integration.md) §1, the
+[order-lifecycle spec](order-lifecycle.md)): a full-prepay variant charges
+the full total, a deferred one (`deposit` > 0) charges the deposit alone.
+The step SHALL show the deposit disclosure when the selected variant is
+deferred — the deposit and the remainder come from the arrangement data
+(never hardcoded) — and the review step's payment section carries the same
+disclosure.
+
+- **Scenario: Deposit disclosed**
+  - WHEN the buyer selects a deferred delivery variant and reaches the
+    Fizetés step
+  - THEN both payment methods stay available and the step discloses the
+    deposit paid now and the remainder collected at handover, from the
+    variant's arrangement data
 
 **The basket is cleared only when the order is truly on our end:** at
 placement for átutalás (the díjbekérő obligation starts), and on a
@@ -237,6 +263,9 @@ success panel does not appear).
   - THEN the order is placed by the unchanged submission sequence, the site
     requests the payment intent and the browser is redirected to the Barion
     gateway without an intervening success panel, the basket staying intact
+  - AND for a deferred variant the gateway payment charges the variant's
+    deposit alone, shown as a single bare deposit line
+    (the order-lifecycle spec)
 - **Scenario: Barion intent refused**
   - WHEN `createBarionPaymentIntent` returns a coded refusal
   - THEN the browser is redirected to the payment confirmation page with the

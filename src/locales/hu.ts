@@ -221,6 +221,9 @@ const translation = {
         "A rendelés összegéről díjbekérőt állítunk ki, amit emailben küldünk el; ezt tudod átutalással rendezni.",
       hint: "A fizetést a rendelés leadása után indíthatod el.",
       pay: "Fizetés most",
+      arrangement: "Fizetés ütemezése",
+      depositDisclose:
+        "Utánvéti fizetés: most {{deposit}} előleget fizetsz, a fennmaradó {{remainder}} összeget a kézbesítéskor a futár szedi be.",
     },
   },
   payment: {

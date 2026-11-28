@@ -54,17 +54,19 @@ const StatusSchema = z.object({
   barionPaymentStatus: z.object({ paymentId: z.string().nullable(), status: z.string() }),
 });
 
-const PaymentsSchema = z.object({
+const AdminOrderSchema = z.object({
   orders: z.object({
     items: z.array(
       z.object({
+        id: z.string(),
+        code: z.string(),
         state: z.string(),
         payments: z.array(
           z.object({
             method: z.string(),
             amount: z.number(),
             state: z.string(),
-            transactionId: z.string(),
+            transactionId: z.string().nullable(),
             metadata: z.record(z.string(), z.unknown()),
           })
         ),
@@ -73,19 +75,16 @@ const PaymentsSchema = z.object({
   }),
 });
 
-type OrderPayments = z.output<typeof PaymentsSchema>["orders"]["items"][number];
+type OrderPayments = z.output<typeof AdminOrderSchema>["orders"]["items"][number];
+
+const ADMIN_ORDER_QUERY = `query($code: String!) {
+  orders(options: { filter: { code: { eq: $code } } }) {
+    items { id code state payments { method amount state transactionId metadata } }
+  }
+}`;
 
 async function paymentsOf(code: string): Promise<OrderPayments> {
-  const data = await run(
-    server.admin,
-    `query($code: String!) {
-      orders(options: { filter: { code: { eq: $code } } }) {
-        items { state payments { method amount state transactionId metadata } }
-      }
-    }`,
-    { code },
-    PaymentsSchema
-  );
+  const data = await run(server.admin, ADMIN_ORDER_QUERY, { code }, AdminOrderSchema);
   const order = data.orders.items.at(0);
 
   if (!order) {
@@ -94,6 +93,25 @@ async function paymentsOf(code: string): Promise<OrderPayments> {
 
   return order;
 }
+
+const DEPOSIT_MUTATION = `mutation($orderId: ID!, $transactionId: String) {
+  recordDepositPayment(orderId: $orderId, transactionId: $transactionId) { id state }
+}`;
+
+const STARTED_MUTATION = `mutation($orderId: ID!) {
+  markFulfillmentStarted(orderId: $orderId) { id customFields { fulfillmentStartedAt } }
+}`;
+
+const LifecycleSchema = z.object({
+  recordDepositPayment: z.object({ id: z.string(), state: z.string() }).optional().nullable(),
+});
+
+const StartedSchema = z.object({
+  markFulfillmentStarted: z.object({
+    id: z.string(),
+    customFields: z.object({ fulfillmentStartedAt: z.string().nullable() }),
+  }),
+});
 
 /** Polls until the predicate holds, or throws (the callback job runs in-process). */
 async function waitFor(
@@ -136,6 +154,25 @@ async function placedOrder(): Promise<{ shopper: ReturnType<typeof newShopper>; 
   await setCustomer(shopper);
   await setAddress(shopper);
   await chooseShipping(shopper, "gls-elore-utalas");
+  await setOrderNotes(shopper, { message: "", termsAccepted: true });
+
+  const result = await transitionTo(shopper, "ArrangingPayment");
+
+  if (!("order" in result)) {
+    throw new Error(JSON.stringify(result.refusal));
+  }
+
+  return { shopper, order: result.order };
+}
+
+/** The deferred variant's order: 6 000 Ft deposit now, the remainder at handover. */
+async function placedCodOrder(): Promise<{ shopper: ReturnType<typeof newShopper>; order: Order }> {
+  const shopper = newShopper(server);
+
+  await addLine(shopper, szalag(150));
+  await setCustomer(shopper);
+  await setAddress(shopper);
+  await chooseShipping(shopper, "gls-utanvet");
   await setOrderNotes(shopper, { message: "", termsAccepted: true });
 
   const result = await transitionTo(shopper, "ArrangingPayment");
@@ -437,5 +474,132 @@ describe("Barion full-prepay", () => {
 
     expect(retried).toBeInstanceOf(Error);
     expect(decodeRefusal((retried as Error).message)?.code).toBe("BARION_ORDER_STATE");
+  });
+
+  it("charges only the deposit on a deferred variant's gateway payment", async () => {
+    const { shopper, order } = await placedCodOrder();
+
+    expect(order.totalWithTax).toBeGreaterThan(6000);
+
+    const intent = await startIntent(shopper, order.code);
+    const started = barion.requestsFor(order.code).at(-1);
+
+    // The gateway shows the single bare deposit line — no itemized order
+    // context on a page whose cardinal rule is what-you-see-is-what-you-pay.
+    expect(started?.total).toBe(6000);
+    expect(started?.items).toHaveLength(1);
+    expect(started?.items[0]?.name).toContain("Előleg");
+    expect(started?.items[0]?.name).toContain(order.code);
+    expect(started?.items[0]?.total).toBe(6000);
+
+    const status = await statusFor(shopper, order.code);
+
+    expect(status).toEqual({ paymentId: intent.paymentId, status: "Processing" });
+  });
+
+  it("records the deposit payment and moves the order to DepositPaid", async () => {
+    const { shopper, order } = await placedCodOrder();
+    const intent = await startIntent(shopper, order.code);
+
+    barion.setStatus(intent.paymentId, "Succeeded", [
+      { transactionId: "tx-dep", total: 6000, type: "CardPayment" },
+    ]);
+    await postCallback(intent.paymentId);
+    await waitFor(order.code, (current) => Promise.resolve(current.state === "DepositPaid"));
+
+    const current = await paymentsOf(order.code);
+
+    expect(current.payments).toHaveLength(1);
+
+    const payment = current.payments[0];
+
+    expect(payment?.method).toBe("barion");
+    expect(payment?.amount).toBe(6000);
+    expect(payment?.state).toBe("Settled");
+    expect(payment?.metadata["role"]).toBe("deposit");
+
+    // The deposit-paid order is no longer the pending basket.
+    const pending = await run(shopper.client, PENDING_QUERY, {}, PendingSchema);
+
+    expect(pending.barionPendingOrder).toBeNull();
+  });
+
+  it("records the deposit from the dashboard and moves the order to DepositPaid", async () => {
+    const { order } = await placedCodOrder();
+    const current = await paymentsOf(order.code);
+
+    const recorded = await run(
+      server.admin,
+      DEPOSIT_MUTATION,
+      { orderId: current.id },
+      LifecycleSchema
+    );
+
+    expect(recorded.recordDepositPayment?.state).toBe("DepositPaid");
+
+    const after = await paymentsOf(order.code);
+
+    expect(after.payments).toHaveLength(1);
+
+    const payment = after.payments[0];
+
+    expect(payment?.method).toBe("bank-transfer");
+    expect(payment?.amount).toBe(6000);
+    expect(payment?.state).toBe("Settled");
+    expect(payment?.metadata["role"]).toBe("deposit");
+    expect(payment?.transactionId).toBeNull();
+
+    // A second recording is refused: the order already left ArrangingPayment.
+    const repeated = await run(
+      server.admin,
+      DEPOSIT_MUTATION,
+      { orderId: current.id },
+      z.unknown()
+    ).catch((e: unknown) => e);
+
+    expect(repeated).toBeInstanceOf(Error);
+    expect((repeated as Error).message).toContain("ArrangingPayment");
+  });
+
+  it("refuses the deposit recording on a full-prepay order", async () => {
+    const { order } = await placedOrder();
+    const current = await paymentsOf(order.code);
+
+    const refused = await run(
+      server.admin,
+      DEPOSIT_MUTATION,
+      { orderId: current.id },
+      z.unknown()
+    ).catch((e: unknown) => e);
+
+    expect(refused).toBeInstanceOf(Error);
+    expect((refused as Error).message).toContain("teljes előre fizetés");
+  });
+
+  it("stamps the fulfillment-started boundary once", async () => {
+    const { order } = await placedOrder();
+    const current = await paymentsOf(order.code);
+
+    const stamped = await run(
+      server.admin,
+      STARTED_MUTATION,
+      { orderId: current.id },
+      StartedSchema
+    );
+
+    expect(stamped.markFulfillmentStarted.customFields.fulfillmentStartedAt).toBeTruthy();
+
+    const first = stamped.markFulfillmentStarted.customFields.fulfillmentStartedAt;
+
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+
+    const repeated = await run(
+      server.admin,
+      STARTED_MUTATION,
+      { orderId: current.id },
+      StartedSchema
+    );
+
+    expect(repeated.markFulfillmentStarted.customFields.fulfillmentStartedAt).toBe(first);
   });
 });

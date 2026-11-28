@@ -9,6 +9,9 @@ const DELIVERED_CODES = new Set(["5", "54", "58", "92"]);
 /** 16 no cash, 17 refused, 20 address problem, 23/40 returned to the sender. */
 export const PROBLEM_CODES = ["16", "17", "20", "23", "40"];
 
+/** The parcel is physically on its way back to the sender. */
+export const RETURNED_CODES = new Set(["23", "40"]);
+
 export type GlsStatusAction =
   | { kind: "delivered" }
   | { kind: "problem"; status: GlsParcelStatus }

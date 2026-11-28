@@ -19,6 +19,8 @@ export interface SeedShippingMethod {
   name: string;
   rate: number;
   requiresAddress: boolean;
+  /** The deposit (Ft) the variant collects at placement; 0 = full prepay. */
+  deposit: number;
   fulfillmentHandler: typeof GLS_HANDLER_CODE | "manual-fulfillment";
 }
 
@@ -28,6 +30,7 @@ export const SHIPPING_METHODS: readonly SeedShippingMethod[] = [
     name: "GLS házhozszállítás előre utalással",
     rate: 2500,
     requiresAddress: true,
+    deposit: 0,
     fulfillmentHandler: GLS_HANDLER_CODE,
   },
   {
@@ -35,6 +38,7 @@ export const SHIPPING_METHODS: readonly SeedShippingMethod[] = [
     name: "GLS házhozszállítás utánvéttel (előleg szükséges)",
     rate: 3500,
     requiresAddress: true,
+    deposit: 6000,
     fulfillmentHandler: GLS_HANDLER_CODE,
   },
   {
@@ -42,6 +46,7 @@ export const SHIPPING_METHODS: readonly SeedShippingMethod[] = [
     name: "Személyes átvétel Telkibányán",
     rate: 0,
     requiresAddress: false,
+    deposit: 0,
     fulfillmentHandler: "manual-fulfillment",
   },
 ];
@@ -100,7 +105,7 @@ async function seedShippingMethod(
       ],
     },
     translations: [{ languageCode: LanguageCode.hu, name: method.name, description: "" }],
-    customFields: { requiresAddress: method.requiresAddress },
+    customFields: { requiresAddress: method.requiresAddress, deposit: method.deposit },
   });
 }
 

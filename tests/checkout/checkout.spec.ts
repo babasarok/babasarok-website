@@ -15,6 +15,7 @@ import {
   chooseMaterial,
   chooseOption,
   completeDetailsWithPickup,
+  completeDetailsWithCod,
   continueFromShipping,
   editLineMaterial,
   expectBrowserBackReturnsToShipping,
@@ -43,6 +44,7 @@ import {
   goToCheckoutInApp,
   increaseLineQuantity,
   lineOf,
+  step,
   openCheckout,
   openPartnerLink,
   openProductFromList,
@@ -304,4 +306,25 @@ test("a pending Barion order pays again from the payment step", async ({ page })
   await page.goto("/checkout");
   await expect(page).not.toHaveURL(/#payment$/);
   await expect(page.getByRole("radio", { name: /Átutalás/ })).toHaveCount(0);
+});
+
+test("a cash-on-delivery order discloses the deposit before submitting", async ({ page }) => {
+  await restoreLargeSize();
+  await openProductFromList(page, /E2E Párna/);
+  await chooseOption(page, /50x50/);
+  await addToBasket(page);
+  await goToCheckoutInApp(page);
+
+  await completeDetailsWithCod(page);
+
+  // The deferred variant's disclosure: the 6 000 Ft deposit now, the
+  // remainder at handover (the amount comes from the arrangement data).
+  await expect(step(page, "payment").getByTestId("deposit-disclosure")).toContainText(/6\s*000/);
+
+  // Both methods stay available; the Barion submit places the order and
+  // charges the deposit on the gateway (the amount is the backend tests').
+  await choosePayment(page, /Online fizetés/);
+  await acceptTermsAndSubmit(page);
+  await page.waitForURL(/secure\.test\.barion\.com/, { waitUntil: "commit" }).catch(() => {});
+  await expect(page).toHaveURL(/secure\.test\.barion\.com/);
 });

@@ -14,11 +14,27 @@
     onBack: (() => void) | undefined;
     /** The pending order skips the review: the continue button pays directly. */
     payNow: boolean;
+    /**
+     * The selected delivery variant's arrangement (ADR 0021 §1), formatted:
+     * null for full prepay, the deposit (and the remainder) for a deferred one.
+     */
+    deposit: string | null;
+    remainder: string | null;
     onSelect: (payment: PaymentMethodId) => void;
     onContinue: (data: FormData) => void;
   }
 
-  let { locale, initial, pending, onBack, onSelect, onContinue, payNow }: Props = $props();
+  let {
+    locale,
+    initial,
+    pending,
+    onBack,
+    onSelect,
+    onContinue,
+    payNow,
+    deposit,
+    remainder,
+  }: Props = $props();
 
   function onChange(event: Event): void {
     if (event.target instanceof HTMLInputElement && event.target.name === FIELD.paymentMethod) {
@@ -71,6 +87,16 @@
         <Icon icon="mdi:information-outline" class="shrink-0" />
         {i18n.t("checkout.payment.hint")}
       </p>
+
+      {#if deposit !== null && remainder !== null}
+        <p
+          class="flex items-start gap-1.5 rounded-lg bg-brown-100 p-3 text-sm text-brown-700"
+          data-testid="deposit-disclosure"
+        >
+          <Icon icon="mdi:cash-check" class="mt-0.5 shrink-0" />
+          {i18n.t("checkout.payment.depositDisclose", { deposit, remainder })}
+        </p>
+      {/if}
 
       <div class="mt-2 hidden items-center justify-between gap-3 lg:flex">
         {#if onBack !== undefined}

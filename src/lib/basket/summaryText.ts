@@ -111,8 +111,24 @@ export function summaryLine(details: readonly DetailRow[]): string {
   return details.map((row) => row.value).join(" · ");
 }
 
-export function paymentRows(payment: PaymentMethodId | undefined, t: T): DetailRow[] {
-  return rows([
+export function paymentRows(
+  payment: PaymentMethodId | undefined,
+  arrangement: { deposit: string; remainder: string } | null,
+  t: T
+): DetailRow[] {
+  const rowsList = [
     { label: t("checkout.payment.label"), value: t(`checkout.payment.${payment ?? "unchosen"}`) },
-  ]);
+  ];
+
+  if (arrangement !== null) {
+    rowsList.push({
+      label: t("checkout.payment.arrangement"),
+      value: t("checkout.payment.depositDisclose", {
+        deposit: arrangement.deposit,
+        remainder: arrangement.remainder,
+      }),
+    });
+  }
+
+  return rows(rowsList);
 }

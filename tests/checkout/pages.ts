@@ -75,7 +75,10 @@ export async function expectLineHighlight(page: Page, text: RegExp, on: boolean)
   await expect(line).not.toHaveClass(/ring-2/);
 }
 
-function step(page: Page, id: "contact" | "shipping" | "billing" | "payment" | "review"): Locator {
+export function step(
+  page: Page,
+  id: "contact" | "shipping" | "billing" | "payment" | "review"
+): Locator {
   return page.getByTestId(`step-${id}`);
 }
 
@@ -154,6 +157,34 @@ export async function completeDetailsWithPickup(page: Page): Promise<void> {
   await chooseDelivery(page, /Személyes átvétel/);
   await continueFromShipping(page);
   await fillPickupBilling(page);
+}
+
+/**
+ * A cash-on-delivery journey: contact, the deferred GLS variant with its
+ * address, the same-as-shipping billing, ending on the Fizetés step.
+ */
+export async function completeDetailsWithCod(page: Page): Promise<void> {
+  await fillContact(page);
+  await chooseDelivery(page, /utánvéttel/);
+
+  const shipping = step(page, "shipping");
+  const saved = shopMutation(page, "setOrderShippingAddress");
+
+  await shipping.getByLabel(/^Utca/).fill("Fő utca");
+  await shipping.getByLabel(/^Házszám/).fill("1");
+  await shipping.getByLabel(/^Irányítószám/).fill("3896");
+  await shipping.getByLabel(/^Város/).fill("Telkibánya");
+
+  await shipping.getByRole("button", { name: /Tovább a számlázáshoz/ }).click();
+  await saved;
+  await expect(page).toHaveURL(/#billing$/);
+
+  // The billing step: the same-as-shipping toggle is on, so no billing save
+  // happens — continuing goes to the Fizetés step.
+  await step(page, "billing")
+    .getByRole("button", { name: /Tovább a fizetéshez/ })
+    .click();
+  await expect(page).toHaveURL(/#payment$/);
 }
 
 export async function writeMessage(page: Page, message: string): Promise<void> {

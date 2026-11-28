@@ -9,7 +9,7 @@ import { BARION_CLIENT } from "./barion.service";
  * not from the passed-in amount).
  */
 export const BarionPaymentMetadataSchema = z.object({
-  role: z.literal("full"),
+  role: z.enum(["full", "deposit"]),
   barionPaymentId: z.string().min(1),
   amount: z.number().int().positive(),
   currencyCode: z.string().min(3),

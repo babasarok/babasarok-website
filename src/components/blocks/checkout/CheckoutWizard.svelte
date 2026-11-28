@@ -41,6 +41,7 @@
     type FieldCheck,
   } from "@/lib/basket/readiness";
   import type { Order, ShippingQuote } from "@/lib/basket/schemas";
+  import { depositDisclosure } from "@/lib/basket/arrangement";
   import type { SetMembers } from "@/lib/basket/setDiscounts";
   import { barionRetryErrorKey, type PaymentMethodId } from "@/lib/basket/barion";
   import {
@@ -108,6 +109,10 @@
    * methods list is empty for a session without an active order).
    */
   const pending = $derived(basket.pendingPayment && order !== null);
+  const currency = $derived(order?.currencyCode ?? "HUF");
+  const disclosure = $derived(
+    order === null ? null : depositDisclosure(method, order.totalWithTax, currency)
+  );
   const wizardSteps = $derived(
     pending ? steps.filter((stepDef) => stepDef.id === "payment") : steps
   );
@@ -444,7 +449,7 @@
     }
 
     if (id === "payment") {
-      return paymentRows(paymentMethod, t);
+      return paymentRows(paymentMethod, disclosure, t);
     }
 
     return billingRows(values.billing, method, t);
@@ -706,6 +711,8 @@
                           onSelect={(payment) => (paymentMethod = payment)}
                           onContinue={(data) => void onContinue("payment", data)}
                           payNow={pending}
+                          deposit={disclosure?.deposit ?? null}
+                          remainder={disclosure?.remainder ?? null}
                         />
                       {:else}
                         <ReviewStep
@@ -718,7 +725,7 @@
                           contactRows={stepRows("contact", saved, order, t)}
                           shippingRows={stepRows("shipping", saved, order, t)}
                           billingRows={stepRows("billing", saved, order, t)}
-                          paymentRows={paymentRows(paymentMethod, t)}
+                          paymentRows={stepRows("payment", saved, order, t)}
                           total={formatMoney(order.totalWithTax, order.currencyCode)}
                           bind:terms={termsAccepted}
                           {error}

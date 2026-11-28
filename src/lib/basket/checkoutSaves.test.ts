@@ -9,7 +9,7 @@ const gls: ShippingQuote = {
   name: "GLS",
   description: "",
   priceWithTax: 2500,
-  customFields: { requiresAddress: true },
+  customFields: { requiresAddress: true, deposit: 0 },
 };
 
 const none: OrderAddress = {

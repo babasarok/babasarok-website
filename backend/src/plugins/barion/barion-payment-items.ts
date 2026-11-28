@@ -72,6 +72,58 @@ function itemUnit(languageCode: string): string {
   return barionLocale(languageCode) === "hu-HU" ? "db" : "pcs";
 }
 
+/**
+ * The COD deposit's gateway line: a single bare deposit item — the gateway's
+ * cardinal rule is what-you-see-is-what-you-pay, so no itemized order
+ * context may suggest the items are today's charge (ADR 0021 §2).
+ */
+export function depositItemName(orderCode: string, languageCode: string): string {
+  if (barionLocale(languageCode) === "hu-HU") {
+    return `Előleg — Babasarok rendelés #${orderCode}`;
+  }
+
+  return `Deposit — Babasarok order #${orderCode}`;
+}
+
+/**
+ * The deposit payment's request: total = the deposit, items = the one bare
+ * deposit line; the payer hints ride along (3DS pass rate), the order's
+ * lines and shipping do not.
+ */
+export function barionDepositStartRequest(
+  order: BarionOrderSnapshot,
+  deposit: number,
+  precision: number,
+  options: {
+    paymentRequestId: string;
+    payeeEmail: string;
+    redirectUrl: string;
+    callbackUrl: string;
+  }
+): BarionStartPaymentRequest {
+  const total = toBarionAmount(deposit, precision);
+
+  return {
+    paymentRequestId: options.paymentRequestId,
+    currencyCode: order.currencyCode,
+    locale: barionLocale(order.languageCode),
+    total,
+    payeeEmail: options.payeeEmail,
+    redirectUrl: options.redirectUrl,
+    callbackUrl: options.callbackUrl,
+    items: [
+      {
+        name: depositItemName(order.code, order.languageCode),
+        quantity: 1,
+        unit: itemUnit(order.languageCode),
+        unitPrice: total,
+        total,
+      },
+    ],
+    payer: barionPayer(order),
+  };
+}
+
 /** Fallback when a variant name is missing: Barion requires a non-empty item name. */
 function itemName(name: string, languageCode: string): string {
   const trimmed = name.trim();

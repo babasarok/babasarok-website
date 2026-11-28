@@ -355,7 +355,7 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
     },
     async eligibleShippingMethods() {
       const result = await request(
-        `query Eligible { eligibleShippingMethods { id name description priceWithTax customFields { requiresAddress } } }`,
+        `query Eligible { eligibleShippingMethods { id name description priceWithTax customFields { requiresAddress deposit } } }`,
         {},
         z.object({ eligibleShippingMethods: z.array(ShippingQuoteSchema) })
       );

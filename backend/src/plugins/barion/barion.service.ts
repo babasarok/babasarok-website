@@ -20,10 +20,12 @@ import type { JobQueue } from "@vendure/core";
 import type { FindOptionsWhere } from "typeorm";
 import type { ID } from "@vendure/core";
 import { z } from "zod";
+import { paymentArrangement } from "../../shared/arrangement";
 import { encodeRefusal } from "../../shared/refusal";
 import { BarionError, type BarionClient } from "./barion-client";
 import { barionCallbackUrl, barionRedirectUrl, type BarionConfig } from "./barion-config";
 import {
+  barionDepositStartRequest,
   barionStartRequest,
   barionStatusDecision,
   type BarionOrderSnapshot,
@@ -99,6 +101,7 @@ export class BarionService implements OnApplicationBootstrap {
         lines: { productVariant: true },
         customer: { user: true },
         payments: true,
+        shippingLines: { shippingMethod: true },
       },
     });
 
@@ -119,6 +122,10 @@ export class BarionService implements OnApplicationBootstrap {
       .getRepository(ctx, BarionPayment)
       .count({ where: { orderId: order.id } });
 
+    // The arrangement decides what the gateway charges (ADR 0021 §1): the
+    // full total for a prepay variant, the deposit alone for a deferred one.
+    const arrangement = paymentArrangement(order);
+
     // Unique per attempt: a retried payment after a failure gets its own id.
     const lines = order.lines.map((line) => ({
       // The entity load carries no translations: the variant name column is
@@ -129,16 +136,24 @@ export class BarionService implements OnApplicationBootstrap {
       linePriceWithTax: line.linePriceWithTax,
     }));
 
-    const request = barionStartRequest(
-      orderSnapshot(order, lines, ctx.languageCode),
-      this.moneyPrecision(),
-      {
-        paymentRequestId: `${order.code}-${attempt + 1}`,
-        payeeEmail: this.payeeEmail(),
-        redirectUrl: barionRedirectUrl(this.config.redirectBase, order.code),
-        callbackUrl: barionCallbackUrl(this.config.callbackBase),
-      }
-    );
+    const snapshot = orderSnapshot(order, lines, ctx.languageCode);
+    const amount = arrangement.kind === "deposit" ? arrangement.deposit : order.totalWithTax;
+    const startOptions = {
+      paymentRequestId: `${order.code}-${attempt + 1}`,
+      payeeEmail: this.payeeEmail(),
+      redirectUrl: barionRedirectUrl(this.config.redirectBase, order.code),
+      callbackUrl: barionCallbackUrl(this.config.callbackBase),
+    };
+
+    const request =
+      arrangement.kind === "deposit"
+        ? barionDepositStartRequest(
+            snapshot,
+            arrangement.deposit,
+            this.moneyPrecision(),
+            startOptions
+          )
+        : barionStartRequest(snapshot, this.moneyPrecision(), startOptions);
 
     const started = await this.client.startPayment(request).catch((error: unknown) => {
       Logger.error(
@@ -155,8 +170,8 @@ export class BarionService implements OnApplicationBootstrap {
         orderCode: order.code,
         sessionId: String(ctx.session?.id),
         status: "Processing",
-        role: "full",
-        amount: order.totalWithTax,
+        role: arrangement.kind === "deposit" ? "deposit" : "full",
+        amount,
         currencyCode: order.currencyCode,
       })
     );
@@ -216,7 +231,11 @@ export class BarionService implements OnApplicationBootstrap {
   async switchPendingOrderToBankTransfer(ctx: RequestContext, orderCode: string): Promise<ID> {
     const order = await this.connection.getRepository(ctx, Order).findOne({
       where: { code: orderCode },
-      relations: { payments: true, customer: { user: true } },
+      relations: {
+        payments: true,
+        customer: { user: true },
+        shippingLines: { shippingMethod: true },
+      },
     });
 
     if (!order || order.active || order.state !== "ArrangingPayment" || coveredByPayments(order)) {
@@ -237,9 +256,17 @@ export class BarionService implements OnApplicationBootstrap {
       .getRepository(ctx, BarionPayment)
       .update({ orderId: order.id, status: "Processing" }, { status: "Switched" });
 
+    // The díjbekérő's amount is the arrangement's payable: the deposit for a
+    // deferred variant (slice 3's invoice automation takes the note over).
+    const arrangement = paymentArrangement(order);
+    const note =
+      arrangement.kind === "deposit"
+        ? `A vevő lemondta a Barion-előleg fizetését, és átutalást választott: a ${arrangement.deposit} Ft előlegről díjbekérőt kell kiállítani, a beérkező átutalást a számlázás után kézzel rögzíteni.`
+        : "A vevő lemondta a Barion-fizetést, és átutalást választott: díjbekérőt kell kiállítani, a beérkező átutalást a számlázás után kézzel rögzíteni.";
+
     await this.orderService.addNoteToOrder(ctx, {
       id: order.id,
-      note: "A vevő lemondta a Barion-fizetést, és átutalást választott: díjbekérőt kell kiállítani, a beérkező átutalást a számlázás után kézzel rögzíteni.",
+      note,
       isPublic: false,
     });
 
@@ -433,6 +460,14 @@ export class BarionService implements OnApplicationBootstrap {
       }
 
       if (order.state !== "ArrangingPayment") {
+        // A deposit settles the order into DepositPaid: a repeated callback
+        // for that payment is the idempotent success case. Any other state
+        // has nothing this payment can record into.
+        if (order.state === "DepositPaid") {
+          await this.updateStatus(row.paymentId, "Succeeded");
+          return;
+        }
+
         Logger.error(
           `A(z) ${row.orderCode} rendelés nem ArrangingPayment állapotban van (${order.state}) — a Barion fizetés nem rögzíthető.`,
           LOG_CONTEXT
@@ -443,7 +478,7 @@ export class BarionService implements OnApplicationBootstrap {
       const result = await this.orderService.addPaymentToOrder(txCtx, order.id, {
         method: BARION_PAYMENT_METHOD_CODE,
         metadata: BarionPaymentMetadataSchema.parse({
-          role: "full",
+          role: row.role,
           barionPaymentId: row.paymentId,
           amount: row.amount,
           currencyCode: row.currencyCode,
@@ -455,6 +490,24 @@ export class BarionService implements OnApplicationBootstrap {
         throw new Error(
           `A(z) ${row.orderCode} rendelés Barion fizetésének rögzítése meghiúsult: ${result.message}`
         );
+      }
+
+      // A deposit-role payment leaves the un-shippable ArrangingPayment: the
+      // deposit is on the order, the branch proceeds (ADR 0021 §4). The
+      // payment-method-agnostic rule: every deposit is equivalent, whoever
+      // recorded it.
+      if (row.role === "deposit") {
+        const transition = await this.orderService.transitionToState(
+          txCtx,
+          order.id,
+          "DepositPaid"
+        );
+
+        if (isGraphQlErrorResult(transition)) {
+          throw new Error(
+            `A(z) ${row.orderCode} rendelés nem mozdítható DepositPaid-ba: ${transition.message}`
+          );
+        }
       }
 
       await this.connection

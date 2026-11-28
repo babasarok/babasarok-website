@@ -23,7 +23,7 @@ import {
 } from "./gls-label-request";
 import { GlsParcel } from "./gls-parcel.entity";
 import { GlsParcelProblemEvent } from "./gls-parcel-problem-event";
-import { glsStatusDecision, wasHandedOver } from "./gls-status-decision";
+import { glsStatusDecision, RETURNED_CODES, wasHandedOver } from "./gls-status-decision";
 import { glsSenderAddress } from "./gls-sender";
 
 export const GLS_CLIENT: InjectionToken<GlsClient> = Symbol("GLS_CLIENT");
@@ -339,6 +339,20 @@ export class GlsService {
       return;
     }
 
+    // A parcel returned to sender (23/40) is the automatic `Returned` flag —
+    // the state entry is the flag; the owner's exits (cancel or re-fulfill)
+    // are manual, no auto-cancel (ADR 0021 §4).
+    if (RETURNED_CODES.has(action.status.code) && order.state === "Shipped") {
+      const transition = await this.orderService.transitionToState(ctx, order.id, "Returned");
+
+      if (isGraphQlErrorResult(transition)) {
+        Logger.warn(
+          `A(z) ${order.code} rendelés nem mozdítható Returned-ba: ${transition.message}`,
+          LOG_CONTEXT
+        );
+      }
+    }
+
     await this.connection
       .getRepository(ctx, GlsParcel)
       .update(
@@ -425,6 +439,8 @@ function labelOrder(order: Order): LabelOrder {
     code: order.code,
     currencyCode: order.currencyCode,
     totalWithTax: order.totalWithTax,
+    state: order.state,
+    deposit: order.shippingLines[0]?.shippingMethod?.customFields?.deposit ?? 0,
     shippingMethodCode: order.shippingLines[0]?.shippingMethod?.code,
     shippingAddress: order.shippingAddress,
     customerEmail: order.customer?.emailAddress,
