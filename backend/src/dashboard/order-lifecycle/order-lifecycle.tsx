@@ -88,12 +88,15 @@ function OrderLifecycleBlock({ context }: { context: PageContextValue }): ReactE
     return <ErrorNotice message="A rendelés munkafolyamata nem olvasható." />;
   }
 
+  // Narrowed bindings for the closures below (narrowing doesn't reach them).
+  const { id: orderId, deposit, state, fulfillmentStartedAt } = info;
+
   async function recordDeposit(): Promise<void> {
     setBusy("deposit");
     setProblem(null);
 
     try {
-      await api.query(recordDepositMutation, { orderId: info.id });
+      await api.query(recordDepositMutation, { orderId });
       globalThis.location.reload();
     } catch (error) {
       setProblem(
@@ -108,7 +111,7 @@ function OrderLifecycleBlock({ context }: { context: PageContextValue }): ReactE
     setProblem(null);
 
     try {
-      await api.query(markFulfillmentStartedMutation, { orderId: info.id });
+      await api.query(markFulfillmentStartedMutation, { orderId });
       globalThis.location.reload();
     } catch (error) {
       setProblem(
@@ -118,15 +121,15 @@ function OrderLifecycleBlock({ context }: { context: PageContextValue }): ReactE
     }
   }
 
-  const depositRecordable = info.deposit > 0 && info.state === "ArrangingPayment";
-  const startedAt = info.fulfillmentStartedAt;
+  const depositRecordable = deposit > 0 && state === "ArrangingPayment";
+  const startedAt = fulfillmentStartedAt;
 
   return (
     <div className="flex flex-col gap-3">
       {depositRecordable && (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-sm">
-            Előleg: <strong>{info.deposit.toLocaleString("hu-HU")} Ft</strong>
+            Előleg: <strong>{deposit.toLocaleString("hu-HU")} Ft</strong>
           </span>
           <Button
             type="button"
