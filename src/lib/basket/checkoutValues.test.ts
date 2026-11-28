@@ -17,9 +17,13 @@ const pickup: ShippingQuote = {
   name: "Személyes",
   description: "",
   priceWithTax: 0,
-  customFields: { requiresAddress: false },
+  customFields: { requiresAddress: false, deposit: 0 },
 };
-const gls: ShippingQuote = { ...pickup, id: "8", customFields: { requiresAddress: true } };
+const gls: ShippingQuote = {
+  ...pickup,
+  id: "8",
+  customFields: { requiresAddress: true, deposit: 0 },
+};
 
 const none: OrderAddress = {
   fullName: null,

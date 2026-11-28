@@ -76,6 +76,9 @@ describe.skipIf(apiUrl === undefined)("basket contract against the live shop API
       taxNumber: "12345678-2-42",
     });
     await api.transitionToArrangingPayment();
+    await api.createBarionPaymentIntent("contract-test");
+    await api.barionPendingOrder();
+    await api.barionPaymentStatus("contract-test");
 
     expect([...new Set(rejections)]).toEqual([]);
   });

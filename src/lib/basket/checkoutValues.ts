@@ -1,4 +1,5 @@
 import type { AddressInput, CustomerInput } from "./api";
+import type { PaymentMethodId } from "./barion";
 import { requiresAddress, type Order, type OrderAddress, type ShippingQuote } from "./schemas";
 
 export const DEFAULT_COUNTRY = "HU";
@@ -16,6 +17,7 @@ export const FIELD = {
   country: "country",
   sameAsShipping: "sameAsShipping",
   fullName: "fullName",
+  paymentMethod: "paymentMethod",
   message: "message",
   terms: "terms",
 } as const;
@@ -143,6 +145,14 @@ export function billingFromForm(data: FormData): BillingValues {
 
 export function messageFromForm(data: FormData): string {
   return field(data, FIELD.message);
+}
+
+/** The payment method the buyer picked on the payment step; nothing is preselected. */
+export function paymentFromForm(data: FormData): PaymentMethodId | undefined {
+  return data.get(FIELD.paymentMethod) === "barion" ||
+    data.get(FIELD.paymentMethod) === "bank-transfer"
+    ? (data.get(FIELD.paymentMethod) as PaymentMethodId)
+    : undefined;
 }
 
 /**

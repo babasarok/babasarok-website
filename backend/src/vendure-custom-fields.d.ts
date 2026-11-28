@@ -18,10 +18,12 @@ declare module "@vendure/core/dist/entity/custom-entity-fields" {
   interface CustomOrderFields {
     termsAccepted: boolean | null;
     taxNumber: string | null;
+    fulfillmentStartedAt: Date | null;
   }
 
   interface CustomShippingMethodFields {
     requiresAddress: boolean;
+    deposit: number;
   }
 
   interface CustomProductFields {

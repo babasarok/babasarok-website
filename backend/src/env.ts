@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { glsConfigFromEnv, type GlsConfig } from "./plugins/gls/gls-config";
+import { barionConfigFromEnv, type BarionConfig } from "./plugins/barion/barion-config";
 
 const EnvSchema = z
   .object({
@@ -151,6 +152,15 @@ function glsConfig(): GlsConfig {
   }
 }
 
+function barionConfig(): BarionConfig {
+  try {
+    return barionConfigFromEnv(process.env, value.NODE_ENV === "production");
+  } catch (error) {
+    console.error(`Invalid env: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  }
+}
+
 export const env = {
   isProduction: value.NODE_ENV === "production",
   port: value.PORT,
@@ -168,4 +178,5 @@ export const env = {
     password: value.SUPERADMIN_PASSWORD,
   },
   gls: glsConfig(),
+  barion: barionConfig(),
 } as const;

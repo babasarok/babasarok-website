@@ -98,6 +98,9 @@
               {i18n.t("basket.browse")}
             </a>
           {:else}
+            {#if basket.pendingPayment}
+              <p class="pb-1 text-center text-xs text-brown-500">{i18n.t("basket.pending")}</p>
+            {/if}
             <ul class="flex max-h-[50vh] flex-col gap-2 overflow-auto">
               {#each items as basketItem (basketItem.id)}
                 {@const product = basketItem.productVariant.product}
@@ -115,30 +118,44 @@
                         )}{/if}
                     </span>
                   </div>
-                  <a
-                    href={localizedPath(`/product/${product.slug}/?line=${basketItem.id}`, locale)}
-                    class="shrink-0 rounded-full p-1.5 text-brown-500 transition-colors hover:bg-brown-100"
-                    aria-label={i18n.t("basket.edit")}
-                  >
-                    <Icon icon="mdi:pencil" />
-                  </a>
-                  <button
-                    type="button"
-                    class="shrink-0 cursor-pointer rounded-full p-1.5 text-brown-500 transition-colors hover:bg-brown-100"
-                    aria-label={i18n.t("basket.remove")}
-                    onclick={() => basket.remove(basketItem.id)}
-                  >
-                    <Icon icon="mdi:delete-outline" />
-                  </button>
+                  {#if !basket.pendingPayment}
+                    <a
+                      href={localizedPath(
+                        `/product/${product.slug}/?line=${basketItem.id}`,
+                        locale
+                      )}
+                      class="shrink-0 rounded-full p-1.5 text-brown-500 transition-colors hover:bg-brown-100"
+                      aria-label={i18n.t("basket.edit")}
+                    >
+                      <Icon icon="mdi:pencil" />
+                    </a>
+                    <button
+                      type="button"
+                      class="shrink-0 cursor-pointer rounded-full p-1.5 text-brown-500 transition-colors hover:bg-brown-100"
+                      aria-label={i18n.t("basket.remove")}
+                      onclick={() => basket.remove(basketItem.id)}
+                    >
+                      <Icon icon="mdi:delete-outline" />
+                    </button>
+                  {/if}
                 </li>
               {/each}
             </ul>
-            <a
-              href={localizedPath("/checkout", locale)}
-              class="mt-3 flex h-10 items-center justify-center rounded-md bg-brown-500 font-medium uppercase text-white transition-colors hover:bg-brown-700"
-            >
-              {i18n.t("basket.checkout")}
-            </a>
+            {#if basket.pendingPayment && order}
+              <a
+                href={`${localizedPath("/payment/confirmation", locale)}?orderCode=${encodeURIComponent(order.code)}`}
+                class="mt-3 flex h-10 items-center justify-center rounded-md bg-brown-500 font-medium uppercase text-white transition-colors hover:bg-brown-700"
+              >
+                {i18n.t("basket.resumePayment")}
+              </a>
+            {:else}
+              <a
+                href={localizedPath("/checkout", locale)}
+                class="mt-3 flex h-10 items-center justify-center rounded-md bg-brown-500 font-medium uppercase text-white transition-colors hover:bg-brown-700"
+              >
+                {i18n.t("basket.checkout")}
+              </a>
+            {/if}
           {/if}
         </div>
       {/if}

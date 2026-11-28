@@ -15,6 +15,7 @@ import {
   chooseMaterial,
   chooseOption,
   completeDetailsWithPickup,
+  completeDetailsWithCod,
   continueFromShipping,
   editLineMaterial,
   expectBrowserBackReturnsToShipping,
@@ -36,11 +37,14 @@ import {
   expectSetChip,
   expectShippingRow,
   expectTotal,
+  choosePayment,
+  continueFromPayment,
   fillContact,
   fillPickupBilling,
   goToCheckoutInApp,
   increaseLineQuantity,
   lineOf,
+  step,
   openCheckout,
   openPartnerLink,
   openProductFromList,
@@ -57,6 +61,7 @@ import {
   createSet,
   raisePrice,
   SET_TITLE,
+  restoreLargeSize,
   withdrawLargeSize,
 } from "./helpers";
 
@@ -116,15 +121,19 @@ test("every step's details are saved onto the order, restored on return, and the
   await fillPickupBilling(page);
   await writeMessage(page, "Kék legyen");
 
+  // The payment choice is not saved onto the order, so a returning buyer is
+  // re-asked on the Fizetés step; everything else is restored.
   await page.reload({ waitUntil: "domcontentloaded" });
-  await expectReviewPrefilled(page, "Kék legyen");
-
-  await page.goBack();
-  await openCheckout(page);
+  await expect(page).toHaveURL(/#payment$/);
+  await choosePayment(page, /Átutalás/);
   await expectReviewPrefilled(page, "Kék legyen");
   await expectContactFieldsPrefilled(page);
 
   await openCheckout(page);
+  await expect(page).toHaveURL(/#payment$/);
+  await choosePayment(page, /Átutalás/);
+  await expectReviewPrefilled(page, "Kék legyen");
+
   await acceptTermsAndSubmit(page);
   await expectOrderPlaced(page);
 
@@ -231,4 +240,91 @@ test("each delivery method is priced, free delivery applies above the threshold 
   await addToBasket(page);
   await goToCheckoutInApp(page);
   await expectNoDeliveryChosen(page);
+});
+
+test("a pending Barion order pays again from the payment step", async ({ page }) => {
+  await restoreLargeSize();
+  await openProductFromList(page, /E2E Párna/);
+  await chooseOption(page, /50x50/);
+  await addToBasket(page);
+  await goToCheckoutInApp(page);
+
+  await fillContact(page);
+  await chooseDelivery(page, /Személyes átvétel/);
+  await continueFromShipping(page);
+  await fillPickupBilling(page);
+  await page.getByRole("button", { name: "Fizetés" }).click();
+  await choosePayment(page, /Online fizetés/);
+  await acceptTermsAndSubmit(page);
+
+  // The wizard requests the intent and redirects to the fake gateway; the
+  // navigation is cut off (the payment stays unfinished — the "buyer closed
+  // the gateway page" case).
+  await page.waitForURL(/secure\.test\.barion\.com/, { waitUntil: "commit" }).catch(() => {});
+
+  const paymentId = new URL(page.url()).searchParams.get("t") ?? "";
+
+  expect(paymentId).toContain("fake-payment-");
+
+  // Coming back: the pending order is the basket, at the payment step only.
+  await page.goto("/checkout");
+  await expect(page).toHaveURL(/#payment$/);
+  await expect(page.getByRole("radio", { name: /Átutalás/ })).toBeVisible();
+  await expect(page.getByTestId("summary-column")).toContainText("E2E Párna");
+
+  // The delivery step is not offered: the placed order's details are fixed,
+  // and the delivery methods list is empty for a session without an active
+  // order. The summary is read-only (no edit/delete on a placed order) and
+  // has no review hint.
+  await expect(page.getByRole("button", { name: "Szállítás" })).toHaveCount(0);
+  await expect(
+    page.getByTestId("summary-column").getByRole("button", { name: "Törlés" })
+  ).toHaveCount(0);
+  await expect(
+    page.getByTestId("summary-column").getByRole("link", { name: "Szerkesztés" })
+  ).toHaveCount(0);
+  await expect(page.getByTestId("summary-column")).not.toContainText("Áttekintés");
+
+  // Barion: a new intent starts and the gateway takes over again.
+  await page.getByRole("radio", { name: /Online fizetés/ }).check();
+  await continueFromPayment(page, /Fizetés most/);
+  await page.waitForURL(/secure\.test\.barion\.com/, { waitUntil: "commit" }).catch(() => {});
+  await expect(page).toHaveURL(/secure\.test\.barion\.com/);
+
+  // Closing the gateway again leaves the order pending once more.
+  await page.goto("/checkout");
+  await expect(page).toHaveURL(/#payment$/);
+
+  // Bank transfer: the switch closes the Barion track on the server (the
+  // díjbekérő replaces it), then the code is shown.
+  await page.getByRole("radio", { name: /Átutalás/ }).check();
+  await continueFromPayment(page, /Fizetés most/);
+  await expectOrderPlaced(page);
+
+  // The switch is real: on reload the pending basket is gone — the checkout
+  // starts fresh instead of resurrecting the order.
+  await page.goto("/checkout");
+  await expect(page).not.toHaveURL(/#payment$/);
+  await expect(page.getByRole("radio", { name: /Átutalás/ })).toHaveCount(0);
+});
+
+test("a cash-on-delivery order discloses the deposit before submitting", async ({ page }) => {
+  await restoreLargeSize();
+  await openProductFromList(page, /E2E Párna/);
+  await chooseOption(page, /50x50/);
+  await addToBasket(page);
+  await goToCheckoutInApp(page);
+
+  await completeDetailsWithCod(page);
+
+  // The deferred variant's disclosure: the 6 000 Ft deposit now, the
+  // remainder at handover (the amount comes from the arrangement data).
+  await expect(step(page, "payment").getByTestId("deposit-disclosure")).toContainText(/6\s*000/);
+
+  // Both methods stay available; the Barion submit places the order and
+  // charges the deposit on the gateway (the amount is the backend tests').
+  await choosePayment(page, /Online fizetés/);
+  await acceptTermsAndSubmit(page);
+  await page.waitForURL(/secure\.test\.barion\.com/, { waitUntil: "commit" }).catch(() => {});
+  await expect(page).toHaveURL(/secure\.test\.barion\.com/);
 });

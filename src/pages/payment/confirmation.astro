@@ -1,0 +1,36 @@
+---
+import Base from "../../layouts/Base.astro";
+import PageHeader from "../../components/ui/PageHeader.astro";
+import PaymentConfirmation from "@/components/blocks/payment/PaymentConfirmation.svelte";
+import { entryIdForLocale, localeFromPathname } from "@/lib/i18n";
+import { getEntry } from "astro:content";
+import { createI18n } from "@/lib/i18next";
+
+const locale = localeFromPathname(Astro.url.pathname);
+const i18n = createI18n(locale);
+const t = i18n.t.bind(i18n);
+const configEntry = await getEntry("config", entryIdForLocale(locale, "config"));
+
+if (!configEntry) {
+  throw new Error("Config entry not found");
+}
+
+const config = configEntry.data;
+---
+
+<Base title={t("payment.title")} compactFooter>
+  <PageHeader
+    title={t("payment.title")}
+    breadcrumb={t("payment.title")}
+    no-shapes
+    class="hidden sm:block"
+  />
+  <!-- TODO: factor out header height -->
+  <div class="h-25 sm:hidden"></div>
+
+  <section class="py-6 sm:py-12.5">
+    <div class="not-prose container">
+      <PaymentConfirmation {locale} supportEmail={config.address?.email} client:load />
+    </div>
+  </section>
+</Base>

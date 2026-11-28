@@ -114,7 +114,7 @@
           disabled={pending}
           aria-busy={pending}
         >
-          {i18n.t("checkout.continueReview")}
+          {i18n.t("checkout.continuePayment")}
           <Icon
             icon={pending ? "mdi:loading" : "mdi:arrow-right"}
             class="text-lg {pending ? 'animate-spin' : ''}"

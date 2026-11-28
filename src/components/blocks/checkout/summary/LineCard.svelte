@@ -22,7 +22,8 @@
     priceChange: PriceChange | undefined;
     highlighted: boolean;
     busy: boolean;
-    onRemove: () => void;
+    /** Undefined renders the line read-only: a placed order's lines cannot change. */
+    onRemove: (() => void) | undefined;
   }
 
   let {
@@ -107,25 +108,27 @@
           {/each}
         </dl>
       {/if}
-      <div class="flex items-center gap-3 text-sm pt-1">
-        <a
-          href={localizedPath(`/product/${product.slug}/?line=${line.id}`, locale)}
-          class="flex text-xs items-center gap-1 font-medium underline text-brown-600 transition-colors hover:text-brown-700"
-        >
-          <Icon icon="mdi:pencil" class="shrink-0 text-base" />
-          {i18n.t("basket.edit")}
-        </a>
-        <div class="h-4 border-l border-brown-200"></div>
-        <button
-          type="button"
-          onclick={onRemove}
-          disabled={busy}
-          aria-label={i18n.t("basket.remove")}
-          class="flex cursor-pointer items-center gap-1 text-brown-500 transition-colors hover:text-danger-500 text-base"
-        >
-          <Icon icon="mdi:delete-outline" class="shrink-0" />
-        </button>
-      </div>
+      {#if onRemove !== undefined}
+        <div class="flex items-center gap-3 text-sm pt-1">
+          <a
+            href={localizedPath(`/product/${product.slug}/?line=${line.id}`, locale)}
+            class="flex text-xs items-center gap-1 font-medium underline text-brown-600 transition-colors hover:text-brown-700"
+          >
+            <Icon icon="mdi:pencil" class="shrink-0 text-base" />
+            {i18n.t("basket.edit")}
+          </a>
+          <div class="h-4 border-l border-brown-200"></div>
+          <button
+            type="button"
+            onclick={onRemove}
+            disabled={busy}
+            aria-label={i18n.t("basket.remove")}
+            class="flex cursor-pointer items-center gap-1 text-brown-500 transition-colors hover:text-danger-500 text-base"
+          >
+            <Icon icon="mdi:delete-outline" class="shrink-0" />
+          </button>
+        </div>
+      {/if}
 
       {#if line.invalidReason || setState || priceChange}
         <div class="flex flex-col items-start justify-between gap-2 border-t border-brown-100 pt-3">

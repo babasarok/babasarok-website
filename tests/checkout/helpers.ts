@@ -228,6 +228,8 @@ export async function createSet(): Promise<void> {
   await login();
 
   for (const material of SET_MATERIALS) {
+    // Idempotent: a retried run re-seeds into a database that already holds
+    // the material, and "Már létezik anyag" must not fail the seed.
     await gql(
       `mutation($input: MaterialInput!) { createMaterial(input: $input) { slug } }`,
       {
@@ -240,7 +242,11 @@ export async function createSet(): Promise<void> {
         },
       },
       z.unknown()
-    );
+    ).catch((error: unknown) => {
+      if (!(error instanceof Error) || !error.message.includes("Már létezik anyag")) {
+        throw error;
+      }
+    });
   }
 
   await createDefinition(setMemberDefinition("e2e-szett-fej", 3000), "E2E Szett Fej");
@@ -250,7 +256,9 @@ export async function createSet(): Promise<void> {
   const lab = await nativeProductId("e2e-szett-lab");
 
   // A set is one promotion: members on the condition, the flat Ft amount on
-  // the action, the Hungarian name as the set label (ADR 0014).
+  // the action, the Hungarian name as the set label (ADR 0014). Idempotent:
+  // Playwright re-runs this seed when a worker restarts, and a database that
+  // already holds the set refuses a second promotion over the same members.
   await gql(
     `mutation($input: CreatePromotionInput!) { createPromotion(input: $input) { __typename } }`,
     {
@@ -272,7 +280,11 @@ export async function createSet(): Promise<void> {
       },
     },
     z.unknown()
-  );
+  ).catch((error: unknown) => {
+    if (!(error instanceof Error) || !error.message.includes("szett-promóció már tartalmazza")) {
+      throw error;
+    }
+  });
   await findShopProduct("e2e-szett-fej", () => true);
   await findShopProduct("e2e-szett-lab", () => true);
 }
@@ -281,6 +293,15 @@ export async function withdrawLargeSize(): Promise<void> {
   await gql(
     `mutation U($productId: String!, $definition: JSON!) { updateProductDefinition(productId: $productId, definition: $definition) { productId } }`,
     { productId: PRODUCT_ID, definition: definition(false) },
+    z.unknown()
+  );
+}
+
+/** Re-enables the size the withdrawn-option test takes away (the spec files share one catalog). */
+export async function restoreLargeSize(): Promise<void> {
+  await gql(
+    `mutation U($productId: String!, $definition: JSON!) { updateProductDefinition(productId: $productId, definition: $definition) { productId } }`,
+    { productId: PRODUCT_ID, definition: definition(true) },
     z.unknown()
   );
 }

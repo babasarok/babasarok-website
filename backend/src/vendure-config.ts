@@ -15,6 +15,8 @@ import {
   DefaultSearchPlugin,
   LanguageCode,
 } from "@vendure/core";
+import { lifecycleOrderProcess } from "./order-state-process";
+import { OrderLifecyclePlugin } from "./plugins/order-lifecycle/order-lifecycle.plugin";
 import { AssetServerPlugin } from "@vendure/asset-server-plugin";
 import { DashboardPlugin } from "@vendure/dashboard/plugin";
 import { EmailPlugin } from "@vendure/email-plugin";
@@ -28,6 +30,8 @@ import { GLS_SENDER_FIELD } from "./plugins/gls/gls-sender";
 import { GlsPlugin } from "./plugins/gls/gls.plugin";
 import { glsProblemHandler, glsShippedHandler } from "./plugins/gls/gls-emails";
 import { glsStatusPollTask } from "./plugins/gls/gls-poll-task";
+import { BarionPlugin } from "./plugins/barion/barion.plugin";
+import { barionHandler } from "./plugins/barion/barion.handler";
 import { z } from "zod";
 import { HandlebarsHtmlGenerator } from "./plugins/email/handlebars-html-generator";
 import { CloudflareEmailSender } from "./plugins/email/cloudflare-email-sender";
@@ -188,7 +192,10 @@ export const config: VendureConfig = {
     },
   },
   orderOptions: {
-    process: [configureDefaultOrderProcess({ arrangingPaymentRequiresShipping: false })],
+    process: [
+      configureDefaultOrderProcess({ arrangingPaymentRequiresShipping: false }),
+      lifecycleOrderProcess,
+    ],
     orderPlacedStrategy: new QuoteOrderPlacedStrategy(),
     stockAllocationStrategy: new PlacedOrderStockAllocationStrategy(),
     orderItemPriceCalculationStrategy: new ServerPricingStrategy(),
@@ -200,7 +207,7 @@ export const config: VendureConfig = {
     moneyStrategy: new ForintMoneyStrategy(),
   },
   paymentOptions: {
-    paymentMethodHandlers: [bankTransferHandler],
+    paymentMethodHandlers: [bankTransferHandler, barionHandler],
     paymentMethodEligibilityCheckers: [bankTransferChecker],
   },
   promotionOptions: {
@@ -228,6 +235,11 @@ export const config: VendureConfig = {
     PricingPlugin,
     CheckoutPlugin,
     GlsPlugin,
+    // Payments (ADR 0021 slice 1: full prepay) — orders are placed at
+    // ArrangingPayment submission (QuoteOrderPlacedStrategy) and the Barion
+    // callback records the money afterwards.
+    BarionPlugin,
+    OrderLifecyclePlugin,
     ChannelSetupPlugin,
     // Owns the material/product imagery (ADR 0009): uploads and previews are
     // stored on local disk (a docker volume in deploys) and served at /assets.
@@ -261,6 +273,19 @@ export const config: VendureConfig = {
         type: "string",
         label: [{ languageCode: LanguageCode.hu, value: "Adószám" }],
       },
+      {
+        name: "fulfillmentStartedAt",
+        type: "datetime",
+        nullable: true,
+        label: [{ languageCode: LanguageCode.hu, value: "Gyártás elindítva" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value:
+              "A tulaj ekkor kezdte el készíteni a terméket (gyártás + szállítás — a készterméket jelenti, nem a Vendure teljesítést). A visszatérítési szabály eszerint dönt.",
+          },
+        ],
+      },
     ],
     // configText is the dashboard-visible line summary (written server-side
     // by LineSummaryService from the selections). lengthCm and selections
@@ -291,6 +316,19 @@ export const config: VendureConfig = {
           {
             languageCode: LanguageCode.hu,
             value: "Igen esetén a vevőnek szállítási címet kell megadnia a rendeléshez.",
+          },
+        ],
+      },
+      {
+        name: "deposit",
+        type: "int",
+        defaultValue: 0,
+        label: [{ languageCode: LanguageCode.hu, value: "Előleg (Ft)" }],
+        description: [
+          {
+            languageCode: LanguageCode.hu,
+            value:
+              "0 = teljes előre fizetés. Nagyobb érték esetén a vevő a megrendeléskor ennyi előleget fizet (Barion vagy átutalás), a fennmaradó összeget a kézbesítéskor szedjük be.",
           },
         ],
       },

@@ -56,11 +56,17 @@ const FulfillResultSchema = z.object({
 
 export type FulfillResult = z.output<typeof FulfillResultSchema>["addFulfillmentToOrder"];
 
-export async function placeOrder(server: IntegrationServer, shippingCode: string): Promise<Placed> {
+export async function placeOrder(
+  server: IntegrationServer,
+  shippingCode: string,
+  lines = [kendo(2), szalag(120)]
+): Promise<Placed> {
   const shopper = newShopper(server);
 
-  await addLine(shopper, kendo(2));
-  await addLine(shopper, szalag(120));
+  for (const line of lines) {
+    await addLine(shopper, line);
+  }
+
   await setCustomer(shopper);
   await setAddress(shopper, { fullName: "Kovács Béla", phoneNumber: "+36309999999" });
   await chooseShipping(shopper, shippingCode);
@@ -100,6 +106,51 @@ export async function recordBankTransfer(
   );
 
   return data.addManualPaymentToOrder.state;
+}
+
+/** The deposit path: `recordDepositPayment` and the order moves to DepositPaid. */
+export async function recordDeposit(server: IntegrationServer, order: Placed): Promise<string> {
+  const data = await run(
+    server.admin,
+    `mutation($orderId: ID!) {
+      recordDepositPayment(orderId: $orderId) { state }
+    }`,
+    { orderId: order.id },
+    z.object({ recordDepositPayment: z.object({ state: z.string() }) })
+  );
+
+  return data.recordDepositPayment.state;
+}
+
+/** The dashboard's manual order-state change (Vendure's order state control). */
+export async function transitionOrder(
+  server: IntegrationServer,
+  order: Placed,
+  state: string
+): Promise<string> {
+  const data = await run(
+    server.admin,
+    `mutation($orderId: ID!, $state: String!) {
+      transitionOrderToState(id: $orderId, state: $state) {
+        __typename ... on Order { state } ... on ErrorResult { errorCode message }
+      }
+    }`,
+    { orderId: order.id, state },
+    z.object({
+      transitionOrderToState: z.union([
+        z.object({ __typename: z.literal("Order"), state: z.string() }),
+        z.object({ __typename: z.string(), errorCode: z.string(), message: z.string() }),
+      ]),
+    })
+  );
+
+  const transition = data.transitionOrderToState;
+
+  if (!("state" in transition)) {
+    throw new Error(`transition to ${state} refused: ${transition.message}`);
+  }
+
+  return transition.state;
 }
 
 export async function fulfill(

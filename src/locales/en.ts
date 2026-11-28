@@ -75,6 +75,9 @@ const translation = {
     remove: "Delete",
     browse: "Browse products",
     checkout: "Checkout",
+    pending:
+      "The order is placed but its payment is unsettled. The lines stay as they are until it is.",
+    resumePayment: "Resume payment",
     inBasket: "In basket",
     configure: "Configure",
     add: "Add",
@@ -165,6 +168,7 @@ const translation = {
       contact: "Contact",
       shipping: "Shipping",
       billing: "Billing",
+      payment: "Payment",
       review: "Review",
     },
     summaryTitle: "Order summary",
@@ -187,6 +191,7 @@ const translation = {
       contact: "Enter your contact details so we can get in touch about your order.",
       shipping: "Choose a shipping method and enter the shipping address.",
       billing: "Enter the billing details.",
+      payment: "Choose how you would like to settle the order's total.",
       review: "Check your order details, then submit the order.",
     },
     subtotal: "Subtotal",
@@ -194,6 +199,7 @@ const translation = {
     back: "Back",
     continueShipping: "Continue to shipping",
     continueBilling: "Continue to billing",
+    continuePayment: "Continue to payment",
     continueReview: "Continue to review",
     street: "Street *",
     houseNumber: "House number *",
@@ -210,6 +216,38 @@ const translation = {
     setIncomplete: "not complete yet",
     noBilling: "No separate billing address",
     setBadge: "Set",
+    payment: {
+      label: "Payment method",
+      barion: "Online payment (Barion)",
+      barionNote:
+        "Secure online payment by bank card or Barion balance. After submitting the order you are taken to the payment page.",
+      "bank-transfer": "Bank transfer",
+      unchosen: "Payment",
+      "bank-transferNote":
+        "We issue a demand document (díjbekérő) for the order's total and send it by email; you can settle it by bank transfer.",
+      hint: "You can start the payment after submitting the order.",
+      pay: "Pay now",
+      arrangement: "Payment schedule",
+      depositDisclose:
+        "Cash-on-delivery order: you pay a {{deposit}} deposit now, and the courier collects the remaining {{remainder}} at delivery.",
+    },
+  },
+  payment: {
+    title: "Payment confirmation",
+    processing: "The payment is being processed…",
+    processingNote:
+      "Confirmation can take a moment; this page refreshes automatically, you don't have to do anything.",
+    succeeded: "The payment succeeded!",
+    succeededNote:
+      "Thank you for your order! We will send the confirmation email and contact you soon with the details.",
+    failed: "The payment did not complete",
+    failedNote:
+      "The payment did not complete successfully this time. You can try again, or switch to a bank transfer.",
+    tryAgain: "Try the payment again",
+    stalledHint:
+      "Processing is taking longer than expected. If the confirmation email doesn't arrive, write to us:",
+    backHome: "Back to the home page",
+    backToCheckout: "Back to the checkout",
   },
   order: {
     priceChanged:
@@ -252,6 +290,10 @@ const translation = {
     SELECTIONS_INVALID: "The order line configuration is invalid: {{issues}}",
     UNKNOWN_THREAD_COLOR: "Unknown embroidery thread colour: {{colorIds}}.",
     CHECKOUT_INCOMPLETE: "The order cannot be submitted, missing: {{missing}}.",
+    BARION_INTENT_FAILED:
+      "The Barion payment could not be started right now. Please try again, or choose a bank transfer.",
+    BARION_ORDER_STATE:
+      "The payment cannot be started because of the order's current state. Please contact us.",
     reasons: {
       UNKNOWN_MATERIAL: "contains an unknown material",
       FOREIGN_COLOR: "contains a colour the material does not offer",
@@ -296,6 +338,7 @@ const translation = {
     email: "Please enter your email address.",
     terms: "Accepting the GTC is required.",
     method: "Please choose a shipping method.",
+    payment: "Please choose a payment method.",
     street: "Please enter the street.",
     houseNumber: "Please enter the house number.",
     postalCode: "Please enter the postcode.",

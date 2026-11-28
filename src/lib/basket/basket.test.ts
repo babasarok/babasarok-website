@@ -266,9 +266,13 @@ const pickup: ShippingQuote = {
   name: "Személyes",
   description: "",
   priceWithTax: 0,
-  customFields: { requiresAddress: false },
+  customFields: { requiresAddress: false, deposit: 0 },
 };
-const gls: ShippingQuote = { ...pickup, id: "8", customFields: { requiresAddress: true } };
+const gls: ShippingQuote = {
+  ...pickup,
+  id: "8",
+  customFields: { requiresAddress: true, deposit: 0 },
+};
 const EMPTY_ADDRESS: AddressValues = {
   street: "",
   houseNumber: "",
@@ -368,11 +372,21 @@ describe("checkout readiness", () => {
 
     expect(entryStep(EMPTY_VALUES, wide, pickup)).toBe("contact");
     expect(entryStep(values, wide, pickup)).toBe("billing");
-    expect(entryStep(values, wide, gls)).toBe("review");
+    expect(entryStep(values, wide, gls, undefined, "bank-transfer")).toBe("review");
     expect(entryStep(values, wide)).toBe("shipping");
     expect(entryStep(values, wide, gls, "contact")).toBe("contact");
     expect(entryStep(EMPTY_VALUES, wide, pickup, "review")).toBe("contact");
     expect(entryStep({ ...values, address: EMPTY_ADDRESS }, wide, gls, "billing")).toBe("shipping");
+  });
+
+  it("stops a returning buyer at the payment step while no method is chosen", () => {
+    const wide = layoutSteps(true);
+
+    // The choice is never saved onto the order, so a reload always re-asks.
+    expect(entryStep(values, wide, gls)).toBe("payment");
+    expect(entryStep(values, wide, gls, "review")).toBe("payment");
+    expect(entryStep(values, wide, gls, "contact")).toBe("contact");
+    expect(entryStep(values, wide, gls, undefined, "bank-transfer")).toBe("review");
   });
 
   it("opens a narrow layout on the basket step until contact details are saved", () => {
@@ -381,7 +395,7 @@ describe("checkout readiness", () => {
 
     expect(entryStep(EMPTY_VALUES, narrow, pickup)).toBe("basket");
     expect(entryStep(EMPTY_VALUES, narrow, pickup, "billing")).toBe("basket");
-    expect(entryStep(values, narrow, gls)).toBe("review");
+    expect(entryStep(values, narrow, gls, undefined, "barion")).toBe("review");
     expect(entryStep(values, narrow, gls, "basket")).toBe("basket");
     expect(entryStep(values, wide, gls, "basket")).toBe("contact");
     expect(entryStep(EMPTY_VALUES, wide, pickup, "basket")).toBe("contact");
@@ -394,7 +408,8 @@ describe("checkout readiness", () => {
     expect(nextStep(narrow, "basket")).toBe("contact");
     expect(previousStep(narrow, "contact")).toBe("basket");
     expect(previousStep(wide, "contact")).toBeUndefined();
-    expect(nextStep(wide, "billing")).toBe("review");
+    expect(nextStep(wide, "billing")).toBe("payment");
+    expect(nextStep(wide, "payment")).toBe("review");
     expect(nextStep(wide, "review")).toBeUndefined();
     expect(stepIn(wide, "basket")).toBe("contact");
     expect(stepIn(narrow, "basket")).toBe("basket");

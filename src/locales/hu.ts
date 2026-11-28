@@ -69,6 +69,9 @@ const translation = {
     remove: "Törlés",
     browse: "Termékek böngészése",
     checkout: "Pénztár",
+    pending:
+      "A rendelés leadva, a fizetés nincs lezárva. A tételek a fizetésig változatlanok maradnak.",
+    resumePayment: "Fizetés folytatása",
     inBasket: "Kosárban",
     configure: "Beállítom",
     add: "Hozzáadom",
@@ -159,6 +162,7 @@ const translation = {
       contact: "Kapcsolat",
       shipping: "Szállítás",
       billing: "Számlázás",
+      payment: "Fizetés",
       review: "Áttekintés",
     },
     summaryTitle: "Rendelés összegzése",
@@ -181,6 +185,7 @@ const translation = {
       contact: "Add meg az elérhetőségeidet, hogy kapcsolatba léphessünk a rendelésedről.",
       shipping: "Válaszd ki a szállítási módot, és add meg a szállítási címet.",
       billing: "Add meg a számlázási adatokat.",
+      payment: "Válaszd ki, hogyan szeretnéd rendezni a rendelés összegét.",
       review: "Ellenőrizd a rendelésed adatait, majd küldd el a rendelést.",
     },
     subtotal: "Részösszeg",
@@ -188,6 +193,7 @@ const translation = {
     back: "Vissza",
     continueShipping: "Tovább a szállításhoz",
     continueBilling: "Tovább a számlázáshoz",
+    continuePayment: "Tovább a fizetéshez",
     continueReview: "Tovább az áttekintéshez",
     street: "Utca *",
     houseNumber: "Házszám *",
@@ -204,6 +210,38 @@ const translation = {
     setIncomplete: "még nem teljes",
     noBilling: "Nincs külön számlázási cím",
     setBadge: "Szett",
+    payment: {
+      label: "Fizetési mód",
+      barion: "Online fizetés (Barion)",
+      barionNote:
+        "Biztonságos online fizetés bankkártyával vagy Barion-egyenleggel. A rendelés leadása után a fizetési oldalra kerülsz.",
+      "bank-transfer": "Átutalás",
+      unchosen: "Fizetés",
+      "bank-transferNote":
+        "A rendelés összegéről díjbekérőt állítunk ki, amit emailben küldünk el; ezt tudod átutalással rendezni.",
+      hint: "A fizetést a rendelés leadása után indíthatod el.",
+      pay: "Fizetés most",
+      arrangement: "Fizetés ütemezése",
+      depositDisclose:
+        "Utánvéti fizetés: most {{deposit}} előleget fizetsz, a fennmaradó {{remainder}} összeget a kézbesítéskor a futár szedi be.",
+    },
+  },
+  payment: {
+    title: "Fizetés visszaigazolása",
+    processing: "A fizetés feldolgozás alatt…",
+    processingNote:
+      "A visszaigazolás eltarthat egy ideig; az oldal automatikusan frissül, nem kell csinálnod semmit.",
+    succeeded: "A fizetés sikeres!",
+    succeededNote:
+      "Köszönjük a rendelést! A visszaigazoló emailt elküldjük, és hamarosan felvesszük veled a kapcsolatot a részletekkel.",
+    failed: "A fizetés nem fejeződött be",
+    failedNote:
+      "A fizetés most nem fejeződött be sikeresen. Újra megpróbálhatod, vagy átváltasz átutalásra.",
+    tryAgain: "Fizetés újrapróbálása",
+    stalledHint:
+      "A feldolgozás a vártnál tovább tart. Ha nem érkezik meg a visszaigazoló email, írj nekünk:",
+    backHome: "Vissza a főoldalra",
+    backToCheckout: "Vissza a pénztárhoz",
   },
   order: {
     priceChanged:
@@ -246,6 +284,10 @@ const translation = {
     SELECTIONS_INVALID: "A rendelési sor konfigurációja érvénytelen: {{issues}}",
     UNKNOWN_THREAD_COLOR: "Ismeretlen hímzőcérna-szín: {{colorIds}}.",
     CHECKOUT_INCOMPLETE: "A rendelés nem adható le, hiányzik: {{missing}}.",
+    BARION_INTENT_FAILED:
+      "A barionos fizetést most nem sikerült elindítani. Kérlek, próbáld meg újra, vagy válaszd az átutalást.",
+    BARION_ORDER_STATE:
+      "A rendelés jelenlegi állapota miatt a fizetés most nem indítható el. Kérlek, vedd fel velünk a kapcsolatot.",
     reasons: {
       UNKNOWN_MATERIAL: "ismeretlen anyagot tartalmaz",
       FOREIGN_COLOR: "az anyag által nem kínált színt tartalmaz",
@@ -290,6 +332,7 @@ const translation = {
     email: "Kérem, add meg az email címed.",
     terms: "Az ÁSZF elfogadása kötelező.",
     method: "Kérem, válassz egy szállítási módot.",
+    payment: "Kérem, válassz fizetési módot.",
     street: "Kérjük, add meg az utcát.",
     houseNumber: "Kérjük, add meg a házszámot.",
     postalCode: "Kérjük, add meg az irányítószámot.",

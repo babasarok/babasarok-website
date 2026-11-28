@@ -50,8 +50,14 @@ Content edits ──▶ Tina Cloud (CMS) ──▶ GitHub repo ──▶ Workers
     allowlisted per stack in `scripts/deploy-runtime-env.ts` — rotation in
     the CF dashboard propagates on the next deploy. Prod:
     `CLOUDFLARE_EMAIL_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `MYGLS_HU_*`,
-    `GLS_LABEL_FORMAT`; previews: `TEST_MYGLS_HU_*`, `GLS_LABEL_FORMAT`
-    (never the live account or the email transport).
+    `GLS_LABEL_FORMAT`, `BARION_POS_KEY`, `BARION_PAYEE_EMAIL`; previews:
+    `TEST_MYGLS_HU_*`, `GLS_LABEL_FORMAT`, `TEST_BARION_POS_KEY`,
+    `TEST_BARION_PAYEE_EMAIL` (never the live accounts or the email
+    transport). The Barion URL origins are derived, not set:
+    `PUBLIC_API_URL` from the branch's `api-<slug>` host on previews and
+    from `PUBLIC_VENDURE_API_URL` in prod; `BARION_REDIRECT_BASE` from
+    `SITE_URL` in prod and from the `wrangler preview` URL on previews
+    (written into the stack's `.env` beside `ADMIN_URL` per deploy).
 - **Cron on the box:** nightly `docker system prune -af` (in the `deploy`
   user's crontab, installed by every deploy — note it runs as `deploy`, whose
   docker-group membership makes it work); hourly `preview-teardown.ts` plus

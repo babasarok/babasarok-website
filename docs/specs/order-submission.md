@@ -13,9 +13,10 @@ owner.
 
 The system SHALL provide the order form on a dedicated checkout page
 (`/checkout`) as a multi-step wizard: **Kapcsolat** (contact), **Szállítás**
-(delivery), **Számlázás** (billing) and **Áttekintés** (review). On mobile a
-**Kosár** (basket) step showing the order summary comes first; desktop has no
-such step because its summary column shows the basket beside every step. The
+(delivery), **Számlázás** (billing), **Fizetés** (payment) and **Áttekintés**
+(review). On mobile a **Kosár** (basket) step showing the order summary comes
+first; desktop has no such step because its summary column shows the basket
+beside every step. The
 step list is data rendered as a progress strip (completed ✓ / active /
 upcoming), and the active step's form is the only editable one. The step index
 is synced to the URL hash: browser back returns to the previous step, a
@@ -80,11 +81,21 @@ The system SHALL offer delivery as native Vendure shipping methods, seeded at
 backend start if missing (looked up by code, deleted rows included, never
 overwritten):
 
-| Code               | Name (hu)                                         | Price (Ft, gross) | `requiresAddress` |
-| ------------------ | ------------------------------------------------- | ----------------- | ----------------- |
-| `gls-elore-utalas` | GLS házhozszállítás előre utalással               | 2 500             | true              |
-| `gls-utanvet`      | GLS házhozszállítás utánvéttel (előleg szükséges) | 3 500             | true              |
-| `szemelyes`        | Személyes átvétel Telkibányán                     | 0                 | false             |
+| Code               | Name (hu)                                         | Price (Ft, gross) | `requiresAddress` | `deposit` |
+| ------------------ | ------------------------------------------------- | ----------------- | ----------------- | --------- |
+| `gls-elore-utalas` | GLS házhozszállítás előre utalással               | 2 500             | true              | 0         |
+| `gls-utanvet`      | GLS házhozszállítás utánvéttel (előleg szükséges) | 3 500             | true              | 6 000     |
+| `szemelyes`        | Személyes átvétel Telkibányán                     | 0                 | false             | 0         |
+
+The `deposit` column is the variant's payment arrangement ([ADR
+0021](../adr/0021-barion-payment-integration.md) §1, the
+[order-lifecycle spec](order-lifecycle.md)): 0 = full prepay, > 0 = the
+deposit collected at placement, the remainder at handover — read by the
+checkout, the Barion gateway request, the GLS label and the invoice builder
+from the variant itself, never hardcoded per consumer. Existing method rows
+carry the value from the `shipping-method-deposit` migration (the owner's
+dashboard edits keep it afterwards; the seed fills only freshly created
+rows).
 
 The system SHALL seed a promotion that gives free shipping when the order's
 subtotal with tax, after line and set discounts, is at least 60 000. The
@@ -199,6 +210,138 @@ field and native `company` address column stay supported without the site
 ever setting them. The invoice buyer is therefore always
 `billingAddress ?? shippingAddress`.
 
+### Payment method
+
+The Fizetés step SHALL offer exactly two payment methods ([ADR
+0021](../adr/0021-barion-payment-integration.md) §2), for every delivery
+variant:
+
+- **Online fizetés (Barion)** — after the order is placed, the site calls
+  `createBarionPaymentIntent` and redirects the browser to the returned
+  `gatewayUrl` (a full-page redirect; the gateway must never sit in an
+  iframe). No success panel precedes the redirect. The choice lives only in
+  the wizard's state and the payment step's form (the submit re-reads the
+  form like every step's inputs); it is not saved onto the order.
+- **Átutalás** — the pre-Barion behavior: the order parks in
+  `ArrangingPayment`, the owner emails the díjbekérő, and the site shows
+  today's success panel (the conversion tracking above fires at placement,
+  per [ADR 0021](../adr/0021-barion-payment-integration.md) §8 / issue
+  #135).
+
+The payment choice applies to the delivery variant's arrangement ([ADR
+0021](../adr/0021-barion-payment-integration.md) §1, the
+[order-lifecycle spec](order-lifecycle.md)): a full-prepay variant charges
+the full total, a deferred one (`deposit` > 0) charges the deposit alone.
+The step SHALL show the deposit disclosure when the selected variant is
+deferred — the deposit and the remainder come from the arrangement data
+(never hardcoded) — and the review step's payment section carries the same
+disclosure.
+
+- **Scenario: Deposit disclosed**
+  - WHEN the buyer selects a deferred delivery variant and reaches the
+    Fizetés step
+  - THEN both payment methods stay available and the step discloses the
+    deposit paid now and the remainder collected at handover, from the
+    variant's arrangement data
+
+**The basket is cleared only when the order is truly on our end:** at
+placement for átutalás (the díjbekérő obligation starts), and on a
+**confirmed** Barion payment for the gateway path — never on the redirect
+itself. Vendure evicts the session's active-order pointer when it comes to
+rest on a placed order, so after placement the server-side basket is empty;
+the unpaid Barion order stays in view through `barionPendingOrder` (below).
+
+A refused payment intent (e.g. the coded refusal `BARION_INTENT_FAILED` or
+`BARION_ORDER_STATE`) SHALL redirect the buyer to the payment confirmation
+page (`?orderCode=<order code>`, no payment id) — the placed order is
+inactive, so re-submitting the wizard cannot retry, and the confirmation
+page owns the retry (the wizard's local basket view is not finished; the
+success panel does not appear).
+
+- **Scenario: Barion chosen**
+  - WHEN the buyer picks Barion and submits
+  - THEN the order is placed by the unchanged submission sequence, the site
+    requests the payment intent and the browser is redirected to the Barion
+    gateway without an intervening success panel, the basket staying intact
+  - AND for a deferred variant the gateway payment charges the variant's
+    deposit alone, shown as a single bare deposit line
+    (the order-lifecycle spec)
+- **Scenario: Barion intent refused**
+  - WHEN `createBarionPaymentIntent` returns a coded refusal
+  - THEN the browser is redirected to the payment confirmation page with the
+    order code, which renders the declined view with the retry button (the
+    retry refuses again while the underlying cause persists)
+- **Scenario: Bank transfer chosen**
+  - WHEN the buyer picks átutalás and submits
+  - THEN the order is placed, the basket is cleared, and the success panel
+    appears as before the
+    payment integration
+
+### Payment confirmation page
+
+The system SHALL provide the payment confirmation page at
+`/payment/confirmation` (`/en/payment/confirmation` in English), the
+`RedirectUrl` the buyer lands on straight from the Barion gateway and the
+failure/retry hub for Barion payments. It reads `orderCode` (required) and
+`paymentId` (optional — the wizard's failure redirect omits it) from the
+query string (zod-validated; a query without an order code renders the
+declined view) and polls `barionPaymentStatus(orderCode)` every ~3 seconds
+through the site's shop-API transport (the POSKey never reaches the client).
+The page SHALL render by the polled status only, never by the redirect's
+parameters: **Processing** is the default on arrival (spinner copy,
+confirmation may take a moment; polling continues), **Succeeded** shows the
+confirmed order code and what happens next (the confirmation email),
+**Failed**/`Expired` shows decline copy with a same-session retry button —
+`createBarionPaymentIntent(orderCode)` again, addressed by the order code
+and authorized by the session (this session's intent row, the order's
+registered buyer, or the session's not-yet-evicted placement pointer) with
+a redirect to the gateway on success — plus a plain link back to
+`/checkout`. The retry is refused (`BARION_ORDER_STATE`) for a caller that
+is neither the intent-creating session nor the order's buyer. Polling
+stops after ~5 minutes and the page stays on the Processing copy with a
+hint to check the confirmation email or contact the shop. The basket after
+a failed payment renders the placed order read-only (it cannot be modified
+in `ArrangingPayment`): the retry happens on this page, not in the wizard.
+
+- **Scenario: The caller's unpaid Barion order as the basket**
+  - WHEN the site loads with no active order but the caller's session (or
+    buyer record) started an intent whose order is placed, unpaid and in
+    `ArrangingPayment`
+  - THEN the basket renders that order's lines read-only with a
+    fizetés-folytatása link to its confirmation page, and stops rendering it
+    once the payment settles
+- **Scenario: The pending order in the checkout**
+  - WHEN the buyer opens the checkout while the rendered order is the
+    pending one (the delivery methods list is empty for a session without an
+    active order, so the earlier steps are unreachable anyway)
+  - THEN the wizard shows only the Fizetés step: Barion restarts the gateway
+    payment from the placed order, Átutalás closes the Barion track on the
+    server (`switchPendingOrderToBankTransfer` — the intent rows end as
+    `Switched`, an owner order note records the choice, and new Barion
+    intents are refused) and shows the placed order's code, the steps before
+    the payment are not offered, and the summary column renders the lines
+    read-only — no edit or remove, no review hint
+
+- **Scenario: Payment confirmed while the buyer waits**
+  - WHEN the polled status turns `Succeeded`
+  - THEN the page stops polling and shows the order code with the
+    what-happens-next copy
+- **Scenario: Payment failed or expired, buyer retries**
+  - WHEN the polled status turns `Failed` or `Expired` and the buyer presses
+    the retry button
+  - THEN the site starts a new payment intent for the same order (a new
+    gateway payment, the previous attempt id retired) and redirects to the
+    gateway; the basket stays intact until a retry is confirmed
+- **Scenario: Retry from a foreign session**
+  - WHEN the retry button is pressed in a session that did not place the
+    order
+  - THEN the intent is refused (`BARION_ORDER_STATE`) and the declined view
+    persists
+- **Scenario: Polling exhausts the budget**
+  - WHEN the status stays `Processing` for ~5 minutes
+  - THEN the page stops polling, keeps the Processing copy and adds the hint
+    to check the email or contact the shop
+
 ### Order submission
 
 The system SHALL place the order with these native shop-API mutations, in
@@ -216,8 +359,9 @@ this order, each result checked before the next:
    `fullName`, or `unsetOrderBillingAddress` when the toggle
    keeps the billing address off the order (the billing section above);
 6. `setOrderCustomFields` — `message` and `termsAccepted`;
-7. `transitionOrderToState("ArrangingPayment")` — the order is placed (there
-   is no payment step yet).
+7. `transitionOrderToState("ArrangingPayment")` — the order is placed; the
+   buyer's payment-method choice (the section below) then decides what
+   happens next, without changing this sequence.
 
 Prices, set discounts, delivery and the total are the order's own
 (price authority: the server pricing strategy and promotions, ADR 0002).

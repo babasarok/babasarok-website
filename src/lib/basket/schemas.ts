@@ -87,7 +87,7 @@ export const ShippingQuoteSchema = z.object({
   name: z.string(),
   description: z.string(),
   priceWithTax: z.number(),
-  customFields: z.object({ requiresAddress: z.boolean() }).nullable(),
+  customFields: z.object({ requiresAddress: z.boolean(), deposit: z.number().int() }).nullable(),
 });
 
 export type ShippingQuote = z.output<typeof ShippingQuoteSchema>;
@@ -95,6 +95,14 @@ export type ShippingQuote = z.output<typeof ShippingQuoteSchema>;
 /** Methods with this flag need a delivery address at checkout. */
 export function requiresAddress(method: ShippingQuote | undefined): boolean {
   return method?.customFields?.requiresAddress === true;
+}
+
+/**
+ * The variant's payment arrangement (ADR 0021 §1): 0 = full prepay,
+ * > 0 = the deposit collected at placement, the remainder at handover.
+ */
+export function depositAmount(method: ShippingQuote | undefined): number {
+  return method?.customFields?.deposit ?? 0;
 }
 
 /** The basket's production time: its longest line's, in days. Undefined for an empty basket. */

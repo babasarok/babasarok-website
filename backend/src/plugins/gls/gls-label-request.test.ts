@@ -21,6 +21,8 @@ function order(overrides: Partial<LabelOrder> = {}): LabelOrder {
     code: "ORD-1",
     currencyCode: "HUF",
     totalWithTax: 21_000,
+    state: "PaymentSettled",
+    deposit: 0,
     shippingMethodCode: "gls-elore-utalas",
     shippingAddress: {
       fullName: "Teszt Címzett",
@@ -102,6 +104,40 @@ describe("glsLabelRequest", () => {
     const result = glsLabelRequest(order({ shippingMethodCode: "gls-utanvet" }), everyLine, sender);
 
     expect(result.ok && result.request.cashOnDelivery).toBeUndefined();
+  });
+
+  it("refuses a deposit-bearing utánvét order before its deposit is recorded", () => {
+    const result = glsLabelRequest(
+      order({
+        shippingMethodCode: "gls-utanvet",
+        deposit: 6000,
+        state: "ArrangingPayment",
+        payments: [],
+      }),
+      everyLine,
+      sender
+    );
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(result.reason).toContain("előlege még nincs rögzítve");
+    }
+  });
+
+  it("collects the remainder after a recorded deposit", () => {
+    const result = glsLabelRequest(
+      order({
+        shippingMethodCode: "gls-utanvet",
+        deposit: 6000,
+        state: "DepositPaid",
+        payments: [{ state: "Settled", amount: 6000 }],
+      }),
+      everyLine,
+      sender
+    );
+
+    expect(result.ok && result.request.cashOnDelivery?.amount).toBe(15_000);
   });
 
   it("never collects on a prepaid order, even when unpaid", () => {

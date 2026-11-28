@@ -26,6 +26,7 @@
     contactRows: DetailRow[];
     shippingRows: DetailRow[];
     billingRows: DetailRow[];
+    paymentRows: DetailRow[];
     total: string;
     terms: boolean;
     error: string | null;
@@ -54,6 +55,7 @@
     contactRows,
     shippingRows,
     billingRows,
+    paymentRows,
     total,
     terms = $bindable(false),
     error,
@@ -78,6 +80,7 @@
     contact: "mdi:account-outline",
     shipping: "mdi:truck-outline",
     billing: "mdi:file-document-outline",
+    payment: "mdi:credit-card-outline",
   };
 
   const problemReportHref = $derived(
@@ -89,6 +92,7 @@
     { step: "contact", rows: contactRows },
     { step: "shipping", rows: shippingRows },
     { step: "billing", rows: billingRows },
+    { step: "payment", rows: paymentRows },
   ]);
 </script>
 

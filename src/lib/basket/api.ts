@@ -2,6 +2,7 @@ import { z } from "zod";
 import { decodeRefusal } from "@babasarok/pricing";
 import type { Reason } from "./refusalText";
 import { isTokenRejection } from "./tokenRejection";
+import { barionRefusalKey, BarionIntentSchema, BarionPaymentStatusSchema } from "./barion";
 import { SET_LINE_FIELDS, SET_ORDER_FIELDS } from "./setDiscounts";
 import {
   OrderSchema,
@@ -10,6 +11,7 @@ import {
   type Order,
   type ShippingQuote,
 } from "./schemas";
+import type { BarionIntent, BarionPaymentStatus } from "./barion";
 
 export interface TokenStore {
   get(): string | null;
@@ -84,6 +86,17 @@ export interface BasketApi {
   setShippingMethod(shippingMethodId: string): Promise<Result<Order>>;
   setOrderCustomFields(input: OrderCustomFieldsInput): Promise<Result<Order>>;
   transitionToArrangingPayment(): Promise<Result<Order>>;
+  /** The gateway redirect for the placed order, addressed by its code. */
+  createBarionPaymentIntent(orderCode: string): Promise<Result<BarionIntent>>;
+  /**
+   * Closes the pending order's Barion track: the buyer pays the placed order
+   * by bank transfer instead. Resolves the order's code.
+   */
+  switchPendingOrderToBankTransfer(orderCode: string): Promise<Result<string>>;
+  /** The placed order's payment status, without the order being active. */
+  barionPaymentStatus(orderCode: string): Promise<Result<BarionPaymentStatus | null>>;
+  /** The caller's unpaid Barion order: placed, not settled, still theirs to pay. */
+  barionPendingOrder(): Promise<Result<Order | null>>;
 }
 
 const ORDER_FIELDS = `
@@ -342,7 +355,7 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
     },
     async eligibleShippingMethods() {
       const result = await request(
-        `query Eligible { eligibleShippingMethods { id name description priceWithTax customFields { requiresAddress } } }`,
+        `query Eligible { eligibleShippingMethods { id name description priceWithTax customFields { requiresAddress deposit } } }`,
         {},
         z.object({ eligibleShippingMethods: z.array(ShippingQuoteSchema) })
       );
@@ -378,5 +391,61 @@ export function createBasketApi(deps: BasketApiDeps): BasketApi {
         { state: "ArrangingPayment" },
         TRANSITION_FIELDS
       ),
+    async createBarionPaymentIntent(orderCode) {
+      const result = await request(
+        `mutation BarionIntent($orderCode: String!) { createBarionPaymentIntent(orderCode: $orderCode) { paymentId gatewayUrl } }`,
+        { orderCode },
+        z.object({ createBarionPaymentIntent: BarionIntentSchema })
+      );
+
+      if (!result.ok) {
+        return {
+          ...result,
+          failure: {
+            ...result.failure,
+            reason: barionRefusalKey(result.failure.detail) ?? result.failure.reason,
+          },
+        };
+      }
+
+      return { ok: true, value: result.value.createBarionPaymentIntent };
+    },
+    async switchPendingOrderToBankTransfer(orderCode) {
+      const result = await request(
+        `mutation BarionSwitch($orderCode: String!) { switchPendingOrderToBankTransfer(orderCode: $orderCode) }`,
+        { orderCode },
+        z.object({ switchPendingOrderToBankTransfer: z.string() })
+      );
+
+      if (!result.ok) {
+        return {
+          ...result,
+          failure: {
+            ...result.failure,
+            reason: barionRefusalKey(result.failure.detail) ?? result.failure.reason,
+          },
+        };
+      }
+
+      return { ok: true, value: result.value.switchPendingOrderToBankTransfer };
+    },
+    async barionPaymentStatus(orderCode) {
+      const result = await request(
+        `query BarionPaymentStatus($orderCode: String!) { barionPaymentStatus(orderCode: $orderCode) { paymentId status } }`,
+        { orderCode },
+        z.object({ barionPaymentStatus: BarionPaymentStatusSchema.nullable() })
+      );
+
+      return result.ok ? { ok: true, value: result.value.barionPaymentStatus } : result;
+    },
+    async barionPendingOrder() {
+      const result = await request(
+        `query BarionPendingOrder { barionPendingOrder { ${ORDER_FIELDS} } }`,
+        {},
+        z.object({ barionPendingOrder: OrderSchema.nullable() })
+      );
+
+      return result.ok ? { ok: true, value: result.value.barionPendingOrder } : result;
+    },
   };
 }

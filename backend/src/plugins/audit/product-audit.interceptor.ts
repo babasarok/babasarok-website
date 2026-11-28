@@ -38,6 +38,11 @@ export class ProductAuditInterceptor implements NestInterceptor {
   ) {}
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
+    if (context.getType<"http" | "graphql">() !== "graphql") {
+      // REST controllers (e.g. the Barion callback) carry no GraphQL info.
+      return next.handle();
+    }
+
     const gqlContext = GqlExecutionContext.create(context);
     const info = gqlContext.getInfo<
       { fieldName: string; parentType: { name: string } } | undefined

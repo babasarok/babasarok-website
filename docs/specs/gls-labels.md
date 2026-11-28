@@ -28,6 +28,11 @@ error and nothing created at GLS, when:
 - the order's delivery method is not a GLS one;
 - the order already has a non-cancelled GLS fulfillment (GLS itself would
   create a second parcel);
+- the order is a deposit-bearing utánvét order whose deposit is not yet
+  recorded (the order still in `ArrangingPayment`) — without it the courier
+  would collect the deposit too, breaking the deposit-now,
+  rest-at-handover promise (the
+  [order-lifecycle spec](order-lifecycle.md));
 - the fulfillment does not cover every line in full;
 - the shipping address lacks the name, street, city, postal code or country
   (the reason names the missing parts);
@@ -44,10 +49,15 @@ answer, the reason warns that the parcel may still exist and to check MyGLS
   - THEN the fulfillment carries the parcel number as its tracking code and
     the label collects no cash
 - **Scenario: Utánvét order**
-  - WHEN a `gls-utanvet` order is fulfilled
-  - THEN the label collects the order total minus its authorized and
-    settled payments, in the order's currency, with the order code as the
-    COD reference; a fully paid order collects nothing
+  - WHEN a `gls-utanvet` order is fulfilled after its deposit is recorded
+  - THEN the label collects the outstanding total (the remainder after the
+    deposit), in the order's currency, with the order code as the COD
+    reference; a fully paid order collects nothing
+- **Scenario: Utánvét order before its deposit**
+  - WHEN a deposit-bearing `gls-utanvet` order still in `ArrangingPayment`
+    is fulfilled
+  - THEN the fulfillment is refused with the deposit named, nothing created
+    at GLS
 - **Scenario: Partial fulfillment**
   - WHEN the owner fulfills only some of an order's items with the `gls`
     handler
@@ -101,7 +111,10 @@ order — from the parcel's full status history:
   per distinct problem code — a new code notifies again, the same code never
   repeats — and record a private note on the order. A refused or unpaid COD
   parcel never reaches "delivered": the refusal path is what these statuses
-  report.
+  report. A parcel returned to the sender (23/40) additionally moves a
+  `Shipped` order to the custom `Returned` state — the automatic act stops
+  at the flag; the owner's exits (cancel, or re-fulfill back to `Shipped`)
+  are manual ([order-lifecycle spec](order-lifecycle.md)).
 - statuses after the latest delivery or problem (transit noise) SHALL NOT
   change the verdict; a delivery anywhere in the history wins over an earlier
   problem (the re-attempt succeeded), while a problem after a delivery is

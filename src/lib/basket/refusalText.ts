@@ -112,5 +112,9 @@ export function refusalText(i18n: I18n, refusal: Refusal): string {
           refusal.addressParts.map((part) => i18n.t(`refusals.addressParts.${part}`))
         ),
       });
+    case "BARION_INTENT_FAILED":
+      return i18n.t("refusals.BARION_INTENT_FAILED");
+    case "BARION_ORDER_STATE":
+      return i18n.t("refusals.BARION_ORDER_STATE");
   }
 }

@@ -11,7 +11,7 @@ const pickup: ShippingQuote = {
   name: "Személyes átvétel",
   description: "",
   priceWithTax: 0,
-  customFields: { requiresAddress: false },
+  customFields: { requiresAddress: false, deposit: 0 },
 };
 
 const gls: ShippingQuote = {
@@ -19,7 +19,7 @@ const gls: ShippingQuote = {
   id: "8",
   name: "GLS",
   priceWithTax: 2500,
-  customFields: { requiresAddress: true },
+  customFields: { requiresAddress: true, deposit: 0 },
 };
 
 const charged = { listPrice: 2500, charged: 2500 };

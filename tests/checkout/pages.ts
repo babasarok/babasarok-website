@@ -75,7 +75,10 @@ export async function expectLineHighlight(page: Page, text: RegExp, on: boolean)
   await expect(line).not.toHaveClass(/ring-2/);
 }
 
-function step(page: Page, id: "contact" | "shipping" | "billing" | "review"): Locator {
+export function step(
+  page: Page,
+  id: "contact" | "shipping" | "billing" | "payment" | "review"
+): Locator {
   return page.getByTestId(`step-${id}`);
 }
 
@@ -121,6 +124,8 @@ export async function continueFromShipping(page: Page): Promise<void> {
 }
 
 export async function fillPickupBilling(page: Page): Promise<void> {
+  // Billing continues to the Fizetés step (checkout.stepIds), which continues
+  // to Áttekintés — the function ends on review, as before the payment step.
   const billing = step(page, "billing");
   const saved = shopMutation(page, "setOrderBillingAddress");
 
@@ -129,8 +134,20 @@ export async function fillPickupBilling(page: Page): Promise<void> {
   await billing.getByLabel(/^Házszám/).fill("1");
   await billing.getByLabel(/^Irányítószám/).fill("3896");
   await billing.getByLabel(/^Város/).fill("Telkibánya");
-  await billing.getByRole("button", { name: /Tovább az áttekintéshez/ }).click();
+  await billing.getByRole("button", { name: /Tovább a fizetéshez/ }).click();
   await saved;
+  await expect(page).toHaveURL(/#payment$/);
+
+  await choosePayment(page, /Átutalás/);
+}
+
+/** Nothing is preselected: the buyer picks explicitly (Átutalás keeps the placed-order behavior the suite asserts). */
+export async function choosePayment(page: Page, name: RegExp): Promise<void> {
+  await step(page, "payment").getByRole("radio", { name }).check();
+
+  await step(page, "payment")
+    .getByRole("button", { name: /Tovább az áttekintéshez/ })
+    .click();
   await expect(page).toHaveURL(/#review$/);
 }
 
@@ -140,6 +157,34 @@ export async function completeDetailsWithPickup(page: Page): Promise<void> {
   await chooseDelivery(page, /Személyes átvétel/);
   await continueFromShipping(page);
   await fillPickupBilling(page);
+}
+
+/**
+ * A cash-on-delivery journey: contact, the deferred GLS variant with its
+ * address, the same-as-shipping billing, ending on the Fizetés step.
+ */
+export async function completeDetailsWithCod(page: Page): Promise<void> {
+  await fillContact(page);
+  await chooseDelivery(page, /utánvéttel/);
+
+  const shipping = step(page, "shipping");
+  const saved = shopMutation(page, "setOrderShippingAddress");
+
+  await shipping.getByLabel(/^Utca/).fill("Fő utca");
+  await shipping.getByLabel(/^Házszám/).fill("1");
+  await shipping.getByLabel(/^Irányítószám/).fill("3896");
+  await shipping.getByLabel(/^Város/).fill("Telkibánya");
+
+  await shipping.getByRole("button", { name: /Tovább a számlázáshoz/ }).click();
+  await saved;
+  await expect(page).toHaveURL(/#billing$/);
+
+  // The billing step: the same-as-shipping toggle is on, so no billing save
+  // happens — continuing goes to the Fizetés step.
+  await step(page, "billing")
+    .getByRole("button", { name: /Tovább a fizetéshez/ })
+    .click();
+  await expect(page).toHaveURL(/#payment$/);
 }
 
 export async function writeMessage(page: Page, message: string): Promise<void> {
@@ -156,6 +201,11 @@ export async function acceptTermsAndSubmit(page: Page): Promise<void> {
 
   await review.getByRole("checkbox", { name: /Elfogadom/ }).check();
   await review.getByTestId("place-order").click();
+}
+
+/** The payment step's continue button (its label differs for a pending order). */
+export async function continueFromPayment(page: Page, name: RegExp): Promise<void> {
+  await step(page, "payment").getByRole("button", { name }).click();
 }
 
 export async function expectOrderPlaced(page: Page): Promise<void> {

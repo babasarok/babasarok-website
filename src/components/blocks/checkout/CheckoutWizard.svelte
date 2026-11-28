@@ -9,6 +9,7 @@
   import ContactStep from "./steps/ContactStep.svelte";
   import ShippingStep from "./steps/ShippingStep.svelte";
   import BillingStep from "./steps/BillingStep.svelte";
+  import PaymentStep from "./steps/PaymentStep.svelte";
   import ReviewStep from "./steps/ReviewStep.svelte";
   import SummaryColumn from "./summary/SummaryColumn.svelte";
   import MobileActionBar from "./MobileActionBar.svelte";
@@ -23,6 +24,7 @@
     billingFromForm,
     contactFromForm,
     messageFromForm,
+    paymentFromForm,
     valuesFromOrder,
     type CheckoutValues,
   } from "@/lib/basket/checkoutValues";
@@ -39,7 +41,9 @@
     type FieldCheck,
   } from "@/lib/basket/readiness";
   import type { Order, ShippingQuote } from "@/lib/basket/schemas";
+  import { depositDisclosure } from "@/lib/basket/arrangement";
   import type { SetMembers } from "@/lib/basket/setDiscounts";
+  import { barionRetryErrorKey, type PaymentMethodId } from "@/lib/basket/barion";
   import {
     layoutSteps,
     nextStep,
@@ -52,6 +56,7 @@
   import {
     billingRows,
     contactRows,
+    paymentRows,
     shippingRows,
     summaryLine,
     type DetailRow,
@@ -86,6 +91,7 @@
   let success = $state<{ code: string } | null>(null);
   let highlightedLines = $state<readonly string[]>([]);
   let termsAccepted = $state(false);
+  let paymentMethod = $state<PaymentMethodId>();
 
   const wide = new MediaQuery("min-width: 64rem");
   const steps = $derived(layoutSteps(wide.current));
@@ -95,6 +101,21 @@
   const currentIndex = $derived(stepIndex(step));
   const blocker = $derived(orderBlocker(order));
   const submitDisabled = $derived(sending || blocker !== undefined || !termsAccepted);
+
+  /**
+   * A pending order is placed and immutable: everything before the payment is
+   * already fixed on it, and its buyer gets the payment step only — the
+   * earlier steps would run mutations the server refuses (the delivery
+   * methods list is empty for a session without an active order).
+   */
+  const pending = $derived(basket.pendingPayment && order !== null);
+  const currency = $derived(order?.currencyCode ?? "HUF");
+  const disclosure = $derived(
+    order === null ? null : depositDisclosure(method, order.totalWithTax, currency)
+  );
+  const wizardSteps = $derived(
+    pending ? steps.filter((stepDef) => stepDef.id === "payment") : steps
+  );
 
   const saves = createCheckoutSaves(basket.api, {
     order: () => basket.order,
@@ -131,7 +152,15 @@
     const values = valuesFromOrder(order);
 
     initial = values;
-    step = entryStep(values, steps, method, stepFromHash(globalThis.location.hash.slice(1)));
+    step = pending
+      ? "payment"
+      : entryStep(
+          values,
+          steps,
+          method,
+          stepFromHash(globalThis.location.hash.slice(1)),
+          paymentMethod
+        );
 
     if (globalThis.location.hash.slice(1) !== step) {
       replaceUrl(`#${step}`);
@@ -139,7 +168,7 @@
   });
 
   $effect(() => {
-    const own = stepIn(steps, step);
+    const own = stepIn(wizardSteps, step);
 
     if (initial === null || own === step) {
       return;
@@ -182,7 +211,7 @@
       return;
     }
 
-    const own = stepIn(steps, hashStep);
+    const own = stepIn(wizardSteps, hashStep);
 
     if (own !== hashStep) {
       replaceUrl(`#${own}`);
@@ -210,7 +239,7 @@
   }
 
   function onBack(id: StepId): void {
-    const previous = previousStep(steps, id);
+    const previous = previousStep(wizardSteps, id);
 
     if (previous === undefined) {
       return;
@@ -271,6 +300,11 @@
       return saveBilling(data);
     }
 
+    if (id === "payment") {
+      paymentMethod = paymentFromForm(data);
+      return Promise.resolve();
+    }
+
     if (id === "review") {
       return saveMessage(data);
     }
@@ -292,6 +326,19 @@
     }
 
     fieldError = undefined;
+
+    if (pending && id === "payment") {
+      advancing = true;
+
+      try {
+        await pendingSubmit(paymentFromForm(data));
+      } finally {
+        advancing = false;
+      }
+
+      return;
+    }
+
     advancing = true;
 
     try {
@@ -300,13 +347,57 @@
       advancing = false;
     }
 
-    const next = nextStep(steps, id);
+    const next = nextStep(wizardSteps, id);
 
     if (next === undefined) {
       return;
     }
 
     goTo(next);
+  }
+
+  /**
+   * The pending order is already placed: the payment re-submission branches on
+   * the method — Barion restarts the gateway payment, bank transfer closes
+   * the Barion track on the server (the díjbekérő obligation replaces it) and
+   * shows the placed order's code. No conversion events: the placement fired
+   * them the first time.
+   */
+  async function pendingSubmit(methodId: PaymentMethodId | undefined): Promise<void> {
+    if (methodId === undefined || order === null) {
+      showError("blockers.payment");
+      return;
+    }
+
+    if (methodId === "bank-transfer") {
+      const switched = await basket.api.switchPendingOrderToBankTransfer(order.code);
+
+      if (!switched.ok) {
+        showError(barionRetryErrorKey(switched.failure.detail));
+        return;
+      }
+
+      const code = switched.value;
+
+      basket.finish();
+      success = { code };
+      return;
+    }
+
+    sending = true;
+
+    try {
+      const intent = await basket.api.createBarionPaymentIntent(order.code);
+
+      if (intent.ok) {
+        globalThis.location.assign(intent.value.gatewayUrl);
+        return;
+      }
+
+      showError(barionRetryErrorKey(intent.failure.detail));
+    } finally {
+      sending = false;
+    }
   }
 
   async function onMethod(shippingMethodId: string): Promise<void> {
@@ -355,6 +446,10 @@
       };
 
       return shippingRows(method, values.address, fee, current.currencyCode, t);
+    }
+
+    if (id === "payment") {
+      return paymentRows(paymentMethod, disclosure, t);
     }
 
     return billingRows(values.billing, method, t);
@@ -413,6 +508,11 @@
       return;
     }
 
+    if (paymentMethod === undefined) {
+      showError("blockers.payment");
+      return;
+    }
+
     sending = true;
     await saves.settled();
 
@@ -427,9 +527,8 @@
       (report) => reportClientError({ kind: "order", ...report })
     );
 
-    sending = false;
-
     if (!result.ok) {
+      sending = false;
       submitFailure = result.failure;
       revealError();
       return;
@@ -456,6 +555,27 @@
       console.error("Failed to record purchase conversion", e);
     }
 
+    if (paymentFromForm(formData("payment")) === "barion") {
+      const intent = await basket.api.createBarionPaymentIntent(result.order.code);
+
+      if (!intent.ok) {
+        // The placed order is inactive, so re-submitting the wizard cannot
+        // retry: the confirmation page owns the retry (same session, the
+        // placed order is still the intent's target). The basket stays — it
+        // is only cleared once the payment is confirmed.
+        globalThis.location.assign(
+          `${localizedPath("/payment/confirmation", locale)}?orderCode=${encodeURIComponent(result.order.code)}`
+        );
+        return;
+      }
+
+      // No success panel: the buyer goes straight to the gateway. The basket
+      // is cleared by the confirmation page once the payment is confirmed.
+      globalThis.location.assign(intent.value.gatewayUrl);
+      return;
+    }
+
+    sending = false;
     basket.finish();
     success = { code: result.order.code };
   }
@@ -510,10 +630,10 @@
         <div class="grid grid-cols-1 items-start gap-6 pb-24 lg:grid-cols-[1fr_420px] lg:pb-0">
           <div class="flex min-w-0 flex-col">
             <div class="pb-4">
-              <StepStrip {locale} {steps} current={step} onJump={goTo} />
+              <StepStrip {locale} steps={wizardSteps} current={step} onJump={goTo} />
             </div>
 
-            {#each steps as stepDef (stepDef.id)}
+            {#each wizardSteps as stepDef (stepDef.id)}
               {@const active = stepDef.id === step}
               {@const shown = stepIndex(stepDef.id) < currentIndex && step !== "review"}
 
@@ -582,6 +702,18 @@
                           onContinue={(data) => void onContinue("billing", data)}
                           onBack={() => onBack("billing")}
                         />
+                      {:else if stepDef.id === "payment"}
+                        <PaymentStep
+                          {locale}
+                          initial={paymentMethod}
+                          pending={advancing}
+                          onBack={pending ? undefined : () => onBack("payment")}
+                          onSelect={(payment) => (paymentMethod = payment)}
+                          onContinue={(data) => void onContinue("payment", data)}
+                          payNow={pending}
+                          deposit={disclosure?.deposit ?? null}
+                          remainder={disclosure?.remainder ?? null}
+                        />
                       {:else}
                         <ReviewStep
                           {locale}
@@ -593,6 +725,7 @@
                           contactRows={stepRows("contact", saved, order, t)}
                           shippingRows={stepRows("shipping", saved, order, t)}
                           billingRows={stepRows("billing", saved, order, t)}
+                          paymentRows={stepRows("payment", saved, order, t)}
                           total={formatMoney(order.totalWithTax, order.currencyCode)}
                           bind:terms={termsAccepted}
                           {error}
@@ -655,20 +788,23 @@
             {labels}
             {setMembers}
             {highlightedLines}
-            hint={step !== "review"}
+            hint={!pending && step !== "review"}
             basketInfo={basketNote}
             shownPrices={basket.shownPrices}
             {busy}
             onHighlight={(lineIds) => (highlightedLines = lineIds)}
-            onRemoveLine={(lineId) => removeLine(lineId)}
+            onRemoveLine={pending ? undefined : (lineId) => removeLine(lineId)}
           />
         </div>
 
         <MobileActionBar
           {locale}
-          backVisible={step !== steps[0].id}
+          backVisible={!pending && step !== steps[0].id}
           onBack={() => onBack(step)}
-          nextLabel={translateMessage(i18n, mobileNextLabelKey(step))}
+          nextLabel={translateMessage(
+            i18n,
+            pending && step === "payment" ? "checkout.payment.pay" : mobileNextLabelKey(step)
+          )}
           nextDisabled={step === "review" ? submitDisabled : false}
           pending={step === "review" ? sending : advancing}
           formId={`wizard-step-${step}`}

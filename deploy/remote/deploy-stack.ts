@@ -17,6 +17,7 @@
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import {
+  appendFileSync,
   chmodSync,
   copyFileSync,
   existsSync,
@@ -135,11 +136,25 @@ try {
           `API_ALLOWED_ORIGINS=${envValue(`${ROOT}/prod/.env`, "API_ALLOWED_ORIGINS")}`,
           // Fallback until deploy-backend.ts registers the preview site URL
           // (printed by wrangler preview) right after the frontend deploy;
-          // the URL does not exist before the first preview deploy.
+          // the URL does not exist before the first preview deploy. The same
+          // URL is the Barion BARION_REDIRECT_BASE (the gateway's buyer
+          // redirect, ADR 0021).
           `ADMIN_URL=https://babasarok.net/dashboard`,
+          `BARION_REDIRECT_BASE=https://babasarok.net`,
           "",
         ].join("\n")
       );
+      chmodSync(`${DIR}/.env`, 0o600);
+    }
+
+    // Ensure the Barion redirect-origin line exists on every deploy, not only
+    // at first provisioning: the migrate/backend containers boot before
+    // deploy-backend.ts patches the real preview URL in (right after the
+    // frontend deploy), and a configured Barion shop refuses to boot without
+    // it. The prod site is the same fallback ADMIN_URL uses; deploy-backend.ts
+    // upserts the real preview URL minutes into the deploy.
+    if (!readFileSync(`${DIR}/.env`, "utf8").includes("BARION_REDIRECT_BASE=")) {
+      appendFileSync(`${DIR}/.env`, "BARION_REDIRECT_BASE=https://babasarok.net\n");
       chmodSync(`${DIR}/.env`, 0o600);
     }
 

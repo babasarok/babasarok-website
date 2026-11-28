@@ -22,7 +22,10 @@ export interface LabelOrder {
   code: string;
   currencyCode: string;
   totalWithTax: number;
+  state: string;
   shippingMethodCode: string | undefined;
+  /** The variant's arrangement deposit (0 = full prepay) — ADR 0021 §1. */
+  deposit: number;
   shippingAddress: LabelAddress;
   customerEmail: string | undefined;
   customerPhone: string | undefined;
@@ -92,6 +95,16 @@ export function glsLabelRequest(
 
   if (method !== GLS_CASH_ON_DELIVERY_METHOD_CODE) {
     return { ok: true, request };
+  }
+
+  // The deferred variant's promise is deposit-now, rest-at-handover: before
+  // the deposit is recorded (the order rests in `ArrangingPayment`) the label
+  // would collect the deposit too — refuse instead (ADR 0021 §4).
+  if (order.deposit > 0 && order.state === "ArrangingPayment") {
+    return {
+      ok: false,
+      reason: `A(z) ${order.code} utánvéti rendelés ${order.deposit} Ft előlege még nincs rögzítve — a címke csak a rögzített előleg után készülhet, különben a futár az előleget is beszedné.`,
+    };
   }
 
   const outstanding = outstandingTotal(order);
